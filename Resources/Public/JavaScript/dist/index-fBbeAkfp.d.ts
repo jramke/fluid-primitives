@@ -1,6 +1,6 @@
 import { Bindable, BindableContext, BindableRefs, ComputedFn, Machine, MachineSchema, Params, PropFn, Scope, Service, mergeProps } from "@zag-js/core";
 import { ListCollection } from "@zag-js/collection";
-import * as _zag_js_types4 from "@zag-js/types";
+import * as _zag_js_types0 from "@zag-js/types";
 
 //#region Resources/Private/Client/src/types.d.ts
 declare global {
@@ -127,7 +127,7 @@ declare class Machine$1<T extends MachineSchema> {
 }
 //#endregion
 //#region Resources/Private/Client/src/lib/normalize-props.d.ts
-declare const normalizeProps: _zag_js_types4.NormalizeProps<_zag_js_types4.PropTypes<{
+declare const normalizeProps: _zag_js_types0.NormalizeProps<_zag_js_types0.PropTypes<{
   [x: string]: any;
 }>>;
 //#endregion
