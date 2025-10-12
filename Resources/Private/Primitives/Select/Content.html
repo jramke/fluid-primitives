@@ -1,0 +1,12 @@
+<f:variable name="state">{context.defaultOpen ? 'open' : 'closed'}</f:variable>
+<f:variable name="refData" value="{state: state}" />
+
+<div
+    tabindex="0"
+    hidden="true"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.content, then: 'id="{context.ids.content}"' )}
+    {ui:ref(name: 'content' , data: refData )}
+    {ui:attributes()}>
+    <f:slot />
+</div>

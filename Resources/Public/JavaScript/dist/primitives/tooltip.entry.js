@@ -1,0 +1,1 @@
+import{initAllComponentInstances as e}from"../Client-Bcuea237.js";import{Tooltip as t}from"../Tooltip-nPU-NzMw.js";e(`tooltip`,({props:e})=>{let n=new t(e);return n.init(),n});

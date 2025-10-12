@@ -1,0 +1,8 @@
+<button
+    type="button"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.trigger, then: 'id="{context.ids.trigger}"' )}
+    {ui:ref(name: 'trigger' )}
+    {ui:attributes()}>
+    <f:slot />
+</button>

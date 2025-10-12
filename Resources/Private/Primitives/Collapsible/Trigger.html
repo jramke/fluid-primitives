@@ -1,0 +1,12 @@
+<f:variable name="state">{context.defaultOpen ? 'open' : 'closed'}</f:variable>
+<f:variable name="refData" value="{state: state, disabled: context.disabled}" />
+
+<button
+    type="button"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.trigger, then: 'id="{context.ids.trigger}"' )}
+    {ui:ref(name: 'trigger' , data: refData )}
+    aria-expanded="{context.defaultOpen ? 'true' : 'false'}"
+    {ui:attributes()}>
+    <f:slot />
+</button>

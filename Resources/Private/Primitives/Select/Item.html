@@ -1,0 +1,16 @@
+<ui:prop name="item" type="mixed" client="{true}" optional="{true}" context="{true}" />
+
+<ui:error when="!{item}" message="The 'item' prop of {component.fullName} is missing or invalid." />
+
+<f:comment>
+    <!-- TODO: we need something to get the items state like selected, highlighted and so on so we can set the attributes server-side -->
+</f:comment>
+
+<div
+    role="option"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.item, then: 'id="{context.ids.item}"' )}
+    {ui:ref(name: 'item' , data: {item: item, value: item.value} )}
+    {ui:attributes()}>
+    <f:slot />
+</div>

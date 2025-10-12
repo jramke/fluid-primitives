@@ -1,0 +1,9 @@
+<ui:error when="!{context.item} || !{context.item.item}" message="The {component.fullName} must only be used within a `select.item` element." />
+
+<span
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.itemText, then: 'id="{context.ids.itemText}"' )}
+    {ui:ref(name: 'itemText' , data: {value: context.item.item.value} )}
+    {ui:attributes()}>
+    <f:slot />
+</span>

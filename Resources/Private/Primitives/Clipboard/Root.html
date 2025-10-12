@@ -1,0 +1,12 @@
+<ui:prop name="value" type="string" client="{true}" optional="{true}" />
+<ui:prop name="timeout" type="integer" optional="{true}" client="{true}" />
+
+<ui:error when="!{value}" message="The 'value' prop is required for {component.fullName}." />
+
+<div
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.root, then: 'id="{context.ids.root}"' )}
+    {ui:ref(name: 'root' )}
+    {ui:attributes()}>
+    <f:slot />
+</div>

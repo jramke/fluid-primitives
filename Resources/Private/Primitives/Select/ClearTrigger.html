@@ -1,0 +1,10 @@
+<button
+    type="button"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.clearTrigger, then: 'id="{context.ids.clearTrigger}"' )}
+    {ui:ref(name: 'clearTrigger' )}
+    {f:if(condition: context.disabled, then: 'disabled' )}
+    {f:if(condition: context.defaultValue, then: '' , else: 'hidden="true"' )}
+    {ui:attributes()}>
+    <f:slot />
+</button>

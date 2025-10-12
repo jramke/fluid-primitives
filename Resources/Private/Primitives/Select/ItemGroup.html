@@ -1,0 +1,11 @@
+<f:variable name="id">{ui:uid()}</f:variable>
+<f:variable name="refData" value="{disabled: context.disabled, id: id}" />
+
+<div
+    role="group"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.itemGroup, then: 'id="{context.ids.itemGroup}"' )}
+    {ui:ref(name: 'itemGroup' , data: refData )}
+    {ui:attributes()}>
+    <f:slot />
+</div>

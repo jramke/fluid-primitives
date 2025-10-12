@@ -1,0 +1,6 @@
+plugin.tx_fluidprimitives {
+    settings {
+        visuallyHiddenStyles = position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+        defaultFloatingStyles = position: absolute; isolation: isolate; top: 0px; left: 0px;
+    }
+}

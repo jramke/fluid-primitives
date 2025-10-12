@@ -1,0 +1,9 @@
+<ui:prop name="orientation" type="string" default="vertical" context="{true}" />
+
+<div
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.scrollbar, then: 'id="{context.ids.scrollbar}"' )}
+    {ui:ref(name: 'scrollbar' , data: {orientation: orientation} )}
+    {ui:attributes()}>
+    <f:slot />
+</div>

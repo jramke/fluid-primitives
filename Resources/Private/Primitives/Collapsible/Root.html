@@ -1,0 +1,16 @@
+<ui:prop name="defaultOpen" type="boolean" optional="{true}" default="{false}" client="{true}" />
+<ui:prop name="disabled" type="boolean" optional="{true}" default="{false}" client="{true}" />
+<ui:prop name="collapsedHeight" type="string" optional="{true}" client="{true}" />
+<ui:prop name="collapsedWidth" type="string" optional="{true}" client="{true}" />
+
+<f:variable name="state">{defaultOpen ? 'open' : 'closed'}</f:variable>
+
+<f:variable name="refData" value="{state: state}" />
+
+<div
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.root, then: 'id="{context.ids.root}"' )}
+    {ui:ref(name: 'root' , data: refData )}
+    {ui:attributes()}>
+    <f:slot />
+</div>

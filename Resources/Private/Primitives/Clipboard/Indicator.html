@@ -1,0 +1,11 @@
+<ui:prop name="state" type="string" optional="{true}" />
+
+<ui:error when="{state}!=copied && {state}!==idle" message="Invalid state '{state}' for {component.fullName}, expected 'copied' or 'idle'." />
+
+<span
+    {f:if(condition: '{state}==copied' , then: 'hidden' )}
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'indicator-{state}' )}
+    {ui:attributes()}>
+    <f:slot />
+</span>

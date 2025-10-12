@@ -1,0 +1,16 @@
+<f:variable name="hidden">{f:if(condition: context.defaultOpen, then: '{false}', else: '{true}')}</f:variable>
+<f:if condition="{context.collapsedHeight} || {context.collapsedWidth}">
+    <f:variable name="hidden" value="{false}" />
+</f:if>
+
+<f:variable name="state">{context.defaultOpen ? 'open' : 'closed'}</f:variable>
+<f:variable name="refData" value="{collapsible: '', state: state}" />
+
+<div
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.content, then: 'id="{context.ids.content}"' )}
+    {ui:ref(name: 'content' , data: refData )}
+    {ui:attributes(skip: 'hidden' )}
+    {f:if(condition: hidden, then: 'hidden="{hidden}"' )}>
+    <f:slot />
+</div>

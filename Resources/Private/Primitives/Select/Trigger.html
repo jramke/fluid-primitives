@@ -1,0 +1,23 @@
+<f:variable name="hasDefaultItemsAttr">{f:if(condition: context.defaultValue, then: '{true}', else: '{null}')}</f:variable>
+<f:variable name="state">{context.defaultOpen ? 'open' : 'closed'}</f:variable>
+<f:variable name="refData" value="{
+    disabled: context.disabled, 
+    invalid: context.invalid, 
+    readonly: context.readonly, 
+    placeholder-shown: hasDefaultItemsAttr, 
+    state: state,
+    expanded: context.defaultOpen
+}" />
+
+<button
+    type="button"
+    role="combobox"
+    aria-haspopup="listbox"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.trigger, then: 'id="{context.ids.trigger}"' )}
+    {ui:ref(name: 'trigger' , data: refData )}
+    {f:if(condition: context.disabled, then: 'disabled' )}
+    aria-invalid="{context.invalid}"
+    {ui:attributes()}>
+    <f:slot />
+</button>

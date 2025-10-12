@@ -1,0 +1,18 @@
+<div
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.root, then: 'id="{context.ids.root}"' )}
+    {ui:ref(name: 'root' )}
+    {ui:attributes()}>
+    <f:slot />
+</div>
+
+<f:asset.css identifier="scroll-area-hide-scrollbar">
+    [data-scope="scroll-area"][data-part="viewport"] {
+    width: 100%;
+    height: 100%;
+    scrollbar-width: none;
+    &::-webkit-scrollbar {
+    display: none;
+    }
+    }
+</f:asset.css>

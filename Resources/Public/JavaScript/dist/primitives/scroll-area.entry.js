@@ -1,0 +1,1 @@
+import{initAllComponentInstances as e}from"../Client-Bcuea237.js";import{ScrollArea as t}from"../ScrollArea-CsOZplcX.js";e(`scroll-area`,({props:e})=>{let n=new t(e);return n.init(),n});

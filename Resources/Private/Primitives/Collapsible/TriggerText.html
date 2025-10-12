@@ -1,0 +1,15 @@
+<ui:prop name="closeText" type="string" optional="{true}" />
+<ui:prop name="openText" type="string" optional="{true}" />
+
+<f:variable name="refData" value="{
+    'close-text': closeText,
+    'open-text': openText
+}" />
+
+<span
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.trigger-text, then: 'id="{context.ids.trigger-text}"' )}
+    {ui:ref(name: 'trigger-text' , data: refData)}
+    {ui:attributes()}>
+    {f:if(condition: '{context.defaultOpen}', then: '{closeText}', else: '{openText}')}
+</span>

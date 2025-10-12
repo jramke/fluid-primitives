@@ -1,0 +1,11 @@
+<f:variable name="state">{context.defaultOpen ? 'open' : 'closed'}</f:variable>
+<f:variable name="refData" value="{state: state, disabled: context.disabled, invalid: context.invalid, readonly: context.readonly}" />
+
+<span
+    aria-hidden="true"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.indicator, then: 'id="{context.ids.indicator}"' )}
+    {ui:ref(name: 'indicator' , data: refData )}
+    {ui:attributes()}>
+    <f:slot />
+</span>

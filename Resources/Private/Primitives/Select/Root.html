@@ -1,0 +1,26 @@
+<ui:prop name="collection" type="Jramke\FluidPrimitives\Domain\Model\ListCollection" client="{true}" optional="{true}" />
+<ui:prop name="name" type="string" optional="{true}" client="{true}" />
+<ui:prop name="form" type="string" optional="{true}" client="{true}" />
+<ui:prop name="disabled" type="boolean" optional="{true}" client="{true}" />
+<ui:prop name="invalid" type="boolean" optional="{true}" client="{true}" />
+<ui:prop name="readonly" type="boolean" optional="{true}" client="{true}" />
+<ui:prop name="required" type="boolean" optional="{true}" client="{true}" />
+<ui:prop name="closeOnSelect" type="boolean" optional="{true}" client="{true}" />
+<ui:prop name="positioning" type="array" optional="{true}" client="{true}" />
+<ui:prop name="defaultValue" type="string[]" optional="{true}" client="{true}" />
+<ui:prop name="defaultHighlightedValue" type="string" optional="{true}" client="{true}" />
+<ui:prop name="loopFocus" type="boolean" optional="{true}" client="{true}" />
+<ui:prop name="multiple" type="boolean" optional="{true}" client="{true}" />
+<ui:prop name="defaultOpen" type="boolean" optional="{true}" client="{true}" />
+<ui:prop name="composite" type="boolean" optional="{true}" client="{true}" />
+<ui:prop name="deselectable" type="boolean" optional="{true}" client="{true}" />
+
+<ui:error when="{collection} !== null && !{collection}.items" message="The 'collection' prop of {component.fullName} is missing or invalid." />
+
+<div
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.root, then: 'id="{context.ids.root}"' )}
+    {ui:ref(name: 'root' , data: {invalid: invalid, readonly: readonly} )}
+    {ui:attributes()}>
+    <f:slot />
+</div>

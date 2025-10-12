@@ -1,0 +1,15 @@
+<select
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.hiddenSelect, then: 'id="{context.ids.hiddenSelect}"' )}
+    {f:if(condition: context.form, then: 'form="{context.form}"' )}
+    {f:if(condition: context.name, then: 'name="{context.name}"' )}
+    {f:if(condition: context.disabled, then: 'disabled' )}
+    {f:if(condition: context.multiple, then: 'multiple' )}
+    {f:if(condition: context.required, then: 'required' )}
+    {ui:ref(name: 'hiddenSelect' )}
+    aria-hidden="true"
+    tabindex="-1"
+    style="{settings.visuallyHiddenStyles}"
+    {ui:attributes(skip: 'style' )}>
+    <f:slot />
+</select>

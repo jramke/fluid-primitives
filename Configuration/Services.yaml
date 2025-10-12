@@ -1,0 +1,12 @@
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: false
+
+  Jramke\FluidPrimitives\:
+    resource: '../Classes/*'
+
+  Jramke\FluidPrimitives\Registry\HydrationRegistry:
+    shared: true
+    public: true

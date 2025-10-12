@@ -1,0 +1,17 @@
+<ui:prop name="placeholder" type="string" optional="{true}" client="{true}" />
+
+<f:variable name="refData" value="{placeholder: placeholder, disabled: context.disabled, invalid: context.invalid}" />
+
+<f:variable name="content">{placeholder ?: ''}</f:variable>
+<f:if condition="{context.defaultValue}">
+    <f:variable name="defaultItems">{context.collection -> ui:call(method: 'findMany', arguments: {0: context.defaultValue})}</f:variable>
+    <f:variable name="content">{context.collection -> ui:call(method: 'stringifyItems', arguments: {0: defaultItems})}</f:variable>
+</f:if>
+
+<span
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.valueText, then: 'id="{context.ids.valueText}"' )}
+    {ui:ref(name: 'valueText' , data: refData )}
+    {ui:attributes()}>
+    {content}
+</span>

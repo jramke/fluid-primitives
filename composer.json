@@ -1,0 +1,33 @@
+{
+    "name": "jramke/fluid-primitives",
+    "type": "typo3-cms-extension",
+    "description": "Build Component Compositions in Fluid.",
+    "license": "GPL-2.0-or-later",
+    "version": "0.0.1",
+    "authors": [
+        {
+            "name": "Joost Ramke",
+            "role": "Developer",
+            "email": "hey@joostramke.com",
+            "homepage": "https://joostramke.com"
+        }
+    ],
+    "require": {
+        "php": ">=8.2",
+        "typo3/cms-fluid": "^13.4",
+        "typo3fluid/fluid": "^4"
+    },
+    "autoload": {
+        "psr-4": {
+            "Jramke\\FluidPrimitives\\": "Classes"
+        }
+    },
+    "replace": {
+        "typo3-ter/fluid_primitives": "*"
+    },
+    "extra": {
+        "typo3/cms": {
+            "extension-key": "fluid_primitives"
+        }
+    }
+}

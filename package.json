@@ -1,0 +1,67 @@
+{
+    "name": "fluid-primitives",
+    "version": "0.0.1",
+    "description": "Client-side library for Fluid Primitives.",
+    "type": "module",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/jramke/fluid-primitives.git"
+    },
+    "author": "Joost Ramke <hey@joostramke.com>",
+    "files": [
+        "./Resources/Public/JavaScript/dist"
+    ],
+    "main": "./Resources/Public/JavaScript/dist/client.js",
+    "types": "./Resources/Public/JavaScript/dist/client.d.ts",
+    "exports": {
+        ".": {
+            "import": "./Resources/Public/JavaScript/dist/client.js",
+            "types": "./Resources/Public/JavaScript/dist/client.d.ts"
+        },
+        "./primitives/dialog": {
+            "import": "./Resources/Public/JavaScript/dist/primitives/dialog.js",
+            "types": "./Resources/Public/JavaScript/dist/primitives/dialog.d.ts"
+        },
+        "./primitives/clipboard": {
+            "import": "./Resources/Public/JavaScript/dist/primitives/clipboard.js",
+            "types": "./Resources/Public/JavaScript/dist/primitives/clipboard.d.ts"
+        },
+        "./primitives/collapsible": {
+            "import": "./Resources/Public/JavaScript/dist/primitives/collapsible.js",
+            "types": "./Resources/Public/JavaScript/dist/primitives/collapsible.d.ts"
+        },
+        "./primitives/scroll-area": {
+            "import": "./Resources/Public/JavaScript/dist/primitives/scroll-area.js",
+            "types": "./Resources/Public/JavaScript/dist/primitives/scroll-area.d.ts"
+        },
+        "./primitives/tooltip": {
+            "import": "./Resources/Public/JavaScript/dist/primitives/tooltip.js",
+            "types": "./Resources/Public/JavaScript/dist/primitives/tooltip.d.ts"
+        }
+    },
+    "scripts": {
+        "build": "tsdown",
+        "dev": "tsdown --watch"
+    },
+    "devDependencies": {
+        "@types/node": "^22.15.17",
+        "tsdown": "^0.11.9",
+        "typescript": "^5.8.3"
+    },
+    "dependencies": {
+        "@zag-js/clipboard": "^1.24.2",
+        "@zag-js/collapsible": "^1.24.2",
+        "@zag-js/collection": "^1.26.1",
+        "@zag-js/core": "^1.24.2",
+        "@zag-js/dialog": "^1.24.2",
+        "@zag-js/dom-query": "^1.26.1",
+        "@zag-js/scroll-area": "^1.24.2",
+        "@zag-js/select": "^1.25.0",
+        "@zag-js/store": "^1.24.2",
+        "@zag-js/tooltip": "^1.24.2",
+        "@zag-js/types": "^1.24.2",
+        "@zag-js/utils": "^1.24.2",
+        "nanoid": "^5.1.5"
+    }
+}
