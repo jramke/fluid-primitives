@@ -181,10 +181,6 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
             }
         }
 
-        // Provide slots to SlotViewHelper
-        $renderingContext->setViewHelperVariableContainer(new ViewHelperVariableContainer());
-        $renderingContext->getViewHelperVariableContainer()->addAll(SlotViewHelper::class, $slots);
-
         if ($arguments['asChild'] ?? false) {
             $renderedChild = isset($slots['default']) && is_callable($slots['default'])
                 ? (string)$slots['default']()
