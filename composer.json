@@ -17,6 +17,9 @@
         "typo3/cms-fluid": "^13.4",
         "typo3fluid/fluid": "^4"
     },
+    "scripts": {
+        "prepare-release": ["rm -rf .github", "rm .gitignore"]
+    },
     "autoload": {
         "psr-4": {
             "Jramke\\FluidPrimitives\\": "Classes"
