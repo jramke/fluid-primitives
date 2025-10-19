@@ -1,7 +1,7 @@
 {
     "name": "jramke/fluid-primitives",
     "type": "typo3-cms-extension",
-    "description": "Build Component Compositions in Fluid.",
+    "description": "The headless component library for TYPO3 Fluid",
     "license": "GPL-2.0-or-later",
     "version": "0.0.1",
     "authors": [

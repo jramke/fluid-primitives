@@ -2,7 +2,7 @@
 
 $EM_CONF[$_EXTKEY] = [
     'title' => 'Fluid Primitives',
-    'description' => 'Build Component Compositions in Fluid.',
+    'description' => 'The headless component library for TYPO3 Fluid',
     'version' => '0.0.1',
     'state' => 'alpha',
     'author' => 'Joost Ramke',
