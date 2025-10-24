@@ -1,51 +1,14 @@
-import { Component$1 as Component, Machine$1 as Machine } from "../index-fBbeAkfp.js";
+import { Component$1 as Component, Machine$1 as Machine } from "../index-C4NaCoPN.js";
+import * as _zag_js_types1 from "@zag-js/types";
 import * as dialog from "@zag-js/dialog";
 
 //#region Resources/Private/Primitives/Dialog/Dialog.d.ts
 declare class Dialog extends Component<dialog.Props, dialog.Api> {
   name: string;
   initMachine(props: dialog.Props): Machine<any>;
-  initApi(): dialog.Api<{
-    button: {
-      [x: string]: any;
-    };
-    label: {
-      [x: string]: any;
-    };
-    input: {
-      [x: string]: any;
-    };
-    textarea: {
-      [x: string]: any;
-    };
-    img: {
-      [x: string]: any;
-    };
-    output: {
-      [x: string]: any;
-    };
-    element: {
-      [x: string]: any;
-    };
-    select: {
-      [x: string]: any;
-    };
-    rect: {
-      [x: string]: any;
-    };
-    style: {
-      [x: string]: any;
-    };
-    circle: {
-      [x: string]: any;
-    };
-    svg: {
-      [x: string]: any;
-    };
-    path: {
-      [x: string]: any;
-    };
-  }>;
+  initApi(): dialog.Api<_zag_js_types1.PropTypes<{
+    [x: string]: any;
+  }>>;
   render(): void;
 }
 //#endregion

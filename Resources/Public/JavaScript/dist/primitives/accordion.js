@@ -1,0 +1,1 @@
+import"../Client-Bcuea237.js";import{Accordion as e}from"../Accordion-eTTEZRA4.js";export{e as Accordion};

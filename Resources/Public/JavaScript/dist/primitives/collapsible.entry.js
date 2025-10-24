@@ -1,1 +1,1 @@
-import{initAllComponentInstances as e}from"../Client-Bcuea237.js";import{Collapsible as t}from"../Collapsible-BO4vsAfM.js";e(`collapsible`,({props:e})=>{let n=new t(e);return n.init(),n});
+import{initAllComponentInstances as e}from"../Client-Bcuea237.js";import{Collapsible as t}from"../Collapsible-CupTOmpO.js";e(`collapsible`,({props:e})=>{let n=new t(e);return n.init(),n});

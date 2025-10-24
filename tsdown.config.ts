@@ -5,6 +5,10 @@ export default defineConfig([
 		entry: {
 			client: './Resources/Private/Client/index.ts',
 
+			'primitives/accordion': './Resources/Private/Primitives/Accordion/Accordion.ts',
+			'primitives/accordion.entry':
+				'./Resources/Private/Primitives/Accordion/Accordion.entry.ts',
+
 			'primitives/dialog': './Resources/Private/Primitives/Dialog/Dialog.ts',
 			'primitives/dialog.entry': './Resources/Private/Primitives/Dialog/Dialog.entry.ts',
 
