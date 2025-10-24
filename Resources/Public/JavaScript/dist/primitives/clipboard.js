@@ -1,1 +1,1 @@
-import"../Client-Bcuea237.js";import{Clipboard as e}from"../Clipboard-7TmYA69d.js";export{e as Clipboard};
+import"../Client-Bcuea237.js";import{Clipboard as e}from"../Clipboard-5zCCVAd5.js";export{e as Clipboard};

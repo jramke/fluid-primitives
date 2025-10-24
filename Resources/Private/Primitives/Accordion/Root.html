@@ -1,0 +1,15 @@
+<ui:prop name="multiple" type="boolean" optional="{true}" client="{true}" />
+<ui:prop name="collapsible" type="boolean" optional="{true}" client="{true}" />
+<ui:prop name="defaultValue" type="string[]" optional="{true}" client="{true}" />
+<ui:prop name="disabled" type="boolean" optional="{true}" client="{true}" />
+<ui:prop name="orientation" type="string" optional="{true}" client="{true}" default="vertical" />
+
+<f:variable name="refData" value="{orientation: orientation}" />
+
+<div
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.root, then: 'id="{context.ids.root}"' )}
+    {ui:ref(name: 'root' , data: refData )}
+    {ui:attributes()}>
+    <f:slot />
+</div>

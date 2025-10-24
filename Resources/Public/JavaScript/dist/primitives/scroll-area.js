@@ -1,1 +1,1 @@
-import"../Client-Bcuea237.js";import{ScrollArea as e}from"../ScrollArea-CsOZplcX.js";export{e as ScrollArea};
+import"../Client-Bcuea237.js";import{ScrollArea as e}from"../ScrollArea-B__fLtaA.js";export{e as ScrollArea};

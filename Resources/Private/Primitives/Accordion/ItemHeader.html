@@ -1,0 +1,13 @@
+<ui:prop name="level" type="integer" optional="{true}" default="3" />
+
+<ui:error when="!{context.item.value}" message="The {component.fullName} must only be used inside an accordion.item component" />
+
+<f:variable name="refData" value="{value: context.item.value}" />
+
+<h{level}
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.item-header, then: 'id="{context.ids.item-header}"' )}
+    {ui:ref(name: 'item-header' , data: refData )}
+    {ui:attributes()}>
+    <f:slot />
+</h{level}>

@@ -1,0 +1,25 @@
+<ui:prop name="value" type="string" optional="{true}" client="{true}" context="{true}" />
+<ui:prop name="disabled" type="boolean" optional="{true}" client="{true}" context="{true}" />
+
+<ui:error when="!{value}" message="The value prop is required for component {component.fullName}" />
+
+<f:variable name="open" value="{false}" />
+<f:if condition="{context.defaultValue}">
+    <f:for each="{context.defaultValue}" as="defaultValue" iteration="i">
+        <f:if condition="{value}=={defaultValue}">
+            <f:variable name="open" value="{true}" />
+        </f:if>
+    </f:for>
+</f:if>
+
+<f:variable name="disabled" value="{f:if(condition: '{context.disabled} || {disabled}', then: '{true}', else: '{null}')}" />
+<f:variable name="state">{open ? 'open' : 'closed'}</f:variable>
+<f:variable name="refData" value="{value: value, disabled: disabled, orientation: context.orientation, state: state}" />
+
+<div
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.item, then: 'id="{context.ids.item}"' )}
+    {ui:ref(name: 'item' , data: refData)}
+    {ui:attributes()}>
+    <f:slot />
+</div>
