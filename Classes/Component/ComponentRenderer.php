@@ -8,7 +8,6 @@ use Jramke\FluidPrimitives\Constants;
 use Jramke\FluidPrimitives\Domain\Model\TagAttributes;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
-use Jramke\FluidPrimitives\ViewHelpers\AttributesViewHelper;
 use Jramke\FluidPrimitives\ViewHelpers\ContextViewHelper;
 use TYPO3Fluid\Fluid\Core\Component\ComponentRendererInterface;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;

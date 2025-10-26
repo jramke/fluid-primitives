@@ -7,7 +7,6 @@ namespace Jramke\FluidPrimitives\ViewHelpers;
 use Jramke\FluidPrimitives\Constants;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use Jramke\FluidPrimitives\Utility\PropsUtility;
-use TYPO3Fluid\Fluid\Core\Compiler\TemplateCompiler;
 use TYPO3Fluid\Fluid\Core\Parser\ParsingState;
 use TYPO3Fluid\Fluid\Core\Parser\SyntaxTree\BooleanNode;
 use TYPO3Fluid\Fluid\Core\Parser\SyntaxTree\ViewHelperNode;
@@ -16,7 +15,6 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\ViewHelperNodeInitializedEventInterface;
 use TYPO3Fluid\Fluid\ViewHelpers\ArgumentViewHelper;
 use TYPO3Fluid\Fluid\Core\Parser\SyntaxTree\TextNode;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContext;
-use TYPO3Fluid\Fluid\Core\ViewHelper\ArgumentDefinition;
 
 /**
  * Defines a template argument (prop) for a component.
@@ -53,8 +51,14 @@ class PropViewHelper extends AbstractViewHelper implements ViewHelperNodeInitial
             throw new \RuntimeException('The prop ViewHelper can only be used inside a component context.', 1698255600);
         }
 
-        if ($this->arguments['context'] && ComponentUtility::isRootComponent($this->renderingContext)) {
+        $isRootComponent = ComponentUtility::isRootComponent($this->renderingContext);
+
+        if ($this->arguments['context'] && $isRootComponent) {
             throw new \RuntimeException('The context argument can only be used inside a composable component. All props from the root component are automatically available in the context.', 1698255601);
+        }
+
+        if ($this->arguments['client'] && !$isRootComponent) {
+            throw new \RuntimeException('The client argument can only be used inside a root component.', 1698255602);
         }
 
         if (PropsUtility::isReservedProp($this->arguments['name'])) {
@@ -62,12 +66,6 @@ class PropViewHelper extends AbstractViewHelper implements ViewHelperNodeInitial
         }
 
         return '';
-    }
-
-
-    public function compile($argumentsName, $closureName, &$initializationPhpCode, ViewHelperNode $node, TemplateCompiler $compiler): string
-    {
-        return '\'\'';
     }
 
     public static function nodeInitializedEvent(ViewHelperNode $node, array $arguments, ParsingState $parsingState): void
