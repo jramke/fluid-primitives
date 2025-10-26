@@ -86,12 +86,16 @@ class TagAttributes implements \Countable
                 continue;
             }
 
-            if (is_array($value) || is_object($value)) {
-                $value = json_encode($value);
+            // convert boolean values to html boolean attributes unless they are aria- attributes
+            if (!str_starts_with($key, 'aria-') && is_bool($value)) {
+                $value = $value ? '' : null;
+                if ($value === null) {
+                    continue;
+                }
             }
 
-            if ($value === false) {
-                $value = 'false';
+            if (is_array($value) || is_object($value)) {
+                $value = json_encode($value);
             }
 
             $result[$key] = $valueFormatter((string)$key, (string)$value);
@@ -102,6 +106,9 @@ class TagAttributes implements \Countable
 
     protected function buildSingleAttributeString(string $key, string $value): string
     {
+        if (empty($value)) {
+            return htmlspecialchars((string)$key);
+        }
         return sprintf('%s="%s"', htmlspecialchars((string)$key), htmlspecialchars((string)$value));
     }
 
