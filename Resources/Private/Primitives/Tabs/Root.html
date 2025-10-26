@@ -1,0 +1,16 @@
+<ui:prop name="loopFocus" type="boolean" optional="{true}" client="{true}" />
+<ui:prop name="defaultValue" type="string" optional="{true}" client="{true}" />
+<ui:prop name="orientation" type="string" optional="{true}" client="{true}" default="horizontal" />
+<ui:prop name="activationMode" type="string" optional="{true}" client="{true}" />
+<ui:prop name="composite" type="boolean" optional="{true}" client="{true}" default="{true}" />
+<ui:prop name="deselectable" type="boolean" optional="{true}" client="{true}" />
+
+<f:variable name="refData" value="{orientation: orientation}" />
+
+<div
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.root, then: 'id="{context.ids.root}"' )}
+    {ui:ref(name: 'root' , data: refData )}
+    {ui:attributes()}>
+    <f:slot />
+</div>

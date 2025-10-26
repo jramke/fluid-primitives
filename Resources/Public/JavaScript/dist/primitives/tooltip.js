@@ -1,1 +1,1 @@
-import"../Client-Bcuea237.js";import{Tooltip as e}from"../Tooltip-l3slToje.js";export{e as Tooltip};
+import"../Client-Bcuea237.js";import{Tooltip as e}from"../Tooltip-BgU6DpGy.js";export{e as Tooltip};

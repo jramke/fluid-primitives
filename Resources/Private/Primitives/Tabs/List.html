@@ -1,0 +1,13 @@
+<f:variable name="orientation" value="{context.orientation}" />
+
+<f:variable name="refData" value="{orientation: orientation}" />
+
+<div
+    role="tablist"
+    aria-orientation="{orientation}"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.list, then: 'id="{context.ids.list}"' )}
+    {ui:ref(name: 'list' , data: refData )}
+    {ui:attributes()}>
+    <f:slot />
+</div>

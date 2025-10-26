@@ -27,6 +27,9 @@ export default defineConfig([
 			'primitives/select': './Resources/Private/Primitives/Select/Select.ts',
 			'primitives/select.entry': './Resources/Private/Primitives/Select/ScrollArea.entry.ts',
 
+			'primitives/tabs': './Resources/Private/Primitives/Tabs/Tabs.ts',
+			'primitives/tabs.entry': './Resources/Private/Primitives/Tabs/Tabs.entry.ts',
+
 			'primitives/tooltip': './Resources/Private/Primitives/Tooltip/Tooltip.ts',
 			'primitives/tooltip.entry': './Resources/Private/Primitives/Tooltip/Tooltip.entry.ts',
 		},

@@ -1,11 +1,11 @@
 import { Component$1 as Component, Machine$1 as Machine } from "../index-AN0XU_8B.js";
-import * as accordion from "@zag-js/accordion";
+import * as tabs from "@zag-js/tabs";
 
-//#region Resources/Private/Primitives/Accordion/Accordion.d.ts
-declare class Accordion extends Component<accordion.Props, accordion.Api> {
+//#region Resources/Private/Primitives/Tabs/Tabs.d.ts
+declare class Tabs extends Component<tabs.Props, tabs.Api> {
   name: string;
-  initMachine(props: accordion.Props): Machine<any>;
-  initApi(): accordion.Api<{
+  initMachine(props: tabs.Props): Machine<any>;
+  initApi(): tabs.Api<{
     button: {
       [x: string]: any;
     };
@@ -46,7 +46,7 @@ declare class Accordion extends Component<accordion.Props, accordion.Api> {
       [x: string]: any;
     };
   }>;
-  render(): void;
+  render: () => void;
 }
 //#endregion
-export { Accordion };
+export { Tabs };

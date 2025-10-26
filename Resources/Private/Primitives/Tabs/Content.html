@@ -1,0 +1,18 @@
+<ui:prop name="value" type="string" optional="{true}" />
+
+<ui:error when="!{value}" message="The value prop is required for component {component.fullName}" />
+
+<f:variable name="selected">{f:if(condition: '{value}=={context.defaultValue}', then: '{true}', else: '{false}')}</f:variable>
+
+<f:variable name="refData" value="{value: value, orientation: context.orientation, selected: selected}" />
+
+<div
+    role="tabpanel"
+    tabindex="{f:if(condition: context.composite, then: '0', else: '-1')}"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.content, then: 'id="{context.ids.content}"' )}
+    {ui:ref(name: 'content' , data: refData )}
+    {ui:attributes(skip: 'hidden' )}
+    {f:if(condition: selected, then: 'hidden="{selected}"' )}>
+    <f:slot />
+</div>
