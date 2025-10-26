@@ -4,8 +4,8 @@
     hidden="true"
     aria-hidden="true"
     {f:if(condition: class, then: 'class="{class}"' )}
-    {f:if(condition: context.ids.itemIndicator, then: 'id="{context.ids.itemIndicator}"' )}
-    {ui:ref(name: 'itemIndicator' , data: {value: context.item.item.value} )}
+    {f:if(condition: context.ids.item-indicator, then: 'id="{context.ids.item-indicator}"' )}
+    {ui:ref(name: 'item-indicator' , data: {value: context.item.item.value} )}
     {ui:attributes()}>
     <f:slot />
 </div>

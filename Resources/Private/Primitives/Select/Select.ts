@@ -25,7 +25,7 @@ export class Select extends Component<select.Props, select.Api> {
 		const controlEl = this.getElement('control');
 		if (controlEl) this.spreadProps(controlEl, this.api.getControlProps());
 
-		const hiddenSelectEl = this.getElement('hiddenSelect');
+		const hiddenSelectEl = this.getElement('hidden-select');
 		if (hiddenSelectEl) this.spreadProps(hiddenSelectEl, this.api.getHiddenSelectProps());
 
 		const labelEl = this.getElement('label');
@@ -40,7 +40,7 @@ export class Select extends Component<select.Props, select.Api> {
 		const contentEl = this.getElement('content');
 		if (contentEl) this.spreadProps(contentEl, this.api.getContentProps());
 
-		const valueTextEl = this.getElement('valueText');
+		const valueTextEl = this.getElement('value-text');
 		if (valueTextEl)
 			this.spreadProps(
 				valueTextEl,
@@ -49,13 +49,13 @@ export class Select extends Component<select.Props, select.Api> {
 				})
 			);
 
-		const itemGroupEls = this.getElements('itemGroup');
+		const itemGroupEls = this.getElements('item-group');
 		itemGroupEls.forEach(itemGroupEl => {
 			this.spreadProps(
 				itemGroupEl,
 				this.api.getItemGroupProps({ id: itemGroupEl.dataset.id! })
 			);
-			const itemGroupLabelEl = this.getElement('itemGroupLabel', itemGroupEl);
+			const itemGroupLabelEl = this.getElement('item-group-label', itemGroupEl);
 			if (itemGroupLabelEl) {
 				this.spreadProps(
 					itemGroupLabelEl,
@@ -72,7 +72,7 @@ export class Select extends Component<select.Props, select.Api> {
 			}
 		});
 
-		const itemTextEls = this.getElements('itemText');
+		const itemTextEls = this.getElements('item-text');
 		itemTextEls.forEach(itemTextEl => {
 			const item = this.api.collection.find(itemTextEl.dataset.value);
 			if (item) {
@@ -80,7 +80,7 @@ export class Select extends Component<select.Props, select.Api> {
 			}
 		});
 
-		const itemIndicatorEls = this.getElements('itemIndicator');
+		const itemIndicatorEls = this.getElements('item-indicator');
 		itemIndicatorEls.forEach(itemIndicatorEl => {
 			const item = this.api.collection.find(itemIndicatorEl.dataset.value);
 			if (item) {
@@ -88,7 +88,7 @@ export class Select extends Component<select.Props, select.Api> {
 			}
 		});
 
-		const clearTriggerEl = this.getElement('clearTrigger');
+		const clearTriggerEl = this.getElement('clear-trigger');
 		if (clearTriggerEl) this.spreadProps(clearTriggerEl, this.api.getClearTriggerProps());
 
 		const indicatorEl = this.getElement('indicator');

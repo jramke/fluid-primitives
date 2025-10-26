@@ -1,12 +1,12 @@
 import { Component$1 as Component, Machine$1 as Machine } from "../index-C4NaCoPN.js";
-import * as _zag_js_types0 from "@zag-js/types";
+import * as _zag_js_types1 from "@zag-js/types";
 import * as collapsible from "@zag-js/collapsible";
 
 //#region Resources/Private/Primitives/Collapsible/Collapsible.d.ts
 declare class Collapsible extends Component<collapsible.Props, collapsible.Api> {
   name: string;
   initMachine(props: collapsible.Props): Machine<any>;
-  initApi(): collapsible.Api<_zag_js_types0.PropTypes<{
+  initApi(): collapsible.Api<_zag_js_types1.PropTypes<{
     [x: string]: any;
   }>>;
   render(): void;

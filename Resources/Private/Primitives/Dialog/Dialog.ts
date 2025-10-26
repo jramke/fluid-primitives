@@ -43,7 +43,7 @@ export class Dialog extends Component<dialog.Props, dialog.Api> {
 			this.spreadProps(descriptionEl, this.api.getDescriptionProps());
 		}
 
-		const closeTriggers = this.getElements('closeTrigger');
+		const closeTriggers = this.getElements('close-trigger');
 		closeTriggers.forEach(trigger => {
 			this.spreadProps(trigger, this.api.getCloseTriggerProps());
 		});

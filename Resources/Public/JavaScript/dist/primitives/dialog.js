@@ -1,1 +1,1 @@
-import"../Client-Bcuea237.js";import{Dialog as e}from"../Dialog-Dj9fi8xw.js";export{e as Dialog};
+import"../Client-Bcuea237.js";import{Dialog as e}from"../Dialog-Bc_TDlPF.js";export{e as Dialog};

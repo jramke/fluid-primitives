@@ -2,8 +2,8 @@
 
 <span
     {f:if(condition: class, then: 'class="{class}"' )}
-    {f:if(condition: context.ids.itemText, then: 'id="{context.ids.itemText}"' )}
-    {ui:ref(name: 'itemText' , data: {value: context.item.item.value} )}
+    {f:if(condition: context.ids.item-text, then: 'id="{context.ids.item-text}"' )}
+    {ui:ref(name: 'item-text' , data: {value: context.item.item.value} )}
     {ui:attributes()}>
     <f:slot />
 </span>
