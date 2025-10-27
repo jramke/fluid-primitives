@@ -19,6 +19,10 @@
             "import": "./Resources/Public/JavaScript/dist/client.js",
             "types": "./Resources/Public/JavaScript/dist/client.d.ts"
         },
+        "./primitives/accordion": {
+            "import": "./Resources/Public/JavaScript/dist/primitives/accordion.js",
+            "types": "./Resources/Public/JavaScript/dist/primitives/accordion.d.ts"
+        },
         "./primitives/dialog": {
             "import": "./Resources/Public/JavaScript/dist/primitives/dialog.js",
             "types": "./Resources/Public/JavaScript/dist/primitives/dialog.d.ts"
@@ -34,6 +38,14 @@
         "./primitives/scroll-area": {
             "import": "./Resources/Public/JavaScript/dist/primitives/scroll-area.js",
             "types": "./Resources/Public/JavaScript/dist/primitives/scroll-area.d.ts"
+        },
+        "./primitives/select": {
+            "import": "./Resources/Public/JavaScript/dist/primitives/select.js",
+            "types": "./Resources/Public/JavaScript/dist/primitives/select.d.ts"
+        },
+        "./primitives/tabs": {
+            "import": "./Resources/Public/JavaScript/dist/primitives/tabs.js",
+            "types": "./Resources/Public/JavaScript/dist/primitives/tabs.d.ts"
         },
         "./primitives/tooltip": {
             "import": "./Resources/Public/JavaScript/dist/primitives/tooltip.js",
