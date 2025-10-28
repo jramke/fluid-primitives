@@ -105,7 +105,7 @@ abstract class AbstractComponentCollection implements ComponentCollectionInterfa
             foreach ($argumentDefinitions as $name => $definition) {
                 if (in_array($name, Constants::RESERVED_PROPS, true)) {
                     throw new UnresolvableViewHelperException(sprintf(
-                        'The argument "%s" is reserved and cannot be used as an argument inside component "%s".',
+                        'The argument "%s" is reserved and cannot be used as an argument inside component "%s". See https://fluid-primitives.com/docs/core-concepts/arguments for more information.',
                         $name,
                         $viewHelperName,
                     ), 1748511298);
@@ -118,14 +118,6 @@ abstract class AbstractComponentCollection implements ComponentCollectionInterfa
                 'If true the component uses its child only without the component template. Like Radix UI asChild or Base UI render props.',
                 false,
                 false,
-            );
-
-            $argumentDefinitions['class'] = new ArgumentDefinition(
-                'class',
-                'string',
-                'The CSS class(es) to be applied to the component.',
-                false,
-                null,
             );
 
             if ($isRootComponent) {
@@ -155,6 +147,17 @@ abstract class AbstractComponentCollection implements ComponentCollectionInterfa
             }
 
             $templateString = $this->getTemplatePaths()->getTemplateSource('Default', $templateName);
+
+            // only add the class argument if the template string uses it.
+            if (preg_match('/(?<!\{)\{class\}(?!\})|(?<![A-Za-z0-9_-])class(?!\s*=|\s*\})/i', $templateString)) {
+                $argumentDefinitions['class'] = new ArgumentDefinition(
+                    'class',
+                    'string',
+                    'The CSS class(es) to be applied to the component.',
+                    false,
+                    null,
+                );
+            }
 
             $additionalArgumentsAllowed = false;
             if (str_contains($templateString, 'ui:attributes(')) {
