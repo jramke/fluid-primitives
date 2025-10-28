@@ -28,7 +28,7 @@ export function getHydrationData(component?: string, id?: string) {
 
 export function initAllComponentInstances(
 	componentName: string,
-	callback: (data: ComponentHydrationData) => Component<unknown, unknown> | undefined
+	callback: (data: ComponentHydrationData) => Component<unknown, unknown> | void
 ) {
 	const hydrationInstances = getHydrationData(componentName);
 	if (!hydrationInstances) return;
