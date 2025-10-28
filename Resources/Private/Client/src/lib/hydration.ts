@@ -28,7 +28,7 @@ export function getHydrationData(component?: string, id?: string) {
 
 export function initAllComponentInstances(
 	componentName: string,
-	callback: (data: ComponentHydrationData) => Component<unknown, unknown>
+	callback: (data: ComponentHydrationData) => Component<unknown, unknown> | undefined
 ) {
 	const hydrationInstances = getHydrationData(componentName);
 	if (!hydrationInstances) return;
@@ -36,6 +36,7 @@ export function initAllComponentInstances(
 	Object.keys(hydrationInstances).forEach(id => {
 		if (hydrationInstances[id].controlled) return;
 		const instance = callback(hydrationInstances[id]);
+		if (!instance) return;
 
 		if (!window.FluidPrimitives.uncontrolledInstances[componentName]) {
 			window.FluidPrimitives.uncontrolledInstances[componentName] = {};
@@ -49,7 +50,7 @@ export class ComponentHydrator {
 	doc: Document;
 	rootId: string;
 	ids: { [key: string]: string };
-	elementRefs = new Map<string, HTMLElement | HTMLElement[]>();
+	elementRefs = new Map<string, Element | Element[]>();
 
 	constructor(
 		componentName: string,
@@ -66,10 +67,7 @@ export class ComponentHydrator {
 		this.ids = ids;
 	}
 
-	getElement<T extends HTMLElement>(
-		part: string,
-		parent: HTMLElement | Document = this.doc
-	): T | null {
+	getElement<T extends Element>(part: string, parent: Element | Document = this.doc): T | null {
 		if (this.elementRefs.has(part)) {
 			return (this.elementRefs.get(part) as T) || null;
 		}
@@ -95,10 +93,7 @@ export class ComponentHydrator {
 		return element;
 	}
 
-	getElements<T extends HTMLElement>(
-		part: string,
-		parent: HTMLElement | Document = this.doc
-	): T[] {
+	getElements<T extends Element>(part: string, parent: Element | Document = this.doc): T[] {
 		if (this.elementRefs.has(part)) {
 			return this.elementRefs.get(part) as T[];
 		}
@@ -128,7 +123,7 @@ export class ComponentHydrator {
 		return `data-scope="${this.componentName}" data-part="${part}" data-hydrate-${this.componentName}="${id}"`;
 	}
 
-	setRefAttributes(element: HTMLElement, part: string): void {
+	setRefAttributes(element: Element, part: string): void {
 		const attributes = this.generateRefAttributesString(part);
 		const attributesArray = attributes.split(' ').map(attr => attr.trim());
 		attributesArray.forEach(attr => {

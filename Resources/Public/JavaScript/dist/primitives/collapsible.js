@@ -1,1 +1,1 @@
-import"../Client-Bcuea237.js";import{Collapsible as e}from"../Collapsible-CupTOmpO.js";export{e as Collapsible};
+import"../Client-BEjJ50yU.js";import{Collapsible as e}from"../Collapsible-M8I0wdQS.js";export{e as Collapsible};
