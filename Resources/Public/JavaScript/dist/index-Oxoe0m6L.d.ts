@@ -70,7 +70,7 @@ declare abstract class Component<Props, Api> implements ComponentInterface<Api> 
 //#region Resources/Private/Client/src/lib/hydration.d.ts
 declare function getHydrationData(component: string): Record<string, ComponentHydrationData> | null;
 declare function getHydrationData(component: string, id: string): ComponentHydrationData | null;
-declare function initAllComponentInstances(componentName: string, callback: (data: ComponentHydrationData) => Component<unknown, unknown>): void;
+declare function initAllComponentInstances(componentName: string, callback: (data: ComponentHydrationData) => Component<unknown, unknown> | undefined): void;
 declare class ComponentHydrator {
   componentName: string;
   doc: Document;
@@ -78,14 +78,14 @@ declare class ComponentHydrator {
   ids: {
     [key: string]: string;
   };
-  elementRefs: Map<string, HTMLElement | HTMLElement[]>;
+  elementRefs: Map<string, Element | Element[]>;
   constructor(componentName: string, rootId: string | undefined, ids?: {
     [key: string]: string;
   }, doc?: Document);
-  getElement<T extends HTMLElement>(part: string, parent?: HTMLElement | Document): T | null;
-  getElements<T extends HTMLElement>(part: string, parent?: HTMLElement | Document): T[];
+  getElement<T extends Element>(part: string, parent?: Element | Document): T | null;
+  getElements<T extends Element>(part: string, parent?: Element | Document): T[];
   generateRefAttributesString(part: string): string;
-  setRefAttributes(element: HTMLElement, part: string): void;
+  setRefAttributes(element: Element, part: string): void;
   destroy(): void;
 }
 //#endregion

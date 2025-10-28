@@ -1,4 +1,4 @@
-import { Component$1 as Component, Machine$1 as Machine } from "../index-AN0XU_8B.js";
+import { Component$1 as Component, Machine$1 as Machine } from "../index-Oxoe0m6L.js";
 import * as accordion from "@zag-js/accordion";
 
 //#region Resources/Private/Primitives/Accordion/Accordion.d.ts
