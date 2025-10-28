@@ -70,7 +70,7 @@ declare abstract class Component<Props, Api> implements ComponentInterface<Api> 
 //#region Resources/Private/Client/src/lib/hydration.d.ts
 declare function getHydrationData(component: string): Record<string, ComponentHydrationData> | null;
 declare function getHydrationData(component: string, id: string): ComponentHydrationData | null;
-declare function initAllComponentInstances(componentName: string, callback: (data: ComponentHydrationData) => Component<unknown, unknown> | undefined): void;
+declare function initAllComponentInstances(componentName: string, callback: (data: ComponentHydrationData) => Component<unknown, unknown> | void): void;
 declare class ComponentHydrator {
   componentName: string;
   doc: Document;

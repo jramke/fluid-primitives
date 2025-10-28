@@ -1,4 +1,4 @@
-import { Component$1 as Component, Machine$1 as Machine } from "../index-Oxoe0m6L.js";
+import { Component$1 as Component, Machine$1 as Machine } from "../index-C51Brj49.js";
 import * as tabs from "@zag-js/tabs";
 
 //#region Resources/Private/Primitives/Tabs/Tabs.d.ts
