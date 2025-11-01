@@ -16,7 +16,7 @@ if (!versionArg) {
 	console.error(
 		'Error: Please provide a version argument (major, minor, patch, or a specific version like 1.2.3)'
 	);
-	console.error('Usage: npm run publish <major|minor|patch|X.Y.Z>');
+	console.error('Usage: npm run version <major|minor|patch|X.Y.Z>');
 	process.exit(1);
 }
 
