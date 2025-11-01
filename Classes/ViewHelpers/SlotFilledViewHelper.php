@@ -12,7 +12,7 @@ use TYPO3Fluid\Fluid\ViewHelpers\SlotViewHelper;
  *
  * ## Example
  * ```html
- * <f:if condition="{ui:slot.filled()}">
+ * <f:if condition="{ui:slotFilled()}">
  *     // Slot has content
  * </f:if>
  * ```

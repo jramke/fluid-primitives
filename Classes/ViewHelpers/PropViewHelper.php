@@ -22,7 +22,7 @@ use TYPO3Fluid\Fluid\Core\Rendering\RenderingContext;
  * You must use this ViewHelper instead of the standard `f:argument` ViewHelper to define props for a component.
  * It mirrors the API of `f:argument` but adds some additional features like exposing the prop to the client hydration data or the context.
  *
- * {% component: "ui:alert.simple", arguments: {"title": "All props from a root component are automatically exposed the the context.", "variant": "info"} %}
+ * {% component: "ui:alert.simple", arguments: {"title": "All props from a root component are automatically exposed to the context.", "variant": "info"} %}
  *
  * ## Example
  * ```html
