@@ -72,21 +72,47 @@ console.log('✓ package.json updated');
 // Update composer.json
 console.log('Updating composer.json...');
 const composerJsonPath = join(rootDir, 'composer.json');
-const composerJson = JSON.parse(readFileSync(composerJsonPath, 'utf8'));
-composerJson.version = newVersion;
-writeFileSync(composerJsonPath, JSON.stringify(composerJson, null, 4) + '\n');
-console.log('✓ composer.json updated');
+try {
+    const composerJson = JSON.parse(readFileSync(composerJsonPath, 'utf8'));
+    composerJson.version = newVersion;
+    writeFileSync(composerJsonPath, JSON.stringify(composerJson, null, 4) + '\n');
+    console.log('✓ composer.json updated');
+} catch (error) {
+    if (error.code === 'ENOENT') {
+        console.error('Error: composer.json not found');
+    } else if (error instanceof SyntaxError) {
+        console.error('Error: composer.json is not valid JSON');
+    } else {
+        console.error(`Error updating composer.json: ${error.message}`);
+    }
+    process.exit(1);
+}
 
 // Update ext_emconf.php
 console.log('Updating ext_emconf.php...');
 const extEmconfPath = join(rootDir, 'ext_emconf.php');
-let extEmconfContent = readFileSync(extEmconfPath, 'utf8');
-extEmconfContent = extEmconfContent.replace(
-    /'version'\s*=>\s*'[^']+'/,
-    `'version' => '${newVersion}'`
-);
-writeFileSync(extEmconfPath, extEmconfContent);
-console.log('✓ ext_emconf.php updated');
+try {
+    let extEmconfContent = readFileSync(extEmconfPath, 'utf8');
+    const updatedContent = extEmconfContent.replace(
+        /'version'\s*=>\s*'[^']+'/,
+        `'version' => '${newVersion}'`
+    );
+    
+    if (updatedContent === extEmconfContent) {
+        console.error('Error: Could not find version field in ext_emconf.php');
+        process.exit(1);
+    }
+    
+    writeFileSync(extEmconfPath, updatedContent);
+    console.log('✓ ext_emconf.php updated');
+} catch (error) {
+    if (error.code === 'ENOENT') {
+        console.error('Error: ext_emconf.php not found');
+    } else {
+        console.error(`Error updating ext_emconf.php: ${error.message}`);
+    }
+    process.exit(1);
+}
 
 console.log(`\n✨ Version bumped from ${currentVersion} to ${newVersion}`);
 console.log('\nNext steps:');
