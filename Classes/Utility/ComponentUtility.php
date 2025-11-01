@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Utility;
 
+use Jramke\FluidPrimitives\Contexts\AbstractComponentContext;
+use Jramke\FluidPrimitives\Contexts\BaseContext;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 use TYPO3\CMS\Extbase\Configuration\ConfigurationManagerInterface;
@@ -93,6 +95,8 @@ class ComponentUtility
         return strtolower($end) === 'root';
     }
 
+    // This is not very accurate as a closed component like `alert.simple` would also return true
+    // but its (currently) only used for exposing the `context` variable, so it's acceptable for now.
     public static function isComposableComponent(string $viewHelperName): bool
     {
         if (empty($viewHelperName)) return false;
@@ -136,5 +140,27 @@ class ComponentUtility
 
         self::$cachedSettings = GeneralUtility::removeDotsFromTS($fluidPrimitivesSettings) ?? [];
         return self::$cachedSettings;
+    }
+
+    public static function getContextClassNameFromViewHelperName(string $viewHelperName, array $additionalNamespaces): string
+    {
+        $baseClass = BaseContext::class;
+        $baseNamespace = substr($baseClass, 0, strrpos($baseClass, '\\'));
+
+        $namespaces = array_merge(
+            $additionalNamespaces,
+            [$baseNamespace]
+        );
+
+        $ucFirstComponentBaseName = ucfirst(self::getComponentBaseNameFromViewHelperName($viewHelperName));
+
+        foreach ($namespaces as $namespace) {
+            $contextClass = $namespace . '\\' . $ucFirstComponentBaseName . 'Context';
+            if (class_exists($contextClass) && is_subclass_of($contextClass, AbstractComponentContext::class)) {
+                return $contextClass;
+            }
+        }
+
+        return $baseClass;
     }
 }
