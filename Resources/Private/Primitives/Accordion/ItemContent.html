@@ -1,18 +1,10 @@
 <ui:error when="!{context.item.value}" message="The {component.fullName} must only be used inside an accordion.item component" />
 <f:variable name="value" value="{context.item.value}" />
 
-<f:variable name="open" value="{false}" />
-<f:if condition="{context.defaultValue}">
-    <f:for each="{context.defaultValue}" as="defaultValue" iteration="i">
-        <f:if condition="{value}=={defaultValue}">
-            <f:variable name="open" value="{true}" />
-        </f:if>
-    </f:for>
-</f:if>
+<f:variable name="itemState">{context -> ui:call(method: 'getItemState', arguments: {0: context.item})}</f:variable>
 
-<f:variable name="disabled" value="{f:if(condition: '{context.disabled} || {disabled}', then: '{true}', else: '{null}')}" />
-<f:variable name="state">{open ? 'open' : 'closed'}</f:variable>
-<f:variable name="refData" value="{value: value, disabled: disabled, orientation: context.orientation, state: state}" />
+<f:variable name="state">{itemState.expanded ? 'open' : 'closed'}</f:variable>
+<f:variable name="refData" value="{value: value, disabled: itemState.disabled, orientation: context.orientation, state: state}" />
 
 <div
     role="region"

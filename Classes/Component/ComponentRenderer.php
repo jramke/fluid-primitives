@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Component;
 
 use Jramke\FluidPrimitives\Constants;
+use Jramke\FluidPrimitives\Contexts\AbstractComponentContext;
 use Jramke\FluidPrimitives\Domain\Model\TagAttributes;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
@@ -164,7 +165,9 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
             // Expose variables as context so it can be picked up in other components rendered inside this component.
             if ($isRootComponent) {
                 $contextVariables = $this->buildContextVariables($argumentDefinitions, $view->getRenderingContext()->getVariableProvider(), new StrictArgumentProcessor());
-                $parentRenderingContext->getVariableProvider()->add("__context_{$baseName}", $contextVariables);
+                $contextClassName = ComponentUtility::getContextClassNameFromViewHelperName($viewHelperName);
+                $context = new $contextClassName($renderingContext, $contextVariables);
+                $parentRenderingContext->getVariableProvider()->add("__context_{$baseName}", $context);
             }
 
             if (!empty($propsMarkedForContext) && !$isRootComponent) {
@@ -174,9 +177,10 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
                         $propsMarkedForContextValues[$name] = $arguments[$name] ?? $argumentDefinitions[$name]->getDefaultValue() ?? null;
                     }
                 }
-                $contextVariables = $parentRenderingContext->getVariableProvider()->get("__context_{$baseName}") ?? [];
-                $contextVariables = array_merge($contextVariables, [ComponentUtility::getSubcomponentNameFromViewHelperName($viewHelperName) => $propsMarkedForContextValues]);
-                $parentRenderingContext->getVariableProvider()->add("__context_{$baseName}", $contextVariables);
+                $context = $parentRenderingContext->getVariableProvider()->get("__context_{$baseName}");
+                if ($context) {
+                    $context->set(ComponentUtility::getSubcomponentNameFromViewHelperName($viewHelperName), $propsMarkedForContextValues);
+                }
             }
         }
 
@@ -295,7 +299,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         return $contexts;
     }
 
-    protected function getRootComponentContext(RenderingContextInterface $renderingContext, string $baseName): array|null
+    protected function getRootComponentContext(RenderingContextInterface $renderingContext, string $baseName): AbstractComponentContext|null
     {
         $variableProvider = $renderingContext->getVariableProvider();
         $ctx = $variableProvider->get("__context_{$baseName}") ?? null;
