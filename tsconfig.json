@@ -1,14 +1,4 @@
 {
-    "compilerOptions": {
-        "target": "ES2020",
-        "module": "ESNext",
-        "lib": ["ES2020", "DOM"],
-        "moduleResolution": "bundler",
-        "strict": true,
-        "esModuleInterop": true,
-        "skipLibCheck": true,
-        "forceConsistentCasingInFileNames": true,
-        "declaration": true
-    },
+    "extends": "../../tsconfig.base.json",
     "include": ["Resources/Private/**/*.ts"]
 }
