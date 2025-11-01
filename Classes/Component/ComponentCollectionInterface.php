@@ -19,4 +19,6 @@ interface ComponentCollectionInterface extends ViewHelperResolverDelegateInterfa
      * parsing the underlying Fluid template
      */
     public function getComponentDefinition(string $viewHelperName): ComponentDefinition;
+
+    public function getContextNamespaces(): array;
 }

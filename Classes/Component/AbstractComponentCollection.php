@@ -39,6 +39,16 @@ abstract class AbstractComponentCollection implements ComponentCollectionInterfa
     }
 
     /**
+     * Overwrite this method if you want to provide context classes for your components
+     *
+     * @return array<string>
+     */
+    public function getContextNamespaces(): array
+    {
+        return [];
+    }
+
+    /**
      * Resolve the component template name based on the ViewHelper tag name.
      *
      * @param string $viewHelperName  ViewHelper tag name from a template, e. g. atom.button

@@ -165,7 +165,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
             // Expose variables as context so it can be picked up in other components rendered inside this component.
             if ($isRootComponent) {
                 $contextVariables = $this->buildContextVariables($argumentDefinitions, $view->getRenderingContext()->getVariableProvider(), new StrictArgumentProcessor());
-                $contextClassName = ComponentUtility::getContextClassNameFromViewHelperName($viewHelperName);
+                $contextClassName = ComponentUtility::getContextClassNameFromViewHelperName($viewHelperName, $this->componentResolver->getContextNamespaces());
                 $context = new $contextClassName($renderingContext, $contextVariables);
                 $parentRenderingContext->getVariableProvider()->add("__context_{$baseName}", $context);
             }

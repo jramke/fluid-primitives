@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Utility;
 
+use Jramke\FluidPrimitives\Contexts\AbstractComponentContext;
 use Jramke\FluidPrimitives\Contexts\BaseContext;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
@@ -141,17 +142,25 @@ class ComponentUtility
         return self::$cachedSettings;
     }
 
-    public static function getContextClassNameFromViewHelperName(string $viewHelperName): string
+    public static function getContextClassNameFromViewHelperName(string $viewHelperName, array $additionalNamespaces): string
     {
         $baseClass = BaseContext::class;
         $baseNamespace = substr($baseClass, 0, strrpos($baseClass, '\\'));
 
-        $ucFirstBaseName = ucfirst(self::getComponentBaseNameFromViewHelperName($viewHelperName));
+        $namespaces = array_merge(
+            $additionalNamespaces,
+            [$baseNamespace]
+        );
 
-        $contextClass = $baseNamespace . '\\' . $ucFirstBaseName . 'Context';
+        $ucFirstComponentBaseName = ucfirst(self::getComponentBaseNameFromViewHelperName($viewHelperName));
 
-        return class_exists($contextClass)
-            ? $contextClass
-            : $baseClass;
+        foreach ($namespaces as $namespace) {
+            $contextClass = $namespace . '\\' . $ucFirstComponentBaseName . 'Context';
+            if (class_exists($contextClass) && is_subclass_of($contextClass, AbstractComponentContext::class)) {
+                return $contextClass;
+            }
+        }
+
+        return $baseClass;
     }
 }
