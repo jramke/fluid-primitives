@@ -54,7 +54,8 @@
     },
     "scripts": {
         "build": "tsdown",
-        "dev": "tsdown --watch"
+        "dev": "tsdown --watch",
+        "publish": "node scripts/publish.js"
     },
     "devDependencies": {
         "@types/node": "^22.15.17",
