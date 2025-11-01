@@ -18,7 +18,11 @@
         "typo3fluid/fluid": "^4"
     },
     "scripts": {
-        "prepare-release": ["rm -rf .github", "rm .gitignore", "rm -rf scripts"]
+        "prepare-release": [
+            "rm -rf .github",
+            "rm .gitignore",
+            "rm -rf scripts"
+        ]
     },
     "autoload": {
         "psr-4": {
