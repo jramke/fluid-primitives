@@ -1,51 +1,14 @@
-import { Component$1 as Component, Machine$1 as Machine } from "./index-BQR4r1rn.js";
+import { Component$1 as Component, Machine$1 as Machine } from "./index-ir2YxHr8.js";
+import * as _zag_js_types1 from "@zag-js/types";
 import * as clipboard from "@zag-js/clipboard";
 
 //#region Resources/Private/Primitives/Clipboard/Clipboard.d.ts
 declare class Clipboard extends Component<clipboard.Props, clipboard.Api> {
   name: string;
   initMachine(props: clipboard.Props): Machine<clipboard.Schema>;
-  initApi(): clipboard.Api<{
-    button: {
-      [x: string]: any;
-    };
-    label: {
-      [x: string]: any;
-    };
-    input: {
-      [x: string]: any;
-    };
-    textarea: {
-      [x: string]: any;
-    };
-    img: {
-      [x: string]: any;
-    };
-    output: {
-      [x: string]: any;
-    };
-    element: {
-      [x: string]: any;
-    };
-    select: {
-      [x: string]: any;
-    };
-    rect: {
-      [x: string]: any;
-    };
-    style: {
-      [x: string]: any;
-    };
-    circle: {
-      [x: string]: any;
-    };
-    svg: {
-      [x: string]: any;
-    };
-    path: {
-      [x: string]: any;
-    };
-  }>;
+  initApi(): clipboard.Api<_zag_js_types1.PropTypes<{
+    [x: string]: any;
+  }>>;
   render(): void;
 }
 //#endregion

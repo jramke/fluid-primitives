@@ -1,4 +1,4 @@
-import { Component$1 as Component, Machine$1 as Machine } from "./index-BQR4r1rn.js";
+import { Component$1 as Component, Machine$1 as Machine } from "./index-ir2YxHr8.js";
 import { PropTypes } from "@zag-js/types";
 import * as scrollArea from "@zag-js/scroll-area";
 
@@ -6,47 +6,9 @@ import * as scrollArea from "@zag-js/scroll-area";
 declare class ScrollArea extends Component<scrollArea.Props, scrollArea.Api<PropTypes>> {
   name: string;
   initMachine(props: scrollArea.Props): Machine<any>;
-  initApi(): scrollArea.Api<{
-    button: {
-      [x: string]: any;
-    };
-    label: {
-      [x: string]: any;
-    };
-    input: {
-      [x: string]: any;
-    };
-    textarea: {
-      [x: string]: any;
-    };
-    img: {
-      [x: string]: any;
-    };
-    output: {
-      [x: string]: any;
-    };
-    element: {
-      [x: string]: any;
-    };
-    select: {
-      [x: string]: any;
-    };
-    rect: {
-      [x: string]: any;
-    };
-    style: {
-      [x: string]: any;
-    };
-    circle: {
-      [x: string]: any;
-    };
-    svg: {
-      [x: string]: any;
-    };
-    path: {
-      [x: string]: any;
-    };
-  }>;
+  initApi(): scrollArea.Api<PropTypes<{
+    [x: string]: any;
+  }>>;
   render(): void;
 }
 //#endregion
