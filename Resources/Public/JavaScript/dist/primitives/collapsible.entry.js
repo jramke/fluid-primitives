@@ -1,1 +1,0 @@
-import{initAllComponentInstances as e}from"../Client-BEjJ50yU.js";import{Collapsible as t}from"../Collapsible-M8I0wdQS.js";e(`collapsible`,({props:e})=>{let n=new t(e);return n.init(),n});

@@ -1,1 +1,0 @@
-import{initAllComponentInstances as e}from"../Client-BEjJ50yU.js";import{Dialog as t}from"../Dialog-Yw26iHEs.js";e(`dialog`,({props:e})=>{let n=new t(e);return n.init(),n});

@@ -5,33 +5,29 @@ export default defineConfig([
 		entry: {
 			client: './Resources/Private/Client/index.ts',
 
-			'primitives/accordion': './Resources/Private/Primitives/Accordion/Accordion.ts',
-			'primitives/accordion.entry':
-				'./Resources/Private/Primitives/Accordion/Accordion.entry.ts',
+			accordion: './Resources/Private/Primitives/Accordion/Accordion.ts',
+			'accordion.entry': './Resources/Private/Primitives/Accordion/Accordion.entry.ts',
 
-			'primitives/dialog': './Resources/Private/Primitives/Dialog/Dialog.ts',
-			'primitives/dialog.entry': './Resources/Private/Primitives/Dialog/Dialog.entry.ts',
+			dialog: './Resources/Private/Primitives/Dialog/Dialog.ts',
+			'dialog.entry': './Resources/Private/Primitives/Dialog/Dialog.entry.ts',
 
-			'primitives/clipboard': './Resources/Private/Primitives/Clipboard/Clipboard.ts',
-			'primitives/clipboard.entry':
-				'./Resources/Private/Primitives/Clipboard/Clipboard.entry.ts',
+			clipboard: './Resources/Private/Primitives/Clipboard/Clipboard.ts',
+			'clipboard.entry': './Resources/Private/Primitives/Clipboard/Clipboard.entry.ts',
 
-			'primitives/collapsible': './Resources/Private/Primitives/Collapsible/Collapsible.ts',
-			'primitives/collapsible.entry':
-				'./Resources/Private/Primitives/Collapsible/Collapsible.entry.ts',
+			collapsible: './Resources/Private/Primitives/Collapsible/Collapsible.ts',
+			'collapsible.entry': './Resources/Private/Primitives/Collapsible/Collapsible.entry.ts',
 
-			'primitives/scroll-area': './Resources/Private/Primitives/ScrollArea/ScrollArea.ts',
-			'primitives/scroll-area.entry':
-				'./Resources/Private/Primitives/ScrollArea/ScrollArea.entry.ts',
+			'scroll-area': './Resources/Private/Primitives/ScrollArea/ScrollArea.ts',
+			'scroll-area.entry': './Resources/Private/Primitives/ScrollArea/ScrollArea.entry.ts',
 
-			'primitives/select': './Resources/Private/Primitives/Select/Select.ts',
-			'primitives/select.entry': './Resources/Private/Primitives/Select/ScrollArea.entry.ts',
+			select: './Resources/Private/Primitives/Select/Select.ts',
+			'select.entry': './Resources/Private/Primitives/Select/Select.entry.ts',
 
-			'primitives/tabs': './Resources/Private/Primitives/Tabs/Tabs.ts',
-			'primitives/tabs.entry': './Resources/Private/Primitives/Tabs/Tabs.entry.ts',
+			tabs: './Resources/Private/Primitives/Tabs/Tabs.ts',
+			'tabs.entry': './Resources/Private/Primitives/Tabs/Tabs.entry.ts',
 
-			'primitives/tooltip': './Resources/Private/Primitives/Tooltip/Tooltip.ts',
-			'primitives/tooltip.entry': './Resources/Private/Primitives/Tooltip/Tooltip.entry.ts',
+			tooltip: './Resources/Private/Primitives/Tooltip/Tooltip.ts',
+			'tooltip.entry': './Resources/Private/Primitives/Tooltip/Tooltip.entry.ts',
 		},
 		platform: 'browser',
 		dts: true,
