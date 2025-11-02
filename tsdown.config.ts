@@ -35,7 +35,7 @@ export default defineConfig([
 		},
 		platform: 'browser',
 		dts: true,
-		outDir: './Resources/Public/JavaScript/dist',
+		// outDir: './Resources/Public/JavaScript/dist',
 		clean: true,
 		minify: true,
 	},
