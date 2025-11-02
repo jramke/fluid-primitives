@@ -71,6 +71,26 @@ packageJson.version = newVersion;
 writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 4) + '\n');
 console.log('✓ package.json updated');
 
+// Update package-lock.json
+console.log('Updating package-lock.json...');
+try {
+	const packageLockJsonPath = join(rootDir, 'package-lock.json');
+	const packageLockJson = JSON.parse(readFileSync(packageLockJsonPath, 'utf8'));
+	packageLockJson.version = newVersion;
+	writeFileSync(packageLockJsonPath, JSON.stringify(packageLockJson, null, 4) + '\n');
+	console.log('✓ package-lock.json updated');
+} catch (error) {
+	if (error.code === 'ENOENT') {
+		console.warn('Warning: package-lock.json not found, skipping update.');
+	} else if (error instanceof SyntaxError) {
+		console.error('Error: package-lock.json is not valid JSON');
+		process.exit(1);
+	} else {
+		console.error(`Error updating package-lock.json: ${error.message}`);
+		process.exit(1);
+	}
+}
+
 // Update composer.json
 console.log('Updating composer.json...');
 const composerJsonPath = join(rootDir, 'composer.json');
