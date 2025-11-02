@@ -23,6 +23,10 @@
             "import": "./Resources/Public/JavaScript/dist/accordion.js",
             "types": "./Resources/Public/JavaScript/dist/accordion.d.ts"
         },
+        "./checkbox": {
+            "import": "./Resources/Public/JavaScript/dist/checkbox.js",
+            "types": "./Resources/Public/JavaScript/dist/checkbox.d.ts"
+        },
         "./dialog": {
             "import": "./Resources/Public/JavaScript/dist/dialog.js",
             "types": "./Resources/Public/JavaScript/dist/dialog.d.ts"
@@ -65,6 +69,7 @@
     },
     "dependencies": {
         "@zag-js/accordion": "^1.27.0",
+        "@zag-js/checkbox": "^1.27.0",
         "@zag-js/clipboard": "^1.27.0",
         "@zag-js/collapsible": "^1.27.0",
         "@zag-js/collection": "^1.27.0",

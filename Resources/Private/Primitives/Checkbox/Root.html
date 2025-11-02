@@ -1,0 +1,20 @@
+<ui:prop name="disabled" type="boolean" optional="{true}" client="{true}" />
+<ui:prop name="invalid" type="boolean" optional="{true}" client="{true}" />
+<ui:prop name="required" type="boolean" optional="{true}" client="{true}" />
+<ui:prop name="defaultChecked" type="mixed" optional="{true}" client="{true}" default="{false}" />
+<ui:prop name="name" type="string" optional="{true}" client="{true}" />
+<ui:prop name="form" type="string" optional="{true}" client="{true}" />
+<ui:prop name="value" type="string" optional="{true}" client="{true}" />
+<ui:prop name="readOnly" type="boolean" optional="{true}" client="{true}" />
+
+<ui:error when="!{context -> ui:call(method: 'isValueValid')}" message="The defaultChecked value '{defaultChecked}' is invalid. It must be a boolean or 'indeterminate'." />
+
+<f:variable name="refData">{context -> ui:call(method: 'getDataAttributes')}</f:variable>
+
+<label
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.root, then: 'id="{context.ids.root}"' )}
+    {ui:ref(name: 'root' , data: refData )}
+    {ui:attributes()}>
+    <f:slot />
+</label>

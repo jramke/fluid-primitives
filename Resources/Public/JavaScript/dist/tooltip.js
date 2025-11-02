@@ -1,1 +1,1 @@
-import"./Client-BEjJ50yU.js";import{Tooltip as e}from"./Tooltip-OBDeNAga.js";export{e as Tooltip};
+import"./Client-BEjJ50yU.js";import{Tooltip as e}from"./Tooltip-BgY_8hfa.js";export{e as Tooltip};

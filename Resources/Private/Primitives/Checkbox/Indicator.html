@@ -1,0 +1,10 @@
+<f:variable name="refData">{context -> ui:call(method: 'getDataAttributes')}</f:variable>
+
+<div
+    {f:if(condition: '!{context.indeterminate} && !{context.checked}' , then: 'hidden' )}
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.indicator, then: 'id="{context.ids.indicator}"' )}
+    {ui:ref(name: 'indicator' , data: refData )}
+    {ui:attributes()}>
+    <f:slot />
+</div>
