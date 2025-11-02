@@ -129,15 +129,6 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         ];
         $view->assign('component', $componentData);
 
-        // Pick up potential context from parent component
-        if (!$isRootComponent) {
-            $ctx = $this->getRootComponentContext($parentRenderingContext, $baseName);
-            if ($ctx) $view->assign('context', $ctx);
-        }
-
-        $otherComponentContexts = $this->getOtherComponentContexts($parentRenderingContext, $baseName);
-        $renderingContext->getViewHelperVariableContainer()->addAll(ContextViewHelper::class, $otherComponentContexts);
-
         // Expose additional arguments as as tag attributes so they can be used by the ui:attributes view helper
         $hasAdditionalAttributes = false;
         $attributesArgument = $arguments['attributes'] ?? null;
@@ -161,28 +152,36 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         // render() call includes validation of provided arguments
         $view->assignMultiple($this->componentResolver->getAdditionalVariables($viewHelperName));
 
-        if ($isComposableComponent) {
-            // Expose variables as context so it can be picked up in other components rendered inside this component.
-            if ($isRootComponent) {
-                $contextVariables = $this->buildContextVariables($argumentDefinitions, $view->getRenderingContext()->getVariableProvider(), new StrictArgumentProcessor());
-                $contextClassName = ComponentUtility::getContextClassNameFromViewHelperName($viewHelperName, $this->componentResolver->getContextNamespaces());
-                $context = new $contextClassName($renderingContext, $contextVariables);
-                $parentRenderingContext->getVariableProvider()->add("__context_{$baseName}", $context);
-            }
+        // Expose variables as context so it can be picked up in other components rendered inside this component.
+        if ($isRootComponent) {
+            $contextVariables = $this->buildContextVariables($argumentDefinitions, $view->getRenderingContext()->getVariableProvider(), new StrictArgumentProcessor());
+            $contextClassName = ComponentUtility::getContextClassNameFromViewHelperName($viewHelperName, $this->componentResolver->getContextNamespaces());
+            $context = new $contextClassName($renderingContext, $contextVariables);
+            $parentRenderingContext->getVariableProvider()->add("__context_{$baseName}", $context);
+        }
 
-            if (!empty($propsMarkedForContext) && !$isRootComponent) {
-                $propsMarkedForContextValues = [];
-                foreach ($propsMarkedForContext as $name => $_) {
-                    if (isset($arguments[$name]) || isset($argumentDefinitions[$name])) {
-                        $propsMarkedForContextValues[$name] = $arguments[$name] ?? $argumentDefinitions[$name]->getDefaultValue() ?? null;
-                    }
+        // Expose props marked for context from non root components to the context of this component
+        // All props from the root component are automatically available in the context
+        if (!empty($propsMarkedForContext) && !$isRootComponent) {
+            $propsMarkedForContextValues = [];
+            foreach ($propsMarkedForContext as $name => $_) {
+                if (isset($arguments[$name]) || isset($argumentDefinitions[$name])) {
+                    $propsMarkedForContextValues[$name] = $arguments[$name] ?? $argumentDefinitions[$name]->getDefaultValue() ?? null;
                 }
-                $context = $parentRenderingContext->getVariableProvider()->get("__context_{$baseName}");
-                if ($context) {
-                    $context->set(ComponentUtility::getSubcomponentNameFromViewHelperName($viewHelperName), $propsMarkedForContextValues);
-                }
+            }
+            $context = $parentRenderingContext->getVariableProvider()->get("__context_{$baseName}");
+            if ($context) {
+                $context->set(ComponentUtility::getSubcomponentNameFromViewHelperName($viewHelperName), $propsMarkedForContextValues);
             }
         }
+
+        // Pick up potential context from component (parent or itself if root)
+        $ctx = $this->getRootComponentContext($parentRenderingContext, $baseName);
+        if ($ctx) $view->assign('context', $ctx);
+
+        // Also expose other component contexts to allow deep nesting of composable components
+        $otherComponentContexts = $this->getOtherComponentContexts($parentRenderingContext, $baseName);
+        $renderingContext->getViewHelperVariableContainer()->addAll(ContextViewHelper::class, $otherComponentContexts);
 
         if ($arguments['asChild'] ?? false) {
             $renderedChild = isset($slots['default']) && is_callable($slots['default'])
