@@ -55,7 +55,8 @@
     "scripts": {
         "build": "tsdown",
         "dev": "tsdown --watch",
-        "version": "node scripts/version.js"
+        "version": "node scripts/version.js",
+        "bump-zag": "node scripts/bump-zag.js"
     },
     "devDependencies": {
         "@types/node": "^22.15.17",
@@ -63,20 +64,20 @@
         "typescript": "^5.8.3"
     },
     "dependencies": {
-        "@zag-js/accordion": "^1.26.3",
-        "@zag-js/clipboard": "^1.24.2",
-        "@zag-js/collapsible": "^1.24.2",
-        "@zag-js/collection": "^1.26.1",
-        "@zag-js/core": "^1.24.2",
-        "@zag-js/dialog": "^1.24.2",
-        "@zag-js/dom-query": "^1.26.1",
-        "@zag-js/scroll-area": "^1.24.2",
-        "@zag-js/select": "^1.25.0",
-        "@zag-js/store": "^1.24.2",
-        "@zag-js/tabs": "^1.26.4",
-        "@zag-js/tooltip": "^1.24.2",
-        "@zag-js/types": "^1.24.2",
-        "@zag-js/utils": "^1.24.2",
+        "@zag-js/accordion": "^1.27.0",
+        "@zag-js/clipboard": "^1.27.0",
+        "@zag-js/collapsible": "^1.27.0",
+        "@zag-js/collection": "^1.27.0",
+        "@zag-js/core": "^1.27.0",
+        "@zag-js/dialog": "^1.27.0",
+        "@zag-js/dom-query": "^1.27.0",
+        "@zag-js/scroll-area": "^1.27.0",
+        "@zag-js/select": "^1.27.0",
+        "@zag-js/store": "^1.27.0",
+        "@zag-js/tabs": "^1.27.0",
+        "@zag-js/tooltip": "^1.27.0",
+        "@zag-js/types": "^1.27.0",
+        "@zag-js/utils": "^1.27.0",
         "nanoid": "^5.1.5"
     }
 }
