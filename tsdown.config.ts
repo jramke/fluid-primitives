@@ -8,6 +8,9 @@ export default defineConfig([
 			accordion: './Resources/Private/Primitives/Accordion/Accordion.ts',
 			'accordion.entry': './Resources/Private/Primitives/Accordion/Accordion.entry.ts',
 
+			checkbox: './Resources/Private/Primitives/Checkbox/Checkbox.ts',
+			'checkbox.entry': './Resources/Private/Primitives/Checkbox/Checkbox.entry.ts',
+
 			dialog: './Resources/Private/Primitives/Dialog/Dialog.ts',
 			'dialog.entry': './Resources/Private/Primitives/Dialog/Dialog.entry.ts',
 

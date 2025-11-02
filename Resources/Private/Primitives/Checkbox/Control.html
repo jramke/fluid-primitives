@@ -1,0 +1,10 @@
+<f:variable name="refData">{context -> ui:call(method: 'getDataAttributes')}</f:variable>
+
+<div
+    aria-hidden="true"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.control, then: 'id="{context.ids.control}"' )}
+    {ui:ref(name: 'control' , data: refData )}
+    {ui:attributes()}>
+    <f:slot />
+</div>

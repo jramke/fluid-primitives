@@ -1,0 +1,13 @@
+<input
+    type="checkbox"
+    aria-invalid="{f:if(condition: context.invalid, then: 'true', else: 'false')}"
+    {f:if(condition: context.defaultChecked, then: 'value={context.defaultChecked}' )}
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.hidden-input, then: 'id="{context.ids.hidden-input}"' )}
+    {f:if(condition: context.form, then: 'form="{context.form}"' )}
+    {f:if(condition: context.name, then: 'name="{context.name}"' )}
+    {f:if(condition: context.disabled, then: 'disabled' )}
+    {f:if(condition: context.required, then: 'required' )}
+    {ui:ref(name: 'hidden-input' )}
+    style="{settings.visuallyHiddenStyles}"
+    {ui:attributes(skip: 'style' )} />
