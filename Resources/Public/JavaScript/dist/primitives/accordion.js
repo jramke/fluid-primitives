@@ -1,1 +1,0 @@
-import"../Client-BEjJ50yU.js";import{Accordion as e}from"../Accordion-DKI311fM.js";export{e as Accordion};
