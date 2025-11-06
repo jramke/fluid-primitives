@@ -43,7 +43,7 @@ interface ComponentHydrationData {
 interface Attrs {
   [key: string]: any;
 }
-declare function spreadProps(node: HTMLElement, attrs: Attrs, machineId?: string): () => void;
+declare function spreadProps(node: Element, attrs: Attrs, machineId?: string): () => void;
 //#endregion
 //#region Resources/Private/Client/src/lib/component.d.ts
 declare abstract class Component<Props, Api> implements ComponentInterface<Api> {
