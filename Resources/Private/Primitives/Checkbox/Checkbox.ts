@@ -1,10 +1,25 @@
 import * as checkbox from '@zag-js/checkbox';
-import { Component, Machine, normalizeProps } from '../../Client';
+import { Machine, mergeProps, normalizeProps } from '../../Client';
+import { FieldAwareComponent } from '../../Client/src/lib/field-aware-component';
+import * as fieldDom from '../Field/src/field.dom';
+import type { FieldMachine } from '../Field/src/field.registry';
 
-export class Checkbox extends Component<checkbox.Props, checkbox.Api> {
-	name = 'checkbox';
+export class Checkbox extends FieldAwareComponent<checkbox.Props, checkbox.Api> {
+	static name = 'checkbox';
+
+	propsWithField(props: checkbox.Props, fieldMachine: FieldMachine): checkbox.Props {
+		return {
+			...props,
+			ids: {
+				...props.ids,
+				label: fieldDom.getLabelId(fieldMachine.scope),
+				hiddenInput: fieldDom.getControlId(fieldMachine.scope),
+			},
+		};
+	}
 
 	initMachine(props: checkbox.Props): Machine<any> {
+		props = this.withFieldProps(props);
 		return new Machine(checkbox.machine, props);
 	}
 
@@ -13,6 +28,8 @@ export class Checkbox extends Component<checkbox.Props, checkbox.Api> {
 	}
 
 	render() {
+		this.subscribeToFieldService();
+
 		const rootEl = this.getElement('root');
 		if (rootEl) this.spreadProps(rootEl, this.api.getRootProps());
 
@@ -26,6 +43,11 @@ export class Checkbox extends Component<checkbox.Props, checkbox.Api> {
 		if (indicatorEl) this.spreadProps(indicatorEl, this.api.getIndicatorProps());
 
 		const hiddenInputEl = this.getElement('hidden-input');
-		if (hiddenInputEl) this.spreadProps(hiddenInputEl, this.api.getHiddenInputProps());
+		if (hiddenInputEl) {
+			const mergedProps = mergeProps(this.api.getHiddenInputProps(), {
+				'aria-describedby': this.fieldMachine?.ctx.get('describeIds') || undefined,
+			});
+			this.spreadProps(hiddenInputEl, mergedProps);
+		}
 	}
 }

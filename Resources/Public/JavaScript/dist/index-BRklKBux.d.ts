@@ -1,5 +1,5 @@
-import { Bindable, BindableContext, BindableRefs, ComputedFn, Machine, MachineSchema, Params, PropFn, Scope, Service, mergeProps } from "@zag-js/core";
 import { ListCollection } from "@zag-js/collection";
+import { Bindable, BindableContext, BindableRefs, ComputedFn, Machine, MachineSchema, Params, PropFn, Scope, Service } from "@zag-js/core";
 import * as _zag_js_types7 from "@zag-js/types";
 
 //#region Resources/Private/Client/src/types.d.ts
@@ -52,13 +52,15 @@ declare abstract class Component<Props, Api> implements ComponentInterface<Api> 
   api: Api;
   hydrator: ComponentHydrator | null;
   userProps?: Props;
-  abstract readonly name: string;
+  static name: string;
   get doc(): Document;
   constructor(props: Props, userDocument?: Document);
   abstract initMachine(props: Props): Machine$1<any>;
   abstract initApi(): Api;
+  initHydrator(props: Props): ComponentHydrator;
   init(): void;
-  updateProps(props: Props): void;
+  getName(): string;
+  updateProps(props: Partial<Props>): void;
   destroy: () => void;
   abstract render(): void;
   spreadProps(node: HTMLElement, attrs: Attrs): void;
@@ -126,9 +128,12 @@ declare class Machine$1<T extends MachineSchema> {
   getParams: () => Params<T>;
 }
 //#endregion
+//#region Resources/Private/Client/src/lib/merge-props.d.ts
+declare function mergeProps$1(...args: Record<string | symbol, any>[]): Record<string | symbol, any>;
+//#endregion
 //#region Resources/Private/Client/src/lib/normalize-props.d.ts
 declare const normalizeProps: _zag_js_types7.NormalizeProps<_zag_js_types7.PropTypes<{
   [x: string]: any;
 }>>;
 //#endregion
-export { Component as Component$1, ComponentHydrationData, ComponentHydrator as ComponentHydrator$1, ComponentInterface, Machine$1, getHydrationData as getHydrationData$1, initAllComponentInstances as initAllComponentInstances$1, mergeProps as mergeProps$1, normalizeProps as normalizeProps$1, spreadProps as spreadProps$1 };
+export { Component as Component$1, ComponentHydrationData, ComponentHydrator as ComponentHydrator$1, ComponentInterface, Machine$1, getHydrationData as getHydrationData$1, initAllComponentInstances as initAllComponentInstances$1, mergeProps$1, normalizeProps as normalizeProps$1, spreadProps as spreadProps$1 };

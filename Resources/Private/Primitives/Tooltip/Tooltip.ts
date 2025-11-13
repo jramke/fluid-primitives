@@ -2,7 +2,7 @@ import * as tooltip from '@zag-js/tooltip';
 import { Component, Machine, normalizeProps } from '../../Client';
 
 export class Tooltip extends Component<tooltip.Props, tooltip.Api> {
-	name = 'tooltip';
+	static name = 'tooltip';
 
 	initMachine(props: tooltip.Props): Machine<any> {
 		return new Machine(tooltip.machine, {

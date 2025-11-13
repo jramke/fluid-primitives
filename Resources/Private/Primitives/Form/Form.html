@@ -1,0 +1,7 @@
+<form
+    novalidate
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'form' )}
+    {ui:attributes()}>
+    <f:slot />
+</form>

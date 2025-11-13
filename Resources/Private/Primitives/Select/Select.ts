@@ -3,7 +3,7 @@ import { Component, Machine, mergeProps, normalizeProps } from '../../Client';
 import { getListCollectionFromHydrationData } from '../../Client/src/lib/hydration';
 
 export class Select extends Component<select.Props, select.Api> {
-	name = 'select';
+	static name = 'select';
 
 	initMachine(props: select.Props): Machine<any> {
 		return new Machine(select.machine, {

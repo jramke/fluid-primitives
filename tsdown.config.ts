@@ -20,6 +20,12 @@ export default defineConfig([
 			collapsible: './Resources/Private/Primitives/Collapsible/Collapsible.ts',
 			'collapsible.entry': './Resources/Private/Primitives/Collapsible/Collapsible.entry.ts',
 
+			field: './Resources/Private/Primitives/Field/Field.ts',
+			'field.entry': './Resources/Private/Primitives/Field/Field.entry.ts',
+
+			form: './Resources/Private/Primitives/Form/Form.ts',
+			'form.entry': './Resources/Private/Primitives/Form/Form.entry.ts',
+
 			'scroll-area': './Resources/Private/Primitives/ScrollArea/ScrollArea.ts',
 			'scroll-area.entry': './Resources/Private/Primitives/ScrollArea/ScrollArea.entry.ts',
 

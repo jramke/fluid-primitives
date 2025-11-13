@@ -133,6 +133,13 @@ export class ComponentHydrator {
 	}
 
 	destroy() {
+		this.elementRefs.forEach(el => {
+			if (el instanceof Element) {
+				el.setAttribute(`data-hydrate-${this.componentName}`, this.rootId);
+			} else {
+				el.forEach(e => e.setAttribute(`data-hydrate-${this.componentName}`, this.rootId));
+			}
+		});
 		this.elementRefs.clear();
 	}
 }
