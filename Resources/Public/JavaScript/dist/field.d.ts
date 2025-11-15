@@ -1,4 +1,4 @@
-import { Component$1 as Component, Machine$1 as Machine } from "./index-BRklKBux.js";
+import { Component$1 as Component, Machine$1 as Machine } from "./index-5fDaNxFu.js";
 import { EventObject } from "@zag-js/core";
 import { PropTypes } from "@zag-js/types";
 
@@ -23,6 +23,9 @@ interface FieldSchema {
     readOnly: boolean;
     formMachine: FormMachine | null;
     describeIds: string | undefined;
+  };
+  computed: {
+    errors: string[];
   };
   state: 'ready';
   event: EventObject;

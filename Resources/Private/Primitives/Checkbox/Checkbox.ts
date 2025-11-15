@@ -1,6 +1,5 @@
 import * as checkbox from '@zag-js/checkbox';
-import { Machine, mergeProps, normalizeProps } from '../../Client';
-import { FieldAwareComponent } from '../../Client/src/lib/field-aware-component';
+import { FieldAwareComponent, Machine, mergeProps, normalizeProps } from '../../Client';
 import * as fieldDom from '../Field/src/field.dom';
 import type { FieldMachine } from '../Field/src/field.registry';
 
@@ -10,6 +9,11 @@ export class Checkbox extends FieldAwareComponent<checkbox.Props, checkbox.Api> 
 	propsWithField(props: checkbox.Props, fieldMachine: FieldMachine): checkbox.Props {
 		return {
 			...props,
+			disabled: props.disabled ?? fieldMachine.ctx.get('disabled'),
+			readOnly: props.readOnly ?? fieldMachine.ctx.get('readOnly'),
+			required: props.required ?? fieldMachine.ctx.get('required'),
+			invalid: props.invalid ?? fieldMachine.ctx.get('invalid'),
+			name: props.name ?? fieldMachine.prop('name'),
 			ids: {
 				...props.ids,
 				label: fieldDom.getLabelId(fieldMachine.scope),

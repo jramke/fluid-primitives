@@ -69,6 +69,20 @@ declare abstract class Component<Props, Api> implements ComponentInterface<Api> 
   portalElement(el: HTMLElement | null, target?: HTMLElement | Document): void;
 }
 //#endregion
+//#region Resources/Private/Primitives/Field/src/field.registry.d.ts
+type FieldMachine = Machine$1<any>;
+//#endregion
+//#region Resources/Private/Client/src/lib/field-aware-component.d.ts
+declare abstract class FieldAwareComponent<Props, Api> extends Component<Props, Api> {
+  protected subscribedToField: boolean;
+  protected fieldMachine: FieldMachine | undefined;
+  protected closestField: Element | null;
+  protected abstract propsWithField(props: Props, fieldMachine: FieldMachine): Props;
+  protected getClosestField(): Element | null;
+  protected withFieldProps(props: Props): Props;
+  subscribeToFieldService(): void;
+}
+//#endregion
 //#region Resources/Private/Client/src/lib/hydration.d.ts
 declare function getHydrationData(component: string): Record<string, ComponentHydrationData> | null;
 declare function getHydrationData(component: string, id: string): ComponentHydrationData | null;
@@ -136,4 +150,4 @@ declare const normalizeProps: _zag_js_types7.NormalizeProps<_zag_js_types7.PropT
   [x: string]: any;
 }>>;
 //#endregion
-export { Component as Component$1, ComponentHydrationData, ComponentHydrator as ComponentHydrator$1, ComponentInterface, Machine$1, getHydrationData as getHydrationData$1, initAllComponentInstances as initAllComponentInstances$1, mergeProps$1, normalizeProps as normalizeProps$1, spreadProps as spreadProps$1 };
+export { Component as Component$1, ComponentHydrationData, ComponentHydrator as ComponentHydrator$1, ComponentInterface, FieldAwareComponent as FieldAwareComponent$1, FieldMachine, Machine$1, getHydrationData as getHydrationData$1, initAllComponentInstances as initAllComponentInstances$1, mergeProps$1, normalizeProps as normalizeProps$1, spreadProps as spreadProps$1 };

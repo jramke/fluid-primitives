@@ -8,42 +8,28 @@ export function connect<T extends PropTypes>(
 	service: Service<FieldSchema>,
 	normalize: NormalizeProps<T>
 ): FieldApi {
-	const { scope, prop, context } = service;
+	const { scope, prop, context, computed } = service;
 
-	function getFieldState() {
-		const formMachine = context.get('formMachine');
-		if (!formMachine) return { errors: [] as string[], invalid: false };
-
-		const errs = formMachine.ctx.get('errors')?.[prop('name')] ?? [];
-		return { errors: errs, invalid: errs.length > 0 };
-	}
-
-	const fieldState = getFieldState();
+	const invalid = context.get('invalid');
+	const errors = computed('errors');
 
 	return {
 		getFormMachine: () => context.get('formMachine'),
 
-		get invalid() {
-			const { invalid } = fieldState;
-			return invalid;
-		},
-		get errors() {
-			const { errors } = fieldState;
-			return errors;
-		},
+		invalid,
+		errors,
 
 		name: prop('name'),
 
 		getErrorText() {
-			const errs = this.errors;
-			return errs.length ? errs[0] : null;
+			return errors.length ? errors[0] : null;
 		},
 
 		getRootProps() {
 			return normalize.element({
 				...parts.root.attrs,
 				id: dom.getRootId(scope),
-				'data-invalid': this.invalid ? '' : undefined,
+				'data-invalid': invalid ? '' : undefined,
 			});
 		},
 
@@ -56,8 +42,6 @@ export function connect<T extends PropTypes>(
 		},
 
 		getControlProps() {
-			// const errorId = this.invalid ? dom.getErrorId(scope) : undefined;
-			const invalid = this.invalid;
 			return normalize.element({
 				...parts.control.attrs,
 				id: dom.getControlId(scope),
@@ -72,7 +56,7 @@ export function connect<T extends PropTypes>(
 			return normalize.element({
 				...parts.error.attrs,
 				id: dom.getErrorId(scope),
-				hidden: !this.invalid,
+				hidden: !invalid,
 			});
 		},
 	};

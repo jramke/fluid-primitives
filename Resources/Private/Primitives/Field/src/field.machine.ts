@@ -21,16 +21,29 @@ export const machine = createMachine<FieldSchema>({
 	states: {
 		ready: {},
 	},
-	watch({ track, context, prop, action }) {
-		const formMachineCtx = context.get('formMachine')?.ctx;
-		track([() => JSON.stringify(formMachineCtx?.get('errors'))], () => {
-			// console.log(
-			// 	'field detected formMachine change',
-			// 	context.get('formMachine')?.ctx.get('errors')
-			// );
+	computed: {
+		// invalid({ context, prop }) {
+		// 	if (prop('invalid') !== undefined) {
+		// 		return prop('invalid')!;
+		// 	}
+		// 	const formMachineCtx = context.get('formMachine')?.ctx;
+		// 	if (!formMachineCtx) return false;
+		// 	const errs = formMachineCtx.get('errors')?.[prop('name')] ?? [];
+		// 	return errs.length > 0;
+		// },
+		errors({ context, prop }) {
+			const formMachineCtx = context.get('formMachine')?.ctx;
+			if (!formMachineCtx) return [] as string[];
+			const errs = formMachineCtx.get('errors')?.[prop('name')] ?? [];
+			return errs;
+		},
+	},
+	watch({ track, context, computed, prop, action }) {
+		// const formMachineCtx = context.get('formMachine')?.ctx;
+		track([() => JSON.stringify(context.get('formMachine')?.ctx?.get('errors'))], () => {
 			context.set(
 				'invalid',
-				(formMachineCtx?.get('errors')?.[prop('name')]?.length ?? 0) > 0
+				(context.get('formMachine')?.ctx?.get('errors')?.[prop('name')]?.length ?? 0) > 0
 			);
 			// TODO: check other props?
 		});
@@ -61,7 +74,7 @@ export const machine = createMachine<FieldSchema>({
 					fieldRootEl.addEventListener('fluid-primitives:form:ready', handler);
 				}
 			},
-			determineDescribeIds({ context, scope }) {
+			determineDescribeIds({ context, scope, computed }) {
 				const ids: string[] = [];
 				if (context.get('invalid')) ids.push(dom.getErrorId(scope));
 				// TODO: add description ids when implemented

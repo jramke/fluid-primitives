@@ -1,1 +1,1 @@
-import{initAllComponentInstances as e}from"./Client-D6VJwEI0.js";import{Accordion as t}from"./Accordion-fiOqcl-Z.js";e(`accordion`,({props:e})=>{let n=new t(e);return n.init(),n});
+import{initAllComponentInstances as e}from"./Client-C2pG0vwh.js";import{Accordion as t}from"./Accordion-nsBUfDWg.js";e(`accordion`,({props:e})=>{let n=new t(e);return n.init(),n});

@@ -1,0 +1,1 @@
+const e=e=>e.ids?.form??`field:${e.id}:root`,t=e=>e.ids?.label??`field:${e.id}:label`,n=e=>e.ids?.control??`field:${e.id}:control`,r=e=>e.ids?.error??`field:${e.id}:error`,i=t=>t.getById(e(t));export{n as getControlId,r as getErrorId,t as getLabelId,i as getRootEl,e as getRootId};

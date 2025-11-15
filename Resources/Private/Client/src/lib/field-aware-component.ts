@@ -1,3 +1,4 @@
+import type { Service } from '@zag-js/core';
 import { Component } from '.';
 import {
 	getFieldMachineFor,
@@ -5,7 +6,15 @@ import {
 } from '../../../Primitives/Field/src/field.registry';
 
 const fieldProps = ['invalid', 'disabled', 'readOnly', 'required'] as const;
-type FieldProps = Record<(typeof fieldProps)[number], boolean>;
+type FieldProps = (typeof fieldProps)[number];
+
+const fieldAccessors: Record<FieldProps, (s: Service<any>) => boolean> = {
+	disabled: s => s.context.get('disabled'),
+	readOnly: s => s.context.get('readOnly'),
+	required: s => s.context.get('required'),
+	invalid: s => s.context.get('invalid'),
+	// invalid: s => s.computed('invalid'),
+};
 
 export abstract class FieldAwareComponent<Props, Api> extends Component<Props, Api> {
 	protected subscribedToField = false;
@@ -61,19 +70,27 @@ export abstract class FieldAwareComponent<Props, Api> extends Component<Props, A
 		// TODO: why is it only working when we query the closest field again here?
 		this.closestField = this.getClosestField();
 
+		if (!this.closestField) return;
+
 		if (this.fieldMachine) {
 			this.fieldMachine.subscribe(snapshot => {
-				const fieldValues = fieldProps.map(prop => !!snapshot.context.get(prop));
-				const currentValues = fieldProps.map(prop => !!this.machine.prop(prop));
-				let propsToUpdate: Partial<FieldProps> = {};
-				fieldProps.forEach((prop, index) => {
-					if (fieldValues[index] !== currentValues[index]) {
-						propsToUpdate[prop] = fieldValues[index];
+				let propsToUpdate: Partial<Record<FieldProps, boolean>> = {};
+
+				for (const prop of fieldProps) {
+					const newValue = !!fieldAccessors[prop](snapshot);
+					// const currentValue = !!this.api[prop as keyof Api];
+					const currentValue = !!this.machine.prop(prop);
+
+					if (newValue !== currentValue) {
+						propsToUpdate[prop] = newValue;
 					}
-				});
+				}
+				console.log(this.getName(), { propsToUpdate });
+
 				if (Object.keys(propsToUpdate).length > 0) {
 					this.updateProps(propsToUpdate as Partial<Props>);
 				} else {
+					this.api = this.initApi();
 					this.render();
 				}
 			});
@@ -81,7 +98,7 @@ export abstract class FieldAwareComponent<Props, Api> extends Component<Props, A
 		} else {
 			const handler = () => {
 				this.subscribeToFieldService();
-				this.render();
+				// this.render();
 				this.closestField!.removeEventListener(
 					'fluid-primitives:field:registered',
 					handler

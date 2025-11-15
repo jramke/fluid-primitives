@@ -7,7 +7,6 @@ import type { FieldApi, FieldProps } from './src/field.types';
 export class Field extends Component<FieldProps, FieldApi> {
 	static name = 'field';
 
-	// private mounted = false;
 	private subscribedToForm = false;
 
 	initMachine(props: FieldProps) {
@@ -28,9 +27,8 @@ export class Field extends Component<FieldProps, FieldApi> {
 
 		this.subscribedToForm = true;
 		formMachine.subscribe(() => {
-			// const { state } = test;
-			// console.log('test sub', this.api.name, test, state.get());
-			// console.log('form snap from field', this.api.name, context.get('errors'));
+			console.log('form subscribe calls render', this.api.name);
+			this.api = this.initApi();
 			this.render();
 		});
 	}
@@ -42,10 +40,7 @@ export class Field extends Component<FieldProps, FieldApi> {
 		if (rootEl) {
 			this.spreadProps(rootEl, this.api.getRootProps());
 		}
-		// if (!this.mounted) {
-		// 	this.mounted = true;
-		// 	registerFieldService(rootEl, this.machine);
-		// }
+
 		console.log('render field', this.api.name, {
 			invalid: this.api.invalid,
 			errors: this.api.errors,

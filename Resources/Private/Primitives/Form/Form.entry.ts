@@ -13,6 +13,7 @@ import { Form } from './Form';
 				),
 				// checkboxExample: v.pipe(v.string(), v.value('on')),
 				checkboxExample: v.pipe(v.string(), v.value('yes')),
+				selectExample: v.string(),
 			}),
 			onSubmit: values => {
 				alert(`Form submitted with values:\n${JSON.stringify(values, null, 2)}`);

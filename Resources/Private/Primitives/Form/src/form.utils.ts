@@ -72,6 +72,8 @@ export function snapshotFormValues(form: HTMLFormElement): FormValues {
 	const data = new FormData(form);
 	const values: FormValues = {};
 	for (const [key, raw] of data.entries()) {
+		console.log({ key, raw });
+
 		const prev = values[key];
 		if (prev === undefined) {
 			values[key] = raw;
@@ -81,14 +83,14 @@ export function snapshotFormValues(form: HTMLFormElement): FormValues {
 			values[key] = [prev, raw];
 		}
 	}
-	const inputs = Array.from(form.querySelectorAll('input[name]')) as HTMLInputElement[];
-	for (const input of inputs) {
-		if (input.type === 'checkbox') {
-			if (inputs.filter(i => i.name === input.name).length === 1) {
-				if (!(input.name in values)) values[input.name] = false;
-			}
-		}
-	}
+	// const inputs = Array.from(form.querySelectorAll('input[name]')) as HTMLInputElement[];
+	// for (const input of inputs) {
+	// 	if (input.type === 'checkbox') {
+	// 		if (inputs.filter(i => i.name === input.name).length === 1) {
+	// 			if (!(input.name in values)) values[input.name] = false;
+	// 		}
+	// 	}
+	// }
 	return values;
 }
 

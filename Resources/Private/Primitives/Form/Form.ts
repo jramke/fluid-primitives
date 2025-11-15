@@ -6,7 +6,6 @@ import type { FormApi, FormProps } from './src/form.types';
 
 export class Form extends Component<FormProps, FormApi> {
 	static name = 'form';
-	// private mounted = false;
 
 	initMachine(props: FormProps) {
 		const createdMachine = new Machine(machine, props);
@@ -19,7 +18,7 @@ export class Form extends Component<FormProps, FormApi> {
 	}
 
 	render() {
-		console.log('form', {
+		console.log('render form', {
 			errors: this.api.getErrors(),
 			values: this.api.getValues(),
 			dirty: this.api.getDirty(),
@@ -28,16 +27,6 @@ export class Form extends Component<FormProps, FormApi> {
 		const formEl = this.getElement('form') as HTMLFormElement | null;
 		if (!formEl) return;
 
-		// if (!this.mounted) {
-		// 	this.mounted = true;
-		// 	registerFormService(formEl, this.machine);
-		// }
-
 		this.spreadProps(formEl, this.api.getFormProps());
-
-		// const cleanup = () => {
-		// 	unregisterFormService(formEl);
-		// };
-		// (formEl as any).__fl_cleanup__ ??= cleanup;
 	}
 }

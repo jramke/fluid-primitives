@@ -44,38 +44,38 @@ export const machine = createMachine<FormSchema>({
 
 				const submitting = state.matches('submitting');
 
-				if (Object.keys(errs).length === 0) {
-					if (submitting) {
-						// send({ type: 'SUCCESS' });
-						const onSubmit = prop('onSubmit');
-						if (onSubmit) {
-							const result = onSubmit(context.get('values'));
-							if (result instanceof Promise) {
-								result
-									.then(res => {
-										if (res) {
-											send({ type: 'SUCCESS' });
-										} else {
-											send({ type: 'ERROR' });
-										}
-									})
-									.catch(() => {
-										send({ type: 'ERROR' });
-									});
-							} else {
-								if (result) {
-									send({ type: 'SUCCESS' });
-								} else {
-									send({ type: 'ERROR' });
-								}
-							}
-						}
-					} else {
-						state.set('ready');
-					}
-				} else {
-					send({ type: 'ERROR' });
-				}
+				// if (Object.keys(errs).length === 0) {
+				// 	if (submitting) {
+				// 		// send({ type: 'SUCCESS' });
+				// 		const onSubmit = prop('onSubmit');
+				// 		if (onSubmit) {
+				// 			const result = onSubmit(context.get('values'));
+				// 			if (result instanceof Promise) {
+				// 				result
+				// 					.then(res => {
+				// 						if (res) {
+				// 							send({ type: 'SUCCESS' });
+				// 						} else {
+				// 							send({ type: 'ERROR' });
+				// 						}
+				// 					})
+				// 					.catch(() => {
+				// 						send({ type: 'ERROR' });
+				// 					});
+				// 			} else {
+				// 				if (result) {
+				// 					send({ type: 'SUCCESS' });
+				// 				} else {
+				// 					send({ type: 'ERROR' });
+				// 				}
+				// 			}
+				// 		}
+				// 	} else {
+				// 		state.set('ready');
+				// 	}
+				// } else {
+				// 	send({ type: 'ERROR' });
+				// }
 			},
 
 			applyInputChange({ context, event }) {

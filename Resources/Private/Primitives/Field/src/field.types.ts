@@ -21,6 +21,10 @@ export interface FieldSchema {
 		formMachine: FormMachine | null;
 		describeIds: string | undefined;
 	};
+	computed: {
+		// invalid: boolean;
+		errors: string[];
+	};
 	state: 'ready';
 	event: EventObject;
 	action: string;
