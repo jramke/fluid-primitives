@@ -51,7 +51,7 @@ declare abstract class Component<Props, Api> implements ComponentInterface<Api> 
   machine: Machine$1<any>;
   api: Api;
   hydrator: ComponentHydrator | null;
-  userProps?: Props;
+  userProps?: Partial<Props>;
   static name: string;
   get doc(): Document;
   constructor(props: Props, userDocument?: Document);
@@ -60,6 +60,7 @@ declare abstract class Component<Props, Api> implements ComponentInterface<Api> 
   initHydrator(props: Props): ComponentHydrator;
   init(): void;
   getName(): string;
+  transformProps(props: Partial<Props>): Partial<Props>;
   updateProps(props: Partial<Props>): void;
   destroy: () => void;
   abstract render(): void;
@@ -77,7 +78,7 @@ declare abstract class FieldAwareComponent<Props, Api> extends Component<Props, 
   protected subscribedToField: boolean;
   protected fieldMachine: FieldMachine | undefined;
   protected closestField: Element | null;
-  protected abstract propsWithField(props: Props, fieldMachine: FieldMachine): Props;
+  protected abstract propsWithField(props: Partial<Props>, fieldMachine: FieldMachine): Props;
   protected getClosestField(): Element | null;
   protected withFieldProps(props: Props): Props;
   subscribeToFieldService(): void;
@@ -120,11 +121,13 @@ declare class Machine$1<T extends MachineSchema> {
   private transition;
   private cleanups;
   private subscriptions;
+  private userPropsRef;
   private getEvent;
   private getState;
   debug: (...args: any[]) => void;
   notify: () => void;
   constructor(machine: Machine<T>, userProps?: Partial<T['props']> | (() => Partial<T['props']>));
+  updateProps(newProps: Partial<T['props']> | (() => Partial<T['props']>)): void;
   send: (event: any) => void;
   private action;
   private guard;

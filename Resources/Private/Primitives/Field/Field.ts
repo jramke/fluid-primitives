@@ -27,9 +27,15 @@ export class Field extends Component<FieldProps, FieldApi> {
 
 		this.subscribedToForm = true;
 		formMachine.subscribe(() => {
-			console.log('form subscribe calls render', this.api.name);
-			this.api = this.initApi();
-			this.render();
+			// console.log(
+			// 	'form subscribe calls render',
+			// 	this.api.name,
+			// 	formMachine.ctx.get('errors')
+			// );
+			queueMicrotask(() => {
+				this.api = this.initApi();
+				this.render();
+			});
 		});
 	}
 

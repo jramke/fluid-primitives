@@ -11,12 +11,14 @@ import { Form } from './Form';
 					v.string(),
 					v.minLength(4, 'First name must be at least 4 characters long')
 				),
-				// checkboxExample: v.pipe(v.string(), v.value('on')),
-				checkboxExample: v.pipe(v.string(), v.value('yes')),
+				checkboxExample: v.pipe(v.string(), v.value('on')),
+				// checkboxExample: v.pipe(v.string(), v.value('yes')),
 				selectExample: v.string(),
 			}),
 			onSubmit: values => {
-				alert(`Form submitted with values:\n${JSON.stringify(values, null, 2)}`);
+				// alert(`Form submitted with values:\n${JSON.stringify(values, null, 2)}`);
+				console.log('submit', values);
+
 				return new Promise<boolean>(resolve => {
 					setTimeout(() => resolve(true), 1000);
 				});

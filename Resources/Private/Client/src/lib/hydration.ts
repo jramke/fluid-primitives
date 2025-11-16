@@ -151,6 +151,10 @@ export function getListCollectionFromHydrationData<T extends CollectionItem>(hyd
 	isItemDisabledKey?: string;
 	groupByKey?: string;
 }): ListCollection<T> {
+	if (hydrationCollection instanceof ListCollection) {
+		return hydrationCollection;
+	}
+
 	const collection = new ListCollection<T>({
 		items: hydrationCollection.items,
 		itemToValue: hydrationCollection.itemToValueKey

@@ -1,1 +1,1 @@
-import"./Client-C2pG0vwh.js";import{Tabs as e}from"./Tabs-DPrJkUfU.js";export{e as Tabs};
+import"./Client-ClhqcFHq.js";import{Tabs as e}from"./Tabs-DhPOkvej.js";export{e as Tabs};

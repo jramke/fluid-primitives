@@ -72,7 +72,7 @@ export function snapshotFormValues(form: HTMLFormElement): FormValues {
 	const data = new FormData(form);
 	const values: FormValues = {};
 	for (const [key, raw] of data.entries()) {
-		console.log({ key, raw });
+		// console.log({ key, raw });
 
 		const prev = values[key];
 		if (prev === undefined) {

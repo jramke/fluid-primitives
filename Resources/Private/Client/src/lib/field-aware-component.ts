@@ -31,7 +31,7 @@ export abstract class FieldAwareComponent<Props, Api> extends Component<Props, A
 	//     },
 	//     ...props,
 	// }
-	protected abstract propsWithField(props: Props, fieldMachine: FieldMachine): Props;
+	protected abstract propsWithField(props: Partial<Props>, fieldMachine: FieldMachine): Props;
 
 	protected getClosestField() {
 		return (
@@ -74,25 +74,27 @@ export abstract class FieldAwareComponent<Props, Api> extends Component<Props, A
 
 		if (this.fieldMachine) {
 			this.fieldMachine.subscribe(snapshot => {
-				let propsToUpdate: Partial<Record<FieldProps, boolean>> = {};
+				queueMicrotask(() => {
+					let propsToUpdate: Partial<Record<FieldProps, boolean>> = {};
 
-				for (const prop of fieldProps) {
-					const newValue = !!fieldAccessors[prop](snapshot);
-					// const currentValue = !!this.api[prop as keyof Api];
-					const currentValue = !!this.machine.prop(prop);
+					for (const prop of fieldProps) {
+						const newValue = !!fieldAccessors[prop](snapshot);
+						// const currentValue = !!this.api[prop as keyof Api];
+						const currentValue = !!this.machine.prop(prop);
 
-					if (newValue !== currentValue) {
-						propsToUpdate[prop] = newValue;
+						if (newValue !== currentValue) {
+							propsToUpdate[prop] = newValue;
+						}
 					}
-				}
-				console.log(this.getName(), { propsToUpdate });
+					// console.log(this.getName(), { propsToUpdate });
 
-				if (Object.keys(propsToUpdate).length > 0) {
-					this.updateProps(propsToUpdate as Partial<Props>);
-				} else {
-					this.api = this.initApi();
-					this.render();
-				}
+					if (Object.keys(propsToUpdate).length > 0) {
+						this.updateProps(propsToUpdate as Partial<Props>);
+					} else {
+						this.api = this.initApi();
+						this.render();
+					}
+				});
 			});
 			this.subscribedToField = true;
 		} else {

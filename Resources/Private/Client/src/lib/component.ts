@@ -7,7 +7,7 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
 	machine: Machine<any>;
 	api: Api;
 	hydrator: ComponentHydrator | null = null;
-	userProps?: Props;
+	userProps?: Partial<Props>;
 	static name: string;
 
 	get doc(): Document {
@@ -16,7 +16,7 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
 
 	constructor(props: Props, userDocument: Document = document) {
 		this.document = userDocument;
-		this.userProps = props;
+		this.userProps = this.transformProps(props);
 		this.hydrator = this.initHydrator(props);
 		this.machine = this.initMachine(props);
 		this.api = this.initApi();
@@ -44,13 +44,17 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
 		return (this.constructor as typeof Component).name;
 	}
 
+	// Override in consumer for example when a getter is used for collection
+	// Needs to be used manually inside the initMachine method
+	transformProps(props: Partial<Props>): Partial<Props> {
+		return props;
+	}
+
 	updateProps(props: Partial<Props>) {
-		this.machine.stop();
 		const newProps = { ...this.userProps, ...props };
-		this.userProps = newProps as Props;
-		this.machine = this.initMachine(newProps as Props);
-		this.api = this.initApi();
-		this.init();
+		this.userProps = this.transformProps(newProps) as Props;
+
+		this.machine.updateProps(newProps);
 	}
 
 	destroy = () => {

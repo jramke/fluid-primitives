@@ -13,7 +13,13 @@ export const machine = createMachine<FieldSchema>({
 			required: bindable(() => ({ defaultValue: prop('required') ?? false })),
 			disabled: bindable(() => ({ defaultValue: prop('disabled') ?? false })),
 			readOnly: bindable(() => ({ defaultValue: prop('readOnly') ?? false })),
-			formMachine: bindable(() => ({ defaultValue: null as FormMachine | null })),
+			formMachine: bindable(() => ({
+				defaultValue: null as FormMachine | null,
+				// onChange: () => {
+				// 	console.log('formmachine context change of ', prop('name'), getCon);
+				// },
+				// hash: value => JSON.stringify(value),
+			})),
 			describeIds: bindable<string | undefined>(() => ({ defaultValue: undefined })),
 		};
 	},
@@ -39,14 +45,48 @@ export const machine = createMachine<FieldSchema>({
 		},
 	},
 	watch({ track, context, computed, prop, action }) {
-		// const formMachineCtx = context.get('formMachine')?.ctx;
-		track([() => JSON.stringify(context.get('formMachine')?.ctx?.get('errors'))], () => {
-			context.set(
-				'invalid',
-				(context.get('formMachine')?.ctx?.get('errors')?.[prop('name')]?.length ?? 0) > 0
-			);
-			// TODO: check other props?
-		});
+		// const formMachineCtx = context.get('formMachine')?.ctx?.get('errors');
+		// console.log('WATCH', formMachineCtx);
+
+		track(
+			[
+				// () => {
+				// 	console.log('TRACK', context.hash('formMachine'));
+
+				// 	return context.hash('formMachine');
+				// },
+				() => computed('errors').join('|'),
+			],
+			() => {
+				action(['updateInvalid']);
+			}
+		);
+
+		// track(
+		// 	[
+		// 		() => {
+		// 			const errors = JSON.stringify(
+		// 				context.get('formMachine')?.ctx?.get('errors')?.[prop('name')]
+		// 			);
+		// 			console.log(
+		// 				'TRACK',
+		// 				context.get('formMachine')?.ctx?.get('errors'),
+		// 				prop('name'),
+		// 				errors
+		// 			);
+
+		// 			return errors;
+		// 		},
+		// 	],
+		// 	() => {
+		// 		context.set(
+		// 			'invalid',
+		// 			(context.get('formMachine')?.ctx?.get('errors')?.[prop('name')]?.length ?? 0) >
+		// 				0
+		// 		);
+		// 		// TODO: check other props?
+		// 	}
+		// );
 
 		// TODO: also check descriptions when implemented
 		track([() => context.get('invalid')], () => {
@@ -80,6 +120,19 @@ export const machine = createMachine<FieldSchema>({
 				// TODO: add description ids when implemented
 				const idsStr = ids.join(' ') || undefined;
 				context.set('describeIds', idsStr);
+			},
+			updateInvalid({ context, prop }) {
+				// if (prop('invalid') !== undefined) {
+				// 	context.set('invalid', prop('invalid')!);
+				// 	return;
+				// }
+				const formMachineCtx = context.get('formMachine')?.ctx;
+				if (!formMachineCtx) {
+					context.set('invalid', false);
+					return;
+				}
+				const errs = formMachineCtx.get('errors')?.[prop('name')] ?? [];
+				context.set('invalid', errs.length > 0);
 			},
 		},
 	},

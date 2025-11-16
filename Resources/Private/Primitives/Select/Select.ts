@@ -23,14 +23,18 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
 		};
 	}
 
-	initMachine(props: select.Props): Machine<any> {
-		props = this.withFieldProps(props);
-		return new Machine(select.machine, {
+	transformProps(props: select.Props) {
+		return {
 			...props,
 			get collection() {
-				return getListCollectionFromHydrationData<any>(props.collection);
+				return getListCollectionFromHydrationData(props.collection);
 			},
-		});
+		};
+	}
+
+	initMachine(props: select.Props): Machine<any> {
+		props = this.withFieldProps(props);
+		return new Machine(select.machine, this.transformProps(props));
 	}
 
 	initApi() {

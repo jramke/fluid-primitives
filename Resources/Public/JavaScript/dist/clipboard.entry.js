@@ -1,1 +1,1 @@
-import{initAllComponentInstances as e}from"./Client-C2pG0vwh.js";import{Clipboard as t}from"./Clipboard-CDKK_Quj.js";e(`clipboard`,({props:e})=>{let n=new t(e);return n.init(),n});
+import{initAllComponentInstances as e}from"./Client-ClhqcFHq.js";import{Clipboard as t}from"./Clipboard-Cb6cMHoi.js";e(`clipboard`,({props:e})=>{let n=new t(e);return n.init(),n});

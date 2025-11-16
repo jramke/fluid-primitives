@@ -38,44 +38,47 @@ export const machine = createMachine<FormSchema>({
 		actions: {
 			validateAll({ context, send, prop, state }) {
 				const schema = prop('schema');
-				const result = v.safeParse(schema, context.get('values'));
-				const errs = errorsFromValibot(result);
+				const validationResult = v.safeParse(schema, context.get('values'));
+				const errs = errorsFromValibot(validationResult);
 				context.set('errors', errs);
 
-				const submitting = state.matches('submitting');
+				if (Object.keys(errs).length > 0) {
+					send({ type: 'ERROR' });
+					return;
+				}
 
-				// if (Object.keys(errs).length === 0) {
-				// 	if (submitting) {
-				// 		// send({ type: 'SUCCESS' });
-				// 		const onSubmit = prop('onSubmit');
-				// 		if (onSubmit) {
-				// 			const result = onSubmit(context.get('values'));
-				// 			if (result instanceof Promise) {
-				// 				result
-				// 					.then(res => {
-				// 						if (res) {
-				// 							send({ type: 'SUCCESS' });
-				// 						} else {
-				// 							send({ type: 'ERROR' });
-				// 						}
-				// 					})
-				// 					.catch(() => {
-				// 						send({ type: 'ERROR' });
-				// 					});
-				// 			} else {
-				// 				if (result) {
-				// 					send({ type: 'SUCCESS' });
-				// 				} else {
-				// 					send({ type: 'ERROR' });
-				// 				}
-				// 			}
-				// 		}
-				// 	} else {
-				// 		state.set('ready');
-				// 	}
-				// } else {
-				// 	send({ type: 'ERROR' });
-				// }
+				const submitting = state.matches('submitting');
+				if (!submitting) {
+					state.set('ready');
+					return;
+				}
+
+				const onSubmit = prop('onSubmit');
+				if (!onSubmit) {
+					send({ type: 'SUCCESS' });
+					return;
+				}
+
+				const result = onSubmit(context.get('values'));
+				if (result instanceof Promise) {
+					result
+						.then(res => {
+							if (res) {
+								send({ type: 'SUCCESS' });
+							} else {
+								send({ type: 'ERROR' });
+							}
+						})
+						.catch(() => {
+							send({ type: 'ERROR' });
+						});
+				} else {
+					if (result) {
+						send({ type: 'SUCCESS' });
+					} else {
+						send({ type: 'ERROR' });
+					}
+				}
 			},
 
 			applyInputChange({ context, event }) {
@@ -96,11 +99,11 @@ export const machine = createMachine<FormSchema>({
 				context.set('dirty', dirty);
 			},
 
-			async maybeValidateChanged({ context, prop }) {
+			maybeValidateChanged({ context, prop }) {
 				const validateOnChange = !!prop('validateOnChange');
 				if (!validateOnChange) return;
 				const schema = prop('schema');
-				const result = await v.safeParseAsync(schema, context.get('values'));
+				const result = v.safeParse(schema, context.get('values'));
 				const errs = errorsFromValibot(result);
 				context.set('errors', errs);
 			},
@@ -113,6 +116,8 @@ export const machine = createMachine<FormSchema>({
 				for (const key of Object.keys(initial)) dirty[key] = false;
 				context.set('dirty', dirty);
 			},
+
+			// handleSubmit({ prop })
 		},
 	},
 });
