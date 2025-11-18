@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\ViewHelpers;
 
 use Jramke\FluidPrimitives\Registry\PortalRegistry;
-use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
 /**
@@ -34,15 +33,16 @@ class PortalViewHelper extends AbstractViewHelper
     public function initializeArguments(): void
     {
         $this->registerArgument('name', 'string', 'The name of the target container', false, 'default');
+        $this->registerArgument('disabled', 'bool', 'If set to true, the portal functionality is disabled and content is rendered in place', false, false);
     }
 
-    public function render(): mixed
+    public function render(): string
     {
-        if (!ComponentUtility::isComponent($this->renderingContext)) {
-            throw new \RuntimeException('The portal viewhelper can only be used inside a component context.', 1753646062);
-        }
-
         $rendered = $this->renderChildren();
+
+        if ($this->arguments['disabled'] ?? false) {
+            return $rendered;
+        }
 
         if (empty($rendered)) {
             return '';
