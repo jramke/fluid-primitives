@@ -33,11 +33,16 @@ class PortalViewHelper extends AbstractViewHelper
     public function initializeArguments(): void
     {
         $this->registerArgument('name', 'string', 'The name of the target container', false, 'default');
+        $this->registerArgument('disabled', 'bool', 'If set to true, the portal functionality is disabled and content is rendered in place', false, false);
     }
 
-    public function render(): mixed
+    public function render(): string
     {
         $rendered = $this->renderChildren();
+
+        if ($this->arguments['disabled'] ?? false) {
+            return $rendered;
+        }
 
         if (empty($rendered)) {
             return '';
