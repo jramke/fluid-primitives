@@ -6,7 +6,7 @@ export type FormValues = Record<string, unknown>;
 export type FormErrors = Record<string, string[]>;
 export type FormDirty = Record<string, boolean>;
 
-export type ValibotFormSchema = v.GenericSchema;
+export type ValibotFormSchema = v.GenericSchema; // TODO: object schema
 
 export interface FormProps {
 	id: string;

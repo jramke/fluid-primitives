@@ -29,6 +29,7 @@ export function connect<T extends PropTypes>(
 		getErrors,
 		getDirty,
 
+		// TODO: remove
 		getFieldState(name: string) {
 			const values = getValues();
 			const errors = getErrors();
@@ -71,9 +72,9 @@ export function connect<T extends PropTypes>(
 					});
 					send({ type: 'RESET' });
 				},
-				// onInput: event => {
-				// 	send({ type: 'INPUT', detail: { target: event.target } } as any);
-				// },
+				onInput: event => {
+					send({ type: 'INPUT', detail: { target: event.target } });
+				},
 			});
 		},
 	};

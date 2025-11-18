@@ -1,5 +1,6 @@
 import { createMachine } from '@zag-js/core';
 import * as v from 'valibot';
+import * as dom from './form.dom';
 import type { FormDirty, FormSchema } from './form.types';
 import { errorsFromValibot, getInputValue } from './form.utils';
 
@@ -28,11 +29,14 @@ export const machine = createMachine<FormSchema>({
 	on: {
 		SUBMIT: { target: 'submitting', actions: ['validateAll'] },
 		VALIDATE: { target: 'validating', actions: ['validateAll'] },
+		VALIDATE_SINGLE_FIELD: { target: 'validating', actions: ['validateSingleField'] },
 		INPUT: { target: 'ready', actions: ['applyInputChange', 'maybeValidateChanged'] },
 		RESET: { target: 'ready', actions: ['resetForm'] },
 		ERROR: { target: 'error' },
 		SUCCESS: { target: 'success' },
 	},
+
+	entry: ['handleFieldBlurs'],
 
 	implementations: {
 		actions: {
@@ -88,6 +92,7 @@ export const machine = createMachine<FormSchema>({
 				if (!name) return;
 
 				const value = e?.detail?.value ?? getInputValue(target);
+				console.log({ name, value });
 
 				const values = { ...context.get('values') };
 				values[name] = value;
@@ -117,7 +122,40 @@ export const machine = createMachine<FormSchema>({
 				context.set('dirty', dirty);
 			},
 
-			// handleSubmit({ prop })
+			handleFieldBlurs({ context, event, scope, prop, action }) {
+				const form = dom.getFormEl(scope);
+				Array.from(form?.elements || []).forEach(el => {
+					console.log({ el });
+					el.addEventListener('blur', () => {
+						const schema = prop('schema');
+						console.log('blurred, we validate', el, schema);
+						action(['validateSingleField']);
+					});
+				});
+			},
+			validateSingleField({ prop, context, event }) {
+				const name = (event as any)?.detail?.name as string | undefined;
+				if (!name) return;
+
+				const schema = prop('schema');
+				if (!schema) return;
+
+				const fieldSchema = (schema as any)?.entries[name];
+				if (!fieldSchema) return;
+
+				const results = v.safeParse(fieldSchema, context.get('values')[name]);
+				const errs = errorsFromValibot(results);
+				const existingErrors = context.get('errors');
+				const nextErrors = { ...existingErrors };
+
+				if (errs && Object.keys(errs).length > 0) {
+					nextErrors[name] = errs[name];
+				} else {
+					delete nextErrors[name];
+				}
+
+				context.set('errors', nextErrors);
+			},
 		},
 	},
 });
