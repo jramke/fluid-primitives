@@ -2,7 +2,7 @@ import * as dialog from '@zag-js/dialog';
 import { Component, Machine, normalizeProps } from '../../Client';
 
 export class Dialog extends Component<dialog.Props, dialog.Api> {
-	name = 'dialog';
+	static name = 'dialog';
 
 	initMachine(props: dialog.Props): Machine<any> {
 		return new Machine(dialog.machine, props);

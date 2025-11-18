@@ -7,8 +7,8 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
 	machine: Machine<any>;
 	api: Api;
 	hydrator: ComponentHydrator | null = null;
-	userProps?: Props;
-	abstract readonly name: string;
+	userProps?: Partial<Props>;
+	static name: string;
 
 	get doc(): Document {
 		return this.document;
@@ -16,7 +16,8 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
 
 	constructor(props: Props, userDocument: Document = document) {
 		this.document = userDocument;
-		this.userProps = props;
+		this.userProps = this.transformProps(props);
+		this.hydrator = this.initHydrator(props);
 		this.machine = this.initMachine(props);
 		this.api = this.initApi();
 	}
@@ -24,13 +25,13 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
 	abstract initMachine(props: Props): Machine<any>;
 	abstract initApi(): Api;
 
+	initHydrator(props: Props) {
+		const id = (props as any).id;
+		if (!id) throw new Error('ComponentHydrator requires an id prop to initialize.');
+		return new ComponentHydrator(this.getName(), id, (props as any).ids, this.doc);
+	}
+
 	init() {
-		this.hydrator = new ComponentHydrator(
-			this.name,
-			this.machine.scope.id,
-			this.machine.scope.ids,
-			this.doc
-		);
 		this.render();
 		this.machine.subscribe(() => {
 			this.api = this.initApi();
@@ -39,11 +40,21 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
 		this.machine.start();
 	}
 
-	updateProps(props: Props) {
-		this.machine.stop();
-		this.machine = this.initMachine({ ...this.userProps, ...props });
-		this.api = this.initApi();
-		this.init();
+	getName() {
+		return (this.constructor as typeof Component).name;
+	}
+
+	// Override in consumer for example when a getter is used for collection
+	// Needs to be used manually inside the initMachine method
+	transformProps(props: Partial<Props>): Partial<Props> {
+		return props;
+	}
+
+	updateProps(props: Partial<Props>) {
+		const newProps = { ...this.userProps, ...props };
+		this.userProps = this.transformProps(newProps) as Props;
+
+		this.machine.updateProps(newProps);
 	}
 
 	destroy = () => {

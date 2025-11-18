@@ -59,10 +59,6 @@ class ListCollectionViewHelper extends AbstractViewHelper
 
     public function render(): mixed
     {
-        if (!ComponentUtility::isComponent($this->renderingContext)) {
-            throw new \RuntimeException('The collection ViewHelper can only be used inside a component.', 1759769688);
-        }
-
         $items = $this->arguments['items'] ?? null;
         if (!is_array($items) && !($items instanceof \Traversable)) {
             throw new \InvalidArgumentException('The "items" argument must be an array or Traversable.', 1759769689);

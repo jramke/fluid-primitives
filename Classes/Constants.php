@@ -20,4 +20,8 @@ class Constants
         'class', // reserved for the component class and added automatically for every component
         'asChild',
     ];
+
+    public const COMPONENTS_THAT_SUPPORT_FIELD = [
+        'checkbox',
+    ];
 }

@@ -105,6 +105,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
             }
         }
 
+        // Set all components arguments
         $renderingContext->setVariableProvider($renderingContext->getVariableProvider()->getScopeCopy($arguments));
 
         // Provide slots to SlotViewHelper
@@ -175,13 +176,34 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
             }
         }
 
-        // Pick up potential context from component (parent or itself if root)
-        $ctx = $this->getRootComponentContext($parentRenderingContext, $baseName);
-        if ($ctx) $view->assign('context', $ctx);
-
-        // Also expose other component contexts to allow deep nesting of composable components
+        // Expose other component contexts to allow deep nesting of composable components
         $otherComponentContexts = $this->getOtherComponentContexts($parentRenderingContext, $baseName);
         $renderingContext->getViewHelperVariableContainer()->addAll(ContextViewHelper::class, $otherComponentContexts);
+
+        // Pick up potential context from current component (parent or itself if root)
+        $ctx = $this->getRootComponentContext($parentRenderingContext, $baseName);
+
+        $fieldRootId = null;
+
+        // If the component supports field and there is a field context available, we merge the field context variables into the current context
+        if ($isRootComponent && $this->componentSupportsField($baseName)) {
+            $fieldContext = $otherComponentContexts['field'] ?? null;
+            if ($fieldContext) {
+                $fieldRootId = $fieldContext->get('rootId') ?? null;
+                $fieldVariables = $fieldContext->getChildVariables();
+                foreach ($fieldVariables as $varName => $varValue) {
+                    $view->getRenderingContext()->getVariableProvider()->remove($varName);
+                    $view->getRenderingContext()->getVariableProvider()->add($varName, $varValue);
+                    $arguments[$varName] = $varValue;
+                    if ($ctx) {
+                        $ctx->set($varName, $varValue);
+                    }
+                }
+            }
+        }
+
+        // Assign context if available
+        if ($ctx) $view->assign('context', $ctx);
 
         if ($arguments['asChild'] ?? false) {
             $renderedChild = isset($slots['default']) && is_callable($slots['default'])
@@ -222,19 +244,23 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
                 unset($props['id']); // Remove potential id from client props as it is handled separately
                 unset($props['ids']);
 
+                $data = [
+                    'controlled' => $arguments['controlled'] ?? false,
+                    'props' => [
+                        'id' => $rootId,
+                        'ids' => $arguments['ids'] ?? [],
+                        ...$props,
+                    ],
+                ];
+                if ($fieldRootId) {
+                    $data['field'] = $fieldRootId;
+                }
+
                 $registry = HydrationRegistry::getInstance();
                 $registry->add(
                     $baseName,
                     $rootId,
-                    [
-
-                        'controlled' => $arguments['controlled'] ?? false,
-                        'props' => [
-                            'id' => $rootId,
-                            'ids' => $arguments['ids'] ?? [],
-                            ...$props,
-                        ],
-                    ]
+                    $data
                 );
             }
         }
@@ -353,5 +379,10 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         );
 
         return $finalHtml;
+    }
+
+    protected function componentSupportsField(string $baseName): bool
+    {
+        return in_array($baseName, Constants::COMPONENTS_THAT_SUPPORT_FIELD, true);
     }
 }

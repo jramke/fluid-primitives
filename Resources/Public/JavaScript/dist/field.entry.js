@@ -1,0 +1,1 @@
+import{initAllComponentInstances as e}from"./Client-ClhqcFHq.js";import"./field.dom-BPeGctuk.js";import{Field as t}from"./Field-LTbO-iE7.js";import"./form.registry-BEubiwYA.js";e(`field`,({props:e})=>{let n=new t(e);return n.init(),n});

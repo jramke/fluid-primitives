@@ -3,7 +3,7 @@ import type { Orientation, PropTypes } from '@zag-js/types';
 import { Component, Machine, normalizeProps } from '../../Client';
 
 export class ScrollArea extends Component<scrollArea.Props, scrollArea.Api<PropTypes>> {
-	name = 'scroll-area';
+	static name = 'scroll-area';
 
 	initMachine(props: scrollArea.Props): Machine<any> {
 		return new Machine(scrollArea.machine, props);

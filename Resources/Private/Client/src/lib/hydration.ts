@@ -133,6 +133,13 @@ export class ComponentHydrator {
 	}
 
 	destroy() {
+		this.elementRefs.forEach(el => {
+			if (el instanceof Element) {
+				el.setAttribute(`data-hydrate-${this.componentName}`, this.rootId);
+			} else {
+				el.forEach(e => e.setAttribute(`data-hydrate-${this.componentName}`, this.rootId));
+			}
+		});
 		this.elementRefs.clear();
 	}
 }
@@ -144,6 +151,10 @@ export function getListCollectionFromHydrationData<T extends CollectionItem>(hyd
 	isItemDisabledKey?: string;
 	groupByKey?: string;
 }): ListCollection<T> {
+	if (hydrationCollection instanceof ListCollection) {
+		return hydrationCollection;
+	}
+
 	const collection = new ListCollection<T>({
 		items: hydrationCollection.items,
 		itemToValue: hydrationCollection.itemToValueKey

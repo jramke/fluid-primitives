@@ -2,7 +2,7 @@ import * as accordion from '@zag-js/accordion';
 import { Component, Machine, normalizeProps } from '../../Client';
 
 export class Accordion extends Component<accordion.Props, accordion.Api> {
-	name = 'accordion';
+	static name = 'accordion';
 
 	initMachine(props: accordion.Props): Machine<any> {
 		return new Machine(accordion.machine, {

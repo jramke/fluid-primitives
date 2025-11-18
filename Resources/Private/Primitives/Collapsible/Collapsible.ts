@@ -2,7 +2,7 @@ import * as collapsible from '@zag-js/collapsible';
 import { Component, Machine, normalizeProps } from '../../Client';
 
 export class Collapsible extends Component<collapsible.Props, collapsible.Api> {
-	name = 'collapsible';
+	static name = 'collapsible';
 
 	initMachine(props: collapsible.Props): Machine<any> {
 		return new Machine(collapsible.machine, props);

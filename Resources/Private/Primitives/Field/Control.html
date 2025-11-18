@@ -1,0 +1,9 @@
+<ui:error when="!{asChild}" message="The 'asChild' prop is required for 'Field.Control' to function properly." />
+
+<div
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.control, then: 'id="{context.ids.control}"' )}
+    {ui:ref(name: 'control' )}
+    {ui:attributes()}>
+    <f:slot />
+</div>

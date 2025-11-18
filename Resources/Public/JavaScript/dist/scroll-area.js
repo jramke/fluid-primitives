@@ -1,1 +1,1 @@
-import"./Client-6Iwe-j89.js";import{ScrollArea as e}from"./ScrollArea-D0pn7wBC.js";export{e as ScrollArea};
+import"./Client-ClhqcFHq.js";import{ScrollArea as e}from"./ScrollArea-jljHOq2V.js";export{e as ScrollArea};
