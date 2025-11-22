@@ -54,9 +54,11 @@ class AttributesViewHelper extends AbstractViewHelper
             throw new \RuntimeException('The attributes ViewHelper can only be used inside a component context.', 1698255600);
         }
 
+        $asArray = $this->arguments['asArray'] ?? false;
+
         $tagAttributes = $this->renderingContext->getVariableProvider()->getByPath(Constants::TAG_ATTRIBUTES_KEY);
         if (empty($tagAttributes)) {
-            return '';
+            return $asArray ? [] : '';
         }
 
         if (!$tagAttributes instanceof TagAttributes) {
@@ -64,26 +66,24 @@ class AttributesViewHelper extends AbstractViewHelper
         }
 
         if (count($tagAttributes) === 0) {
-            return '';
+            return $asArray ? [] : '';
         }
 
+        // TODO: maybe we can allow both?
         if ($this->arguments['skip'] && $this->arguments['only']) {
             throw new \RuntimeException('You cannot use both "skip" and "only" arguments at the same time.', 1698255600);
         }
 
-        if ($this->arguments['asArray']) {
-            return $tagAttributes->renderAsArray();
-        }
-
         $skip = $this->arguments['skip'] ? GeneralUtility::trimExplode(',', $this->arguments['skip']) : [];
         if (!empty($skip)) {
-            return $tagAttributes->renderWithSkip($skip);
+            return $tagAttributes->renderWithSkip($skip, $asArray);
         }
 
         $only = $this->arguments['only'] ? GeneralUtility::trimExplode(',', $this->arguments['only']) : [];
         if (!empty($only)) {
-            return $tagAttributes->renderWithOnly($only);
+            return $tagAttributes->renderWithOnly($only, $asArray);
         }
-        return (string)$tagAttributes;
+
+        return $asArray ? $tagAttributes->renderAsArray() : (string)$tagAttributes;
     }
 }

@@ -25,46 +25,56 @@ class TagAttributes implements \Countable
         return $this->attributesString;
     }
 
-    public function renderAsArray(): array
+    public function renderAsArray(array $attributes = []): array
     {
+        if (empty($attributes)) {
+            $attributes = $this->attributes;
+        }
+
+        if (empty($attributes)) {
+            return [];
+        }
+
         return $this->normalizeAttributes(
-            $this->attributes,
+            $attributes,
             fn($key, $value) => htmlspecialchars($value)
         );
     }
 
-    public function renderWithOnly(array $attributeKeys): string
+    public function renderWithOnly(array $attributeKeys, bool $asArray = false): string|array
     {
         if (empty($this->attributes)) {
-            return '';
+            return $asArray ? [] : '';
         }
 
         $attributesToRender = $this->attributes;
-
         if (!empty($attributeKeys)) {
             $attributesToRender = array_intersect_key($this->attributes, array_flip($attributeKeys));
         }
+
         if (empty($attributesToRender)) {
-            return '';
+            return $asArray ? [] : '';
         }
-        return $this->buildAttributesString($attributesToRender);
+
+        return $asArray ? $this->renderAsArray($attributesToRender) : $this->buildAttributesString($attributesToRender);
     }
 
-    public function renderWithSkip(array $attributeKeys): string
+    public function renderWithSkip(array $attributeKeys, bool $asArray = false): string|array
     {
         if (empty($this->attributes)) {
-            return '';
+            return $asArray ? [] : '';
         }
 
         $attributesToRender = $this->attributes;
-
         if (!empty($attributeKeys)) {
             $attributesToRender = array_diff_key($this->attributes, array_flip($attributeKeys));
         }
+
         if (empty($attributesToRender)) {
-            return '';
+            return $asArray ? [] : '';
         }
-        return $this->buildAttributesString($attributesToRender);
+
+        return $asArray ? $this->renderAsArray($attributesToRender) : $this->buildAttributesString($attributesToRender);
     }
 
     protected function buildAttributesString(array $attributes): string
