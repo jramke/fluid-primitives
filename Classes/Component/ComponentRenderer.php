@@ -157,7 +157,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
             $contextVariables = $this->buildContextVariables($argumentDefinitions, $view->getRenderingContext()->getVariableProvider(), new StrictArgumentProcessor());
             $contextClassName = ComponentUtility::getContextClassNameFromViewHelperName($viewHelperName, $this->componentResolver->getContextNamespaces());
             $context = new $contextClassName($renderingContext, $contextVariables);
-            $parentRenderingContext->getVariableProvider()->add("__context_{$baseName}", $context);
+            $parentRenderingContext->getViewHelperVariableContainer()->add(ContextViewHelper::class, $baseName, $context);
         }
 
         // Expose props marked for context from non root components to the context of this component
@@ -169,7 +169,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
                     $propsMarkedForContextValues[$name] = $arguments[$name] ?? $argumentDefinitions[$name]->getDefaultValue() ?? null;
                 }
             }
-            $context = $parentRenderingContext->getVariableProvider()->get("__context_{$baseName}");
+            $context = $parentRenderingContext->getViewHelperVariableContainer()->get(ContextViewHelper::class, $baseName);
             if ($context) {
                 $context->set(ComponentUtility::getSubcomponentNameFromViewHelperName($viewHelperName), $propsMarkedForContextValues);
             }
@@ -190,13 +190,12 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
             $renderedComponent = (string)$view->render($this->componentResolver->resolveTemplateName($viewHelperName));
             $rendered = $this->spreadComponentAttributesToChild($renderedChild, $renderedComponent);
         } else {
-
             $rendered = (string)$view->render($this->componentResolver->resolveTemplateName($viewHelperName));
         }
 
         if ($isRootComponent) {
             // cleanup the context variable from the parent rendering context
-            $parentRenderingContext->getVariableProvider()->remove("__context_{$baseName}");
+            $parentRenderingContext->getViewHelperVariableContainer()->remove(ContextViewHelper::class, $baseName);
 
             $rootId = ComponentUtility::getRootIdFromContext($renderingContext);
             if (!$rootId) {
@@ -287,24 +286,30 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
     {
         $contexts = [];
 
-        $allVars = $parentRenderingContext->getVariableProvider()->getAll();
-        foreach ($allVars as $key => $value) {
-            if (str_starts_with($key, '__context_')) {
-                if ($key === "__context_{$baseName}") continue;
-                $contexts[substr($key, 10)] = $value; // Remove the __context_ prefix
-            }
+        $variableContainer = $parentRenderingContext->getViewHelperVariableContainer();
+        $allContexts = $variableContainer->getAll(ContextViewHelper::class);
+        foreach ($allContexts as $ctxBaseName => $ctx) {
+            if ($ctxBaseName === $baseName) continue;
+            $contexts[$ctxBaseName] = $ctx;
         }
 
         return $contexts;
     }
 
+    // We try to get the context from the ViewHelperVariableContainer first as that is the more reliable way in case of nested components
+    // But to support the spreadProps pattern to use primitives we also need to check the context from the variable provider, 
+    // because we only expose the context to the ViewHelperVariableContainer when rendering the root component.
     protected function getRootComponentContext(RenderingContextInterface $renderingContext, string $baseName): AbstractComponentContext|null
     {
         $variableProvider = $renderingContext->getVariableProvider();
-        $ctx = $variableProvider->get("__context_{$baseName}") ?? null;
+        $variableContainer = $renderingContext->getViewHelperVariableContainer();
+
+        $ctx = $variableContainer->get(ContextViewHelper::class, $baseName);
+
         if ($ctx === null && $variableProvider->getByPath('component.baseName') === $baseName) {
             $ctx = $variableProvider->get('context') ?? null;
         }
+
         return $ctx;
     }
 
