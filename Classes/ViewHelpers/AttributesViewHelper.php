@@ -56,7 +56,7 @@ class AttributesViewHelper extends AbstractViewHelper
 
         $asArray = $this->arguments['asArray'] ?? false;
 
-        $tagAttributes = $this->renderingContext->getVariableProvider()->getByPath(Constants::TAG_ATTRIBUTES_KEY);
+        $tagAttributes = $this->renderingContext->getViewHelperVariableContainer()->get(self::class, 'attributes');
         if (empty($tagAttributes)) {
             return $asArray ? [] : '';
         }

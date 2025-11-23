@@ -10,7 +10,6 @@ class Constants
 
     public const PROPS_MARKED_FOR_CLIENT_KEY = '#__propsMarkedForClient';
     public const PROPS_MARKED_FOR_CONTEXT_KEY = '#__propsMarkedForContext';
-    public const TAG_ATTRIBUTES_KEY = '#__tagAttributes';
 
     public const RESERVED_PROPS = [
         self::PROP_ROOT_ID, // reserved as we declare it manually

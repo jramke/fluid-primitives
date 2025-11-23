@@ -9,6 +9,7 @@ use Jramke\FluidPrimitives\Contexts\AbstractComponentContext;
 use Jramke\FluidPrimitives\Domain\Model\TagAttributes;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
+use Jramke\FluidPrimitives\ViewHelpers\AttributesViewHelper;
 use Jramke\FluidPrimitives\ViewHelpers\ContextViewHelper;
 use TYPO3Fluid\Fluid\Core\Component\ComponentRendererInterface;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
@@ -91,7 +92,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
                 foreach ($propsToUse as $propToUse) {
                     if ($propToUse === 'attributes') {
                         // here we can simply grab the TagAttributes object as it already has resolved the additional attributes and the ones from the attributes argument
-                        $spreadTagAttributes = $parentRenderingContext->getVariableProvider()->get(Constants::TAG_ATTRIBUTES_KEY) ?? null;
+                        $spreadTagAttributes = $parentRenderingContext->getViewHelperVariableContainer()->get(AttributesViewHelper::class, 'attributes') ?? null;
                         if (empty($spreadTagAttributes)) {
                             $propValue = [];
                         } else {
@@ -146,7 +147,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
                 $additionalArguments,
                 $attributes
             );
-            $view->assign(Constants::TAG_ATTRIBUTES_KEY, new TagAttributes($mergedAttributes));
+            $renderingContext->getViewHelperVariableContainer()->add(AttributesViewHelper::class, 'attributes', new TagAttributes($mergedAttributes));
         }
 
         // render() call includes validation of provided arguments
