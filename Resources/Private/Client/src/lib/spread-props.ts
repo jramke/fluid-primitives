@@ -1,4 +1,4 @@
-import { nanoid } from 'nanoid';
+import { uid } from './uid';
 
 export interface Attrs {
 	[key: string]: any; // Change 'any' to the specific type you want to allow for attributes
@@ -24,7 +24,7 @@ const getAttributeName = (node: Element, attrName: string): string => {
 
 export function spreadProps(node: Element, attrs: Attrs, machineId?: string): () => void {
 	if (!(node as any).__spreadId) {
-		(node as any).__spreadId = `spread_${nanoid()}`;
+		(node as any).__spreadId = `spread_${uid()}`;
 	}
 
 	let machineElementKey = '';

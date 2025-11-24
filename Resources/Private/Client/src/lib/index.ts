@@ -4,3 +4,4 @@ export { ComponentHydrator, getHydrationData, initAllComponentInstances } from '
 export { Machine } from './machine';
 export { normalizeProps } from './normalize-props';
 export { spreadProps } from './spread-props';
+export { uid } from './uid';

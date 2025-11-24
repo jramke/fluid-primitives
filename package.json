@@ -82,7 +82,6 @@
         "@zag-js/tabs": "^1.27.0",
         "@zag-js/tooltip": "^1.27.0",
         "@zag-js/types": "^1.27.0",
-        "@zag-js/utils": "^1.27.0",
-        "nanoid": "^5.1.5"
+        "@zag-js/utils": "^1.27.0"
     }
 }

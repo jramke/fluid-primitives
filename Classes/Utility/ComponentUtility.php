@@ -14,9 +14,14 @@ class ComponentUtility
 {
     private static array $cachedSettings = [];
 
-    public static function uid(string $prefix = ''): string
+    public static function uid(string $prefix = 'f'): string
     {
-        return '«' . $prefix . bin2hex(random_bytes(4)) . '»';
+        static $id = 0;
+
+        $id++;
+        $base36 = base_convert((string)$id, 10, 36);
+
+        return '«' . $prefix . $base36 . '»';
     }
 
     public static function isComponent(RenderingContextInterface $renderingContext): bool
