@@ -131,4 +131,7 @@ declare const normalizeProps: _zag_js_types7.NormalizeProps<_zag_js_types7.PropT
   [x: string]: any;
 }>>;
 //#endregion
-export { Component as Component$1, ComponentHydrationData, ComponentHydrator as ComponentHydrator$1, ComponentInterface, Machine$1, getHydrationData as getHydrationData$1, initAllComponentInstances as initAllComponentInstances$1, mergeProps as mergeProps$1, normalizeProps as normalizeProps$1, spreadProps as spreadProps$1 };
+//#region Resources/Private/Client/src/lib/uid.d.ts
+declare function uid(prefix?: string): string;
+//#endregion
+export { Component as Component$1, ComponentHydrationData, ComponentHydrator as ComponentHydrator$1, ComponentInterface, Machine$1, getHydrationData as getHydrationData$1, initAllComponentInstances as initAllComponentInstances$1, mergeProps as mergeProps$1, normalizeProps as normalizeProps$1, spreadProps as spreadProps$1, uid as uid$1 };
