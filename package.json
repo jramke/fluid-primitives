@@ -39,6 +39,10 @@
             "import": "./Resources/Public/JavaScript/dist/collapsible.js",
             "types": "./Resources/Public/JavaScript/dist/collapsible.d.ts"
         },
+        "./popover": {
+            "import": "./Resources/Public/JavaScript/dist/popover.js",
+            "types": "./Resources/Public/JavaScript/dist/popover.d.ts"
+        },
         "./scroll-area": {
             "import": "./Resources/Public/JavaScript/dist/scroll-area.js",
             "types": "./Resources/Public/JavaScript/dist/scroll-area.d.ts"
@@ -76,6 +80,7 @@
         "@zag-js/core": "^1.27.0",
         "@zag-js/dialog": "^1.27.0",
         "@zag-js/dom-query": "^1.27.0",
+        "@zag-js/popover": "^1.29.1",
         "@zag-js/scroll-area": "^1.27.0",
         "@zag-js/select": "^1.27.0",
         "@zag-js/store": "^1.27.0",

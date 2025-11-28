@@ -1,0 +1,8 @@
+<button
+    type="button"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.close-trigger, then: 'id="{context.ids.close-trigger}"' )}
+    {ui:ref(name: 'close-trigger' )}
+    {ui:attributes()}>
+    <f:slot />
+</button>
