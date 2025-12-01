@@ -28,5 +28,7 @@ export class Form extends Component<FormProps, FormApi> {
 		if (!formEl) return;
 
 		this.spreadProps(formEl, this.api.getFormProps());
+
+		this.api.userRenderFn?.(this);
 	}
 }

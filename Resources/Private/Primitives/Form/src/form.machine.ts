@@ -20,7 +20,7 @@ export const machine = createMachine<FormSchema>({
 
 	states: {
 		ready: {},
-		validating: {},
+		invalid: {},
 		submitting: {},
 		success: {},
 		error: {},
@@ -28,42 +28,54 @@ export const machine = createMachine<FormSchema>({
 
 	on: {
 		SUBMIT: { target: 'submitting', actions: ['validateAll'] },
-		VALIDATE: { target: 'validating', actions: ['validateAll'] },
-		VALIDATE_SINGLE_FIELD: { target: 'validating', actions: ['validateSingleField'] },
-		INPUT: { target: 'ready', actions: ['applyInputChange', 'maybeValidateChanged'] },
+		VALIDATE: { actions: ['validateAll'] },
+		INVALID: { target: 'invalid' },
+		INPUT: { actions: ['handleInput'] },
 		RESET: { target: 'ready', actions: ['resetForm'] },
 		ERROR: { target: 'error' },
 		SUCCESS: { target: 'success' },
 	},
 
-	entry: ['handleFieldBlurs'],
+	// entry: ['handleFieldBlurs'],
+	// refs({ context }) {
+	// 	return {
+	// 		fields: dom.getFormEl(this.scope)?.querySelectorAll('[data-scope="field"]') ?? [],
+	// 	};
+	// },
 
 	implementations: {
 		actions: {
-			validateAll({ context, send, prop, state }) {
+			validateAll({ context, send, prop, state, action }) {
 				const schema = prop('schema');
 				const validationResult = v.safeParse(schema, context.get('values'));
 				const errs = errorsFromValibot(validationResult);
 				context.set('errors', errs);
 
+				const submitting = state.matches('submitting');
+
 				if (Object.keys(errs).length > 0) {
-					send({ type: 'ERROR' });
+					send({ type: 'INVALID' });
+					if (submitting) {
+						action(['focusFirstInvalid']);
+					}
 					return;
 				}
 
-				const submitting = state.matches('submitting');
 				if (!submitting) {
 					state.set('ready');
 					return;
 				}
 
 				const onSubmit = prop('onSubmit');
+				// console.log({ onSubmit });
+
 				if (!onSubmit) {
 					send({ type: 'SUCCESS' });
 					return;
 				}
 
 				const result = onSubmit(context.get('values'));
+
 				if (result instanceof Promise) {
 					result
 						.then(res => {
@@ -85,11 +97,17 @@ export const machine = createMachine<FormSchema>({
 				}
 			},
 
-			applyInputChange({ context, event }) {
+			handleInput({ context, event, action, prop }) {
 				const e = event as any;
+
 				const target = e?.detail?.target ?? e?.target ?? e?.currentTarget;
 				const name: string | undefined = target?.name;
 				if (!name) return;
+
+				const reactiveFields = prop('reactiveFields') || [];
+				if (reactiveFields.length === 0 || !reactiveFields.includes(name)) {
+					return;
+				}
 
 				const value = e?.detail?.value ?? getInputValue(target);
 				console.log({ name, value });
@@ -102,16 +120,23 @@ export const machine = createMachine<FormSchema>({
 				const dirty = { ...context.get('dirty') };
 				dirty[name] = JSON.stringify(values[name]) !== JSON.stringify(initial);
 				context.set('dirty', dirty);
+
+				// TODO: also keep validating on change when the errors are gone
+				// like a min length and then the user updates it so its valid and then removes chars again we would want to show the error again
+				// and we maybe want to allow revalidating on change also when the field is not declared as reactive
+				if (context.get('errors')[name]) {
+					action(['validateAll']);
+				}
 			},
 
-			maybeValidateChanged({ context, prop }) {
-				const validateOnChange = !!prop('validateOnChange');
-				if (!validateOnChange) return;
-				const schema = prop('schema');
-				const result = v.safeParse(schema, context.get('values'));
-				const errs = errorsFromValibot(result);
-				context.set('errors', errs);
-			},
+			// maybeValidateChanged({ context, prop }) {
+			// 	const validateOnChange = !!prop('validateOnChange');
+			// 	if (!validateOnChange) return;
+			// 	const schema = prop('schema');
+			// 	const result = v.safeParse(schema, context.get('values'));
+			// 	const errs = errorsFromValibot(result);
+			// 	context.set('errors', errs);
+			// },
 
 			resetForm({ context }) {
 				const initial = context.get('initialValues');
@@ -122,39 +147,17 @@ export const machine = createMachine<FormSchema>({
 				context.set('dirty', dirty);
 			},
 
-			handleFieldBlurs({ context, event, scope, prop, action }) {
-				const form = dom.getFormEl(scope);
-				Array.from(form?.elements || []).forEach(el => {
-					console.log({ el });
-					el.addEventListener('blur', () => {
-						const schema = prop('schema');
-						console.log('blurred, we validate', el, schema);
-						action(['validateSingleField']);
-					});
-				});
-			},
-			validateSingleField({ prop, context, event }) {
-				const name = (event as any)?.detail?.name as string | undefined;
-				if (!name) return;
+			focusFirstInvalid({ context, scope }) {
+				const errors = context.get('errors');
+				const firstKey = Object.keys(errors)[0];
+				if (!firstKey) return;
 
-				const schema = prop('schema');
-				if (!schema) return;
+				const form = dom.getFormEl(scope)!;
 
-				const fieldSchema = (schema as any)?.entries[name];
-				if (!fieldSchema) return;
-
-				const results = v.safeParse(fieldSchema, context.get('values')[name]);
-				const errs = errorsFromValibot(results);
-				const existingErrors = context.get('errors');
-				const nextErrors = { ...existingErrors };
-
-				if (errs && Object.keys(errs).length > 0) {
-					nextErrors[name] = errs[name];
-				} else {
-					delete nextErrors[name];
-				}
-
-				context.set('errors', nextErrors);
+				const invalidEl = form.querySelector(
+					`[name="${CSS.escape(firstKey)}"]`
+				) as HTMLElement | null;
+				invalidEl?.focus();
 			},
 		},
 	},

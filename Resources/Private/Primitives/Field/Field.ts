@@ -1,4 +1,5 @@
 import { Component, Machine, normalizeProps } from '../../Client';
+import { registerFieldMachineForForm } from '../Form/src/form.registry';
 import { connect } from './src/field.connect';
 import { machine } from './src/field.machine';
 import { registerFieldMachine } from './src/field.registry';
@@ -12,6 +13,7 @@ export class Field extends Component<FieldProps, FieldApi> {
 	initMachine(props: FieldProps) {
 		const createdMachine = new Machine(machine, props);
 		registerFieldMachine(this.getElement('root'), createdMachine);
+		registerFieldMachineForForm(this.getElement('root'), createdMachine);
 		return createdMachine;
 	}
 
@@ -27,15 +29,17 @@ export class Field extends Component<FieldProps, FieldApi> {
 
 		this.subscribedToForm = true;
 		formMachine.subscribe(() => {
-			// console.log(
-			// 	'form subscribe calls render',
-			// 	this.api.name,
-			// 	formMachine.ctx.get('errors')
-			// );
-			queueMicrotask(() => {
-				this.api = this.initApi();
-				this.render();
-			});
+			console.log(
+				'form subscribe calls render',
+				this.api.name,
+				formMachine.ctx.get('errors')
+			);
+			this.machine.notify();
+			// queueMicrotask(() => {
+			// 	this.machine.notify();
+			// 	// this.api = this.initApi();
+			// 	// this.render();
+			// });
 		});
 	}
 

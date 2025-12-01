@@ -30,6 +30,7 @@ export function connect<T extends PropTypes>(
 				...parts.root.attrs,
 				id: dom.getRootId(scope),
 				'data-invalid': invalid ? '' : undefined,
+				'data-name': prop('name'),
 			});
 		},
 

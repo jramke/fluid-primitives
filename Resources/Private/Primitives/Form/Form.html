@@ -1,7 +1,9 @@
+<f:variable name="refData" value="{state: 'ready'}" />
+
 <form
     novalidate
     {f:if(condition: class, then: 'class="{class}"' )}
-    {ui:ref(name: 'form' )}
+    {ui:ref(name: 'form' , data: refData )}
     {ui:attributes()}>
     <f:slot />
 </form>

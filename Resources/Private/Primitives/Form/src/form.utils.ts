@@ -14,14 +14,15 @@ export function toKeyPath(path?: Array<{ key?: string | number; index?: number }
 	return parts.join('.');
 }
 
-export function errorsFromValibot(result: v.SafeParseResult<any>): FormErrors {
+export function errorsFromValibot(result: v.SafeParseResult<any>, key?: string): FormErrors {
 	if (result.success) return {};
 	const out: FormErrors = {};
 	for (const issue of result.issues) {
-		const key = toKeyPath(issue.path) || (typeof issue.input === 'string' ? issue.input : '');
+		const errorKey: string =
+			key || toKeyPath(issue.path) || (typeof issue.input === 'string' ? issue.input : '');
 		const message = issue.message ?? 'Invalid value';
-		if (!out[key]) out[key] = [];
-		out[key].push(message);
+		if (!out[errorKey]) out[errorKey] = [];
+		out[errorKey].push(message);
 	}
 	return out;
 }

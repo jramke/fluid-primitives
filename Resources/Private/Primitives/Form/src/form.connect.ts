@@ -3,6 +3,7 @@ import { dataAttr } from '@zag-js/dom-query';
 import type { NormalizeProps, PropTypes } from '@zag-js/types';
 import { parts } from './form.anatomy';
 import * as dom from './form.dom';
+import { getFieldMachinesFor } from './form.registry';
 import type { FormApi, FormDirty, FormErrors, FormSchema, FormValues } from './form.types';
 import { snapshotFormValues } from './form.utils';
 
@@ -10,7 +11,7 @@ export function connect<T extends PropTypes>(
 	service: Service<FormSchema>,
 	normalize: NormalizeProps<T>
 ): FormApi {
-	const { context, state, send, scope } = service;
+	const { context, state, send, scope, prop } = service;
 
 	function getValues(): FormValues {
 		return context.get('values');
@@ -22,25 +23,31 @@ export function connect<T extends PropTypes>(
 		return context.get('dirty');
 	}
 
+	const isSubmitting = state.matches('submitting');
+	const isDirty = Object.values(getDirty()).some(v => v);
+	const isInvalid = Object.values(getErrors()).some(v => v);
+	const isSuccessful = state.matches('success');
+	const isError = state.matches('error');
+	const stateValue = state.get();
+
 	return {
-		isSubmitting: state.matches('submitting'),
+		isSubmitting,
+		isDirty,
+		isInvalid,
+		isSuccessful,
+		isError,
 
 		getValues,
 		getErrors,
 		getDirty,
 
-		// TODO: remove
-		getFieldState(name: string) {
-			const values = getValues();
-			const errors = getErrors();
-			const dirty = getDirty();
-			const errList = errors[name] ?? [];
-			return {
-				value: values[name],
-				errors: errList,
-				dirty: !!dirty[name],
-				invalid: errList.length > 0,
-			};
+		userRenderFn: prop('render'),
+
+		getFormEl() {
+			return dom.getFormEl(scope);
+		},
+		getFields() {
+			return getFieldMachinesFor(dom.getFormEl(scope));
 		},
 
 		getFormProps() {
@@ -48,10 +55,7 @@ export function connect<T extends PropTypes>(
 				...parts.form.attrs,
 				noValidate: dataAttr(true),
 				id: dom.getFormId(scope),
-				'data-dirty': dataAttr(Object.values(getDirty()).some(v => v)),
-				'data-invalid': dataAttr(Object.values(getErrors()).some(v => v)),
-				'data-submitting': dataAttr(state.matches('submitting')),
-				'data-success': dataAttr(state.matches('success')),
+				'data-state': stateValue,
 				onSubmit: async event => {
 					event.preventDefault();
 					const form = event.currentTarget as HTMLFormElement;
@@ -72,7 +76,12 @@ export function connect<T extends PropTypes>(
 					});
 					send({ type: 'RESET' });
 				},
+				// for things like inputs
 				onInput: event => {
+					send({ type: 'INPUT', detail: { target: event.target } });
+				},
+				// for things like selects or checkboxes
+				onChange_: (event: any) => {
 					send({ type: 'INPUT', detail: { target: event.target } });
 				},
 			});
