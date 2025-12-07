@@ -50,7 +50,7 @@ interface ComponentContextInterface extends ContainerInterface
 
     /** 
      * Lifecycle method called before rendering. Only called for root or closed components.
-     * When modifying the rendering context here, make sure to clean it up in afterRendering().
+     * When modifying the ParentRenderingContext here, make sure to clean it up in afterRendering().
      */
     public function beforeRendering(): void;
 

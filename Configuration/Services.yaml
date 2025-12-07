@@ -10,6 +10,3 @@ services:
   Jramke\FluidPrimitives\Registry\HydrationRegistry:
     shared: true
     public: true
-
-  # Jramke\FluidPrimitives\Contexts\FormContext:
-  #   public: true
