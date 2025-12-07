@@ -1,17 +1,40 @@
 import * as select from '@zag-js/select';
-import { Component, Machine, mergeProps, normalizeProps } from '../../Client';
+import { FieldAwareComponent, Machine, mergeProps, normalizeProps } from '../../Client';
 import { getListCollectionFromHydrationData } from '../../Client/src/lib/hydration';
+import * as fieldDom from '../Field/src/field.dom';
+import type { FieldMachine } from '../Field/src/field.registry';
 
-export class Select extends Component<select.Props, select.Api> {
-	name = 'select';
+export class Select extends FieldAwareComponent<select.Props, select.Api> {
+	static name = 'select';
 
-	initMachine(props: select.Props): Machine<any> {
-		return new Machine(select.machine, {
+	propsWithField(props: select.Props, fieldMachine: FieldMachine): select.Props {
+		return {
+			...props,
+			disabled: props.disabled ?? fieldMachine.ctx.get('disabled'),
+			readOnly: props.readOnly ?? fieldMachine.ctx.get('readOnly'),
+			required: props.required ?? fieldMachine.ctx.get('required'),
+			invalid: props.invalid ?? fieldMachine.ctx.get('invalid'),
+			name: props.name ?? fieldMachine.prop('name'),
+			ids: {
+				...props.ids,
+				label: fieldDom.getLabelId(fieldMachine.scope),
+				hiddenSelect: fieldDom.getControlId(fieldMachine.scope),
+			},
+		};
+	}
+
+	transformProps(props: select.Props) {
+		return {
 			...props,
 			get collection() {
-				return getListCollectionFromHydrationData<any>(props.collection);
+				return getListCollectionFromHydrationData(props.collection);
 			},
-		});
+		};
+	}
+
+	initMachine(props: select.Props): Machine<any> {
+		props = this.withFieldProps(props);
+		return new Machine(select.machine, this.transformProps(props));
 	}
 
 	initApi() {
@@ -19,6 +42,8 @@ export class Select extends Component<select.Props, select.Api> {
 	}
 
 	render = () => {
+		this.subscribeToFieldService();
+
 		const rootEl = this.getElement('root');
 		if (rootEl) this.spreadProps(rootEl, this.api.getRootProps());
 
@@ -26,7 +51,12 @@ export class Select extends Component<select.Props, select.Api> {
 		if (controlEl) this.spreadProps(controlEl, this.api.getControlProps());
 
 		const hiddenSelectEl = this.getElement('hidden-select');
-		if (hiddenSelectEl) this.spreadProps(hiddenSelectEl, this.api.getHiddenSelectProps());
+		if (hiddenSelectEl) {
+			const mergedProps = mergeProps(this.api.getHiddenSelectProps(), {
+				'aria-describedby': this.fieldMachine?.ctx.get('describeIds') || undefined,
+			});
+			this.spreadProps(hiddenSelectEl, mergedProps);
+		}
 
 		const labelEl = this.getElement('label');
 		if (labelEl) this.spreadProps(labelEl, this.api.getLabelProps());

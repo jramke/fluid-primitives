@@ -39,6 +39,14 @@
             "import": "./Resources/Public/JavaScript/dist/collapsible.js",
             "types": "./Resources/Public/JavaScript/dist/collapsible.d.ts"
         },
+        "./field": {
+            "import": "./Resources/Public/JavaScript/dist/field.js",
+            "types": "./Resources/Public/JavaScript/dist/field.d.ts"
+        },
+        "./form": {
+            "import": "./Resources/Public/JavaScript/dist/form.js",
+            "types": "./Resources/Public/JavaScript/dist/form.d.ts"
+        },
         "./popover": {
             "import": "./Resources/Public/JavaScript/dist/popover.js",
             "types": "./Resources/Public/JavaScript/dist/popover.d.ts"
@@ -69,10 +77,12 @@
     "devDependencies": {
         "@types/node": "^22.15.17",
         "tsdown": "^0.11.9",
-        "typescript": "^5.8.3"
+        "typescript": "^5.8.3",
+        "valibot": "^1.1.0"
     },
     "dependencies": {
         "@zag-js/accordion": "^1.27.0",
+        "@zag-js/anatomy": "^1.27.1",
         "@zag-js/checkbox": "^1.27.0",
         "@zag-js/clipboard": "^1.27.0",
         "@zag-js/collapsible": "^1.27.0",

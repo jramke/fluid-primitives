@@ -9,17 +9,30 @@ use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 abstract class AbstractComponentContext implements ComponentContextInterface, \ArrayAccess
 {
     protected RenderingContextInterface $renderingContext;
+    protected RenderingContextInterface $parentRenderingContext;
     protected array $contextVariables = [];
 
-    public function __construct(RenderingContextInterface $renderingContext, array $contextVariables = [])
-    {
+    /**
+     * Initialize the context with state after dependency injection
+     */
+    public function initialize(
+        RenderingContextInterface $renderingContext,
+        RenderingContextInterface $parentRenderingContext,
+        array $contextVariables = [],
+    ): void {
         $this->renderingContext = $renderingContext;
+        $this->parentRenderingContext = $parentRenderingContext;
         $this->contextVariables = $contextVariables;
     }
 
     public function getRenderingContext(): RenderingContextInterface
     {
         return $this->renderingContext;
+    }
+
+    public function getParentRenderingContext(): RenderingContextInterface
+    {
+        return $this->parentRenderingContext;
     }
 
     public function getAllVariables(): array
@@ -61,4 +74,8 @@ abstract class AbstractComponentContext implements ComponentContextInterface, \A
     {
         unset($this->contextVariables[$offset]);
     }
+
+    public function beforeRendering(): void {}
+
+    public function afterRendering(string &$rendered): void {}
 }

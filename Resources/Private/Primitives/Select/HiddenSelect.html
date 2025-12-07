@@ -11,5 +11,12 @@
     tabindex="-1"
     style="{settings.visuallyHiddenStyles}"
     {ui:attributes(skip: 'style' )}>
-    <f:slot />
+    <f:for each="{context.collection.items}" as="item" iteration="i">
+        <f:comment>
+            <!-- TODO: this needs to be improved by item state -->
+        </f:comment>
+        <option value="{item.value}" {f:if(condition: item.disabled, then: 'disabled' )}>
+            {item.label}
+        </option>
+    </f:for>
 </select>

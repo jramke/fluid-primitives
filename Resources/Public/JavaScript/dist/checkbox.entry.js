@@ -1,1 +1,1 @@
-import{initAllComponentInstances as e}from"./Client-D6-1-ENk.js";import{Checkbox as t}from"./Checkbox-CckrobGO.js";e(`checkbox`,({props:e})=>{let n=new t(e);return n.init(),n});
+import{initAllComponentInstances as e}from"./Client-oBmSvCIl.js";import"./field.dom-BPeGctuk.js";import{Checkbox as t}from"./Checkbox-DH3KIA4G.js";e(`checkbox`,({props:e})=>{let n=new t(e);return n.init(),n});

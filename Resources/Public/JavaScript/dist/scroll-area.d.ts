@@ -1,10 +1,10 @@
-import { Component$1 as Component, Machine$1 as Machine } from "./index-8dlJl7tG.js";
+import { Component$1 as Component, Machine$1 as Machine } from "./index-w1HRp_7W.js";
 import { PropTypes } from "@zag-js/types";
 import * as scrollArea from "@zag-js/scroll-area";
 
 //#region Resources/Private/Primitives/ScrollArea/ScrollArea.d.ts
 declare class ScrollArea extends Component<scrollArea.Props, scrollArea.Api<PropTypes>> {
-  name: string;
+  static name: string;
   initMachine(props: scrollArea.Props): Machine<any>;
   initApi(): scrollArea.Api<PropTypes<{
     [x: string]: any;

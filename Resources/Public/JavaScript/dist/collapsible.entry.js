@@ -1,1 +1,1 @@
-import{initAllComponentInstances as e}from"./Client-D6-1-ENk.js";import{Collapsible as t}from"./Collapsible-B56Sq73Q.js";e(`collapsible`,({props:e})=>{let n=new t(e);return n.init(),n});
+import{initAllComponentInstances as e}from"./Client-oBmSvCIl.js";import{Collapsible as t}from"./Collapsible-ndvh9m1d.js";e(`collapsible`,({props:e})=>{let n=new t(e);return n.init(),n});

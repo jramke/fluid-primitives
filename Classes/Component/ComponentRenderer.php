@@ -7,10 +7,12 @@ namespace Jramke\FluidPrimitives\Component;
 use Jramke\FluidPrimitives\Constants;
 use Jramke\FluidPrimitives\Contexts\AbstractComponentContext;
 use Jramke\FluidPrimitives\Domain\Model\TagAttributes;
+use Jramke\FluidPrimitives\Factory\ComponentContextFactory;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use Jramke\FluidPrimitives\ViewHelpers\AttributesViewHelper;
 use Jramke\FluidPrimitives\ViewHelpers\ContextViewHelper;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3Fluid\Fluid\Core\Component\ComponentRendererInterface;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 use TYPO3Fluid\Fluid\Core\ViewHelper\ViewHelperVariableContainer;
@@ -106,6 +108,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
             }
         }
 
+        // Set all components arguments
         $renderingContext->setVariableProvider($renderingContext->getVariableProvider()->getScopeCopy($arguments));
 
         // Provide slots to SlotViewHelper
@@ -157,7 +160,14 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         if ($isRootComponent) {
             $contextVariables = $this->buildContextVariables($argumentDefinitions, $view->getRenderingContext()->getVariableProvider(), new StrictArgumentProcessor());
             $contextClassName = ComponentUtility::getContextClassNameFromViewHelperName($viewHelperName, $this->componentResolver->getContextNamespaces());
-            $context = new $contextClassName($renderingContext, $contextVariables);
+            $contextFactory = GeneralUtility::makeInstance(ComponentContextFactory::class);
+            $context = $contextFactory->create(
+                $contextClassName,
+                $renderingContext,
+                $parentRenderingContext,
+                $contextVariables
+            );
+
             $parentRenderingContext->getViewHelperVariableContainer()->add(ContextViewHelper::class, $baseName, $context);
         }
 
@@ -176,13 +186,39 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
             }
         }
 
-        // Pick up potential context from component (parent or itself if root)
-        $ctx = $this->getRootComponentContext($parentRenderingContext, $baseName);
-        if ($ctx) $view->assign('context', $ctx);
-
-        // Also expose other component contexts to allow deep nesting of composable components
+        // Expose other component contexts to allow deep nesting of composable components
         $otherComponentContexts = $this->getOtherComponentContexts($parentRenderingContext, $baseName);
         $renderingContext->getViewHelperVariableContainer()->addAll(ContextViewHelper::class, $otherComponentContexts);
+
+        // Pick up potential context from current component (parent or itself if root)
+        $ctx = $this->getRootComponentContext($parentRenderingContext, $baseName);
+
+        $fieldRootId = null;
+
+        // If the component supports field and there is a field context available, we merge the field context variables into the current context
+        if ($isRootComponent && $this->componentSupportsField($baseName)) {
+            $fieldContext = $otherComponentContexts['field'] ?? null;
+            if ($fieldContext) {
+                $fieldRootId = $fieldContext->get('rootId') ?? null;
+                $fieldVariables = $fieldContext->getChildVariables();
+                foreach ($fieldVariables as $varName => $varValue) {
+                    $view->getRenderingContext()->getVariableProvider()->remove($varName);
+                    $view->getRenderingContext()->getVariableProvider()->add($varName, $varValue);
+                    $arguments[$varName] = $varValue;
+                    if ($ctx) {
+                        $ctx->set($varName, $varValue);
+                    }
+                }
+            }
+        }
+
+        // Assign context if available
+        if ($ctx) $view->assign('context', $ctx);
+
+        // Call beforeRendering lifecycle method only for root or closed components
+        if ($ctx && $isRootComponent && method_exists($ctx, 'beforeRendering')) {
+            $ctx->beforeRendering();
+        }
 
         if ($arguments['asChild'] ?? false) {
             $renderedChild = isset($slots['default']) && is_callable($slots['default'])
@@ -197,6 +233,11 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         if ($isRootComponent) {
             // cleanup the context variable from the parent rendering context
             $parentRenderingContext->getViewHelperVariableContainer()->remove(ContextViewHelper::class, $baseName);
+
+            // Call afterRendering lifecycle method only for root or closed components
+            if ($ctx && method_exists($ctx, 'afterRendering')) {
+                $ctx->afterRendering($rendered);
+            }
 
             $rootId = ComponentUtility::getRootIdFromContext($renderingContext);
             if (!$rootId) {
@@ -222,19 +263,23 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
                 unset($props['id']); // Remove potential id from client props as it is handled separately
                 unset($props['ids']);
 
+                $data = [
+                    'controlled' => $arguments['controlled'] ?? false,
+                    'props' => [
+                        'id' => $rootId,
+                        'ids' => $arguments['ids'] ?? [],
+                        ...$props,
+                    ],
+                ];
+                if ($fieldRootId) {
+                    $data['field'] = $fieldRootId;
+                }
+
                 $registry = HydrationRegistry::getInstance();
                 $registry->add(
                     $baseName,
                     $rootId,
-                    [
-
-                        'controlled' => $arguments['controlled'] ?? false,
-                        'props' => [
-                            'id' => $rootId,
-                            'ids' => $arguments['ids'] ?? [],
-                            ...$props,
-                        ],
-                    ]
+                    $data
                 );
             }
         }
@@ -359,5 +404,10 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         );
 
         return $finalHtml;
+    }
+
+    protected function componentSupportsField(string $baseName): bool
+    {
+        return in_array($baseName, Constants::COMPONENTS_THAT_SUPPORT_FIELD, true);
     }
 }

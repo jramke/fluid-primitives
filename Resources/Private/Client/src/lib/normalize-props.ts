@@ -13,12 +13,15 @@ export const propMap: AttrMap = {
 	className: 'class',
 	defaultValue: 'value',
 	defaultChecked: 'checked',
+	// we need the change event for the form to detect changes in a select element for example
+	// since the change and input events are a little different in react zag maps onChange to onInput (same for svelte adapter for example)
+	onChange_: 'onChange',
 };
 
 // SVG attributes that should preserve their case
 const caseSensitiveSvgAttrs = new Set<string>(['viewBox', 'preserveAspectRatio']);
 
-const toStyleString = (style: any) => {
+export const toStyleString = (style: any) => {
 	let string = '';
 	for (let key in style) {
 		const value = style[key];

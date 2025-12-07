@@ -46,6 +46,8 @@ export class Machine<T extends MachineSchema> {
 	private cleanups: VoidFunction[] = [];
 	private subscriptions: Array<(service: Service<T>) => void> = [];
 
+	private userPropsRef: { current: Partial<T['props']> | (() => Partial<T['props']>) };
+
 	private getEvent = () => ({
 		...this.event,
 		current: () => this.event,
@@ -71,13 +73,15 @@ export class Machine<T extends MachineSchema> {
 		private machine: ZagMachine<T>,
 		userProps: Partial<T['props']> | (() => Partial<T['props']>) = {}
 	) {
+		this.userPropsRef = { current: userProps };
+
 		// create scope
 		const { id, ids, getRootNode } = runIfFn(userProps) as any;
 		this.scope = createScope({ id, ids, getRootNode });
 
 		// create prop
 		const prop: PropFn<T> = key => {
-			const __props = runIfFn(userProps);
+			const __props = runIfFn(this.userPropsRef.current);
 			const props: any =
 				machine.props?.({ props: compact(__props), scope: this.scope }) ?? __props;
 			return props[key] as any;
@@ -188,6 +192,11 @@ export class Machine<T extends MachineSchema> {
 		}));
 		this.state = state;
 		this.cleanups.push(subscribe(this.state.ref, () => this.notify()));
+	}
+
+	updateProps(newProps: Partial<T['props']> | (() => Partial<T['props']>)) {
+		this.userPropsRef.current = newProps;
+		this.notify();
 	}
 
 	send = (event: any) => {

@@ -2,7 +2,7 @@ import * as clipboard from '@zag-js/clipboard';
 import { Component, Machine, normalizeProps } from '../../Client';
 
 export class Clipboard extends Component<clipboard.Props, clipboard.Api> {
-	name = 'clipboard';
+	static name = 'clipboard';
 
 	initMachine(props: clipboard.Props) {
 		return new Machine(clipboard.machine, props);
