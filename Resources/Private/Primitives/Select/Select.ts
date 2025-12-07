@@ -44,8 +44,6 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
 	render = () => {
 		this.subscribeToFieldService();
 
-		console.log('render machine select');
-
 		const rootEl = this.getElement('root');
 		if (rootEl) this.spreadProps(rootEl, this.api.getRootProps());
 

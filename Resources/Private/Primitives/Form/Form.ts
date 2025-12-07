@@ -18,11 +18,11 @@ export class Form extends Component<FormProps, FormApi> {
 	}
 
 	render() {
-		console.log('render form', {
-			errors: this.api.getErrors(),
-			values: this.api.getValues(),
-			dirty: this.api.getDirty(),
-		});
+		// console.log('render form', {
+		// 	errors: this.api.getErrors(),
+		// 	values: this.api.getValues(),
+		// 	dirty: this.api.getDirty(),
+		// });
 
 		const formEl = this.getElement('form') as HTMLFormElement | null;
 		if (!formEl) return;

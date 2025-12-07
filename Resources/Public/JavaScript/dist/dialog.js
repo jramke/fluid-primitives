@@ -1,1 +1,1 @@
-import"./Client-ClhqcFHq.js";import{Dialog as e}from"./Dialog-C8eCDkqg.js";export{e as Dialog};
+import"./Client-D9VkIMmt.js";import{Dialog as e}from"./Dialog-B3SuN79P.js";export{e as Dialog};

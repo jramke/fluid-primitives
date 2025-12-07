@@ -1,10 +1,8 @@
-import { Component$1 as Component, Machine$1 as Machine } from "./index-C2xweJ6P.js";
+import { Component$1 as Component, Machine$1 as Machine } from "./index-D3h8ShLC.js";
+import { FormMachine } from "./form.registry-DDatD89B.js";
 import { EventObject } from "@zag-js/core";
 import { PropTypes } from "@zag-js/types";
 
-//#region Resources/Private/Primitives/Form/src/form.registry.d.ts
-type FormMachine = Machine<any>;
-//#endregion
 //#region Resources/Private/Primitives/Field/src/field.types.d.ts
 interface FieldProps {
   id: string;

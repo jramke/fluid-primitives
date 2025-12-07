@@ -1,9 +1,25 @@
-<f:variable name="refData" value="{state: 'ready'}" />
+<ui:prop name="actionUri" type="string" optional="{true}" />
+<ui:prop name="action" type="string" optional="{true}" />
+<ui:prop name="extensionName" type="string" optional="{true}" />
+<ui:prop name="pluginName" type="string" optional="{true}" />
+<ui:prop name="controller" type="string" optional="{true}" />
+<ui:prop name="arguments" type="array" optional="{true}" />
+<ui:prop name="pageUid" type="int" optional="{true}" />
+<ui:prop name="objectName" type="string" optional="{true}" client="{true}" />
+
+<f:variable name="refData" value="{state: 'ready', field-name-prefix: context.fieldNamePrefix, object-name: objectName}" />
 
 <form
     novalidate
+    {f:if(condition: context.resolvedAction, then: 'action="{context.resolvedAction}"' )}
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'form' , data: refData )}
     {ui:attributes()}>
     <f:slot />
 </form>
+
+<f:comment>
+</f:comment>
+<f:form action="submit" objectName="testForm" method="post" id="test-form">
+    <f:form.textfield property="something" type="text" />
+</f:form>

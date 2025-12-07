@@ -8,6 +8,7 @@ export class Checkbox extends FieldAwareComponent<checkbox.Props, checkbox.Api> 
 
 	propsWithField(props: checkbox.Props, fieldMachine: FieldMachine): checkbox.Props {
 		return {
+			value: '1', // HTML default is 'on' but we use '1' for easier boolean conversion
 			...props,
 			disabled: props.disabled ?? fieldMachine.ctx.get('disabled'),
 			readOnly: props.readOnly ?? fieldMachine.ctx.get('readOnly'),

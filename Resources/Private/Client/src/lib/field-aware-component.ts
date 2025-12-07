@@ -13,7 +13,6 @@ const fieldAccessors: Record<FieldProps, (s: Service<any>) => boolean> = {
 	readOnly: s => s.context.get('readOnly'),
 	required: s => s.context.get('required'),
 	invalid: s => s.context.get('invalid'),
-	// invalid: s => s.computed('invalid'),
 };
 
 export abstract class FieldAwareComponent<Props, Api> extends Component<Props, Api> {
@@ -79,14 +78,12 @@ export abstract class FieldAwareComponent<Props, Api> extends Component<Props, A
 
 					for (const prop of fieldProps) {
 						const newValue = !!fieldAccessors[prop](snapshot);
-						// const currentValue = !!this.api[prop as keyof Api];
 						const currentValue = !!this.machine.prop(prop);
 
 						if (newValue !== currentValue) {
 							propsToUpdate[prop] = newValue;
 						}
 					}
-					// console.log(this.getName(), { propsToUpdate });
 
 					if (Object.keys(propsToUpdate).length > 0) {
 						this.updateProps(propsToUpdate as Partial<Props>);

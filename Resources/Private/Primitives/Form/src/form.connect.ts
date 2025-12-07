@@ -4,8 +4,7 @@ import type { NormalizeProps, PropTypes } from '@zag-js/types';
 import { parts } from './form.anatomy';
 import * as dom from './form.dom';
 import { getFieldMachinesFor } from './form.registry';
-import type { FormApi, FormDirty, FormErrors, FormSchema, FormValues } from './form.types';
-import { snapshotFormValues } from './form.utils';
+import type { FormApi, FormDirty, FormSchema } from './form.types';
 
 export function connect<T extends PropTypes>(
 	service: Service<FormSchema>,
@@ -13,14 +12,18 @@ export function connect<T extends PropTypes>(
 ): FormApi {
 	const { context, state, send, scope, prop } = service;
 
-	function getValues(): FormValues {
+	function getValues() {
 		return context.get('values');
 	}
-	function getErrors(): FormErrors {
+	function getErrors() {
 		return context.get('errors');
 	}
-	function getDirty(): FormDirty {
+	function getDirty() {
 		return context.get('dirty');
+	}
+
+	function getFormEl() {
+		return dom.getFormEl(scope);
 	}
 
 	const isSubmitting = state.matches('submitting');
@@ -43,11 +46,13 @@ export function connect<T extends PropTypes>(
 
 		userRenderFn: prop('render'),
 
-		getFormEl() {
-			return dom.getFormEl(scope);
-		},
+		getFormEl,
 		getFields() {
 			return getFieldMachinesFor(dom.getFormEl(scope));
+		},
+		getAction() {
+			const formEl = getFormEl();
+			return formEl.getAttribute('action') || '';
 		},
 
 		getFormProps() {
@@ -59,14 +64,13 @@ export function connect<T extends PropTypes>(
 				onSubmit: async event => {
 					event.preventDefault();
 					const form = event.currentTarget as HTMLFormElement;
-					const nextValues = snapshotFormValues(form);
-					context.set('values', nextValues);
-					send({ type: 'SUBMIT' });
+					context.set('values', new FormData(form));
+					send({ type: 'SUBMIT', detail: { event, api: this } });
 				},
 				onReset: event => {
 					const form = event.currentTarget as HTMLFormElement;
 					queueMicrotask(() => {
-						const nextValues = snapshotFormValues(form);
+						const nextValues = new FormData(form);
 						context.set('initialValues', nextValues);
 						context.set('values', nextValues);
 						context.set('errors', {});

@@ -1,44 +1,58 @@
-import { Component$1 as Component, Machine$1 as Machine } from "./index-C2xweJ6P.js";
+import { Component$1 as Component, Machine$1 as Machine } from "./index-D3h8ShLC.js";
+import { FieldMachine$1 as FieldMachine } from "./form.registry-DDatD89B.js";
 import { EventObject } from "@zag-js/core";
-import { PropTypes } from "@zag-js/types";
+import { JSX, PropTypes } from "@zag-js/types";
 import * as v from "valibot";
 
 //#region Resources/Private/Primitives/Form/src/form.types.d.ts
-type FormValues = Record<string, unknown>;
 type FormErrors = Record<string, string[]>;
 type FormDirty = Record<string, boolean>;
-type ValibotFormSchema = v.GenericSchema;
+type ValibotFormSchema = v.ObjectSchema<v.ObjectEntries, v.ErrorMessage<v.ObjectIssue> | undefined>;
 interface FormProps {
   id: string;
-  schema: ValibotFormSchema;
-  validateOnChange?: boolean;
-  onSubmit?: (values: FormValues) => Promise<boolean> | boolean;
+  schema?: ValibotFormSchema;
+  reactiveFields?: string[];
+  objectName?: string;
+  onSubmit?: ({
+    formData,
+    api,
+    event,
+    post
+  }: {
+    formData: FormData;
+    api: FormApi;
+    event: JSX.FormEvent<HTMLElement>;
+    post: (url: string, data: FormData) => Promise<Response>;
+  }) => Promise<boolean> | boolean;
+  render?: (form: Form) => void;
 }
 interface FormSchema {
   props: FormProps;
   context: {
-    values: FormValues;
-    initialValues: FormValues;
+    values: FormData;
+    initialValues: FormData;
     errors: FormErrors;
     dirty: FormDirty;
   };
-  state: 'validating' | 'ready' | 'submitting' | 'success' | 'error';
+  state: 'invalid' | 'ready' | 'submitting' | 'success' | 'error';
   event: EventObject;
   action: string;
   effect: string;
 }
 interface FormApi {
   isSubmitting: boolean;
+  isDirty: boolean;
+  isInvalid: boolean;
+  isSuccessful: boolean;
+  isError: boolean;
   getFormProps(): PropTypes['element'];
-  getValues(): FormValues;
+  getValues(): FormData;
   getErrors(): FormErrors;
   getDirty(): FormDirty;
-  getFieldState(name: string): {
-    value: unknown;
-    errors: string[];
-    dirty: boolean;
-    invalid: boolean;
-  };
+  userRenderFn: FormProps['render'];
+  getFields(): Map<string, FieldMachine>;
+  getFormEl(): HTMLFormElement | null;
+  getAction(): string;
 }
 //#endregion
 //#region Resources/Private/Primitives/Form/Form.d.ts

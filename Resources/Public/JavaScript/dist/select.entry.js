@@ -1,1 +1,1 @@
-import{initAllComponentInstances as e}from"./Client-ClhqcFHq.js";import"./field.dom-BPeGctuk.js";import{Select as t}from"./Select-BF2LykQX.js";e(`select`,({props:e})=>{let n=new t(e);return n.init(),n});
+import{initAllComponentInstances as e}from"./Client-D9VkIMmt.js";import"./field.dom-BPeGctuk.js";import{Select as t}from"./Select-D42ZKTvM.js";e(`select`,({props:e})=>{let n=new t(e);return n.init(),n});

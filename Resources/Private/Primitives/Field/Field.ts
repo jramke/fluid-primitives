@@ -29,17 +29,12 @@ export class Field extends Component<FieldProps, FieldApi> {
 
 		this.subscribedToForm = true;
 		formMachine.subscribe(() => {
-			console.log(
-				'form subscribe calls render',
-				this.api.name,
-				formMachine.ctx.get('errors')
-			);
+			// console.log(
+			// 	'form subscribe calls render',
+			// 	this.api.name,
+			// 	formMachine.ctx.get('errors')
+			// );
 			this.machine.notify();
-			// queueMicrotask(() => {
-			// 	this.machine.notify();
-			// 	// this.api = this.initApi();
-			// 	// this.render();
-			// });
 		});
 	}
 
@@ -51,10 +46,10 @@ export class Field extends Component<FieldProps, FieldApi> {
 			this.spreadProps(rootEl, this.api.getRootProps());
 		}
 
-		console.log('render field', this.api.name, {
-			invalid: this.api.invalid,
-			errors: this.api.errors,
-		});
+		// console.log('render field', this.api.name, {
+		// 	invalid: this.api.invalid,
+		// 	errors: this.api.errors,
+		// });
 
 		const labelEl = this.getElement('label');
 		if (labelEl) this.spreadProps(labelEl, this.api.getLabelProps());

@@ -7,9 +7,11 @@ namespace Jramke\FluidPrimitives\Component;
 use Jramke\FluidPrimitives\Constants;
 use Jramke\FluidPrimitives\Contexts\AbstractComponentContext;
 use Jramke\FluidPrimitives\Domain\Model\TagAttributes;
+use Jramke\FluidPrimitives\Factory\ComponentContextFactory;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use Jramke\FluidPrimitives\ViewHelpers\ContextViewHelper;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3Fluid\Fluid\Core\Component\ComponentRendererInterface;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 use TYPO3Fluid\Fluid\Core\ViewHelper\ViewHelperVariableContainer;
@@ -157,7 +159,14 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         if ($isRootComponent) {
             $contextVariables = $this->buildContextVariables($argumentDefinitions, $view->getRenderingContext()->getVariableProvider(), new StrictArgumentProcessor());
             $contextClassName = ComponentUtility::getContextClassNameFromViewHelperName($viewHelperName, $this->componentResolver->getContextNamespaces());
-            $context = new $contextClassName($renderingContext, $contextVariables);
+            $contextFactory = GeneralUtility::makeInstance(ComponentContextFactory::class);
+            $context = $contextFactory->create(
+                $contextClassName,
+                $renderingContext,
+                $parentRenderingContext,
+                $contextVariables
+            );
+
             $parentRenderingContext->getVariableProvider()->add("__context_{$baseName}", $context);
         }
 
@@ -205,6 +214,11 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         // Assign context if available
         if ($ctx) $view->assign('context', $ctx);
 
+        // Call beforeRendering lifecycle method only for root or closed components
+        if ($ctx && $isRootComponent && method_exists($ctx, 'beforeRendering')) {
+            $ctx->beforeRendering();
+        }
+
         if ($arguments['asChild'] ?? false) {
             $renderedChild = isset($slots['default']) && is_callable($slots['default'])
                 ? (string)$slots['default']()
@@ -219,6 +233,11 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         if ($isRootComponent) {
             // cleanup the context variable from the parent rendering context
             $parentRenderingContext->getVariableProvider()->remove("__context_{$baseName}");
+
+            // Call afterRendering lifecycle method only for root or closed components
+            if ($ctx && method_exists($ctx, 'afterRendering')) {
+                $ctx->afterRendering($rendered);
+            }
 
             $rootId = ComponentUtility::getRootIdFromContext($renderingContext);
             if (!$rootId) {

@@ -1,5 +1,5 @@
 import * as v from 'valibot';
-import type { FormErrors, FormSchema, FormValues } from './form.types';
+import type { FormErrors } from './form.types';
 
 export function toKeyPath(path?: Array<{ key?: string | number; index?: number }>) {
 	if (!path || path.length === 0) return '';
@@ -23,6 +23,21 @@ export function errorsFromValibot(result: v.SafeParseResult<any>, key?: string):
 		const message = issue.message ?? 'Invalid value';
 		if (!out[errorKey]) out[errorKey] = [];
 		out[errorKey].push(message);
+	}
+	return out;
+}
+
+export function errorsFromServer(
+	responseErrors: Record<string, string[]>,
+	objectName?: string
+): FormErrors {
+	const out: FormErrors = {};
+	for (const key in responseErrors) {
+		let newKey = key;
+		if (objectName) {
+			newKey = newKey.replace(objectName + '.', '');
+		}
+		out[newKey] = responseErrors[key];
 	}
 	return out;
 }
@@ -69,44 +84,21 @@ export function getInputValue(target: EventTarget | null): unknown {
 	return (el as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement).value;
 }
 
-export function snapshotFormValues(form: HTMLFormElement): FormValues {
-	const data = new FormData(form);
-	const values: FormValues = {};
-	for (const [key, raw] of data.entries()) {
-		// console.log({ key, raw });
-
-		const prev = values[key];
-		if (prev === undefined) {
-			values[key] = raw;
-		} else if (Array.isArray(prev)) {
-			values[key] = [...prev, raw];
-		} else {
-			values[key] = [prev, raw];
-		}
+export function prefixFieldName(fieldName: string, prefix: string, objectName?: string) {
+	if (fieldName === '') {
+		return '';
 	}
-	// const inputs = Array.from(form.querySelectorAll('input[name]')) as HTMLInputElement[];
-	// for (const input of inputs) {
-	// 	if (input.type === 'checkbox') {
-	// 		if (inputs.filter(i => i.name === input.name).length === 1) {
-	// 			if (!(input.name in values)) values[input.name] = false;
-	// 		}
-	// 	}
-	// }
-	return values;
-}
 
-// Helper: emit update event (called after any state-changing action)
-export function emitUpdate(formId: string, context: FormSchema['context']) {
-	const formEl = document.getElementById(formId) as HTMLFormElement | null;
-	if (!formEl) return;
-	formEl.dispatchEvent(
-		new CustomEvent('fluid-primitives:form:update', {
-			bubbles: true,
-			detail: {
-				values: context.values,
-				errors: context.errors,
-				dirty: context.dirty,
-			},
-		})
-	);
+	if (objectName) {
+		fieldName = `${objectName}[${fieldName}]`;
+	}
+
+	const fieldNameSegments = fieldName.split('[', 2);
+	let prefixedFieldName = `${prefix}[${fieldNameSegments[0]}]`;
+
+	if (fieldNameSegments.length > 1) {
+		prefixedFieldName += `[${fieldNameSegments[1]}`;
+	}
+
+	return prefixedFieldName;
 }

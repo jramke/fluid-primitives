@@ -1,1 +1,1 @@
-import{initAllComponentInstances as e}from"./Client-ClhqcFHq.js";import{Tabs as t}from"./Tabs-DhPOkvej.js";e(`tabs`,({props:e})=>{let n=new t(e);return n.init(),n});
+import{initAllComponentInstances as e}from"./Client-D9VkIMmt.js";import{Tabs as t}from"./Tabs-FuqLKcKZ.js";e(`tabs`,({props:e})=>{let n=new t(e);return n.init(),n});

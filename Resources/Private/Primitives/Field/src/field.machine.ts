@@ -59,12 +59,18 @@ export const machine = createMachine<FieldSchema>({
 				if (formMachine) {
 					context.set('formMachine', formMachine);
 				} else {
+					const closestForm = fieldRootEl.closest('form');
+					if (!closestForm) return;
+
 					const handler = () => {
 						const fs = getFormMachineFor(fieldRootEl) ?? null;
 						context.set('formMachine', fs);
-						fieldRootEl.removeEventListener('fluid-primitives:form:ready', handler);
+						closestForm.removeEventListener(
+							'fluid-primitives:form:registered',
+							handler
+						);
 					};
-					fieldRootEl.addEventListener('fluid-primitives:form:ready', handler);
+					closestForm.addEventListener('fluid-primitives:form:registered', handler);
 				}
 			},
 			determineDescribeIds({ context, scope }) {

@@ -1,1 +1,0 @@
-const e=new WeakMap;function t(t,n){t&&e.set(t,n)}function n(t){if(!t)return;let n=t instanceof HTMLFormElement?t:t.closest(`form`);if(n)return e.get(n)}export{n as getFormMachineFor,t as registerFormMachine};
