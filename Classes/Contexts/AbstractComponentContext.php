@@ -8,9 +8,9 @@ use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 
 abstract class AbstractComponentContext implements ComponentContextInterface, \ArrayAccess
 {
-    protected RenderingContextInterface $renderingContext;
-    protected RenderingContextInterface $parentRenderingContext;
-    protected array $contextVariables = [];
+    private RenderingContextInterface $renderingContext;
+    private RenderingContextInterface $parentRenderingContext;
+    private array $contextVariables = [];
 
     /**
      * Initialize the context with state after dependency injection
