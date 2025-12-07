@@ -2,7 +2,7 @@ import * as popover from '@zag-js/popover';
 import { Component, Machine, normalizeProps } from '../../Client';
 
 export class Popover extends Component<popover.Props, popover.Api> {
-	name = 'popover';
+	static name = 'popover';
 
 	initMachine(props: popover.Props): Machine<any> {
 		return new Machine(popover.machine, {
@@ -20,6 +20,8 @@ export class Popover extends Component<popover.Props, popover.Api> {
 
 	render() {
 		const triggerEl = this.getElement('trigger');
+		console.log({ triggerEl });
+
 		if (triggerEl) this.spreadProps(triggerEl, this.api.getTriggerProps());
 
 		const positionerEl = this.getElement('positioner');

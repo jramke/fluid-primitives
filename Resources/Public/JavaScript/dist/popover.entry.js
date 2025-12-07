@@ -1,1 +1,1 @@
-import{initAllComponentInstances as e}from"./Client-oBmSvCIl.js";import{Popover as t}from"./Popover-Dw8elXI6.js";e(`popover`,({props:e})=>{let n=new t(e);return n.init(),n});
+import{initAllComponentInstances as e}from"./Client-oBmSvCIl.js";import{Popover as t}from"./Popover-BYysiZof.js";e(`popover`,({props:e})=>{let n=new t(e);return n.init(),n});
