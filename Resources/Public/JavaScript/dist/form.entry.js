@@ -1,1 +1,1 @@
-import{initAllComponentInstances as e}from"./Client-oBmSvCIl.js";import"./form.registry-ABqE-vzj.js";import{Form as t}from"./Form-CRD7_HtC.js";e(`form`,({props:e})=>{let n=new t(e);return n.init(),n});
+import{initAllComponentInstances as e}from"./Client-oBmSvCIl.js";import"./form.registry-ABqE-vzj.js";import{Form as t}from"./Form-DIvUO_ZZ.js";e(`form`,({props:e})=>{let n=new t(e);return n.init(),n});

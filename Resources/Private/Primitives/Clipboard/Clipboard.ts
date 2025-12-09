@@ -4,7 +4,7 @@ import { Component, Machine, normalizeProps } from '../../Client';
 export class Clipboard extends Component<clipboard.Props, clipboard.Api> {
 	static name = 'clipboard';
 
-	initMachine(props: clipboard.Props) {
+	initMachine(props: clipboard.Props): Machine<any> {
 		return new Machine(clipboard.machine, props);
 	}
 
