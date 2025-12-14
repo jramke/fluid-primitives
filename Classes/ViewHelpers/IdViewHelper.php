@@ -25,7 +25,7 @@ class IdViewHelper extends AbstractViewHelper
 
     public function initializeArguments(): void
     {
-        $this->registerArgument('prefix', 'string', 'The prefix of the generated ID', false, '');
+        $this->registerArgument('prefix', 'string', 'The prefix of the generated ID', false, 'f');
     }
 
     public function render(): string
