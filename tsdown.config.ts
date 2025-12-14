@@ -29,6 +29,9 @@ export default defineConfig([
 			popover: './Resources/Private/Primitives/Popover/Popover.ts',
 			'popover.entry': './Resources/Private/Primitives/Popover/Popover.entry.ts',
 
+			'radio-group': './Resources/Private/Primitives/RadioGroup/RadioGroup.ts',
+			'radio-group.entry': './Resources/Private/Primitives/RadioGroup/RadioGroup.entry.ts',
+
 			'scroll-area': './Resources/Private/Primitives/ScrollArea/ScrollArea.ts',
 			'scroll-area.entry': './Resources/Private/Primitives/ScrollArea/ScrollArea.entry.ts',
 

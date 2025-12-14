@@ -1,0 +1,16 @@
+<ui:prop name="value" type="string" optional="{true}" context="{true}" />
+<ui:prop name="disabled" type="boolean" optional="{true}" context="{true}" />
+<ui:prop name="invalid" type="boolean" optional="{true}" context="{true}" />
+
+<ui:error when="!{value}" message="The value prop is required for component {component.fullName}" />
+
+<f:variable name="itemProps" value="{value: value, disabled: disabled, invalid: invalid}" />
+<f:variable name="itemDataAttributes">{context -> ui:call(method: 'getItemDataAttributes', arguments: {0: itemProps})}</f:variable>
+
+<label
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.item, then: 'id="{context.ids.item}"' )}
+    {ui:ref(name: 'item' , data: itemDataAttributes )}
+    {ui:attributes()}>
+    <f:slot />
+</label>
