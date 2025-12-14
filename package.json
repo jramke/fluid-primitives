@@ -51,6 +51,10 @@
             "import": "./Resources/Public/JavaScript/dist/popover.js",
             "types": "./Resources/Public/JavaScript/dist/popover.d.ts"
         },
+        "./radio-group": {
+            "import": "./Resources/Public/JavaScript/dist/radio-group.js",
+            "types": "./Resources/Public/JavaScript/dist/radio-group.d.ts"
+        },
         "./scroll-area": {
             "import": "./Resources/Public/JavaScript/dist/scroll-area.js",
             "types": "./Resources/Public/JavaScript/dist/scroll-area.d.ts"
@@ -91,6 +95,7 @@
         "@zag-js/dialog": "^1.31.0",
         "@zag-js/dom-query": "^1.31.0",
         "@zag-js/popover": "^1.31.0",
+        "@zag-js/radio-group": "^1.31.0",
         "@zag-js/scroll-area": "^1.31.0",
         "@zag-js/select": "^1.31.0",
         "@zag-js/store": "^1.31.0",

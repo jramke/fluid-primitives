@@ -157,7 +157,7 @@ class ComponentUtility
             [$baseNamespace]
         );
 
-        $ucFirstComponentBaseName = ucfirst(self::getComponentBaseNameFromViewHelperName($viewHelperName));
+        $ucFirstComponentBaseName = ucfirst(explode('.', $viewHelperName)[0] ?? '');
 
         foreach ($namespaces as $namespace) {
             $contextClass = $namespace . '\\' . $ucFirstComponentBaseName . 'Context';

@@ -1,0 +1,23 @@
+<ui:prop name="defaultValue" type="string" optional="{true}" client="{true}" />
+<ui:prop name="name" type="string" optional="{true}" client="{true}" />
+<ui:prop name="form" type="string" optional="{true}" client="{true}" />
+<ui:prop name="disabled" type="boolean" optional="{true}" client="{true}" />
+<ui:prop name="readOnly" type="boolean" optional="{true}" client="{true}" />
+<ui:prop name="required" type="boolean" optional="{true}" client="{true}" />
+<ui:prop name="orientation" type="string" optional="{true}" client="{true}" />
+<ui:prop name="invalid" type="boolean" optional="{true}" client="{true}" />
+
+<f:variable name="refData" value="{orientation: orientation, disabled: disabled, readonly: readOnly, required: required, invalid: invalid}" />
+
+<div
+    role="radiogroup"
+    aria-required="{f:if(condition: required, then: 'true', else: 'false')}"
+    aria-disabled="{f:if(condition: disabled, then: 'true', else: 'false')}"
+    aria-readonly="{f:if(condition: readOnly, then: 'true', else: 'false')}"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.root, then: 'id="{context.ids.root}"' )}
+    {ui:ref(name: 'root' , data: refData )}
+    {ui:attributes()}
+    style="position: relative;">
+    <f:slot />
+</div>
