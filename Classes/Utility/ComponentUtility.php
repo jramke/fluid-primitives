@@ -14,7 +14,7 @@ class ComponentUtility
 {
     private static array $cachedSettings = [];
 
-    public static function uid(string $prefix = 'f'): string
+    public static function id(string $prefix = 'f'): string
     {
         static $id = 0;
 

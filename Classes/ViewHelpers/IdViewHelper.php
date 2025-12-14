@@ -15,11 +15,11 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
  *
  * ## Example
  * ```html
- * <f:variable name="myId">{ui:uid()}</f:variable>
+ * <f:variable name="myId">{ui:id()}</f:variable>
  * ```
  * this will generate a unique id like `«f4»`
  */
-class UidViewHelper extends AbstractViewHelper
+class IdViewHelper extends AbstractViewHelper
 {
     protected $escapeOutput = false;
 
@@ -30,6 +30,6 @@ class UidViewHelper extends AbstractViewHelper
 
     public function render(): string
     {
-        return ComponentUtility::uid($this->arguments['prefix']);
+        return ComponentUtility::id($this->arguments['prefix']);
     }
 }

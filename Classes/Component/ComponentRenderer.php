@@ -52,7 +52,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
 
         if (!isset($arguments['rootId'])) {
             if ($isRootComponent) {
-                $arguments['rootId'] = ComponentUtility::uid();
+                $arguments['rootId'] = ComponentUtility::id();
             } else {
                 $arguments['rootId'] = $renderingContext->getVariableProvider()->get('rootId') ?? null;
             }
