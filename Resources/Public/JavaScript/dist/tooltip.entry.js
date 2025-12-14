@@ -1,1 +1,1 @@
-import{initAllComponentInstances as e}from"./Client-oBmSvCIl.js";import{Tooltip as t}from"./Tooltip-Cv1zWULX.js";e(`tooltip`,({props:e})=>{let n=new t(e);return n.init(),n});
+import{initAllComponentInstances as e}from"./Client-oBmSvCIl.js";import{Tooltip as t}from"./Tooltip-GGH8XsKg.js";e(`tooltip`,({props:e})=>{let n=new t(e);return n.init(),n});

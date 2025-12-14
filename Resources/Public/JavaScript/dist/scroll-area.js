@@ -1,1 +1,1 @@
-import"./Client-oBmSvCIl.js";import{ScrollArea as e}from"./ScrollArea-BseEK6t2.js";export{e as ScrollArea};
+import"./Client-oBmSvCIl.js";import{ScrollArea as e}from"./ScrollArea-B_sxfjA8.js";export{e as ScrollArea};

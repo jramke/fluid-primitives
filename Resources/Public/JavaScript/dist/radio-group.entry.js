@@ -1,0 +1,1 @@
+import{initAllComponentInstances as e}from"./Client-oBmSvCIl.js";import{RadioGroup as t}from"./RadioGroup-DdEPU4GR.js";e(`radio-group`,({props:e})=>{let n=new t(e);return n.init(),n});

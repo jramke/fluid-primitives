@@ -1,1 +1,1 @@
-import{initAllComponentInstances as e}from"./Client-oBmSvCIl.js";import{ScrollArea as t}from"./ScrollArea-BseEK6t2.js";e(`scroll-area`,({props:e})=>{let n=new t(e);return n.init(),n});
+import{initAllComponentInstances as e}from"./Client-oBmSvCIl.js";import{ScrollArea as t}from"./ScrollArea-B_sxfjA8.js";e(`scroll-area`,({props:e})=>{let n=new t(e);return n.init(),n});
