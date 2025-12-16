@@ -2,6 +2,7 @@
     {f:if(condition: class, then: 'class="{class}"' )}
     {f:if(condition: context.ids.viewport, then: 'id="{context.ids.viewport}"' )}
     {ui:ref(name: 'viewport' )}
-    {ui:attributes()}>
+    {ui:attributes()}
+    style="overflow: auto">
     <f:slot />
 </div>
