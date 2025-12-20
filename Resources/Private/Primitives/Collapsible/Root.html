@@ -3,9 +3,7 @@
 <ui:prop name="collapsedHeight" type="string" optional="{true}" client="{true}" />
 <ui:prop name="collapsedWidth" type="string" optional="{true}" client="{true}" />
 
-<f:variable name="state">{defaultOpen ? 'open' : 'closed'}</f:variable>
-
-<f:variable name="refData" value="{state: state}" />
+<f:variable name="refData" value="{state: context.state}" />
 
 <div
     {f:if(condition: class, then: 'class="{class}"' )}

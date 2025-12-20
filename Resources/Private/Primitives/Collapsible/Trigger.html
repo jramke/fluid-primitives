@@ -1,5 +1,4 @@
-<f:variable name="state">{context.defaultOpen ? 'open' : 'closed'}</f:variable>
-<f:variable name="refData" value="{state: state, disabled: context.disabled}" />
+<f:variable name="refData" value="{state: context.state, disabled: context.disabled}" />
 
 <button
     type="button"
