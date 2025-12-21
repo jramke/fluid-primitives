@@ -1,1 +1,1 @@
-import{initAllComponentInstances as e}from"./Client-oBmSvCIl.js";import{Tabs as t}from"./Tabs-DZLmk59Z.js";e(`tabs`,({props:e})=>{let n=new t(e);return n.init(),n});
+import{mount as e}from"./Client-B1xGmpZs.js";import{Tabs as t}from"./Tabs-BjhGHZLt.js";e(`tabs`,({props:e})=>{let n=new t(e);return n.init(),n});

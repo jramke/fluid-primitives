@@ -1,1 +1,1 @@
-import"./Client-oBmSvCIl.js";import{Clipboard as e}from"./Clipboard-CkdRKp1D.js";export{e as Clipboard};
+import"./Client-B1xGmpZs.js";import{Clipboard as e}from"./Clipboard-D22TL1oO.js";export{e as Clipboard};

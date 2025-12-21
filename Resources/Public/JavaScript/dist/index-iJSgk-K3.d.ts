@@ -87,7 +87,9 @@ declare abstract class FieldAwareComponent<Props, Api> extends Component<Props, 
 //#region Resources/Private/Client/src/lib/hydration.d.ts
 declare function getHydrationData(component: string): Record<string, ComponentHydrationData> | null;
 declare function getHydrationData(component: string, id: string): ComponentHydrationData | null;
-declare function initAllComponentInstances(componentName: string, callback: (data: ComponentHydrationData) => Component<unknown, unknown> | void): void;
+declare function mount(componentName: string, callback: (data: ComponentHydrationData & {
+  createHydrator: () => ComponentHydrator;
+}) => Component<unknown, unknown> | void): void;
 declare class ComponentHydrator {
   componentName: string;
   doc: Document;
@@ -156,4 +158,4 @@ declare const normalizeProps: _zag_js_types9.NormalizeProps<_zag_js_types9.PropT
 //#region Resources/Private/Client/src/lib/uid.d.ts
 declare function uid(prefix?: string): string;
 //#endregion
-export { Component as Component$1, ComponentHydrationData, ComponentHydrator as ComponentHydrator$1, ComponentInterface, FieldAwareComponent as FieldAwareComponent$1, FieldMachine, Machine$1, getHydrationData as getHydrationData$1, initAllComponentInstances as initAllComponentInstances$1, mergeProps$1, normalizeProps as normalizeProps$1, spreadProps as spreadProps$1, uid as uid$1 };
+export { Component as Component$1, ComponentHydrationData, ComponentHydrator as ComponentHydrator$1, ComponentInterface, FieldAwareComponent as FieldAwareComponent$1, FieldMachine, Machine$1, getHydrationData as getHydrationData$1, mergeProps$1, mount as mount$1, normalizeProps as normalizeProps$1, spreadProps as spreadProps$1, uid as uid$1 };

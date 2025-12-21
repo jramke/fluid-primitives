@@ -1,1 +1,1 @@
-import{initAllComponentInstances as e}from"./Client-oBmSvCIl.js";import{ScrollArea as t}from"./ScrollArea-B_sxfjA8.js";e(`scroll-area`,({props:e})=>{let n=new t(e);return n.init(),n});
+import{mount as e}from"./Client-B1xGmpZs.js";import{ScrollArea as t}from"./ScrollArea-SbIL1FyF.js";e(`scroll-area`,({props:e})=>{let n=new t(e);return n.init(),n});
