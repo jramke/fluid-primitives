@@ -1,8 +1,8 @@
-import { initAllComponentInstances } from '../../Client';
+import { mount } from '../../Client';
 import { Form } from './Form';
 
 (() => {
-	initAllComponentInstances('form', ({ props }) => {
+	mount('form', ({ props }) => {
 		const form = new Form(props);
 		form.init();
 		return form;

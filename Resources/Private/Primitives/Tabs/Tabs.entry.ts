@@ -1,8 +1,8 @@
-import { initAllComponentInstances } from '../../Client';
+import { mount } from '../../Client';
 import { Tabs } from './Tabs';
 
 (() => {
-	initAllComponentInstances('tabs', ({ props }) => {
+	mount('tabs', ({ props }) => {
 		const tabs = new Tabs(props);
 		tabs.init();
 		return tabs;

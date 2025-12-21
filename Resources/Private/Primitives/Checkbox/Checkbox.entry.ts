@@ -1,8 +1,8 @@
-import { initAllComponentInstances } from '../../Client';
+import { mount } from '../../Client';
 import { Checkbox } from './Checkbox';
 
 (() => {
-	initAllComponentInstances('checkbox', ({ props }) => {
+	mount('checkbox', ({ props }) => {
 		const checkbox = new Checkbox(props);
 		checkbox.init();
 		return checkbox;
