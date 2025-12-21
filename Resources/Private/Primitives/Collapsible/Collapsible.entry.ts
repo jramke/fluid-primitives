@@ -1,8 +1,8 @@
-import { initAllComponentInstances } from '../../Client';
+import { mount } from '../../Client';
 import { Collapsible } from './Collapsible';
 
 (() => {
-	initAllComponentInstances('collapsible', ({ props }) => {
+	mount('collapsible', ({ props }) => {
 		const collapsible = new Collapsible(props);
 		collapsible.init();
 		return collapsible;

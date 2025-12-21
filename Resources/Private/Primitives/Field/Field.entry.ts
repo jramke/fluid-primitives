@@ -1,8 +1,8 @@
-import { initAllComponentInstances } from '../../Client';
+import { mount } from '../../Client';
 import { Field } from './Field';
 
 (() => {
-	initAllComponentInstances('field', ({ props }) => {
+	mount('field', ({ props }) => {
 		// @ts-expect-error
 		const field = new Field(props);
 		field.init();

@@ -26,16 +26,22 @@ export function getHydrationData(component?: string, id?: string) {
 	return hydrationData[component][id] || null;
 }
 
-export function initAllComponentInstances(
+export function mount(
 	componentName: string,
-	callback: (data: ComponentHydrationData) => Component<unknown, unknown> | void
+	callback: (
+		data: ComponentHydrationData & { createHydrator: () => ComponentHydrator }
+	) => Component<unknown, unknown> | void
 ) {
 	const hydrationInstances = getHydrationData(componentName);
 	if (!hydrationInstances) return;
 
 	Object.keys(hydrationInstances).forEach(id => {
 		if (hydrationInstances[id].controlled) return;
-		const instance = callback(hydrationInstances[id]);
+		const instance = callback({
+			...hydrationInstances[id],
+			createHydrator: () =>
+				new ComponentHydrator(componentName, id, hydrationInstances[id].props.ids),
+		});
 		if (!instance) return;
 
 		if (!window.FluidPrimitives.uncontrolledInstances[componentName]) {
