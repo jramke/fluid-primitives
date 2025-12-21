@@ -9,6 +9,7 @@ use Jramke\FluidPrimitives\Contexts\AbstractComponentContext;
 use Jramke\FluidPrimitives\Domain\Model\TagAttributes;
 use Jramke\FluidPrimitives\Factory\ComponentContextFactory;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
+use Jramke\FluidPrimitives\Utility\ClientPropsContextExtractor;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use Jramke\FluidPrimitives\ViewHelpers\AttributesViewHelper;
 use Jramke\FluidPrimitives\ViewHelpers\ContextViewHelper;
@@ -259,7 +260,12 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
                     return !is_null($value);
                 });
 
-                $props = [...$propsMarkedForClientValues];
+                $clientPropsFromContext = [];
+                if ($ctx) {
+                    $clientPropsFromContext = ClientPropsContextExtractor::extract($ctx);
+                }
+
+                $props = [...$propsMarkedForClientValues, ...$clientPropsFromContext];
                 unset($props['id']); // Remove potential id from client props as it is handled separately
                 unset($props['ids']);
 
