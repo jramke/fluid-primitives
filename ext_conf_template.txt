@@ -1,0 +1,6 @@
+cli {
+    add {
+        # cat=cli; type=string; label=The default extension in which new components will be created
+        defaultExtension =
+    }
+}
