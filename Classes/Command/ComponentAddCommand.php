@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Command;
 
-use GuzzleHttp\Client;
+use Jramke\FluidPrimitives\Service\RegistryService;
 use Jramke\FluidPrimitives\Service\PackageResolver;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -17,7 +17,6 @@ use Symfony\Component\Console\Question\ChoiceQuestion;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Cache\CacheManager;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
-use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Package\PackageInterface;
 
 #[AsCommand(
@@ -29,7 +28,8 @@ class ComponentAddCommand extends Command
     public function __construct(
         protected readonly PackageResolver $packageResolver,
         protected readonly CacheManager $cacheManager,
-        protected readonly ExtensionConfiguration $extensionConfiguration
+        protected readonly ExtensionConfiguration $extensionConfiguration,
+        protected readonly RegistryService $registryService,
     ) {
         parent::__construct();
     }
@@ -115,27 +115,14 @@ class ComponentAddCommand extends Command
             }
         }
 
-        $client = new Client([
-            'base_uri' => Environment::getContext()->isDevelopment()
-                ? 'https://fluid-primitives.ddev.site/'
-                : 'https://fluid-primitives.com/',
-        ]);
-
-        try {
-            $response = $client->get("/registry/components/{$componentKey}");
-            $manifest = json_decode((string)$response->getBody(), true);
-        } catch (\GuzzleHttp\Exception\ClientException $e) {
-            $io->error('Component not found in registry.');
+        [$error, $manifest] = $this->registryService->fetchComponent($componentKey);
+        if ($error) {
+            $io->error($error['message']);
             return Command::FAILURE;
         }
 
         $componentFolderName = $manifest['name'] ?? null;
         $files = $manifest['files'] ?? [];
-
-        if (empty($files) || $componentFolderName === null) {
-            $io->error('Invalid component manifest received from registry.');
-            return Command::FAILURE;
-        }
 
         $targetFolder = $availablePackages[$extension]->getPackagePath() . $input->getOption('path') . $componentFolderName . '/';
 
@@ -144,13 +131,11 @@ class ComponentAddCommand extends Command
         $someCreated = false;
 
         foreach ($files as $file) {
-            $res = $client->get("/registry/components/{$componentKey}/files/{$file}");
-            if ($res->getStatusCode() !== 200) {
-                $io->warning("Failed to fetch file {$file}");
+            [$error, $content] = $this->registryService->fetchComponentFile($componentKey, $file);
+            if ($error) {
+                $io->warning($error['message']);
                 continue;
             }
-
-            $content = (string)$res->getBody();
 
             $targetFilePath = $targetFolder . $file;
 

@@ -4,21 +4,12 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Command;
 
-use GuzzleHttp\Client;
-use Jramke\FluidPrimitives\Service\PackageResolver;
+use Jramke\FluidPrimitives\Service\RegistryService;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Exception\MissingInputException;
-use Symfony\Component\Console\Input\InputOption;
-use Symfony\Component\Console\Question\ChoiceQuestion;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use TYPO3\CMS\Core\Cache\CacheManager;
-use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
-use TYPO3\CMS\Core\Core\Environment;
-use TYPO3\CMS\Core\Package\PackageInterface;
 
 #[AsCommand(
     name: 'ui:list',
@@ -27,9 +18,7 @@ use TYPO3\CMS\Core\Package\PackageInterface;
 class ComponentListCommand extends Command
 {
     public function __construct(
-        protected readonly PackageResolver $packageResolver,
-        protected readonly CacheManager $cacheManager,
-        protected readonly ExtensionConfiguration $extensionConfiguration
+        protected readonly RegistryService $registryService,
     ) {
         parent::__construct();
     }
@@ -43,17 +32,9 @@ class ComponentListCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
-        $client = new Client([
-            'base_uri' => Environment::getContext()->isDevelopment()
-                ? 'https://fluid-primitives.ddev.site/'
-                : 'https://fluid-primitives.com/',
-        ]);
-
-        try {
-            $response = $client->get("/registry/components");
-            $components = json_decode((string)$response->getBody(), true);
-        } catch (\GuzzleHttp\Exception\ClientException $e) {
-            $io->error('Failed to fetch component registry: ' . $e->getMessage());
+        [$error, $components] = $this->registryService->fetchComponentList();
+        if ($error) {
+            $io->error($error['message']);
             return Command::FAILURE;
         }
 
