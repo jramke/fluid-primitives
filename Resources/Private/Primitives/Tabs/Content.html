@@ -13,6 +13,6 @@
     {f:if(condition: context.ids.content, then: 'id="{context.ids.content}"' )}
     {ui:ref(name: 'content' , data: refData )}
     {ui:attributes(skip: 'hidden' )}
-    {f:if(condition: selected, then: 'hidden="{selected}"' )}>
+    {f:if(condition: '!{selected}' , then: 'hidden' )}>
     <f:slot />
 </div>
