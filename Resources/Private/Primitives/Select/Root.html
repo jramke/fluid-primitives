@@ -1,4 +1,4 @@
-<ui:prop name="collection" type="Jramke\FluidPrimitives\Domain\Model\ListCollection" client="{true}" />
+<ui:prop name="collection" type="Jramke\FluidPrimitives\Domain\Model\ListCollection" optional="{true}" client="{true}" />
 <ui:prop name="name" type="string" optional="{true}" client="{true}" />
 <ui:prop name="form" type="string" optional="{true}" client="{true}" />
 <ui:prop name="disabled" type="boolean" optional="{true}" client="{true}" />
@@ -15,7 +15,7 @@
 <ui:prop name="composite" type="boolean" optional="{true}" client="{true}" />
 <ui:prop name="deselectable" type="boolean" optional="{true}" client="{true}" />
 
-<ui:error when="{collection} !== null && !{collection}.items" message="The 'collection' prop of {component.fullName} is missing or invalid." />
+<ui:error when="!{collection}" message="The 'collection' prop of {component.fullName} is missing or invalid." />
 
 <div
     {f:if(condition: class, then: 'class="{class}"' )}
