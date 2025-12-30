@@ -6,7 +6,6 @@ namespace Jramke\FluidPrimitives\Service;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
-use TYPO3\CMS\Core\Core\Environment;
 
 class RegistryService
 {
@@ -15,9 +14,7 @@ class RegistryService
     public function __construct()
     {
         $this->client = new Client([
-            'base_uri' => Environment::getContext()->isDevelopment()
-                ? 'https://fluid-primitives.ddev.site/'
-                : 'https://fluid-primitives.com/',
+            'base_uri' => 'https://fluid-primitives.com/'
         ]);
     }
 
