@@ -15,18 +15,21 @@ use TYPO3Fluid\Fluid\Core\Parser\SyntaxTree\ViewHelperNode;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 use TYPO3Fluid\Fluid\Core\ViewHelper\ViewHelperNodeInitializedEventInterface;
 use TYPO3Fluid\Fluid\Core\Parser\SyntaxTree\TextNode;
+use TYPO3Fluid\Fluid\Core\Rendering\RenderingContext;
 
 /**
  * Use props from another component.
  *
  * This ViewHelper allows you to import all props from another component and register them for the current component.
  * This is helpful/needed when consuming the `primitives` components or when you want to reuse props from another component.
+ * 
+ * You can also override default values of the imported props by passing a `defaults` array with key-value pairs.
  *
  * ## Example
  * 
  * `Tooltip/Root.html` that uses the tooltip primitive:
  * ```html
- * <ui:useProps name="primitives:tooltip.root" />
+ * <ui:useProps name="primitives:tooltip.root" defaults="{openDelay: 200}" />
  * 
  * <primitives:tooltip.root spreadProps="{true}">
  *     <f:slot />
@@ -47,7 +50,8 @@ class UsePropsViewHelper extends AbstractViewHelper implements ViewHelperNodeIni
 
     public function initializeArguments(): void
     {
-        $this->registerArgument('name', 'string', 'name of component to use the props from', true);
+        $this->registerArgument('name', 'string', 'Name of component to use the props from', true);
+        $this->registerArgument('defaults', 'array', 'Default values for props to override the imported ones. Key-value pairs', false, []);
     }
 
     public function render(): string
@@ -91,6 +95,14 @@ class UsePropsViewHelper extends AbstractViewHelper implements ViewHelperNodeIni
             }
 
             $externalArgumentDefinitionsWithoutReserved = PropsUtility::cleanupReservedProps([...$externalArgumentDefinitions]);
+
+            if (isset($arguments['defaults']) && $evaluatedDefaults = $arguments['defaults']->evaluate(new RenderingContext())) {
+                foreach ($evaluatedDefaults as $defaultPropName => $defaultPropValue) {
+                    if (isset($externalArgumentDefinitionsWithoutReserved[$defaultPropName])) {
+                        $externalArgumentDefinitionsWithoutReserved[$defaultPropName] = PropsUtility::duplicateArgumentDefinitionWithNewDefault($externalArgumentDefinitionsWithoutReserved[$defaultPropName], $defaultPropValue);
+                    }
+                }
+            }
 
             $argumentDefinitions = $parsingState->getArgumentDefinitions();
 

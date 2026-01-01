@@ -53,4 +53,21 @@ class PropsUtility
             $defaultValue
         );
     }
+
+    public static function duplicateArgumentDefinitionWithNewDefault(ArgumentDefinition $argumentDefinition, mixed $newDefaultValue = null): ArgumentDefinition
+    {
+        $newDefinition = new ArgumentDefinition(
+            $argumentDefinition->getName(),
+            $argumentDefinition->getType(),
+            $argumentDefinition->getDescription(),
+            $argumentDefinition->isRequired(),
+            $newDefaultValue !== null ? $newDefaultValue : $argumentDefinition->getDefaultValue(),
+            $argumentDefinition->getEscape()
+        );
+
+        // We dont validate the default value against the type here, because fluid also does not do this.
+        // Also the StrictArgumentProcessor->isValid() allows all arguments with any default value if they are not required.
+
+        return $newDefinition;
+    }
 }
