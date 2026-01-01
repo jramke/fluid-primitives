@@ -20,7 +20,6 @@ export class Popover extends Component<popover.Props, popover.Api> {
 
 	render() {
 		const triggerEl = this.getElement('trigger');
-		console.log({ triggerEl });
 
 		if (triggerEl) this.spreadProps(triggerEl, this.api.getTriggerProps());
 
