@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Utility;
 
+use Jramke\FluidPrimitives\Component\ComponentCollectionInterface;
+use Jramke\FluidPrimitives\Component\ComponentPrimitivesCollection;
 use Jramke\FluidPrimitives\Contexts\AbstractComponentContext;
 use Jramke\FluidPrimitives\Contexts\BaseContext;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -167,5 +169,10 @@ class ComponentUtility
         }
 
         return $baseClass;
+    }
+
+    public static function isPrimitive(ComponentCollectionInterface $componentResolver): bool
+    {
+        return $componentResolver instanceof ComponentPrimitivesCollection;
     }
 }

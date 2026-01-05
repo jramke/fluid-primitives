@@ -7,18 +7,20 @@ namespace Jramke\FluidPrimitives\Component;
 use Jramke\FluidPrimitives\Component\ComponentRenderer;
 use Jramke\FluidPrimitives\Component\TemplateStructureViewHelperResolver;
 use Jramke\FluidPrimitives\Constants;
+use Jramke\FluidPrimitives\Traits\ComponentAssetAutoLoaderTrait;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use Jramke\FluidPrimitives\Utility\PropsUtility;
 use TYPO3Fluid\Fluid\Core\Component\ComponentRendererInterface;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContext;
 use TYPO3Fluid\Fluid\Core\ViewHelper\UnresolvableViewHelperException;
-use TYPO3Fluid\Fluid\ViewHelpers\SlotViewHelper;
 use TYPO3Fluid\Fluid\Core\Component\ComponentDefinition;
 use TYPO3Fluid\Fluid\Core\Component\ComponentAdapter;
 use TYPO3Fluid\Fluid\Core\ViewHelper\ArgumentDefinition;
 
 abstract class AbstractComponentCollection implements ComponentCollectionInterface
 {
+    use ComponentAssetAutoLoaderTrait;
+
     /**
      * Runtime cache for component definitions. This mainly speeds up uncached templates since we
      * create a new TemplateParser instance for each component to receive its argument definitions.

@@ -288,7 +288,22 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
                     $data
                 );
             }
+
+
+            // autoload component assets if defined
+            if (!empty($entryExtensions = $this->componentResolver->getComponentEntryExtensions($viewHelperName))) {
+                $this->componentResolver->autoLoadComponentAssets(
+                    $viewHelperName,
+                    function (string $entryFile, string $viewHelperName): void {
+                        $this->componentResolver->loadComponentAsset($entryFile, $viewHelperName);
+                    },
+                    $entryExtensions
+                );
+            }
         }
+        // krexx(ComponentUtility::isPrimitive($this->componentResolver));
+        // $isPrimitiveRenderedInComponent = 
+        // if (ComponentUtility::isComponent($parentRenderingContext))
 
         return $rendered;
     }

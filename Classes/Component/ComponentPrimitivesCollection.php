@@ -18,4 +18,14 @@ final class ComponentPrimitivesCollection extends AbstractComponentCollection
         ]);
         return $templatePaths;
     }
+
+    public function getComponentEntryExtensions(string $viewHelperName): array
+    {
+        return ['.entry.ts'];
+    }
+
+    // public function loadComponentAsset(string $fileName, string $viewHelperName)
+    // {
+    //     krexx([$fileName, $viewHelperName]);
+    // }
 }

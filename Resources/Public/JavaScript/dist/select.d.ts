@@ -1,6 +1,6 @@
 import { FieldAwareComponent$1 as FieldAwareComponent, FieldMachine, Machine$1 as Machine } from "./index-iJSgk-K3.js";
 import * as _zag_js_collection0 from "@zag-js/collection";
-import * as _zag_js_types6 from "@zag-js/types";
+import * as _zag_js_types8 from "@zag-js/types";
 import * as select from "@zag-js/select";
 
 //#region Resources/Private/Primitives/Select/Select.d.ts
@@ -53,7 +53,7 @@ declare class Select extends FieldAwareComponent<select.Props, select.Api> {
     onInteractOutside?: ((event: select.InteractOutsideEvent) => void) | undefined;
   };
   initMachine(props: select.Props): Machine<any>;
-  initApi(): select.Api<_zag_js_types6.PropTypes<{
+  initApi(): select.Api<_zag_js_types8.PropTypes<{
     [x: string]: any;
   }>, any>;
   render: () => void;
