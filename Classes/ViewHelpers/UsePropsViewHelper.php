@@ -6,6 +6,7 @@ namespace Jramke\FluidPrimitives\ViewHelpers;
 
 use Jramke\FluidPrimitives\Component\ComponentPrimitivesCollection;
 use Jramke\FluidPrimitives\Constants;
+use Jramke\FluidPrimitives\Service\ComponentCollectionService;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use Jramke\FluidPrimitives\Utility\PropsUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -46,7 +47,8 @@ class UsePropsViewHelper extends AbstractViewHelper implements ViewHelperNodeIni
 {
     protected $escapeOutput = false;
 
-    protected static ?ComponentPrimitivesCollection $componentPrimitivesCollection = null;
+    private static ?ComponentCollectionService $componentCollectionService = null;
+    private static ?ComponentPrimitivesCollection $componentPrimitivesCollection = null;
 
     public function initializeArguments(): void
     {
@@ -71,11 +73,6 @@ class UsePropsViewHelper extends AbstractViewHelper implements ViewHelperNodeIni
 
     public static function nodeInitializedEvent(ViewHelperNode $node, array $arguments, ParsingState $parsingState): void
     {
-        static $componentPrimitivesCollection = null;
-        if ($componentPrimitivesCollection === null) {
-            $componentPrimitivesCollection = GeneralUtility::makeInstance(ComponentPrimitivesCollection::class);
-        }
-
         if (isset($arguments['name'])) {
             $name = $arguments['name'] instanceof TextNode ? $arguments['name']->getText() : '';
             if (empty($name)) {
@@ -84,10 +81,9 @@ class UsePropsViewHelper extends AbstractViewHelper implements ViewHelperNodeIni
 
             if (str_starts_with($name, 'primitives:')) {
                 $name = substr($name, strlen('primitives:'));
-                $externalArgumentDefinitions = $componentPrimitivesCollection->getComponentDefinition($name)->getArgumentDefinitions();
+                $externalArgumentDefinitions = self::getComponentPrimitivesCollection()->getComponentDefinition($name)->getArgumentDefinitions();
             } else {
-                [$explodedNamespace, $explodedName] = explode(':', $name);
-                $externalArgumentDefinitions = GeneralUtility::makeInstance(end($GLOBALS['TYPO3_CONF_VARS']['SYS']['fluid']['namespaces'][$explodedNamespace]))->getComponentDefinition($explodedName)->getArgumentDefinitions();
+                $externalArgumentDefinitions = self::getComponentCollectionService()->getCollectionByViewHelperName($name)->getComponentDefinition(explode(':', $name)[1])->getArgumentDefinitions();
             }
 
             if (empty($externalArgumentDefinitions)) {
@@ -126,11 +122,19 @@ class UsePropsViewHelper extends AbstractViewHelper implements ViewHelperNodeIni
         }
     }
 
-    protected function getComponentPrimitivesCollection(): ComponentPrimitivesCollection
+    protected static function getComponentPrimitivesCollection(): ComponentPrimitivesCollection
     {
         if (self::$componentPrimitivesCollection === null) {
             self::$componentPrimitivesCollection = GeneralUtility::makeInstance(ComponentPrimitivesCollection::class);
         }
         return self::$componentPrimitivesCollection;
+    }
+
+    protected static function getComponentCollectionService(): ComponentCollectionService
+    {
+        if (self::$componentCollectionService === null) {
+            self::$componentCollectionService = GeneralUtility::makeInstance(ComponentCollectionService::class);
+        }
+        return self::$componentCollectionService;
     }
 }
