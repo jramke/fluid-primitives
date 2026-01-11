@@ -1,1 +1,1 @@
-import{mount as e}from"./Client-B1xGmpZs.js";import{Tooltip as t}from"./Tooltip-Bzjy9H15.js";e(`tooltip`,({props:e})=>{let n=new t(e);return n.init(),n});
+import{mount as e}from"./Client-B1xGmpZs.js";import{Tooltip as t}from"./Tooltip-CMxZffnJ.js";e(`tooltip`,({props:e})=>{let n=new t(e);return n.init(),n});

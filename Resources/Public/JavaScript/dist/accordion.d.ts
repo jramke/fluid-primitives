@@ -1,12 +1,12 @@
-import { Component$1 as Component, Machine$1 as Machine } from "./index-iJSgk-K3.js";
-import * as _zag_js_types3 from "@zag-js/types";
+import { Component$1 as Component, Machine$1 as Machine } from "./index-Dn0aMgBA.js";
+import * as _zag_js_types7 from "@zag-js/types";
 import * as accordion from "@zag-js/accordion";
 
 //#region Resources/Private/Primitives/Accordion/Accordion.d.ts
 declare class Accordion extends Component<accordion.Props, accordion.Api> {
   static name: string;
   initMachine(props: accordion.Props): Machine<any>;
-  initApi(): accordion.Api<_zag_js_types3.PropTypes<{
+  initApi(): accordion.Api<_zag_js_types7.PropTypes<{
     [x: string]: any;
   }>>;
   render(): void;

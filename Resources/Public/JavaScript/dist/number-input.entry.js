@@ -1,0 +1,1 @@
+import{mount as e}from"./Client-B1xGmpZs.js";import"./field.dom-BPeGctuk.js";import{NumberInput as t}from"./NumberInput-DOaLFDlW.js";e(`number-input`,({props:e})=>{let n=new t(e);return n.init(),n});

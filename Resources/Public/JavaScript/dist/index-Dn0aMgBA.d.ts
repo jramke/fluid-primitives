@@ -1,6 +1,6 @@
 import { ListCollection } from "@zag-js/collection";
 import { Bindable, BindableContext, BindableRefs, ComputedFn, Machine, MachineSchema, Params, PropFn, Scope, Service } from "@zag-js/core";
-import * as _zag_js_types9 from "@zag-js/types";
+import * as _zag_js_types10 from "@zag-js/types";
 
 //#region Resources/Private/Client/src/types.d.ts
 declare global {
@@ -151,7 +151,7 @@ declare class Machine$1<T extends MachineSchema> {
 declare function mergeProps$1(...args: Record<string | symbol, any>[]): Record<string | symbol, any>;
 //#endregion
 //#region Resources/Private/Client/src/lib/normalize-props.d.ts
-declare const normalizeProps: _zag_js_types9.NormalizeProps<_zag_js_types9.PropTypes<{
+declare const normalizeProps: _zag_js_types10.NormalizeProps<_zag_js_types10.PropTypes<{
   [x: string]: any;
 }>>;
 //#endregion
