@@ -1,0 +1,12 @@
+<ui:prop name="htmlFor" type="string" />
+
+<f:variable name="refData" value="{htmlFor: htmlFor}" />
+
+<div
+    role="presentation"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.item-group-label, then: 'id="{context.ids.item-group-label}"' )}
+    {ui:ref(name: 'item-group-label' , data: refData )}
+    {ui:attributes()}>
+    <f:slot />
+</div>

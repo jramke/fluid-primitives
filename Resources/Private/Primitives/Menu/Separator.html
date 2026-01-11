@@ -1,0 +1,7 @@
+<hr
+    role="separator"
+    aria-orientation="horizontal"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.separator, then: 'id="{context.ids.separator}"' )}
+    {ui:ref(name: 'separator' )}
+    {ui:attributes()} />

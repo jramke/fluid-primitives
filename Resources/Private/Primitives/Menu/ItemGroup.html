@@ -1,0 +1,12 @@
+<ui:prop name="id" type="string" />
+
+<f:variable name="refData" value="{id: id}" />
+
+<div
+    role="group"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.item-group, then: 'id="{context.ids.item-group}"' )}
+    {ui:ref(name: 'item-group' , data: refData )}
+    {ui:attributes()}>
+    <f:slot />
+</div>

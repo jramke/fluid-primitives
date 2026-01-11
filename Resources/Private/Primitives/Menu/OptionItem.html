@@ -1,0 +1,22 @@
+<ui:prop name="name" type="string" />
+<ui:prop name="type" type="string" />
+<ui:prop name="value" type="string" />
+<ui:prop name="disabled" type="boolean" optional="{true}" />
+<ui:prop name="closeOnSelect" type="boolean" optional="{true}" />
+<ui:prop name="checked" type="boolean" optional="{true}" />
+<ui:prop name="valueText" type="string" optional="{true}" />
+
+<f:variable name="role">{f:if(condition: '{type} == "radio"', then: 'menuitemradio', else: 'menuitemcheckbox')}</f:variable>
+<f:variable name="refData" value="{disabled: disabled, value: value, name: name, type: type}" />
+
+<div
+    role="{role}"
+    tabindex="-1"
+    aria-checked="{f:if(condition: checked, then: 'true', else: 'false')}"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.option-item, then: 'id="{context.ids.option-item}"' )}
+    {f:if(condition: disabled, then: 'aria-disabled="true"' )}
+    {ui:ref(name: 'option-item' , data: refData )}
+    {ui:attributes()}>
+    <f:slot />
+</div>

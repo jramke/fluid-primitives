@@ -1,0 +1,9 @@
+<f:variable name="refData" value="{state: context.state}" />
+
+<div
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.context-trigger, then: 'id="{context.ids.context-trigger}"' )}
+    {ui:ref(name: 'context-trigger' , data: refData )}
+    {ui:attributes()}>
+    <f:slot />
+</div>

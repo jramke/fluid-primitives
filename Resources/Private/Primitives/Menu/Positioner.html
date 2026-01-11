@@ -1,0 +1,7 @@
+<div
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.positioner, then: 'id="{context.ids.positioner}"' )}
+    {ui:ref(name: 'positioner' )}
+    {ui:attributes()}>
+    <f:slot />
+</div>

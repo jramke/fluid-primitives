@@ -1,0 +1,7 @@
+<span
+    aria-hidden="true"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'item-indicator' )}
+    {ui:attributes()}>
+    <f:slot />
+</span>

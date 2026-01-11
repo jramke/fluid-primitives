@@ -1,0 +1,12 @@
+<f:variable name="refData" value="{state: context.state}" />
+
+<button
+    type="button"
+    aria-haspopup="menu"
+    aria-expanded="{f:if(condition: context.defaultOpen, then: 'true', else: 'false')}"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.trigger, then: 'id="{context.ids.trigger}"' )}
+    {ui:ref(name: 'trigger' , data: refData )}
+    {ui:attributes()}>
+    <f:slot />
+</button>

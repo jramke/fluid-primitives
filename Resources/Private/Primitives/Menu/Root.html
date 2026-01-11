@@ -1,0 +1,14 @@
+<ui:prop name="positioning" type="array" optional="{true}" client="{true}" />
+<ui:prop name="defaultOpen" type="boolean" optional="{true}" client="{true}" />
+<ui:prop name="closeOnSelect" type="boolean" optional="{true}" client="{true}" default="{true}" />
+<ui:prop name="loopFocus" type="boolean" optional="{true}" client="{true}" default="{false}" />
+<ui:prop name="composite" type="boolean" optional="{true}" client="{true}" default="{true}" />
+<ui:prop name="typeahead" type="boolean" optional="{true}" client="{true}" default="{true}" />
+<ui:prop name="anchorPoint" type="array" optional="{true}" client="{true}" />
+<ui:prop name="highlightedValue" type="string" optional="{true}" client="{true}" />
+<ui:prop name="ariaLabel" type="string" optional="{true}" client="{true}" />
+<ui:prop name="parentMenu" type="string" optional="{true}" client="{true}" />
+
+<f:variable name="refData" value="{state: context.state}" />
+
+<f:slot />
