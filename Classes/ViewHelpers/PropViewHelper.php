@@ -4,17 +4,20 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\ViewHelpers;
 
+use Jramke\FluidPrimitives\Annotations\MarkedForClientAnnotation;
 use Jramke\FluidPrimitives\Constants;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use Jramke\FluidPrimitives\Utility\PropsUtility;
 use TYPO3Fluid\Fluid\Core\Parser\ParsingState;
 use TYPO3Fluid\Fluid\Core\Parser\SyntaxTree\BooleanNode;
+use TYPO3Fluid\Fluid\Core\Parser\SyntaxTree\NodeInterface;
 use TYPO3Fluid\Fluid\Core\Parser\SyntaxTree\ViewHelperNode;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 use TYPO3Fluid\Fluid\Core\ViewHelper\ViewHelperNodeInitializedEventInterface;
 use TYPO3Fluid\Fluid\ViewHelpers\ArgumentViewHelper;
 use TYPO3Fluid\Fluid\Core\Parser\SyntaxTree\TextNode;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContext;
+use TYPO3Fluid\Fluid\Core\ViewHelper\ArgumentDefinition;
 
 /**
  * Defines a template argument (prop) for a component.
@@ -71,19 +74,19 @@ class PropViewHelper extends AbstractViewHelper implements ViewHelperNodeInitial
     public static function nodeInitializedEvent(ViewHelperNode $node, array $arguments, ParsingState $parsingState): void
     {
         // register an internal argumentDefinition with all the client props as default value so we can access them later in the component renderer
-        if (isset($arguments['client']) && $arguments['client'] instanceof BooleanNode && $arguments['client']->evaluate(new RenderingContext())) {
-            $name = $arguments['name'] instanceof TextNode ? $arguments['name']->getText() : (string)$arguments['name'];
-            $argumentDefinitions = $parsingState->getArgumentDefinitions();
+        // if (isset($arguments['client']) && $arguments['client'] instanceof BooleanNode && $arguments['client']->evaluate(new RenderingContext())) {
+        //     $name = $arguments['name'] instanceof TextNode ? $arguments['name']->getText() : (string)$arguments['name'];
+        //     $argumentDefinitions = $parsingState->getArgumentDefinitions();
 
-            $propsWithClientFlagDefinition = $argumentDefinitions[Constants::PROPS_MARKED_FOR_CLIENT_KEY] ?? null;
-            $propsWithClientFlag = $propsWithClientFlagDefinition ? $propsWithClientFlagDefinition->getDefaultValue() : [];
+        //     $propsWithClientFlagDefinition = $argumentDefinitions[Constants::PROPS_MARKED_FOR_CLIENT_KEY] ?? null;
+        //     $propsWithClientFlag = $propsWithClientFlagDefinition ? $propsWithClientFlagDefinition->getDefaultValue() : [];
 
-            $propsWithClientFlag[$name] = true;
+        //     $propsWithClientFlag[$name] = true;
 
-            $argumentDefinitions[Constants::PROPS_MARKED_FOR_CLIENT_KEY] = PropsUtility::createPropsMarkedForClientArgumentDefinition($propsWithClientFlag);
+        //     $argumentDefinitions[Constants::PROPS_MARKED_FOR_CLIENT_KEY] = PropsUtility::createPropsMarkedForClientArgumentDefinition($propsWithClientFlag);
 
-            $parsingState->setArgumentDefinitions($argumentDefinitions);
-        }
+        //     $parsingState->setArgumentDefinitions($argumentDefinitions);
+        // }
 
         if (isset($arguments['context']) && $arguments['context'] instanceof BooleanNode && $arguments['context']->evaluate(new RenderingContext())) {
             $name = $arguments['name'] instanceof TextNode ? $arguments['name']->getText() : (string)$arguments['name'];
@@ -99,6 +102,55 @@ class PropViewHelper extends AbstractViewHelper implements ViewHelperNodeInitial
             $parsingState->setArgumentDefinitions($argumentDefinitions);
         }
 
-        ArgumentViewHelper::nodeInitializedEvent($node, $arguments, $parsingState);
+        // ArgumentViewHelper::nodeInitializedEvent($node, $arguments, $parsingState);
+        // Create static values of supplied arguments. A new empty rendering context is used here
+        // because argument definitions shouldn't be dependent on any variables in the template.
+        // Any variables that are used anyway (e. g. in default values) will be interpreted as "null"
+        $emptyRenderingContext = new RenderingContext();
+        $evaluatedArguments = array_map(
+            static fn(NodeInterface $node): mixed => $node->evaluate($emptyRenderingContext),
+            $arguments,
+        );
+        $argumentName = (string)$evaluatedArguments['name'];
+
+        // Make sure that arguments are not nested into other ViewHelpers as this might create confusion
+        if ($parsingState->hasNodeTypeInStack(ViewHelperNode::class)) {
+            throw new \TYPO3Fluid\Fluid\Core\Parser\Exception(sprintf(
+                'Template argument "%s" needs to be defined at the root level of the template, not within a ViewHelper.',
+                $argumentName,
+            ), 1744908510);
+        }
+
+        // Make sure that this argument hasn't already been defined in the template
+        $argumentDefinitions = $parsingState->getArgumentDefinitions();
+        if (isset($argumentDefinitions[$argumentName])) {
+            throw new \TYPO3Fluid\Fluid\Core\Parser\Exception(sprintf(
+                'Template argument "%s" has been defined multiple times.',
+                $argumentName,
+            ), 1744908509);
+        }
+
+        // Automatically make the argument definition optional if it has a default value
+        $hasDefaultValue = array_key_exists('default', $evaluatedArguments);
+        $optional = ($evaluatedArguments['optional'] ?? false) || $hasDefaultValue;
+
+        $annotations = [];
+        if ($evaluatedArguments['client'] ?? false) {
+            $annotations[] = new MarkedForClientAnnotation(true);
+            // $annotations[] = MarkedForClientAnnotation::__set_state(['state' => true]);
+        }
+
+        // Create argument definition to be interpreted later during rendering
+        // This will also be written to the cache by the TemplateCompiler
+        $argumentDefinitions[$argumentName] = new ArgumentDefinition(
+            $argumentName,
+            (string)$evaluatedArguments['type'],
+            array_key_exists('description', $evaluatedArguments) ? (string)$evaluatedArguments['description'] : '',
+            !$optional,
+            $hasDefaultValue ? $evaluatedArguments['default'] : null,
+            null,
+            $annotations,
+        );
+        $parsingState->setArgumentDefinitions($argumentDefinitions);
     }
 }

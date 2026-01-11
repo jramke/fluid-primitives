@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Component;
 
+use Jramke\FluidPrimitives\Annotations\MarkedForClientAnnotation;
 use Jramke\FluidPrimitives\Constants;
 use Jramke\FluidPrimitives\Contexts\AbstractComponentContext;
 use Jramke\FluidPrimitives\Domain\Model\TagAttributes;
@@ -63,12 +64,21 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
 
         // Extract props marked for client from internal argument definition
         $propsMarkedForClient = [];
-        $propsMarkedForClientDefinition = $argumentDefinitions[Constants::PROPS_MARKED_FOR_CLIENT_KEY] ?? null;
-        if ($propsMarkedForClientDefinition) {
-            $propsMarkedForClient = $propsMarkedForClientDefinition->getDefaultValue() ?? [];
+        // $propsMarkedForClientDefinition = $argumentDefinitions[Constants::PROPS_MARKED_FOR_CLIENT_KEY] ?? null;
+        // if ($propsMarkedForClientDefinition) {
+        //     $propsMarkedForClient = $propsMarkedForClientDefinition->getDefaultValue() ?? [];
+        // }
+        // unset($argumentDefinitions[Constants::PROPS_MARKED_FOR_CLIENT_KEY]);
+        // unset($arguments[Constants::PROPS_MARKED_FOR_CLIENT_KEY]);
+        foreach ($argumentDefinitions as $argDef) {
+            $annotations = $argDef->getAnnotations();
+            foreach ($annotations as $annotation) {
+                if ($annotation instanceof MarkedForClientAnnotation) {
+                    $propsMarkedForClient[$argDef->getName()] = true;
+                    // krexx($annotation->state);
+                }
+            }
         }
-        unset($argumentDefinitions[Constants::PROPS_MARKED_FOR_CLIENT_KEY]);
-        unset($arguments[Constants::PROPS_MARKED_FOR_CLIENT_KEY]);
 
         // Extract props marked for context from internal argument definition
         $propsMarkedForContext = [];
@@ -247,7 +257,6 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
 
             // only register the components props for hydration if the user used the ui:ref viewhelper
             if (preg_match('/data-hydrate-[^=]*="' . preg_quote($rootId, '/') . '"/', $rendered)) {
-
                 $propsMarkedForClientValues = [];
                 foreach ($propsMarkedForClient as $name => $_) {
                     if (isset($arguments[$name]) || isset($argumentDefinitions[$name])) {
@@ -255,6 +264,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
                     }
                 }
 
+                // krexx([$propsMarkedForClient, $propsMarkedForClientValues, $arguments, $argumentDefinitions]);
                 // we dont want to send null values to the client, defaults should be defined in the component ts file
                 $propsMarkedForClientValues = array_filter($propsMarkedForClientValues, function ($value) {
                     return !is_null($value);
