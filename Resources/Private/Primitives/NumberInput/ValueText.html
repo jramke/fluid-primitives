@@ -1,0 +1,9 @@
+<f:variable name="refData" value="{disabled: context.disabled, invalid: context.invalid}" />
+
+<span
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.value-text, then: 'id="{context.ids.value-text}"' )}
+    {ui:ref(name: 'value-text' )}
+    {ui:attributes()}>
+    {f:slot() -> f:or(alternative: context.formattedValue)}
+</span>

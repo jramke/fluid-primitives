@@ -26,6 +26,9 @@ export default defineConfig([
 			form: './Resources/Private/Primitives/Form/Form.ts',
 			'form.entry': './Resources/Private/Primitives/Form/Form.entry.ts',
 
+			'number-input': './Resources/Private/Primitives/NumberInput/NumberInput.ts',
+			'number-input.entry': './Resources/Private/Primitives/NumberInput/NumberInput.entry.ts',
+
 			popover: './Resources/Private/Primitives/Popover/Popover.ts',
 			'popover.entry': './Resources/Private/Primitives/Popover/Popover.entry.ts',
 

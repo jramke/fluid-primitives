@@ -1,0 +1,12 @@
+<f:variable name="refData" value="{disabled: context.disabled, invalid: context.invalid, focus: ''}" />
+
+<div
+    role="group"
+    aria-disabled="{f:if(condition: context.disabled, then: 'true', else: 'false')}"
+    aria-invalid="{f:if(condition: context.invalid, then: 'true', else: 'false')}"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.control, then: 'id="{context.ids.control}"' )}
+    {ui:ref(name: 'control' , data: refData )}
+    {ui:attributes()}>
+    <f:slot />
+</div>

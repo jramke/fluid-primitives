@@ -1,0 +1,11 @@
+<f:variable name="refData" value="{disabled: context.disabled}" />
+
+<div
+    role="presentation"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.scrubber, then: 'id="{context.ids.scrubber}"' )}
+    {ui:ref(name: 'scrubber' , data: refData )}
+    {ui:attributes()}
+    style="{f:if(condition: '!{context.disabled}', then: 'cursor: ew-resize;')}">
+    <f:slot />
+</div>
