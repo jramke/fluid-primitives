@@ -1,0 +1,30 @@
+<ui:prop name="disabled" type="boolean" optional="{true}" client="{true}" />
+<ui:prop name="invalid" type="boolean" optional="{true}" client="{true}" />
+<ui:prop name="required" type="boolean" optional="{true}" client="{true}" />
+<ui:prop name="readOnly" type="boolean" optional="{true}" client="{true}" />
+<ui:prop name="name" type="string" optional="{true}" client="{true}" />
+<ui:prop name="form" type="string" optional="{true}" client="{true}" />
+<ui:prop name="defaultValue" type="string" optional="{true}" client="{true}" />
+<ui:prop name="min" type="float" optional="{true}" client="{true}" />
+<ui:prop name="max" type="float" optional="{true}" client="{true}" />
+<ui:prop name="step" type="float" optional="{true}" client="{true}" />
+<ui:prop name="allowMouseWheel" type="boolean" optional="{true}" client="{true}" />
+<ui:prop name="allowOverflow" type="boolean" optional="{true}" client="{true}" default="{false}" />
+<ui:prop name="clampValueOnBlur" type="boolean" optional="{true}" client="{true}" />
+<ui:prop name="focusInputOnChange" type="boolean" optional="{true}" client="{true}" />
+<ui:prop name="spinOnPress" type="boolean" optional="{true}" client="{true}" />
+<ui:prop name="formatOptions" type="array" optional="{true}" client="{true}" />
+<ui:prop name="inputMode" type="string" optional="{true}" client="{true}" default="decimal" />
+<ui:prop name="pattern" type="string" optional="{true}" client="{true}" default="-?[0-9]*(.[0-9]+)?" />
+<ui:prop name="translations" type="array" optional="{true}" client="{true}" default="{ incrementLabel: 'increment value', decrementLabel: 'decrement value' }" />
+<ui:prop name="locale" type="string" optional="{true}" client="{true}" />
+
+<f:variable name="refData" value="{disabled: context.disabled, invalid: context.invalid}" />
+
+<div
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.root, then: 'id="{context.ids.root}"' )}
+    {ui:ref(name: 'root' , data: refData )}
+    {ui:attributes()}>
+    <f:slot />
+</div>

@@ -1,0 +1,14 @@
+<f:variable name="isDisabled">{f:if(condition: '{context.disabled} || !{context.canDecrement}', then: true, else: false)}</f:variable>
+<f:variable name="refData" value="{disabled: isDisabled}" />
+
+<button
+    type="button"
+    tabindex="-1"
+    aria-label="{context.translations.decrementLabel}"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.decrement-trigger, then: 'id="{context.ids.decrement-trigger}"' )}
+    {f:if(condition: isDisabled, then: 'disabled' )}
+    {ui:ref(name: 'decrement-trigger' , data: refData )}
+    {ui:attributes()}>
+    <f:slot />
+</button>

@@ -1,0 +1,26 @@
+<f:variable name="refData" value="{disabled: context.disabled, invalid: context.invalid}" />
+
+<input
+    type="text"
+    role="spinbutton"
+    inputmode="{context.inputMode}"
+    autocomplete="off"
+    autocorrect="off"
+    spellcheck="false"
+    aria-invalid="{f:if(condition: context.invalid, then: 'true', else: 'false')}"
+    aria-roledescription="numberfield"
+    {f:if(condition: context.min, then: 'aria-valuemin="{context.min}"' )}
+    {f:if(condition: context.max, then: 'aria-valuemax="{context.max}"' )}
+    {f:if(condition: context.defaultValue, then: 'aria-valuenow="{context.defaultValue}"' )}
+    {f:if(condition: context.translations.valueText, then: 'aria-valuetext="{context.translations.valueText}"' )}
+    {f:if(condition: '{context.formatOptions}' , then: '' , else: 'pattern="{context.pattern}"' )}
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.input, then: 'id="{context.ids.input}"' )}
+    {f:if(condition: context.form, then: 'form="{context.form}"' )}
+    {f:if(condition: context.name, then: 'name="{context.name}"' )}
+    {f:if(condition: context.defaultValue, then: 'value="{context.formattedValue}"' )}
+    {f:if(condition: context.disabled, then: 'disabled' )}
+    {f:if(condition: context.required, then: 'required' )}
+    {f:if(condition: context.readOnly, then: 'readonly' )}
+    {ui:ref(name: 'input' , data: refData )}
+    {ui:attributes()} />

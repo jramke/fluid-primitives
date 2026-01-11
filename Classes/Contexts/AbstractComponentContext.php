@@ -52,7 +52,7 @@ abstract class AbstractComponentContext implements ComponentContextInterface, \A
 
     public function has(string $key): bool
     {
-        return array_key_exists($key, $this->contextVariables);
+        return array_key_exists($key, $this->contextVariables) && $this->contextVariables[$key] !== null;
     }
 
     public function offsetExists($offset): bool
