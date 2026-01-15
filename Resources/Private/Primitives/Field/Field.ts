@@ -29,11 +29,6 @@ export class Field extends Component<FieldProps, FieldApi> {
 
 		this.subscribedToForm = true;
 		formMachine.subscribe(() => {
-			// console.log(
-			// 	'form subscribe calls render',
-			// 	this.api.name,
-			// 	formMachine.ctx.get('errors')
-			// );
 			this.machine.notify();
 		});
 	}
@@ -46,16 +41,14 @@ export class Field extends Component<FieldProps, FieldApi> {
 			this.spreadProps(rootEl, this.api.getRootProps());
 		}
 
-		// console.log('render field', this.api.name, {
-		// 	invalid: this.api.invalid,
-		// 	errors: this.api.errors,
-		// });
-
 		const labelEl = this.getElement('label');
 		if (labelEl) this.spreadProps(labelEl, this.api.getLabelProps());
 
 		const controlEl = this.getElement('control');
 		if (controlEl) this.spreadProps(controlEl, this.api.getControlProps());
+
+		const descriptionEl = this.getElement('description');
+		if (descriptionEl) this.spreadProps(descriptionEl, this.api.getDescriptionProps());
 
 		const errorEl = this.getElement('error');
 		if (errorEl) {

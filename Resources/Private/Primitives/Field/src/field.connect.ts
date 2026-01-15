@@ -11,12 +11,18 @@ export function connect<T extends PropTypes>(
 	const { scope, prop, context, computed } = service;
 
 	const invalid = context.get('invalid');
+	const disabled = context.get('disabled');
+	const required = context.get('required');
+	const readOnly = context.get('readOnly');
 	const errors = computed('errors');
 
 	return {
 		getFormMachine: () => context.get('formMachine'),
 
 		invalid,
+		disabled,
+		required,
+		readOnly,
 		errors,
 
 		name: prop('name'),
@@ -30,6 +36,9 @@ export function connect<T extends PropTypes>(
 				...parts.root.attrs,
 				id: dom.getRootId(scope),
 				'data-invalid': invalid ? '' : undefined,
+				'data-disabled': disabled ? '' : undefined,
+				'data-readonly': readOnly ? '' : undefined,
+				'data-required': required ? '' : undefined,
 				'data-name': prop('name'),
 			});
 		},
@@ -39,6 +48,9 @@ export function connect<T extends PropTypes>(
 				...parts.label.attrs,
 				id: dom.getLabelId(scope),
 				htmlFor: dom.getControlId(scope),
+				'data-invalid': invalid ? '' : undefined,
+				'data-disabled': disabled ? '' : undefined,
+				'data-required': required ? '' : undefined,
 			});
 		},
 
@@ -47,9 +59,15 @@ export function connect<T extends PropTypes>(
 				...parts.control.attrs,
 				id: dom.getControlId(scope),
 				name: prop('name'),
-				'aria-invalid': invalid ? 'true' : 'false',
-				'aria-describedby': context.get('describeIds'),
+				disabled: disabled || undefined,
+				readOnly: readOnly || undefined,
+				required: required || undefined,
+				'aria-invalid': invalid ? 'true' : undefined,
+				'aria-describedby': context.get('describeIds') || undefined,
+				'aria-required': required ? 'true' : undefined,
 				'data-invalid': invalid ? '' : undefined,
+				'data-disabled': disabled ? '' : undefined,
+				'data-readonly': readOnly ? '' : undefined,
 			});
 		},
 
@@ -58,6 +76,13 @@ export function connect<T extends PropTypes>(
 				...parts.error.attrs,
 				id: dom.getErrorId(scope),
 				hidden: !invalid,
+			});
+		},
+
+		getDescriptionProps() {
+			return normalize.element({
+				...parts.description.attrs,
+				id: dom.getDescriptionId(scope),
 			});
 		},
 	};

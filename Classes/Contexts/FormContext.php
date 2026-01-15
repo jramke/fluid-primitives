@@ -74,7 +74,7 @@ class FormContext extends AbstractComponentContext
         return $formActionUri;
     }
 
-    // The form viewhelper has an argument to override the field name prefix, is this needed here?
+    // TODO: The form viewhelper has an argument to override the field name prefix, is this needed here?
     public function getFieldNamePrefix(): string
     {
         try {
@@ -111,7 +111,6 @@ class FormContext extends AbstractComponentContext
                 $fieldNames[] = $this->prefixFieldName($fieldContextData['name'], $this->get('objectName'));
             }
         }
-        // krexx($fieldNames);
 
         $requestHash = $this->mvcPropertyMappingConfigurationService->generateTrustedPropertiesToken($fieldNames, $this->getFieldNamePrefix());
         return '<input type="hidden" name="' . htmlspecialchars($this->prefixFieldName('__trustedProperties')) . '" value="' . htmlspecialchars($requestHash) . '" ' . ($this->shouldUseXHtmlSlash() ? '/' : '') . '>';
@@ -132,8 +131,13 @@ class FormContext extends AbstractComponentContext
             $fieldName = $objectName . '[' . $fieldName . ']';
         }
 
+        $prefix = $this->getFieldNamePrefix();
+        if ($prefix === '') {
+            return $fieldName;
+        }
+
         $fieldNameSegments = explode('[', $fieldName, 2);
-        $fieldName = $this->getFieldNamePrefix() . '[' . $fieldNameSegments[0] . ']';
+        $fieldName = $prefix . '[' . $fieldNameSegments[0] . ']';
 
         if (count($fieldNameSegments) > 1) {
             $fieldName .= '[' . $fieldNameSegments[1];
@@ -149,12 +153,11 @@ class FormContext extends AbstractComponentContext
 
     protected function getExtbaseRequestOrThrow(): RequestInterface
     {
-        if (!$this->renderingContext->hasAttribute(ServerRequestInterface::class)) {
+        if (!$this->getRenderingContext()->hasAttribute(ServerRequestInterface::class)) {
             throw new \RuntimeException('No ServerRequestInterface found in rendering context attributes', 1765100022);
         }
 
-        $request = $this->renderingContext->getAttribute(ServerRequestInterface::class);
-
+        $request = $this->getRenderingContext()->getAttribute(ServerRequestInterface::class);
         if (!$request instanceof RequestInterface) {
             throw new \RuntimeException('The ServerRequestInterface in rendering context attributes is not an Extbase RequestInterface', 1765100023);
         }

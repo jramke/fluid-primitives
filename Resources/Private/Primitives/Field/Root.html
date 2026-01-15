@@ -1,8 +1,10 @@
-<ui:prop name="name" type="string" client="{true}" />
+<ui:prop name="name" type="string" optional="{true}" client="{true}" />
 <ui:prop name="disabled" type="boolean" optional="{true}" client="{true}" />
 <ui:prop name="invalid" type="boolean" optional="{true}" client="{true}" />
 <ui:prop name="required" type="boolean" optional="{true}" client="{true}" />
 <ui:prop name="readOnly" type="boolean" optional="{true}" client="{true}" />
+
+<ui:error when="!{name}" message="The 'name' prop is required for field root components." />
 
 <div
     {f:if(condition: class, then: 'class="{class}"' )}

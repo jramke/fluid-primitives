@@ -11,9 +11,10 @@ class FieldContext extends AbstractComponentContext
         $parentRenderingContext = $this->getParentRenderingContext();
         if (!$parentRenderingContext) return;
 
-        // TODO: only do this if we are in a form 
-        // we could check the variablecontainer of the parent rendering context if there is a form context
-        $parentRenderingContext->getViewHelperVariableContainer()->add(self::class, $this->get('rootId'), ['name' => $this->get('name')]);
+        $variableContainer = $parentRenderingContext->getViewHelperVariableContainer();
+        if ($variableContainer->exists(FormContext::class, 'fieldNamePrefix')) {
+            $variableContainer->add(self::class, $this->get('rootId'), ['name' => $this->get('name')]);
+        }
     }
 
     public function getChildVariables(): array

@@ -4,9 +4,9 @@ import * as v from 'valibot';
 import type { Form } from '../Form';
 import type { FieldMachine } from './form.registry';
 
-// export type FormValues = Record<string, unknown>;
 export type FormErrors = Record<string, string[]>;
 export type FormDirty = Record<string, boolean>;
+export type FormTouched = Record<string, boolean>;
 
 export type ValibotFormSchema = v.ObjectSchema<
 	v.ObjectEntries,
@@ -16,9 +16,8 @@ export type ValibotFormSchema = v.ObjectSchema<
 export interface FormProps {
 	id: string;
 	schema?: ValibotFormSchema;
-	reactiveFields?: string[];
 	objectName?: string;
-	// validateOn?: 'change' | 'blur';
+	inputDebounceMs?: number;
 	onSubmit?: ({
 		formData,
 		api,
@@ -40,6 +39,7 @@ export interface FormSchema {
 		initialValues: FormData;
 		errors: FormErrors;
 		dirty: FormDirty;
+		touched: FormTouched;
 	};
 	state: 'invalid' | 'ready' | 'submitting' | 'success' | 'error';
 	event: EventObject;
@@ -57,14 +57,9 @@ export interface FormApi {
 	getValues(): FormData;
 	getErrors(): FormErrors;
 	getDirty(): FormDirty;
+	getTouched(): FormTouched;
 	userRenderFn: FormProps['render'];
 	getFields(): Map<string, FieldMachine>;
 	getFormEl(): HTMLFormElement | null;
 	getAction(): string;
-	// getFieldState(name: string): {
-	// 	value: unknown;
-	// 	errors: string[];
-	// 	dirty: boolean;
-	// 	invalid: boolean;
-	// };
 }

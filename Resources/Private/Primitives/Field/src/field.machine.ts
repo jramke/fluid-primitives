@@ -22,9 +22,10 @@ export const machine = createMachine<FieldSchema>({
 					}),
 			})),
 			describeIds: bindable<string | undefined>(() => ({ defaultValue: undefined })),
+			hasDescription: bindable(() => ({ defaultValue: false })),
 		};
 	},
-	entry: ['getFormMachine', 'determineDescribeIds', 'updateInvalid'],
+	entry: ['getFormMachine', 'checkForDescription', 'determineDescribeIds', 'updateInvalid'],
 	states: {
 		ready: {},
 	},
@@ -41,8 +42,7 @@ export const machine = createMachine<FieldSchema>({
 			action(['updateInvalid']);
 		});
 
-		// TODO: also check descriptions when implemented
-		track([() => context.get('invalid')], () => {
+		track([() => context.get('invalid'), () => context.get('hasDescription')], () => {
 			action(['determineDescribeIds']);
 		});
 	},
@@ -73,10 +73,18 @@ export const machine = createMachine<FieldSchema>({
 					closestForm.addEventListener('fluid-primitives:form:registered', handler);
 				}
 			},
+			checkForDescription({ context, scope }) {
+				const descriptionEl = dom.getDescriptionEl(scope);
+				context.set('hasDescription', !!descriptionEl);
+			},
 			determineDescribeIds({ context, scope }) {
 				const ids: string[] = [];
-				if (context.get('invalid')) ids.push(dom.getErrorId(scope));
-				// TODO: add description ids when implemented
+				if (context.get('hasDescription')) {
+					ids.push(dom.getDescriptionId(scope));
+				}
+				if (context.get('invalid')) {
+					ids.push(dom.getErrorId(scope));
+				}
 				const idsStr = ids.join(' ') || undefined;
 				context.set('describeIds', idsStr);
 			},

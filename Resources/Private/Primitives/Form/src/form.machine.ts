@@ -1,7 +1,7 @@
 import { createMachine } from '@zag-js/core';
 import * as v from 'valibot';
 import * as dom from './form.dom';
-import type { FormDirty, FormSchema } from './form.types';
+import type { FormDirty, FormErrors, FormSchema, FormTouched } from './form.types';
 import { errorsFromServer, errorsFromValibot, getInputValue, prefixFieldName } from './form.utils';
 
 export const machine = createMachine<FormSchema>({
@@ -13,8 +13,9 @@ export const machine = createMachine<FormSchema>({
 		return {
 			values: bindable(() => ({ defaultValue: new FormData() })),
 			initialValues: bindable(() => ({ defaultValue: new FormData() })),
-			errors: bindable(() => ({ defaultValue: {} })),
-			dirty: bindable(() => ({ defaultValue: {} })),
+			errors: bindable(() => ({ defaultValue: {} as FormErrors })),
+			dirty: bindable(() => ({ defaultValue: {} as FormDirty })),
+			touched: bindable(() => ({ defaultValue: {} as FormTouched })),
 		};
 	},
 
@@ -29,14 +30,16 @@ export const machine = createMachine<FormSchema>({
 	on: {
 		SUBMIT: { target: 'submitting', actions: ['validateAll'] },
 		VALIDATE: { actions: ['validateAll'] },
+		VALIDATE_FIELD: { actions: ['validateField'] },
 		INVALID: { target: 'invalid' },
 		INPUT: { actions: ['handleInput'] },
+		BLUR: { actions: ['handleBlur'] },
 		RESET: { target: 'ready', actions: ['resetForm'] },
 		ERROR: { target: 'error' },
 		SUCCESS: { target: 'success' },
 	},
 
-	entry: ['handleFieldBlurs'],
+	entry: ['setupFormListeners'],
 
 	implementations: {
 		actions: {
@@ -45,10 +48,9 @@ export const machine = createMachine<FormSchema>({
 				const schema = prop('schema');
 
 				if (schema) {
-					const validationResult = v.safeParse(
-						schema,
-						Object.fromEntries(context.get('values').entries())
-					);
+					const formData = context.get('values');
+					const dataObject = Object.fromEntries(formData.entries());
+					const validationResult = v.safeParse(schema, dataObject);
 					const errs = errorsFromValibot(validationResult);
 					context.set('errors', errs);
 
@@ -79,10 +81,10 @@ export const machine = createMachine<FormSchema>({
 						api: event.detail.api,
 						event: event.detail.event,
 						post: async (url: string, data: FormData) => {
-							let prefixedData = new FormData();
+							const prefixedData = new FormData();
 							const objectName = prop('objectName');
-							const prefix =
-								dom.getFormEl(scope).getAttribute('data-field-name-prefix') || '';
+							const formEl = dom.getFormEl(scope);
+							const prefix = formEl?.getAttribute('data-field-name-prefix') || '';
 
 							for (const [key, value] of data.entries()) {
 								if (key.includes(prefix)) {
@@ -135,20 +137,35 @@ export const machine = createMachine<FormSchema>({
 				}
 			},
 
-			handleInput({ context, event, action, prop }) {
-				const e = event as any;
+			validateField({ context, prop, event }) {
+				const schema = prop('schema');
+				if (!schema) return;
 
+				const fieldName = event.detail?.fieldName;
+				if (!fieldName) return;
+
+				const formData = context.get('values');
+				const dataObject = Object.fromEntries(formData.entries());
+				const validationResult = v.safeParse(schema, dataObject);
+				const allErrors = errorsFromValibot(validationResult);
+
+				// Update only errors for the specific field
+				const currentErrors = { ...context.get('errors') };
+				if (allErrors[fieldName]) {
+					currentErrors[fieldName] = allErrors[fieldName];
+				} else {
+					delete currentErrors[fieldName];
+				}
+				context.set('errors', currentErrors);
+			},
+
+			handleInput({ context, event, send }) {
+				const e = event as any;
 				const target = e?.detail?.target ?? e?.target ?? e?.currentTarget;
 				const name: string | undefined = target?.name;
 				if (!name) return;
 
-				const reactiveFields = prop('reactiveFields') || [];
-				if (reactiveFields.length === 0 || !reactiveFields.includes(name)) {
-					return;
-				}
-
 				const value = e?.detail?.value ?? getInputValue(target);
-
 				const values = context.get('values');
 				values.set(name, value);
 				context.set('values', values);
@@ -158,30 +175,56 @@ export const machine = createMachine<FormSchema>({
 				dirty[name] = JSON.stringify(values.get(name)) !== JSON.stringify(initial);
 				context.set('dirty', dirty);
 
-				// TODO: also keep validating on change when the errors are gone
-				// like a min length and then the user updates it so its valid and then removes chars again we would want to show the error again
-				// and we maybe want to allow revalidating on change also when the field is not declared as reactive
-				if (context.get('errors')[name]) {
-					action(['validateAll']);
+				// Revalidate if field has errors OR if any validation has occurred
+				// This ensures errors clear immediately when fixed
+				const currentErrors = context.get('errors');
+				const touched = context.get('touched');
+				const hasFieldError = !!currentErrors[name];
+				const fieldTouched = !!touched[name];
+
+				if (hasFieldError || fieldTouched) {
+					send({ type: 'VALIDATE_FIELD', detail: { fieldName: name } });
 				}
 			},
 
-			// maybeValidateChanged({ context, prop }) {
-			// 	const validateOnChange = !!prop('validateOnChange');
-			// 	if (!validateOnChange) return;
-			// 	const schema = prop('schema');
-			// 	const result = v.safeParse(schema, context.get('values'));
-			// 	const errs = errorsFromValibot(result);
-			// 	context.set('errors', errs);
-			// },
+			handleBlur({ context, send, prop, event }) {
+				const e = event as any;
+				const target = e?.detail?.target;
+				let name: string | undefined = target?.name;
+				if (!name) {
+					name =
+						target?.closest('[data-scope="field"]')?.getAttribute('name') || undefined;
+				}
 
-			resetForm({ context }) {
-				const initial = context.get('initialValues');
-				context.set('values', { ...initial });
+				if (!name) return;
+
+				// Mark field as touched
+				const touched = { ...context.get('touched') };
+				touched[name] = true;
+				context.set('touched', touched);
+
+				// Get current form values from DOM to ensure we have latest
+				const form = target.form as HTMLFormElement | null;
+				if (form) {
+					const values = new FormData(form);
+					context.set('values', values);
+				}
+
+				// Validate the field on blur
+				const schema = prop('schema');
+				if (schema) {
+					send({ type: 'VALIDATE_FIELD', detail: { fieldName: name } });
+				}
+			},
+
+			resetForm({ context, scope }) {
+				const form = dom.getFormEl(scope);
+				const initial = form ? new FormData(form) : context.get('initialValues');
+				context.set('values', initial);
+				context.set('initialValues', initial);
 				context.set('errors', {});
-				const dirty: FormDirty = {};
-				for (const key of Object.keys(initial)) dirty[key] = false;
-				context.set('dirty', dirty);
+				context.set('touched', {});
+				context.set('dirty', {});
 			},
 
 			focusFirstInvalid({ context, scope }) {
@@ -189,7 +232,8 @@ export const machine = createMachine<FormSchema>({
 				const firstKey = Object.keys(errors)[0];
 				if (!firstKey) return;
 
-				const form = dom.getFormEl(scope)!;
+				const form = dom.getFormEl(scope);
+				if (!form) return;
 
 				const invalidEl = form.querySelector(
 					`[name="${CSS.escape(firstKey)}"]`
@@ -197,40 +241,20 @@ export const machine = createMachine<FormSchema>({
 				invalidEl?.focus();
 			},
 
-			handleFieldBlurs({ scope }) {
+			setupFormListeners({ scope, send }) {
 				const form = dom.getFormEl(scope);
 				if (!form) return;
 
-				const handleBlur = (event: FocusEvent) => {
-					const target = event.target as
-						| HTMLInputElement
-						| HTMLTextAreaElement
-						| HTMLSelectElement;
-					const name = target?.name;
-					if (!name) return;
-
-					// TODO: set error state for the field
-					// i think we still need to validate the whole form schema
-
-					// const reactiveFields = prop('reactiveFields') || [];
-					// if (reactiveFields.length === 0 || !reactiveFields.includes(name)) {
-					// 	return;
-					// }
-
-					// const value = getInputValue(target);
-					// const values = { ...context.get('values') };
-					// values[name] = value;
-					// context.set('values', values);
-
-					// const initial = context.get('initialValues')[name];
-					// const dirty = { ...context.get('dirty') };
-					// dirty[name] = JSON.stringify(values[name]) !== JSON.stringify(initial);
-					// context.set('dirty', dirty);
-
-					// action(['validateAll']);
-				};
-
-				form.addEventListener('blur', handleBlur, true);
+				// We need to listen to the change event to capture changes in select elements or checkboxes
+				// The input event does not always fire for these elements in all browsers
+				// Also zag-js spreadProps maps onChange to onInput so we need to manually listen to change events here
+				form.addEventListener(
+					'change',
+					event => {
+						send({ type: 'INPUT', detail: { target: event.target } });
+					},
+					true
+				);
 			},
 		},
 	},
