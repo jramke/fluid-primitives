@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\ViewHelpers;
 
+use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
+use Jramke\FluidPrimitives\Service\ContextService;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
@@ -28,7 +30,7 @@ class ContextViewHelper extends AbstractViewHelper
         $this->registerArgument('as', 'string', 'Variable name to assign the result to');
     }
 
-    public function render(): mixed
+    public function render(): ?ComponentContextInterface
     {
         if (!ComponentUtility::isComponent($this->renderingContext)) {
             throw new \RuntimeException('The context ViewHelper can only be used inside a component.', 1754253443);
@@ -43,14 +45,13 @@ class ContextViewHelper extends AbstractViewHelper
             throw new \RuntimeException('You cannot access the context of the current component using the context ViewHelper. Use the exposed "context" variable instead.', 1754253445);
         }
 
-        $variableContainer = $this->renderingContext->getViewHelperVariableContainer();
-        $context = $variableContainer->get(self::class, $this->arguments['name']);
+        $context = ContextService::getFromRenderingContext($this->renderingContext, $this->arguments['name']);
 
         if ($this->arguments['as']) {
             $this->renderingContext->getVariableProvider()->add($this->arguments['as'], $context);
-            return '';
+            return null;
         }
 
-        return $context ?? null;
+        return $context;
     }
 }

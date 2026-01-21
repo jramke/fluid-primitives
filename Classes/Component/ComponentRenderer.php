@@ -9,10 +9,10 @@ use Jramke\FluidPrimitives\Contexts\AbstractComponentContext;
 use Jramke\FluidPrimitives\Domain\Model\TagAttributes;
 use Jramke\FluidPrimitives\Factory\ComponentContextFactory;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
+use Jramke\FluidPrimitives\Service\ContextService;
 use Jramke\FluidPrimitives\Utility\ClientPropsContextExtractor;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use Jramke\FluidPrimitives\ViewHelpers\AttributesViewHelper;
-use Jramke\FluidPrimitives\ViewHelpers\ContextViewHelper;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3Fluid\Fluid\Core\Component\ComponentRendererInterface;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
@@ -169,7 +169,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
                 $contextVariables
             );
 
-            $parentRenderingContext->getViewHelperVariableContainer()->add(ContextViewHelper::class, $baseName, $context);
+            ContextService::addToRenderingContext($parentRenderingContext, $baseName, $context);
         }
 
         // Expose props marked for context from non root components to the context of this component
@@ -181,7 +181,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
                     $propsMarkedForContextValues[$name] = $arguments[$name] ?? $argumentDefinitions[$name]->getDefaultValue() ?? null;
                 }
             }
-            $context = $parentRenderingContext->getViewHelperVariableContainer()->get(ContextViewHelper::class, $baseName);
+            $context = ContextService::getFromRenderingContext($parentRenderingContext, $baseName);
             if ($context) {
                 $context->set(ComponentUtility::getSubcomponentNameFromViewHelperName($viewHelperName), $propsMarkedForContextValues);
             }
@@ -189,7 +189,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
 
         // Expose other component contexts to allow deep nesting of composable components
         $otherComponentContexts = $this->getOtherComponentContexts($parentRenderingContext, $baseName);
-        $renderingContext->getViewHelperVariableContainer()->addAll(ContextViewHelper::class, $otherComponentContexts);
+        ContextService:
 
         // Pick up potential context from current component (parent or itself if root)
         $ctx = $this->getRootComponentContext($parentRenderingContext, $baseName);
@@ -233,7 +233,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
 
         if ($isRootComponent) {
             // cleanup the context variable from the parent rendering context
-            $parentRenderingContext->getViewHelperVariableContainer()->remove(ContextViewHelper::class, $baseName);
+            ContextService::removeFromRenderingContext($parentRenderingContext, $baseName);
 
             // Call afterRendering lifecycle method only for root or closed components
             if ($ctx && method_exists($ctx, 'afterRendering')) {
@@ -338,8 +338,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
     {
         $contexts = [];
 
-        $variableContainer = $parentRenderingContext->getViewHelperVariableContainer();
-        $allContexts = $variableContainer->getAll(ContextViewHelper::class);
+        $allContexts = ContextService::getAllFromRenderingContext($parentRenderingContext);
         foreach ($allContexts as $ctxBaseName => $ctx) {
             if ($ctxBaseName === $baseName) continue;
             $contexts[$ctxBaseName] = $ctx;
@@ -356,7 +355,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         $variableProvider = $renderingContext->getVariableProvider();
         $variableContainer = $renderingContext->getViewHelperVariableContainer();
 
-        $ctx = $variableContainer->get(ContextViewHelper::class, $baseName);
+        $ctx = ContextService::getFromRenderingContext($renderingContext, $baseName);
 
         if ($ctx === null && $variableProvider->getByPath('component.baseName') === $baseName) {
             $ctx = $variableProvider->get('context') ?? null;
