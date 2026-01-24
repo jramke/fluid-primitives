@@ -203,6 +203,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
                 $fieldRootId = $fieldContext->get('rootId') ?? null;
                 $fieldVariables = $fieldContext->getChildVariables();
                 foreach ($fieldVariables as $varName => $varValue) {
+                    if ($varValue === null) continue;
                     $view->getRenderingContext()->getVariableProvider()->remove($varName);
                     $view->getRenderingContext()->getVariableProvider()->add($varName, $varValue);
                     $arguments[$varName] = $varValue;
