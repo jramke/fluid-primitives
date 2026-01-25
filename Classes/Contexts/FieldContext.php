@@ -15,10 +15,7 @@ class FieldContext extends AbstractComponentContext
         if (!$parentRenderingContext) return;
 
         $variableContainer = $parentRenderingContext->getViewHelperVariableContainer();
-        $isInsideForm = $variableContainer->exists(FormContext::class, 'fieldNamePrefix');
-        if ($isInsideForm) {
-            $variableContainer->add(self::class, $this->get('rootId'), ['name' => $this->get('name')]);
-        }
+        $variableContainer->add(self::class, $this->get('rootId'), ['name' => $this->get('name')]);
 
         $formContext = ContextService::getFromRenderingContext($parentRenderingContext, 'form');
         if ($formContext) {
