@@ -27,10 +27,16 @@ class ClientPropsContextExtractor
 
             $attribute = $attributes[0]->newInstance();
 
+            $value = $method->invoke($context);
+
+            if ($attribute->excludeIfNull && $value === null) {
+                continue;
+            }
+
             $name = $attribute->name
                 ?? self::normalizeMethodName($method->getName());
 
-            $props[$name] = $method->invoke($context);
+            $props[$name] = $value;
         }
 
         return $props;
