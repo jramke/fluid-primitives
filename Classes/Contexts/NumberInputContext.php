@@ -8,7 +8,7 @@ use Jramke\FluidPrimitives\Attributes\ExposeToClient;
 
 class NumberInputContext extends AbstractComponentContext
 {
-    #[ExposeToClient]
+    #[ExposeToClient(excludeIfNull: true)]
     public function getDefaultValue(): mixed
     {
         return (string)$this->get('defaultValue');
