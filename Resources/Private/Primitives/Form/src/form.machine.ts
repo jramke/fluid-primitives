@@ -1,8 +1,8 @@
 import { createMachine } from '@zag-js/core';
-import * as v from 'valibot';
 import * as dom from './form.dom';
 import type { FormDirty, FormErrors, FormSchema, FormTouched } from './form.types';
-import { errorsFromServer, errorsFromValibot, getInputValue, prefixFieldName } from './form.utils';
+import { ValidationError } from './form.types';
+import { errorsFromServer, getInputValue, prefixFieldName, validateWithSchema } from './form.utils';
 
 export const machine = createMachine<FormSchema>({
 	initialState() {
@@ -49,9 +49,7 @@ export const machine = createMachine<FormSchema>({
 
 				if (schema) {
 					const formData = context.get('values');
-					const dataObject = Object.fromEntries(formData.entries());
-					const validationResult = v.safeParse(schema, dataObject);
-					const errs = errorsFromValibot(validationResult);
+					const errs = validateWithSchema(schema, formData);
 					context.set('errors', errs);
 
 					if (Object.keys(errs).length > 0) {
@@ -74,67 +72,60 @@ export const machine = createMachine<FormSchema>({
 					return;
 				}
 
-				let result: boolean | Promise<boolean>;
-				try {
-					result = onSubmit({
-						formData: context.get('values'),
-						api: event.detail.api,
-						event: event.detail.event,
-						post: async (url: string, data: FormData) => {
-							const prefixedData = new FormData();
-							const objectName = prop('objectName');
-							const formEl = dom.getFormEl(scope);
-							const prefix = formEl?.getAttribute('data-field-name-prefix') || '';
+				// Async IIFE to handle both sync and async onSubmit with single try/catch
+				(async () => {
+					try {
+						const result = await onSubmit({
+							formData: context.get('values'),
+							api: event.detail.api,
+							event: event.detail.event,
+							post: async (url: string, data: FormData): Promise<Response> => {
+								const prefixedData = new FormData();
+								const objectName = prop('objectName');
+								const formEl = dom.getFormEl(scope);
+								const prefix = formEl?.getAttribute('data-field-name-prefix') || '';
 
-							for (const [key, value] of data.entries()) {
-								if (key.includes(prefix)) {
-									prefixedData.append(key, value);
-									continue;
+								for (const [key, value] of data.entries()) {
+									if (key.includes(prefix)) {
+										prefixedData.append(key, value);
+										continue;
+									}
+									prefixedData.append(
+										prefixFieldName(key, prefix, objectName),
+										value
+									);
 								}
-								prefixedData.append(
-									prefixFieldName(key, prefix, objectName),
-									value
-								);
-							}
 
-							const response = await fetch(url, {
-								method: 'POST',
-								body: prefixedData,
-							});
+								const response = await fetch(url, {
+									method: 'POST',
+									body: prefixedData,
+								});
 
-							if (response.status === 422) {
-								const errors = await response.json();
-								context.set('errors', errorsFromServer(errors, objectName));
-								send({ type: 'INVALID' });
-							}
+								if (response.status === 422) {
+									const errors = await response.json();
+									const formErrors = errorsFromServer(errors, objectName);
+									context.set('errors', formErrors);
+									throw new ValidationError(formErrors);
+								}
 
-							return response;
-						},
-					});
-				} catch (error) {
-					send({ type: 'ERROR' });
-					return;
-				}
-
-				if (result instanceof Promise) {
-					result
-						.then(res => {
-							if (res) {
-								send({ type: 'SUCCESS' });
-							} else {
-								send({ type: 'ERROR' });
-							}
-						})
-						.catch(() => {
-							send({ type: 'ERROR' });
+								return response;
+							},
 						});
-				} else {
-					if (result) {
-						send({ type: 'SUCCESS' });
-					} else {
+
+						if (result) {
+							send({ type: 'SUCCESS' });
+						} else {
+							send({ type: 'ERROR' });
+						}
+					} catch (error) {
+						if (error instanceof ValidationError) {
+							send({ type: 'INVALID' });
+							action(['focusFirstInvalid']);
+							return;
+						}
 						send({ type: 'ERROR' });
 					}
-				}
+				})();
 			},
 
 			validateField({ context, prop, event }) {
@@ -145,9 +136,7 @@ export const machine = createMachine<FormSchema>({
 				if (!fieldName) return;
 
 				const formData = context.get('values');
-				const dataObject = Object.fromEntries(formData.entries());
-				const validationResult = v.safeParse(schema, dataObject);
-				const allErrors = errorsFromValibot(validationResult);
+				const allErrors = validateWithSchema(schema, formData);
 
 				// Update only errors for the specific field
 				const currentErrors = { ...context.get('errors') };

@@ -1,30 +1,27 @@
-import * as v from 'valibot';
-import type { FormErrors } from './form.types';
+import * as z from 'zod';
+import type { FormErrors, ZodFormSchema } from './form.types';
 
-export function toKeyPath(path?: Array<{ key?: string | number; index?: number }>) {
-	if (!path || path.length === 0) return '';
-	const parts = path
-		.map(p => {
-			if (typeof p.key === 'number') return String(p.key);
-			if (typeof p.key === 'string') return p.key;
-			if (typeof p.index === 'number') return String(p.index);
-			return '';
-		})
-		.filter(Boolean);
-	return parts.join('.');
-}
-
-export function errorsFromValibot(result: v.SafeParseResult<any>, key?: string): FormErrors {
-	if (result.success) return {};
-	const out: FormErrors = {};
-	for (const issue of result.issues) {
-		const errorKey: string =
-			key || toKeyPath(issue.path) || (typeof issue.input === 'string' ? issue.input : '');
-		const message = issue.message ?? 'Invalid value';
-		if (!out[errorKey]) out[errorKey] = [];
-		out[errorKey].push(message);
+export function validateWithSchema(schema: ZodFormSchema, formData: FormData): FormErrors {
+	if (!schema) {
+		return {};
 	}
-	return out;
+	const dataObject = Object.fromEntries(formData.entries());
+
+	const validationResult = schema.safeParse(dataObject);
+	if (validationResult.success) {
+		return {};
+	}
+
+	const flat = z.flattenError(validationResult.error).fieldErrors;
+
+	const errors: FormErrors = {};
+
+	for (const key in flat) {
+		if (!flat[key]) continue;
+		errors[key] = flat[key];
+	}
+
+	return errors;
 }
 
 export function errorsFromServer(

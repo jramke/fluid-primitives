@@ -1,6 +1,6 @@
 import type { EventObject } from '@zag-js/core';
 import type { JSX, PropTypes } from '@zag-js/types';
-import * as v from 'valibot';
+import * as z from 'zod';
 import type { Form } from '../Form';
 import type { FieldMachine } from './form.registry';
 
@@ -8,14 +8,22 @@ export type FormErrors = Record<string, string[]>;
 export type FormDirty = Record<string, boolean>;
 export type FormTouched = Record<string, boolean>;
 
-export type ValibotFormSchema = v.ObjectSchema<
-	v.ObjectEntries,
-	v.ErrorMessage<v.ObjectIssue> | undefined
->;
+/**
+ * Error thrown by post() when server returns 422 validation errors.
+ * The machine catches this and transitions to 'invalid' state.
+ */
+export class ValidationError extends Error {
+	constructor(public errors: FormErrors) {
+		super('Server validation failed');
+		this.name = 'ValidationError';
+	}
+}
+
+export type ZodFormSchema = z.ZodObject | undefined;
 
 export interface FormProps {
 	id: string;
-	schema?: ValibotFormSchema;
+	schema?: ZodFormSchema;
 	objectName?: string;
 	inputDebounceMs?: number;
 	onSubmit?: ({
