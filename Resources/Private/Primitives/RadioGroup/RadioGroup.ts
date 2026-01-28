@@ -1,10 +1,29 @@
 import * as radioGroup from '@zag-js/radio-group';
-import { Component, Machine, normalizeProps } from '../../Client';
+import { FieldAwareComponent, Machine, mergeProps, normalizeProps } from '../../Client';
+import * as fieldDom from '../Field/src/field.dom';
+import type { FieldMachine } from '../Field/src/field.registry';
 
-export class RadioGroup extends Component<radioGroup.Props, radioGroup.Api> {
+export class RadioGroup extends FieldAwareComponent<radioGroup.Props, radioGroup.Api> {
 	static name = 'radio-group';
 
+	propsWithField(props: radioGroup.Props, fieldMachine: FieldMachine): radioGroup.Props {
+		return {
+			...props,
+			disabled: props.disabled ?? fieldMachine.ctx.get('disabled'),
+			readOnly: props.readOnly ?? fieldMachine.ctx.get('readOnly'),
+			required: props.required ?? fieldMachine.ctx.get('required'),
+			invalid: props.invalid ?? fieldMachine.ctx.get('invalid'),
+			name: props.name ?? fieldMachine.prop('name'),
+			ids: {
+				...props.ids,
+				label: fieldDom.getLabelId(fieldMachine.scope),
+				itemHiddenInput: fieldDom.getControlId(fieldMachine.scope),
+			},
+		};
+	}
+
 	initMachine(props: radioGroup.Props): Machine<any> {
+		props = this.withFieldProps(props);
 		return new Machine(radioGroup.machine, props);
 	}
 
@@ -13,8 +32,16 @@ export class RadioGroup extends Component<radioGroup.Props, radioGroup.Api> {
 	}
 
 	render() {
+		this.subscribeToFieldService();
+
 		const rootEl = this.getElement('root');
-		if (rootEl) this.spreadProps(rootEl, this.api.getRootProps());
+		if (rootEl)
+			this.spreadProps(
+				rootEl,
+				mergeProps(this.api.getRootProps(), {
+					'aria-describedby': this.fieldMachine?.ctx.get('describeIds') || undefined,
+				})
+			);
 
 		const labelEl = this.getElement('label');
 		if (labelEl) this.spreadProps(labelEl, this.api.getLabelProps());
