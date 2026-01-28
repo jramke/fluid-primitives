@@ -86,6 +86,11 @@ export function prefixFieldName(fieldName: string, prefix: string, objectName?: 
 		return '';
 	}
 
+	const isArrayField = fieldName.endsWith('[]');
+	if (isArrayField) {
+		fieldName = fieldName.slice(0, -2);
+	}
+
 	if (objectName) {
 		fieldName = `${objectName}[${fieldName}]`;
 	}
@@ -95,6 +100,10 @@ export function prefixFieldName(fieldName: string, prefix: string, objectName?: 
 
 	if (fieldNameSegments.length > 1) {
 		prefixedFieldName += `[${fieldNameSegments[1]}`;
+	}
+
+	if (isArrayField) {
+		prefixedFieldName += '[]';
 	}
 
 	return prefixedFieldName;
