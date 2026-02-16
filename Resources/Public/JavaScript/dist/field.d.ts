@@ -21,6 +21,7 @@ interface FieldSchema {
     readOnly: boolean;
     formMachine: FormMachine | null;
     describeIds: string | undefined;
+    hasDescription: boolean;
   };
   computed: {
     errors: string[];
@@ -35,10 +36,14 @@ interface FieldApi {
   invalid: boolean;
   errors: string[];
   name: string;
+  disabled: boolean;
+  required: boolean;
+  readOnly: boolean;
   getRootProps(): PropTypes['element'];
   getLabelProps(): PropTypes['label'];
   getControlProps(): PropTypes['element'];
   getErrorProps(): PropTypes['element'];
+  getDescriptionProps(): PropTypes['element'];
   getErrorText(): string | null;
 }
 //#endregion

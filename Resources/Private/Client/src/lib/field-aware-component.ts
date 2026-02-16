@@ -88,8 +88,7 @@ export abstract class FieldAwareComponent<Props, Api> extends Component<Props, A
 					if (Object.keys(propsToUpdate).length > 0) {
 						this.updateProps(propsToUpdate as Partial<Props>);
 					} else {
-						this.api = this.initApi();
-						this.render();
+						this.machine.notify();
 					}
 				});
 			});
@@ -97,7 +96,6 @@ export abstract class FieldAwareComponent<Props, Api> extends Component<Props, A
 		} else {
 			const handler = () => {
 				this.subscribeToFieldService();
-				// this.render();
 				this.closestField!.removeEventListener(
 					'fluid-primitives:field:registered',
 					handler

@@ -1,12 +1,12 @@
 import { Component$1 as Component, Machine$1 as Machine } from "./index-Dn0aMgBA.js";
-import * as _zag_js_types9 from "@zag-js/types";
+import * as _zag_js_types2 from "@zag-js/types";
 import * as dialog from "@zag-js/dialog";
 
 //#region Resources/Private/Primitives/Dialog/Dialog.d.ts
 declare class Dialog extends Component<dialog.Props, dialog.Api> {
   static name: string;
   initMachine(props: dialog.Props): Machine<any>;
-  initApi(): dialog.Api<_zag_js_types9.PropTypes<{
+  initApi(): dialog.Api<_zag_js_types2.PropTypes<{
     [x: string]: any;
   }>>;
   render(): void;

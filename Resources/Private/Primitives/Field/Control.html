@@ -5,6 +5,7 @@
     {f:if(condition: context.ids.control, then: 'id="{context.ids.control}"' )}
     {f:if(condition: context.defaultValue, then: 'value="{context.defaultValue}"' )}
     {ui:ref(name: 'control' )}
+    name="{context.name}"
     {ui:attributes()}>
     <f:slot />
 </div>

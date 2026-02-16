@@ -10,3 +10,9 @@ services:
   Jramke\FluidPrimitives\Registry\HydrationRegistry:
     shared: true
     public: true
+
+  Jramke\FluidPrimitives\Service\TemplateTokenService:
+    public: true
+
+  Jramke\FluidPrimitives\Controller\TemplateController:
+    public: true

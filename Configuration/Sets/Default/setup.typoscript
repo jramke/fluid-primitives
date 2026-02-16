@@ -4,3 +4,24 @@ plugin.tx_fluidprimitives {
         defaultFloatingStyles = position: absolute; isolation: isolate; top: 0px; left: 0px;
     }
 }
+
+# Page type for AJAX template rendering
+# This allows the ui:template ViewHelper to re-render templates via AJAX
+fluidPrimitivesTemplate = PAGE
+fluidPrimitivesTemplate {
+    typeNum = 1748293746
+
+    config {
+        disableAllHeaderCode = 1
+        additionalHeaders.10.header = Content-Type: text/html; charset=utf-8
+        debug = 0
+        no_cache = 1
+    }
+
+    10 = USER
+    10 {
+        userFunc = TYPO3\CMS\Extbase\Core\Bootstrap->run
+        extensionName = FluidPrimitives
+        pluginName = Template
+    }
+}

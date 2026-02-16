@@ -1,1 +1,1 @@
-import{mount as e}from"./Client-B1xGmpZs.js";import{Popover as t}from"./Popover-Ajn8UjnK.js";e(`popover`,({props:e})=>{let n=new t(e);return n.init(),n});
+import{mount as e}from"./Client-Cg0r8pJG.js";import{Popover as t}from"./Popover-DboSp7W_.js";e(`popover`,({props:e})=>{let n=new t(e);return n.init(),n});

@@ -1,1 +1,1 @@
-import{mount as e}from"./Client-B1xGmpZs.js";import{Tabs as t}from"./Tabs-D1dfkUC3.js";e(`tabs`,({props:e})=>{let n=new t(e);return n.init(),n});
+import{mount as e}from"./Client-Cg0r8pJG.js";import{Tabs as t}from"./Tabs-BaV4Y_gI.js";e(`tabs`,({props:e})=>{let n=new t(e);return n.init(),n});

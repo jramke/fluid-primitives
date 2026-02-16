@@ -1,1 +1,1 @@
-import{mount as e}from"./Client-B1xGmpZs.js";import{Dialog as t}from"./Dialog-BMSz7fxF.js";e(`dialog`,({props:e})=>{let n=new t(e);return n.init(),n});
+import{mount as e}from"./Client-Cg0r8pJG.js";import{Dialog as t}from"./Dialog-DWgowUfq.js";e(`dialog`,({props:e})=>{let n=new t(e);return n.init(),n});

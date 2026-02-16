@@ -59,15 +59,22 @@ export function connect<T extends PropTypes>(
 		getDirty,
 		getTouched,
 
-		userRenderFn: prop('render'),
+		_userRenderFn: prop('render'),
 
 		getFormEl,
-		getFields() {
+		getAllFields() {
 			return getFieldMachinesFor(dom.getFormEl(scope));
+		},
+		getField(name: string) {
+			return this.getAllFields().get(name);
 		},
 		getAction() {
 			const formEl = getFormEl();
 			return formEl?.getAttribute('action') || '';
+		},
+
+		reset() {
+			send({ type: 'RESET' });
 		},
 
 		getFormProps() {
@@ -83,11 +90,13 @@ export function connect<T extends PropTypes>(
 				onSubmit: async event => {
 					event.preventDefault();
 					const form = event.currentTarget as HTMLFormElement;
+					console.log(Object.fromEntries(new FormData(form)));
+
 					context.set('values', new FormData(form));
 					send({ type: 'SUBMIT', detail: { event, api: this } });
 				},
-				onReset: _event => {
-					send({ type: 'RESET' });
+				onReset: event => {
+					send({ type: 'RESET', detail: { omitManualReset: true } });
 				},
 				// for things like inputs
 				onInput: event => {
@@ -117,11 +126,6 @@ export function connect<T extends PropTypes>(
 
 					send({ type: 'BLUR', detail: { target } });
 				},
-				// TODO ??? for things like selects or checkboxes
-				// can we get rid of this
-				// onChange_: (event: any) => {
-				// 	send({ type: 'INPUT', detail: { target: event.target } });
-				// },
 			});
 		},
 	};

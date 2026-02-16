@@ -2,17 +2,30 @@ import { Component$1 as Component, Machine$1 as Machine } from "./index-Dn0aMgBA
 import { FieldMachine$1 as FieldMachine } from "./form.registry-B9EJCStd.js";
 import { EventObject } from "@zag-js/core";
 import { JSX, PropTypes } from "@zag-js/types";
-import * as v from "valibot";
+import * as z from "zod";
 
 //#region Resources/Private/Primitives/Form/src/form.types.d.ts
-type FormErrors = Record<string, string[]>;
+interface FieldError {
+  messages: string[];
+  value: FormDataEntryValue | FormDataEntryValue[] | null;
+}
+type FormErrors = Record<string, FieldError>;
 type FormDirty = Record<string, boolean>;
-type ValibotFormSchema = v.ObjectSchema<v.ObjectEntries, v.ErrorMessage<v.ObjectIssue> | undefined>;
+type FormTouched = Record<string, boolean>;
+/**
+ * Error thrown by post() when server returns 422 validation errors.
+ * The machine catches this and transitions to 'invalid' state.
+ */
+declare class ValidationError extends Error {
+  errors: FormErrors;
+  constructor(errors: FormErrors);
+}
+type ZodFormSchema = z.ZodObject | undefined;
 interface FormProps {
   id: string;
-  schema?: ValibotFormSchema;
-  reactiveFields?: string[];
+  schema?: ZodFormSchema;
   objectName?: string;
+  inputDebounceMs?: number;
   onSubmit?: ({
     formData,
     api,
@@ -33,6 +46,7 @@ interface FormSchema {
     initialValues: FormData;
     errors: FormErrors;
     dirty: FormDirty;
+    touched: FormTouched;
   };
   state: 'invalid' | 'ready' | 'submitting' | 'success' | 'error';
   event: EventObject;
@@ -49,10 +63,13 @@ interface FormApi {
   getValues(): FormData;
   getErrors(): FormErrors;
   getDirty(): FormDirty;
-  userRenderFn: FormProps['render'];
-  getFields(): Map<string, FieldMachine>;
+  getTouched(): FormTouched;
+  _userRenderFn: FormProps['render'];
+  getAllFields(): Map<string, FieldMachine>;
+  getField(name: string): FieldMachine | undefined;
   getFormEl(): HTMLFormElement | null;
   getAction(): string;
+  reset(): void;
 }
 //#endregion
 //#region Resources/Private/Primitives/Form/Form.d.ts
@@ -63,4 +80,4 @@ declare class Form extends Component<FormProps, FormApi> {
   render(): void;
 }
 //#endregion
-export { Form };
+export { Form, ValidationError };

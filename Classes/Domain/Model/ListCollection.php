@@ -143,8 +143,12 @@ class ListCollection implements JsonSerializable, IteratorAggregate
         return null;
     }
 
-    public function findMany(array $values): array
+    public function findMany(array|string $values): array
     {
+        if (is_string($values)) {
+            $values = [$values];
+        }
+
         $result = [];
         foreach ($values as $value) {
             $item = $this->find($value);

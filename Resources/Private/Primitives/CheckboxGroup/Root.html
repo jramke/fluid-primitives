@@ -1,0 +1,16 @@
+<ui:prop name="disabled" type="boolean" optional="{true}" client="{true}" />
+<ui:prop name="invalid" type="boolean" optional="{true}" client="{true}" />
+<ui:prop name="required" type="boolean" optional="{true}" client="{true}" />
+<ui:prop name="defaultValue" type="array" optional="{true}" client="{true}" />
+<ui:prop name="name" type="string" optional="{true}" client="{true}" />
+<ui:prop name="form" type="string" optional="{true}" client="{true}" />
+<ui:prop name="value" type="string" optional="{true}" client="{true}" />
+<ui:prop name="readOnly" type="boolean" optional="{true}" client="{true}" />
+
+<div
+    role="group"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'root' , data: refData )}
+    {ui:attributes()}>
+    <f:slot />
+</div>

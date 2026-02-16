@@ -1,1 +1,1 @@
-import{mount as e}from"./Client-B1xGmpZs.js";import"./field.dom-BPeGctuk.js";import{Select as t}from"./Select-DwAhBdKO.js";e(`select`,({props:e})=>{let n=new t(e);return n.init(),n});
+import{mount as e}from"./Client-Cg0r8pJG.js";import"./field.dom-r8J9M7vj.js";import{Select as t}from"./Select-BuFuIjny.js";e(`select`,({props:e})=>{let n=new t(e);return n.init(),n});

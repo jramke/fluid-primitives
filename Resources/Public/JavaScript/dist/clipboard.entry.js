@@ -1,1 +1,1 @@
-import{mount as e}from"./Client-B1xGmpZs.js";import{Clipboard as t}from"./Clipboard-D22TL1oO.js";e(`clipboard`,({props:e})=>{let n=new t(e);return n.init(),n});
+import{mount as e}from"./Client-Cg0r8pJG.js";import{Clipboard as t}from"./Clipboard-FshBetKv.js";e(`clipboard`,({props:e})=>{let n=new t(e);return n.init(),n});

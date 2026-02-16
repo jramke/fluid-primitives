@@ -1,1 +1,1 @@
-import{mount as e}from"./Client-B1xGmpZs.js";import"./form.registry-ABqE-vzj.js";import{Form as t}from"./Form-DBS4vhQ1.js";e(`form`,({props:e})=>{let n=new t(e);return n.init(),n});
+import{mount as e}from"./Client-Cg0r8pJG.js";import"./form.registry-ABqE-vzj.js";import{Form as t}from"./Form-CwIZCiGS.js";e(`form`,({props:e})=>{let n=new t(e);return n.init(),n});
