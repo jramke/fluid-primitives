@@ -43,7 +43,7 @@ export const machine = createMachine<FormSchema>({
 		BLUR: { actions: ['handleBlur'] },
 		RESET: { target: 'ready', actions: ['resetForm'] },
 		ERROR: { target: 'error' },
-		SUCCESS: { target: 'success', actions: ['resetForm'] },
+		SUCCESS: { target: 'success' },
 	},
 
 	entry: ['setupFormListeners'],

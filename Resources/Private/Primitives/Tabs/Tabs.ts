@@ -25,7 +25,7 @@ export class Tabs extends Component<tabs.Props, tabs.Api> {
 				triggerEl,
 				this.api.getTriggerProps({
 					value: triggerEl.dataset.value!,
-					disabled: triggerEl.getAttribute('data-disabled') === 'true',
+					disabled: triggerEl.hasAttribute('data-disabled'),
 				})
 			);
 		});

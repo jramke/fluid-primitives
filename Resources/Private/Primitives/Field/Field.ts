@@ -54,8 +54,8 @@ export class Field extends Component<FieldProps, FieldApi> {
 		if (errorEl) {
 			this.spreadProps(errorEl, this.api.getErrorProps());
 			const msg = this.api.getErrorText();
-			if (typeof (errorEl as any).textContent !== 'undefined') {
-				(errorEl as HTMLElement).textContent = msg ?? '';
+			if (msg) {
+				errorEl.textContent = msg;
 			}
 		}
 	}
