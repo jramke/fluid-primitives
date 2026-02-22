@@ -1,1 +1,1 @@
-import{mount as e}from"./Client-B1xGmpZs.js";import{RadioGroup as t}from"./RadioGroup-BIJSdLot.js";e(`radio-group`,({props:e})=>{let n=new t(e);return n.init(),n});
+import{mount as e}from"./Client-C7pLb8Ab.js";import{RadioGroup as t}from"./RadioGroup-RoniWWCD.js";e(`radio-group`,({props:e})=>{let n=new t(e);return n.init(),n});

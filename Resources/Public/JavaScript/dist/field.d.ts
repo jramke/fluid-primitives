@@ -1,5 +1,5 @@
-import { Component$1 as Component, Machine$1 as Machine } from "./index-Dn0aMgBA.js";
-import { FormMachine } from "./form.registry-B9EJCStd.js";
+import { Component$1 as Component, Machine$1 as Machine } from "./index-QGNV9SvR.js";
+import { FormMachine } from "./form.registry-Bk1J-OLU.js";
 import { EventObject } from "@zag-js/core";
 import { PropTypes } from "@zag-js/types";
 
@@ -21,6 +21,7 @@ interface FieldSchema {
     readOnly: boolean;
     formMachine: FormMachine | null;
     describeIds: string | undefined;
+    hasDescription: boolean;
   };
   computed: {
     errors: string[];
@@ -35,10 +36,14 @@ interface FieldApi {
   invalid: boolean;
   errors: string[];
   name: string;
+  disabled: boolean;
+  required: boolean;
+  readOnly: boolean;
   getRootProps(): PropTypes['element'];
   getLabelProps(): PropTypes['label'];
   getControlProps(): PropTypes['element'];
   getErrorProps(): PropTypes['element'];
+  getDescriptionProps(): PropTypes['element'];
   getErrorText(): string | null;
 }
 //#endregion

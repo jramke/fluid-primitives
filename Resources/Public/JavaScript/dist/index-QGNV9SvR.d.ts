@@ -77,9 +77,9 @@ type FieldMachine = Machine$1<any>;
 declare abstract class FieldAwareComponent<Props, Api> extends Component<Props, Api> {
   protected subscribedToField: boolean;
   protected fieldMachine: FieldMachine | undefined;
-  protected closestField: Element | null;
+  protected closestField: HTMLElement | null;
   protected abstract propsWithField(props: Partial<Props>, fieldMachine: FieldMachine): Props;
-  protected getClosestField(): Element | null;
+  protected getClosestField(): HTMLElement;
   protected withFieldProps(props: Props): Props;
   subscribeToFieldService(): void;
 }

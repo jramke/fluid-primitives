@@ -1,1 +1,1 @@
-import"./Client-B1xGmpZs.js";import"./form.registry-ABqE-vzj.js";import{Form as e}from"./Form-DBS4vhQ1.js";export{e as Form};
+import"./Client-C7pLb8Ab.js";import"./form.registry-ABqE-vzj.js";import{Form as e,ValidationError as t}from"./Form-DBNNU5PD.js";export{e as Form,t as ValidationError};
