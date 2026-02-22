@@ -5,7 +5,7 @@ import { Component } from './component';
 export function getHydrationData(component: string): Record<string, ComponentHydrationData> | null;
 export function getHydrationData(component: string, id: string): ComponentHydrationData | null;
 export function getHydrationData(component?: string, id?: string) {
-	const hydrationData = window.FluidPrimitives.hydrationData;
+	const hydrationData = window.FluidPrimitives?.hydrationData;
 
 	if (!hydrationData || typeof hydrationData !== 'object') {
 		return null;
