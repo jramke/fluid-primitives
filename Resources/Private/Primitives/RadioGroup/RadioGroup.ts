@@ -1,6 +1,5 @@
 import * as radioGroup from '@zag-js/radio-group';
 import { FieldAwareComponent, Machine, mergeProps, normalizeProps } from '../../Client';
-import * as fieldDom from '../Field/src/field.dom';
 import type { FieldMachine } from '../Field/src/field.registry';
 
 export class RadioGroup extends FieldAwareComponent<radioGroup.Props, radioGroup.Api> {
@@ -14,11 +13,6 @@ export class RadioGroup extends FieldAwareComponent<radioGroup.Props, radioGroup
 			required: props.required ?? fieldMachine.ctx.get('required'),
 			invalid: props.invalid ?? fieldMachine.ctx.get('invalid'),
 			name: props.name ?? fieldMachine.prop('name'),
-			ids: {
-				...props.ids,
-				label: fieldDom.getLabelId(fieldMachine.scope),
-				itemHiddenInput: fieldDom.getControlId(fieldMachine.scope),
-			},
 		};
 	}
 
@@ -39,6 +33,7 @@ export class RadioGroup extends FieldAwareComponent<radioGroup.Props, radioGroup
 			this.spreadProps(
 				rootEl,
 				mergeProps(this.api.getRootProps(), {
+					'aria-invalid': this.fieldMachine?.ctx.get('invalid') || undefined,
 					'aria-describedby': this.fieldMachine?.ctx.get('describeIds') || undefined,
 				})
 			);

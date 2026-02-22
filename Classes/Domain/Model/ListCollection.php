@@ -143,8 +143,12 @@ class ListCollection implements JsonSerializable, IteratorAggregate
         return null;
     }
 
-    public function findMany(array $values): array
+    public function findMany(array|string $values): array
     {
+        if (is_string($values)) {
+            $values = [$values];
+        }
+
         $result = [];
         foreach ($values as $value) {
             $item = $this->find($value);
@@ -221,7 +225,6 @@ class ListCollection implements JsonSerializable, IteratorAggregate
         $groups = [];
         foreach ($this->items as $index => $item) {
             $key = (string)($this->getFromKey($item, $this->groupByKey) ?? '');
-            // krexx($key);
             $groups[$key][] = $item;
         }
 

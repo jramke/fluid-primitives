@@ -2,9 +2,16 @@ import { createMachine } from '@zag-js/core';
 import * as dom from './form.dom';
 import type { FormDirty, FormErrors, FormSchema, FormTouched } from './form.types';
 import { ValidationError } from './form.types';
-import { errorsFromServer, getInputValue, prefixFieldName, validateWithSchema } from './form.utils';
+import {
+	errorsFromServer,
+	getFormDataValue,
+	getInputValue,
+	prefixFieldName,
+	validateWithSchema,
+} from './form.utils';
 
 export const machine = createMachine<FormSchema>({
+	// debug: true,
 	initialState() {
 		return 'ready';
 	},
@@ -36,7 +43,7 @@ export const machine = createMachine<FormSchema>({
 		BLUR: { actions: ['handleBlur'] },
 		RESET: { target: 'ready', actions: ['resetForm'] },
 		ERROR: { target: 'error' },
-		SUCCESS: { target: 'success' },
+		SUCCESS: { target: 'success', actions: ['resetForm'] },
 	},
 
 	entry: ['setupFormListeners'],
@@ -103,8 +110,7 @@ export const machine = createMachine<FormSchema>({
 
 								if (response.status === 422) {
 									const errors = await response.json();
-									const formErrors = errorsFromServer(errors, objectName);
-									context.set('errors', formErrors);
+									const formErrors = errorsFromServer(errors, objectName, data);
 									throw new ValidationError(formErrors);
 								}
 
@@ -119,6 +125,7 @@ export const machine = createMachine<FormSchema>({
 						}
 					} catch (error) {
 						if (error instanceof ValidationError) {
+							context.set('errors', error.errors);
 							send({ type: 'INVALID' });
 							action(['focusFirstInvalid']);
 							return;
@@ -136,16 +143,32 @@ export const machine = createMachine<FormSchema>({
 				if (!fieldName) return;
 
 				const formData = context.get('values');
+				const currentErrors = context.get('errors');
+				const existingError = currentErrors[fieldName];
+
+				const currentValue = getFormDataValue(formData, fieldName);
+
+				// Skip validation if the value hasn't changed from when the error was triggered
+				// This preserves server-side validation errors until the user actually changes the value
+				if (existingError) {
+					const errorValue = existingError.value;
+					if (JSON.stringify(currentValue) === JSON.stringify(errorValue)) {
+						return;
+					}
+				}
+
 				const allErrors = validateWithSchema(schema, formData);
 
 				// Update only errors for the specific field
-				const currentErrors = { ...context.get('errors') };
+				const updatedErrors = { ...currentErrors };
+
 				if (allErrors[fieldName]) {
-					currentErrors[fieldName] = allErrors[fieldName];
+					updatedErrors[fieldName] = allErrors[fieldName];
 				} else {
-					delete currentErrors[fieldName];
+					delete updatedErrors[fieldName];
 				}
-				context.set('errors', currentErrors);
+
+				context.set('errors', updatedErrors);
 			},
 
 			handleInput({ context, event, send }) {
@@ -206,9 +229,15 @@ export const machine = createMachine<FormSchema>({
 				}
 			},
 
-			resetForm({ context, scope }) {
+			resetForm({ context, scope, event }) {
 				const form = dom.getFormEl(scope);
+
+				if (form && !event?.detail?.omitManualReset) {
+					form.reset();
+				}
+
 				const initial = form ? new FormData(form) : context.get('initialValues');
+
 				context.set('values', initial);
 				context.set('initialValues', initial);
 				context.set('errors', {});
@@ -228,6 +257,12 @@ export const machine = createMachine<FormSchema>({
 					`[name="${CSS.escape(firstKey)}"]`
 				) as HTMLElement | null;
 				invalidEl?.focus();
+				if (
+					invalidEl instanceof HTMLInputElement ||
+					invalidEl instanceof HTMLTextAreaElement
+				) {
+					invalidEl.select();
+				}
 			},
 
 			setupFormListeners({ scope, send }) {

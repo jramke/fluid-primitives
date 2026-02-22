@@ -4,6 +4,7 @@ import * as dom from './field.dom';
 import type { FieldSchema } from './field.types';
 
 export const machine = createMachine<FieldSchema>({
+	// debug: true,
 	initialState() {
 		return 'ready';
 	},
@@ -33,8 +34,8 @@ export const machine = createMachine<FieldSchema>({
 		errors({ context, prop }) {
 			const formMachineCtx = context.get('formMachine')?.ctx;
 			if (!formMachineCtx) return [] as string[];
-			const errs = formMachineCtx.get('errors')?.[prop('name')] ?? [];
-			return errs;
+			const fieldError = formMachineCtx.get('errors')?.[prop('name')];
+			return fieldError?.messages ?? [];
 		},
 	},
 	watch({ track, context, computed, action }) {
@@ -95,7 +96,10 @@ export const machine = createMachine<FieldSchema>({
 					context.set('invalid', prop('invalid') ?? false);
 					return;
 				}
-				const errs = formMachineCtx.get('errors')?.[prop('name')] ?? [];
+
+				const fieldError = formMachineCtx.get('errors')?.[prop('name')];
+				const errs = fieldError?.messages ?? [];
+
 				context.set('invalid', errs.length > 0);
 			},
 		},

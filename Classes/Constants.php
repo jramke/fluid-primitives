@@ -24,5 +24,8 @@ class Constants
         'checkbox',
         'select',
         'number-input',
+        'radio-group',
     ];
+
+    public const MANUALLY_EXPOSED_TO_CLIENT_MARKER = '<!-- FLUID_PRIMITIVES_COMPONENT_MANUALLY_EXPOSED_TO_CLIENT -->';
 }

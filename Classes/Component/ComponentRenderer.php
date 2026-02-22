@@ -166,7 +166,8 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
                 $contextClassName,
                 $renderingContext,
                 $parentRenderingContext,
-                $contextVariables
+                $this->componentResolver,
+                $contextVariables,
             );
 
             ContextService::addToRenderingContext($parentRenderingContext, $baseName, $context);
@@ -247,7 +248,12 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
             }
 
             // only register the components props for hydration if the user used the ui:ref viewhelper
-            if (preg_match('/data-hydrate-[^=]*="' . preg_quote($rootId, '/') . '"/', $rendered)) {
+            $hasRef = preg_match('/data-hydrate-[^=]*="' . preg_quote($rootId, '/') . '"/', $rendered) === 1;
+            $manuallyExposedToClient = strpos($rendered, Constants::MANUALLY_EXPOSED_TO_CLIENT_MARKER) !== false;
+            if ($hasRef || $manuallyExposedToClient) {
+                if ($manuallyExposedToClient) {
+                    $rendered = str_replace(Constants::MANUALLY_EXPOSED_TO_CLIENT_MARKER, '', $rendered);
+                }
 
                 $propsMarkedForClientValues = [];
                 foreach ($propsMarkedForClient as $name => $_) {

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Contexts;
 
+use Jramke\FluidPrimitives\Component\ComponentCollectionInterface;
 use Psr\Container\ContainerInterface;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 
@@ -15,6 +16,7 @@ interface ComponentContextInterface extends ContainerInterface
     public function initialize(
         RenderingContextInterface $renderingContext,
         RenderingContextInterface $parentRenderingContext,
+        ComponentCollectionInterface $componentResolver,
         array $contextVariables = [],
     ): void;
 
@@ -47,6 +49,11 @@ interface ComponentContextInterface extends ContainerInterface
      * Gets the parent rendering context associated with this component context.
      */
     public function getParentRenderingContext(): ?RenderingContextInterface;
+
+    /**
+     * Gets the component resolver associated with this component context.
+     */
+    public function getComponentResolver(): ComponentCollectionInterface;
 
     /** 
      * Lifecycle method called before rendering. Only called for root or closed components.

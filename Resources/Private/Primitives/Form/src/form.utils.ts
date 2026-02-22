@@ -18,7 +18,10 @@ export function validateWithSchema(schema: ZodFormSchema, formData: FormData): F
 
 	for (const key in flat) {
 		if (!flat[key]) continue;
-		errors[key] = flat[key];
+		errors[key] = {
+			messages: flat[key],
+			value: getFormDataValue(formData, key),
+		};
 	}
 
 	return errors;
@@ -26,7 +29,8 @@ export function validateWithSchema(schema: ZodFormSchema, formData: FormData): F
 
 export function errorsFromServer(
 	responseErrors: Record<string, string[]>,
-	objectName?: string
+	objectName: string | undefined,
+	formData: FormData
 ): FormErrors {
 	const out: FormErrors = {};
 	for (const key in responseErrors) {
@@ -34,7 +38,10 @@ export function errorsFromServer(
 		if (objectName) {
 			newKey = newKey.replace(objectName + '.', '');
 		}
-		out[newKey] = responseErrors[key];
+		out[newKey] = {
+			messages: responseErrors[key],
+			value: getFormDataValue(formData, newKey),
+		};
 	}
 	return out;
 }
@@ -79,6 +86,12 @@ export function getInputValue(target: EventTarget | null): unknown {
 	}
 
 	return (el as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement).value;
+}
+
+export function getFormDataValue(formData: FormData, fieldName: string) {
+	return formData.getAll(fieldName).length > 1
+		? formData.getAll(fieldName)
+		: formData.get(fieldName);
 }
 
 export function prefixFieldName(fieldName: string, prefix: string, objectName?: string) {

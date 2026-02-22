@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Contexts;
 
+use Jramke\FluidPrimitives\Component\ComponentCollectionInterface;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 
 abstract class AbstractComponentContext implements ComponentContextInterface, \ArrayAccess
@@ -11,6 +12,7 @@ abstract class AbstractComponentContext implements ComponentContextInterface, \A
     private RenderingContextInterface $renderingContext;
     private RenderingContextInterface $parentRenderingContext;
     private array $contextVariables = [];
+    private ComponentCollectionInterface $componentResolver;
 
     /**
      * Initialize the context with state after dependency injection
@@ -18,10 +20,12 @@ abstract class AbstractComponentContext implements ComponentContextInterface, \A
     public function initialize(
         RenderingContextInterface $renderingContext,
         RenderingContextInterface $parentRenderingContext,
+        ComponentCollectionInterface $componentResolver,
         array $contextVariables = [],
     ): void {
         $this->renderingContext = $renderingContext;
         $this->parentRenderingContext = $parentRenderingContext;
+        $this->componentResolver = $componentResolver;
         $this->contextVariables = $contextVariables;
     }
 
@@ -33,6 +37,11 @@ abstract class AbstractComponentContext implements ComponentContextInterface, \A
     public function getParentRenderingContext(): RenderingContextInterface
     {
         return $this->parentRenderingContext;
+    }
+
+    public function getComponentResolver(): ComponentCollectionInterface
+    {
+        return $this->componentResolver;
     }
 
     public function getAllVariables(): array

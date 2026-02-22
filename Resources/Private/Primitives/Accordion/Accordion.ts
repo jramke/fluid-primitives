@@ -27,7 +27,7 @@ export class Accordion extends Component<accordion.Props, accordion.Api> {
 				itemEl,
 				this.api.getItemProps({
 					value: itemEl.getAttribute('data-value')!,
-					disabled: itemEl.getAttribute('data-disabled') === 'true',
+					disabled: itemEl.hasAttribute('data-disabled'),
 				})
 			);
 		});
@@ -38,7 +38,7 @@ export class Accordion extends Component<accordion.Props, accordion.Api> {
 				trigger,
 				this.api.getItemTriggerProps({
 					value: trigger.getAttribute('data-value')!,
-					disabled: trigger.getAttribute('data-disabled') === 'true',
+					disabled: trigger.hasAttribute('data-disabled'),
 				})
 			);
 		});
@@ -49,7 +49,7 @@ export class Accordion extends Component<accordion.Props, accordion.Api> {
 				contentEl,
 				this.api.getItemContentProps({
 					value: contentEl.getAttribute('data-value')!,
-					disabled: contentEl.getAttribute('data-disabled') === 'true',
+					disabled: contentEl.hasAttribute('data-disabled'),
 				})
 			);
 		});
@@ -60,7 +60,7 @@ export class Accordion extends Component<accordion.Props, accordion.Api> {
 				indicatorEl,
 				this.api.getItemIndicatorProps({
 					value: indicatorEl.getAttribute('data-value')!,
-					disabled: indicatorEl.getAttribute('data-disabled') === 'true',
+					disabled: indicatorEl.hasAttribute('data-disabled'),
 				})
 			);
 		});

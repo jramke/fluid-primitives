@@ -4,7 +4,11 @@ import * as z from 'zod';
 import type { Form } from '../Form';
 import type { FieldMachine } from './form.registry';
 
-export type FormErrors = Record<string, string[]>;
+export interface FieldError {
+	messages: string[];
+	value?: FormDataEntryValue | FormDataEntryValue[] | null;
+}
+export type FormErrors = Record<string, FieldError>;
 export type FormDirty = Record<string, boolean>;
 export type FormTouched = Record<string, boolean>;
 
@@ -66,8 +70,10 @@ export interface FormApi {
 	getErrors(): FormErrors;
 	getDirty(): FormDirty;
 	getTouched(): FormTouched;
-	userRenderFn: FormProps['render'];
-	getFields(): Map<string, FieldMachine>;
+	_userRenderFn: FormProps['render'];
+	getAllFields(): Map<string, FieldMachine>;
+	getField(name: string): FieldMachine | undefined;
 	getFormEl(): HTMLFormElement | null;
 	getAction(): string;
+	reset(): void;
 }

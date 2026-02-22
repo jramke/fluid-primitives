@@ -11,6 +11,10 @@ class SelectContext extends AbstractComponentContext
     #[ExposeToClient(excludeIfNull: true)]
     public function getDefaultValue(): ?array
     {
+        if (empty($this->get('defaultValue'))) {
+            return null;
+        }
+
         if (is_string($this->get('defaultValue'))) {
             return [$this->get('defaultValue')];
         }

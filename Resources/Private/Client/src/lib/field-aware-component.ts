@@ -18,24 +18,16 @@ const fieldAccessors: Record<FieldProps, (s: Service<any>) => boolean> = {
 export abstract class FieldAwareComponent<Props, Api> extends Component<Props, Api> {
 	protected subscribedToField = false;
 	protected fieldMachine: FieldMachine | undefined;
-	protected closestField: Element | null = null;
+	protected closestField: HTMLElement | null = null;
 
-	// protected abstract fieldLinkConfig: FieldLinkedConfig<Props>;
-	// return the props with ids or so from the field like
-	// {
-	//     ids: {
-	//         label: getFieldLabelId(fieldMachine.scope),
-	//         hiddenInput: getFieldControlId(fieldMachine.scope),
-	//         ...props.ids,
-	//     },
-	//     ...props,
-	// }
 	protected abstract propsWithField(props: Partial<Props>, fieldMachine: FieldMachine): Props;
 
 	protected getClosestField() {
 		return (
 			this.closestField ||
-			this.getElement('root')?.closest('[data-scope="field"][data-part="root"]') ||
+			(this.getElement('root')?.closest(
+				'[data-scope="field"][data-part="root"]'
+			) as HTMLElement) ||
 			null
 		);
 	}
@@ -45,12 +37,12 @@ export abstract class FieldAwareComponent<Props, Api> extends Component<Props, A
 
 		if (!this.closestField) return props;
 
-		this.fieldMachine = getFieldMachineFor(this.closestField as HTMLElement);
+		this.fieldMachine = getFieldMachineFor(this.closestField);
 		if (this.fieldMachine) {
 			return this.propsWithField(props, this.fieldMachine);
 		} else {
 			const handler = () => {
-				this.fieldMachine = getFieldMachineFor(this.closestField as HTMLElement);
+				this.fieldMachine = getFieldMachineFor(this.closestField);
 				this.updateProps(this.propsWithField(this.userProps!, this.fieldMachine!));
 				this.closestField?.removeEventListener(
 					'fluid-primitives:field:registered',
@@ -66,10 +58,12 @@ export abstract class FieldAwareComponent<Props, Api> extends Component<Props, A
 	subscribeToFieldService() {
 		if (this.subscribedToField) return;
 
-		// TODO: why is it only working when we query the closest field again here?
 		this.closestField = this.getClosestField();
-
 		if (!this.closestField) return;
+
+		if (!this.fieldMachine) {
+			this.fieldMachine = getFieldMachineFor(this.closestField);
+		}
 
 		if (this.fieldMachine) {
 			this.fieldMachine.subscribe(snapshot => {
@@ -88,8 +82,7 @@ export abstract class FieldAwareComponent<Props, Api> extends Component<Props, A
 					if (Object.keys(propsToUpdate).length > 0) {
 						this.updateProps(propsToUpdate as Partial<Props>);
 					} else {
-						this.api = this.initApi();
-						this.render();
+						this.machine.notify();
 					}
 				});
 			});
@@ -97,7 +90,6 @@ export abstract class FieldAwareComponent<Props, Api> extends Component<Props, A
 		} else {
 			const handler = () => {
 				this.subscribeToFieldService();
-				// this.render();
 				this.closestField!.removeEventListener(
 					'fluid-primitives:field:registered',
 					handler

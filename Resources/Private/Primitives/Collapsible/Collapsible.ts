@@ -16,15 +16,23 @@ export class Collapsible extends Component<collapsible.Props, collapsible.Api> {
 		const rootEl = this.getElement('root');
 		if (rootEl) this.spreadProps(rootEl, this.api.getRootProps());
 
-		const triggerEl = this.getElement('trigger');
-		if (triggerEl) this.spreadProps(triggerEl, this.api.getTriggerProps());
+		const triggerEls = this.getElements('trigger');
+		triggerEls.forEach(triggerEl => {
+			this.spreadProps(triggerEl, this.api.getTriggerProps());
+		});
 
-		const triggerTextEl = this.getElement('trigger-text');
-		if (triggerTextEl && triggerTextEl.dataset.openText && triggerTextEl.dataset.closeText) {
-			triggerTextEl.textContent = this.api.open
-				? triggerTextEl.dataset.closeText
-				: triggerTextEl.dataset.openText;
-		}
+		const triggerTextEls = this.getElements('trigger-text');
+		triggerTextEls.forEach(triggerTextEl => {
+			if (
+				triggerTextEl &&
+				triggerTextEl.dataset.openText &&
+				triggerTextEl.dataset.closeText
+			) {
+				triggerTextEl.textContent = this.api.open
+					? triggerTextEl.dataset.closeText
+					: triggerTextEl.dataset.openText;
+			}
+		});
 
 		const contentEl = this.getElement('content');
 		if (contentEl) this.spreadProps(contentEl, this.api.getContentProps());

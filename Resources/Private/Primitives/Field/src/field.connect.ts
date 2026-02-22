@@ -28,7 +28,7 @@ export function connect<T extends PropTypes>(
 		name: prop('name'),
 
 		getErrorText() {
-			return errors.length ? errors[0] : null;
+			return errors.length > 0 ? errors.join(' ') : null;
 		},
 
 		getRootProps() {
