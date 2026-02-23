@@ -1,1 +1,0 @@
-import{mount as e}from"./Client-C7pLb8Ab.js";import{Clipboard as t}from"./Clipboard-3xYQ-5z-.js";e(`clipboard`,({props:e})=>{let n=new t(e);return n.init(),n});

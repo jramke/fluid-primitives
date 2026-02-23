@@ -1,1 +1,0 @@
-import{mount as e}from"./Client-C7pLb8Ab.js";import{Collapsible as t}from"./Collapsible-CRkyzge9.js";e(`collapsible`,({props:e})=>{let n=new t(e);return n.init(),n});

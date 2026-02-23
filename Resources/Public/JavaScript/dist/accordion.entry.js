@@ -1,1 +1,0 @@
-import{mount as e}from"./Client-C7pLb8Ab.js";import{Accordion as t}from"./Accordion-CDhNab8V.js";e(`accordion`,({props:e})=>{let n=new t(e);return n.init(),n});

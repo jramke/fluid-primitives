@@ -1,1 +1,0 @@
-import{mount as e}from"./Client-C7pLb8Ab.js";import{ScrollArea as t}from"./ScrollArea-XpAVw840.js";e(`scroll-area`,({props:e})=>{let n=new t(e);return n.init(),n});

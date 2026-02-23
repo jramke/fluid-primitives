@@ -9,67 +9,69 @@
         "url": "git+https://github.com/jramke/fluid-primitives.git"
     },
     "author": "Joost Ramke <hey@joostramke.com>",
-    "files": [
-        "./Resources/Public/JavaScript/dist"
-    ],
-    "main": "./Resources/Public/JavaScript/dist/client.js",
-    "types": "./Resources/Public/JavaScript/dist/client.d.ts",
+    "files": ["./dist"],
+    "main": "./dist/client.js",
+    "types": "./dist/client.d.ts",
     "exports": {
         ".": {
-            "import": "./Resources/Public/JavaScript/dist/client.js",
-            "types": "./Resources/Public/JavaScript/dist/client.d.ts"
+            "import": "./dist/client.js",
+            "types": "./dist/client.d.ts"
         },
         "./accordion": {
-            "import": "./Resources/Public/JavaScript/dist/accordion.js",
-            "types": "./Resources/Public/JavaScript/dist/accordion.d.ts"
+            "import": "./dist/accordion.js",
+            "types": "./dist/accordion.d.ts"
         },
         "./checkbox": {
-            "import": "./Resources/Public/JavaScript/dist/checkbox.js",
-            "types": "./Resources/Public/JavaScript/dist/checkbox.d.ts"
+            "import": "./dist/checkbox.js",
+            "types": "./dist/checkbox.d.ts"
         },
         "./dialog": {
-            "import": "./Resources/Public/JavaScript/dist/dialog.js",
-            "types": "./Resources/Public/JavaScript/dist/dialog.d.ts"
+            "import": "./dist/dialog.js",
+            "types": "./dist/dialog.d.ts"
         },
         "./clipboard": {
-            "import": "./Resources/Public/JavaScript/dist/clipboard.js",
-            "types": "./Resources/Public/JavaScript/dist/clipboard.d.ts"
+            "import": "./dist/clipboard.js",
+            "types": "./dist/clipboard.d.ts"
         },
         "./collapsible": {
-            "import": "./Resources/Public/JavaScript/dist/collapsible.js",
-            "types": "./Resources/Public/JavaScript/dist/collapsible.d.ts"
+            "import": "./dist/collapsible.js",
+            "types": "./dist/collapsible.d.ts"
         },
         "./field": {
-            "import": "./Resources/Public/JavaScript/dist/field.js",
-            "types": "./Resources/Public/JavaScript/dist/field.d.ts"
+            "import": "./dist/field.js",
+            "types": "./dist/field.d.ts"
         },
         "./form": {
-            "import": "./Resources/Public/JavaScript/dist/form.js",
-            "types": "./Resources/Public/JavaScript/dist/form.d.ts"
+            "import": "./dist/form.js",
+            "types": "./dist/form.d.ts"
         },
         "./popover": {
-            "import": "./Resources/Public/JavaScript/dist/popover.js",
-            "types": "./Resources/Public/JavaScript/dist/popover.d.ts"
+            "import": "./dist/popover.js",
+            "types": "./dist/popover.d.ts"
         },
         "./radio-group": {
-            "import": "./Resources/Public/JavaScript/dist/radio-group.js",
-            "types": "./Resources/Public/JavaScript/dist/radio-group.d.ts"
+            "import": "./dist/radio-group.js",
+            "types": "./dist/radio-group.d.ts"
         },
         "./scroll-area": {
-            "import": "./Resources/Public/JavaScript/dist/scroll-area.js",
-            "types": "./Resources/Public/JavaScript/dist/scroll-area.d.ts"
+            "import": "./dist/scroll-area.js",
+            "types": "./dist/scroll-area.d.ts"
         },
         "./select": {
-            "import": "./Resources/Public/JavaScript/dist/select.js",
-            "types": "./Resources/Public/JavaScript/dist/select.d.ts"
+            "import": "./dist/select.js",
+            "types": "./dist/select.d.ts"
         },
         "./tabs": {
-            "import": "./Resources/Public/JavaScript/dist/tabs.js",
-            "types": "./Resources/Public/JavaScript/dist/tabs.d.ts"
+            "import": "./dist/tabs.js",
+            "types": "./dist/tabs.d.ts"
         },
         "./tooltip": {
-            "import": "./Resources/Public/JavaScript/dist/tooltip.js",
-            "types": "./Resources/Public/JavaScript/dist/tooltip.d.ts"
+            "import": "./dist/tooltip.js",
+            "types": "./dist/tooltip.d.ts"
+        },
+        "./number-input": {
+            "import": "./dist/number-input.js",
+            "types": "./dist/number-input.d.ts"
         }
     },
     "scripts": {

@@ -1,1 +1,0 @@
-import{mount as e}from"./Client-C7pLb8Ab.js";import"./field.dom-r8J9M7vj.js";import{Checkbox as t}from"./Checkbox-CpGwRTbn.js";e(`checkbox`,({props:e})=>{let n=new t(e);return n.init(),n});
