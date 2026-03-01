@@ -17,6 +17,6 @@ class ExposeToClient
 {
     public function __construct(
         public ?string $name = null,
-        public bool $excludeIfNull = false
+        public bool $excludeIfNull = false,
     ) {}
 }

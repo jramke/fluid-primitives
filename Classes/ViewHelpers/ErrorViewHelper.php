@@ -10,7 +10,7 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
 /**
  * Throw an error with a custom message.
- * 
+ *
  * This is useful inside components to throw errors for required props or other misconfigurations that you cant handle with argument definitions.
  *
  * ## Example
@@ -32,10 +32,7 @@ class ErrorViewHelper extends AbstractConditionViewHelper
     public function render(): void
     {
         if ((bool)$this->arguments['when']) {
-            throw new \RuntimeException(
-                $this->arguments['message'],
-                (int)$this->arguments['code']
-            );
+            throw new \RuntimeException($this->arguments['message'], (int)$this->arguments['code']);
         }
     }
 }

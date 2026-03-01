@@ -29,7 +29,9 @@ use TYPO3\CMS\Core\Package\PackageManager;
  */
 readonly class PackageResolver
 {
-    public function __construct(protected PackageManager $packageManager) {}
+    public function __construct(
+        protected PackageManager $packageManager,
+    ) {}
 
     /**
      * @return array<string, PackageInterface>
@@ -71,7 +73,10 @@ readonly class PackageResolver
      */
     protected function removeFrameworkExtensions(array $packages): array
     {
-        return array_filter($packages, fn(PackageInterface $package): bool => !$package->getPackageMetaData()->isFrameworkType());
+        return array_filter(
+            $packages,
+            fn(PackageInterface $package): bool => !$package->getPackageMetaData()->isFrameworkType(),
+        );
     }
 
     /**

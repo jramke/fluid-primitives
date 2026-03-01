@@ -7,8 +7,8 @@ namespace Jramke\FluidPrimitives\Utility;
 use Jramke\FluidPrimitives\Contexts\AbstractComponentContext;
 use Jramke\FluidPrimitives\Contexts\BaseContext;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 use TYPO3\CMS\Extbase\Configuration\ConfigurationManagerInterface;
+use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 
 class ComponentUtility
 {
@@ -87,10 +87,12 @@ class ComponentUtility
             $viewHelperName = $viewHelperNameOrRenderingContext;
         }
 
-        if (empty($viewHelperName)) return false;
+        if (empty($viewHelperName))
+            return false;
 
         $componentParts = explode('.', $viewHelperName);
-        if (count($componentParts) === 0) return false;
+        if (count($componentParts) === 0)
+            return false;
 
         if (count($componentParts) === 1) {
             return true; // Single part components are considered root components
@@ -104,10 +106,12 @@ class ComponentUtility
     // but its (currently) only used for exposing the `context` variable, so it's acceptable for now.
     public static function isComposableComponent(string $viewHelperName): bool
     {
-        if (empty($viewHelperName)) return false;
+        if (empty($viewHelperName))
+            return false;
 
         $componentParts = explode('.', $viewHelperName);
-        if (count($componentParts) > 1) return true;
+        if (count($componentParts) > 1)
+            return true;
 
         return false;
     }
@@ -115,7 +119,9 @@ class ComponentUtility
     public static function getRootIdFromContext(RenderingContextInterface $renderingContext): string
     {
         $isRootComponent = self::isRootComponent($renderingContext);
-        $rootId = $isRootComponent ? $renderingContext->getVariableProvider()->getByPath('rootId') : $renderingContext->getVariableProvider()->getByPath('context.rootId');
+        $rootId = $isRootComponent
+            ? $renderingContext->getVariableProvider()->getByPath('rootId')
+            : $renderingContext->getVariableProvider()->getByPath('context.rootId');
         return $rootId ?? '';
     }
 
@@ -132,9 +138,7 @@ class ComponentUtility
         }
 
         $configurationManager = GeneralUtility::makeInstance(ConfigurationManagerInterface::class);
-        $settings = $configurationManager->getConfiguration(
-            ConfigurationManagerInterface::CONFIGURATION_TYPE_FULL_TYPOSCRIPT
-        );
+        $settings = $configurationManager->getConfiguration(ConfigurationManagerInterface::CONFIGURATION_TYPE_FULL_TYPOSCRIPT);
 
         $fluidPrimitivesSettings = $settings['plugin.']['tx_fluidprimitives.']['settings.'] ?? [];
 
@@ -147,15 +151,14 @@ class ComponentUtility
         return self::$cachedSettings;
     }
 
-    public static function getContextClassNameFromViewHelperName(string $viewHelperName, array $additionalNamespaces): string
-    {
+    public static function getContextClassNameFromViewHelperName(
+        string $viewHelperName,
+        array $additionalNamespaces,
+    ): string {
         $baseClass = BaseContext::class;
         $baseNamespace = substr($baseClass, 0, strrpos($baseClass, '\\'));
 
-        $namespaces = array_merge(
-            $additionalNamespaces,
-            [$baseNamespace]
-        );
+        $namespaces = array_merge($additionalNamespaces, [$baseNamespace]);
 
         $ucFirstComponentBaseName = ucfirst(explode('.', $viewHelperName)[0] ?? '');
 

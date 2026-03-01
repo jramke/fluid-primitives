@@ -33,8 +33,7 @@ class ClientPropsContextExtractor
                 continue;
             }
 
-            $name = $attribute->name
-                ?? self::normalizeMethodName($method->getName());
+            $name = $attribute->name ?? self::normalizeMethodName($method->getName());
 
             $props[$name] = $value;
         }

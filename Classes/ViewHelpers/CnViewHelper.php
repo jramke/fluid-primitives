@@ -6,15 +6,15 @@ namespace Jramke\FluidPrimitives\ViewHelpers;
 
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
-/** 
+/**
  * A ViewHelper that mimics the behavior of the popular `clsx` library for conditional class name merging.
  * It allows you to combine static class names with conditional ones based on the truthiness of values.
- * 
- * It also helps you with whitespace management by filtering out empty or whitespace-only class names 
+ *
+ * It also helps you with whitespace management by filtering out empty or whitespace-only class names
  * and makes it possible to declare your class in multiple lines, which is especially useful in combination with Tailwind CSS.
- * 
+ *
  * ## Examples
- * 
+ *
  * A common pattern you maybe already needed to use is something like this:
  * ```html
  * <div class="my-class{f:if(condition: someCondition, then: ' my-other-class')}">
@@ -23,7 +23,7 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
  * ```html
  * <div class="{ui:cn(value: 'my-class', when: { 'my-other-class': someCondition})}">
  * ```
- * 
+ *
  * In context of components you will do something like this:
  * ```html
  * <div class="{ui:cn(value: 'my-class-1 my-class-2 {class}')}">
@@ -37,7 +37,11 @@ class CnViewHelper extends AbstractViewHelper
     public function initializeArguments(): void
     {
         $this->registerArgument('value', 'string', 'The class input string to process');
-        $this->registerArgument('when', 'array', 'Array of conditional classes where key is class(es) and value is condition');
+        $this->registerArgument(
+            'when',
+            'array',
+            'Array of conditional classes where key is class(es) and value is condition',
+        );
         $this->registerArgument('as', 'string', 'Variable name to assign the result to');
     }
 
@@ -107,12 +111,9 @@ class CnViewHelper extends AbstractViewHelper
         }
 
         // Split by whitespace and filter out empty values
-        return array_filter(
-            preg_split('/\s+/', trim($classString)),
-            function ($class) {
-                return !empty(trim($class));
-            }
-        );
+        return array_filter(preg_split('/\s+/', trim($classString)), function ($class) {
+            return !empty(trim($class));
+        });
     }
 
     /**
@@ -128,7 +129,14 @@ class CnViewHelper extends AbstractViewHelper
         if (is_string($value)) {
             $lower = strtolower(trim($value));
             // Handle common falsy string representations
-            return $lower !== '' && $lower !== '0' && $lower !== 'false' && $lower !== 'no' && $lower !== 'null' && $lower !== 'undefined';
+            return (
+                $lower !== '' &&
+                $lower !== '0' &&
+                $lower !== 'false' &&
+                $lower !== 'no' &&
+                $lower !== 'null' &&
+                $lower !== 'undefined'
+            );
         }
 
         if (is_numeric($value)) {

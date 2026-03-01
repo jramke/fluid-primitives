@@ -9,8 +9,10 @@ use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 
 class ContextService
 {
-    public static function getFromRenderingContext(RenderingContextInterface $renderingContext, string $name): ?ComponentContextInterface
-    {
+    public static function getFromRenderingContext(
+        RenderingContextInterface $renderingContext,
+        string $name,
+    ): ?ComponentContextInterface {
         $variableContainer = $renderingContext->getViewHelperVariableContainer();
         return $variableContainer->get(self::class, $name);
     }
@@ -21,8 +23,11 @@ class ContextService
         return $variableContainer->getAll(self::class);
     }
 
-    public static function addToRenderingContext(RenderingContextInterface $renderingContext, string $name, ComponentContextInterface $context): void
-    {
+    public static function addToRenderingContext(
+        RenderingContextInterface $renderingContext,
+        string $name,
+        ComponentContextInterface $context,
+    ): void {
         $variableContainer = $renderingContext->getViewHelperVariableContainer();
         $variableContainer->add(self::class, $name, $context);
     }

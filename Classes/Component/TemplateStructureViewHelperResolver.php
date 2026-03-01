@@ -9,8 +9,8 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Component;
 
-use TYPO3Fluid\Fluid\Core\ViewHelper\ViewHelperResolver;
 use TYPO3Fluid\Fluid\Core\ViewHelper\TemplateStructurePlaceholderViewHelper;
+use TYPO3Fluid\Fluid\Core\ViewHelper\ViewHelperResolver;
 use TYPO3Fluid\Fluid\Core\ViewHelper\ViewHelperResolverDelegateInterface;
 
 // TODO Fluid will move this into the Templateparser in the future, so we then need to adjust this.
@@ -26,7 +26,7 @@ final class TemplateStructureViewHelperResolver extends ViewHelperResolver
         'argument',
         'prop',
         'slot',
-        'useProps'
+        'useProps',
     ];
 
     public function isNamespaceValid(string $namespaceIdentifier): bool
@@ -41,15 +41,23 @@ final class TemplateStructureViewHelperResolver extends ViewHelperResolver
 
     public function resolveViewHelperClassName(string $namespaceIdentifier, string $methodIdentifier): string
     {
-        if (($namespaceIdentifier === 'f' || $namespaceIdentifier === 'ui') && in_array($methodIdentifier, self::STRUCTURE_VIEWHELPERS)) {
+        if (
+            ($namespaceIdentifier === 'f' || $namespaceIdentifier === 'ui') &&
+            in_array($methodIdentifier, self::STRUCTURE_VIEWHELPERS)
+        ) {
             return parent::resolveViewHelperClassName($namespaceIdentifier, $methodIdentifier);
         }
         return TemplateStructurePlaceholderViewHelper::class;
     }
 
-    public function getResponsibleDelegate(string $namespaceIdentifier, string $methodIdentifier): ?ViewHelperResolverDelegateInterface
-    {
-        if (($namespaceIdentifier === 'f' || $namespaceIdentifier === 'ui') && in_array($methodIdentifier, self::STRUCTURE_VIEWHELPERS)) {
+    public function getResponsibleDelegate(
+        string $namespaceIdentifier,
+        string $methodIdentifier,
+    ): ?ViewHelperResolverDelegateInterface {
+        if (
+            ($namespaceIdentifier === 'f' || $namespaceIdentifier === 'ui') &&
+            in_array($methodIdentifier, self::STRUCTURE_VIEWHELPERS)
+        ) {
             return parent::getResponsibleDelegate($namespaceIdentifier, $methodIdentifier);
         }
         return null;

@@ -8,11 +8,11 @@ use Jramke\FluidPrimitives\Registry\PortalRegistry;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
 /**
- * This ViewHelper allows you to render content in a different part of the DOM tree than where it is defined. 
+ * This ViewHelper allows you to render content in a different part of the DOM tree than where it is defined.
  * This is particularly useful for modals, tooltips, or any component that needs to break out of its parent container for styling or positioning reasons.
- * 
+ *
  * You need to use this ViewHelper in conjunction with the [ui:portalContainer](./portalContainer) ViewHelper, which acts as the target container for all portalled content.
- * 
+ *
  * ## Example
  * Common use case inside `Tooltip/Content.html`:
  * ```html
@@ -33,7 +33,13 @@ class PortalViewHelper extends AbstractViewHelper
     public function initializeArguments(): void
     {
         $this->registerArgument('name', 'string', 'The name of the target container', false, 'default');
-        $this->registerArgument('disabled', 'bool', 'If set to true, the portal functionality is disabled and content is rendered in place', false, false);
+        $this->registerArgument(
+            'disabled',
+            'bool',
+            'If set to true, the portal functionality is disabled and content is rendered in place',
+            false,
+            false,
+        );
     }
 
     public function render(): string

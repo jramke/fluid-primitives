@@ -55,13 +55,13 @@ interface ComponentContextInterface extends ContainerInterface
      */
     public function getComponentResolver(): ComponentCollectionInterface;
 
-    /** 
+    /**
      * Lifecycle method called before rendering. Only called for root or closed components.
      * When modifying the ParentRenderingContext here, make sure to clean it up in afterRendering().
      */
     public function beforeRendering(): void;
 
-    /** 
+    /**
      * Lifecycle method called after rendering. Only called for root or closed components.
      */
     public function afterRendering(string &$html): void;

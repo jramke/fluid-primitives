@@ -16,7 +16,7 @@ class CollapsibleContext extends AbstractComponentContext
         return $this->get('collapsedHeight') || $this->get('collapsedWidth');
     }
 
-    // we can only apply the styles related to the collapsed size, 
+    // we can only apply the styles related to the collapsed size,
     // the --height and --width variables are applied on the client
     public function getContentStyleString(): string
     {
@@ -25,13 +25,13 @@ class CollapsibleContext extends AbstractComponentContext
         if ($this->get('defaultOpen') === false) {
             if ($this->get('collapsedHeight')) {
                 $styles[] = "--collapsed-height: {$this->get('collapsedHeight')};";
-                $styles[] = "overflow: hidden;";
+                $styles[] = 'overflow: hidden;';
                 $styles[] = "min-height: {$this->get('collapsedHeight')};";
                 $styles[] = "max-height: {$this->get('collapsedHeight')};";
             }
             if ($this->get('collapsedWidth')) {
                 $styles[] = "--collapsed-width: {$this->get('collapsedWidth')};";
-                $styles[] = "overflow: hidden;";
+                $styles[] = 'overflow: hidden;';
                 $styles[] = "min-width: {$this->get('collapsedWidth')};";
                 $styles[] = "max-width: {$this->get('collapsedWidth')};";
             }

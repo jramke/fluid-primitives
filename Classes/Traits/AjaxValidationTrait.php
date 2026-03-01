@@ -10,7 +10,11 @@ trait AjaxValidationTrait
     protected function throwJsonValidationErrorResponse(): void
     {
         if (!method_exists($this, 'jsonResponse')) {
-            throw new \RuntimeException('Method jsonResponse does not exist in the parent class. The respondJson method can only be used in Classes that extend ' . ActionController::class, 1768514275);
+            throw new \RuntimeException(
+                'Method jsonResponse does not exist in the parent class. The respondJson method can only be used in Classes that extend ' .
+                ActionController::class,
+                1768514275,
+            );
         }
 
         $validationErrors = $this->arguments->validate()->getFlattenedErrors();

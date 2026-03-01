@@ -12,7 +12,8 @@ class FieldContext extends AbstractComponentContext
     public function beforeRendering(): void
     {
         $parentRenderingContext = $this->getParentRenderingContext();
-        if (!$parentRenderingContext) return;
+        if (!$parentRenderingContext)
+            return;
 
         $variableContainer = $parentRenderingContext->getViewHelperVariableContainer();
         $variableContainer->add(self::class, $this->get('rootId'), ['name' => $this->get('name')]);

@@ -35,10 +35,7 @@ class TagAttributes implements \Countable
             return [];
         }
 
-        return $this->normalizeAttributes(
-            $attributes,
-            fn($key, $value) => htmlspecialchars($value)
-        );
+        return $this->normalizeAttributes($attributes, fn($key, $value) => htmlspecialchars($value));
     }
 
     public function renderWithOnly(array $attributeKeys, bool $asArray = false): string|array
@@ -79,10 +76,10 @@ class TagAttributes implements \Countable
 
     protected function buildAttributesString(array $attributes): string
     {
-        $parts = $this->normalizeAttributes(
-            $attributes,
-            fn($key, $value) => $this->buildSingleAttributeString($key, $value)
-        );
+        $parts = $this->normalizeAttributes($attributes, fn($key, $value) => $this->buildSingleAttributeString(
+            $key,
+            $value,
+        ));
 
         return implode(' ', $parts);
     }

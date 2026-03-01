@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Domain\Model;
 
-use JsonSerializable;
 use IteratorAggregate;
+use JsonSerializable;
 use Traversable;
 
 class ListCollection implements JsonSerializable, IteratorAggregate
@@ -24,7 +24,7 @@ class ListCollection implements JsonSerializable, IteratorAggregate
         ?string $itemToStringKey = null,
         ?string $isItemDisabledKey = null,
         ?string $groupByKey = null,
-        array|string|null $groupSort = null
+        array|string|null $groupSort = null,
     ) {
         $this->items = $items;
 
@@ -43,7 +43,7 @@ class ListCollection implements JsonSerializable, IteratorAggregate
             $this->itemToStringKey,
             $this->isItemDisabledKey,
             $this->groupByKey,
-            $this->groupSort
+            $this->groupSort,
         );
     }
 
@@ -64,7 +64,8 @@ class ListCollection implements JsonSerializable, IteratorAggregate
 
     protected function getFromKey(array|object $item, ?string $key): mixed
     {
-        if (!$key) return null;
+        if (!$key)
+            return null;
         $segments = explode('.', $key);
         $current = $item;
 

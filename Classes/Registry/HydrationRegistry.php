@@ -16,7 +16,7 @@ class HydrationRegistry
     private static ?self $instance = null;
 
     public function __construct(
-        private readonly AssetCollector $assetCollector
+        private readonly AssetCollector $assetCollector,
     ) {}
 
     public static function getInstance(): self
@@ -69,12 +69,12 @@ class HydrationRegistry
         }
 
         $js = <<<JS
-(function() {
-window.FluidPrimitives = window.FluidPrimitives || {};
-window.FluidPrimitives.uncontrolledInstances = {};
-window.FluidPrimitives.hydrationData = $json;
-})();
-JS;
+        (function() {
+        window.FluidPrimitives = window.FluidPrimitives || {};
+        window.FluidPrimitives.uncontrolledInstances = {};
+        window.FluidPrimitives.hydrationData = $json;
+        })();
+        JS;
 
         $scriptAttributes = [
             'id' => self::SCRIPT_ID,
@@ -89,14 +89,9 @@ JS;
         }
 
         // Add or update the script in AssetCollector
-        $this->assetCollector->addInlineJavaScript(
-            self::SCRIPT_ID,
-            $js,
-            $scriptAttributes,
-            [
-                'priority' => true
-            ]
-        );
+        $this->assetCollector->addInlineJavaScript(self::SCRIPT_ID, $js, $scriptAttributes, [
+            'priority' => true,
+        ]);
     }
 
     private function isDevelopment(): bool

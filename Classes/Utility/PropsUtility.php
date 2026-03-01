@@ -11,9 +11,13 @@ class PropsUtility
 {
     public static function cleanupReservedProps(array $props, bool $useKeys = true): array
     {
-        return array_filter($props, function ($key) {
-            return !self::isReservedProp($key);
-        }, $useKeys ? ARRAY_FILTER_USE_KEY : 0);
+        return array_filter(
+            $props,
+            function ($key) {
+                return !self::isReservedProp($key);
+            },
+            $useKeys ? ARRAY_FILTER_USE_KEY : 0,
+        );
     }
 
     public static function isReservedProp(string $propKey): bool
@@ -28,7 +32,7 @@ class PropsUtility
             'array',
             'DO NOT USE THIS ARGUMENT, IT IS FOR INTERNAL USE ONLY',
             false,
-            $defaultValue
+            $defaultValue,
         );
     }
 
@@ -39,7 +43,7 @@ class PropsUtility
             'array',
             'DO NOT USE THIS ARGUMENT, IT IS FOR INTERNAL USE ONLY',
             false,
-            $defaultValue
+            $defaultValue,
         );
     }
 
@@ -50,19 +54,21 @@ class PropsUtility
             'mixed',
             'Spread props from a component to another fluid component.',
             false,
-            $defaultValue
+            $defaultValue,
         );
     }
 
-    public static function duplicateArgumentDefinitionWithNewDefault(ArgumentDefinition $argumentDefinition, mixed $newDefaultValue = null): ArgumentDefinition
-    {
+    public static function duplicateArgumentDefinitionWithNewDefault(
+        ArgumentDefinition $argumentDefinition,
+        mixed $newDefaultValue = null,
+    ): ArgumentDefinition {
         $newDefinition = new ArgumentDefinition(
             $argumentDefinition->getName(),
             $argumentDefinition->getType(),
             $argumentDefinition->getDescription(),
             $argumentDefinition->isRequired(),
             $newDefaultValue !== null ? $newDefaultValue : $argumentDefinition->getDefaultValue(),
-            $argumentDefinition->getEscape()
+            $argumentDefinition->getEscape(),
         );
 
         // We dont validate the default value against the type here, because fluid also does not do this.

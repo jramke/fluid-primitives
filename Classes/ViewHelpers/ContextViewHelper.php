@@ -42,7 +42,10 @@ class ContextViewHelper extends AbstractViewHelper
 
         $componentName = ComponentUtility::getComponentBaseNameFromContext($this->renderingContext);
         if ($componentName === $this->arguments['name']) {
-            throw new \RuntimeException('You cannot access the context of the current component using the context ViewHelper. Use the exposed "context" variable instead.', 1754253445);
+            throw new \RuntimeException(
+                'You cannot access the context of the current component using the context ViewHelper. Use the exposed "context" variable instead.',
+                1754253445,
+            );
         }
 
         $context = ContextService::getFromRenderingContext($this->renderingContext, $this->arguments['name']);

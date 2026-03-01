@@ -8,12 +8,12 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
 /**
  * Call a method on an object with optional arguments.
- * 
+ *
  * Used internally and exposed for convenience.
- * 
+ *
  * ## Examples
  *
- * ``` 
+ * ```
  * {object -> ui:call(method: 'doSomething')}
  * {object -> ui:call(method: 'doSomethingWithArguments', arguments: {0: 'foo', 1: 'bar'})}
  * ```
@@ -48,7 +48,7 @@ class CallViewHelper extends AbstractViewHelper
             throw new \RuntimeException(sprintf(
                 'Method "%s" does not exist on object of type %s',
                 $method,
-                get_class($object)
+                get_class($object),
             ));
         }
 

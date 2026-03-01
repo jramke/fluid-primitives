@@ -8,8 +8,8 @@ use Psr\Http\Message\ServerRequestInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use TYPO3\CMS\Core\Page\PageRenderer;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Extbase\Mvc\RequestInterface;
 use TYPO3\CMS\Extbase\Mvc\Controller\MvcPropertyMappingConfigurationService;
+use TYPO3\CMS\Extbase\Mvc\RequestInterface;
 use TYPO3\CMS\Extbase\Mvc\Web\Routing\UriBuilder;
 use TYPO3\CMS\Extbase\Service\ExtensionService;
 
@@ -24,11 +24,7 @@ class FormContext extends AbstractComponentContext
 
     public function afterRendering(string &$html): void
     {
-        $html = str_replace(
-            '</form>',
-            $this->renderTrustedPropertiesField() . '</form>',
-            $html
-        );
+        $html = str_replace('</form>', $this->renderTrustedPropertiesField() . '</form>', $html);
 
         foreach (array_keys($this->getFieldContextInformations()) as $id) {
             $this->getParentRenderingContext()->getViewHelperVariableContainer()->remove(FieldContext::class, $id);
@@ -44,18 +40,15 @@ class FormContext extends AbstractComponentContext
         $request = $this->getExtbaseRequestOrThrow();
 
         $uriBuilder = GeneralUtility::makeInstance(UriBuilder::class);
-        $uriBuilder
-            ->reset()
-            ->setRequest($request)
-            // TODO: enable these options as arguments?
-            // ->setTargetPageType((int)($this->arguments['pageType'] ?? 0))
-            // ->setNoCache((bool)($this->arguments['noCache'] ?? false))
-            // ->setSection($this->arguments['section'] ?? '')
-            // ->setCreateAbsoluteUri((bool)($this->arguments['absolute'] ?? false))
-            // ->setArguments(isset($this->arguments['additionalParams']) ? (array)$this->arguments['additionalParams'] : [])
-            // ->setAddQueryString($this->arguments['addQueryString'] ?? false)
-            // ->setArgumentsToBeExcludedFromQueryString(isset($this->arguments['argumentsToBeExcludedFromQueryString']) ? (array)$this->arguments['argumentsToBeExcludedFromQueryString'] : [])
-            // ->setFormat($this->arguments['format'] ?? '')
+        $uriBuilder->reset()->setRequest($request)// TODO: enable these options as arguments?
+        // ->setTargetPageType((int)($this->arguments['pageType'] ?? 0))
+        // ->setNoCache((bool)($this->arguments['noCache'] ?? false))
+        // ->setSection($this->arguments['section'] ?? '')
+        // ->setCreateAbsoluteUri((bool)($this->arguments['absolute'] ?? false))
+        // ->setArguments(isset($this->arguments['additionalParams']) ? (array)$this->arguments['additionalParams'] : [])
+        // ->setAddQueryString($this->arguments['addQueryString'] ?? false)
+        // ->setArgumentsToBeExcludedFromQueryString(isset($this->arguments['argumentsToBeExcludedFromQueryString']) ? (array)$this->arguments['argumentsToBeExcludedFromQueryString'] : [])
+        // ->setFormat($this->arguments['format'] ?? '')
         ;
 
         $pageUid = (int)($this->get('pageUid') ?? 0);
@@ -68,7 +61,7 @@ class FormContext extends AbstractComponentContext
             $this->get('get') ?? [],
             $this->get('controller') ?? null,
             $this->get('extensionName') ?? null,
-            $this->get('pluginName') ?? null
+            $this->get('pluginName') ?? null,
         );
 
         return $formActionUri;
@@ -112,8 +105,19 @@ class FormContext extends AbstractComponentContext
             }
         }
 
-        $requestHash = $this->mvcPropertyMappingConfigurationService->generateTrustedPropertiesToken($fieldNames, $this->getFieldNamePrefix());
-        return '<input type="hidden" name="' . htmlspecialchars($this->prefixFieldName('__trustedProperties')) . '" value="' . htmlspecialchars($requestHash) . '" ' . ($this->shouldUseXHtmlSlash() ? '/' : '') . '>';
+        $requestHash = $this->mvcPropertyMappingConfigurationService->generateTrustedPropertiesToken(
+            $fieldNames,
+            $this->getFieldNamePrefix(),
+        );
+        return (
+            '<input type="hidden" name="' .
+            htmlspecialchars($this->prefixFieldName('__trustedProperties')) .
+            '" value="' .
+            htmlspecialchars($requestHash) .
+            '" ' .
+            ($this->shouldUseXHtmlSlash() ? '/' : '') .
+            '>'
+        );
     }
 
     protected function getFieldContextInformations(): array
@@ -159,7 +163,10 @@ class FormContext extends AbstractComponentContext
 
         $request = $this->getRenderingContext()->getAttribute(ServerRequestInterface::class);
         if (!$request instanceof RequestInterface) {
-            throw new \RuntimeException('The ServerRequestInterface in rendering context attributes is not an Extbase RequestInterface', 1765100023);
+            throw new \RuntimeException(
+                'The ServerRequestInterface in rendering context attributes is not an Extbase RequestInterface',
+                1765100023,
+            );
         }
 
         return $request;

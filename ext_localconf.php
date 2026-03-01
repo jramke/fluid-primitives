@@ -14,7 +14,9 @@ if (!isset($GLOBALS['TYPO3_CONF_VARS']['SYS']['fluid']['namespaces']['ui'])) {
 $GLOBALS['TYPO3_CONF_VARS']['SYS']['fluid']['namespaces']['ui'][] = 'Jramke\\FluidPrimitives\\ViewHelpers';
 
 // Register primitives namespace
-$GLOBALS['TYPO3_CONF_VARS']['SYS']['fluid']['namespaces']['primitives'] = ['Jramke\\FluidPrimitives\\Component\\ComponentPrimitivesCollection'];
+$GLOBALS['TYPO3_CONF_VARS']['SYS']['fluid']['namespaces']['primitives'] = [
+    'Jramke\\FluidPrimitives\\Component\\ComponentPrimitivesCollection',
+];
 
 // Exclude specific arguments from storybook controls when using EXT:storybook
 if (ExtensionManagementUtility::isLoaded('storybook')) {

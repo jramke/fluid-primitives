@@ -14,7 +14,7 @@ class RegistryService
     public function __construct()
     {
         $this->client = new Client([
-            'base_uri' => 'https://fluid-primitives.com/'
+            'base_uri' => 'https://fluid-primitives.com/',
         ]);
     }
 
@@ -75,7 +75,7 @@ class RegistryService
         $error = null;
 
         try {
-            $response = $this->client->get("/registry/components");
+            $response = $this->client->get('/registry/components');
             $data = json_decode((string)$response->getBody(), true);
         } catch (ClientException $e) {
             $error = [

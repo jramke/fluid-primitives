@@ -14,6 +14,6 @@ $EM_CONF[$_EXTKEY] = [
         ],
     ],
     'autoload' => [
-        'psr-4' => ['Jramke\\FluidPrimitives\\' => 'Classes']
+        'psr-4' => ['Jramke\\FluidPrimitives\\' => 'Classes'],
     ],
 ];

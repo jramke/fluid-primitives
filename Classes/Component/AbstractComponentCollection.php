@@ -9,13 +9,13 @@ use Jramke\FluidPrimitives\Component\TemplateStructureViewHelperResolver;
 use Jramke\FluidPrimitives\Constants;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use Jramke\FluidPrimitives\Utility\PropsUtility;
+use TYPO3Fluid\Fluid\Core\Component\ComponentAdapter;
+use TYPO3Fluid\Fluid\Core\Component\ComponentDefinition;
 use TYPO3Fluid\Fluid\Core\Component\ComponentRendererInterface;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContext;
+use TYPO3Fluid\Fluid\Core\ViewHelper\ArgumentDefinition;
 use TYPO3Fluid\Fluid\Core\ViewHelper\UnresolvableViewHelperException;
 use TYPO3Fluid\Fluid\ViewHelpers\SlotViewHelper;
-use TYPO3Fluid\Fluid\Core\Component\ComponentDefinition;
-use TYPO3Fluid\Fluid\Core\Component\ComponentAdapter;
-use TYPO3Fluid\Fluid\Core\ViewHelper\ArgumentDefinition;
 
 abstract class AbstractComponentCollection implements ComponentCollectionInterface
 {
@@ -114,11 +114,14 @@ abstract class AbstractComponentCollection implements ComponentCollectionInterfa
 
             foreach ($argumentDefinitions as $name => $definition) {
                 if (in_array($name, Constants::RESERVED_PROPS, true)) {
-                    throw new UnresolvableViewHelperException(sprintf(
-                        'The argument "%s" is reserved and cannot be used as an argument inside component "%s". See https://fluid-primitives.com/docs/core-concepts/arguments for more information.',
-                        $name,
-                        $viewHelperName,
-                    ), 1748511298);
+                    throw new UnresolvableViewHelperException(
+                        sprintf(
+                            'The argument "%s" is reserved and cannot be used as an argument inside component "%s". See https://fluid-primitives.com/docs/core-concepts/arguments for more information.',
+                            $name,
+                            $viewHelperName,
+                        ),
+                        1748511298,
+                    );
                 }
             }
 
@@ -186,7 +189,10 @@ abstract class AbstractComponentCollection implements ComponentCollectionInterfa
 
             // for now we just allow additional arguments if a primitive is used with the spreadProps pattern
             // because all primitives support additional arguments/attributes
-            if (str_contains($templateString, 'spreadProps') && str_contains($templateString, '<ui:useProps name="primitives:')) {
+            if (
+                str_contains($templateString, 'spreadProps') &&
+                str_contains($templateString, '<ui:useProps name="primitives:')
+            ) {
                 $additionalArgumentsAllowed = true;
             }
 
@@ -214,13 +220,19 @@ abstract class AbstractComponentCollection implements ComponentCollectionInterfa
     final public function resolveViewHelperClassName(string $viewHelperName): string
     {
         $expectedTemplateName = $this->resolveTemplateName($viewHelperName);
-        if (!$this->getTemplatePaths()->resolveTemplateFileForControllerAndActionAndFormat('Default', $expectedTemplateName)) {
-            throw new UnresolvableViewHelperException(sprintf(
-                'Based on your spelling, the system would load the component template "%s.%s" in "%s", however this file does not exist.',
-                $expectedTemplateName,
-                $this->getTemplatePaths()->getFormat(),
-                implode(', ', $this->getTemplatePaths()->getTemplateRootPaths()),
-            ), 1748511297);
+        if (!$this->getTemplatePaths()->resolveTemplateFileForControllerAndActionAndFormat(
+            'Default',
+            $expectedTemplateName,
+        )) {
+            throw new UnresolvableViewHelperException(
+                sprintf(
+                    'Based on your spelling, the system would load the component template "%s.%s" in "%s", however this file does not exist.',
+                    $expectedTemplateName,
+                    $this->getTemplatePaths()->getFormat(),
+                    implode(', ', $this->getTemplatePaths()->getTemplateRootPaths()),
+                ),
+                1748511297,
+            );
         }
         return ComponentAdapter::class;
     }
