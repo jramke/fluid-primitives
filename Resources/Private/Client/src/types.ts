@@ -1,4 +1,5 @@
-import type { ComponentHydrator, Machine } from './lib';
+import { VanillaMachine as Machine } from '@zag-js/vanilla';
+import type { ComponentHydrator } from './lib';
 import type { Component } from './lib/component';
 
 declare global {

@@ -10,10 +10,10 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
 	propsWithField(props: select.Props, fieldMachine: FieldMachine): select.Props {
 		return {
 			...props,
-			disabled: props.disabled ?? fieldMachine.ctx.get('disabled'),
-			readOnly: props.readOnly ?? fieldMachine.ctx.get('readOnly'),
-			required: props.required ?? fieldMachine.ctx.get('required'),
-			invalid: props.invalid ?? fieldMachine.ctx.get('invalid'),
+			disabled: props.disabled ?? fieldMachine.context.get('disabled'),
+			readOnly: props.readOnly ?? fieldMachine.context.get('readOnly'),
+			required: props.required ?? fieldMachine.context.get('required'),
+			invalid: props.invalid ?? fieldMachine.context.get('invalid'),
 			name: props.name ?? fieldMachine.prop('name'),
 			ids: {
 				...props.ids,
@@ -53,7 +53,7 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
 		const hiddenSelectEl = this.getElement('hidden-select');
 		if (hiddenSelectEl) {
 			const mergedProps = mergeProps(this.api.getHiddenSelectProps(), {
-				'aria-describedby': this.fieldMachine?.ctx.get('describeIds') || undefined,
+				'aria-describedby': this.fieldMachine?.context.get('describeIds') || undefined,
 			});
 			this.spreadProps(hiddenSelectEl, mergedProps);
 		}

@@ -8,10 +8,10 @@ export class RadioGroup extends FieldAwareComponent<radioGroup.Props, radioGroup
 	propsWithField(props: radioGroup.Props, fieldMachine: FieldMachine): radioGroup.Props {
 		return {
 			...props,
-			disabled: props.disabled ?? fieldMachine.ctx.get('disabled'),
-			readOnly: props.readOnly ?? fieldMachine.ctx.get('readOnly'),
-			required: props.required ?? fieldMachine.ctx.get('required'),
-			invalid: props.invalid ?? fieldMachine.ctx.get('invalid'),
+			disabled: props.disabled ?? fieldMachine.context.get('disabled'),
+			readOnly: props.readOnly ?? fieldMachine.context.get('readOnly'),
+			required: props.required ?? fieldMachine.context.get('required'),
+			invalid: props.invalid ?? fieldMachine.context.get('invalid'),
 			name: props.name ?? fieldMachine.prop('name'),
 		};
 	}
@@ -33,8 +33,8 @@ export class RadioGroup extends FieldAwareComponent<radioGroup.Props, radioGroup
 			this.spreadProps(
 				rootEl,
 				mergeProps(this.api.getRootProps(), {
-					'aria-invalid': this.fieldMachine?.ctx.get('invalid') || undefined,
-					'aria-describedby': this.fieldMachine?.ctx.get('describeIds') || undefined,
+					'aria-invalid': this.fieldMachine?.context.get('invalid') || undefined,
+					'aria-describedby': this.fieldMachine?.context.get('describeIds') || undefined,
 				})
 			);
 

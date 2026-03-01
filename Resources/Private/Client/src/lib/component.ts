@@ -1,6 +1,6 @@
+import type { Attrs } from '@zag-js/vanilla';
 import { ComponentHydrator, Machine, spreadProps } from '.';
 import type { ComponentInterface } from '../types';
-import type { Attrs } from './spread-props';
 
 export abstract class Component<Props, Api> implements ComponentInterface<Api> {
 	document: Document;
@@ -50,19 +50,14 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
 		return props;
 	}
 
-	updateProps(props: Partial<Props>) {
-		const newProps = { ...this.userProps, ...props };
-		this.userProps = this.transformProps(newProps) as Props;
-
+	updateProps(newProps: Partial<Props>) {
 		this.machine.updateProps(newProps);
 	}
 
-	destroy = () => {
+	destroy() {
 		this.machine.stop();
 		this.hydrator?.destroy();
-	};
-
-	abstract render(): void;
+	}
 
 	spreadProps(node: HTMLElement, attrs: Attrs) {
 		spreadProps(node, attrs, this.machine.scope.id);
@@ -76,11 +71,5 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
 		return this.hydrator?.getElements<T>(part, parent) || [];
 	}
 
-	portalElement(el: HTMLElement | null, target: HTMLElement | Document = this.doc.body): void {
-		if (!el) return;
-		if (el.parentNode !== target) {
-			target.appendChild(el);
-			el.setAttribute('data-portalled', 'true');
-		}
-	}
+	abstract render(): void;
 }

@@ -82,6 +82,8 @@ export abstract class FieldAwareComponent<Props, Api> extends Component<Props, A
 					if (Object.keys(propsToUpdate).length > 0) {
 						this.updateProps(propsToUpdate as Partial<Props>);
 					} else {
+						// notify is marked as private but that does not prevent runtime access
+						// @ts-expect-error
 						this.machine.notify();
 					}
 				});

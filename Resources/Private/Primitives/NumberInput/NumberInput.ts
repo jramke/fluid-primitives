@@ -9,10 +9,10 @@ export class NumberInput extends FieldAwareComponent<numberInput.Props, numberIn
 	propsWithField(props: numberInput.Props, fieldMachine: FieldMachine): numberInput.Props {
 		return {
 			...props,
-			disabled: props.disabled ?? fieldMachine.ctx.get('disabled'),
-			readOnly: props.readOnly ?? fieldMachine.ctx.get('readOnly'),
-			required: props.required ?? fieldMachine.ctx.get('required'),
-			invalid: props.invalid ?? fieldMachine.ctx.get('invalid'),
+			disabled: props.disabled ?? fieldMachine.context.get('disabled'),
+			readOnly: props.readOnly ?? fieldMachine.context.get('readOnly'),
+			required: props.required ?? fieldMachine.context.get('required'),
+			invalid: props.invalid ?? fieldMachine.context.get('invalid'),
 			name: props.name ?? fieldMachine.prop('name'),
 			ids: {
 				...props.ids,
@@ -46,7 +46,7 @@ export class NumberInput extends FieldAwareComponent<numberInput.Props, numberIn
 		const inputEl = this.getElement('input');
 		if (inputEl) {
 			const mergedProps = mergeProps(this.api.getInputProps(), {
-				'aria-describedby': this.fieldMachine?.ctx.get('describeIds') || undefined,
+				'aria-describedby': this.fieldMachine?.context.get('describeIds') || undefined,
 			});
 			this.spreadProps(inputEl, mergedProps);
 		}

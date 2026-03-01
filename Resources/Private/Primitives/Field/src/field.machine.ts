@@ -19,7 +19,7 @@ export const machine = createMachine<FieldSchema>({
 				hash: value =>
 					JSON.stringify({
 						state: value?.state,
-						errors: value?.ctx.get('errors'),
+						errors: value?.context.get('errors'),
 					}),
 			})),
 			describeIds: bindable<string | undefined>(() => ({ defaultValue: undefined })),
@@ -32,7 +32,7 @@ export const machine = createMachine<FieldSchema>({
 	},
 	computed: {
 		errors({ context, prop }) {
-			const formMachineCtx = context.get('formMachine')?.ctx;
+			const formMachineCtx = context.get('formMachine')?.context;
 			if (!formMachineCtx) return [] as string[];
 			const fieldError = formMachineCtx.get('errors')?.[prop('name')];
 			return fieldError?.messages ?? [];
@@ -90,7 +90,7 @@ export const machine = createMachine<FieldSchema>({
 				context.set('describeIds', idsStr);
 			},
 			updateInvalid({ context, prop }) {
-				const formMachineCtx = context.get('formMachine')?.ctx;
+				const formMachineCtx = context.get('formMachine')?.context;
 
 				if (!formMachineCtx) {
 					context.set('invalid', prop('invalid') ?? false);

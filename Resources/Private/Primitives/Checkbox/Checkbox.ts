@@ -10,10 +10,10 @@ export class Checkbox extends FieldAwareComponent<checkbox.Props, checkbox.Api> 
 		return {
 			value: '1', // HTML default is 'on' but we use '1' for easier boolean conversion
 			...props,
-			disabled: props.disabled ?? fieldMachine.ctx.get('disabled'),
-			readOnly: props.readOnly ?? fieldMachine.ctx.get('readOnly'),
-			required: props.required ?? fieldMachine.ctx.get('required'),
-			invalid: props.invalid ?? fieldMachine.ctx.get('invalid'),
+			disabled: props.disabled ?? fieldMachine.context.get('disabled'),
+			readOnly: props.readOnly ?? fieldMachine.context.get('readOnly'),
+			required: props.required ?? fieldMachine.context.get('required'),
+			invalid: props.invalid ?? fieldMachine.context.get('invalid'),
 			name: props.name ?? fieldMachine.prop('name'),
 			ids: {
 				...props.ids,
@@ -50,7 +50,7 @@ export class Checkbox extends FieldAwareComponent<checkbox.Props, checkbox.Api> 
 		const hiddenInputEl = this.getElement('hidden-input');
 		if (hiddenInputEl) {
 			const mergedProps = mergeProps(this.api.getHiddenInputProps(), {
-				'aria-describedby': this.fieldMachine?.ctx.get('describeIds') || undefined,
+				'aria-describedby': this.fieldMachine?.context.get('describeIds') || undefined,
 			});
 			this.spreadProps(hiddenInputEl, mergedProps);
 		}
