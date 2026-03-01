@@ -139,7 +139,10 @@ class ComponentAddCommand extends Command
 
             $targetFilePath = $targetFolder . $file;
 
-            @mkdir(dirname($targetFilePath), 0o777, true);
+            $targetDir = dirname($targetFilePath);
+            if (!is_dir($targetDir)) {
+                mkdir($targetDir, 0o777, true);
+            }
 
             if (file_exists($targetFilePath)) {
                 if (!$input->getOption('force')) {

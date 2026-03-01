@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 $EM_CONF[$_EXTKEY] = [
     'title' => 'Fluid Primitives',
     'description' => 'The headless component library for TYPO3 Fluid',

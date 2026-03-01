@@ -64,9 +64,7 @@ class CnViewHelper extends AbstractViewHelper
             $classes = array_merge($classes, $this->processWhenArray($whenArray));
         }
 
-        $classes = array_filter(array_unique($classes), static function ($class) {
-            return !empty(trim($class)) && is_string($class);
-        });
+        $classes = array_filter(array_unique($classes), static fn($class) => !empty(trim($class)) && is_string($class));
 
         $as = $this->arguments['as'] ?? '';
 
@@ -111,9 +109,7 @@ class CnViewHelper extends AbstractViewHelper
         }
 
         // Split by whitespace and filter out empty values
-        return array_filter(preg_split('/\s+/', trim($classString)), static function ($class) {
-            return !empty(trim($class));
-        });
+        return array_filter(preg_split('/\s+/', trim($classString)), static fn($class) => !empty(trim($class)));
     }
 
     /**

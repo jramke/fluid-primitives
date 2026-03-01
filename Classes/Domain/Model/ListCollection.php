@@ -8,6 +8,7 @@ use IteratorAggregate;
 use JsonSerializable;
 use Traversable;
 
+// @mago-expect lint:kan-defect
 class ListCollection implements JsonSerializable, IteratorAggregate
 {
     protected array $items = [];
@@ -18,6 +19,7 @@ class ListCollection implements JsonSerializable, IteratorAggregate
     protected ?string $groupByKey = null;
     protected array|string|null $groupSort = null;
 
+    // @mago-expect lint:excessive-parameter-list
     public function __construct(
         array $items = [],
         ?string $itemToValueKey = null,

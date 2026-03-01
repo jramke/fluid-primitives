@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Jramke\FluidPrimitives\Traits;
 
 use TYPO3\CMS\Core\Http\PropagateResponseException;

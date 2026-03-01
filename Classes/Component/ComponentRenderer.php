@@ -23,6 +23,7 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\ViewHelperVariableContainer;
 use TYPO3Fluid\Fluid\View\TemplateView;
 use TYPO3Fluid\Fluid\ViewHelpers\SlotViewHelper;
 
+// @mago-expect lint:cyclomatic-complexity,kan-defect
 final readonly class ComponentRenderer implements ComponentRendererInterface
 {
     public function __construct(
@@ -300,9 +301,10 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
                 }
 
                 // we dont want to send null values to the client, defaults should be defined in the component ts file
-                $propsMarkedForClientValues = array_filter($propsMarkedForClientValues, static function ($value) {
-                    return !is_null($value);
-                });
+                $propsMarkedForClientValues = array_filter(
+                    $propsMarkedForClientValues,
+                    static fn($value) => !is_null($value),
+                );
 
                 $clientPropsFromContext = [];
                 if ($ctx) {

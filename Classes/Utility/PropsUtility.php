@@ -13,9 +13,7 @@ class PropsUtility
     {
         return array_filter(
             $props,
-            static function ($key) {
-                return !self::isReservedProp($key);
-            },
+            static fn($key) => !self::isReservedProp($key),
             $useKeys ? ARRAY_FILTER_USE_KEY : 0,
         );
     }
