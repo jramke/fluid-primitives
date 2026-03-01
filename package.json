@@ -1,6 +1,6 @@
 {
     "name": "fluid-primitives",
-    "version": "0.14.0",
+    "version": "0.15.0",
     "description": "Client-side library for Fluid Primitives.",
     "type": "module",
     "license": "MIT",
@@ -9,7 +9,9 @@
         "url": "git+https://github.com/jramke/fluid-primitives.git"
     },
     "author": "Joost Ramke <hey@joostramke.com>",
-    "files": ["./dist"],
+    "files": [
+        "./dist"
+    ],
     "main": "./dist/client.js",
     "types": "./dist/client.d.ts",
     "exports": {
