@@ -72,7 +72,7 @@ class HydrationRegistry
         (function() {
         window.FluidPrimitives = window.FluidPrimitives || {};
         window.FluidPrimitives.uncontrolledInstances = {};
-        window.FluidPrimitives.hydrationData = $json;
+        window.FluidPrimitives.hydrationData = {$json};
         })();
         JS;
 

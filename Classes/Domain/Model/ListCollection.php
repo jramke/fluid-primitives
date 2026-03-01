@@ -233,10 +233,12 @@ class ListCollection implements JsonSerializable, IteratorAggregate
         if (is_array($this->groupSort)) {
             $ordered = [];
             foreach ($this->groupSort as $key) {
-                if (isset($groups[$key])) {
-                    $ordered[$key] = $groups[$key];
-                    unset($groups[$key]);
+                if (!isset($groups[$key])) {
+                    continue;
                 }
+
+                $ordered[$key] = $groups[$key];
+                unset($groups[$key]);
             }
             $groups = array_merge($ordered, $groups);
         } elseif ($this->groupSort === 'asc') {

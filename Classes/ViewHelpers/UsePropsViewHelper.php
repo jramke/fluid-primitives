@@ -121,12 +121,14 @@ class UsePropsViewHelper extends AbstractViewHelper implements ViewHelperNodeIni
                 ))
             ) {
                 foreach ($evaluatedDefaults as $defaultPropName => $defaultPropValue) {
-                    if (isset($externalArgumentDefinitionsWithoutReserved[$defaultPropName])) {
-                        $externalArgumentDefinitionsWithoutReserved[$defaultPropName] = PropsUtility::duplicateArgumentDefinitionWithNewDefault(
-                            $externalArgumentDefinitionsWithoutReserved[$defaultPropName],
-                            $defaultPropValue,
-                        );
+                    if (!isset($externalArgumentDefinitionsWithoutReserved[$defaultPropName])) {
+                        continue;
                     }
+
+                    $externalArgumentDefinitionsWithoutReserved[$defaultPropName] = PropsUtility::duplicateArgumentDefinitionWithNewDefault(
+                        $externalArgumentDefinitionsWithoutReserved[$defaultPropName],
+                        $defaultPropValue,
+                    );
                 }
             }
 
@@ -134,8 +136,10 @@ class UsePropsViewHelper extends AbstractViewHelper implements ViewHelperNodeIni
 
             // Merge props marked for client from external component definition and current
             if (
-                isset($argumentDefinitions[Constants::PROPS_MARKED_FOR_CLIENT_KEY]) &&
-                isset($externalArgumentDefinitions[Constants::PROPS_MARKED_FOR_CLIENT_KEY])
+                isset(
+                    $argumentDefinitions[Constants::PROPS_MARKED_FOR_CLIENT_KEY],
+                    $externalArgumentDefinitions[Constants::PROPS_MARKED_FOR_CLIENT_KEY],
+                )
             ) {
                 $argumentDefinitions[Constants::PROPS_MARKED_FOR_CLIENT_KEY] = PropsUtility::createPropsMarkedForClientArgumentDefinition(array_merge(
                     $argumentDefinitions[Constants::PROPS_MARKED_FOR_CLIENT_KEY]->getDefaultValue(),
@@ -146,8 +150,10 @@ class UsePropsViewHelper extends AbstractViewHelper implements ViewHelperNodeIni
 
             // Merge props marked for context from external component definition and current
             if (
-                isset($argumentDefinitions[Constants::PROPS_MARKED_FOR_CONTEXT_KEY]) &&
-                isset($externalArgumentDefinitions[Constants::PROPS_MARKED_FOR_CONTEXT_KEY])
+                isset(
+                    $argumentDefinitions[Constants::PROPS_MARKED_FOR_CONTEXT_KEY],
+                    $externalArgumentDefinitions[Constants::PROPS_MARKED_FOR_CONTEXT_KEY],
+                )
             ) {
                 $argumentDefinitions[Constants::PROPS_MARKED_FOR_CONTEXT_KEY] = PropsUtility::createPropsMarkedForContextArgumentDefinition(array_merge(
                     $argumentDefinitions[Constants::PROPS_MARKED_FOR_CONTEXT_KEY]->getDefaultValue(),

@@ -39,8 +39,7 @@ readonly class PackageResolver
     public function getAvailablePackages(): array
     {
         $packages = $this->packageManager->getAvailablePackages();
-        $packages = $this->removeFrameworkExtensions($packages);
-        return $packages;
+        return $this->removeFrameworkExtensions($packages);
     }
 
     /**
@@ -63,8 +62,7 @@ readonly class PackageResolver
         }
         $rootPackageName = $this->getRootPackageName();
         $parts = explode('/', $rootPackageName);
-        $vendor = $parts[0];
-        return $vendor;
+        return $parts[0];
     }
 
     /**
@@ -75,7 +73,7 @@ readonly class PackageResolver
     {
         return array_filter(
             $packages,
-            fn(PackageInterface $package): bool => !$package->getPackageMetaData()->isFrameworkType(),
+            static fn(PackageInterface $package): bool => !$package->getPackageMetaData()->isFrameworkType(),
         );
     }
 
@@ -107,7 +105,6 @@ readonly class PackageResolver
 
     protected function getRootPackageName(): string
     {
-        $rootPackageName = InstalledVersions::getRootPackage()['name'];
-        return $rootPackageName;
+        return InstalledVersions::getRootPackage()['name'];
     }
 }

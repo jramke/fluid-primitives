@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Component;
 
-use Jramke\FluidPrimitives\Component\AbstractComponentCollection;
 use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
 use TYPO3Fluid\Fluid\View\TemplatePaths;
 

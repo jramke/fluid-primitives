@@ -204,10 +204,12 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         if (!empty($propsMarkedForContext) && !$isRootComponent) {
             $propsMarkedForContextValues = [];
             foreach ($propsMarkedForContext as $name => $_) {
-                if (isset($arguments[$name]) || isset($argumentDefinitions[$name])) {
-                    $propsMarkedForContextValues[$name] =
-                        $arguments[$name] ?? $argumentDefinitions[$name]->getDefaultValue() ?? null;
+                if (!(isset($arguments[$name]) || isset($argumentDefinitions[$name]))) {
+                    continue;
                 }
+
+                $propsMarkedForContextValues[$name] =
+                    $arguments[$name] ?? $argumentDefinitions[$name]->getDefaultValue() ?? null;
             }
             $context = ContextService::getFromRenderingContext($parentRenderingContext, $baseName);
             if ($context) {
@@ -281,7 +283,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
 
             // only register the components props for hydration if the user used the ui:ref viewhelper
             $hasRef = preg_match('/data-hydrate-[^=]*="' . preg_quote($rootId, '/') . '"/', $rendered) === 1;
-            $manuallyExposedToClient = strpos($rendered, Constants::MANUALLY_EXPOSED_TO_CLIENT_MARKER) !== false;
+            $manuallyExposedToClient = str_contains($rendered, Constants::MANUALLY_EXPOSED_TO_CLIENT_MARKER);
             if ($hasRef || $manuallyExposedToClient) {
                 if ($manuallyExposedToClient) {
                     $rendered = str_replace(Constants::MANUALLY_EXPOSED_TO_CLIENT_MARKER, '', $rendered);
@@ -289,14 +291,16 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
 
                 $propsMarkedForClientValues = [];
                 foreach ($propsMarkedForClient as $name => $_) {
-                    if (isset($arguments[$name]) || isset($argumentDefinitions[$name])) {
-                        $propsMarkedForClientValues[$name] =
-                            $arguments[$name] ?? $argumentDefinitions[$name]->getDefaultValue() ?? null;
+                    if (!(isset($arguments[$name]) || isset($argumentDefinitions[$name]))) {
+                        continue;
                     }
+
+                    $propsMarkedForClientValues[$name] =
+                        $arguments[$name] ?? $argumentDefinitions[$name]->getDefaultValue() ?? null;
                 }
 
                 // we dont want to send null values to the client, defaults should be defined in the component ts file
-                $propsMarkedForClientValues = array_filter($propsMarkedForClientValues, function ($value) {
+                $propsMarkedForClientValues = array_filter($propsMarkedForClientValues, static function ($value) {
                     return !is_null($value);
                 });
 
@@ -451,13 +455,11 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         // Rebuild attributes
         $finalAttrs = '';
         foreach ($childAttrs as $k => $v) {
-            $finalAttrs .= $v === null ? " $k" : ' ' . $k . '="' . htmlspecialchars($v, ENT_QUOTES) . '"';
+            $finalAttrs .= $v === null ? " {$k}" : ' ' . $k . '="' . htmlspecialchars($v, ENT_QUOTES) . '"';
         }
 
         // Replace child opening tag
-        $finalHtml = preg_replace('/^\s*<' . $childTag . '[^>]*>/', '<' . $childTag . $finalAttrs . '>', $childHtml, 1);
-
-        return $finalHtml;
+        return preg_replace('/^\s*<' . $childTag . '[^>]*>/', '<' . $childTag . $finalAttrs . '>', $childHtml, 1);
     }
 
     protected function componentSupportsField(string $baseName): bool

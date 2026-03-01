@@ -56,15 +56,13 @@ class FormContext extends AbstractComponentContext
             $uriBuilder->setTargetPageUid($pageUid);
         }
 
-        $formActionUri = $uriBuilder->uriFor(
+        return $uriBuilder->uriFor(
             $this->get('action') ?? null,
             $this->get('get') ?? [],
             $this->get('controller') ?? null,
             $this->get('extensionName') ?? null,
             $this->get('pluginName') ?? null,
         );
-
-        return $formActionUri;
     }
 
     // TODO: The form viewhelper has an argument to override the field name prefix, is this needed here?
@@ -100,9 +98,11 @@ class FormContext extends AbstractComponentContext
         $fieldNames = [];
 
         foreach ($this->getFieldContextInformations() as $fieldContextData) {
-            if (isset($fieldContextData['name'])) {
-                $fieldNames[] = $this->prefixFieldName($fieldContextData['name'], $this->get('objectName'));
+            if (!isset($fieldContextData['name'])) {
+                continue;
             }
+
+            $fieldNames[] = $this->prefixFieldName($fieldContextData['name'], $this->get('objectName'));
         }
 
         $requestHash = $this->mvcPropertyMappingConfigurationService->generateTrustedPropertiesToken(

@@ -75,7 +75,7 @@ class RefViewHelper extends AbstractViewHelper
 
         $additionalData = $this->arguments['data'] ?? [];
         if (!empty($additionalData)) {
-            $additionalData = array_combine(array_map(function ($key) {
+            $additionalData = array_combine(array_map(static function ($key) {
                 return "data-{$key}";
             }, array_keys($this->arguments['data'])), array_values($this->arguments['data']));
         }

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\ViewHelpers;
 
-use Jramke\FluidPrimitives\Constants;
 use Jramke\FluidPrimitives\Domain\Model\TagAttributes;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;

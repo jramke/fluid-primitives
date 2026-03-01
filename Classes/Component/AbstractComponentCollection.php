@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Component;
 
-use Jramke\FluidPrimitives\Component\ComponentRenderer;
-use Jramke\FluidPrimitives\Component\TemplateStructureViewHelperResolver;
 use Jramke\FluidPrimitives\Constants;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use Jramke\FluidPrimitives\Utility\PropsUtility;
@@ -15,7 +13,6 @@ use TYPO3Fluid\Fluid\Core\Component\ComponentRendererInterface;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContext;
 use TYPO3Fluid\Fluid\Core\ViewHelper\ArgumentDefinition;
 use TYPO3Fluid\Fluid\Core\ViewHelper\UnresolvableViewHelperException;
-use TYPO3Fluid\Fluid\ViewHelpers\SlotViewHelper;
 
 abstract class AbstractComponentCollection implements ComponentCollectionInterface
 {

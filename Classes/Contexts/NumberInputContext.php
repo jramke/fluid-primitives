@@ -21,8 +21,7 @@ class NumberInputContext extends AbstractComponentContext
             return (string)$this->get('locale');
         }
         $language = $this->getRenderingContext()->getRequest()->getAttribute('language');
-        $locale = (string)$language->getLocale() ?? null;
-        return $locale;
+        return (string)$language->getLocale() ?? null;
     }
 
     public function getFormattedValue(): string

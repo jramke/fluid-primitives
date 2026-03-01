@@ -139,7 +139,7 @@ class ComponentAddCommand extends Command
 
             $targetFilePath = $targetFolder . $file;
 
-            @mkdir(dirname($targetFilePath), 0777, true);
+            @mkdir(dirname($targetFilePath), 0o777, true);
 
             if (file_exists($targetFilePath)) {
                 if (!$input->getOption('force')) {
@@ -186,13 +186,13 @@ class ComponentAddCommand extends Command
 
     private function getPackageTitles(array $availablePackages): array
     {
-        return array_map(fn(PackageInterface $package): string => $package
+        return array_map(static fn(PackageInterface $package): string => $package
             ->getPackageMetaData()
             ->getTitle(), $availablePackages);
     }
 
     protected function getPackageKeys(array $availablePackages): array
     {
-        return array_map(fn(PackageInterface $package): string => $package->getPackageKey(), $availablePackages);
+        return array_map(static fn(PackageInterface $package): string => $package->getPackageKey(), $availablePackages);
     }
 }

@@ -35,7 +35,7 @@ class TagAttributes implements \Countable
             return [];
         }
 
-        return $this->normalizeAttributes($attributes, fn($key, $value) => htmlspecialchars($value));
+        return $this->normalizeAttributes($attributes, static fn($key, $value) => htmlspecialchars($value));
     }
 
     public function renderWithOnly(array $attributeKeys, bool $asArray = false): string|array
@@ -128,7 +128,7 @@ class TagAttributes implements \Countable
         $attributes = [];
         $parts = explode(' ', trim($attributesString));
         foreach ($parts as $part) {
-            if (strpos($part, '=') !== false) {
+            if (str_contains($part, '=')) {
                 [$key, $value] = explode('=', $part, 2);
                 $attributes[trim($key)] = trim($value, '"');
             } else {
