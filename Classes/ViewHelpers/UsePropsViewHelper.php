@@ -26,7 +26,7 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\ViewHelperNodeInitializedEventInterface;
  *
  * You can also override default values of the imported props by passing a `defaults` array with key-value pairs.
  *
- * ## Example
+ * ## Examples
  *
  * `Tooltip/Root.html` that uses the tooltip primitive:
  * ```html
@@ -35,6 +35,13 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\ViewHelperNodeInitializedEventInterface;
  * <primitives:tooltip.root spreadProps="{true}">
  *     <f:slot />
  * </primitives:tooltip.root>
+ * ```
+ *
+ * If you dont want all props from a component, you can also selectively import props by passing an array of prop names to the `props` argument.
+ * ```html
+ * <ui:useProps name="primitives:tooltip.root" props="{0: 'openDelay', 1: 'closeDelay'}" />
+ *
+ * // ...
  * ```
  *
  * ## Limitation
@@ -57,6 +64,13 @@ class UsePropsViewHelper extends AbstractViewHelper implements ViewHelperNodeIni
             'defaults',
             'array',
             'Default values for props to override the imported ones. Key-value pairs',
+            false,
+            [],
+        );
+        $this->registerArgument(
+            'props',
+            'array',
+            'Only use a subset of props from the referenced component. Value should be an array of prop names.',
             false,
             [],
         );
@@ -114,6 +128,25 @@ class UsePropsViewHelper extends AbstractViewHelper implements ViewHelperNodeIni
             $externalArgumentDefinitionsWithoutReserved = PropsUtility::cleanupReservedProps([
                 ...$externalArgumentDefinitions,
             ]);
+
+            if (
+                isset($arguments['props']) && ($evaluatedSelectedProps = $arguments['props']->evaluate(
+                    new RenderingContext(),
+                ))
+            ) {
+                $externalArgumentDefinitionsWithoutReservedUpdated = [];
+                foreach ($evaluatedSelectedProps as $argumentName) {
+                    if (!isset($externalArgumentDefinitionsWithoutReserved[$argumentName])) {
+                        throw new \RuntimeException(
+                            "The prop {$argumentName} does not exist in the referenced component {$name}.",
+                            1772899866,
+                        );
+                    }
+                    $externalArgumentDefinitionsWithoutReservedUpdated[$argumentName] =
+                        $externalArgumentDefinitionsWithoutReserved[$argumentName];
+                }
+                $externalArgumentDefinitionsWithoutReserved = $externalArgumentDefinitionsWithoutReservedUpdated;
+            }
 
             if (
                 isset($arguments['defaults']) && ($evaluatedDefaults = $arguments['defaults']->evaluate(
