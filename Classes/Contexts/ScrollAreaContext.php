@@ -34,7 +34,9 @@ class ScrollAreaContext extends AbstractComponentContext
             $styles[] = 'top: 0;';
             $styles[] = 'bottom: var(--corner-height);';
             $styles[] = 'inset-inline-end: 0;';
-        } elseif ($this->get('scrollbar.orientation') === 'horizontal') {
+        }
+
+        if ($this->get('scrollbar.orientation') === 'horizontal') {
             $styles[] = 'inset-inline-start: 0;';
             $styles[] = 'inset-inline-end: var(--corner-width);';
             $styles[] = 'bottom: 0;';
@@ -49,7 +51,9 @@ class ScrollAreaContext extends AbstractComponentContext
 
         if ($this->get('scrollbar.orientation') === 'vertical') {
             $styles[] = 'height: var(--thumb-height);';
-        } elseif ($this->get('scrollbar.orientation') === 'horizontal') {
+        }
+
+        if ($this->get('scrollbar.orientation') === 'horizontal') {
             $styles[] = 'width: var(--thumb-width);';
         }
 
