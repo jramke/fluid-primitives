@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Contexts;
 
+use ArrayAccess;
 use Jramke\FluidPrimitives\Component\ComponentCollectionInterface;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 
@@ -49,9 +50,33 @@ abstract class AbstractComponentContext implements ComponentContextInterface, \A
         return $this->contextVariables;
     }
 
+    /**
+     * Get a context variable by key, supports dot notation for nested access.
+     * Example: $this->get('scrollbar.orientation')
+     */
     public function get(string $key): mixed
     {
-        return $this->contextVariables[$key] ?? null;
+        // Direct key lookup first (faster for non-nested access)
+        if (array_key_exists($key, $this->contextVariables)) {
+            return $this->contextVariables[$key];
+        }
+
+        // Support dot notation for nested array access
+        if (!str_contains($key, '.')) {
+            return null;
+        }
+
+        $segments = explode('.', $key);
+        $value = $this->contextVariables;
+
+        foreach ($segments as $segment) {
+            if (!is_array($value) || !array_key_exists($segment, $value)) {
+                return null;
+            }
+            $value = $value[$segment];
+        }
+
+        return $value;
     }
 
     public function set(string $key, mixed $value): void
@@ -59,9 +84,13 @@ abstract class AbstractComponentContext implements ComponentContextInterface, \A
         $this->contextVariables[$key] = $value;
     }
 
+    /**
+     * Check if a context variable exists, supports dot notation for nested access.
+     */
     public function has(string $key): bool
     {
-        return array_key_exists($key, $this->contextVariables) && $this->contextVariables[$key] !== null;
+        $value = $this->get($key);
+        return $value !== null;
     }
 
     public function offsetExists($offset): bool
