@@ -2,5 +2,6 @@
     {f:if(condition: class, then: 'class="{class}"' )}
     {f:if(condition: context.ids.thumb, then: 'id="{context.ids.thumb}"' )}
     {ui:ref(name: 'thumb' , data: {orientation: context.scrollbar.orientation} )}
+    style="{context.thumbStyles}"
     {ui:attributes()}>
 </div>
