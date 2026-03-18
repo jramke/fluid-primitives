@@ -20,8 +20,13 @@
     "scripts": {
         "prepare-release": [
             "rm -rf .github",
-            "rm .gitignore",
-            "rm -rf scripts"
+            "rm -f .gitignore",
+            "rm -f .gitattributes",
+            "rm -rf scripts",
+            "rm -f tsconfig.json",
+            "rm -f tsdown.config.ts",
+            "rm -f package.json",
+            "rm -f package-lock.json"
         ]
     },
     "autoload": {
