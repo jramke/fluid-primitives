@@ -6,6 +6,7 @@ namespace Jramke\FluidPrimitives\Contexts;
 
 use ArrayAccess;
 use Jramke\FluidPrimitives\Component\ComponentCollectionInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 
 abstract class AbstractComponentContext implements ComponentContextInterface, \ArrayAccess
@@ -48,6 +49,21 @@ abstract class AbstractComponentContext implements ComponentContextInterface, \A
     public function getAllVariables(): array
     {
         return $this->contextVariables;
+    }
+
+    // TODO: remove `$this->getRenderingContext()->getRequest()` when v13 support is dropped
+    public function getRequest(): ServerRequestInterface
+    {
+        if (
+            method_exists($this->getRenderingContext(), 'getAttribute') &&
+            method_exists($this->getRenderingContext(), 'hasAttribute') &&
+            $this->getRenderingContext()->hasAttribute(ServerRequestInterface::class)
+        ) {
+            $request = $this->getRenderingContext()->getAttribute(ServerRequestInterface::class);
+        } else {
+            $request = $this->getRenderingContext()->getRequest();
+        }
+        return $request;
     }
 
     /**

@@ -20,7 +20,8 @@ class NumberInputContext extends AbstractComponentContext
         if ($this->has('locale')) {
             return (string)$this->get('locale');
         }
-        $language = $this->getRenderingContext()->getRequest()->getAttribute('language');
+
+        $language = $this->getRequest()->getAttribute('language');
         return (string)$language->getLocale() ?? null;
     }
 

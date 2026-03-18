@@ -6,6 +6,7 @@ namespace Jramke\FluidPrimitives\Contexts;
 
 use Jramke\FluidPrimitives\Component\ComponentCollectionInterface;
 use Psr\Container\ContainerInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 
 /**
@@ -54,6 +55,11 @@ interface ComponentContextInterface extends ContainerInterface
      * Gets the component resolver associated with this component context.
      */
     public function getComponentResolver(): ComponentCollectionInterface;
+
+    /**
+     * Gets the current HTTP request.
+     */
+    public function getRequest(): ServerRequestInterface;
 
     /**
      * Lifecycle method called before rendering. Only called for root or closed components.

@@ -50,7 +50,7 @@ class ListCollectionViewHelper extends AbstractViewHelper
         $this->registerArgument('as', 'string', 'Variable name to assign the result to', false);
         $this->registerArgument(
             'items',
-            'ListCollectionItem',
+            'array',
             'The items of the collection. `{value: string, label: string, disabled: boolean}`',
             true,
         );

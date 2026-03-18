@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\ViewHelpers;
 
-use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractConditionViewHelper;
+use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
 /**
  * Throw an error with a custom message.
@@ -16,7 +16,7 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractConditionViewHelper;
  * <ui:error when="!{value}" message="This is an error message." />
  * ```
  */
-class ErrorViewHelper extends AbstractConditionViewHelper
+class ErrorViewHelper extends AbstractViewHelper
 {
     protected $escapeOutput = false;
 
