@@ -17,12 +17,26 @@
         "typo3/cms-fluid": "^13.4 || ^14.1",
         "typo3fluid/fluid": "^4 || ^5"
     },
+    "require-dev": {
+        "pestphp/pest": "^4.4",
+        "typo3/testing-framework": "^9.4"
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true,
+            "typo3/class-alias-loader": true,
+            "typo3/cms-composer-installers": true
+        }
+    },
     "scripts": {
+        "test": "pest",
         "prepare-release": [
             "rm -rf .github",
             "rm -f .gitignore",
             "rm -f .gitattributes",
             "rm -rf scripts",
+            "rm -rf tests",
+            "rm -f phpunit.xml",
             "rm -f tsconfig.json",
             "rm -f tsdown.config.ts",
             "rm -f package.json",
@@ -32,6 +46,11 @@
     "autoload": {
         "psr-4": {
             "Jramke\\FluidPrimitives\\": "Classes"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Jramke\\FluidPrimitives\\Tests\\": "tests"
         }
     },
     "replace": {

@@ -1,0 +1,71 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: PHP ${{ matrix.php }} / TYPO3 ${{ matrix.typo3 }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # TYPO3 13.4 LTS combinations
+          - php: '8.2'
+            typo3: '13.4'
+            fluid: '4'
+          - php: '8.3'
+            typo3: '13.4'
+            fluid: '4'
+          - php: '8.4'
+            typo3: '13.4'
+            fluid: '4'
+
+          # TYPO3 14.x combinations
+          - php: '8.3'
+            typo3: '14.1'
+            fluid: '5'
+          - php: '8.4'
+            typo3: '14.1'
+            fluid: '5'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mbstring, intl, pdo_sqlite
+          coverage: none
+          tools: composer:v2
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-php${{ matrix.php }}-typo3${{ matrix.typo3 }}-${{ hashFiles('composer.json') }}
+          restore-keys: |
+            ${{ runner.os }}-php${{ matrix.php }}-typo3${{ matrix.typo3 }}-
+            ${{ runner.os }}-php${{ matrix.php }}-
+
+      - name: Install dependencies with specific TYPO3 version
+        run: |
+          composer require --no-update \
+            "typo3/cms-core:^${{ matrix.typo3 }}" \
+            "typo3/cms-fluid:^${{ matrix.typo3 }}" \
+            "typo3fluid/fluid:^${{ matrix.fluid }}"
+          composer update --prefer-dist --no-progress
+
+      - name: Run tests
+        run: composer test

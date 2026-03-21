@@ -3,3 +3,7 @@
 nbproject
 node_modules
 dist
+vendor
+public
+composer.lock
+.phpunit.cache

@@ -96,6 +96,11 @@ class HydrationRegistry
 
     private function isDevelopment(): bool
     {
-        return Environment::getContext()->isDevelopment();
+        try {
+            return Environment::getContext()->isDevelopment();
+        } catch (\Throwable) {
+            // If Environment is not initialized (e.g., in unit tests), assume production
+            return false;
+        }
     }
 }
