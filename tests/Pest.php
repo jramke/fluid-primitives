@@ -29,10 +29,6 @@ pest()->extend(Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase::class
  |
  */
 
-expect()->extend('toBeValidClassName', function () {
-    return $this->toBeString()->toMatch('/^[A-Z][a-zA-Z0-9_\\\\]*$/');
-});
-
 /*
  |--------------------------------------------------------------------------
  | Functions
