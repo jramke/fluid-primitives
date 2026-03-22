@@ -58,11 +58,14 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
 
         $isComposableComponent = ComponentUtility::isComposableComponent($viewHelperName);
 
-        if (!isset($arguments['rootId'])) {
+        $rootId = $arguments['rootId'] ?? null;
+
+        if (!isset($rootId)) {
             if ($isRootComponent) {
-                $arguments['rootId'] = ComponentUtility::id();
+                $rootId = ComponentUtility::id();
             } else {
-                $arguments['rootId'] = $renderingContext->getVariableProvider()->get('rootId') ?? null;
+                // We assign the rootId to each rendered component so this line gets the rootId of the parent component when rendering subcomponents.
+                $rootId = $renderingContext->getVariableProvider()->get('rootId') ?? null;
             }
         }
 
@@ -135,7 +138,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         // Create Fluid view for component
         $view = new TemplateView($renderingContext);
 
-        $view->assign('rootId', $arguments['rootId'] ?? null);
+        $view->assign('rootId', $rootId);
 
         $view->getRenderingContext()->getVariableProvider()->remove('settings');
         $view->assign('settings', ComponentUtility::getSettings());
