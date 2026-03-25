@@ -6,6 +6,8 @@ Unstyled, flexible and accessible UI Primitives that provide a foundation for bu
 
 Fluid Primitives brings modern component patterns to TYPO3. Build accessible, composable UI components with the same developer experience you'd expect from React libraries like Radix or Base UI - but for Fluid templates.
 
+## Documentation
+
 Full documentation can be found at [fluid-primitives.com](https://fluid-primitives.com).
 
 ## What You Get
@@ -39,16 +41,10 @@ Fluid Primitives solves this by bringing proven patterns from the modern fronten
 
 ## Acknowledgments
 
-Built on the shoulders of giants:
-
 - [Zag.js](https://zagjs.com/) - The state machine foundation
 - [Radix UI](https://www.radix-ui.com/primitives) - API design inspiration
 - [Base UI](https://base-ui.com/) - Component behavior patterns
 - [Ark UI](https://ark-ui.com/) - Zag.js integration patterns
-
-## Documentation
-
-The full documentation can be found at [fluid-primitives.com](https://fluid-primitives.com).
 
 ## Development
 
