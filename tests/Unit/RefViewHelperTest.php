@@ -162,8 +162,7 @@ describe('RefViewHelper', function () {
                 'data' => [],
             ]);
 
-            expect(fn() => $this->viewHelper->render())
-                ->toThrow(RuntimeException::class, 'No rootId found');
+            expect(fn() => $this->viewHelper->render())->toThrow(RuntimeException::class, 'No rootId found');
         });
     });
 });

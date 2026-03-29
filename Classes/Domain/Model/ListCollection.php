@@ -19,6 +19,9 @@ class ListCollection implements JsonSerializable, IteratorAggregate
     protected ?string $groupByKey = null;
     protected array|string|null $groupSort = null;
 
+    /** @var ListCollectionItem[]|null Cached normalized items */
+    private ?array $normalizedItems = null;
+
     // @mago-expect lint:excessive-parameter-list
     public function __construct(
         array $items = [],
@@ -51,12 +54,43 @@ class ListCollection implements JsonSerializable, IteratorAggregate
 
     public function getIterator(): Traversable
     {
-        yield from $this->items;
+        yield from $this->getItems();
     }
 
+    /**
+     * Get all items as normalized ListCollectionItem objects.
+     * Results are cached for performance.
+     *
+     * @return ListCollectionItem[]
+     */
     public function getItems(): array
     {
+        if ($this->normalizedItems === null) {
+            $this->normalizedItems = array_map(fn($item) => $this->normalizeItem($item), $this->items);
+        }
+
+        return $this->normalizedItems;
+    }
+
+    /**
+     * Get the raw/original items without normalization.
+     */
+    public function getRawItems(): array
+    {
         return $this->items;
+    }
+
+    /**
+     * Normalize a raw item to a ListCollectionItem object.
+     */
+    public function normalizeItem(array|object $item): ListCollectionItem
+    {
+        return new ListCollectionItem(
+            value: $this->getItemValue($item) ?? '',
+            label: $this->stringifyItem($item) ?? '',
+            disabled: $this->getItemDisabled($item),
+            original: $item,
+        );
     }
 
     public function getSize(): int
@@ -112,7 +146,12 @@ class ListCollection implements JsonSerializable, IteratorAggregate
         $strings = [];
 
         foreach ($items as $item) {
-            $str = $this->stringifyItem($item);
+            // Handle both ListCollectionItem objects and raw items
+            if ($item instanceof ListCollectionItem) {
+                $str = $item->label;
+            } else {
+                $str = $this->stringifyItem($item);
+            }
             if ($str !== null && $str !== '') {
                 $strings[] = $str;
             }
@@ -126,26 +165,38 @@ class ListCollection implements JsonSerializable, IteratorAggregate
         if ($item === null) {
             return false;
         }
+        // Handle ListCollectionItem objects
+        if ($item instanceof ListCollectionItem) {
+            return $item->disabled;
+        }
         if ($this->isItemDisabledKey) {
             return (bool)$this->getFromKey($item, $this->isItemDisabledKey);
         }
         return (bool)($item['disabled'] ?? false);
     }
 
-    public function find(?string $value)
+    /**
+     * Find a normalized ListCollectionItem by value.
+     */
+    public function find(?string $value): ?ListCollectionItem
     {
         if ($value === null) {
             return null;
         }
 
-        foreach ($this->items as $item) {
-            if ($this->getItemValue($item) === $value) {
+        foreach ($this->getItems() as $item) {
+            if ($item->value === $value) {
                 return $item;
             }
         }
         return null;
     }
 
+    /**
+     * Find multiple normalized ListCollectionItems by values.
+     *
+     * @return ListCollectionItem[]
+     */
     public function findMany(array|string $values): array
     {
         if (is_string($values)) {
@@ -168,17 +219,21 @@ class ListCollection implements JsonSerializable, IteratorAggregate
             return -1;
         }
 
-        foreach ($this->items as $index => $item) {
-            if ($this->getItemValue($item) === $value) {
+        foreach ($this->getItems() as $index => $item) {
+            if ($item->value === $value) {
                 return $index;
             }
         }
         return -1;
     }
 
-    public function at(int $index)
+    /**
+     * Get a normalized ListCollectionItem at the given index.
+     */
+    public function at(int $index): ?ListCollectionItem
     {
-        return $this->items[$index] ?? null;
+        $items = $this->getItems();
+        return $items[$index] ?? null;
     }
 
     public function has(?string $value): bool
@@ -186,19 +241,20 @@ class ListCollection implements JsonSerializable, IteratorAggregate
         return $this->indexOf($value) !== -1;
     }
 
-    public function hasItem(?array $item): bool
+    public function hasItem(ListCollectionItem|array|null $item): bool
     {
         if ($item === null) {
             return false;
         }
-        return $this->has($this->getItemValue($item));
+        $value = $item instanceof ListCollectionItem ? $item->value : $this->getItemValue($item);
+        return $this->has($value);
     }
 
     public function getFirstValue(): ?string
     {
-        foreach ($this->items as $item) {
-            if (!$this->getItemDisabled($item)) {
-                return $this->getItemValue($item);
+        foreach ($this->getItems() as $item) {
+            if (!$item->disabled) {
+                return $item->value;
             }
         }
         return null;
@@ -206,28 +262,33 @@ class ListCollection implements JsonSerializable, IteratorAggregate
 
     public function getLastValue(): ?string
     {
-        for ($i = count($this->items) - 1; $i >= 0; $i--) {
-            if (!$this->getItemDisabled($this->items[$i])) {
-                return $this->getItemValue($this->items[$i]);
+        $items = $this->getItems();
+        for ($i = count($items) - 1; $i >= 0; $i--) {
+            if (!$items[$i]->disabled) {
+                return $items[$i]->value;
             }
         }
         return null;
     }
 
     /**
-     * Group items by the defined key (e.g. "category").
+     * Group normalized items by the defined key (e.g. "category").
+     * Groups contain normalized ListCollectionItem objects.
      *
-     * @return array<string, mixed>
+     * @return array<string, ListCollectionItem[]>
      */
     public function group(): array
     {
+        $normalizedItems = $this->getItems();
+
         if ($this->groupByKey === null) {
-            return ['' => $this->items];
+            return ['' => $normalizedItems];
         }
 
         $groups = [];
-        foreach ($this->items as $index => $item) {
-            $key = (string)($this->getFromKey($item, $this->groupByKey) ?? '');
+        foreach ($normalizedItems as $item) {
+            // Access the original data to get the group key
+            $key = (string)($this->getFromKey($item->original, $this->groupByKey) ?? '');
             $groups[$key][] = $item;
         }
 

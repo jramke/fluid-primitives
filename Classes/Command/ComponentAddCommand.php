@@ -99,9 +99,9 @@ class ComponentAddCommand extends Command
                     throw new MissingInputException('Aborted.', 1766948173);
                 }
 
-                if ($io->confirm('Do you want to set "' .
-                $extension .
-                '" as the default extension for new components?')) {
+                if ($io->confirm(
+                    'Do you want to set "' . $extension . '" as the default extension for new components?',
+                )) {
                     $settings = $this->extensionConfiguration->get('fluid_primitives');
                     if (!is_array($settings)) {
                         $settings = [];

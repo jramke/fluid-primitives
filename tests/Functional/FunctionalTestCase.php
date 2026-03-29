@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Tests\Functional;
 
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
+use TYPO3\CMS\Core\Core\SystemEnvironmentBuilder;
 use TYPO3\CMS\Core\Http\NormalizedParams;
 use TYPO3\CMS\Core\Http\ServerRequest;
-use TYPO3\CMS\Core\Core\SystemEnvironmentBuilder;
 use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
 use TYPO3\CMS\Core\View\ViewFactoryData;
 use TYPO3\CMS\Core\View\ViewFactoryInterface;
@@ -100,9 +100,10 @@ abstract class FunctionalTestCase extends TYPO3FunctionalTestCase
     {
         // Set up a frontend request for proper context
         $request = new ServerRequest();
-        $request = $request
-            ->withAttribute('applicationType', SystemEnvironmentBuilder::REQUESTTYPE_FE)
-            ->withAttribute('normalizedParams', NormalizedParams::createFromRequest($request));
+        $request = $request->withAttribute('applicationType', SystemEnvironmentBuilder::REQUESTTYPE_FE)->withAttribute(
+            'normalizedParams',
+            NormalizedParams::createFromRequest($request),
+        );
         $GLOBALS['TYPO3_REQUEST'] = $request;
 
         // Get the ViewFactory from the container
@@ -112,21 +113,21 @@ abstract class FunctionalTestCase extends TYPO3FunctionalTestCase
         $extensionPath = ExtensionManagementUtility::extPath('fluid_primitives');
 
         // Create a view using the factory
-        $view = $viewFactory->create(new ViewFactoryData(
-            templateRootPaths: [$extensionPath . 'Resources/Private/Primitives'],
-        ));
+        $view = $viewFactory->create(
+            new ViewFactoryData(templateRootPaths: [$extensionPath . 'Resources/Private/Primitives']),
+        );
 
         // Register the primitives namespace
-        $view->getRenderingContext()->getViewHelperResolver()->addNamespace(
-            'primitives',
-            new \Jramke\FluidPrimitives\Component\ComponentPrimitivesCollection()
-        );
+        $view
+            ->getRenderingContext()
+            ->getViewHelperResolver()
+            ->addNamespace('primitives', new \Jramke\FluidPrimitives\Component\ComponentPrimitivesCollection());
 
         // Register the ui namespace
-        $view->getRenderingContext()->getViewHelperResolver()->addNamespace(
-            'ui',
-            'Jramke\\FluidPrimitives\\ViewHelpers'
-        );
+        $view
+            ->getRenderingContext()
+            ->getViewHelperResolver()
+            ->addNamespace('ui', 'Jramke\\FluidPrimitives\\ViewHelpers');
 
         // Clear the hydration registry
         HydrationRegistry::getInstance()->clear();
