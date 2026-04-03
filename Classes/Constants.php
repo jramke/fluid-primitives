@@ -22,6 +22,7 @@ class Constants
 
     public const COMPONENTS_THAT_SUPPORT_FIELD = [
         'checkbox',
+        'checkbox-group',
         'select',
         'number-input',
         'radio-group',

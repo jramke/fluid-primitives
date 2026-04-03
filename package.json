@@ -25,6 +25,10 @@
             "import": "./dist/checkbox.js",
             "types": "./dist/checkbox.d.ts"
         },
+        "./checkbox-group": {
+            "import": "./dist/checkbox-group.js",
+            "types": "./dist/checkbox-group.d.ts"
+        },
         "./dialog": {
             "import": "./dist/dialog.js",
             "types": "./dist/dialog.d.ts"

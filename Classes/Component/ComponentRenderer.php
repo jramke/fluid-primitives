@@ -240,8 +240,30 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
                 $fieldRootId = $fieldContext->get('rootId') ?? null;
                 $fieldVariables = $fieldContext->getChildVariables();
                 foreach ($fieldVariables as $varName => $varValue) {
-                    if ($varValue === null)
+                    if ($varValue === null) {
                         continue;
+                    }
+                    $view->getRenderingContext()->getVariableProvider()->remove($varName);
+                    $view->getRenderingContext()->getVariableProvider()->add($varName, $varValue);
+                    $arguments[$varName] = $varValue;
+                    if ($ctx) {
+                        $ctx->set($varName, $varValue);
+                    }
+                }
+            }
+        }
+
+        // If the component supports checkbox-group and there is a checkbox-group context available, we merge the checkbox-group context variables into the current context
+        $checkboxGroupRootId = null;
+        if ($isRootComponent && $baseName === 'checkbox') {
+            $checkboxGroupContext = $otherComponentContexts['checkbox-group'] ?? null;
+            if ($checkboxGroupContext) {
+                $checkboxGroupRootId = $checkboxGroupContext->get('rootId') ?? null;
+                $checkboxGroupVariables = $checkboxGroupContext->getChildVariables($arguments);
+                foreach ($checkboxGroupVariables as $varName => $varValue) {
+                    if ($varValue === null) {
+                        continue;
+                    }
                     $view->getRenderingContext()->getVariableProvider()->remove($varName);
                     $view->getRenderingContext()->getVariableProvider()->add($varName, $varValue);
                     $arguments[$varName] = $varValue;
@@ -253,8 +275,9 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         }
 
         // Assign context if available
-        if ($ctx)
+        if ($ctx) {
             $view->assign('context', $ctx);
+        }
 
         // Call beforeRendering lifecycle method only for root or closed components
         if ($ctx && $isRootComponent && method_exists($ctx, 'beforeRendering')) {
@@ -328,6 +351,9 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
                 ];
                 if ($fieldRootId) {
                     $data['field'] = $fieldRootId;
+                }
+                if ($checkboxGroupRootId) {
+                    $data['checkboxGroup'] = $checkboxGroupRootId;
                 }
 
                 $registry = HydrationRegistry::getInstance();

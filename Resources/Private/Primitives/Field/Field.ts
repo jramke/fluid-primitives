@@ -29,6 +29,8 @@ export class Field extends Component<FieldProps, FieldApi> {
 
 		this.subscribedToForm = true;
 		formMachine.subscribe(() => {
+			// notify is marked as private but that does not prevent runtime access
+			// @ts-expect-error
 			this.machine.notify();
 		});
 	}

@@ -31,6 +31,8 @@ export function registerFieldMachineForForm(el: Element | null, fieldMachine: Fi
 
 		// trigger initial form render when all fields are registered
 		if (entry.fields.size === entry.expectedFieldCount) {
+			// notify is marked as private but that does not prevent runtime access
+			// @ts-expect-error
 			entry.machine.notify();
 		}
 	};

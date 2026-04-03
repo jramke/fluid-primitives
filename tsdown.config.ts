@@ -5,6 +5,7 @@ export default defineConfig({
 		client: './Resources/Private/Client/index.ts',
 		accordion: './Resources/Private/Primitives/Accordion/Accordion.ts',
 		checkbox: './Resources/Private/Primitives/Checkbox/Checkbox.ts',
+		'checkbox-group': './Resources/Private/Primitives/CheckboxGroup/CheckboxGroup.ts',
 		dialog: './Resources/Private/Primitives/Dialog/Dialog.ts',
 		clipboard: './Resources/Private/Primitives/Clipboard/Clipboard.ts',
 		collapsible: './Resources/Private/Primitives/Collapsible/Collapsible.ts',

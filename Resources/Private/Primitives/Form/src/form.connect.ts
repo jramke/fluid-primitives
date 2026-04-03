@@ -96,7 +96,7 @@ export function connect<T extends PropTypes>(
 				onReset: () => {
 					send({ type: 'RESET', detail: { omitManualReset: true } });
 				},
-				// for things like inputs
+				// for things like inputs, others like select elements are handeled via `setupFormListeners`
 				onInput: event => {
 					debouncedSendInput(event.target);
 				},

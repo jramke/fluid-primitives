@@ -5,7 +5,7 @@ export function validateWithSchema(schema: ZodFormSchema, formData: FormData): F
 	if (!schema) {
 		return {};
 	}
-	const dataObject = Object.fromEntries(formData.entries());
+	const dataObject = formDataToObject(formData);
 
 	const validationResult = schema.safeParse(dataObject);
 	if (validationResult.success) {
@@ -89,9 +89,20 @@ export function getInputValue(target: EventTarget | null): unknown {
 }
 
 export function getFormDataValue(formData: FormData, fieldName: string) {
-	return formData.getAll(fieldName).length > 1
+	return formData.getAll(fieldName).length > 1 || fieldName.endsWith('[]')
 		? formData.getAll(fieldName)
 		: formData.get(fieldName);
+}
+
+export function formDataToObject(
+	formData: FormData
+): Record<string, FormDataEntryValue | FormDataEntryValue[]> {
+	return Object.fromEntries(
+		Array.from(formData.keys()).map(key => [
+			key.endsWith('[]') ? key.slice(0, -2) : key,
+			getFormDataValue(formData, key) ?? '',
+		])
+	);
 }
 
 export function prefixFieldName(fieldName: string, prefix: string, objectName?: string) {

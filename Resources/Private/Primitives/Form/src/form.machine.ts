@@ -139,7 +139,7 @@ export const machine = createMachine<FormSchema>({
 				const schema = prop('schema');
 				if (!schema) return;
 
-				const fieldName = event.detail?.fieldName;
+				let fieldName = event.detail?.fieldName;
 				if (!fieldName) return;
 
 				const formData = context.get('values');
@@ -162,10 +162,12 @@ export const machine = createMachine<FormSchema>({
 				// Update only errors for the specific field
 				const updatedErrors = { ...currentErrors };
 
-				if (allErrors[fieldName]) {
-					updatedErrors[fieldName] = allErrors[fieldName];
+				const fieldNameWithoutSuffix = fieldName.replace(/\[\]$/, '');
+
+				if (allErrors[fieldNameWithoutSuffix]) {
+					updatedErrors[fieldNameWithoutSuffix] = allErrors[fieldNameWithoutSuffix];
 				} else {
-					delete updatedErrors[fieldName];
+					delete updatedErrors[fieldNameWithoutSuffix];
 				}
 
 				context.set('errors', updatedErrors);
@@ -178,6 +180,8 @@ export const machine = createMachine<FormSchema>({
 				if (!name) return;
 
 				const value = e?.detail?.value ?? getInputValue(target);
+				// console.log('input', value);
+
 				const values = context.get('values');
 				values.set(name, value);
 				context.set('values', values);
