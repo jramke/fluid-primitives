@@ -1,0 +1,8 @@
+<f:variable name="refData" value="{orientation: context.orientation}" />
+
+<div
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'indicator-track' , data: refData)}
+    {ui:attributes()}>
+    <f:slot />
+</div>

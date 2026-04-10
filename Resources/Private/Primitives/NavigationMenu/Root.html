@@ -1,0 +1,17 @@
+<ui:prop name="orientation" type="string" optional="{true}" client="{true}" default="horizontal" />
+<ui:prop name="defaultValue" type="string" optional="{true}" client="{true}" />
+<ui:prop name="openDelay" type="integer" optional="{true}" client="{true}" />
+<ui:prop name="closeDelay" type="integer" optional="{true}" client="{true}" />
+<ui:prop name="disableHoverTrigger" type="boolean" optional="{true}" client="{true}" />
+<ui:prop name="disableClickTrigger" type="boolean" optional="{true}" client="{true}" />
+<ui:prop name="disablePointerLeaveClose" type="boolean" optional="{true}" client="{true}" />
+
+<f:variable name="refData" value="{orientation: orientation}" />
+
+<nav
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.root, then: 'id="{context.ids.root}"' )}
+    {ui:ref(name: 'root' , data: refData)}
+    {ui:attributes()}>
+    <f:slot />
+</nav>

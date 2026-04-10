@@ -1,0 +1,16 @@
+<ui:error when="!{context.item.value}" message="The {component.fullName} must only be used inside a navigationMenu.item component" />
+<f:variable name="value" value="{context.item.value}" />
+
+<f:variable name="itemState">{context -> ui:call(method: 'getItemState', arguments: {0: context.item})}</f:variable>
+
+<f:variable name="state" value="{itemState.state}" />
+<f:variable name="refData" value="{value: value, state: state, orientation: context.orientation}" />
+
+<div
+    aria-hidden="true"
+    {f:if(condition: '!{itemState.open}' , then: 'hidden="true"' )}
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'item-indicator' , data: refData)}
+    {ui:attributes()}>
+    <f:slot />
+</div>

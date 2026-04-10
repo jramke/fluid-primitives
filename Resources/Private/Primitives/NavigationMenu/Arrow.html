@@ -1,0 +1,9 @@
+<f:variable name="refData" value="{orientation: context.orientation}" />
+
+<div
+    aria-hidden="true"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'arrow' , data: refData)}
+    {ui:attributes()}>
+    <f:slot />
+</div>

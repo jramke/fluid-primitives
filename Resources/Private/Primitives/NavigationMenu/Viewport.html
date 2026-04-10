@@ -1,0 +1,9 @@
+<f:variable name="refData" value="{orientation: context.orientation, align: context.viewport-positioner.align, state: context.globalState.state}" />
+
+<div
+    {f:if(condition: '!{context.globalState.open}' , then: 'hidden="true"' )}
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'viewport' , data: refData)}
+    {ui:attributes()}>
+    <f:slot />
+</div>

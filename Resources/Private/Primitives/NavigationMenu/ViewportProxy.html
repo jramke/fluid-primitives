@@ -1,0 +1,10 @@
+<ui:error when="!{context.item.value}" message="The {component.fullName} must only be used inside a navigationMenu.item component" />
+<f:variable name="value" value="{context.item.value}" />
+
+<f:variable name="refData" value="{value: value}" />
+
+<span
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'viewport-proxy' , data: refData)}
+    {ui:attributes()}>
+</span>

@@ -1,0 +1,24 @@
+<ui:prop name="value" type="string" optional="{true}" />
+
+<f:variable name="contentValue">{f:if(condition: value, then: value, else: context.item.value)}</f:variable>
+
+<ui:error when="!{contentValue}" message="The {component.fullName} requires a value prop or must be used inside a navigationMenu.item component" />
+
+<f:variable name="itemProps" value="{value: contentValue}" />
+<f:variable name="itemState">{context -> ui:call(method: 'getItemState', arguments: {0: itemProps})}</f:variable>
+
+<f:variable name="state" value="{itemState.state}" />
+<f:variable name="refData" value="{value: contentValue, state: state, orientation: context.orientation}" />
+
+{context -> ui:call(method: 'setIsInsideContent')}
+
+<div
+    data-uid="{context.rootId}"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: '!{itemState.open}' , then: 'hidden' )}
+    {ui:ref(name: 'content' , data: refData)}
+    {ui:attributes(skip: 'hidden' )}>
+    <f:slot />
+</div>
+
+{context -> ui:call(method: 'unsetIsInsideContent')}

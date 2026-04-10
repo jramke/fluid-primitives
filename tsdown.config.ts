@@ -11,6 +11,7 @@ export default defineConfig({
 		collapsible: './Resources/Private/Primitives/Collapsible/Collapsible.ts',
 		field: './Resources/Private/Primitives/Field/Field.ts',
 		form: './Resources/Private/Primitives/Form/Form.ts',
+		'navigation-menu': './Resources/Private/Primitives/NavigationMenu/NavigationMenu.ts',
 		'number-input': './Resources/Private/Primitives/NumberInput/NumberInput.ts',
 		popover: './Resources/Private/Primitives/Popover/Popover.ts',
 		'radio-group': './Resources/Private/Primitives/RadioGroup/RadioGroup.ts',

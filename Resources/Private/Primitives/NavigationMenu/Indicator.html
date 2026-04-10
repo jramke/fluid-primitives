@@ -1,0 +1,10 @@
+<f:variable name="refData" value="{orientation: context.orientation, state: context.globalState.state}" />
+
+<div
+    aria-hidden="true"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'indicator' , data: refData)}
+    {f:if(condition: context.globalState.open, then: 'hidden="true"' )}
+    {ui:attributes()}>
+    <f:slot />
+</div>

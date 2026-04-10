@@ -1,0 +1,14 @@
+<f:variable name="refData" value="{orientation: context.orientation}" />
+
+<f:comment>
+    <!-- We add role=list here because safari is a little picky about list semantics when styling overrides list-style-type or display:list-item -->
+</f:comment>
+
+<ul
+    role="list"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.list, then: 'id="{context.ids.list}"' )}
+    {ui:ref(name: 'list' , data: refData)}
+    {ui:attributes()}>
+    <f:slot />
+</ul>

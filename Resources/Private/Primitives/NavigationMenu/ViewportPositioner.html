@@ -1,0 +1,10 @@
+<ui:prop name="align" type="string" optional="{true}" default="center" context="{true}" />
+
+<f:variable name="refData" value="{orientation: context.orientation, align: align}" />
+
+<div
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'viewport-positioner' , data: refData)}
+    {ui:attributes()}>
+    <f:slot />
+</div>

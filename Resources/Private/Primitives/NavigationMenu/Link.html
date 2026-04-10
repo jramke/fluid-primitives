@@ -1,0 +1,13 @@
+<ui:prop name="value" type="string" optional="{true}" />
+<ui:prop name="current" type="boolean" optional="{true}" />
+
+<f:variable name="linkValue">{f:if(condition: value, then: value, else: context.item.value)}</f:variable>
+<f:variable name="refData" value="{value: linkValue, current: current}" />
+
+<a
+    {f:if(condition: current, then: 'aria-current="page"' )}
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'link' , data: refData)}
+    {ui:attributes()}>
+    <f:slot />
+</a>

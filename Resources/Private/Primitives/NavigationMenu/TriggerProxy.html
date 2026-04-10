@@ -1,0 +1,16 @@
+<ui:error when="!{context.item.value}" message="The {component.fullName} must only be used inside a navigationMenu.item component" />
+
+<f:variable name="itemState" value="{context -> ui:call(method: 'getItemState', arguments: {0: context.item})}" />
+
+<f:variable name="refData" value="{value: context.item.value}" />
+
+<span
+    tabindex="0"
+    data-trigger-proxy
+    aria-hidden="true"
+    {f:if(condition: '!{itemState.open}' , then: 'hidden="true"' )}
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'trigger-proxy' , data: refData)}
+    style="{settings.visuallyHiddenStyles}"
+    {ui:attributes()}>
+</span>

@@ -76,6 +76,10 @@
         "./number-input": {
             "import": "./dist/number-input.js",
             "types": "./dist/number-input.d.ts"
+        },
+        "./navigation-menu": {
+            "import": "./dist/navigation-menu.js",
+            "types": "./dist/navigation-menu.d.ts"
         }
     },
     "scripts": {
@@ -100,25 +104,26 @@
         "zod": "^4.3.6"
     },
     "dependencies": {
-        "@zag-js/accordion": "^1.37.0",
-        "@zag-js/anatomy": "^1.37.0",
-        "@zag-js/checkbox": "^1.37.0",
-        "@zag-js/clipboard": "^1.37.0",
-        "@zag-js/collapsible": "^1.37.0",
-        "@zag-js/collection": "^1.37.0",
-        "@zag-js/core": "^1.37.0",
-        "@zag-js/dialog": "^1.37.0",
-        "@zag-js/dom-query": "^1.37.0",
-        "@zag-js/number-input": "^1.37.0",
-        "@zag-js/popover": "^1.37.0",
-        "@zag-js/radio-group": "^1.37.0",
-        "@zag-js/scroll-area": "^1.37.0",
-        "@zag-js/select": "^1.37.0",
-        "@zag-js/store": "^1.37.0",
-        "@zag-js/tabs": "^1.37.0",
-        "@zag-js/tooltip": "^1.37.0",
-        "@zag-js/types": "^1.37.0",
-        "@zag-js/utils": "^1.37.0",
-        "@zag-js/vanilla": "^1.37.0"
+        "@zag-js/accordion": "^1.39.1",
+        "@zag-js/anatomy": "^1.39.1",
+        "@zag-js/checkbox": "^1.39.1",
+        "@zag-js/clipboard": "^1.39.1",
+        "@zag-js/collapsible": "^1.39.1",
+        "@zag-js/collection": "^1.39.1",
+        "@zag-js/core": "^1.39.1",
+        "@zag-js/dialog": "^1.39.1",
+        "@zag-js/dom-query": "^1.39.1",
+        "@zag-js/navigation-menu": "^1.39.1",
+        "@zag-js/number-input": "^1.39.1",
+        "@zag-js/popover": "^1.39.1",
+        "@zag-js/radio-group": "^1.39.1",
+        "@zag-js/scroll-area": "^1.39.1",
+        "@zag-js/select": "^1.39.1",
+        "@zag-js/store": "^1.39.1",
+        "@zag-js/tabs": "^1.39.1",
+        "@zag-js/tooltip": "^1.39.1",
+        "@zag-js/types": "^1.39.1",
+        "@zag-js/utils": "^1.39.1",
+        "@zag-js/vanilla": "^1.39.1"
     }
 }
