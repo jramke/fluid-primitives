@@ -44,8 +44,10 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
 		return (this.constructor as typeof Component).name;
 	}
 
-	// Override in consumer for example when a getter is used for collection
-	// Needs to be used manually inside the initMachine method
+	/**
+	 * Override in consumer for example when a getter is used for collection
+	 * Needs to be used manually inside the initMachine method
+	 */
 	transformProps(props: Partial<Props>): Partial<Props> {
 		return props;
 	}

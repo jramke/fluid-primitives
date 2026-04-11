@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Registry;
 
+use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Page\AssetCollector;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -14,6 +15,8 @@ class HydrationRegistry
 
     private array $registry = [];
     private static ?self $instance = null;
+    private array $globals = [];
+    private bool $globalsResolved = false;
 
     public function __construct(
         private readonly AssetCollector $assetCollector,
@@ -50,9 +53,17 @@ class HydrationRegistry
         return $this->registry;
     }
 
+    public function getGlobals(): array
+    {
+        $this->resolveGlobals();
+        return $this->globals;
+    }
+
     public function clear(): void
     {
         $this->registry = [];
+        $this->globals = [];
+        $this->globalsResolved = false;
     }
 
     private function updateAssetCollector(): void
@@ -61,18 +72,14 @@ class HydrationRegistry
             return;
         }
 
-        $isDevelopment = $this->isDevelopment();
-        if ($isDevelopment) {
-            $json = json_encode($this->registry, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
-        } else {
-            $json = json_encode($this->registry, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-        }
+        $globals = $this->getGlobals();
 
         $js = <<<JS
         (function() {
         window.FluidPrimitives = window.FluidPrimitives || {};
         window.FluidPrimitives.uncontrolledInstances = {};
-        window.FluidPrimitives.hydrationData = {$json};
+        window.FluidPrimitives.globals = {$this->toJson($globals)};
+        window.FluidPrimitives.hydrationData = {$this->toJson($this->registry)};
         })();
         JS;
 
@@ -80,7 +87,7 @@ class HydrationRegistry
             'id' => self::SCRIPT_ID,
         ];
 
-        if (!$isDevelopment) {
+        if (!$this->isDevelopment()) {
             $js = str_replace("\n", '', $js);
             $js = str_replace("\r", '', $js);
             $js = preg_replace('/\s+/', ' ', $js); // replace multiple whitespaces with one space
@@ -94,6 +101,36 @@ class HydrationRegistry
         ]);
     }
 
+    private function resolveGlobals(): void
+    {
+        if ($this->globalsResolved) {
+            return;
+        }
+
+        $this->globalsResolved = true;
+        $request = $this->getRequest();
+
+        if (!$request) {
+            return;
+        }
+
+        $language = $request->getAttribute('language');
+
+        $language = $this->getRequest()->getAttribute('language');
+        $locale = (string)$language->getLocale() ?? '';
+
+        $this->globals = [
+            'locale' => $locale,
+        ];
+    }
+
+    private function getRequest(): ?ServerRequestInterface
+    {
+        $request = $GLOBALS['TYPO3_REQUEST'] ?? null;
+
+        return $request instanceof ServerRequestInterface ? $request : null;
+    }
+
     private function isDevelopment(): bool
     {
         try {
@@ -102,5 +139,13 @@ class HydrationRegistry
             // If Environment is not initialized (e.g., in unit tests), assume production
             return false;
         }
+    }
+
+    private function toJson(array $data): string
+    {
+        if ($this->isDevelopment()) {
+            return json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        }
+        return json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     }
 }

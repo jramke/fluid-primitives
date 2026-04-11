@@ -1,5 +1,5 @@
 import { ListCollection, type CollectionItem } from '@zag-js/collection';
-import type { ComponentHydrationData } from '../types';
+import type { ComponentHydrationData, FluidPrimitivesGlobals } from '../types';
 import { Component } from './component';
 
 export function getHydrationData(component: string): Record<string, ComponentHydrationData> | null;
@@ -24,6 +24,25 @@ export function getHydrationData(component?: string, id?: string) {
 	}
 
 	return hydrationData[component][id] || null;
+}
+
+export function getGlobals(): FluidPrimitivesGlobals | null {
+	const globals = window.FluidPrimitives?.globals;
+
+	if (!globals || typeof globals !== 'object') {
+		return null;
+	}
+
+	return globals;
+}
+
+export function getGlobal<T = unknown>(key: string): T | undefined {
+	const globals = getGlobals();
+	if (!globals || !(key in globals)) {
+		return undefined;
+	}
+
+	return globals[key] as T;
 }
 
 export function mount(

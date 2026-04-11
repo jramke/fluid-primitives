@@ -10,6 +10,7 @@ declare global {
 					[id: string]: ComponentHydrationData;
 				};
 			};
+			globals?: FluidPrimitivesGlobals;
 			uncontrolledInstances: {
 				[componentName: string]: {
 					[id: string]: Component<unknown, unknown>;
@@ -37,4 +38,9 @@ export interface ComponentHydrationData {
 		ids: { [key: string]: string };
 		[key: string]: unknown;
 	};
+}
+
+export interface FluidPrimitivesGlobals {
+	locale?: string;
+	[key: string]: unknown;
 }
