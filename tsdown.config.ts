@@ -17,6 +17,7 @@ export default defineConfig({
 		'radio-group': './Resources/Private/Primitives/RadioGroup/RadioGroup.ts',
 		'scroll-area': './Resources/Private/Primitives/ScrollArea/ScrollArea.ts',
 		select: './Resources/Private/Primitives/Select/Select.ts',
+		switch: './Resources/Private/Primitives/Switch/Switch.ts',
 		tabs: './Resources/Private/Primitives/Tabs/Tabs.ts',
 		tooltip: './Resources/Private/Primitives/Tooltip/Tooltip.ts',
 	},

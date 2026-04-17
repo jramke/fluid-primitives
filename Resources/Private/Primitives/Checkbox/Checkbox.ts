@@ -23,7 +23,6 @@ export class Checkbox extends FieldAwareComponent<checkbox.Props, checkbox.Api> 
 		const isInGroup = !!this.getClosestCheckboxGroup();
 
 		return {
-			value: '1', // HTML default is 'on' but we use '1' for easier boolean conversion
 			...props,
 			disabled: props.disabled ?? fieldMachine.context.get('disabled'),
 			readOnly: props.readOnly ?? fieldMachine.context.get('readOnly'),

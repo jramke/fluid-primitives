@@ -65,6 +65,10 @@
             "import": "./dist/select.js",
             "types": "./dist/select.d.ts"
         },
+        "./switch": {
+            "import": "./dist/switch.js",
+            "types": "./dist/switch.d.ts"
+        },
         "./tabs": {
             "import": "./dist/tabs.js",
             "types": "./dist/tabs.d.ts"
@@ -120,6 +124,7 @@
         "@zag-js/scroll-area": "^1.39.1",
         "@zag-js/select": "^1.39.1",
         "@zag-js/store": "^1.39.1",
+        "@zag-js/switch": "^1.39.1",
         "@zag-js/tabs": "^1.39.1",
         "@zag-js/tooltip": "^1.39.1",
         "@zag-js/types": "^1.39.1",
