@@ -167,34 +167,6 @@ class UsePropsViewHelper extends AbstractViewHelper implements ViewHelperNodeIni
 
             $argumentDefinitions = $parsingState->getArgumentDefinitions();
 
-            // Merge props marked for client from external component definition and current
-            if (
-                isset(
-                    $argumentDefinitions[Constants::PROPS_MARKED_FOR_CLIENT_KEY],
-                    $externalArgumentDefinitions[Constants::PROPS_MARKED_FOR_CLIENT_KEY],
-                )
-            ) {
-                $argumentDefinitions[Constants::PROPS_MARKED_FOR_CLIENT_KEY] = PropsUtility::createPropsMarkedForClientArgumentDefinition(array_merge(
-                    $argumentDefinitions[Constants::PROPS_MARKED_FOR_CLIENT_KEY]->getDefaultValue(),
-                    $externalArgumentDefinitions[Constants::PROPS_MARKED_FOR_CLIENT_KEY]->getDefaultValue(),
-                ));
-                unset($externalArgumentDefinitionsWithoutReserved[Constants::PROPS_MARKED_FOR_CLIENT_KEY]);
-            }
-
-            // Merge props marked for context from external component definition and current
-            if (
-                isset(
-                    $argumentDefinitions[Constants::PROPS_MARKED_FOR_CONTEXT_KEY],
-                    $externalArgumentDefinitions[Constants::PROPS_MARKED_FOR_CONTEXT_KEY],
-                )
-            ) {
-                $argumentDefinitions[Constants::PROPS_MARKED_FOR_CONTEXT_KEY] = PropsUtility::createPropsMarkedForContextArgumentDefinition(array_merge(
-                    $argumentDefinitions[Constants::PROPS_MARKED_FOR_CONTEXT_KEY]->getDefaultValue(),
-                    $externalArgumentDefinitions[Constants::PROPS_MARKED_FOR_CONTEXT_KEY]->getDefaultValue(),
-                ));
-                unset($externalArgumentDefinitionsWithoutReserved[Constants::PROPS_MARKED_FOR_CONTEXT_KEY]);
-            }
-
             $mergedArgumentDefinitions = array_merge($externalArgumentDefinitionsWithoutReserved, $argumentDefinitions);
 
             $mergedArgumentDefinitions['spreadProps'] = PropsUtility::createSpreadPropsArgumentDefinition(array_keys(

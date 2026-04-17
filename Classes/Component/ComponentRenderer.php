@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Component;
 
+use Jramke\FluidPrimitives\Annotations\ClientArgumentAnnotation;
+use Jramke\FluidPrimitives\Annotations\ContextArgumentAnnotation;
 use Jramke\FluidPrimitives\Constants;
 use Jramke\FluidPrimitives\Contexts\AbstractComponentContext;
 use Jramke\FluidPrimitives\Domain\Model\TagAttributes;
@@ -73,23 +75,25 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
             ->getComponentDefinition($viewHelperName)
             ->getArgumentDefinitions();
 
-        // Extract props marked for client from internal argument definition
+        // Extract props marked for client and context
         $propsMarkedForClient = [];
-        $propsMarkedForClientDefinition = $argumentDefinitions[Constants::PROPS_MARKED_FOR_CLIENT_KEY] ?? null;
-        if ($propsMarkedForClientDefinition) {
-            $propsMarkedForClient = $propsMarkedForClientDefinition->getDefaultValue() ?? [];
-        }
-        unset($argumentDefinitions[Constants::PROPS_MARKED_FOR_CLIENT_KEY]);
-        unset($arguments[Constants::PROPS_MARKED_FOR_CLIENT_KEY]);
-
-        // Extract props marked for context from internal argument definition
         $propsMarkedForContext = [];
-        $propsMarkedForContextDefinition = $argumentDefinitions[Constants::PROPS_MARKED_FOR_CONTEXT_KEY] ?? null;
-        if ($propsMarkedForContextDefinition) {
-            $propsMarkedForContext = $propsMarkedForContextDefinition->getDefaultValue() ?? [];
+
+        foreach ($argumentDefinitions as $argDef) {
+            $annotations = $argDef->getAnnotations();
+
+            foreach ($annotations as $annotation) {
+                if ($annotation instanceof ClientArgumentAnnotation) {
+                    $propsMarkedForClient[$argDef->getName()] = true;
+                    continue;
+                }
+
+                if ($annotation instanceof ContextArgumentAnnotation) {
+                    $propsMarkedForContext[$argDef->getName()] = true;
+                    continue;
+                }
+            }
         }
-        unset($argumentDefinitions[Constants::PROPS_MARKED_FOR_CONTEXT_KEY]);
-        unset($arguments[Constants::PROPS_MARKED_FOR_CONTEXT_KEY]);
 
         $definedArgumentKeys = array_keys($argumentDefinitions);
         $additionalArguments = array_diff_key($arguments, array_flip($definedArgumentKeys));
