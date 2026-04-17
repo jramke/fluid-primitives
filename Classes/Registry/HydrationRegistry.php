@@ -76,10 +76,11 @@ class HydrationRegistry
 
         $js = <<<JS
         (function() {
-        window.FluidPrimitives = window.FluidPrimitives || {};
-        window.FluidPrimitives.uncontrolledInstances = {};
-        window.FluidPrimitives.globals = {$this->toJson($globals)};
-        window.FluidPrimitives.hydrationData = {$this->toJson($this->registry)};
+        window.FluidPrimitives = {
+            uncontrolledInstances: {},
+            globals: {$this->toJson($globals)},
+            hydrationData: {$this->toJson($this->registry)}
+        };
         })();
         JS;
 
@@ -115,9 +116,7 @@ class HydrationRegistry
         }
 
         $language = $request->getAttribute('language');
-
-        $language = $this->getRequest()->getAttribute('language');
-        $locale = (string)$language->getLocale() ?? '';
+        $locale = is_object($language) && method_exists($language, 'getLocale') ? (string)$language->getLocale() : '';
 
         $this->globals = [
             'locale' => $locale,
