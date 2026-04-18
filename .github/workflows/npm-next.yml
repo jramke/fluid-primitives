@@ -24,11 +24,10 @@ jobs:
           node-version: '24'
           registry-url: 'https://registry.npmjs.org'
 
+      - run: npm ci
+      - run: npm run build
       - name: Set unique next snapshot version
         run: |
           VERSION=$(node -e 'const fs = require("node:fs"); const pkg = JSON.parse(fs.readFileSync("package.json", "utf8")); process.stdout.write(`${pkg.version}-next.${process.env.GITHUB_RUN_NUMBER}.${process.env.GITHUB_SHA.slice(0, 7)}`)')
-          npm version "$VERSION" --no-git-tag-version
-
-      - run: npm ci
-      - run: npm run build
+          npm pkg set version="$VERSION"
       - run: npm publish --tag next
