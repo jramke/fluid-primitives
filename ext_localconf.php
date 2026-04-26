@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Jramke\FluidPrimitives\Constants;
 use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
@@ -23,9 +24,11 @@ if (ExtensionManagementUtility::isLoaded('storybook')) {
     $existing = $GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS']['storybook']['excludeArguments'] ?? '';
     $existingArr = GeneralUtility::trimExplode(',', $existing, true);
 
-    $addList = ['ids', 'attributes', 'asChild', 'rootId', 'controlled', 'spreadProps'];
+    $globalPropsWithoutClass = array_filter(Constants::GLOBAL_PROPS, static function ($value) {
+        return $value !== 'class';
+    });
 
-    $merged = array_values(array_unique(array_merge($existingArr, $addList)));
+    $merged = array_values(array_unique(array_merge($existingArr, $globalPropsWithoutClass)));
 
     $GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS']['storybook']['excludeArguments'] = implode(',', $merged);
 }

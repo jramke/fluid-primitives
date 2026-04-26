@@ -11,6 +11,8 @@ class Constants
     public const PROPS_MARKED_FOR_CLIENT_KEY = '#__propsMarkedForClient';
     public const PROPS_MARKED_FOR_CONTEXT_KEY = '#__propsMarkedForContext';
 
+    public const GLOBAL_PROPS = ['ids', 'attributes', 'asChild', 'rootId', 'controlled', 'spreadProps', 'class'];
+
     public const RESERVED_PROPS = [
         self::PROP_ROOT_ID, // reserved as we declare it manually
         'context', // reserved for the component context
