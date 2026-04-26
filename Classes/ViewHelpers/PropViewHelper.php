@@ -6,6 +6,7 @@ namespace Jramke\FluidPrimitives\ViewHelpers;
 
 use Jramke\FluidPrimitives\Annotations\ClientArgumentAnnotation;
 use Jramke\FluidPrimitives\Annotations\ContextArgumentAnnotation;
+use Jramke\FluidPrimitives\Annotations\RequiredAtRuntimeArgumentAnnotation;
 use Jramke\FluidPrimitives\Constants;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use Jramke\FluidPrimitives\Utility\PropsUtility;
@@ -60,6 +61,13 @@ class PropViewHelper extends AbstractViewHelper implements ViewHelperNodeInitial
             false,
             false,
         );
+        $this->registerArgument(
+            'requiredAtRuntime',
+            'boolean',
+            'Whether the property is required at runtime. This means that the component will throw an error if the property is not defined when rendering. This is used internally by the primitives so props spreading works.',
+            false,
+            false,
+        );
     }
 
     public function render(): string
@@ -85,6 +93,20 @@ class PropViewHelper extends AbstractViewHelper implements ViewHelperNodeInitial
             throw new \RuntimeException(
                 'The name "' . $this->arguments['name'] . '" is reserved and cannot be used as prop name.',
                 1758400699,
+            );
+        }
+
+        if (
+            $this->arguments['requiredAtRuntime'] &&
+            !$this->renderingContext->getVariableProvider()->exists($this->arguments['name'])
+        ) {
+            throw new \RuntimeException(
+                'The prop "' .
+                $this->arguments['name'] .
+                '" is required for component "' .
+                ComponentUtility::getComponentFullNameFromContext($this->renderingContext) .
+                '" but was not provided.',
+                1776714998,
             );
         }
 
@@ -134,6 +156,9 @@ class PropViewHelper extends AbstractViewHelper implements ViewHelperNodeInitial
         }
         if ($evaluatedArguments['context'] ?? false) {
             $annotations[] = new ContextArgumentAnnotation();
+        }
+        if ($evaluatedArguments['requiredAtRuntime'] ?? false) {
+            $annotations[] = new RequiredAtRuntimeArgumentAnnotation();
         }
 
         // Create argument definition to be interpreted later during rendering
