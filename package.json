@@ -9,7 +9,9 @@
         "url": "git+https://github.com/jramke/fluid-primitives.git"
     },
     "author": "Joost Ramke <hey@joostramke.com>",
-    "files": ["./dist"],
+    "files": [
+        "./dist"
+    ],
     "main": "./dist/client.js",
     "types": "./dist/client.d.ts",
     "exports": {
@@ -108,27 +110,27 @@
         "zod": "^4.3.6"
     },
     "dependencies": {
-        "@zag-js/accordion": "^1.39.1",
-        "@zag-js/anatomy": "^1.39.1",
-        "@zag-js/checkbox": "^1.39.1",
-        "@zag-js/clipboard": "^1.39.1",
-        "@zag-js/collapsible": "^1.39.1",
-        "@zag-js/collection": "^1.39.1",
-        "@zag-js/core": "^1.39.1",
-        "@zag-js/dialog": "^1.39.1",
-        "@zag-js/dom-query": "^1.39.1",
-        "@zag-js/navigation-menu": "^1.39.1",
-        "@zag-js/number-input": "^1.39.1",
-        "@zag-js/popover": "^1.39.1",
-        "@zag-js/radio-group": "^1.39.1",
-        "@zag-js/scroll-area": "^1.39.1",
-        "@zag-js/select": "^1.39.1",
-        "@zag-js/store": "^1.39.1",
-        "@zag-js/switch": "^1.39.1",
-        "@zag-js/tabs": "^1.39.1",
-        "@zag-js/tooltip": "^1.39.1",
-        "@zag-js/types": "^1.39.1",
-        "@zag-js/utils": "^1.39.1",
-        "@zag-js/vanilla": "^1.39.1"
+        "@zag-js/accordion": "^1.40.0",
+        "@zag-js/anatomy": "^1.40.0",
+        "@zag-js/checkbox": "^1.40.0",
+        "@zag-js/clipboard": "^1.40.0",
+        "@zag-js/collapsible": "^1.40.0",
+        "@zag-js/collection": "^1.40.0",
+        "@zag-js/core": "^1.40.0",
+        "@zag-js/dialog": "^1.40.0",
+        "@zag-js/dom-query": "^1.40.0",
+        "@zag-js/navigation-menu": "^1.40.0",
+        "@zag-js/number-input": "^1.40.0",
+        "@zag-js/popover": "^1.40.0",
+        "@zag-js/radio-group": "^1.40.0",
+        "@zag-js/scroll-area": "^1.40.0",
+        "@zag-js/select": "^1.40.0",
+        "@zag-js/store": "^1.40.0",
+        "@zag-js/switch": "^1.40.0",
+        "@zag-js/tabs": "^1.40.0",
+        "@zag-js/tooltip": "^1.40.0",
+        "@zag-js/types": "^1.40.0",
+        "@zag-js/utils": "^1.40.0",
+        "@zag-js/vanilla": "^1.40.0"
     }
 }
