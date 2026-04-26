@@ -1,7 +1,5 @@
-<ui:prop name="value" type="string" optional="{true}" context="{true}" />
-<ui:prop name="disabled" type="boolean" optional="{true}" context="{true}" />
-
-<ui:error when="!{value}" message="The value prop is required for component {component.fullName}" />
+<ui:prop name="value" type="string" optional="{true}" context="{true}" requiredAtRuntime="{true}" description="The value of the item." />
+<ui:prop name="disabled" type="boolean" optional="{true}" context="{true}" description="Whether the item is disabled." />
 
 <f:variable name="itemProps" value="{value: value, disabled: disabled}" />
 <f:variable name="itemState">{context -> ui:call(method: 'getItemState', arguments: {0: itemProps})}</f:variable>

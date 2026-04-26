@@ -1,4 +1,4 @@
-<ui:prop name="value" type="string" optional="{true}" />
+<ui:prop name="value" type="string" optional="{true}" description="The value of the item this content belongs to." />
 
 <f:variable name="contentValue">{f:if(condition: value, then: value, else: context.item.value)}</f:variable>
 

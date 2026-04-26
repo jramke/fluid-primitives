@@ -1,10 +1,10 @@
-<ui:prop name="orientation" type="string" optional="{true}" client="{true}" default="horizontal" />
-<ui:prop name="defaultValue" type="string" optional="{true}" client="{true}" />
-<ui:prop name="openDelay" type="integer" optional="{true}" client="{true}" />
-<ui:prop name="closeDelay" type="integer" optional="{true}" client="{true}" />
-<ui:prop name="disableHoverTrigger" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="disableClickTrigger" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="disablePointerLeaveClose" type="boolean" optional="{true}" client="{true}" />
+<ui:prop name="orientation" type="string" optional="{true}" client="{true}" default="horizontal" description="The orientation of the navigation menu." />
+<ui:prop name="defaultValue" type="string" optional="{true}" client="{true}" default="" description="The default value of the navigation menu. Use when you don't want to control the value of the menu." />
+<ui:prop name="openDelay" type="integer" optional="{true}" client="{true}" default="200" description="The delay before the menu opens." />
+<ui:prop name="closeDelay" type="integer" optional="{true}" client="{true}" default="300" description="The delay before the menu closes." />
+<ui:prop name="disableHoverTrigger" type="boolean" optional="{true}" client="{true}" description="Whether to disable the hover trigger." />
+<ui:prop name="disableClickTrigger" type="boolean" optional="{true}" client="{true}" description="Whether to disable the click trigger." />
+<ui:prop name="disablePointerLeaveClose" type="boolean" optional="{true}" client="{true}" description="Whether to disable the pointer leave close." />
 
 <f:variable name="refData" value="{orientation: orientation}" />
 

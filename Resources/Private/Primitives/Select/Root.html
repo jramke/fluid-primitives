@@ -1,26 +1,23 @@
-<ui:prop name="collection" type="Jramke\FluidPrimitives\Domain\Model\ListCollection" optional="{true}" client="{true}" />
-<ui:prop name="name" type="string" optional="{true}" client="{true}" />
-<ui:prop name="form" type="string" optional="{true}" client="{true}" />
-<ui:prop name="disabled" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="invalid" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="readonly" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="required" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="closeOnSelect" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="positioning" type="array" optional="{true}" client="{true}" />
-<ui:prop name="defaultValue" type="mixed" optional="{true}" client="{true}" />
-<ui:prop name="defaultHighlightedValue" type="string" optional="{true}" client="{true}" />
-<ui:prop name="loopFocus" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="multiple" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="defaultOpen" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="composite" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="deselectable" type="boolean" optional="{true}" client="{true}" />
-
-<ui:error when="!{collection}" message="The 'collection' prop of {component.fullName} is missing or invalid." />
-
+<ui:prop name="collection" type="Jramke\FluidPrimitives\Domain\Model\ListCollection" optional="{true}" client="{true}" requiredAtRuntime="{true}" description="The item collection." />
+<ui:prop name="name" type="string" optional="{true}" client="{true}" description="The `name` attribute of the underlying select. Inherited from a surrounding field when available." />
+<ui:prop name="form" type="string" optional="{true}" client="{true}" description="The associate form of the underlying select." />
+<ui:prop name="disabled" type="boolean" optional="{true}" client="{true}" description="Whether the select is disabled. Inherited from a surrounding field when available." />
+<ui:prop name="invalid" type="boolean" optional="{true}" client="{true}" description="Whether the select is invalid. Inherited from a surrounding field when available." />
+<ui:prop name="readOnly" type="boolean" optional="{true}" client="{true}" description="Whether the select is read-only. Inherited from a surrounding field when available." />
+<ui:prop name="required" type="boolean" optional="{true}" client="{true}" description="Whether the select is required. Inherited from a surrounding field when available." />
+<ui:prop name="closeOnSelect" type="boolean" optional="{true}" client="{true}" default="{true}" description="Whether the select should close after an item is selected." />
+<ui:prop name="positioning" type="array" optional="{true}" client="{true}" default="{ placement: 'bottom-start', gutter: 8 }" description="The positioning options of the menu." />
+<ui:prop name="defaultValue" type="mixed" optional="{true}" client="{true}" description="The initial default value of the select when rendered. Use when you don't need to control the value of the select. Inherited from a surrounding field when available." />
+<ui:prop name="defaultHighlightedValue" type="string" optional="{true}" client="{true}" description="The initial value of the highlighted item when opened. Use when you don't need to control the highlighted value of the select." />
+<ui:prop name="loopFocus" type="boolean" optional="{true}" client="{true}" default="{false}" description="Whether to loop the keyboard navigation through the options." />
+<ui:prop name="multiple" type="boolean" optional="{true}" client="{true}" description="Whether to allow multiple selection." />
+<ui:prop name="defaultOpen" type="boolean" optional="{true}" client="{true}" description="Whether the select's open state is controlled by the user." />
+<ui:prop name="composite" type="boolean" optional="{true}" client="{true}" default="{true}" description="Whether the select is composed with other composite widgets like tabs or combobox." />
+<ui:prop name="deselectable" type="boolean" optional="{true}" client="{true}" description="Whether the value can be cleared by clicking the selected item." />
 <div
     {f:if(condition: class, then: 'class="{class}"' )}
     {f:if(condition: context.ids.root, then: 'id="{context.ids.root}"' )}
-    {ui:ref(name: 'root' , data: {invalid: invalid, readonly: readonly} )}
+    {ui:ref(name: 'root' , data: {invalid: invalid, readonly: readOnly} )}
     {ui:attributes()}>
     <f:slot />
 </div>

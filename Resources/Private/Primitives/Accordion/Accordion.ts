@@ -6,7 +6,6 @@ export class Accordion extends Component<accordion.Props, accordion.Api> {
 
 	initMachine(props: accordion.Props): Machine<any> {
 		return new Machine(accordion.machine, {
-			collapsible: true,
 			...props,
 		});
 	}

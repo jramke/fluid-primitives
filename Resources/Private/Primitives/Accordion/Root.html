@@ -1,8 +1,8 @@
-<ui:prop name="multiple" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="collapsible" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="defaultValue" type="string[]" optional="{true}" client="{true}" />
-<ui:prop name="disabled" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="orientation" type="string" optional="{true}" client="{true}" default="vertical" />
+<ui:prop name="multiple" type="boolean" optional="{true}" client="{true}" default="{false}" description="Whether multiple accordion items can be expanded at the same time." />
+<ui:prop name="collapsible" type="boolean" optional="{true}" client="{true}" default="{true}" description="Whether an accordion item can be closed after it has been expanded." />
+<ui:prop name="defaultValue" type="string[]" optional="{true}" client="{true}" description="The initial value of the expanded accordion items. Use when you don't need to control the value of the accordion." />
+<ui:prop name="disabled" type="boolean" optional="{true}" client="{true}" description="Whether the accordion items are disabled." />
+<ui:prop name="orientation" type="string" optional="{true}" client="{true}" default="vertical" description="The orientation of the accordion items." />
 
 <f:variable name="refData" value="{orientation: orientation}" />
 

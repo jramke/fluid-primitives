@@ -1,13 +1,13 @@
-<ui:prop name="actionUri" type="string" optional="{true}" />
-<ui:prop name="action" type="string" optional="{true}" />
-<ui:prop name="extensionName" type="string" optional="{true}" />
-<ui:prop name="pluginName" type="string" optional="{true}" />
-<ui:prop name="controller" type="string" optional="{true}" />
-<ui:prop name="arguments" type="array" optional="{true}" />
-<ui:prop name="pageUid" type="int" optional="{true}" />
-<ui:prop name="objectName" type="string" optional="{true}" client="{true}" />
-<ui:prop name="object" type="mixed" optional="{true}" />
-<ui:prop name="method" type="string" optional="{true}" default="post" />
+<ui:prop name="actionUri" type="string" optional="{true}" description="The resolved form action URI to submit to directly." />
+<ui:prop name="action" type="string" optional="{true}" description="The Extbase action name used to build the form action URI." />
+<ui:prop name="extensionName" type="string" optional="{true}" description="The Extbase extension name used to build the form action URI." />
+<ui:prop name="pluginName" type="string" optional="{true}" description="The Extbase plugin name used to build the form action URI." />
+<ui:prop name="controller" type="string" optional="{true}" description="The Extbase controller name used to build the form action URI." />
+<ui:prop name="arguments" type="array" optional="{true}" description="The Extbase arguments used to build the form action URI." />
+<ui:prop name="pageUid" type="int" optional="{true}" description="The target page UID used to build the form action URI." />
+<ui:prop name="objectName" type="string" optional="{true}" client="{true}" description="The object name prefix used for nested form field names." />
+<ui:prop name="object" type="mixed" optional="{true}" description="The bound object used for form value mapping." />
+<ui:prop name="method" type="string" optional="{true}" default="post" description="The HTTP method used for form submission." />
 
 <f:variable name="refData" value="{state: 'ready', field-name-prefix: context.fieldNamePrefix, object-name: objectName}" />
 

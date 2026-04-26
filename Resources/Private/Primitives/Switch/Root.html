@@ -1,12 +1,12 @@
-<ui:prop name="disabled" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="invalid" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="required" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="defaultChecked" type="boolean" optional="{true}" client="{true}" default="{false}" />
-<ui:prop name="name" type="string" optional="{true}" client="{true}" />
-<ui:prop name="form" type="string" optional="{true}" client="{true}" />
-<ui:prop name="readOnly" type="boolean" optional="{true}" client="{true}" />
+<ui:prop name="disabled" type="boolean" optional="{true}" client="{true}" description="Whether the switch is disabled. Inherited from a surrounding field when available." />
+<ui:prop name="invalid" type="boolean" optional="{true}" client="{true}" description="If `true`, the switch is marked as invalid. Inherited from a surrounding field when available." />
+<ui:prop name="required" type="boolean" optional="{true}" client="{true}" description="If `true`, the switch input is marked as required. Inherited from a surrounding field when available." />
+<ui:prop name="defaultChecked" type="boolean" optional="{true}" client="{true}" default="{false}" description="The initial checked state of the switch when rendered. Use when you don't need to control the checked state of the switch." />
+<ui:prop name="name" type="string" optional="{true}" client="{true}" description="The name of the input field in a switch. Useful for form submission. Inherited from a surrounding field when available." />
+<ui:prop name="form" type="string" optional="{true}" client="{true}" description="The id of the form that the switch belongs to." />
+<ui:prop name="readOnly" type="boolean" optional="{true}" client="{true}" description="Whether the switch is read-only. Inherited from a surrounding field when available." />
 <f:comment>HTML/zag default is 'on' but we use '1' for easier boolean conversion with extbase</f:comment>
-<ui:prop name="value" type="string" optional="{true}" client="{true}" default="1" />
+<ui:prop name="value" type="string" optional="{true}" client="{true}" default="1" description="The value of switch input. Useful for form submission." />
 
 <f:variable name="refData">{context -> ui:call(method: 'getDataAttributes')}</f:variable>
 

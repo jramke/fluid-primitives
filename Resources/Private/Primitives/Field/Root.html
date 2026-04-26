@@ -1,11 +1,9 @@
-<ui:prop name="name" type="string" optional="{true}" client="{true}" />
-<ui:prop name="disabled" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="invalid" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="required" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="readOnly" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="defaultValue" type="mixed" optional="{true}" client="{true}" />
-
-<ui:error when="!{name}" message="The 'name' prop is required for field root components." />
+<ui:prop name="name" type="string" optional="{true}" client="{true}" requiredAtRuntime="{true}" description="The unique field name used to associate labels, descriptions, errors, and form values." />
+<ui:prop name="disabled" type="boolean" optional="{true}" client="{true}" description="Whether the field is disabled." />
+<ui:prop name="invalid" type="boolean" optional="{true}" client="{true}" description="Whether the field is invalid." />
+<ui:prop name="required" type="boolean" optional="{true}" client="{true}" description="Whether the field is required." />
+<ui:prop name="readOnly" type="boolean" optional="{true}" client="{true}" description="Whether the field is read-only." />
+<ui:prop name="defaultValue" type="mixed" optional="{true}" client="{true}" description="The initial value that child controls can use when rendered inside the field." />
 
 <div
     {f:if(condition: class, then: 'class="{class}"' )}

@@ -1,7 +1,5 @@
-<ui:prop name="value" type="string" optional="{true}" />
-<ui:prop name="disabled" type="boolean" optional="{true}" />
-
-<ui:error when="!{value}" message="The value prop is required for component {component.fullName}" />
+<ui:prop name="value" type="string" optional="{true}" requiredAtRuntime="{true}" description="The value of the tab." />
+<ui:prop name="disabled" type="boolean" optional="{true}" description="Whether the tab is disabled." />
 
 <f:variable name="selected">{f:if(condition: '{value}=={context.defaultValue}', then: '{true}', else: '{false}')}</f:variable>
 <f:variable name="tabindex">{f:if(condition: '{selected} && {context.composite}', then: '0', else: '-1')}</f:variable>

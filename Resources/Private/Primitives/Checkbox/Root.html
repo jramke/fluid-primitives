@@ -1,12 +1,12 @@
-<ui:prop name="disabled" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="invalid" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="required" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="defaultChecked" type="mixed" optional="{true}" client="{true}" default="{false}" />
-<ui:prop name="name" type="string" optional="{true}" client="{true}" />
-<ui:prop name="form" type="string" optional="{true}" client="{true}" />
-<ui:prop name="readOnly" type="boolean" optional="{true}" client="{true}" />
+<ui:prop name="disabled" type="boolean" optional="{true}" client="{true}" description="Whether the checkbox is disabled. Inherited from a surrounding field when available." />
+<ui:prop name="invalid" type="boolean" optional="{true}" client="{true}" description="Whether the checkbox is invalid. Inherited from a surrounding field when available." />
+<ui:prop name="required" type="boolean" optional="{true}" client="{true}" description="Whether the checkbox is required. Inherited from a surrounding field when available." />
+<ui:prop name="defaultChecked" type="mixed" optional="{true}" client="{true}" default="{false}" description="The initial checked state of the checkbox when rendered. Use when you don't need to control the checked state of the checkbox." />
+<ui:prop name="name" type="string" optional="{true}" client="{true}" description="The name of the input field in the checkbox. Useful for form submission. Inherited from a surrounding field when available." />
+<ui:prop name="form" type="string" optional="{true}" client="{true}" description="The id of the form that the checkbox belongs to." />
+<ui:prop name="readOnly" type="boolean" optional="{true}" client="{true}" description="Whether the checkbox is read-only. Inherited from a surrounding field when available." />
 <f:comment>HTML/zag default is 'on' but we use '1' for easier boolean conversion with extbase</f:comment>
-<ui:prop name="value" type="string" optional="{true}" client="{true}" default="1" />
+<ui:prop name="value" type="string" optional="{true}" client="{true}" default="1" description="The value of checkbox input. Useful for form submission." />
 
 <ui:error when="!{context -> ui:call(method: 'isValueValid')}" message="The defaultChecked value '{defaultChecked}' is invalid. It must be a boolean or 'indeterminate'." />
 

@@ -1,6 +1,4 @@
-<ui:prop name="item" type="mixed" optional="{true}" context="{true}" />
-
-<ui:error when="!{item}" message="The 'item' prop of {component.fullName} is missing or invalid." />
+<ui:prop name="item" type="mixed" optional="{true}" context="{true}" requiredAtRuntime="{true}" description="The item to render." />
 
 <f:variable name="itemState">{context -> ui:call(method: 'getItemState', arguments: {0: item})}</f:variable>
 <f:variable name="refData" value="{item: item, value: item.value, disabled: itemState.disabled, selected: itemState.selected}" />

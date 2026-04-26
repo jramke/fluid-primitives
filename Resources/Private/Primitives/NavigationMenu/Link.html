@@ -1,5 +1,5 @@
-<ui:prop name="value" type="string" optional="{true}" />
-<ui:prop name="current" type="boolean" optional="{true}" />
+<ui:prop name="value" type="string" optional="{true}" description="The value of the item this link belongs to. By default this is inherited from the parent navigationMenu.item." />
+<ui:prop name="current" type="boolean" optional="{true}" description="Whether the link is the current page." />
 
 <f:variable name="linkValue">{f:if(condition: value, then: value, else: context.item.value)}</f:variable>
 <f:variable name="refData" value="{value: linkValue, current: current}" />

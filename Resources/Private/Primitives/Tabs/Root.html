@@ -1,9 +1,9 @@
-<ui:prop name="loopFocus" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="defaultValue" type="string" optional="{true}" client="{true}" />
-<ui:prop name="orientation" type="string" optional="{true}" client="{true}" default="horizontal" />
-<ui:prop name="activationMode" type="string" optional="{true}" client="{true}" />
-<ui:prop name="composite" type="boolean" optional="{true}" client="{true}" default="{true}" />
-<ui:prop name="deselectable" type="boolean" optional="{true}" client="{true}" />
+<ui:prop name="loopFocus" type="boolean" optional="{true}" client="{true}" default="{true}" description="Whether the keyboard navigation will loop from last tab to first, and vice versa." />
+<ui:prop name="defaultValue" type="string" optional="{true}" client="{true}" description="The initial selected tab value when rendered. Use when you don't need to control the selected tab value." />
+<ui:prop name="orientation" type="string" optional="{true}" client="{true}" default="horizontal" description="The orientation of the tabs." />
+<ui:prop name="activationMode" type="string" optional="{true}" client="{true}" default="automatic" description="The activation mode of the tabs." />
+<ui:prop name="composite" type="boolean" optional="{true}" client="{true}" default="{true}" description="Whether the tab is composite." />
+<ui:prop name="deselectable" type="boolean" optional="{true}" client="{true}" description="Whether the active tab can be deselected when clicking on it." />
 
 <f:variable name="refData" value="{orientation: orientation}" />
 

@@ -1,7 +1,7 @@
 <f:comment>
     <!-- TODO: use an enum when possible -->
 </f:comment>
-<ui:prop name="state" type="string" optional="{true}" />
+<ui:prop name="state" type="string" optional="{true}" requiredAtRuntime="{true}" description="The indicator state to render. Must be `checked` or `unchecked`." />
 
 <ui:error when="{state}!=checked && {state}!==unchecked" message="Invalid state '{state}' for {component.fullName}, expected 'checked' or 'unchecked'." />
 

@@ -1,23 +1,23 @@
-<ui:prop name="disabled" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="invalid" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="required" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="readOnly" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="name" type="string" optional="{true}" client="{true}" />
-<ui:prop name="form" type="string" optional="{true}" client="{true}" />
-<ui:prop name="defaultValue" type="string" optional="{true}" client="{true}" />
-<ui:prop name="min" type="float" optional="{true}" client="{true}" />
-<ui:prop name="max" type="float" optional="{true}" client="{true}" />
-<ui:prop name="step" type="float" optional="{true}" client="{true}" />
-<ui:prop name="allowMouseWheel" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="allowOverflow" type="boolean" optional="{true}" client="{true}" default="{false}" />
-<ui:prop name="clampValueOnBlur" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="focusInputOnChange" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="spinOnPress" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="formatOptions" type="array" optional="{true}" client="{true}" />
-<ui:prop name="inputMode" type="string" optional="{true}" client="{true}" default="decimal" />
-<ui:prop name="pattern" type="string" optional="{true}" client="{true}" default="-?[0-9]*(.[0-9]+)?" />
-<ui:prop name="translations" type="array" optional="{true}" client="{true}" default="{ incrementLabel: 'increment value', decrementLabel: 'decrement value' }" />
-<ui:prop name="locale" type="string" optional="{true}" client="{true}" />
+<ui:prop name="disabled" type="boolean" optional="{true}" client="{true}" description="Whether the number input is disabled. Inherited from a surrounding field when available." />
+<ui:prop name="invalid" type="boolean" optional="{true}" client="{true}" description="Whether the number input value is invalid. Inherited from a surrounding field when available." />
+<ui:prop name="required" type="boolean" optional="{true}" client="{true}" description="Whether the number input is required. Inherited from a surrounding field when available." />
+<ui:prop name="readOnly" type="boolean" optional="{true}" client="{true}" description="Whether the number input is readonly. Inherited from a surrounding field when available." />
+<ui:prop name="name" type="string" optional="{true}" client="{true}" description="The name attribute of the number input. Useful for form submission. Inherited from a surrounding field when available." />
+<ui:prop name="form" type="string" optional="{true}" client="{true}" description="The associate form of the input element." />
+<ui:prop name="defaultValue" type="string" optional="{true}" client="{true}" default="" description="The initial value of the input when rendered. Use when you don't need to control the value of the input. Inherited from a surrounding field when available." />
+<ui:prop name="min" type="float" optional="{true}" client="{true}" description="The minimum value of the number input." />
+<ui:prop name="max" type="float" optional="{true}" client="{true}" description="The maximum value of the number input." />
+<ui:prop name="step" type="float" optional="{true}" client="{true}" description="The amount to increment or decrement the value by." />
+<ui:prop name="allowMouseWheel" type="boolean" optional="{true}" client="{true}" description="Whether to allow mouse wheel to change the value." />
+<ui:prop name="allowOverflow" type="boolean" optional="{true}" client="{true}" default="{false}" description="Whether to allow the value overflow the min/max range." />
+<ui:prop name="clampValueOnBlur" type="boolean" optional="{true}" client="{true}" default="{true}" description="Whether to clamp the value when the input loses focus (blur)." />
+<ui:prop name="focusInputOnChange" type="boolean" optional="{true}" client="{true}" default="{true}" description="Whether to focus input when the value changes." />
+<ui:prop name="spinOnPress" type="boolean" optional="{true}" client="{true}" default="{true}" description="Whether to spin the value when the increment/decrement button is pressed." />
+<ui:prop name="formatOptions" type="array" optional="{true}" client="{true}" description="The options to pass to the `Intl.NumberFormat` constructor." />
+<ui:prop name="inputMode" type="string" optional="{true}" client="{true}" default="decimal" description="Hints at the type of data that might be entered by the user and the keyboard shown on mobile devices." />
+<ui:prop name="pattern" type="string" optional="{true}" client="{true}" default="-?[0-9]*(.[0-9]+)?" description="The pattern used to check the `<input>` element's value against." />
+<ui:prop name="translations" type="array" optional="{true}" client="{true}" default="{ incrementLabel: 'increment value', decrementLabel: 'decrement value' }" description="Specifies the localized strings that identify the accessibility elements and their states." />
+<ui:prop name="locale" type="string" optional="{true}" client="{true}" description="The current locale. Inherited from the site's language." />
 
 <f:variable name="refData" value="{disabled: context.disabled, invalid: context.invalid}" />
 

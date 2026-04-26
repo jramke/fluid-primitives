@@ -1,4 +1,4 @@
-<ui:prop name="state" type="string" optional="{true}" />
+<ui:prop name="state" type="string" optional="{true}" requiredAtRuntime="{true}" description="The indicator state to render. Must be `idle` or `copied`." />
 
 <ui:error when="{state}!=copied && {state}!==idle" message="Invalid state '{state}' for {component.fullName}, expected 'copied' or 'idle'." />
 

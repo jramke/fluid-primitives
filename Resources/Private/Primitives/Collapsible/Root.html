@@ -1,7 +1,7 @@
-<ui:prop name="defaultOpen" type="boolean" optional="{true}" default="{false}" client="{true}" />
-<ui:prop name="disabled" type="boolean" optional="{true}" default="{false}" client="{true}" />
-<ui:prop name="collapsedHeight" type="string" optional="{true}" client="{true}" />
-<ui:prop name="collapsedWidth" type="string" optional="{true}" client="{true}" />
+<ui:prop name="defaultOpen" type="boolean" optional="{true}" default="{false}" client="{true}" description="The initial open state of the collapsible when rendered. Use when you don't need to control the open state of the collapsible." />
+<ui:prop name="disabled" type="boolean" optional="{true}" client="{true}" description="Whether the collapsible is disabled." />
+<ui:prop name="collapsedHeight" type="string" optional="{true}" client="{true}" description="The height of the content when collapsed." />
+<ui:prop name="collapsedWidth" type="string" optional="{true}" client="{true}" description="The width of the content when collapsed." />
 
 <f:variable name="refData" value="{state: context.state}" />
 

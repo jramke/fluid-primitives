@@ -1,12 +1,12 @@
-<ui:prop name="defaultOpen" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="disabled" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="openDelay" type="integer" optional="{true}" client="{true}" />
-<ui:prop name="closeDelay" type="integer" optional="{true}" client="{true}" />
-<ui:prop name="closeOnPointerDown" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="closeOnEscape" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="closeOnScroll" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="closeOnClick" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="interactive" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="positioning" type="array" optional="{true}" client="{true}" />
+<ui:prop name="defaultOpen" type="boolean" optional="{true}" client="{true}" description="The initial open state of the tooltip when rendered. Use when you don't need to control the open state of the tooltip." />
+<ui:prop name="disabled" type="boolean" optional="{true}" client="{true}" default="{false}" description="Whether the tooltip is disabled." />
+<ui:prop name="openDelay" type="integer" optional="{true}" client="{true}" default="400" description="The open delay of the tooltip." />
+<ui:prop name="closeDelay" type="integer" optional="{true}" client="{true}" default="150" description="The close delay of the tooltip." />
+<ui:prop name="closeOnPointerDown" type="boolean" optional="{true}" client="{true}" default="{true}" description="Whether to close the tooltip on pointerdown." />
+<ui:prop name="closeOnEscape" type="boolean" optional="{true}" client="{true}" default="{true}" description="Whether to close the tooltip when the Escape key is pressed." />
+<ui:prop name="closeOnScroll" type="boolean" optional="{true}" client="{true}" default="{true}" description="Whether the tooltip should close on scroll." />
+<ui:prop name="closeOnClick" type="boolean" optional="{true}" client="{true}" default="{true}" description="Whether the tooltip should close on click." />
+<ui:prop name="interactive" type="boolean" optional="{true}" client="{true}" default="{false}" description="Whether the tooltip's content is interactive and remains open when hovered." />
+<ui:prop name="positioning" type="array" optional="{true}" client="{true}" description="The user provided options used to position the popover content." />
 
 <f:slot />

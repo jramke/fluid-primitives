@@ -1,10 +1,10 @@
-<ui:prop name="trapFocus" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="preventScroll" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="modal" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="restoreFocus" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="closeOnInteractOutside" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="closeOnEscape" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="role" type="string" optional="{true}" client="{true}" />
-<ui:prop name="defaultOpen" type="boolean" optional="{true}" client="{true}" />
+<ui:prop name="trapFocus" type="boolean" optional="{true}" client="{true}" default="{true}" description="Whether to trap focus inside the dialog when it's opened." />
+<ui:prop name="preventScroll" type="boolean" optional="{true}" client="{true}" default="{true}" description="Whether to prevent scrolling behind the dialog when it's opened." />
+<ui:prop name="modal" type="boolean" optional="{true}" client="{true}" default="{true}" description="Whether to prevent pointer interaction outside the element and hide all content below it." />
+<ui:prop name="restoreFocus" type="boolean" optional="{true}" client="{true}" default="{true}" description="Whether to restore focus to the element that had focus before the dialog was opened." />
+<ui:prop name="closeOnInteractOutside" type="boolean" optional="{true}" client="{true}" default="{true}" description="Whether to close the dialog when the outside is clicked." />
+<ui:prop name="closeOnEscape" type="boolean" optional="{true}" client="{true}" default="{true}" description="Whether to close the dialog when the escape key is pressed." />
+<ui:prop name="role" type="string" optional="{true}" client="{true}" default="dialog" description="The dialog's role." />
+<ui:prop name="defaultOpen" type="boolean" optional="{true}" client="{true}" default="{false}" description="The initial open state of the dialog when rendered. Use when you don't need to control the open state of the dialog." />
 
 <f:slot />

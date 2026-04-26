@@ -1,11 +1,11 @@
-<ui:prop name="defaultValue" type="array" optional="{true}" client="{true}" />
-<ui:prop name="name" type="string" optional="{true}" client="{true}" />
-<ui:prop name="form" type="string" optional="{true}" client="{true}" />
-<ui:prop name="disabled" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="readOnly" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="required" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="invalid" type="boolean" optional="{true}" client="{true}" />
-<ui:prop name="maxSelectedValues" type="integer" optional="{true}" client="{true}" />
+<ui:prop name="defaultValue" type="array" optional="{true}" client="{true}" description="The initial value of the checkbox group. Use when you don't need to control the value of the checkbox group. Inherited from a surrounding field when available." />
+<ui:prop name="name" type="string" optional="{true}" client="{true}" description="The name of the input fields in the checkbox group. Useful for form submission. Inherited from a surrounding field when available." />
+<ui:prop name="form" type="string" optional="{true}" client="{true}" description="The form id the checkbox group belongs to." />
+<ui:prop name="disabled" type="boolean" optional="{true}" client="{true}" description="If true, the checkbox group is disabled. Inherited from a surrounding field when available." />
+<ui:prop name="readOnly" type="boolean" optional="{true}" client="{true}" description="If true, the checkbox group is read-only. Inherited from a surrounding field when available." />
+<ui:prop name="required" type="boolean" optional="{true}" client="{true}" description="If true, the checkbox group is required. Inherited from a surrounding field when available." />
+<ui:prop name="invalid" type="boolean" optional="{true}" client="{true}" description="If true, the checkbox group is invalid. Inherited from a surrounding field when available." />
+<ui:prop name="maxSelectedValues" type="integer" optional="{true}" client="{true}" description="The maximum number of selected values." />
 
 <f:variable name="refData" value="{disabled: disabled, readonly: readOnly, required: required, invalid: invalid}" />
 
