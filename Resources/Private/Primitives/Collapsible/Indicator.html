@@ -1,9 +1,9 @@
 <ui:prop name="state" type="string" optional="{true}" requiredAtRuntime="{true}" description="The indicator state to render. Must be `open` or `closed`." />
 
-<ui:error when="{state}!=open && {state}!==closed" message="Invalid state '{state}' for {component.fullName}, expected 'open' or 'closed'." />
+<ui:error when="!{context -> ui:call(method: 'isIndicatorStateValid', arguments: {0: state})}" message="Invalid state '{state}' for {component.fullName}, expected 'open' or 'closed'." />
 
 <f:variable name="refData" value="{state: context.state}" />
-<f:variable name="isHidden" value="{f:if(condition: '{context.state} !== {state}', then: '{true}', else: '{false}')}" />
+<f:variable name="isHidden" value="{context -> ui:call(method: 'isIndicatorHidden', arguments: {0: state})}" />
 
 <span
     {f:if(condition: isHidden, then: 'hidden' )}
