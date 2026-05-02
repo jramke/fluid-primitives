@@ -70,6 +70,24 @@ export function mount(
 	});
 }
 
+export function mountControlled(
+	componentName: string,
+	rootId: string,
+	callback: (
+		data: ComponentHydrationData & { createHydrator: () => ComponentHydrator }
+	) => Component<unknown, unknown> | void
+) {
+	const hydrationData = getHydrationData(componentName, rootId);
+	if (!hydrationData) return;
+
+	const instance = callback({
+		...hydrationData,
+		createHydrator: () => new ComponentHydrator(componentName, rootId, hydrationData.props.ids),
+	});
+
+	return instance;
+}
+
 export class ComponentHydrator {
 	componentName: string;
 	doc: Document;
