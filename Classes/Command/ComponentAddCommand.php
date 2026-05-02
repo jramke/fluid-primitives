@@ -17,6 +17,7 @@ use Symfony\Component\Console\Question\ChoiceQuestion;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Cache\CacheManager;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
+use TYPO3\CMS\Core\Information\Typo3Version;
 use TYPO3\CMS\Core\Package\PackageInterface;
 
 #[AsCommand(name: 'ui:add', description: 'Add a new component from Fluid Primitives')]
@@ -51,6 +52,12 @@ class ComponentAddCommand extends Command
             InputOption::VALUE_OPTIONAL,
             'Custom path where the Component should be stored.',
             'Resources/Private/Components/ui/',
+        );
+        $this->addOption(
+            'fluid-suffix',
+            '',
+            InputOption::VALUE_NEGATABLE,
+            'Use .fluid.html suffix for component files. Defaults to enabled on TYPO3 v14+.',
         );
         $this->addOption('force', 'f', InputOption::VALUE_NONE, 'Force overwriting existing component.');
     }
@@ -122,6 +129,10 @@ class ComponentAddCommand extends Command
 
         $componentFolderName = $manifest['name'] ?? null;
         $files = $manifest['files'] ?? [];
+        $useFluidSuffix = $input->getOption('fluid-suffix');
+        if (!is_bool($useFluidSuffix)) {
+            $useFluidSuffix = $this->shouldUseFluidSuffixByDefault();
+        }
 
         $targetFolder =
             $availablePackages[$extension]->getPackagePath() . $input->getOption('path') . $componentFolderName . '/';
@@ -137,7 +148,8 @@ class ComponentAddCommand extends Command
                 continue;
             }
 
-            $targetFilePath = $targetFolder . $file;
+            $targetFileName = $this->resolveTargetFileName($file, $useFluidSuffix);
+            $targetFilePath = $targetFolder . $targetFileName;
 
             $targetDir = dirname($targetFilePath);
             if (!is_dir($targetDir)) {
@@ -146,19 +158,19 @@ class ComponentAddCommand extends Command
 
             if (file_exists($targetFilePath)) {
                 if (!$input->getOption('force')) {
-                    $io->writeln('Skipped: ' . $file);
+                    $io->writeln('Skipped: ' . $targetFileName);
                     $someSkipped = true;
                     continue;
                 }
 
                 file_put_contents($targetFilePath, $content);
-                $io->writeln('Updated: ' . $file);
+                $io->writeln('Updated: ' . $targetFileName);
                 $someUpdated = true;
                 continue;
             }
 
             file_put_contents($targetFilePath, $content);
-            $io->writeln('Created: ' . $file);
+            $io->writeln('Created: ' . $targetFileName);
             $someCreated = true;
         }
 
@@ -197,5 +209,19 @@ class ComponentAddCommand extends Command
     protected function getPackageKeys(array $availablePackages): array
     {
         return array_map(static fn(PackageInterface $package): string => $package->getPackageKey(), $availablePackages);
+    }
+
+    private function shouldUseFluidSuffixByDefault(): bool
+    {
+        return (new Typo3Version())->getMajorVersion() >= 14;
+    }
+
+    private function resolveTargetFileName(string $file, bool $useFluidSuffix): string
+    {
+        if (!$useFluidSuffix || !str_ends_with($file, '.html')) {
+            return $file;
+        }
+
+        return substr($file, 0, -5) . '.fluid.html';
     }
 }
