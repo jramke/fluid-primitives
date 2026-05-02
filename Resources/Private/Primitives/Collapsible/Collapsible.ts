@@ -26,7 +26,7 @@ export class Collapsible extends Component<collapsible.Props, collapsible.Api> {
 			this.spreadProps(
 				openIndicatorEl,
 				normalizeProps.element({
-					hidden: this.api.open ? undefined : true,
+					hidden: !this.api.open,
 					'data-state': 'open',
 				})
 			);
@@ -37,7 +37,7 @@ export class Collapsible extends Component<collapsible.Props, collapsible.Api> {
 			this.spreadProps(
 				closedIndicatorEl,
 				normalizeProps.element({
-					hidden: this.api.open ? true : undefined,
+					hidden: this.api.open,
 					'data-state': 'closed',
 				})
 			);
