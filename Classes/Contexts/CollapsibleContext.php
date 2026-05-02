@@ -6,6 +6,16 @@ namespace Jramke\FluidPrimitives\Contexts;
 
 class CollapsibleContext extends AbstractComponentContext
 {
+    public function isIndicatorStateValid(string $state): bool
+    {
+        return in_array($state, ['open', 'closed'], true);
+    }
+
+    public function isIndicatorHidden(string $state): bool
+    {
+        return $this->getState() !== $state;
+    }
+
     public function getState(): string
     {
         return $this->get('defaultOpen') ? 'open' : 'closed';
