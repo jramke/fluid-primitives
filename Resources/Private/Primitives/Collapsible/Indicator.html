@@ -2,7 +2,7 @@
 
 <ui:error when="!{context -> ui:call(method: 'isIndicatorStateValid', arguments: {0: state})}" message="Invalid state '{state}' for {component.fullName}, expected 'open' or 'closed'." />
 
-<f:variable name="refData" value="{state: context.state}" />
+<f:variable name="refData" value="{state: context.state, indicator-state: state}" />
 <f:variable name="isHidden" value="{context -> ui:call(method: 'isIndicatorHidden', arguments: {0: state})}" />
 
 <span

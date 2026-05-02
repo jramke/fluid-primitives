@@ -155,6 +155,7 @@ describe('Collapsible Component Rendering', function () {
             expect($html)->toContain('Show more');
             expect($html)->toContain('data-part="indicator-closed"');
             expect($html)->toContain('data-part="indicator-open"');
+            // The hidden attribute may appear before or after the data-part attribute.
             expect($html)->toMatch('/data-part="indicator-open"[^>]*hidden|hidden[^>]*data-part="indicator-open"/');
         });
 
@@ -170,6 +171,7 @@ describe('Collapsible Component Rendering', function () {
             ');
 
             expect($html)->toContain('Show less');
+            // The hidden attribute may appear before or after the data-part attribute.
             expect($html)->toMatch('/data-part="indicator-closed"[^>]*hidden|hidden[^>]*data-part="indicator-closed"/');
         });
     });
