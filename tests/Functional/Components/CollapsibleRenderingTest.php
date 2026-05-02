@@ -140,35 +140,37 @@ describe('Collapsible Component Rendering', function () {
         });
     });
 
-    describe('triggerText', function () {
-        it('renders dynamic text based on state', function () {
+    describe('indicator', function () {
+        it('renders the closed indicator by default', function () {
             $html = $this->renderTemplate('
                 <primitives:collapsible.root>
                     <primitives:collapsible.trigger>
-                        <primitives:collapsible.triggerText openText="Show more" closeText="Show less" />
+                        <primitives:collapsible.indicator state="closed">Show more</primitives:collapsible.indicator>
+                        <primitives:collapsible.indicator state="open">Show less</primitives:collapsible.indicator>
                     </primitives:collapsible.trigger>
                     <primitives:collapsible.content>Content</primitives:collapsible.content>
                 </primitives:collapsible.root>
             ');
 
-            // When closed, should show "Show more" (the openText)
             expect($html)->toContain('Show more');
-            expect($html)->toContain('data-part="trigger-text"');
-            expect($html)->toContain('data-open-text="Show more"');
-            expect($html)->toContain('data-close-text="Show less"');
+            expect($html)->toContain('data-part="indicator-closed"');
+            expect($html)->toContain('data-part="indicator-open"');
+            expect($html)->toMatch('/data-part="indicator-open"[^>]*hidden|hidden[^>]*data-part="indicator-open"/');
         });
 
-        it('renders closeText when defaultOpen is true', function () {
+        it('renders the open indicator when defaultOpen is true', function () {
             $html = $this->renderTemplate('
                 <primitives:collapsible.root defaultOpen="{true}">
                     <primitives:collapsible.trigger>
-                        <primitives:collapsible.triggerText openText="Show more" closeText="Show less" />
+                        <primitives:collapsible.indicator state="closed">Show more</primitives:collapsible.indicator>
+                        <primitives:collapsible.indicator state="open">Show less</primitives:collapsible.indicator>
                     </primitives:collapsible.trigger>
                     <primitives:collapsible.content>Content</primitives:collapsible.content>
                 </primitives:collapsible.root>
             ');
 
             expect($html)->toContain('Show less');
+            expect($html)->toMatch('/data-part="indicator-closed"[^>]*hidden|hidden[^>]*data-part="indicator-closed"/');
         });
     });
 
