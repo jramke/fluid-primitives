@@ -14,8 +14,6 @@ export class NavigationMenu extends Component<navigationMenu.Props, navigationMe
 
 	render() {
 		const rootEl = this.getElement('root');
-		console.log(this.api.getRootProps());
-
 		if (rootEl) this.spreadProps(rootEl, this.api.getRootProps());
 
 		const listEl = this.getElement('list');
