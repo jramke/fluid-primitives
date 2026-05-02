@@ -47,7 +47,7 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\ViewHelperNodeInitializedEventInterface;
  * ## Limitation
  *
  * Currently its not possible to use this `useProps` and `spreadProps` pattern with required arguments because of how Fluid parses the templates.
- * If a prop for a primitive is required, we use the [ui:error](./error) ViewHelper to manually throw an error if the prop is not set.
+ * If a prop for a primitive is required, we use the `requiredAtRuntime` argument on the [ui:prop](./prop) ViewHelper.
  *
  */
 class UsePropsViewHelper extends AbstractViewHelper implements ViewHelperNodeInitializedEventInterface
