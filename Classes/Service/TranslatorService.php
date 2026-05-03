@@ -28,7 +28,7 @@ final class TranslatorService
             return $this->getTranslator($request)->translate($key, self::TRANSLATIONS_FILE, $arguments);
         }
 
-        $llString = $this->getTranslator($request)->sL(self::TRANSLATIONS_FILE . ':' . $key);
+        $llString = $this->getTranslator($request)->sL('LLL:' . self::TRANSLATIONS_FILE . ':' . $key);
         if (!$llString) {
             return null;
         }
@@ -58,6 +58,6 @@ final class TranslatorService
 
     private function getSiteLanguage(ServerRequestInterface $request): ?SiteLanguage
     {
-        return $request->getAttribute('language') ?? $request->getAttribute('site')->getDefaultLanguage() ?? null;
+        return $request->getAttribute('language') ?? $request->getAttribute('site')?->getDefaultLanguage();
     }
 }
