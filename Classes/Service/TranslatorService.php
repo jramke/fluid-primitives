@@ -6,6 +6,7 @@ namespace Jramke\FluidPrimitives\Service;
 
 use Psr\Http\Message\ServerRequestInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
+use TYPO3\CMS\Core\Information\Typo3Version;
 use TYPO3\CMS\Core\Localization\LanguageService;
 use TYPO3\CMS\Core\Localization\LanguageServiceFactory;
 use TYPO3\CMS\Core\Site\Entity\SiteLanguage;
@@ -13,18 +14,26 @@ use TYPO3\CMS\Core\Site\Entity\SiteLanguage;
 #[Autoconfigure(public: true)]
 final class TranslatorService
 {
+    private const TRANSLATIONS_FILE = 'EXT:fluid_primitives/Resources/Private/Language/locallang.xlf';
+
     private array $translators = [];
 
     public function __construct(
         private readonly LanguageServiceFactory $languageServiceFactory,
     ) {}
 
-    public function translate(string $key, ServerRequestInterface $request): ?string
+    public function translate(string $key, ServerRequestInterface $request, array $arguments = []): ?string
     {
-        return $this->getTranslator($request)->translate(
-            $key,
-            'EXT:fluid_primitives/Resources/Private/Language/locallang.xlf',
-        );
+        if ((new Typo3Version())->getMajorVersion() >= 14) {
+            return $this->getTranslator($request)->translate($key, self::TRANSLATIONS_FILE, $arguments);
+        }
+
+        $llString = $this->getTranslator($request)->sL(self::TRANSLATIONS_FILE . ':' . $key);
+        if (!$llString) {
+            return null;
+        }
+
+        return sprintf($llString, ...$arguments);
     }
 
     public function getLocale(ServerRequestInterface $request): ?string
