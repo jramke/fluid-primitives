@@ -1,11 +1,9 @@
-<ui:prop name="state" type="string" optional="{true}" requiredAtRuntime="{true}" description="The indicator state to render. Must be `idle` or `copied`." />
-
-<ui:error when="{state}!=copied && {state}!==idle" message="Invalid state '{state}' for {component.fullName}, expected 'copied' or 'idle'." />
+<ui:prop name="state" type="Jramke\FluidPrimitives\Enum\ClipboardIndicatorState" optional="{true}" requiredAtRuntime="{true}" description="The indicator state to render." />
 
 <span
-    {f:if(condition: '{state}==copied' , then: 'hidden' )}
+    {f:if(condition: '{state.value}==copied' , then: 'hidden' )}
     {f:if(condition: class, then: 'class="{class}"' )}
-    {ui:ref(name: 'indicator-{state}' )}
+    {ui:ref(name: 'indicator-{state.value}' )}
     {ui:attributes()}>
     <f:slot />
 </span>

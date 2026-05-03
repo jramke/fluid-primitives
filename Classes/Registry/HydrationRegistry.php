@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Registry;
 
+use Jramke\FluidPrimitives\Utility\EnumUtility;
 use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Page\AssetCollector;
@@ -37,7 +38,7 @@ class HydrationRegistry
             $this->registry[$componentType] = [];
         }
 
-        $this->registry[$componentType][$id] = $props;
+        $this->registry[$componentType][$id] = EnumUtility::normalize($props);
 
         // Update the asset collector whenever data changes
         $this->updateAssetCollector();

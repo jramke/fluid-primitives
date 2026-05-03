@@ -100,14 +100,14 @@ describe('RadioGroup Component Rendering', function () {
         });
 
         it('includes orientation and readonly from root', function () {
-            $html = $this->renderTemplate('
-                <primitives:radioGroup.root orientation="vertical" readOnly="{true}">
+            $html = $this->renderTemplate(<<<'FLUID'
+                <primitives:radioGroup.root orientation="{f:constant(name: 'Jramke\FluidPrimitives\Enum\Orientation::Vertical')}" readOnly="{true}">
                     <primitives:radioGroup.item value="option-1">
                         <primitives:radioGroup.itemControl />
                         <primitives:radioGroup.itemText>Option 1</primitives:radioGroup.itemText>
                     </primitives:radioGroup.item>
                 </primitives:radioGroup.root>
-            ');
+            FLUID);
 
             expect($html)->toContain('data-orientation="vertical"');
             expect($html)->toContain('data-readonly');
@@ -116,14 +116,14 @@ describe('RadioGroup Component Rendering', function () {
 
     describe('hydration data', function () {
         it('registers component with props in hydration registry', function () {
-            $this->renderTemplate('
-                <primitives:radioGroup.root defaultValue="option-1" name="choice" orientation="horizontal">
+            $this->renderTemplate(<<<'FLUID'
+                <primitives:radioGroup.root defaultValue="option-1" name="choice" orientation="{f:constant(name: 'Jramke\FluidPrimitives\Enum\Orientation::Horizontal')}">
                     <primitives:radioGroup.item value="option-1">
                         <primitives:radioGroup.itemControl />
                         <primitives:radioGroup.itemText>Option 1</primitives:radioGroup.itemText>
                     </primitives:radioGroup.item>
                 </primitives:radioGroup.root>
-            ');
+            FLUID);
 
             $hydrationData = HydrationRegistry::getInstance()->getAll();
 

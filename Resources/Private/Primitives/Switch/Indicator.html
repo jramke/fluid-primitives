@@ -1,19 +1,14 @@
-<f:comment>
-    <!-- TODO: use an enum when possible -->
-</f:comment>
-<ui:prop name="state" type="string" optional="{true}" requiredAtRuntime="{true}" description="The indicator state to render. Must be `checked` or `unchecked`." />
-
-<ui:error when="{state}!=checked && {state}!==unchecked" message="Invalid state '{state}' for {component.fullName}, expected 'checked' or 'unchecked'." />
+<ui:prop name="state" type="Jramke\FluidPrimitives\Enum\SwitchIndicatorState" optional="{true}" requiredAtRuntime="{true}" description="The indicator state to render." />
 
 <f:variable name="refData" value="{state: context.state}" />
-<f:variable name="isHidden" value="{f:if(condition: '{context.state} !== {state}', then: '{true}', else: '{false}')}" />
+<f:variable name="isHidden" value="{f:if(condition: '{context.state} !== {state.value}', then: '{true}', else: '{false}')}" />
 
 <span
     aria-hidden="true"
     {f:if(condition: isHidden, then: 'hidden' )}
     {f:if(condition: context.checked, then: '' , else: '' )}
     {f:if(condition: class, then: 'class="{class}"' )}
-    {ui:ref(name: 'indicator-{state}' , data: refData )}
+    {ui:ref(name: 'indicator-{state.value}' , data: refData )}
     {ui:attributes()}>
     <f:slot />
 </span>

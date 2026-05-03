@@ -35,7 +35,7 @@ class ClientPropsContextExtractor
 
             $name = $attribute->name ?? self::normalizeMethodName($method->getName());
 
-            $props[$name] = $value;
+            $props[$name] = EnumUtility::normalize($value);
         }
 
         return $props;

@@ -4,7 +4,7 @@
 <ui:prop name="disabled" type="boolean" optional="{true}" client="{true}" description="If `true`, the radio group will be disabled. Inherited from a surrounding field when available." />
 <ui:prop name="readOnly" type="boolean" optional="{true}" client="{true}" description="Whether the radio group is read-only. Inherited from a surrounding field when available." />
 <ui:prop name="required" type="boolean" optional="{true}" client="{true}" description="If `true`, the radio group is marked as required. Inherited from a surrounding field when available." />
-<ui:prop name="orientation" type="string" optional="{true}" client="{true}" default="vertical" description="Orientation of the radio group." />
+<ui:prop name="orientation" type="Jramke\FluidPrimitives\Enum\Orientation" optional="{true}" client="{true}" default="{f:constant(name: 'Jramke\FluidPrimitives\Enum\Orientation::Vertical')}" description="Orientation of the radio group." />
 <ui:prop name="invalid" type="boolean" optional="{true}" client="{true}" description="If `true`, the radio group is marked as invalid. Inherited from a surrounding field when available." />
 
 <f:variable name="refData" value="{orientation: orientation, disabled: disabled, readonly: readOnly, required: required, invalid: invalid}" />

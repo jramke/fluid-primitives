@@ -27,6 +27,7 @@ final class TemplateStructureViewHelperResolver extends ViewHelperResolver
         'prop',
         'slot',
         'useProps',
+        'constant',
     ];
 
     public function isNamespaceValid(string $namespaceIdentifier): bool

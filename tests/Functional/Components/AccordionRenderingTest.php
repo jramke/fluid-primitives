@@ -146,14 +146,14 @@ describe('Accordion Component Rendering', function () {
         });
 
         it('passes orientation prop through data attribute', function () {
-            $html = $this->renderTemplate('
-                <primitives:accordion.root orientation="horizontal">
+            $html = $this->renderTemplate(<<<'FLUID'
+                <primitives:accordion.root orientation="{f:constant(name: 'Jramke\FluidPrimitives\Enum\Orientation::Horizontal')}">
                     <primitives:accordion.item value="item-1">
                         <primitives:accordion.itemTrigger>Trigger</primitives:accordion.itemTrigger>
                         <primitives:accordion.itemContent>Content</primitives:accordion.itemContent>
                     </primitives:accordion.item>
                 </primitives:accordion.root>
-            ');
+            FLUID);
 
             expect($html)->toContain('data-orientation="horizontal"');
         });

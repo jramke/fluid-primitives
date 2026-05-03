@@ -1,6 +1,4 @@
-<ui:prop name="state" type="string" optional="{true}" requiredAtRuntime="{true}" description="The indicator state to render. Must be `open` or `closed`." />
-
-<ui:error when="!{context -> ui:call(method: 'isIndicatorStateValid', arguments: {0: state})}" message="Invalid state '{state}' for {component.fullName}, expected 'open' or 'closed'." />
+<ui:prop name="state" type="Jramke\FluidPrimitives\Enum\CollapsibleIndicatorState" optional="{true}" requiredAtRuntime="{true}" description="The indicator state to render." />
 
 <f:variable name="refData" value="{variant: state}" />
 <f:variable name="isHidden" value="{context -> ui:call(method: 'isIndicatorHidden', arguments: {0: state})}" />
@@ -8,7 +6,7 @@
 <span
     {f:if(condition: isHidden, then: 'hidden' )}
     {f:if(condition: class, then: 'class="{class}"' )}
-    {ui:ref(name: 'indicator-{state}' , data: refData )}
+    {ui:ref(name: 'indicator-{state.value}' , data: refData )}
     {ui:attributes()}>
     <f:slot />
 </span>

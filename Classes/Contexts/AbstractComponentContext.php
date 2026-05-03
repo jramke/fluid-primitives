@@ -6,6 +6,7 @@ namespace Jramke\FluidPrimitives\Contexts;
 
 use ArrayAccess;
 use Jramke\FluidPrimitives\Component\ComponentCollectionInterface;
+use Jramke\FluidPrimitives\Utility\EnumUtility;
 use Psr\Http\Message\ServerRequestInterface;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 
@@ -74,7 +75,7 @@ abstract class AbstractComponentContext implements ComponentContextInterface, \A
     {
         // Direct key lookup first (faster for non-nested access)
         if (array_key_exists($key, $this->contextVariables)) {
-            return $this->contextVariables[$key];
+            return EnumUtility::normalize($this->contextVariables[$key]);
         }
 
         // Support dot notation for nested array access
@@ -92,7 +93,7 @@ abstract class AbstractComponentContext implements ComponentContextInterface, \A
             $value = $value[$segment];
         }
 
-        return $value;
+        return EnumUtility::normalize($value);
     }
 
     public function set(string $key, mixed $value): void

@@ -218,8 +218,8 @@ describe('NavigationMenu Component Rendering', function () {
         });
 
         it('propagates orientation to items and content', function () {
-            $html = $this->renderTemplate('
-                <primitives:navigationMenu.root orientation="vertical">
+            $html = $this->renderTemplate(<<<'FLUID'
+                <primitives:navigationMenu.root orientation="{f:constant(name: 'Jramke\FluidPrimitives\Enum\Orientation::Vertical')}">
                     <primitives:navigationMenu.list>
                         <primitives:navigationMenu.item value="item-1">
                             <primitives:navigationMenu.trigger>Trigger</primitives:navigationMenu.trigger>
@@ -227,7 +227,7 @@ describe('NavigationMenu Component Rendering', function () {
                         </primitives:navigationMenu.item>
                     </primitives:navigationMenu.list>
                 </primitives:navigationMenu.root>
-            ');
+            FLUID);
 
             expect(preg_match_all('/data-orientation="vertical"/', $html))->toBeGreaterThanOrEqual(2);
         });
@@ -284,8 +284,8 @@ describe('NavigationMenu Component Rendering', function () {
         });
 
         it('includes client props in hydration data', function () {
-            $this->renderTemplate('
-                <primitives:navigationMenu.root defaultValue="item-1" orientation="vertical">
+            $this->renderTemplate(<<<'FLUID'
+                <primitives:navigationMenu.root defaultValue="item-1" orientation="{f:constant(name: 'Jramke\FluidPrimitives\Enum\Orientation::Vertical')}">
                     <primitives:navigationMenu.list>
                         <primitives:navigationMenu.item value="item-1">
                             <primitives:navigationMenu.trigger>Trigger</primitives:navigationMenu.trigger>
@@ -293,7 +293,7 @@ describe('NavigationMenu Component Rendering', function () {
                         </primitives:navigationMenu.item>
                     </primitives:navigationMenu.list>
                 </primitives:navigationMenu.root>
-            ');
+            FLUID);
 
             $hydrationData = HydrationRegistry::getInstance()->getAll();
             $menuData = array_values($hydrationData['navigation-menu'])[0];

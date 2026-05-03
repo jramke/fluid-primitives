@@ -142,15 +142,15 @@ describe('Collapsible Component Rendering', function () {
 
     describe('indicator', function () {
         it('renders the closed indicator by default', function () {
-            $html = $this->renderTemplate('
+            $html = $this->renderTemplate(<<<'FLUID'
                 <primitives:collapsible.root>
                     <primitives:collapsible.trigger>
-                        <primitives:collapsible.indicator state="closed">Show more</primitives:collapsible.indicator>
-                        <primitives:collapsible.indicator state="open">Show less</primitives:collapsible.indicator>
+                        <primitives:collapsible.indicator state="{f:constant(name: 'Jramke\FluidPrimitives\Enum\CollapsibleIndicatorState::Closed')}">Show more</primitives:collapsible.indicator>
+                        <primitives:collapsible.indicator state="{f:constant(name: 'Jramke\FluidPrimitives\Enum\CollapsibleIndicatorState::Open')}">Show less</primitives:collapsible.indicator>
                     </primitives:collapsible.trigger>
                     <primitives:collapsible.content>Content</primitives:collapsible.content>
                 </primitives:collapsible.root>
-            ');
+            FLUID);
 
             expect($html)->toContain('Show more');
             expect($html)->toContain('data-part="indicator-closed"');
@@ -160,15 +160,15 @@ describe('Collapsible Component Rendering', function () {
         });
 
         it('renders the open indicator when defaultOpen is true', function () {
-            $html = $this->renderTemplate('
+            $html = $this->renderTemplate(<<<'FLUID'
                 <primitives:collapsible.root defaultOpen="{true}">
                     <primitives:collapsible.trigger>
-                        <primitives:collapsible.indicator state="closed">Show more</primitives:collapsible.indicator>
-                        <primitives:collapsible.indicator state="open">Show less</primitives:collapsible.indicator>
+                        <primitives:collapsible.indicator state="{f:constant(name: 'Jramke\FluidPrimitives\Enum\CollapsibleIndicatorState::Closed')}">Show more</primitives:collapsible.indicator>
+                        <primitives:collapsible.indicator state="{f:constant(name: 'Jramke\FluidPrimitives\Enum\CollapsibleIndicatorState::Open')}">Show less</primitives:collapsible.indicator>
                     </primitives:collapsible.trigger>
                     <primitives:collapsible.content>Content</primitives:collapsible.content>
                 </primitives:collapsible.root>
-            ');
+            FLUID);
 
             expect($html)->toContain('Show less');
             // The hidden attribute may appear before or after the data-part attribute.

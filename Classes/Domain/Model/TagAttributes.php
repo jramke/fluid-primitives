@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Domain\Model;
 
+use Jramke\FluidPrimitives\Utility\EnumUtility;
+
 class TagAttributes implements \Countable
 {
     protected $attributesString = '';
@@ -89,6 +91,8 @@ class TagAttributes implements \Countable
             if (empty($key) || $value === null) {
                 continue;
             }
+
+            $value = EnumUtility::normalize($value);
 
             // convert boolean values to html boolean attributes unless they are aria- attributes
             if (!str_starts_with($key, 'aria-') && is_bool($value)) {

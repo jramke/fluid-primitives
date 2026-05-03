@@ -137,14 +137,14 @@ describe('Tabs Component Rendering', function () {
         });
 
         it('renders vertical orientation when specified', function () {
-            $html = $this->renderTemplate('
-                <primitives:tabs.root defaultValue="tab-1" orientation="vertical">
+            $html = $this->renderTemplate(<<<'FLUID'
+                <primitives:tabs.root defaultValue="tab-1" orientation="{f:constant(name: 'Jramke\FluidPrimitives\Enum\Orientation::Vertical')}">
                     <primitives:tabs.list>
                         <primitives:tabs.trigger value="tab-1">Tab 1</primitives:tabs.trigger>
                     </primitives:tabs.list>
                     <primitives:tabs.content value="tab-1">Content 1</primitives:tabs.content>
                 </primitives:tabs.root>
-            ');
+            FLUID);
 
             expect($html)->toContain('data-orientation="vertical"');
             expect($html)->toContain('aria-orientation="vertical"');
