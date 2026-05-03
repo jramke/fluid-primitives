@@ -9,16 +9,11 @@ use Jramke\FluidPrimitives\Service\TranslatorService;
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 
 #[Autoconfigure(public: true)]
-class PopoverContext extends AbstractComponentContext
+class ClipboardContext extends AbstractComponentContext
 {
     public function __construct(
         private readonly TranslatorService $translator,
     ) {}
-
-    public function getState()
-    {
-        return $this->get('defaultOpen') ? 'open' : 'closed';
-    }
 
     #[ExposeToClient]
     public function getTranslations(): array
@@ -26,7 +21,8 @@ class PopoverContext extends AbstractComponentContext
         $overrides = $this->get('translations') ?? [];
 
         $defaults = [
-            'closeTriggerLabel' => $this->translator->translate('popover.closeTriggerLabel', $this->getRequest()),
+            'triggerLabelIdle' => $this->translator->translate('clipboard.triggerLabelIdle', $this->getRequest()),
+            'triggerLabelCopied' => $this->translator->translate('clipboard.triggerLabelCopied', $this->getRequest()),
         ];
 
         return array_merge($defaults, $overrides);

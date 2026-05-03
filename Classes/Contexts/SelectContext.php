@@ -7,9 +7,16 @@ namespace Jramke\FluidPrimitives\Contexts;
 use Jramke\FluidPrimitives\Attributes\ExposeToClient;
 use Jramke\FluidPrimitives\Domain\Model\ListCollection;
 use Jramke\FluidPrimitives\Domain\Model\ListCollectionItem;
+use Jramke\FluidPrimitives\Service\TranslatorService;
+use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 
+#[Autoconfigure(public: true)]
 class SelectContext extends AbstractComponentContext
 {
+    public function __construct(
+        private readonly TranslatorService $translator,
+    ) {}
+
     #[ExposeToClient(excludeIfNull: true)]
     public function getDefaultValue(): ?array
     {
@@ -22,6 +29,18 @@ class SelectContext extends AbstractComponentContext
         }
 
         return $this->get('defaultValue');
+    }
+
+    #[ExposeToClient]
+    public function getTranslations(): array
+    {
+        $overrides = $this->get('translations') ?? [];
+
+        $defaults = [
+            'clearTriggerLabel' => $this->translator->translate('select.clearTriggerLabel', $this->getRequest()),
+        ];
+
+        return array_merge($defaults, $overrides);
     }
 
     /**

@@ -14,6 +14,7 @@
 <ui:prop name="defaultOpen" type="boolean" optional="{true}" client="{true}" description="Whether the select's open state is controlled by the user." />
 <ui:prop name="composite" type="boolean" optional="{true}" client="{true}" default="{true}" description="Whether the select is composed with other composite widgets like tabs or combobox." />
 <ui:prop name="deselectable" type="boolean" optional="{true}" client="{true}" description="Whether the value can be cleared by clicking the selected item." />
+<ui:prop name="translations" type="array" optional="{true}" client="{true}" description="Localized select labels. Set entries to `{false}` to omit the corresponding `aria-label`. Use `f:translate` for per-template localization overrides when needed." />
 <div
     {f:if(condition: class, then: 'class="{class}"' )}
     {f:if(condition: context.ids.root, then: 'id="{context.ids.root}"' )}

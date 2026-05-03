@@ -1,5 +1,6 @@
 <button
     type="button"
+    {f:if(condition: context.translations.triggerLabelIdle, then: 'aria-label="{context.translations.triggerLabelIdle}"' )}
     {f:if(condition: class, then: 'class="{class}"' )}
     {f:if(condition: context.ids.trigger, then: 'id="{context.ids.trigger}"' )}
     {ui:ref(name: 'trigger' )}

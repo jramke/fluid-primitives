@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
+    <file source-language="en" target-language="de" datatype="plaintext" original="EXT:fluid_primitives/Resources/Private/Language/locallang.xlf" product-name="fluid_primitives">
+        <body>
+            <trans-unit id="numberInput.incrementLabel" approved="yes">
+                <target>Wert erhöhen</target>
+            </trans-unit>
+            <trans-unit id="numberInput.decrementLabel" approved="yes">
+                <target>Wert verringern</target>
+            </trans-unit>
+            <trans-unit id="clipboard.triggerLabelIdle" approved="yes">
+                <target>In Zwischenablage kopieren</target>
+            </trans-unit>
+            <trans-unit id="clipboard.triggerLabelCopied" approved="yes">
+                <target>In Zwischenablage kopiert</target>
+            </trans-unit>
+            <trans-unit id="select.clearTriggerLabel" approved="yes">
+                <target>Wert löschen</target>
+            </trans-unit>
+            <trans-unit id="popover.closeTriggerLabel" approved="yes">
+                <target>Schließen</target>
+            </trans-unit>
+        </body>
+    </file>
+</xliff>

@@ -52,12 +52,20 @@ export class NumberInput extends FieldAwareComponent<numberInput.Props, numberIn
 		}
 
 		const incrementTriggerEl = this.getElement('increment-trigger');
-		if (incrementTriggerEl)
-			this.spreadProps(incrementTriggerEl, this.api.getIncrementTriggerProps());
+		if (incrementTriggerEl) {
+			const triggerProps = mergeProps(this.api.getIncrementTriggerProps(), {
+				'aria-label': this.userProps?.translations?.incrementLabel || null,
+			});
+			this.spreadProps(incrementTriggerEl, triggerProps);
+		}
 
 		const decrementTriggerEl = this.getElement('decrement-trigger');
-		if (decrementTriggerEl)
-			this.spreadProps(decrementTriggerEl, this.api.getDecrementTriggerProps());
+		if (decrementTriggerEl) {
+			const triggerProps = mergeProps(this.api.getDecrementTriggerProps(), {
+				'aria-label': this.userProps?.translations?.decrementLabel || null,
+			});
+			this.spreadProps(decrementTriggerEl, triggerProps);
+		}
 
 		const valueTextEl = this.getElement('value-text');
 		if (valueTextEl) this.spreadProps(valueTextEl, this.api.getValueTextProps());

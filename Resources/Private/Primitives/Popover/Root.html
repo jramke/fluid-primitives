@@ -6,5 +6,6 @@
 <ui:prop name="closeOnEscape" type="boolean" optional="{true}" client="{true}" default="{true}" description="Whether to close the popover when the escape key is pressed." />
 <ui:prop name="positioning" type="array" optional="{true}" client="{true}" description="The user provided options used to position the popover content." />
 <ui:prop name="defaultOpen" type="boolean" optional="{true}" client="{true}" description="The initial open state of the popover when rendered. Use when you don't need to control the open state of the popover." />
+<ui:prop name="translations" type="array" optional="{true}" client="{true}" description="Localized popover labels. Set entries to `{false}` to omit the corresponding `aria-label`. Use `f:translate` for per-template localization overrides when needed." />
 
 <f:slot />

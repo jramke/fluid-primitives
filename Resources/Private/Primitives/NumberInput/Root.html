@@ -16,7 +16,7 @@
 <ui:prop name="formatOptions" type="array" optional="{true}" client="{true}" description="The options to pass to the `Intl.NumberFormat` constructor." />
 <ui:prop name="inputMode" type="string" optional="{true}" client="{true}" default="decimal" description="Hints at the type of data that might be entered by the user and the keyboard shown on mobile devices." />
 <ui:prop name="pattern" type="string" optional="{true}" client="{true}" default="-?[0-9]*(.[0-9]+)?" description="The pattern used to check the `<input>` element's value against." />
-<ui:prop name="translations" type="array" optional="{true}" client="{true}" default="{ incrementLabel: 'increment value', decrementLabel: 'decrement value' }" description="Specifies the localized strings that identify the accessibility elements and their states." />
+<ui:prop name="translations" type="array" optional="{true}" client="{true}" description="Specifies the localized strings that identify the accessibility elements and their states. Use `f:translate` for per-template localization overrides when needed." />
 <ui:prop name="locale" type="string" optional="{true}" client="{true}" description="The current locale. Inherited from the site's language." />
 
 <f:variable name="refData" value="{disabled: context.disabled, invalid: context.invalid}" />

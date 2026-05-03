@@ -5,9 +5,16 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Contexts;
 
 use Jramke\FluidPrimitives\Attributes\ExposeToClient;
+use Jramke\FluidPrimitives\Service\TranslatorService;
+use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 
+#[Autoconfigure(public: true)]
 class NumberInputContext extends AbstractComponentContext
 {
+    public function __construct(
+        protected readonly TranslatorService $translator,
+    ) {}
+
     #[ExposeToClient(excludeIfNull: true)]
     public function getDefaultValue(): mixed
     {
@@ -17,12 +24,20 @@ class NumberInputContext extends AbstractComponentContext
     #[ExposeToClient]
     public function getLocale(): ?string
     {
-        if ($this->has('locale')) {
-            return (string)$this->get('locale');
-        }
+        return $this->translator->getLocale($this->getRequest());
+    }
 
-        $language = $this->getRequest()->getAttribute('language');
-        return (string)$language->getLocale() ?? null;
+    #[ExposeToClient]
+    public function getTranslations(): array
+    {
+        $overrides = $this->get('translations') ?? [];
+
+        $defaults = [
+            'incrementLabel' => $this->translator->translate('numberInput.incrementLabel', $this->getRequest()),
+            'decrementLabel' => $this->translator->translate('numberInput.decrementLabel', $this->getRequest()),
+        ];
+
+        return array_merge($defaults, $overrides);
     }
 
     public function getFormattedValue(): string

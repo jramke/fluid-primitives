@@ -1,5 +1,6 @@
 <ui:prop name="value" type="string" client="{true}" optional="{true}" requiredAtRuntime="{true}" description="The value to copy to the clipboard." />
 <ui:prop name="timeout" type="integer" optional="{true}" client="{true}" default="3000" description="The timeout for the copied state in milliseconds." />
+<ui:prop name="translations" type="array" optional="{true}" client="{true}" description="Localized clipboard trigger labels. Set entries to `{false}` to omit the corresponding `aria-label`. Use `f:translate` for per-template localization overrides when needed." />
 
 <div
     {f:if(condition: class, then: 'class="{class}"' )}

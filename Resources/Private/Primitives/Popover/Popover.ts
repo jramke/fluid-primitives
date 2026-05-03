@@ -1,5 +1,5 @@
 import * as popover from '@zag-js/popover';
-import { Component, Machine, normalizeProps } from '../../Client';
+import { Component, Machine, mergeProps, normalizeProps } from '../../Client';
 
 export class Popover extends Component<popover.Props, popover.Api> {
 	static name = 'popover';
@@ -42,7 +42,12 @@ export class Popover extends Component<popover.Props, popover.Api> {
 		if (descriptionEl) this.spreadProps(descriptionEl, this.api.getDescriptionProps());
 
 		const closeTriggerEl = this.getElement('close-trigger');
-		if (closeTriggerEl) this.spreadProps(closeTriggerEl, this.api.getCloseTriggerProps());
+		if (closeTriggerEl) {
+			const closeTriggerProps = mergeProps(this.api.getCloseTriggerProps(), {
+				'aria-label': this.userProps?.translations?.closeTriggerLabel || null,
+			});
+			this.spreadProps(closeTriggerEl, closeTriggerProps);
+		}
 
 		const indicatorEl = this.getElement('indicator');
 		if (indicatorEl) this.spreadProps(indicatorEl, this.api.getIndicatorProps());

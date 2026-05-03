@@ -8,6 +8,9 @@ use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use TYPO3\CMS\Core\Core\SystemEnvironmentBuilder;
 use TYPO3\CMS\Core\Http\NormalizedParams;
 use TYPO3\CMS\Core\Http\ServerRequest;
+use TYPO3\CMS\Core\Http\Uri;
+use TYPO3\CMS\Core\Site\Entity\Site;
+use TYPO3\CMS\Core\Site\Entity\SiteLanguage;
 use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
 use TYPO3\CMS\Core\View\ViewFactoryData;
 use TYPO3\CMS\Core\View\ViewFactoryInterface;
@@ -93,13 +96,59 @@ abstract class FunctionalTestCase extends TYPO3FunctionalTestCase
         return $this->view;
     }
 
+    protected function setRequestLocale(string $locale): void
+    {
+        $baseUri = new Uri('https://example.com/');
+        $language = new SiteLanguage(0, $locale, $baseUri, ['title' => $locale]);
+        $site = new Site('test', 1, [
+            'base' => (string)$baseUri,
+            'languages' => [],
+            'errorHandling' => [],
+            'routes' => [],
+        ]);
+
+        $request = $GLOBALS['TYPO3_REQUEST'] ?? new ServerRequest();
+        if (!$request instanceof ServerRequest) {
+            $request = new ServerRequest();
+        }
+
+        $request = $request->withAttribute('language', $language)->withAttribute('site', $site);
+        $GLOBALS['TYPO3_REQUEST'] = $request;
+
+        if ($this->view !== null) {
+            $this->view->getRenderingContext()->setAttribute(ServerRequest::class, $request);
+            $this->view->getRenderingContext()->setAttribute(\Psr\Http\Message\ServerRequestInterface::class, $request);
+        }
+    }
+
     /**
      * Create a Fluid view configured for rendering primitives components.
      */
     private function createPrimitivesView(): ViewInterface
     {
-        // Set up a frontend request for proper context
-        $request = new ServerRequest();
+        // Set up a frontend request for proper context, but keep any locale/site overrides set by tests.
+        $request = $GLOBALS['TYPO3_REQUEST'] ?? new ServerRequest();
+        if (!$request instanceof ServerRequest) {
+            $request = new ServerRequest();
+        }
+
+        if (!$request->getAttribute('site')) {
+            $baseUri = new Uri('https://example.com/');
+            $site = new Site('test', 1, [
+                'base' => (string)$baseUri,
+                'languages' => [],
+                'errorHandling' => [],
+                'routes' => [],
+            ]);
+            $request = $request->withAttribute('site', $site);
+        }
+
+        if (!$request->getAttribute('language')) {
+            $baseUri = new Uri('https://example.com/');
+            $language = new SiteLanguage(0, 'en_US', $baseUri, ['title' => 'English']);
+            $request = $request->withAttribute('language', $language);
+        }
+
         $request = $request->withAttribute('applicationType', SystemEnvironmentBuilder::REQUESTTYPE_FE)->withAttribute(
             'normalizedParams',
             NormalizedParams::createFromRequest($request),
@@ -116,6 +165,9 @@ abstract class FunctionalTestCase extends TYPO3FunctionalTestCase
         $view = $viewFactory->create(
             new ViewFactoryData(templateRootPaths: [$extensionPath . 'Resources/Private/Primitives']),
         );
+
+        $view->getRenderingContext()->setAttribute(ServerRequest::class, $request);
+        $view->getRenderingContext()->setAttribute(\Psr\Http\Message\ServerRequestInterface::class, $request);
 
         // Register the primitives namespace
         $view

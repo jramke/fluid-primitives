@@ -4,7 +4,7 @@
 <button
     type="button"
     tabindex="-1"
-    aria-label="{context.translations.decrementLabel}"
+    {f:if(condition: context.translations.decrementLabel, then: 'aria-label="{context.translations.decrementLabel}"' )}
     {f:if(condition: class, then: 'class="{class}"' )}
     {f:if(condition: context.ids.decrement-trigger, then: 'id="{context.ids.decrement-trigger}"' )}
     {f:if(condition: isDisabled, then: 'disabled' )}

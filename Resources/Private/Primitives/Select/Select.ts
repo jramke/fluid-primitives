@@ -119,7 +119,12 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
 		});
 
 		const clearTriggerEl = this.getElement('clear-trigger');
-		if (clearTriggerEl) this.spreadProps(clearTriggerEl, this.api.getClearTriggerProps());
+		if (clearTriggerEl) {
+			const clearTriggerProps = mergeProps(this.api.getClearTriggerProps(), {
+				'aria-label': this.userProps?.translations?.clearTriggerLabel || null,
+			});
+			this.spreadProps(clearTriggerEl, clearTriggerProps);
+		}
 
 		const indicatorEl = this.getElement('indicator');
 		if (indicatorEl) this.spreadProps(indicatorEl, this.api.getIndicatorProps());
