@@ -110,23 +110,45 @@ abstract class AbstractComponentContext implements ComponentContextInterface, \A
         return $value !== null;
     }
 
+    // The following ArrayAccess methods are used by Fluid for the variable access.
+    // They can be overridden by defining `getX`, `setX`, `hasX`, `unsetX` methods for specific keys to allow for computed properties or custom logic.
+
     public function offsetExists($offset): bool
     {
+        // We use the same logic as `has` to check for existence, which also supports computed properties via `getX` methods.
+        if (method_exists($this, 'get' . ucfirst($offset))) {
+            return $this->{'get' . ucfirst($offset)}() !== null;
+        }
+
         return $this->has($offset);
     }
 
     public function offsetGet($offset): mixed
     {
+        if (method_exists($this, 'get' . ucfirst($offset))) {
+            return $this->{'get' . ucfirst($offset)}();
+        }
+
         return $this->get($offset);
     }
 
     public function offsetSet($offset, $value): void
     {
+        if (method_exists($this, 'set' . ucfirst($offset))) {
+            $this->{'set' . ucfirst($offset)}($value);
+            return;
+        }
+
         $this->set($offset, $value);
     }
 
     public function offsetUnset($offset): void
     {
+        if (method_exists($this, 'unset' . ucfirst($offset))) {
+            $this->{'unset' . ucfirst($offset)}();
+            return;
+        }
+
         unset($this->contextVariables[$offset]);
     }
 
