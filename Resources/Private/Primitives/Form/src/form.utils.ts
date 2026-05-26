@@ -107,18 +107,22 @@ export function formDataToObject(
 
 export function objectToFormData(values: Record<string, unknown>): FormData {
 	const formData = new FormData();
+	const toEntry = (value: unknown): FormDataEntryValue => {
+		if (value instanceof File) return value;
+		return String(value);
+	};
 
 	for (const [key, value] of Object.entries(values)) {
 		if (Array.isArray(value)) {
 			for (const item of value) {
-				if (item === null || item === undefined) continue;
-				formData.append(key, item as FormDataEntryValue);
+				if (item == null) continue;
+				formData.append(key, toEntry(item));
 			}
 			continue;
 		}
 
 		if (value === null || value === undefined) continue;
-		formData.append(key, value as FormDataEntryValue);
+		formData.append(key, toEntry(value));
 	}
 
 	return formData;

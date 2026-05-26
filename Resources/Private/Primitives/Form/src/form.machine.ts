@@ -14,6 +14,13 @@ import {
 } from './form.utils';
 
 type FormCoreApi = TanStackFormApi<Record<string, unknown>>;
+type FormContextSetter = {
+	set: <TKey extends keyof FormSchema['context']>(
+		key: TKey,
+		value: FormSchema['context'][TKey]
+	) => void;
+};
+type FormInputValue = FormDataEntryValue | FormDataEntryValue[] | boolean | null | undefined;
 
 function getDirtyMap(formApi: FormCoreApi): FormDirty {
 	const dirty: FormDirty = {};
@@ -35,10 +42,49 @@ function getTouchedMap(formApi: FormCoreApi): FormTouched {
 	return touched;
 }
 
-function syncContextFromFormApi(context: any, formApi: FormCoreApi) {
+function syncContextFromFormApi(context: FormContextSetter, formApi: FormCoreApi) {
 	context.set('values', objectToFormData(formApi.state.values as Record<string, unknown>));
 	context.set('dirty', getDirtyMap(formApi));
 	context.set('touched', getTouchedMap(formApi));
+}
+
+function normalizeFormInputValue(value: unknown): FormInputValue {
+	if (value === null || value === undefined) return value;
+	if (Array.isArray(value)) {
+		return value.filter(item => item != null).map(item => {
+			if (item instanceof File) return item;
+			return String(item);
+		});
+	}
+	if (value instanceof File) return value;
+	if (typeof value === 'string' || typeof value === 'boolean') return value;
+	return String(value);
+}
+
+function toFormInputRecord(formData: FormData): Record<string, FormInputValue> {
+	const out: Record<string, FormInputValue> = {};
+	const values = formDataToObject(formData);
+	for (const [key, value] of Object.entries(values)) {
+		out[key] = normalizeFormInputValue(value);
+	}
+	return out;
+}
+
+function syncFormApiValues(formApi: FormCoreApi, values: Record<string, FormInputValue>) {
+	const currentValues = formApi.state.values as Record<string, FormInputValue>;
+	const keys = new Set([...Object.keys(currentValues), ...Object.keys(values)]);
+
+	for (const key of keys) {
+		const hasNextValue = Object.prototype.hasOwnProperty.call(values, key);
+		const nextValue = hasNextValue ? values[key] : undefined;
+		const currentValue = currentValues[key];
+		if (JSON.stringify(currentValue) === JSON.stringify(nextValue)) continue;
+		formApi.setFieldValue(key, nextValue, {
+			dontValidate: true,
+			dontUpdateMeta: true,
+			dontRunListeners: true,
+		});
+	}
 }
 
 export const machine = createMachine<FormSchema>({
@@ -55,6 +101,7 @@ export const machine = createMachine<FormSchema>({
 			dirty: bindable(() => ({ defaultValue: {} as FormDirty })),
 			touched: bindable(() => ({ defaultValue: {} as FormTouched })),
 			formApi: bindable(() => ({ defaultValue: null as FormCoreApi | null })),
+			formApiUnsubscribe: bindable(() => ({ defaultValue: null as (() => void) | null })),
 		};
 	},
 
@@ -79,10 +126,12 @@ export const machine = createMachine<FormSchema>({
 	},
 
 	entry: ['initializeFormApi', 'setupFormListeners'],
+	exit: ['cleanupFormApi'],
 
 	implementations: {
 		actions: {
 			initializeFormApi({ context, scope }) {
+				context.get('formApiUnsubscribe')?.();
 				const form = dom.getFormEl(scope);
 				const initialValues = form ? new FormData(form) : new FormData();
 				context.set('values', initialValues);
@@ -94,9 +143,20 @@ export const machine = createMachine<FormSchema>({
 				context.set('formApi', formApi);
 				syncContextFromFormApi(context, formApi);
 
-				formApi.store.subscribe(() => {
+				const subscription = formApi.store.subscribe(() => {
 					syncContextFromFormApi(context, formApi);
 				});
+				context.set(
+					'formApiUnsubscribe',
+					typeof subscription?.unsubscribe === 'function'
+						? () => subscription.unsubscribe()
+						: null
+				);
+			},
+
+			cleanupFormApi({ context }) {
+				context.get('formApiUnsubscribe')?.();
+				context.set('formApiUnsubscribe', null);
 			},
 
 			validateAll({ context, send, prop, state, action, event, scope }) {
@@ -106,10 +166,7 @@ export const machine = createMachine<FormSchema>({
 				const formEl = dom.getFormEl(scope);
 
 				if (formApi && formEl) {
-					formApi.baseStore.setState(prev => ({
-						...prev,
-						values: formDataToObject(new FormData(formEl)),
-					}));
+					syncFormApiValues(formApi, toFormInputRecord(new FormData(formEl)));
 					syncContextFromFormApi(context, formApi);
 				}
 
@@ -243,7 +300,8 @@ export const machine = createMachine<FormSchema>({
 				// console.log('input', value);
 
 				if (formApi) {
-					formApi.setFieldValue(name, value as any, { dontValidate: true });
+					const inputValue = normalizeFormInputValue(value);
+					formApi.setFieldValue(name, inputValue, { dontValidate: true });
 					syncContextFromFormApi(context, formApi);
 				} else {
 					const values = context.get('values');
@@ -295,10 +353,7 @@ export const machine = createMachine<FormSchema>({
 					const values = new FormData(form);
 					context.set('values', values);
 					if (formApi) {
-						formApi.baseStore.setState(prev => ({
-							...prev,
-							values: formDataToObject(values),
-						}));
+						syncFormApiValues(formApi, toFormInputRecord(values));
 						syncContextFromFormApi(context, formApi);
 					}
 				}
@@ -326,7 +381,10 @@ export const machine = createMachine<FormSchema>({
 				context.set('errors', {});
 				context.set('touched', {});
 				context.set('dirty', {});
-				formApi?.reset(initialObj, { keepDefaultValues: false });
+				if (formApi) {
+					formApi.reset(initialObj, { keepDefaultValues: false });
+					syncContextFromFormApi(context, formApi);
+				}
 			},
 
 			focusFirstInvalid({ context, scope }) {

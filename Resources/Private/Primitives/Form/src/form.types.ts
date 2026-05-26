@@ -54,6 +54,7 @@ export interface FormSchema {
 		dirty: FormDirty;
 		touched: FormTouched;
 		formApi: TanStackFormApi<Record<string, unknown>> | null;
+		formApiUnsubscribe: (() => void) | null;
 	};
 	state: 'invalid' | 'ready' | 'submitting' | 'success' | 'error';
 	event: EventObject;
