@@ -1,14 +1,45 @@
 import { createMachine } from '@zag-js/core';
+import { FormApi as TanStackFormApi } from '@tanstack/form-core';
 import * as dom from './form.dom';
 import type { FormDirty, FormErrors, FormSchema, FormTouched } from './form.types';
 import { ValidationError } from './form.types';
 import {
 	errorsFromServer,
+	formDataToObject,
 	getFormDataValue,
 	getInputValue,
+	objectToFormData,
 	prefixFieldName,
 	validateWithSchema,
 } from './form.utils';
+
+type FormCoreApi = TanStackFormApi<Record<string, unknown>>;
+
+function getDirtyMap(formApi: FormCoreApi): FormDirty {
+	const dirty: FormDirty = {};
+	for (const [name, meta] of Object.entries(formApi.state.fieldMeta)) {
+		if (meta?.isDirty) {
+			dirty[name] = true;
+		}
+	}
+	return dirty;
+}
+
+function getTouchedMap(formApi: FormCoreApi): FormTouched {
+	const touched: FormTouched = {};
+	for (const [name, meta] of Object.entries(formApi.state.fieldMeta)) {
+		if (meta?.isTouched) {
+			touched[name] = true;
+		}
+	}
+	return touched;
+}
+
+function syncContextFromFormApi(context: any, formApi: FormCoreApi) {
+	context.set('values', objectToFormData(formApi.state.values as Record<string, unknown>));
+	context.set('dirty', getDirtyMap(formApi));
+	context.set('touched', getTouchedMap(formApi));
+}
 
 export const machine = createMachine<FormSchema>({
 	// debug: true,
@@ -23,6 +54,7 @@ export const machine = createMachine<FormSchema>({
 			errors: bindable(() => ({ defaultValue: {} as FormErrors })),
 			dirty: bindable(() => ({ defaultValue: {} as FormDirty })),
 			touched: bindable(() => ({ defaultValue: {} as FormTouched })),
+			formApi: bindable(() => ({ defaultValue: null as FormCoreApi | null })),
 		};
 	},
 
@@ -46,13 +78,40 @@ export const machine = createMachine<FormSchema>({
 		SUCCESS: { target: 'success', actions: ['clearErrors'] },
 	},
 
-	entry: ['setupFormListeners'],
+	entry: ['initializeFormApi', 'setupFormListeners'],
 
 	implementations: {
 		actions: {
+			initializeFormApi({ context, scope }) {
+				const form = dom.getFormEl(scope);
+				const initialValues = form ? new FormData(form) : new FormData();
+				context.set('values', initialValues);
+				context.set('initialValues', initialValues);
+
+				const formApi = new TanStackFormApi<Record<string, unknown>>({
+					defaultValues: formDataToObject(initialValues),
+				});
+				context.set('formApi', formApi);
+				syncContextFromFormApi(context, formApi);
+
+				formApi.store.subscribe(() => {
+					syncContextFromFormApi(context, formApi);
+				});
+			},
+
 			validateAll({ context, send, prop, state, action, event, scope }) {
 				const submitting = state.matches('submitting');
 				const schema = prop('schema');
+				const formApi = context.get('formApi');
+				const formEl = dom.getFormEl(scope);
+
+				if (formApi && formEl) {
+					formApi.baseStore.setState(prev => ({
+						...prev,
+						values: formDataToObject(new FormData(formEl)),
+					}));
+					syncContextFromFormApi(context, formApi);
+				}
 
 				if (schema) {
 					const formData = context.get('values');
@@ -178,18 +237,19 @@ export const machine = createMachine<FormSchema>({
 				const target = e?.detail?.target ?? e?.target ?? e?.currentTarget;
 				const name: string | undefined = target?.name;
 				if (!name) return;
+				const formApi = context.get('formApi');
 
 				const value = e?.detail?.value ?? getInputValue(target);
 				// console.log('input', value);
 
-				const values = context.get('values');
-				values.set(name, value);
-				context.set('values', values);
-
-				const initial = context.get('initialValues').get(name);
-				const dirty = { ...context.get('dirty') };
-				dirty[name] = JSON.stringify(values.get(name)) !== JSON.stringify(initial);
-				context.set('dirty', dirty);
+				if (formApi) {
+					formApi.setFieldValue(name, value as any, { dontValidate: true });
+					syncContextFromFormApi(context, formApi);
+				} else {
+					const values = context.get('values');
+					values.set(name, value);
+					context.set('values', values);
+				}
 
 				// Revalidate if field has errors OR if any validation has occurred
 				// This ensures errors clear immediately when fixed
@@ -213,17 +273,34 @@ export const machine = createMachine<FormSchema>({
 				}
 
 				if (!name) return;
+				const formApi = context.get('formApi');
 
 				// Mark field as touched
-				const touched = { ...context.get('touched') };
-				touched[name] = true;
-				context.set('touched', touched);
+				if (formApi) {
+					formApi.setFieldMeta(name, prev => ({
+						...(prev ?? {}),
+						isTouched: true,
+						isBlurred: true,
+					}));
+					syncContextFromFormApi(context, formApi);
+				} else {
+					const touched = { ...context.get('touched') };
+					touched[name] = true;
+					context.set('touched', touched);
+				}
 
 				// Get current form values from DOM to ensure we have latest
 				const form = target.form as HTMLFormElement | null;
 				if (form) {
 					const values = new FormData(form);
 					context.set('values', values);
+					if (formApi) {
+						formApi.baseStore.setState(prev => ({
+							...prev,
+							values: formDataToObject(values),
+						}));
+						syncContextFromFormApi(context, formApi);
+					}
 				}
 
 				// Validate the field on blur
@@ -235,18 +312,21 @@ export const machine = createMachine<FormSchema>({
 
 			resetForm({ context, scope, event }) {
 				const form = dom.getFormEl(scope);
+				const formApi = context.get('formApi');
 
 				if (form && !event?.detail?.omitManualReset) {
 					form.reset();
 				}
 
 				const initial = form ? new FormData(form) : context.get('initialValues');
+				const initialObj = formDataToObject(initial);
 
 				context.set('values', initial);
 				context.set('initialValues', initial);
 				context.set('errors', {});
 				context.set('touched', {});
 				context.set('dirty', {});
+				formApi?.reset(initialObj, { keepDefaultValues: false });
 			},
 
 			focusFirstInvalid({ context, scope }) {
