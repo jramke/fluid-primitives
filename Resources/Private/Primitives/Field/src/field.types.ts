@@ -1,3 +1,4 @@
+import type { AnyFieldApi } from '@tanstack/form-core';
 import type { EventObject } from '@zag-js/core';
 import type { PropTypes } from '@zag-js/types';
 import type { FormMachine } from '../../Form/src/form.registry';
@@ -19,6 +20,8 @@ export interface FieldSchema {
 		disabled: boolean;
 		readOnly: boolean;
 		formMachine: FormMachine | null;
+		fieldApi: AnyFieldApi | null;
+		fieldApiUnsubscribe: (() => void) | null;
 		describeIds: string | undefined;
 		hasDescription: boolean;
 	};
@@ -33,6 +36,7 @@ export interface FieldSchema {
 
 export interface FieldApi {
 	getFormMachine(): FieldSchema['context']['formMachine'];
+	getFieldCoreApi(): AnyFieldApi | null;
 	invalid: boolean;
 	errors: string[];
 	name: string;

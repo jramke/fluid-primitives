@@ -21,31 +21,37 @@ type FormContextSetter = {
 	) => void;
 };
 type FormInputValue = FormDataEntryValue | FormDataEntryValue[] | boolean | null | undefined;
-
-function getDirtyMap(formApi: FormCoreApi): FormDirty {
-	const dirty: FormDirty = {};
-	for (const [name, meta] of Object.entries(formApi.state.fieldMeta)) {
-		if (meta?.isDirty) {
-			dirty[name] = true;
-		}
-	}
-	return dirty;
-}
-
-function getTouchedMap(formApi: FormCoreApi): FormTouched {
-	const touched: FormTouched = {};
-	for (const [name, meta] of Object.entries(formApi.state.fieldMeta)) {
-		if (meta?.isTouched) {
-			touched[name] = true;
-		}
-	}
-	return touched;
-}
+type FieldErrorCause = 'onBlur' | 'onChange' | 'onSubmit';
 
 function syncContextFromFormApi(context: FormContextSetter, formApi: FormCoreApi) {
 	context.set('values', objectToFormData(formApi.state.values as Record<string, unknown>));
-	context.set('dirty', getDirtyMap(formApi));
-	context.set('touched', getTouchedMap(formApi));
+}
+
+function syncFormApiErrors(formApi: FormCoreApi, errors: FormErrors, cause: FieldErrorCause) {
+	const fieldNames = new Set([...Object.keys(formApi.state.fieldMeta), ...Object.keys(errors)]);
+
+	for (const fieldName of fieldNames) {
+		const messages = errors[fieldName]?.messages;
+		formApi.setFieldMeta(fieldName, prev => ({
+			...(prev ?? {
+				isTouched: false,
+				isBlurred: false,
+				isDirty: false,
+				isValidating: false,
+				errorMap: {},
+				errorSourceMap: {},
+				_arrayVersion: 0,
+			}),
+			errorMap: {
+				...(prev?.errorMap ?? {}),
+				[cause]: messages && messages.length > 0 ? messages : undefined,
+			},
+			errorSourceMap: {
+				...(prev?.errorSourceMap ?? {}),
+				[cause]: messages && messages.length > 0 ? 'form' : undefined,
+			},
+		}));
+	}
 }
 
 function normalizeFormInputValue(value: unknown): FormInputValue {
@@ -174,6 +180,9 @@ export const machine = createMachine<FormSchema>({
 					const formData = context.get('values');
 					const errs = validateWithSchema(schema, formData);
 					context.set('errors', errs);
+					if (formApi) {
+						syncFormApiErrors(formApi, errs, submitting ? 'onSubmit' : 'onChange');
+					}
 
 					if (Object.keys(errs).length > 0) {
 						send({ type: 'INVALID' });
@@ -242,6 +251,9 @@ export const machine = createMachine<FormSchema>({
 					} catch (error) {
 						if (error instanceof ValidationError) {
 							context.set('errors', error.errors);
+							if (formApi) {
+								syncFormApiErrors(formApi, error.errors, 'onSubmit');
+							}
 							send({ type: 'INVALID' });
 							action(['focusFirstInvalid']);
 							return;
@@ -287,6 +299,14 @@ export const machine = createMachine<FormSchema>({
 				}
 
 				context.set('errors', updatedErrors);
+				const formApi = context.get('formApi');
+				if (formApi) {
+					syncFormApiErrors(
+						formApi,
+						updatedErrors,
+						event.detail?.cause === 'blur' ? 'onBlur' : 'onChange'
+					);
+				}
 			},
 
 			handleInput({ context, event, send }) {
@@ -312,12 +332,11 @@ export const machine = createMachine<FormSchema>({
 				// Revalidate if field has errors OR if any validation has occurred
 				// This ensures errors clear immediately when fixed
 				const currentErrors = context.get('errors');
-				const touched = context.get('touched');
 				const hasFieldError = !!currentErrors[name];
-				const fieldTouched = !!touched[name];
+				const fieldTouched = !!formApi?.getFieldMeta(name)?.isTouched || !!context.get('touched')[name];
 
 				if (hasFieldError || fieldTouched) {
-					send({ type: 'VALIDATE_FIELD', detail: { fieldName: name } });
+					send({ type: 'VALIDATE_FIELD', detail: { fieldName: name, cause: 'change' } });
 				}
 			},
 
@@ -361,7 +380,7 @@ export const machine = createMachine<FormSchema>({
 				// Validate the field on blur
 				const schema = prop('schema');
 				if (schema) {
-					send({ type: 'VALIDATE_FIELD', detail: { fieldName: name } });
+					send({ type: 'VALIDATE_FIELD', detail: { fieldName: name, cause: 'blur' } });
 				}
 			},
 
@@ -426,6 +445,19 @@ export const machine = createMachine<FormSchema>({
 			clearErrors({ context }) {
 				context.set('errors', {});
 				context.set('touched', {});
+				const formApi = context.get('formApi');
+				if (formApi) {
+					syncFormApiErrors(formApi, {}, 'onBlur');
+					syncFormApiErrors(formApi, {}, 'onChange');
+					syncFormApiErrors(formApi, {}, 'onSubmit');
+					for (const fieldName of Object.keys(formApi.state.fieldMeta)) {
+						formApi.setFieldMeta(fieldName, prev => ({
+							...(prev ?? {}),
+							isTouched: false,
+							isBlurred: false,
+						}));
+					}
+				}
 			},
 		},
 	},

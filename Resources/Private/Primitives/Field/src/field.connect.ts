@@ -9,15 +9,19 @@ export function connect<T extends PropTypes>(
 	normalize: NormalizeProps<T>
 ): FieldApi {
 	const { scope, prop, context, computed } = service;
+	const fieldApi = context.get('fieldApi');
 
-	const invalid = context.get('invalid');
+	const invalid = fieldApi ? fieldApi.state.meta.errors.length > 0 : context.get('invalid');
 	const disabled = context.get('disabled');
 	const required = context.get('required');
 	const readOnly = context.get('readOnly');
-	const errors = computed('errors');
+	const errors = fieldApi
+		? fieldApi.state.meta.errors.map(error => String(error))
+		: computed('errors');
 
 	return {
 		getFormMachine: () => context.get('formMachine'),
+		getFieldCoreApi: () => fieldApi,
 
 		invalid,
 		disabled,

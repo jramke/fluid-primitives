@@ -5,31 +5,63 @@ import { parts } from './form.anatomy';
 import * as dom from './form.dom';
 import { getFieldMachinesFor } from './form.registry';
 import type { FormApi, FormSchema } from './form.types';
+import { objectToFormData } from './form.utils';
+
+function getDirtyMap(service: Service<FormSchema>) {
+	const formApi = service.context.get('formApi');
+	if (!formApi) {
+		return service.context.get('dirty');
+	}
+
+	return Object.fromEntries(
+		Object.entries(formApi.state.fieldMeta)
+			.filter(([, meta]) => meta?.isDirty)
+			.map(([name]) => [name, true])
+	);
+}
+
+function getTouchedMap(service: Service<FormSchema>) {
+	const formApi = service.context.get('formApi');
+	if (!formApi) {
+		return service.context.get('touched');
+	}
+
+	return Object.fromEntries(
+		Object.entries(formApi.state.fieldMeta)
+			.filter(([, meta]) => meta?.isTouched)
+			.map(([name]) => [name, true])
+	);
+}
 
 export function connect<T extends PropTypes>(
 	service: Service<FormSchema>,
 	normalize: NormalizeProps<T>
 ): FormApi {
 	const { context, state, send, scope, prop } = service;
+	const formApi = context.get('formApi');
 
 	function getValues() {
-		return context.get('values');
+		if (!formApi) {
+			return context.get('values');
+		}
+
+		return objectToFormData(formApi.state.values as Record<string, unknown>);
 	}
 	function getErrors() {
 		return context.get('errors');
 	}
 	function getDirty() {
-		return context.get('dirty');
+		return getDirtyMap(service);
 	}
 	function getTouched() {
-		return context.get('touched');
+		return getTouchedMap(service);
 	}
 
 	function getFormEl() {
 		return dom.getFormEl(scope);
 	}
 
-	const isSubmitting = state.matches('submitting');
+	const isSubmitting = formApi?.state.isSubmitting ?? state.matches('submitting');
 	const isDirty = Object.values(getDirty()).length > 0;
 	const isInvalid = Object.keys(getErrors()).length > 0;
 	const isSuccessful = state.matches('success');
@@ -54,6 +86,9 @@ export function connect<T extends PropTypes>(
 		isSuccessful,
 		isError,
 
+		getFormCoreApi() {
+			return formApi;
+		},
 		getValues,
 		getErrors,
 		getDirty,

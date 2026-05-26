@@ -8,7 +8,9 @@ import type { FieldApi, FieldProps } from './src/field.types';
 export class Field extends Component<FieldProps, FieldApi> {
 	static name = 'field';
 
-	private subscribedToForm = false;
+	private subscribedToFormMachine = false;
+	private subscribedToFieldApi = false;
+	private fieldApiUnsubscribe: (() => void) | null = null;
 
 	initMachine(props: FieldProps) {
 		const createdMachine = new Machine(machine, props);
@@ -22,21 +24,41 @@ export class Field extends Component<FieldProps, FieldApi> {
 	}
 
 	subscribeToFormMachine() {
-		if (this.subscribedToForm) return;
+		if (this.subscribedToFormMachine) return;
 
 		const formMachine = this.api.getFormMachine();
 		if (!formMachine) return;
 
-		this.subscribedToForm = true;
+		this.subscribedToFormMachine = true;
 		formMachine.subscribe(() => {
-			// notify is marked as private but that does not prevent runtime access
-			// @ts-expect-error
-			this.machine.notify();
+			if (!this.api.getFieldCoreApi() && formMachine.context.get('formApi')) {
+				this.machine.send({ type: 'FORM_API_READY' });
+			}
 		});
+	}
+
+	subscribeToFieldApi() {
+		if (this.subscribedToFieldApi) return;
+
+		const fieldApi = this.api.getFieldCoreApi();
+		if (!fieldApi) return;
+
+		const subscription = fieldApi.store.subscribe(() => {
+			queueMicrotask(() => {
+				// notify is marked as private but that does not prevent runtime access
+				// @ts-expect-error
+				this.machine.notify();
+			});
+		});
+
+		this.fieldApiUnsubscribe =
+			typeof subscription?.unsubscribe === 'function' ? () => subscription.unsubscribe() : null;
+		this.subscribedToFieldApi = true;
 	}
 
 	render() {
 		this.subscribeToFormMachine();
+		this.subscribeToFieldApi();
 
 		const rootEl = this.getElement('root');
 		if (rootEl) {
@@ -60,5 +82,10 @@ export class Field extends Component<FieldProps, FieldApi> {
 				errorEl.textContent = msg;
 			}
 		}
+	}
+
+	destroy() {
+		this.fieldApiUnsubscribe?.();
+		super.destroy();
 	}
 }
