@@ -1,5 +1,6 @@
 import type { EventObject } from '@zag-js/core';
 import type { JSX, PropTypes } from '@zag-js/types';
+import type { FormApi as TanStackFormApi } from '@tanstack/form-core';
 import * as z from 'zod';
 import type { Form } from '../Form';
 import type { FieldMachine } from './form.registry';
@@ -52,6 +53,7 @@ export interface FormSchema {
 		errors: FormErrors;
 		dirty: FormDirty;
 		touched: FormTouched;
+		formApi: TanStackFormApi<Record<string, unknown>> | null;
 	};
 	state: 'invalid' | 'ready' | 'submitting' | 'success' | 'error';
 	event: EventObject;

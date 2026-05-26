@@ -105,6 +105,25 @@ export function formDataToObject(
 	);
 }
 
+export function objectToFormData(values: Record<string, unknown>): FormData {
+	const formData = new FormData();
+
+	for (const [key, value] of Object.entries(values)) {
+		if (Array.isArray(value)) {
+			for (const item of value) {
+				if (item === null || item === undefined) continue;
+				formData.append(key, item as FormDataEntryValue);
+			}
+			continue;
+		}
+
+		if (value === null || value === undefined) continue;
+		formData.append(key, value as FormDataEntryValue);
+	}
+
+	return formData;
+}
+
 export function prefixFieldName(fieldName: string, prefix: string, objectName?: string) {
 	if (fieldName === '') {
 		return '';
