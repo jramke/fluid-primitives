@@ -23,6 +23,18 @@ type FormContextSetter = {
 type FormInputValue = FormDataEntryValue | FormDataEntryValue[] | boolean | null | undefined;
 type FieldErrorCause = 'onBlur' | 'onChange' | 'onSubmit';
 
+function createDefaultFieldMeta() {
+	return {
+		isTouched: false,
+		isBlurred: false,
+		isDirty: false,
+		isValidating: false,
+		errorMap: {},
+		errorSourceMap: {},
+		_arrayVersion: 0,
+	};
+}
+
 function syncContextFromFormApi(context: FormContextSetter, formApi: FormCoreApi) {
 	context.set('values', objectToFormData(formApi.state.values as Record<string, unknown>));
 }
@@ -33,15 +45,8 @@ function syncFormApiErrors(formApi: FormCoreApi, errors: FormErrors, cause: Fiel
 	for (const fieldName of fieldNames) {
 		const messages = errors[fieldName]?.messages;
 		formApi.setFieldMeta(fieldName, prev => ({
-			...(prev ?? {
-				isTouched: false,
-				isBlurred: false,
-				isDirty: false,
-				isValidating: false,
-				errorMap: {},
-				errorSourceMap: {},
-				_arrayVersion: 0,
-			}),
+			...createDefaultFieldMeta(),
+			...(prev ?? {}),
 			errorMap: {
 				...(prev?.errorMap ?? {}),
 				[cause]: messages && messages.length > 0 ? messages : undefined,
@@ -355,6 +360,7 @@ export const machine = createMachine<FormSchema>({
 				// Mark field as touched
 				if (formApi) {
 					formApi.setFieldMeta(name, prev => ({
+						...createDefaultFieldMeta(),
 						...(prev ?? {}),
 						isTouched: true,
 						isBlurred: true,
@@ -452,6 +458,7 @@ export const machine = createMachine<FormSchema>({
 					syncFormApiErrors(formApi, {}, 'onSubmit');
 					for (const fieldName of Object.keys(formApi.state.fieldMeta)) {
 						formApi.setFieldMeta(fieldName, prev => ({
+							...createDefaultFieldMeta(),
 							...(prev ?? {}),
 							isTouched: false,
 							isBlurred: false,
