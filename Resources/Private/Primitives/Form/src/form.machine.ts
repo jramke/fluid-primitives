@@ -81,6 +81,21 @@ function toFormInputRecord(formData: FormData): Record<string, FormInputValue> {
 	return out;
 }
 
+function isEqualFormInputValue(currentValue: FormInputValue, nextValue: FormInputValue) {
+	if (Array.isArray(currentValue) || Array.isArray(nextValue)) {
+		if (!Array.isArray(currentValue) || !Array.isArray(nextValue)) {
+			return false;
+		}
+
+		return (
+			currentValue.length === nextValue.length &&
+			currentValue.every((value, index) => value === nextValue[index])
+		);
+	}
+
+	return currentValue === nextValue;
+}
+
 function syncFormApiValues(formApi: FormCoreApi, values: Record<string, FormInputValue>) {
 	const currentValues = formApi.state.values as Record<string, FormInputValue>;
 	const keys = new Set([...Object.keys(currentValues), ...Object.keys(values)]);
@@ -89,7 +104,7 @@ function syncFormApiValues(formApi: FormCoreApi, values: Record<string, FormInpu
 		const hasNextValue = Object.prototype.hasOwnProperty.call(values, key);
 		const nextValue = hasNextValue ? values[key] : undefined;
 		const currentValue = currentValues[key];
-		if (JSON.stringify(currentValue) === JSON.stringify(nextValue)) continue;
+		if (isEqualFormInputValue(currentValue, nextValue)) continue;
 		formApi.setFieldValue(key, nextValue, {
 			dontValidate: true,
 			dontUpdateMeta: true,

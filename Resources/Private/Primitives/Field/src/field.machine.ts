@@ -36,11 +36,11 @@ export const machine = createMachine<FieldSchema>({
 			fieldApi: bindable(() => ({
 				defaultValue: null as ReturnType<typeof createFieldApi>['fieldApi'],
 				hash: value =>
-					JSON.stringify({
-						errors: value?.state.meta.errors ?? [],
-						isTouched: value?.state.meta.isTouched ?? false,
-						isDirty: value?.state.meta.isDirty ?? false,
-					}),
+					[
+						value?.state.meta.isTouched ? '1' : '0',
+						value?.state.meta.isDirty ? '1' : '0',
+						...(value?.state.meta.errors ?? []).map(error => String(error)),
+					].join('\u0000'),
 			})),
 			fieldApiUnsubscribe: bindable(() => ({ defaultValue: null as (() => void) | null })),
 			describeIds: bindable<string | undefined>(() => ({ defaultValue: undefined })),
