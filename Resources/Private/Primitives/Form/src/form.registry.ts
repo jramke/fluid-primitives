@@ -1,24 +1,43 @@
 import type { Machine } from '../../../Client';
+import type { TanstackForm } from './form.types';
 
 export type FormMachine = Machine<any>;
 export type FieldMachine = Machine<any>;
 
 type RegistryEntry = {
 	machine: FormMachine;
+	/** The TanStack form instance backing this form. */
+	getForm: () => TanstackForm | null;
 	fields: Map<string, FieldMachine>;
 	expectedFieldCount: number;
 };
 const registry = new WeakMap<HTMLFormElement, RegistryEntry>();
 
-export function registerFormMachine(form: HTMLFormElement | null, service: FormMachine) {
+export const FORM_REGISTERED_EVENT = 'fluid-primitives:form:registered';
+
+export function registerFormMachine(
+	form: HTMLFormElement | null,
+	machine: FormMachine,
+	getForm: () => TanstackForm | null
+) {
 	if (!form) return;
 	registry.set(form, {
-		machine: service,
+		machine,
+		getForm,
 		fields: new Map(),
 		expectedFieldCount:
 			form.querySelectorAll('[data-scope="field"][data-part="root"]').length || 0,
 	});
-	form.dispatchEvent(new CustomEvent('fluid-primitives:form:registered', { bubbles: true }));
+}
+
+/**
+ * Signals that the form's TanStack instance is created and ready. Fields wait
+ * for this before mounting their own `FieldApi`. Dispatched separately from
+ * registration because the machine creates the TanStack form lazily on start.
+ */
+export function markFormReady(form: HTMLFormElement | null) {
+	if (!form) return;
+	form.dispatchEvent(new CustomEvent(FORM_REGISTERED_EVENT, { bubbles: true }));
 }
 
 export function registerFieldMachineForForm(el: Element | null, fieldMachine: FieldMachine) {
@@ -41,14 +60,14 @@ export function registerFieldMachineForForm(el: Element | null, fieldMachine: Fi
 		const entry = registry.get(form);
 		if (!entry) return;
 		handleEntry(entry);
-		form.removeEventListener('fluid-primitives:form:registered', handler);
+		form.removeEventListener(FORM_REGISTERED_EVENT, handler);
 	};
 
 	const entry = registry.get(form);
 	if (entry) {
 		handleEntry(entry);
 	} else {
-		form.addEventListener('fluid-primitives:form:registered', handler);
+		form.addEventListener(FORM_REGISTERED_EVENT, handler);
 	}
 }
 
@@ -59,8 +78,7 @@ export function unregisterFormMachine(form: HTMLFormElement) {
 function resolveElToForm(el: Element | null): HTMLFormElement | null {
 	if (!el) return null;
 	if (el instanceof HTMLFormElement) return el;
-	const form = el.closest('form') as HTMLFormElement | null;
-	return form;
+	return el.closest('form') as HTMLFormElement | null;
 }
 
 export function getFormMachineFor(el: Element | null): FormMachine | undefined {
@@ -70,11 +88,17 @@ export function getFormMachineFor(el: Element | null): FormMachine | undefined {
 	return registry.get(form)?.machine;
 }
 
+/** Returns the TanStack form instance for the form containing `el`. */
+export function getTanstackFormFor(el: Element | null): TanstackForm | null {
+	if (!el) return null;
+	const form = resolveElToForm(el);
+	if (!form) return null;
+	return registry.get(form)?.getForm() ?? null;
+}
+
 export function getFieldMachinesFor(el: Element | null): Map<string, FieldMachine> {
 	if (!el) return new Map();
 	const form = resolveElToForm(el);
 	if (!form) return new Map();
-	const entry = registry.get(form);
-	if (!entry) return new Map();
-	return entry.fields;
+	return registry.get(form)?.fields ?? new Map();
 }

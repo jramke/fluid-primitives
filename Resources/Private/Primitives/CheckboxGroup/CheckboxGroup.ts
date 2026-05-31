@@ -37,8 +37,13 @@ export class CheckboxGroup extends FieldAwareComponent<CheckboxGroupProps, Check
 		return connect(this.machine.service, normalizeProps);
 	}
 
+	getFieldValue() {
+		return this.api.value ?? [];
+	}
+
 	render() {
 		this.subscribeToFieldService();
+		this.syncValueToField();
 
 		const rootEl = this.getElement('root');
 		if (rootEl) {

@@ -1,28 +1,41 @@
+import { FormApi as TanstackFormApi } from '@tanstack/form-core';
 import { createMachine } from '@zag-js/core';
 import * as dom from './form.dom';
-import type { FormDirty, FormErrors, FormSchema, FormTouched } from './form.types';
-import { ValidationError } from './form.types';
+import { markFormReady } from './form.registry';
+import type { FormApi, FormSchema, FormValues, TanstackForm } from './form.types';
+import { SubmitError, ValidationError } from './form.types';
 import {
+	clearServerFieldErrors,
 	errorsFromServer,
-	getFormDataValue,
-	getInputValue,
 	prefixFieldName,
-	validateWithSchema,
+	setServerFieldError,
+	stripArraySuffix,
+	valuesToFormData,
 } from './form.utils';
 
 export const machine = createMachine<FormSchema>({
 	// debug: true,
+	// props(params) {
+	// 	return {
+	// 		id: uid(),
+	// 		validationLogic: revalidateLogic({ mode: 'blur', modeAfterSubmission: 'change' }),
+	// 		...params,
+	// 	};
+	// },
 	initialState() {
 		return 'ready';
 	},
 
 	context({ bindable }) {
 		return {
-			values: bindable(() => ({ defaultValue: new FormData() })),
-			initialValues: bindable(() => ({ defaultValue: new FormData() })),
-			errors: bindable(() => ({ defaultValue: {} as FormErrors })),
-			dirty: bindable(() => ({ defaultValue: {} as FormDirty })),
-			touched: bindable(() => ({ defaultValue: {} as FormTouched })),
+			storeVersion: bindable<number>(() => ({ defaultValue: 0 })),
+		};
+	},
+
+	refs() {
+		return {
+			form: null as TanstackForm | null,
+			submitContext: null as { api?: FormApi; event?: any } | null,
 		};
 	},
 
@@ -35,99 +48,100 @@ export const machine = createMachine<FormSchema>({
 	},
 
 	on: {
-		SUBMIT: { target: 'submitting', actions: ['validateAll'] },
-		VALIDATE: { actions: ['validateAll'] },
-		VALIDATE_FIELD: { actions: ['validateField'] },
+		SUBMIT: { target: 'submitting', actions: ['runSubmit'] },
 		INVALID: { target: 'invalid' },
-		INPUT: { actions: ['handleInput'] },
-		BLUR: { actions: ['handleBlur'] },
 		RESET: { target: 'ready', actions: ['resetForm'] },
 		ERROR: { target: 'error' },
-		SUCCESS: { target: 'success', actions: ['clearErrors'] },
+		SUCCESS: { target: 'success' },
 	},
 
-	entry: ['setupFormListeners'],
+	entry: ['createTanstackForm'],
+
+	effects: ['subscribeToStore'],
 
 	implementations: {
+		effects: {
+			subscribeToStore({ refs, context }) {
+				const form = refs.get('form');
+				if (!form) return;
+				const subscription = form.store.subscribe(() => {
+					// mirror TanStack reactivity into the zag render loop
+					context.set('storeVersion', context.get('storeVersion') + 1);
+				});
+				return () => subscription.unsubscribe();
+			},
+		},
+
 		actions: {
-			validateAll({ context, send, prop, state, action, event, scope }) {
-				const submitting = state.matches('submitting');
-				const schema = prop('schema');
+			createTanstackForm({ refs, scope, prop }) {
+				if (refs.get('form')) return;
 
-				if (schema) {
-					const formData = context.get('values');
-					const errs = validateWithSchema(schema, formData);
-					context.set('errors', errs);
+				const formEl = dom.getFormEl(scope);
+				// Default values are seeded by each Field/primitive on first render
+				// (via `pushFieldValue`). Starting empty avoids string-coercing the
+				// server-rendered DOM into JS-typed values too early.
+				const form = new TanstackFormApi({
+					defaultValues: {},
+					asyncDebounceMs: prop('asyncDebounceMs'),
+					validationLogic: prop('validationLogic'),
+					validators: prop('validators') as any,
+					// TanStack drives the whole submit lifecycle. Our user-facing
+					// `onSubmit` runs here, after field + form validation has passed.
+					onSubmit: async ({ value }) => {
+						const onSubmit = prop('onSubmit');
+						if (!onSubmit) return;
 
-					if (Object.keys(errs).length > 0) {
-						send({ type: 'INVALID' });
-						if (submitting) {
-							action(['focusFirstInvalid']);
-						}
-						return;
-					}
-				}
+						const submitContext = refs.get('submitContext');
+						const result = await onSubmit({
+							value: value as FormValues,
+							formData: valuesToFormData(value as FormValues),
+							api: submitContext?.api as FormApi,
+							event: submitContext?.event as any,
+							post: createPost(scope, prop('objectName'), value as FormValues),
+						});
 
-				if (!submitting) {
-					state.set('ready');
-					return;
-				}
+						// A `false` return signals a generic (non-validation) error.
+						if (result === false) throw new SubmitError();
+					},
+				});
+				form.mount();
 
-				const onSubmit = prop('onSubmit');
-				if (!onSubmit) {
+				refs.set('form', form as unknown as TanstackForm);
+
+				// The TanStack form now exists; let waiting fields connect to it.
+				markFormReady(formEl);
+			},
+
+			runSubmit({ refs, scope, send, event }) {
+				const form = refs.get('form');
+				if (!form) {
 					send({ type: 'SUCCESS' });
 					return;
 				}
 
-				// Async IIFE to handle both sync and async onSubmit with single try/catch
+				refs.set('submitContext', {
+					api: event.detail?.api,
+					event: event.detail?.event,
+				});
+
 				(async () => {
 					try {
-						const result = await onSubmit({
-							formData: context.get('values'),
-							api: event.detail.api,
-							event: event.detail.event,
-							post: async (url: string, data: FormData): Promise<Response> => {
-								const prefixedData = new FormData();
-								const objectName = prop('objectName');
-								const formEl = dom.getFormEl(scope);
-								const prefix = formEl?.getAttribute('data-field-name-prefix') || '';
+						await form.handleSubmit();
 
-								for (const [key, value] of data.entries()) {
-									if (key.includes(prefix)) {
-										prefixedData.append(key, value);
-										continue;
-									}
-									prefixedData.append(
-										prefixFieldName(key, prefix, objectName),
-										value
-									);
-								}
+						console.log(form.state);
 
-								const response = await fetch(url, {
-									method: 'POST',
-									body: prefixedData,
-								});
-
-								if (response.status === 422) {
-									const errors = await response.json();
-									const formErrors = errorsFromServer(errors, objectName, data);
-									throw new ValidationError(formErrors);
-								}
-
-								return response;
-							},
-						});
-
-						if (result) {
+						if (form.state.isSubmitSuccessful) {
 							send({ type: 'SUCCESS' });
 						} else {
-							send({ type: 'ERROR' });
+							// Validation failed inside handleSubmit (no error thrown).
+							send({ type: 'INVALID' });
+							focusFirstInvalid(scope, form);
 						}
 					} catch (error) {
 						if (error instanceof ValidationError) {
-							context.set('errors', error.errors);
+							applyServerErrors(form, error.errors);
 							send({ type: 'INVALID' });
-							action(['focusFirstInvalid']);
+							focusFirstInvalid(scope, form);
 							return;
 						}
 						send({ type: 'ERROR' });
@@ -135,160 +149,100 @@ export const machine = createMachine<FormSchema>({
 				})();
 			},
 
-			validateField({ context, prop, event }) {
-				const schema = prop('schema');
-				if (!schema) return;
-
-				let fieldName = event.detail?.fieldName;
-				if (!fieldName) return;
-
-				const formData = context.get('values');
-				const currentErrors = context.get('errors');
-				const existingError = currentErrors[fieldName];
-
-				const currentValue = getFormDataValue(formData, fieldName);
-
-				// Skip validation if the value hasn't changed from when the error was triggered
-				// This preserves server-side validation errors until the user actually changes the value
-				if (existingError) {
-					const errorValue = existingError.value;
-					if (JSON.stringify(currentValue) === JSON.stringify(errorValue)) {
-						return;
-					}
+			resetForm({ refs, scope, event }) {
+				const formEl = dom.getFormEl(scope);
+				if (formEl && !event?.detail?.omitManualReset) {
+					formEl.reset();
 				}
 
-				const allErrors = validateWithSchema(schema, formData);
-
-				// Update only errors for the specific field
-				const updatedErrors = { ...currentErrors };
-
-				const fieldNameWithoutSuffix = fieldName.replace(/\[\]$/, '');
-
-				if (allErrors[fieldNameWithoutSuffix]) {
-					updatedErrors[fieldNameWithoutSuffix] = allErrors[fieldNameWithoutSuffix];
-				} else {
-					delete updatedErrors[fieldNameWithoutSuffix];
-				}
-
-				context.set('errors', updatedErrors);
-			},
-
-			handleInput({ context, event, send }) {
-				const e = event as any;
-				const target = e?.detail?.target ?? e?.target ?? e?.currentTarget;
-				const name: string | undefined = target?.name;
-				if (!name) return;
-
-				const value = e?.detail?.value ?? getInputValue(target);
-				// console.log('input', value);
-
-				const values = context.get('values');
-				values.set(name, value);
-				context.set('values', values);
-
-				const initial = context.get('initialValues').get(name);
-				const dirty = { ...context.get('dirty') };
-				dirty[name] = JSON.stringify(values.get(name)) !== JSON.stringify(initial);
-				context.set('dirty', dirty);
-
-				// Revalidate if field has errors OR if any validation has occurred
-				// This ensures errors clear immediately when fixed
-				const currentErrors = context.get('errors');
-				const touched = context.get('touched');
-				const hasFieldError = !!currentErrors[name];
-				const fieldTouched = !!touched[name];
-
-				if (hasFieldError || fieldTouched) {
-					send({ type: 'VALIDATE_FIELD', detail: { fieldName: name } });
-				}
-			},
-
-			handleBlur({ context, send, prop, event }) {
-				const e = event as any;
-				const target = e?.detail?.target;
-				let name: string | undefined = target?.name;
-				if (!name) {
-					name =
-						target?.closest('[data-scope="field"]')?.getAttribute('name') || undefined;
-				}
-
-				if (!name) return;
-
-				// Mark field as touched
-				const touched = { ...context.get('touched') };
-				touched[name] = true;
-				context.set('touched', touched);
-
-				// Get current form values from DOM to ensure we have latest
-				const form = target.form as HTMLFormElement | null;
+				// Reset to no values; primitives will reseed on the next render via
+				// `pushFieldValue` once the DOM has been reset.
+				const form = refs.get('form');
 				if (form) {
-					const values = new FormData(form);
-					context.set('values', values);
-				}
-
-				// Validate the field on blur
-				const schema = prop('schema');
-				if (schema) {
-					send({ type: 'VALIDATE_FIELD', detail: { fieldName: name } });
-				}
-			},
-
-			resetForm({ context, scope, event }) {
-				const form = dom.getFormEl(scope);
-
-				if (form && !event?.detail?.omitManualReset) {
+					clearServerFieldErrors(form);
 					form.reset();
 				}
-
-				const initial = form ? new FormData(form) : context.get('initialValues');
-
-				context.set('values', initial);
-				context.set('initialValues', initial);
-				context.set('errors', {});
-				context.set('touched', {});
-				context.set('dirty', {});
-			},
-
-			focusFirstInvalid({ context, scope }) {
-				const errors = context.get('errors');
-				const firstKey = Object.keys(errors)[0];
-				if (!firstKey) return;
-
-				const form = dom.getFormEl(scope);
-				if (!form) return;
-
-				const invalidEl = form.querySelector(
-					`[name="${CSS.escape(firstKey)}"]`
-				) as HTMLElement | null;
-				invalidEl?.focus();
-				if (
-					invalidEl instanceof HTMLInputElement ||
-					invalidEl instanceof HTMLTextAreaElement
-				) {
-					invalidEl.select();
-				}
-			},
-
-			setupFormListeners({ scope, send }) {
-				const form = dom.getFormEl(scope);
-				if (!form) return;
-
-				// We need to listen to the change event to capture changes in select elements or checkboxes
-				// The input event does not always fire for these elements in all browsers
-				// Also zag-js spreadProps maps onChange to onInput so we need to manually listen to change events here
-				form.addEventListener(
-					'change',
-					event => {
-						send({ type: 'INPUT', detail: { target: event.target } });
-					},
-					true
-				);
-			},
-
-			clearErrors({ context }) {
-				context.set('errors', {});
-				context.set('touched', {});
 			},
 		},
 	},
 });
+
+/**
+ * Builds the `post()` helper passed to the user `onSubmit`. Adds the Extbase
+ * field-name-prefix before sending and throws a {@link ValidationError} on 422.
+ */
+function createPost(scope: any, objectName: string | undefined, values: FormValues) {
+	return async (url: string, data: FormData): Promise<Response> => {
+		const prefixedData = new FormData();
+		const formElement = dom.getFormEl(scope);
+		const prefix = formElement?.getAttribute('data-field-name-prefix') || '';
+
+		for (const [key, value] of data.entries()) {
+			if (prefix && key.includes(prefix)) {
+				prefixedData.append(key, value);
+				continue;
+			}
+			prefixedData.append(prefixFieldName(key, prefix, objectName), value);
+		}
+
+		// Forward any server-injected hidden fields (Extbase `__trustedProperties`,
+		// `__referrer`, ...) that don't live in the TanStack form values.
+		appendServerHiddenFields(prefixedData, formElement);
+
+		const response = await fetch(url, { method: 'POST', body: prefixedData });
+
+		if (response.status === 422) {
+			const serverErrors = await response.json();
+			throw new ValidationError(errorsFromServer(serverErrors, objectName, values));
+		}
+
+		return response;
+	};
+}
+
+/**
+ * Forwards Extbase's server-injected hidden fields (`__trustedProperties`,
+ * `__referrer[...]`, ...) into the FormData. Their `name` attribute is already
+ * fully prefixed by the server, so we append them as-is without re-prefixing.
+ */
+function appendServerHiddenFields(formData: FormData, formEl: HTMLFormElement | null) {
+	if (!formEl) return;
+	const hiddenInputs = formEl.querySelectorAll<HTMLInputElement>(
+		'input[type="hidden"][name^="__"], input[type="hidden"][name*="[__"]'
+	);
+	for (const input of hiddenInputs) {
+		formData.append(input.name, input.value);
+	}
+}
+
+/** Writes server-side errors into the TanStack form's per-field error maps. */
+function applyServerErrors(form: TanstackForm, errors: Record<string, { messages: string[] }>) {
+	for (const name in errors) {
+		const key = stripArraySuffix(name);
+		const error = errors[name];
+		setServerFieldError(form, key, error);
+		form.setFieldMeta(key as never, prev => ({
+			...prev,
+			isTouched: true,
+			errorMap: { ...prev.errorMap, onServer: error.messages.join(' ') },
+			errorSourceMap: { ...prev.errorSourceMap, onServer: 'form' },
+		}));
+	}
+}
+
+function focusFirstInvalid(scope: any, form: TanstackForm) {
+	const fieldMeta = form.state.fieldMeta as Record<string, { errors: unknown[] }>;
+	const firstKey = Object.keys(fieldMeta).find(key => (fieldMeta[key]?.errors?.length ?? 0) > 0);
+	if (!firstKey) return;
+
+	const formEl = dom.getFormEl(scope);
+	if (!formEl) return;
+
+	const name = stripArraySuffix(firstKey);
+	const invalidEl = (formEl.querySelector(`[name="${CSS.escape(name)}"]`) ||
+		formEl.querySelector(`[name="${CSS.escape(`${name}[]`)}"]`)) as HTMLElement | null;
+	invalidEl?.focus();
+	if (invalidEl instanceof HTMLInputElement || invalidEl instanceof HTMLTextAreaElement) {
+		invalidEl.select();
+	}
+}

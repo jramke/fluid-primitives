@@ -25,8 +25,13 @@ export class RadioGroup extends FieldAwareComponent<radioGroup.Props, radioGroup
 		return radioGroup.connect(this.machine.service, normalizeProps);
 	}
 
+	getFieldValue() {
+		return this.api.value ?? '';
+	}
+
 	render() {
 		this.subscribeToFieldService();
+		this.syncValueToField();
 
 		const rootEl = this.getElement('root');
 		if (rootEl)

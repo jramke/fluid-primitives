@@ -41,8 +41,15 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
 		return select.connect(this.machine.service, normalizeProps);
 	}
 
+	getFieldValue() {
+		const value = this.api.value ?? [];
+		// Non-multiple selects report a single scalar to match schema/server.
+		return this.machine.prop('multiple') ? value : (value[0] ?? '');
+	}
+
 	render = () => {
 		this.subscribeToFieldService();
+		this.syncValueToField();
 
 		const rootEl = this.getElement('root');
 		if (rootEl) this.spreadProps(rootEl, this.api.getRootProps());

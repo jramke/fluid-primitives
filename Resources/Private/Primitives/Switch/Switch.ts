@@ -31,8 +31,14 @@ export class Switch extends FieldAwareComponent<zagSwitch.Props, zagSwitch.Api> 
 		return zagSwitch.connect(this.machine.service, normalizeProps);
 	}
 
+	getFieldValue() {
+		// JS-typed boolean. The FormData serializer maps `true` -> '1' on submit.
+		return this.api.checked === true;
+	}
+
 	render() {
 		this.subscribeToFieldService();
+		this.syncValueToField();
 
 		const rootEl = this.getElement('root');
 		if (rootEl) this.spreadProps(rootEl, this.api.getRootProps());

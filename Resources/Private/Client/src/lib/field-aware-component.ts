@@ -1,5 +1,6 @@
 import type { Service } from '@zag-js/core';
 import { Component } from '.';
+import { blurField, pushFieldValue } from '../../../Primitives/Field/src/field.machine';
 import {
 	getFieldMachineFor,
 	type FieldMachine,
@@ -21,6 +22,40 @@ export abstract class FieldAwareComponent<Props, Api> extends Component<Props, A
 	protected closestField: HTMLElement | null = null;
 
 	protected abstract propsWithField(props: Partial<Props>, fieldMachine: FieldMachine): Props;
+
+	/**
+	 * Return the primitive's current value so it can be pushed into the bound
+	 * TanStack field. Override in primitives that participate in form validation
+	 * (NumberInput, Select, RadioGroup, Checkbox, ...). Returning `undefined`
+	 * (the default) opts out of value syncing.
+	 */
+	protected getFieldValue(): unknown {
+		return undefined;
+	}
+
+	private seededFieldValue = false;
+
+	/**
+	 * Pushes the primitive's current value into the bound TanStack field. The
+	 * first push (initial render) only seeds the value; subsequent pushes from
+	 * user interaction mark the field touched and run change validators.
+	 */
+	protected syncValueToField() {
+		if (!this.fieldMachine) return;
+		const value = this.getFieldValue();
+		if (value === undefined) return;
+
+		const wrote = pushFieldValue(this.fieldMachine, value, this.seededFieldValue);
+		if (wrote || this.fieldMachine.refs?.get('field')) {
+			this.seededFieldValue = true;
+		}
+	}
+
+	/** Marks the bound TanStack field as blurred. */
+	protected blurFieldValue() {
+		if (!this.fieldMachine) return;
+		blurField(this.fieldMachine);
+	}
 
 	protected getClosestField() {
 		return (

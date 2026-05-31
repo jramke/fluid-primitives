@@ -133,9 +133,18 @@ export class Checkbox extends FieldAwareComponent<checkbox.Props, checkbox.Api> 
 		return checkbox.connect(this.machine.service, normalizeProps);
 	}
 
+	getFieldValue() {
+		// When inside a CheckboxGroup, the group reports the value array instead.
+		if (this.getClosestCheckboxGroup()) return undefined;
+		// Boolean carries best in JS-land; the FormData serializer maps `true` to
+		// the input's `value` attribute (default '1') and omits `false`.
+		return this.api.checked === true;
+	}
+
 	render() {
 		this.subscribeToFieldService();
 		this.subscribeToCheckboxGroup();
+		this.syncValueToField();
 
 		const rootEl = this.getElement('root');
 		if (rootEl) this.spreadProps(rootEl, this.api.getRootProps());
@@ -153,6 +162,16 @@ export class Checkbox extends FieldAwareComponent<checkbox.Props, checkbox.Api> 
 		if (hiddenInputEl) {
 			const mergedProps = mergeProps(this.api.getHiddenInputProps(), {
 				'aria-describedby': this.fieldMachine?.context.get('describeIds') || undefined,
+				...(!!this.fieldMachine
+					? {
+							onBlur: (e: FocusEvent) => {
+								// TODO: dont trigger blur when focusing another checkbox in the same group
+								// TODO: implement other primitives on blurs
+								console.log(e);
+								this.blurFieldValue();
+							},
+						}
+					: {}), // trigger on blur when in form/field
 			});
 			this.spreadProps(hiddenInputEl, mergedProps);
 		}

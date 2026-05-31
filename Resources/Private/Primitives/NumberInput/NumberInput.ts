@@ -31,8 +31,18 @@ export class NumberInput extends FieldAwareComponent<numberInput.Props, numberIn
 		return numberInput.connect(this.machine.service, normalizeProps);
 	}
 
+	getFieldValue() {
+		// JS-typed number when parseable; '' for an empty input. Matches native
+		// form-submission semantics after FormData serialization.
+		const raw = this.api.value;
+		if (raw === '' || raw === undefined || raw === null) return '';
+		const n = this.api.valueAsNumber;
+		return Number.isNaN(n) ? raw : n;
+	}
+
 	render() {
 		this.subscribeToFieldService();
+		this.syncValueToField();
 
 		const rootEl = this.getElement('root');
 		if (rootEl) this.spreadProps(rootEl, this.api.getRootProps());
