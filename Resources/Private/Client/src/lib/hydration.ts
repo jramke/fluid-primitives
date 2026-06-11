@@ -70,22 +70,18 @@ export function mount(
 	});
 }
 
-export function mountControlled(
+export function mountControlled<T>(
 	componentName: string,
 	rootId: string,
-	callback: (
-		data: ComponentHydrationData & { createHydrator: () => ComponentHydrator }
-	) => Component<unknown, unknown> | void
-) {
+	callback: (data: ComponentHydrationData & { createHydrator: () => ComponentHydrator }) => T
+): T | undefined {
 	const hydrationData = getHydrationData(componentName, rootId);
-	if (!hydrationData) return;
+	if (!hydrationData) return undefined;
 
-	const instance = callback({
+	return callback({
 		...hydrationData,
 		createHydrator: () => new ComponentHydrator(componentName, rootId, hydrationData.props.ids),
 	});
-
-	return instance;
 }
 
 export class ComponentHydrator {
