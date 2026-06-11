@@ -53,6 +53,10 @@ export interface FormSchema {
 		dirty: FormDirty;
 		touched: FormTouched;
 	};
+	refs: {
+		submitCount: number;
+		serverErrors: FormErrors;
+	};
 	state: 'invalid' | 'ready' | 'submitting' | 'success' | 'error';
 	event: EventObject;
 	action: string;

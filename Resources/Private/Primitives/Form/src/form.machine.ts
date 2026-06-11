@@ -1,17 +1,22 @@
 import { createMachine } from '@zag-js/core';
+import { getClosestFieldName, isFocusMovingWithinSameField } from '../../Field/src/field.dom';
 import * as dom from './form.dom';
 import type { FormDirty, FormErrors, FormSchema, FormTouched } from './form.types';
 import { ValidationError } from './form.types';
 import {
 	errorsFromServer,
-	getFormDataValue,
+	getErrorForValue,
+	getErrorsForCurrentValues,
+	getFieldElement,
+	getFieldValue,
 	getInputValue,
+	normalizeFieldName,
 	prefixFieldName,
 	validateWithSchema,
+	withCurrentValues,
 } from './form.utils';
 
 export const machine = createMachine<FormSchema>({
-	// debug: true,
 	initialState() {
 		return 'ready';
 	},
@@ -23,6 +28,13 @@ export const machine = createMachine<FormSchema>({
 			errors: bindable(() => ({ defaultValue: {} as FormErrors })),
 			dirty: bindable(() => ({ defaultValue: {} as FormDirty })),
 			touched: bindable(() => ({ defaultValue: {} as FormTouched })),
+		};
+	},
+
+	refs() {
+		return {
+			submitCount: 0,
+			serverErrors: {} as FormErrors,
 		};
 	},
 
@@ -40,7 +52,8 @@ export const machine = createMachine<FormSchema>({
 		VALIDATE_FIELD: { actions: ['validateField'] },
 		INVALID: { target: 'invalid' },
 		INPUT: { actions: ['handleInput'] },
-		BLUR: { actions: ['handleBlur'] },
+		FIELD_FOCUS: { actions: ['handleFocus'] },
+		FIELD_BLUR: { actions: ['handleBlur'] },
 		RESET: { target: 'ready', actions: ['resetForm'] },
 		ERROR: { target: 'error' },
 		SUCCESS: { target: 'success', actions: ['clearErrors'] },
@@ -50,22 +63,34 @@ export const machine = createMachine<FormSchema>({
 
 	implementations: {
 		actions: {
-			validateAll({ context, send, prop, state, action, event, scope }) {
+			validateAll({ context, send, prop, state, action, event, scope, refs }) {
 				const submitting = state.matches('submitting');
 				const schema = prop('schema');
+				const formData = context.get('values');
+
+				if (submitting) {
+					const submitCount = refs.get('submitCount');
+					refs.set('submitCount', submitCount + 1);
+				}
+
+				const cachedServerErrors = getErrorsForCurrentValues(
+					refs.get('serverErrors'),
+					formData
+				);
+				let errs = cachedServerErrors;
 
 				if (schema) {
-					const formData = context.get('values');
-					const errs = validateWithSchema(schema, formData);
-					context.set('errors', errs);
+					errs = { ...cachedServerErrors, ...validateWithSchema(schema, formData) };
+				}
 
-					if (Object.keys(errs).length > 0) {
-						send({ type: 'INVALID' });
-						if (submitting) {
-							action(['focusFirstInvalid']);
-						}
-						return;
+				context.set('errors', errs);
+
+				if (Object.keys(errs).length > 0) {
+					send({ type: 'INVALID' });
+					if (submitting) {
+						action(['focusFirstInvalid']);
 					}
+					return;
 				}
 
 				if (!submitting) {
@@ -125,7 +150,9 @@ export const machine = createMachine<FormSchema>({
 						}
 					} catch (error) {
 						if (error instanceof ValidationError) {
-							context.set('errors', error.errors);
+							const errors = withCurrentValues(error.errors, context.get('values'));
+							refs.set('serverErrors', { ...refs.get('serverErrors'), ...errors });
+							context.set('errors', errors);
 							send({ type: 'INVALID' });
 							action(['focusFirstInvalid']);
 							return;
@@ -135,39 +162,42 @@ export const machine = createMachine<FormSchema>({
 				})();
 			},
 
-			validateField({ context, prop, event }) {
-				const schema = prop('schema');
-				if (!schema) return;
-
-				let fieldName = event.detail?.fieldName;
+			validateField({ context, prop, event, refs }) {
+				const fieldName = event.detail?.fieldName;
 				if (!fieldName) return;
+				const normalizedFieldName = normalizeFieldName(fieldName);
 
 				const formData = context.get('values');
 				const currentErrors = context.get('errors');
-				const existingError = currentErrors[fieldName];
+				const currentValue = getFieldValue(formData, fieldName);
+				const updatedErrors = { ...currentErrors };
+				const serverError = getErrorForValue(
+					refs.get('serverErrors'),
+					normalizedFieldName,
+					currentValue
+				);
 
-				const currentValue = getFormDataValue(formData, fieldName);
+				if (serverError) {
+					updatedErrors[normalizedFieldName] = serverError;
+					context.set('errors', updatedErrors);
+					return;
+				}
 
-				// Skip validation if the value hasn't changed from when the error was triggered
-				// This preserves server-side validation errors until the user actually changes the value
-				if (existingError) {
-					const errorValue = existingError.value;
-					if (JSON.stringify(currentValue) === JSON.stringify(errorValue)) {
-						return;
-					}
+				delete updatedErrors[normalizedFieldName];
+
+				const schema = prop('schema');
+				if (!schema) {
+					context.set('errors', updatedErrors);
+					return;
 				}
 
 				const allErrors = validateWithSchema(schema, formData);
 
 				// Update only errors for the specific field
-				const updatedErrors = { ...currentErrors };
-
-				const fieldNameWithoutSuffix = fieldName.replace(/\[\]$/, '');
-
-				if (allErrors[fieldNameWithoutSuffix]) {
-					updatedErrors[fieldNameWithoutSuffix] = allErrors[fieldNameWithoutSuffix];
+				if (allErrors[normalizedFieldName]) {
+					updatedErrors[normalizedFieldName] = allErrors[normalizedFieldName];
 				} else {
-					delete updatedErrors[fieldNameWithoutSuffix];
+					delete updatedErrors[normalizedFieldName];
 				}
 
 				context.set('errors', updatedErrors);
@@ -180,7 +210,6 @@ export const machine = createMachine<FormSchema>({
 				if (!name) return;
 
 				const value = e?.detail?.value ?? getInputValue(target);
-				// console.log('input', value);
 
 				const values = context.get('values');
 				values.set(name, value);
@@ -191,33 +220,37 @@ export const machine = createMachine<FormSchema>({
 				dirty[name] = JSON.stringify(values.get(name)) !== JSON.stringify(initial);
 				context.set('dirty', dirty);
 
-				// Revalidate if field has errors OR if any validation has occurred
+				// Revalidate on input if field has errors OR if any validation has occurred
 				// This ensures errors clear immediately when fixed
 				const currentErrors = context.get('errors');
 				const touched = context.get('touched');
-				const hasFieldError = !!currentErrors[name];
-				const fieldTouched = !!touched[name];
+				const normalizedName = normalizeFieldName(name);
+				const hasFieldError = !!currentErrors[normalizedName];
+				const fieldTouched = !!touched[normalizedName];
 
 				if (hasFieldError || fieldTouched) {
 					send({ type: 'VALIDATE_FIELD', detail: { fieldName: name } });
 				}
 			},
 
+			handleFocus({ context, event }) {
+				const e = event as any;
+				const target = e?.detail?.target ?? e?.target ?? e?.currentTarget;
+
+				const name = getClosestFieldName(target);
+				if (!name) return;
+
+				const touched = { ...context.get('touched') };
+				touched[normalizeFieldName(name)] = true;
+				context.set('touched', touched);
+			},
+
 			handleBlur({ context, send, prop, event }) {
 				const e = event as any;
 				const target = e?.detail?.target;
-				let name: string | undefined = target?.name;
-				if (!name) {
-					name =
-						target?.closest('[data-scope="field"]')?.getAttribute('name') || undefined;
-				}
 
+				const name = getClosestFieldName(target);
 				if (!name) return;
-
-				// Mark field as touched
-				const touched = { ...context.get('touched') };
-				touched[name] = true;
-				context.set('touched', touched);
 
 				// Get current form values from DOM to ensure we have latest
 				const form = target.form as HTMLFormElement | null;
@@ -227,13 +260,15 @@ export const machine = createMachine<FormSchema>({
 				}
 
 				// Validate the field on blur
+				if (isFocusMovingWithinSameField(target, e?.detail?.relatedTarget)) return;
+
 				const schema = prop('schema');
-				if (schema) {
+				if (schema || context.get('errors')[normalizeFieldName(name)]) {
 					send({ type: 'VALIDATE_FIELD', detail: { fieldName: name } });
 				}
 			},
 
-			resetForm({ context, scope, event }) {
+			resetForm({ context, scope, event, refs }) {
 				const form = dom.getFormEl(scope);
 
 				if (form && !event?.detail?.omitManualReset) {
@@ -245,6 +280,7 @@ export const machine = createMachine<FormSchema>({
 				context.set('values', initial);
 				context.set('initialValues', initial);
 				context.set('errors', {});
+				refs.set('serverErrors', {});
 				context.set('touched', {});
 				context.set('dirty', {});
 			},
@@ -257,9 +293,7 @@ export const machine = createMachine<FormSchema>({
 				const form = dom.getFormEl(scope);
 				if (!form) return;
 
-				const invalidEl = form.querySelector(
-					`[name="${CSS.escape(firstKey)}"]`
-				) as HTMLElement | null;
+				const invalidEl = getFieldElement(form, firstKey);
 				invalidEl?.focus();
 				if (
 					invalidEl instanceof HTMLInputElement ||
@@ -285,8 +319,9 @@ export const machine = createMachine<FormSchema>({
 				);
 			},
 
-			clearErrors({ context }) {
+			clearErrors({ context, refs }) {
 				context.set('errors', {});
+				refs.set('serverErrors', {});
 				context.set('touched', {});
 			},
 		},

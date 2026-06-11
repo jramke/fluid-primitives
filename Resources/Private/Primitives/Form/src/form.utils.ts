@@ -20,7 +20,7 @@ export function validateWithSchema(schema: ZodFormSchema, formData: FormData): F
 		if (!flat[key]) continue;
 		errors[key] = {
 			messages: flat[key],
-			value: getFormDataValue(formData, key),
+			value: getFieldValue(formData, key),
 		};
 	}
 
@@ -40,10 +40,98 @@ export function errorsFromServer(
 		}
 		out[newKey] = {
 			messages: responseErrors[key],
-			value: getFormDataValue(formData, newKey),
+			value: getFieldValue(formData, newKey),
 		};
 	}
 	return out;
+}
+
+export function normalizeFieldName(fieldName: string) {
+	return fieldName.replace(/\[\]$/, '');
+}
+
+export function withCurrentValues(errors: FormErrors, formData: FormData): FormErrors {
+	return Object.fromEntries(
+		Object.entries(errors).map(([fieldName, error]) => [
+			normalizeFieldName(fieldName),
+			{
+				...error,
+				value: error.value ?? getFieldValue(formData, fieldName),
+			},
+		])
+	);
+}
+
+export function getErrorsForCurrentValues(
+	serverErrors: FormErrors,
+	formData: FormData
+): FormErrors {
+	const errors: FormErrors = {};
+
+	for (const fieldName in serverErrors) {
+		const currentValue = getFieldValue(formData, fieldName);
+		const error = getErrorForValue(serverErrors, fieldName, currentValue);
+		if (error) {
+			errors[fieldName] = error;
+		}
+	}
+
+	return errors;
+}
+
+export function getErrorForValue(
+	errors: FormErrors,
+	fieldName: string,
+	currentValue: FormDataEntryValue | FormDataEntryValue[] | null
+) {
+	const error = errors[normalizeFieldName(fieldName)];
+	if (!error || error.value === undefined) return;
+	return serializeFieldValue(currentValue) === serializeFieldValue(error.value)
+		? error
+		: undefined;
+}
+
+export function getFieldValue(formData: FormData, fieldName: string) {
+	const normalizedFieldName = normalizeFieldName(fieldName);
+	const arrayEntries = formData.getAll(`${normalizedFieldName}[]`);
+	const values = formData.getAll(normalizedFieldName);
+	const entries = values.length > 0 ? values : arrayEntries;
+	const isArrayValue = fieldName.endsWith('[]') || arrayEntries.length > 0 || entries.length > 1;
+
+	if (isArrayValue) {
+		return entries;
+	}
+
+	return entries[0] ?? null;
+}
+
+export function getFieldElement(form: HTMLFormElement, fieldName: string) {
+	return form.querySelector(
+		`[name="${CSS.escape(fieldName)}"], [name="${CSS.escape(fieldName)}[]"]`
+	) as HTMLElement | null;
+}
+
+export function serializeFieldValue(value: FormDataEntryValue | FormDataEntryValue[] | null) {
+	return JSON.stringify(toSerializableFieldValue(value));
+}
+
+function toSerializableFieldValue(
+	value: FormDataEntryValue | FormDataEntryValue[] | null
+): unknown {
+	if (Array.isArray(value)) {
+		return value.map(toSerializableFieldValue);
+	}
+
+	if (value instanceof File) {
+		return {
+			name: value.name,
+			size: value.size,
+			type: value.type,
+			lastModified: value.lastModified,
+		};
+	}
+
+	return value;
 }
 
 export function getInputValue(target: EventTarget | null): unknown {
@@ -88,20 +176,13 @@ export function getInputValue(target: EventTarget | null): unknown {
 	return (el as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement).value;
 }
 
-export function getFormDataValue(formData: FormData, fieldName: string) {
-	return formData.getAll(fieldName).length > 1 || fieldName.endsWith('[]')
-		? formData.getAll(fieldName)
-		: formData.get(fieldName);
-}
-
 export function formDataToObject(
 	formData: FormData
 ): Record<string, FormDataEntryValue | FormDataEntryValue[]> {
+	const fieldNames = new Set(Array.from(formData.keys(), normalizeFieldName));
+
 	return Object.fromEntries(
-		Array.from(formData.keys()).map(key => [
-			key.endsWith('[]') ? key.slice(0, -2) : key,
-			getFormDataValue(formData, key) ?? '',
-		])
+		Array.from(fieldNames, fieldName => [fieldName, getFieldValue(formData, fieldName) ?? ''])
 	);
 }
 

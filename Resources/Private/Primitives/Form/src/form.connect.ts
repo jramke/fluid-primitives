@@ -1,6 +1,7 @@
 import type { Service } from '@zag-js/core';
 import type { NormalizeProps, PropTypes } from '@zag-js/types';
 import { debounce } from '@zag-js/utils';
+import { getClosestFieldRoot } from '../../Field/src/field.dom';
 import { parts } from './form.anatomy';
 import * as dom from './form.dom';
 import { getFieldMachinesFor } from './form.registry';
@@ -87,8 +88,9 @@ export function connect<T extends PropTypes>(
 				'data-invalid': isInvalid ? '' : undefined,
 				'data-dirty': isDirty ? '' : undefined,
 				'data-touched': isTouched ? '' : undefined,
-				onSubmit: async event => {
+				onSubmit: event => {
 					event.preventDefault();
+					if (isSubmitting) return;
 					const form = event.currentTarget as HTMLFormElement;
 					context.set('values', new FormData(form));
 					send({ type: 'SUBMIT', detail: { event, api: this } });
@@ -107,7 +109,6 @@ export function connect<T extends PropTypes>(
 						| HTMLSelectElement
 						| HTMLButtonElement
 						| null;
-					// if (!target?.name) return;
 
 					// Ensure target is a form field
 					if (
@@ -122,7 +123,16 @@ export function connect<T extends PropTypes>(
 						return;
 					}
 
-					send({ type: 'BLUR', detail: { target } });
+					send({
+						type: 'FIELD_BLUR',
+						detail: { target, relatedTarget: event.relatedTarget },
+					});
+				},
+				onFocus: event => {
+					const target = event.target as Element | null;
+					if (!getClosestFieldRoot(target)) return;
+
+					send({ type: 'FIELD_FOCUS', detail: { target } });
 				},
 			});
 		},
