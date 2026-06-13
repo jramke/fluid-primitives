@@ -70,14 +70,21 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
 		const contentEl = this.getElement('content');
 		if (contentEl) this.spreadProps(contentEl, this.api.getContentProps());
 
+		// We need to make sure the element is rerendered because otherwise safari doesnt update the spans value in the a11y tree
+		// and the button would announce an old value when it receives focus.
+		// see: https://github.com/chakra-ui/zag/issues/3099
 		const valueTextEl = this.getElement('value-text');
-		if (valueTextEl)
+		if (valueTextEl) {
+			const next = valueTextEl.cloneNode(true) as HTMLElement;
+			valueTextEl.replaceWith(next);
+			next.replaceWith(valueTextEl);
 			this.spreadProps(
 				valueTextEl,
 				mergeProps(this.api.getValueTextProps(), {
 					children: this.api.valueAsString || valueTextEl.dataset.placeholder,
 				})
 			);
+		}
 
 		const itemGroupEls = this.getElements('item-group');
 		itemGroupEls.forEach(itemGroupEl => {
