@@ -12,6 +12,12 @@ export type FormErrors = Record<string, FieldError>;
 export type FormDirty = Record<string, boolean>;
 export type FormTouched = Record<string, boolean>;
 
+export type AnyFormControlElement =
+	| HTMLInputElement
+	| HTMLTextAreaElement
+	| HTMLSelectElement
+	| HTMLButtonElement;
+
 /**
  * Error thrown by post() when server returns 422 validation errors.
  * The machine catches this and transitions to 'invalid' state.
@@ -77,7 +83,9 @@ export interface FormApi {
 	_userRenderFn: FormProps['render'];
 	getAllFields(): Map<string, FieldMachine>;
 	getField(name: string): FieldMachine | undefined;
+	getFormControl(name: string): AnyFormControlElement | null;
 	getFormEl(): HTMLFormElement | null;
 	getAction(): string;
 	reset(): void;
+	formDataToObject(): Record<string, FormDataEntryValue | FormDataEntryValue[]>;
 }

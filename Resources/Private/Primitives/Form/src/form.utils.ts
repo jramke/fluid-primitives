@@ -1,5 +1,5 @@
 import * as z from 'zod';
-import type { FormErrors, ZodFormSchema } from './form.types';
+import type { AnyFormControlElement, FormErrors, ZodFormSchema } from './form.types';
 
 export function validateWithSchema(schema: ZodFormSchema, formData: FormData): FormErrors {
 	if (!schema) {
@@ -108,7 +108,7 @@ export function getFieldValue(formData: FormData, fieldName: string) {
 export function getFieldElement(form: HTMLFormElement, fieldName: string) {
 	return form.querySelector(
 		`[name="${CSS.escape(fieldName)}"], [name="${CSS.escape(fieldName)}[]"]`
-	) as HTMLElement | null;
+	) as AnyFormControlElement | null;
 }
 
 export function serializeFieldValue(value: FormDataEntryValue | FormDataEntryValue[] | null) {
@@ -135,7 +135,7 @@ function toSerializableFieldValue(
 }
 
 export function getInputValue(target: EventTarget | null): unknown {
-	const el = target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | null;
+	const el = target as AnyFormControlElement | null;
 	if (!el || !('type' in el)) return undefined;
 
 	if ((el as HTMLInputElement).type === 'checkbox') {
@@ -173,7 +173,7 @@ export function getInputValue(target: EventTarget | null): unknown {
 		return Array.from(el.selectedOptions).map(o => o.value);
 	}
 
-	return (el as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement).value;
+	return (el as AnyFormControlElement).value;
 }
 
 export function formDataToObject(

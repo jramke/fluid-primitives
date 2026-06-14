@@ -6,6 +6,7 @@ import { parts } from './form.anatomy';
 import * as dom from './form.dom';
 import { getFieldMachinesFor } from './form.registry';
 import type { FormApi, FormSchema } from './form.types';
+import { formDataToObject, getFieldElement } from './form.utils';
 
 export function connect<T extends PropTypes>(
 	service: Service<FormSchema>,
@@ -66,12 +67,19 @@ export function connect<T extends PropTypes>(
 		getAllFields() {
 			return getFieldMachinesFor(dom.getFormEl(scope));
 		},
-		getField(name: string) {
+		getField(name) {
 			return this.getAllFields().get(name);
+		},
+		getFormControl(name) {
+			return getFieldElement(dom.getFormEl(scope), name);
 		},
 		getAction() {
 			const formEl = getFormEl();
 			return formEl?.getAttribute('action') || '';
+		},
+
+		formDataToObject() {
+			return formDataToObject(getValues());
 		},
 
 		reset() {
