@@ -66,7 +66,7 @@ class ListCollection implements JsonSerializable, IteratorAggregate
     public function getItems(): array
     {
         if ($this->normalizedItems === null) {
-            $this->normalizedItems = array_map(fn($item) => $this->normalizeItem($item), $this->items);
+            $this->normalizedItems = array_map($this->normalizeItem(...), $this->items);
         }
 
         return $this->normalizedItems;

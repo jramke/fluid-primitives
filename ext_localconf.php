@@ -24,9 +24,7 @@ if (ExtensionManagementUtility::isLoaded('storybook')) {
     $existing = $GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS']['storybook']['excludeArguments'] ?? '';
     $existingArr = GeneralUtility::trimExplode(',', $existing, true);
 
-    $globalPropsWithoutClass = array_filter(Constants::GLOBAL_PROPS, static function ($value) {
-        return $value !== 'class';
-    });
+    $globalPropsWithoutClass = array_filter(Constants::GLOBAL_PROPS, static fn($value) => $value !== 'class');
 
     $merged = array_values(array_unique(array_merge($existingArr, $globalPropsWithoutClass)));
 

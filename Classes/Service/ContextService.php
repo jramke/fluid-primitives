@@ -45,9 +45,11 @@ class ContextService
 
         $result = [];
         foreach ($allStacks as $name => $stack) {
-            if (is_array($stack) && !empty($stack)) {
-                $result[$name] = end($stack);
+            if (!(is_array($stack) && !empty($stack))) {
+                continue;
             }
+
+            $result[$name] = end($stack);
         }
 
         return $result;

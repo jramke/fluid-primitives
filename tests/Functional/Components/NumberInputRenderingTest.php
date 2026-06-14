@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
-use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
 
 describe('NumberInput Component Rendering', function () {
     beforeEach(function () {

@@ -7,20 +7,16 @@ namespace Jramke\FluidPrimitives\ViewHelpers;
 use Jramke\FluidPrimitives\Annotations\ClientArgumentAnnotation;
 use Jramke\FluidPrimitives\Annotations\ContextArgumentAnnotation;
 use Jramke\FluidPrimitives\Annotations\RequiredAtRuntimeArgumentAnnotation;
-use Jramke\FluidPrimitives\Constants;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use Jramke\FluidPrimitives\Utility\PropsUtility;
 use TYPO3Fluid\Fluid\Core\Parser\Exception;
 use TYPO3Fluid\Fluid\Core\Parser\ParsingState;
-use TYPO3Fluid\Fluid\Core\Parser\SyntaxTree\BooleanNode;
 use TYPO3Fluid\Fluid\Core\Parser\SyntaxTree\NodeInterface;
-use TYPO3Fluid\Fluid\Core\Parser\SyntaxTree\TextNode;
 use TYPO3Fluid\Fluid\Core\Parser\SyntaxTree\ViewHelperNode;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContext;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 use TYPO3Fluid\Fluid\Core\ViewHelper\ArgumentDefinition;
 use TYPO3Fluid\Fluid\Core\ViewHelper\ViewHelperNodeInitializedEventInterface;
-use TYPO3Fluid\Fluid\ViewHelpers\ArgumentViewHelper;
 
 /**
  * Defines a template argument (prop) for a component.

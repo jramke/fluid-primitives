@@ -46,10 +46,7 @@ abstract class ViewHelperTestCase extends TestCase
      */
     protected function renderTemplate(string $template): string
     {
-        $this->view
-            ->getRenderingContext()
-            ->getTemplatePaths()
-            ->setTemplateSource($template);
+        $this->view->getRenderingContext()->getTemplatePaths()->setTemplateSource($template);
 
         $this->view->assignMultiple($this->variables);
 
@@ -66,8 +63,6 @@ abstract class ViewHelperTestCase extends TestCase
         // Normalize multiple whitespace to single space
         $html = preg_replace('/\s+/', ' ', $html);
         // Remove whitespace between tags
-        $html = preg_replace('/>\s+</', '><', $html);
-
-        return $html;
+        return preg_replace('/>\s+</', '><', $html);
     }
 }

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\ViewHelpers;
 
 use Jramke\FluidPrimitives\Component\ComponentPrimitivesCollection;
-use Jramke\FluidPrimitives\Constants;
 use Jramke\FluidPrimitives\Service\ComponentCollectionService;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use Jramke\FluidPrimitives\Utility\PropsUtility;
