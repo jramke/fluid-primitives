@@ -327,7 +327,10 @@ export const machine = createMachine<FormSchema>({
 
 			// TODO: maybe this can be moved to the context default value declaration with zag v2
 			getInitialValues({ scope, context }) {
-				context.set('initialValues', new FormData(dom.getFormEl(scope)));
+				const form = dom.getFormEl(scope);
+				if (!form) return;
+
+				context.set('initialValues', new FormData(form));
 			},
 		},
 	},
