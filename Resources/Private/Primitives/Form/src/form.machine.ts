@@ -59,7 +59,7 @@ export const machine = createMachine<FormSchema>({
 		SUCCESS: { target: 'success', actions: ['clearErrors'] },
 	},
 
-	entry: ['setupFormListeners'],
+	entry: ['setupFormListeners', 'getInitialValues'],
 
 	implementations: {
 		actions: {
@@ -323,6 +323,11 @@ export const machine = createMachine<FormSchema>({
 				context.set('errors', {});
 				refs.set('serverErrors', {});
 				context.set('touched', {});
+			},
+
+			// TODO: maybe this can be moved to the context default value declaration with zag v2
+			getInitialValues({ scope, context }) {
+				context.set('initialValues', new FormData(dom.getFormEl(scope)));
 			},
 		},
 	},
