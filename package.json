@@ -9,9 +9,7 @@
         "url": "git+https://github.com/jramke/fluid-primitives.git"
     },
     "author": "Joost Ramke <hey@joostramke.com>",
-    "files": [
-        "./dist"
-    ],
+    "files": ["./dist"],
     "main": "./dist/client.js",
     "types": "./dist/client.d.ts",
     "exports": {

@@ -23,7 +23,7 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
 		};
 	}
 
-	transformProps(props: select.Props) {
+	transformProps(props: select.Props): select.Props {
 		return {
 			...props,
 			get collection() {
@@ -75,15 +75,26 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
 		// see: https://github.com/chakra-ui/zag/issues/3099
 		const valueTextEl = this.getElement('value-text');
 		if (valueTextEl) {
-			const next = valueTextEl.cloneNode(true) as HTMLElement;
-			valueTextEl.replaceWith(next);
-			next.replaceWith(valueTextEl);
+			const currentText = valueTextEl.textContent || valueTextEl.dataset.placeholder || '';
+			const nextValue = this.api.valueAsString || valueTextEl.dataset.placeholder || '';
+
 			this.spreadProps(
 				valueTextEl,
 				mergeProps(this.api.getValueTextProps(), {
-					children: this.api.valueAsString || valueTextEl.dataset.placeholder,
+					children: nextValue,
 				})
 			);
+
+			if (nextValue !== currentText) {
+				queueMicrotask(() => {
+					const el = this.getElement('value-text');
+					if (el?.isConnected) {
+						const next = el.cloneNode(true) as HTMLElement;
+						el.replaceWith(next);
+						next.replaceWith(el);
+					}
+				});
+			}
 		}
 
 		const itemGroupEls = this.getElements('item-group');
