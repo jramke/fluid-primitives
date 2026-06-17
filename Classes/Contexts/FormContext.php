@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Contexts;
 
+use Jramke\FluidPrimitives\Enum\FormState;
 use Psr\Http\Message\ServerRequestInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use TYPO3\CMS\Core\Page\PageRenderer;
@@ -63,6 +64,31 @@ class FormContext extends AbstractComponentContext
             $this->get('extensionName') ?? null,
             $this->get('pluginName') ?? null,
         );
+    }
+
+    public function getState(): string
+    {
+        return FormState::Ready->value;
+    }
+
+    public function getContentHidden(): bool
+    {
+        return in_array($this->getState(), [FormState::Error->value, FormState::Success->value], true);
+    }
+
+    public function isIndicatorHidden(FormState $state): bool
+    {
+        return $this->getState() !== $state->value;
+    }
+
+    public function getErrorTextHidden(): bool
+    {
+        return $this->getState() !== FormState::Error->value;
+    }
+
+    public function getSuccessTextHidden(): bool
+    {
+        return $this->getState() !== FormState::Success->value;
     }
 
     // TODO: The form viewhelper has an argument to override the field name prefix, is this needed here?

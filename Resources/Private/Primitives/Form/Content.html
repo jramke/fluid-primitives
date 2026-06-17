@@ -1,0 +1,7 @@
+<div
+    {f:if(condition: context.contentHidden, then: 'hidden' )}
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'content' )}
+    {ui:attributes()}>
+    <f:slot />
+</div>

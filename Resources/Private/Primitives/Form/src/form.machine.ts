@@ -12,7 +12,7 @@ import {
 	getInputValue,
 	normalizeFieldName,
 	prefixFieldName,
-	validateWithSchema,
+	validateWithValidation,
 	withCurrentValues,
 } from './form.utils';
 
@@ -28,6 +28,8 @@ export const machine = createMachine<FormSchema>({
 			errors: bindable(() => ({ defaultValue: {} as FormErrors })),
 			dirty: bindable(() => ({ defaultValue: {} as FormDirty })),
 			touched: bindable(() => ({ defaultValue: {} as FormTouched })),
+			errorText: bindable(() => ({ defaultValue: null as string | null })),
+			successText: bindable(() => ({ defaultValue: null as string | null })),
 		};
 	},
 
@@ -47,7 +49,7 @@ export const machine = createMachine<FormSchema>({
 	},
 
 	on: {
-		SUBMIT: { target: 'submitting', actions: ['validateAll'] },
+		SUBMIT: { target: 'submitting', actions: ['clearStatusText', 'validateAll'] },
 		VALIDATE: { actions: ['validateAll'] },
 		VALIDATE_FIELD: { actions: ['validateField'] },
 		INVALID: { target: 'invalid' },
@@ -57,6 +59,9 @@ export const machine = createMachine<FormSchema>({
 		RESET: { target: 'ready', actions: ['resetForm'] },
 		ERROR: { target: 'error' },
 		SUCCESS: { target: 'success', actions: ['clearErrors'] },
+		SET_ERROR_TEXT: { actions: ['setErrorText'] },
+		SET_SUCCESS_TEXT: { actions: ['setSuccessText'] },
+		CLEAR_STATUS_TEXT: { actions: ['clearStatusText'] },
 	},
 
 	entry: ['setupFormListeners', 'getInitialValues'],
@@ -65,7 +70,7 @@ export const machine = createMachine<FormSchema>({
 		actions: {
 			validateAll({ context, send, prop, state, action, event, scope, refs }) {
 				const submitting = state.matches('submitting');
-				const schema = prop('schema');
+				const validation = prop('validation');
 				const formData = context.get('values');
 
 				if (submitting) {
@@ -79,8 +84,11 @@ export const machine = createMachine<FormSchema>({
 				);
 				let errs = cachedServerErrors;
 
-				if (schema) {
-					errs = { ...cachedServerErrors, ...validateWithSchema(schema, formData) };
+				if (validation) {
+					errs = {
+						...cachedServerErrors,
+						...validateWithValidation(validation, formData),
+					};
 				}
 
 				context.set('errors', errs);
@@ -106,6 +114,14 @@ export const machine = createMachine<FormSchema>({
 
 				// Async IIFE to handle both sync and async onSubmit with single try/catch
 				(async () => {
+					const invalidateWithErrors = (errors: FormErrors) => {
+						const currentErrors = withCurrentValues(errors, context.get('values'));
+						refs.set('serverErrors', { ...refs.get('serverErrors'), ...currentErrors });
+						context.set('errors', currentErrors);
+						send({ type: 'INVALID' });
+						action(['focusFirstInvalid']);
+					};
+
 					try {
 						const result = await onSubmit({
 							formData: context.get('values'),
@@ -143,18 +159,30 @@ export const machine = createMachine<FormSchema>({
 							},
 						});
 
-						if (result) {
+						if (result === true) {
 							send({ type: 'SUCCESS' });
-						} else {
-							send({ type: 'ERROR' });
+							return;
 						}
+
+						if (result === false) {
+							send({ type: 'ERROR' });
+							return;
+						}
+
+						if (isFormErrors(result)) {
+							if (Object.keys(result).length === 0) {
+								send({ type: 'SUCCESS' });
+								return;
+							}
+
+							invalidateWithErrors(result);
+							return;
+						}
+
+						send({ type: 'ERROR' });
 					} catch (error) {
 						if (error instanceof ValidationError) {
-							const errors = withCurrentValues(error.errors, context.get('values'));
-							refs.set('serverErrors', { ...refs.get('serverErrors'), ...errors });
-							context.set('errors', errors);
-							send({ type: 'INVALID' });
-							action(['focusFirstInvalid']);
+							invalidateWithErrors(error.errors);
 							return;
 						}
 						send({ type: 'ERROR' });
@@ -185,13 +213,13 @@ export const machine = createMachine<FormSchema>({
 
 				delete updatedErrors[normalizedFieldName];
 
-				const schema = prop('schema');
-				if (!schema) {
+				const validation = prop('validation');
+				if (!validation) {
 					context.set('errors', updatedErrors);
 					return;
 				}
 
-				const allErrors = validateWithSchema(schema, formData);
+				const allErrors = validateWithValidation(validation, formData, normalizedFieldName);
 
 				// Update only errors for the specific field
 				if (allErrors[normalizedFieldName]) {
@@ -262,8 +290,8 @@ export const machine = createMachine<FormSchema>({
 				// Validate the field on blur
 				if (isFocusMovingWithinSameField(target, e?.detail?.relatedTarget)) return;
 
-				const schema = prop('schema');
-				if (schema || context.get('errors')[normalizeFieldName(name)]) {
+				const validation = prop('validation');
+				if (validation || context.get('errors')[normalizeFieldName(name)]) {
 					send({ type: 'VALIDATE_FIELD', detail: { fieldName: name } });
 				}
 			},
@@ -280,9 +308,24 @@ export const machine = createMachine<FormSchema>({
 				context.set('values', initial);
 				context.set('initialValues', initial);
 				context.set('errors', {});
+				context.set('errorText', null);
+				context.set('successText', null);
 				refs.set('serverErrors', {});
 				context.set('touched', {});
 				context.set('dirty', {});
+			},
+
+			setErrorText({ context, event }) {
+				context.set('errorText', event.detail?.text ?? null);
+			},
+
+			setSuccessText({ context, event }) {
+				context.set('successText', event.detail?.text ?? null);
+			},
+
+			clearStatusText({ context }) {
+				context.set('errorText', null);
+				context.set('successText', null);
 			},
 
 			focusFirstInvalid({ context, scope }) {
@@ -335,3 +378,7 @@ export const machine = createMachine<FormSchema>({
 		},
 	},
 });
+
+function isFormErrors(result: unknown): result is FormErrors {
+	return typeof result === 'object' && result !== null && !Array.isArray(result);
+}

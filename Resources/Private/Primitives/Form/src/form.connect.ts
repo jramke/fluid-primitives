@@ -26,6 +26,12 @@ export function connect<T extends PropTypes>(
 	function getTouched() {
 		return context.get('touched');
 	}
+	function getErrorText() {
+		return context.get('errorText');
+	}
+	function getSuccessText() {
+		return context.get('successText');
+	}
 
 	function getFormEl() {
 		return dom.getFormEl(scope);
@@ -60,6 +66,20 @@ export function connect<T extends PropTypes>(
 		getErrors,
 		getDirty,
 		getTouched,
+		getErrorText,
+		getSuccessText,
+
+		setErrorText(text) {
+			send({ type: 'SET_ERROR_TEXT', detail: { text } });
+		},
+
+		setSuccessText(text) {
+			send({ type: 'SET_SUCCESS_TEXT', detail: { text } });
+		},
+
+		clearStatusText() {
+			send({ type: 'CLEAR_STATUS_TEXT' });
+		},
 
 		_userRenderFn: prop('render'),
 
@@ -84,6 +104,37 @@ export function connect<T extends PropTypes>(
 
 		reset() {
 			send({ type: 'RESET' });
+		},
+
+		getContentProps() {
+			return normalize.element({
+				...parts.content.attrs,
+				hidden: isError || isSuccessful,
+			});
+		},
+
+		getIndicatorProps(indicatorState) {
+			return normalize.element({
+				...parts.indicator.attrs,
+				hidden: stateValue !== indicatorState,
+			});
+		},
+
+		getErrorTextProps() {
+			return normalize.element({
+				...parts['error-text'].attrs,
+				hidden: !isError,
+				role: 'alert',
+			});
+		},
+
+		getSuccessTextProps() {
+			return normalize.element({
+				...parts['success-text'].attrs,
+				hidden: !isSuccessful,
+				role: 'status',
+				'aria-live': 'polite',
+			});
 		},
 
 		getFormProps() {

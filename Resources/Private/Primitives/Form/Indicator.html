@@ -1,0 +1,11 @@
+<ui:prop name="state" type="Jramke\FluidPrimitives\Enum\FormState" optional="{true}" requiredAtRuntime="{true}" description="The form state to render." />
+
+<f:variable name="isHidden" value="{context -> ui:call(method: 'isIndicatorHidden', arguments: {0: state})}" />
+
+<div
+    {f:if(condition: isHidden, then: 'hidden' )}
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'indicator-{state.value}' )}
+    {ui:attributes()}>
+    <f:slot />
+</div>

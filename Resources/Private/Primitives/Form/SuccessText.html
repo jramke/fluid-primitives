@@ -1,0 +1,9 @@
+<span
+    {f:if(condition: context.successTextHidden, then: 'hidden' )}
+    {f:if(condition: class, then: 'class="{class}"' )}
+    role="status"
+    aria-live="polite"
+    {ui:ref(name: 'success-text' )}
+    {ui:attributes()}>
+    <f:slot />
+</span>

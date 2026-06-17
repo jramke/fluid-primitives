@@ -1,6 +1,5 @@
 import type { EventObject } from '@zag-js/core';
 import type { JSX, PropTypes } from '@zag-js/types';
-import * as z from 'zod';
 import type { Form } from '../Form';
 import type { FieldMachine } from './form.registry';
 
@@ -11,6 +10,49 @@ export interface FieldError {
 export type FormErrors = Record<string, FieldError>;
 export type FormDirty = Record<string, boolean>;
 export type FormTouched = Record<string, boolean>;
+
+export interface StandardSchemaPathSegment {
+	readonly key: PropertyKey;
+}
+
+export interface StandardSchemaIssue {
+	readonly message: string;
+	readonly path?: readonly (PropertyKey | StandardSchemaPathSegment)[];
+}
+
+export interface StandardSchemaSuccessResult<Output = unknown> {
+	readonly value: Output;
+	readonly issues?: undefined;
+}
+
+export interface StandardSchemaFailureResult {
+	readonly issues: readonly StandardSchemaIssue[];
+}
+
+export type StandardSchemaResult<Output = unknown> =
+	| StandardSchemaSuccessResult<Output>
+	| StandardSchemaFailureResult;
+
+export interface StandardSchemaV1<Output = unknown> {
+	readonly '~standard': {
+		readonly validate: (
+			value: unknown
+		) => StandardSchemaResult<Output> | Promise<StandardSchemaResult<Output>>;
+	};
+}
+
+export interface FormValidationContext {
+	formData: FormData;
+	fieldName?: string;
+}
+
+export type FormState = 'invalid' | 'ready' | 'submitting' | 'success' | 'error';
+
+export type FormValidation =
+	| StandardSchemaV1
+	| ((context: FormValidationContext) => FormErrors | null | void);
+
+export type FormSubmitResult = true | false | FormErrors;
 
 export type AnyFormControlElement =
 	| HTMLInputElement
@@ -29,11 +71,9 @@ export class ValidationError extends Error {
 	}
 }
 
-export type ZodFormSchema = z.ZodObject | undefined;
-
 export interface FormProps {
 	id: string;
-	schema?: ZodFormSchema;
+	validation?: FormValidation;
 	objectName?: string;
 	inputDebounceMs?: number;
 	onSubmit?: ({
@@ -46,7 +86,7 @@ export interface FormProps {
 		api: FormApi;
 		event: JSX.FormEvent<HTMLElement>;
 		post: (url: string, data: FormData) => Promise<Response>;
-	}) => Promise<boolean> | boolean;
+	}) => Promise<FormSubmitResult> | FormSubmitResult;
 	render?: (form: Form) => void;
 }
 
@@ -58,12 +98,14 @@ export interface FormSchema {
 		errors: FormErrors;
 		dirty: FormDirty;
 		touched: FormTouched;
+		errorText: string | null;
+		successText: string | null;
 	};
 	refs: {
 		submitCount: number;
 		serverErrors: FormErrors;
 	};
-	state: 'invalid' | 'ready' | 'submitting' | 'success' | 'error';
+	state: FormState;
 	event: EventObject;
 	action: string;
 	effect: string;
@@ -76,10 +118,19 @@ export interface FormApi {
 	isSuccessful: boolean;
 	isError: boolean;
 	getFormProps(): PropTypes['element'];
+	getContentProps(): PropTypes['element'];
+	getIndicatorProps(state: FormState): PropTypes['element'];
+	getErrorTextProps(): PropTypes['element'];
+	getSuccessTextProps(): PropTypes['element'];
 	getValues(): FormData;
 	getErrors(): FormErrors;
 	getDirty(): FormDirty;
 	getTouched(): FormTouched;
+	getErrorText(): string | null;
+	setErrorText(text: string | null): void;
+	getSuccessText(): string | null;
+	setSuccessText(text: string | null): void;
+	clearStatusText(): void;
 	_userRenderFn: FormProps['render'];
 	getAllFields(): Map<string, FieldMachine>;
 	getField(name: string): FieldMachine | undefined;

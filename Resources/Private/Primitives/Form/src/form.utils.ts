@@ -1,30 +1,84 @@
-import * as z from 'zod';
-import type { AnyFormControlElement, FormErrors, ZodFormSchema } from './form.types';
+import type {
+	AnyFormControlElement,
+	FormErrors,
+	FormValidation,
+	StandardSchemaIssue,
+	StandardSchemaResult,
+	StandardSchemaV1,
+} from './form.types';
 
-export function validateWithSchema(schema: ZodFormSchema, formData: FormData): FormErrors {
-	if (!schema) {
+export function validateWithValidation(
+	validation: FormValidation | undefined,
+	formData: FormData,
+	fieldName?: string
+): FormErrors {
+	if (!validation) {
 		return {};
 	}
+
+	if (typeof validation === 'function') {
+		return withCurrentValues(validation({ formData, fieldName }) ?? {}, formData);
+	}
+
+	return validateWithStandardSchema(validation, formData);
+}
+
+function validateWithStandardSchema(schema: StandardSchemaV1, formData: FormData): FormErrors {
 	const dataObject = formDataToObject(formData);
+	const validationResult = schema['~standard'].validate(dataObject);
 
-	const validationResult = schema.safeParse(dataObject);
-	if (validationResult.success) {
+	if (isPromiseLike(validationResult)) {
+		throw new TypeError(
+			'Form validation must be synchronous. Use onSubmit for async validation.'
+		);
+	}
+
+	if (!validationResult.issues || validationResult.issues.length === 0) {
 		return {};
 	}
 
-	const flat = z.flattenError(validationResult.error).fieldErrors;
+	return withCurrentValues(errorsFromIssues(validationResult.issues), formData);
+}
 
+function errorsFromIssues(issues: readonly StandardSchemaIssue[]): FormErrors {
 	const errors: FormErrors = {};
 
-	for (const key in flat) {
-		if (!flat[key]) continue;
-		errors[key] = {
-			messages: flat[key],
-			value: getFieldValue(formData, key),
-		};
+	for (const issue of issues) {
+		const fieldName = getIssueFieldName(issue);
+		if (!fieldName) continue;
+
+		const existingError = errors[fieldName];
+		if (existingError) {
+			existingError.messages.push(issue.message);
+			continue;
+		}
+
+		errors[fieldName] = { messages: [issue.message] };
 	}
 
 	return errors;
+}
+
+function getIssueFieldName(issue: StandardSchemaIssue): string | undefined {
+	const pathSegment = issue.path?.[0];
+	if (pathSegment === undefined) {
+		return undefined;
+	}
+
+	const key =
+		typeof pathSegment === 'object' && pathSegment !== null && 'key' in pathSegment
+			? pathSegment.key
+			: pathSegment;
+
+	if (typeof key === 'symbol') {
+		return undefined;
+	}
+
+	return normalizeFieldName(String(key));
+}
+
+function isPromiseLike(result: StandardSchemaResult | Promise<StandardSchemaResult>) {
+	return typeof result === 'object' && result !== null && 'then' in result;
 }
 
 export function errorsFromServer(
@@ -56,7 +110,7 @@ export function withCurrentValues(errors: FormErrors, formData: FormData): FormE
 			normalizeFieldName(fieldName),
 			{
 				...error,
-				value: error.value ?? getFieldValue(formData, fieldName),
+				value: error.value === undefined ? getFieldValue(formData, fieldName) : error.value,
 			},
 		])
 	);
