@@ -1,7 +1,7 @@
 import type { EventObject } from '@zag-js/core';
 import type { JSX, PropTypes } from '@zag-js/types';
+import type { FieldHandle } from '../../Field/src/field.types';
 import type { Form } from '../Form';
-import type { FieldMachine } from './form.registry';
 
 export interface FieldError {
 	messages: string[];
@@ -93,16 +93,10 @@ export interface FormProps {
 export interface FormSchema {
 	props: FormProps;
 	context: {
-		values: FormData;
-		initialValues: FormData;
-		errors: FormErrors;
-		dirty: FormDirty;
-		touched: FormTouched;
 		errorText: string | null;
 		successText: string | null;
 	};
 	refs: {
-		submitCount: number;
 		serverErrors: FormErrors;
 	};
 	state: FormState;
@@ -132,8 +126,8 @@ export interface FormApi {
 	setSuccessText(text: string | null): void;
 	clearStatusText(): void;
 	_userRenderFn: FormProps['render'];
-	getAllFields(): Map<string, FieldMachine>;
-	getField(name: string): FieldMachine | undefined;
+	getAllFields(): Map<string, FieldHandle>;
+	getField(name: string): FieldHandle | undefined;
 	getFormControl(name: string): AnyFormControlElement | null;
 	getFormEl(): HTMLFormElement | null;
 	getAction(): string;

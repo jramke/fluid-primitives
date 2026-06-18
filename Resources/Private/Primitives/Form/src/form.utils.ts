@@ -1,3 +1,5 @@
+import * as dom from './form.dom';
+import { getFieldMachinesFor } from './form.registry';
 import type {
 	AnyFormControlElement,
 	FormErrors,
@@ -159,9 +161,82 @@ export function getFieldValue(formData: FormData, fieldName: string) {
 	return entries[0] ?? null;
 }
 
+export function getFieldValueFromContainer(container: ParentNode, fieldName: string) {
+	const normalizedFieldName = normalizeFieldName(fieldName);
+	const selector = [
+		`input[name="${CSS.escape(normalizedFieldName)}"]`,
+		`input[name="${CSS.escape(normalizedFieldName)}[]"]`,
+		`select[name="${CSS.escape(normalizedFieldName)}"]`,
+		`select[name="${CSS.escape(normalizedFieldName)}[]"]`,
+		`textarea[name="${CSS.escape(normalizedFieldName)}"]`,
+		`textarea[name="${CSS.escape(normalizedFieldName)}[]"]`,
+	].join(', ');
+	const elements = Array.from(container.querySelectorAll(selector)) as Array<
+		HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+	>;
+
+	if (elements.length === 0) {
+		return null;
+	}
+
+	if (elements.every(el => el instanceof HTMLInputElement && el.type === 'checkbox')) {
+		const checkboxes = elements as HTMLInputElement[];
+		const checkedValues = checkboxes
+			.filter(input => input.checked)
+			.map(input => input.value || 'on');
+		const isArrayValue =
+			fieldName.endsWith('[]') ||
+			elements.some(el => el.name.endsWith('[]')) ||
+			checkboxes.length > 1;
+
+		if (isArrayValue) {
+			return checkedValues;
+		}
+
+		return checkedValues[0] ?? null;
+	}
+
+	if (elements.every(el => el instanceof HTMLInputElement && el.type === 'radio')) {
+		const checkedInput = (elements as HTMLInputElement[]).find(input => input.checked);
+		return checkedInput?.value ?? null;
+	}
+
+	if (elements.length === 1) {
+		const [element] = elements;
+
+		if (element instanceof HTMLInputElement && element.type === 'file') {
+			const files = element.files ? Array.from(element.files) : [];
+			return element.multiple ? files : (files[0] ?? null);
+		}
+
+		if (element instanceof HTMLSelectElement && element.multiple) {
+			return Array.from(element.selectedOptions).map(option => option.value);
+		}
+
+		return element.value ?? null;
+	}
+
+	return elements
+		.map(element => {
+			if (element instanceof HTMLInputElement && element.type === 'file') {
+				return element.files?.[0];
+			}
+
+			return element.value;
+		})
+		.filter((value): value is FormDataEntryValue => value !== undefined);
+}
+
 export function getFieldElement(form: HTMLFormElement, fieldName: string) {
 	return form.querySelector(
-		`[name="${CSS.escape(fieldName)}"], [name="${CSS.escape(fieldName)}[]"]`
+		[
+			`input[name="${CSS.escape(fieldName)}"]`,
+			`input[name="${CSS.escape(fieldName)}[]"]`,
+			`select[name="${CSS.escape(fieldName)}"]`,
+			`select[name="${CSS.escape(fieldName)}[]"]`,
+			`textarea[name="${CSS.escape(fieldName)}"]`,
+			`textarea[name="${CSS.escape(fieldName)}[]"]`,
+		].join(', ')
 	) as AnyFormControlElement | null;
 }
 
@@ -266,4 +341,59 @@ export function prefixFieldName(fieldName: string, prefix: string, objectName?: 
 	}
 
 	return prefixedFieldName;
+}
+
+export function getFormData(scope: Parameters<typeof dom.getFormEl>[0]) {
+	const form = dom.getFormEl(scope);
+	return form ? new FormData(form) : new FormData();
+}
+
+export function getRegisteredFieldMachines(scope: Parameters<typeof dom.getFormEl>[0]) {
+	return getFieldMachinesFor(dom.getFormEl(scope));
+}
+
+export function syncAllFieldMachines(scope: Parameters<typeof dom.getFormEl>[0]) {
+	for (const [, fieldMachine] of getRegisteredFieldMachines(scope)) {
+		fieldMachine.send({ type: 'SYNC_FROM_DOM' });
+	}
+}
+
+export function setFieldMachineErrors(
+	scope: Parameters<typeof dom.getFormEl>[0],
+	fieldName: string,
+	errors: string[]
+) {
+	getRegisteredFieldMachines(scope)
+		.get(fieldName)
+		?.send({ type: 'SET_ERRORS', detail: { errors } });
+}
+
+export function distributeFieldErrors(
+	scope: Parameters<typeof dom.getFormEl>[0],
+	errors: FormErrors
+) {
+	for (const [name, fieldMachine] of getRegisteredFieldMachines(scope)) {
+		fieldMachine.send({
+			type: 'SET_ERRORS',
+			detail: { errors: errors[name]?.messages ?? [] },
+		});
+	}
+}
+
+export function resetFieldMachines(scope: Parameters<typeof dom.getFormEl>[0]) {
+	for (const [, fieldMachine] of getRegisteredFieldMachines(scope)) {
+		fieldMachine.send({ type: 'RESET' });
+	}
+}
+
+export function hasInvalidFieldMachines(scope: Parameters<typeof dom.getFormEl>[0]) {
+	return Array.from(getRegisteredFieldMachines(scope).values()).some(fieldMachine =>
+		fieldMachine.context.get('invalid')
+	);
+}
+
+export function getFirstInvalidFieldMachine(scope: Parameters<typeof dom.getFormEl>[0]) {
+	return Array.from(getRegisteredFieldMachines(scope)).find(([, fieldMachine]) =>
+		fieldMachine.context.get('invalid')
+	)?.[0];
 }

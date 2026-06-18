@@ -8,8 +8,6 @@ import type { FieldApi, FieldProps } from './src/field.types';
 export class Field extends Component<FieldProps, FieldApi> {
 	static name = 'field';
 
-	private subscribedToForm = false;
-
 	initMachine(props: FieldProps) {
 		const createdMachine = new Machine(machine, props);
 		registerFieldMachine(this.getElement('root'), createdMachine);
@@ -21,23 +19,7 @@ export class Field extends Component<FieldProps, FieldApi> {
 		return connect(this.machine.service, normalizeProps);
 	}
 
-	subscribeToFormMachine() {
-		if (this.subscribedToForm) return;
-
-		const formMachine = this.api.getFormMachine();
-		if (!formMachine) return;
-
-		this.subscribedToForm = true;
-		formMachine.subscribe(() => {
-			// notify is marked as private but that does not prevent runtime access
-			// @ts-expect-error
-			this.machine.notify();
-		});
-	}
-
 	render() {
-		this.subscribeToFormMachine();
-
 		const rootEl = this.getElement('root');
 		if (rootEl) {
 			this.spreadProps(rootEl, this.api.getRootProps());

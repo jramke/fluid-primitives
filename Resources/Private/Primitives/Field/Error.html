@@ -1,4 +1,5 @@
 <div
+    {f:if(condition: '!{invalid}', then: 'hidden' )}
     {f:if(condition: class, then: 'class="{class}"' )}
     {f:if(condition: context.ids.error, then: 'id="{context.ids.error}"' )}
     {ui:ref(name: 'error' )}

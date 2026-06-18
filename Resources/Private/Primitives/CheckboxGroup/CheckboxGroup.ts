@@ -9,8 +9,6 @@ import type { CheckboxGroupApi, CheckboxGroupProps } from './src/checkbox-group.
 export class CheckboxGroup extends FieldAwareComponent<CheckboxGroupProps, CheckboxGroupApi> {
 	static name = 'checkbox-group';
 
-	// TODO: Somehow the client side field validation only triggers on blur not on field change of a checkbox item
-	// but i guess thats ok for now
 	propsWithField(props: CheckboxGroupProps, fieldMachine: FieldMachine): CheckboxGroupProps {
 		return {
 			...props,

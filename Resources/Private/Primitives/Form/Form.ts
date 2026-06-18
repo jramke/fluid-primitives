@@ -1,13 +1,15 @@
 import { Component, Machine, normalizeProps } from '../../Client';
 import { connect } from './src/form.connect';
 import { machine } from './src/form.machine';
-import { registerFormMachine } from './src/form.registry';
+import { getFieldMachinesFor, registerFormMachine, type FieldMachine } from './src/form.registry';
 import type { FormApi, FormProps, FormState } from './src/form.types';
 
 const formStates: FormState[] = ['ready', 'invalid', 'submitting', 'success', 'error'];
 
 export class Form extends Component<FormProps, FormApi> {
 	static name = 'form';
+
+	private fieldSubscriptions = new Map<FieldMachine, () => void>();
 
 	initMachine(props: FormProps) {
 		const createdMachine = new Machine(machine, props);
@@ -19,9 +21,24 @@ export class Form extends Component<FormProps, FormApi> {
 		return connect(this.machine.service, normalizeProps);
 	}
 
+	private subscribeToFieldMachines(formEl: HTMLFormElement) {
+		for (const fieldMachine of getFieldMachinesFor(formEl).values()) {
+			if (this.fieldSubscriptions.has(fieldMachine)) continue;
+
+			const unsubscribe = fieldMachine.subscribe(() => {
+				this.api = this.initApi();
+				this.render();
+			});
+
+			this.fieldSubscriptions.set(fieldMachine, unsubscribe);
+		}
+	}
+
 	render() {
 		const formEl = this.getElement('form') as HTMLFormElement | null;
 		if (!formEl) return;
+
+		this.subscribeToFieldMachines(formEl);
 
 		this.spreadProps(formEl, this.api.getFormProps());
 
@@ -46,6 +63,14 @@ export class Form extends Component<FormProps, FormApi> {
 		});
 
 		this.api._userRenderFn?.(this);
+	}
+
+	destroy() {
+		for (const unsubscribe of this.fieldSubscriptions.values()) {
+			unsubscribe();
+		}
+		this.fieldSubscriptions.clear();
+		super.destroy();
 	}
 }
 
