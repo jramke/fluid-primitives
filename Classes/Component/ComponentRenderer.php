@@ -8,6 +8,7 @@ use Jramke\FluidPrimitives\Annotations\ClientArgumentAnnotation;
 use Jramke\FluidPrimitives\Annotations\ContextArgumentAnnotation;
 use Jramke\FluidPrimitives\Constants;
 use Jramke\FluidPrimitives\Contexts\AbstractComponentContext;
+use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
 use Jramke\FluidPrimitives\Domain\Model\TagAttributes;
 use Jramke\FluidPrimitives\Factory\ComponentContextFactory;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
@@ -100,14 +101,14 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
 
         // We remove the additional arguments here
         // They are added later again coupled to an internal variable so they can be used by the ui:attributes view helper
-        foreach ($additionalArguments as $key => $_) {
+        foreach (array_keys($additionalArguments) as $key) {
             unset($arguments[$key]);
         }
 
         // Add spreaded props as arguments
         if (isset($arguments['spreadProps']) && $arguments['spreadProps']) {
             $propsToUse = $parentRenderingContext->getVariableProvider()->get('spreadProps') ?? [];
-            if (!empty($propsToUse) && is_array($propsToUse)) {
+            if (is_array($propsToUse) && $propsToUse !== []) {
                 foreach ($propsToUse as $propToUse) {
                     if ($propToUse === 'attributes') {
                         // here we can simply grab the TagAttributes object as it already has resolved the additional attributes and the ones from the attributes argument
@@ -116,11 +117,9 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
                                 AttributesViewHelper::class,
                                 'attributes',
                             ) ?? null;
-                        if (empty($spreadTagAttributes)) {
-                            $propValue = [];
-                        } else {
-                            $propValue = $spreadTagAttributes->renderAsArray();
-                        }
+                        $propValue = $spreadTagAttributes instanceof TagAttributes
+                            ? $spreadTagAttributes->renderAsArray()
+                            : [];
                     } else {
                         $propValue =
                             $arguments[$propToUse] ?? $parentRenderingContext->getVariableProvider()->get(
@@ -160,8 +159,9 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         // Expose additional arguments as as tag attributes so they can be used by the ui:attributes view helper
         $hasAdditionalAttributes = false;
         $attributesArgument = $arguments['attributes'] ?? null;
-        if (count($additionalArguments) > 0)
+        if (count($additionalArguments) > 0) {
             $hasAdditionalAttributes = true;
+        }
         if (isset($arguments['attributes'])) {
             if (is_string($arguments['attributes']) && trim($arguments['attributes']) !== '') {
                 $hasAdditionalAttributes = true;
@@ -209,10 +209,10 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
 
         // Expose props marked for context from non root components to the context of this component
         // All props from the root component are automatically available in the context
-        if (!empty($propsMarkedForContext) && !$isRootComponent) {
+        if ($propsMarkedForContext !== [] && !$isRootComponent) {
             $propsMarkedForContextValues = [];
-            foreach ($propsMarkedForContext as $name => $_) {
-                if (!(isset($arguments[$name]) || isset($argumentDefinitions[$name]))) {
+            foreach (array_keys($propsMarkedForContext) as $name) {
+                if (!isset($arguments[$name]) && !isset($argumentDefinitions[$name])) {
                     continue;
                 }
 
@@ -220,7 +220,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
                     $arguments[$name] ?? $argumentDefinitions[$name]->getDefaultValue() ?? null;
             }
             $context = ContextService::getFromRenderingContext($parentRenderingContext, $baseName);
-            if ($context) {
+            if ($context instanceof ComponentContextInterface) {
                 $context->set(
                     ComponentUtility::getSubcomponentNameFromViewHelperName($viewHelperName),
                     $propsMarkedForContextValues,
@@ -230,7 +230,6 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
 
         // Expose other component contexts to allow deep nesting of composable components
         $otherComponentContexts = $this->getOtherComponentContexts($parentRenderingContext, $baseName);
-        ContextService:
 
         // Pick up potential context from current component (parent or itself if root)
         $ctx = $this->getRootComponentContext($parentRenderingContext, $baseName);
@@ -250,7 +249,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
                     $view->getRenderingContext()->getVariableProvider()->remove($varName);
                     $view->getRenderingContext()->getVariableProvider()->add($varName, $varValue);
                     $arguments[$varName] = $varValue;
-                    if ($ctx) {
+                    if ($ctx instanceof AbstractComponentContext) {
                         $ctx->set($varName, $varValue);
                     }
                 }
@@ -271,7 +270,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
                     $view->getRenderingContext()->getVariableProvider()->remove($varName);
                     $view->getRenderingContext()->getVariableProvider()->add($varName, $varValue);
                     $arguments[$varName] = $varValue;
-                    if ($ctx) {
+                    if ($ctx instanceof AbstractComponentContext) {
                         $ctx->set($varName, $varValue);
                     }
                 }
@@ -279,7 +278,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         }
 
         // Assign context if available
-        if ($ctx) {
+        if ($ctx instanceof AbstractComponentContext) {
             $view->assign('context', $ctx);
         }
 
@@ -308,7 +307,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
             }
 
             $rootId = ComponentUtility::getRootIdFromContext($renderingContext);
-            if (!$rootId) {
+            if ($rootId === '' || $rootId === '0') {
                 throw new \RuntimeException('No rootId found for root component ' . $viewHelperName . '.', 1756025241);
             }
 
@@ -321,8 +320,8 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
                 }
 
                 $propsMarkedForClientValues = [];
-                foreach ($propsMarkedForClient as $name => $_) {
-                    if (!(isset($arguments[$name]) || isset($argumentDefinitions[$name]))) {
+                foreach (array_keys($propsMarkedForClient) as $name) {
+                    if (!isset($arguments[$name]) && !isset($argumentDefinitions[$name])) {
                         continue;
                     }
 
@@ -337,7 +336,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
                 );
 
                 $clientPropsFromContext = [];
-                if ($ctx) {
+                if ($ctx instanceof AbstractComponentContext) {
                     $clientPropsFromContext = ClientPropsContextExtractor::extract($ctx);
                 }
 
@@ -420,8 +419,9 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
 
         $allContexts = ContextService::getAllFromRenderingContext($parentRenderingContext);
         foreach ($allContexts as $ctxBaseName => $ctx) {
-            if ($ctxBaseName === $baseName)
+            if ($ctxBaseName === $baseName) {
                 continue;
+            }
             $contexts[$ctxBaseName] = $ctx;
         }
 
@@ -440,7 +440,10 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
 
         $ctx = ContextService::getFromRenderingContext($renderingContext, $baseName);
 
-        if ($ctx === null && $variableProvider->getByPath('component.baseName') === $baseName) {
+        if (
+            !$ctx instanceof ComponentContextInterface &&
+            $variableProvider->getByPath('component.baseName') === $baseName
+        ) {
             $ctx = $variableProvider->get('context') ?? null;
         }
 

@@ -27,10 +27,11 @@ class ComponentUtility
     public static function isComponent(RenderingContextInterface $renderingContext): bool
     {
         $componentProp = $renderingContext->getVariableProvider()->get('component');
-        if (is_array($componentProp) && isset($componentProp['fullName']) && !empty($componentProp['fullName'])) {
-            return true;
-        }
-        return false;
+        return (
+            is_array($componentProp) &&
+            is_string($componentProp['fullName'] ?? null) &&
+            $componentProp['fullName'] !== ''
+        );
     }
 
     public static function getComponentFullNameFromViewHelperName(string $viewHelperName): string
@@ -87,12 +88,14 @@ class ComponentUtility
             $viewHelperName = $viewHelperNameOrRenderingContext;
         }
 
-        if (empty($viewHelperName))
+        if ($viewHelperName === '' || $viewHelperName === '0') {
             return false;
+        }
 
         $componentParts = explode('.', $viewHelperName);
-        if (count($componentParts) === 0)
+        if (count($componentParts) === 0) {
             return false;
+        }
 
         if (count($componentParts) === 1) {
             return true; // Single part components are considered root components
@@ -106,14 +109,12 @@ class ComponentUtility
     // but its (currently) only used for exposing the `context` variable, so it's acceptable for now.
     public static function isComposableComponent(string $viewHelperName): bool
     {
-        if (empty($viewHelperName))
+        if ($viewHelperName === '' || $viewHelperName === '0') {
             return false;
+        }
 
         $componentParts = explode('.', $viewHelperName);
-        if (count($componentParts) > 1)
-            return true;
-
-        return false;
+        return count($componentParts) > 1;
     }
 
     public static function getRootIdFromContext(RenderingContextInterface $renderingContext): string
@@ -133,7 +134,7 @@ class ComponentUtility
 
     public static function getSettings(): array
     {
-        if (!empty(self::$cachedSettings)) {
+        if (self::$cachedSettings !== []) {
             return self::$cachedSettings;
         }
 
@@ -149,7 +150,7 @@ class ComponentUtility
         $fluidPrimitivesSettings = $settings['plugin.']['tx_fluidprimitives.']['settings.'] ?? [];
 
         $contentElementSettings = $settings['lib.']['contentElement.']['settings.'] ?? [];
-        if (!empty($contentElementSettings)) {
+        if ($contentElementSettings !== []) {
             $fluidPrimitivesSettings = array_merge($contentElementSettings, $fluidPrimitivesSettings);
         }
 

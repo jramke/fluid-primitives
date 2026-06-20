@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Tests\Functional;
 
+use Jramke\FluidPrimitives\Component\ComponentPrimitivesCollection;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
+use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Core\Core\SystemEnvironmentBuilder;
 use TYPO3\CMS\Core\Http\NormalizedParams;
 use TYPO3\CMS\Core\Http\ServerRequest;
@@ -89,7 +91,7 @@ abstract class FunctionalTestCase extends TYPO3FunctionalTestCase
      */
     protected function getView(): ViewInterface
     {
-        if ($this->view === null) {
+        if (!$this->view instanceof ViewInterface) {
             $this->view = $this->createPrimitivesView();
         }
 
@@ -115,9 +117,9 @@ abstract class FunctionalTestCase extends TYPO3FunctionalTestCase
         $request = $request->withAttribute('language', $language)->withAttribute('site', $site);
         $GLOBALS['TYPO3_REQUEST'] = $request;
 
-        if ($this->view !== null) {
+        if ($this->view instanceof ViewInterface) {
             $this->view->getRenderingContext()->setAttribute(ServerRequest::class, $request);
-            $this->view->getRenderingContext()->setAttribute(\Psr\Http\Message\ServerRequestInterface::class, $request);
+            $this->view->getRenderingContext()->setAttribute(ServerRequestInterface::class, $request);
         }
     }
 
@@ -167,13 +169,13 @@ abstract class FunctionalTestCase extends TYPO3FunctionalTestCase
         );
 
         $view->getRenderingContext()->setAttribute(ServerRequest::class, $request);
-        $view->getRenderingContext()->setAttribute(\Psr\Http\Message\ServerRequestInterface::class, $request);
+        $view->getRenderingContext()->setAttribute(ServerRequestInterface::class, $request);
 
         // Register the primitives namespace
         $view
             ->getRenderingContext()
             ->getViewHelperResolver()
-            ->addNamespace('primitives', new \Jramke\FluidPrimitives\Component\ComponentPrimitivesCollection());
+            ->addNamespace('primitives', new ComponentPrimitivesCollection());
 
         // Register the ui namespace
         $view

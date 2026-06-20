@@ -41,8 +41,10 @@ class CnViewHelper extends AbstractViewHelper
             'when',
             'array',
             'Array of conditional classes where key is class(es) and value is condition',
+            false,
+            [],
         );
-        $this->registerArgument('as', 'string', 'Variable name to assign the result to');
+        $this->registerArgument('as', 'string', 'Variable name to assign the result to', false, '');
     }
 
     public function getContentArgumentName(): string
@@ -54,21 +56,23 @@ class CnViewHelper extends AbstractViewHelper
     {
         $classes = [];
 
-        $classesString = $this->renderChildren() ?? '';
-        if (!empty($classesString)) {
+        $classesString = trim($this->renderChildren() ?? '');
+        if ($classesString !== '') {
             $classes = array_merge($classes, $this->parseClassString((string)$classesString));
         }
 
-        $whenArray = $this->arguments['when'] ?? [];
-        if (!empty($whenArray)) {
+        $whenArray = $this->arguments['when'];
+        if ($whenArray !== []) {
             $classes = array_merge($classes, $this->processWhenArray($whenArray));
         }
 
-        $classes = array_filter(array_unique($classes), static fn($class) => !empty(trim($class)) && is_string($class));
+        $classes = array_filter(
+            array_unique($classes),
+            static fn($class) => !in_array(trim($class), ['', '0'], true) && is_string($class),
+        );
 
-        $as = $this->arguments['as'] ?? '';
-
-        if (!empty($as)) {
+        $as = $this->arguments['as'];
+        if ($as !== '') {
             $this->renderingContext->getVariableProvider()->add($as, implode(' ', $classes));
             return '';
         } else {
@@ -87,15 +91,14 @@ class CnViewHelper extends AbstractViewHelper
         foreach ($whenArray as $key => $value) {
             if (is_int($key)) {
                 // Indexed array: treat value as class name(s)
-                if (!empty($value)) {
-                    $classes = array_merge($classes, $this->parseClassString((string)$value));
+                $value = (string)$value;
+                if ($value !== '') {
+                    $classes = array_merge($classes, $this->parseClassString($value));
                 }
-            } else {
+            } elseif ($this->isTruthy($value)) {
                 // Associative array: key is class name(s), value is condition
                 // This supports multiple classes per condition like: 'btn-primary btn-large': '{condition}'
-                if ($this->isTruthy($value)) {
-                    $classes = array_merge($classes, $this->parseClassString($key));
-                }
+                $classes = array_merge($classes, $this->parseClassString($key));
             }
         }
 
@@ -104,19 +107,22 @@ class CnViewHelper extends AbstractViewHelper
 
     private function parseClassString(string $classString): array
     {
-        if (empty(trim($classString))) {
+        if (in_array(trim($classString), ['', '0'], true)) {
             return [];
         }
 
         // Split by whitespace and filter out empty values
-        return array_filter(preg_split('/\s+/', trim($classString)), static fn($class) => !empty(trim($class)));
+        return array_filter(
+            preg_split('/\s+/', trim($classString)),
+            static fn($class) => !in_array(trim($class), ['', '0'], true),
+        );
     }
 
     /**
      * Check if a value is truthy in the context of class conditions
      * This mimics JavaScript's truthy evaluation for the clsx library
      */
-    private function isTruthy($value): bool
+    private function isTruthy(mixed $value): bool
     {
         if (is_bool($value)) {
             return $value;
@@ -125,18 +131,11 @@ class CnViewHelper extends AbstractViewHelper
         if (is_string($value)) {
             $lower = strtolower(trim($value));
             // Handle common falsy string representations
-            return (
-                $lower !== '' &&
-                $lower !== '0' &&
-                $lower !== 'false' &&
-                $lower !== 'no' &&
-                $lower !== 'null' &&
-                $lower !== 'undefined'
-            );
+            return !in_array($lower, ['', '0', 'false', 'no', 'null', 'undefined'], true);
         }
 
         if (is_numeric($value)) {
-            return $value != 0;
+            return $value !== 0;
         }
 
         if (is_array($value)) {
@@ -147,6 +146,6 @@ class CnViewHelper extends AbstractViewHelper
             return false;
         }
 
-        return !empty($value);
+        return !!$value;
     }
 }

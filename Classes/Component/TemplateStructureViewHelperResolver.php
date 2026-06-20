@@ -20,7 +20,7 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\ViewHelperResolverDelegateInterface;
  */
 final class TemplateStructureViewHelperResolver extends ViewHelperResolver
 {
-    private const STRUCTURE_VIEWHELPERS = [
+    private const array STRUCTURE_VIEWHELPERS = [
         'layout',
         'section',
         'argument',
@@ -30,34 +30,38 @@ final class TemplateStructureViewHelperResolver extends ViewHelperResolver
         'constant',
     ];
 
+    #[\Override]
     public function isNamespaceValid(string $namespaceIdentifier): bool
     {
         return $namespaceIdentifier === 'f' || $namespaceIdentifier === 'ui';
     }
 
+    #[\Override]
     public function isNamespaceIgnored(string $namespaceIdentifier): bool
     {
         return $namespaceIdentifier !== 'f' && $namespaceIdentifier !== 'ui';
     }
 
+    #[\Override]
     public function resolveViewHelperClassName(string $namespaceIdentifier, string $methodIdentifier): string
     {
         if (
             ($namespaceIdentifier === 'f' || $namespaceIdentifier === 'ui') &&
-            in_array($methodIdentifier, self::STRUCTURE_VIEWHELPERS)
+            in_array($methodIdentifier, self::STRUCTURE_VIEWHELPERS, strict: true)
         ) {
             return parent::resolveViewHelperClassName($namespaceIdentifier, $methodIdentifier);
         }
         return TemplateStructurePlaceholderViewHelper::class;
     }
 
+    #[\Override]
     public function getResponsibleDelegate(
         string $namespaceIdentifier,
         string $methodIdentifier,
     ): ?ViewHelperResolverDelegateInterface {
         if (
             ($namespaceIdentifier === 'f' || $namespaceIdentifier === 'ui') &&
-            in_array($methodIdentifier, self::STRUCTURE_VIEWHELPERS)
+            in_array($methodIdentifier, self::STRUCTURE_VIEWHELPERS, strict: true)
         ) {
             return parent::getResponsibleDelegate($namespaceIdentifier, $methodIdentifier);
         }

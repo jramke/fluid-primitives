@@ -31,7 +31,7 @@ trait AjaxValidationTrait
             }
         }
 
-        if (empty($messages)) {
+        if ($messages === []) {
             return;
         }
 

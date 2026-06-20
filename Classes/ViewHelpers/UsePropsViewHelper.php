@@ -87,6 +87,7 @@ class UsePropsViewHelper extends AbstractViewHelper implements ViewHelperNodeIni
         return '';
     }
 
+    #[\Override]
     public function compile(
         $argumentsName,
         $closureName,
@@ -104,7 +105,7 @@ class UsePropsViewHelper extends AbstractViewHelper implements ViewHelperNodeIni
     ): void {
         if (isset($arguments['name'])) {
             $name = $arguments['name'] instanceof TextNode ? $arguments['name']->getText() : '';
-            if (empty($name)) {
+            if ($name === '' || $name === '0') {
                 throw new \RuntimeException('The name argument must not be empty.', 1755936423);
             }
 
@@ -120,7 +121,7 @@ class UsePropsViewHelper extends AbstractViewHelper implements ViewHelperNodeIni
                     ->getArgumentDefinitions();
             }
 
-            if (empty($externalArgumentDefinitions)) {
+            if ($externalArgumentDefinitions === []) {
                 return;
             }
 
@@ -178,7 +179,7 @@ class UsePropsViewHelper extends AbstractViewHelper implements ViewHelperNodeIni
 
     protected static function getComponentPrimitivesCollection(): ComponentPrimitivesCollection
     {
-        if (self::$componentPrimitivesCollection === null) {
+        if (!self::$componentPrimitivesCollection instanceof ComponentPrimitivesCollection) {
             self::$componentPrimitivesCollection = GeneralUtility::makeInstance(ComponentPrimitivesCollection::class);
         }
         return self::$componentPrimitivesCollection;
@@ -186,7 +187,7 @@ class UsePropsViewHelper extends AbstractViewHelper implements ViewHelperNodeIni
 
     protected static function getComponentCollectionService(): ComponentCollectionService
     {
-        if (self::$componentCollectionService === null) {
+        if (!self::$componentCollectionService instanceof ComponentCollectionService) {
             self::$componentCollectionService = GeneralUtility::makeInstance(ComponentCollectionService::class);
         }
         return self::$componentCollectionService;

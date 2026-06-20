@@ -6,7 +6,7 @@ namespace Jramke\FluidPrimitives\Domain\Model;
 
 use Jramke\FluidPrimitives\Utility\EnumUtility;
 
-class TagAttributes implements \Countable
+class TagAttributes implements \Countable, \Stringable
 {
     protected $attributesString = '';
     protected $attributes = [];
@@ -24,34 +24,34 @@ class TagAttributes implements \Countable
 
     public function __toString(): string
     {
-        return $this->attributesString;
+        return (string)$this->attributesString;
     }
 
     public function renderAsArray(array $attributes = []): array
     {
-        if (empty($attributes)) {
+        if ($attributes === []) {
+            if ($this->attributes === []) {
+                return [];
+            }
+
             $attributes = $this->attributes;
         }
 
-        if (empty($attributes)) {
-            return [];
-        }
-
-        return $this->normalizeAttributes($attributes, static fn($key, $value) => htmlspecialchars($value));
+        return $this->normalizeAttributes($attributes, static fn($key, $value) => htmlspecialchars((string)$value));
     }
 
     public function renderWithOnly(array $attributeKeys, bool $asArray = false): string|array
     {
-        if (empty($this->attributes)) {
+        if ($this->attributes === []) {
             return $asArray ? [] : '';
         }
 
         $attributesToRender = $this->attributes;
-        if (!empty($attributeKeys)) {
+        if ($attributeKeys !== []) {
             $attributesToRender = array_intersect_key($this->attributes, array_flip($attributeKeys));
         }
 
-        if (empty($attributesToRender)) {
+        if ($attributesToRender === []) {
             return $asArray ? [] : '';
         }
 
@@ -60,16 +60,16 @@ class TagAttributes implements \Countable
 
     public function renderWithSkip(array $attributeKeys, bool $asArray = false): string|array
     {
-        if (empty($this->attributes)) {
+        if ($this->attributes === []) {
             return $asArray ? [] : '';
         }
 
         $attributesToRender = $this->attributes;
-        if (!empty($attributeKeys)) {
+        if ($attributeKeys !== []) {
             $attributesToRender = array_diff_key($this->attributes, array_flip($attributeKeys));
         }
 
-        if (empty($attributesToRender)) {
+        if ($attributesToRender === []) {
             return $asArray ? [] : '';
         }
 
@@ -88,14 +88,14 @@ class TagAttributes implements \Countable
         $result = [];
 
         foreach ($attributes as $key => $value) {
-            if (empty($key) || $value === null) {
+            if (in_array($key, [0, '', '0'], true) || $value === null) {
                 continue;
             }
 
             $value = EnumUtility::normalize($value);
 
             // convert boolean values to html boolean attributes unless they are aria- attributes
-            if (!str_starts_with($key, 'aria-') && is_bool($value)) {
+            if (!str_starts_with((string)$key, 'aria-') && is_bool($value)) {
                 $value = $value ? '' : null;
                 if ($value === null) {
                     continue;
@@ -114,7 +114,7 @@ class TagAttributes implements \Countable
 
     protected function buildSingleAttributeString(string $key, string $value): string
     {
-        if (empty($value)) {
+        if ($value === '' || $value === '0') {
             return htmlspecialchars((string)$key);
         }
         return sprintf('%s="%s"', htmlspecialchars((string)$key), htmlspecialchars((string)$value));
@@ -122,7 +122,7 @@ class TagAttributes implements \Countable
 
     public static function stringToArray(string $attributesString): array
     {
-        if (empty($attributesString)) {
+        if ($attributesString === '' || $attributesString === '0') {
             return [];
         }
 

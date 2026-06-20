@@ -11,34 +11,18 @@ use Traversable;
 // @mago-expect lint:kan-defect
 class ListCollection implements JsonSerializable, IteratorAggregate
 {
-    protected array $items = [];
-
-    protected ?string $itemToValueKey = null;
-    protected ?string $itemToStringKey = null;
-    protected ?string $isItemDisabledKey = null;
-    protected ?string $groupByKey = null;
-    protected array|string|null $groupSort = null;
-
     /** @var ListCollectionItem[]|null Cached normalized items */
     private ?array $normalizedItems = null;
 
     // @mago-expect lint:excessive-parameter-list
     public function __construct(
-        array $items = [],
-        ?string $itemToValueKey = null,
-        ?string $itemToStringKey = null,
-        ?string $isItemDisabledKey = null,
-        ?string $groupByKey = null,
-        array|string|null $groupSort = null,
-    ) {
-        $this->items = $items;
-
-        $this->itemToValueKey = $itemToValueKey;
-        $this->itemToStringKey = $itemToStringKey;
-        $this->isItemDisabledKey = $isItemDisabledKey;
-        $this->groupByKey = $groupByKey;
-        $this->groupSort = $groupSort;
-    }
+        protected array $items = [],
+        protected ?string $itemToValueKey = null,
+        protected ?string $itemToStringKey = null,
+        protected ?string $isItemDisabledKey = null,
+        protected ?string $groupByKey = null,
+        protected array|string|null $groupSort = null,
+    ) {}
 
     public function copy(?array $items = null): static
     {
@@ -100,8 +84,9 @@ class ListCollection implements JsonSerializable, IteratorAggregate
 
     protected function getFromKey(array|object $item, ?string $key): mixed
     {
-        if (!$key)
+        if (!$key) {
             return null;
+        }
         $segments = explode('.', $key);
         $current = $item;
 
@@ -206,7 +191,7 @@ class ListCollection implements JsonSerializable, IteratorAggregate
         $result = [];
         foreach ($values as $value) {
             $item = $this->find($value);
-            if ($item) {
+            if ($item instanceof ListCollectionItem) {
                 $result[] = $item;
             }
         }

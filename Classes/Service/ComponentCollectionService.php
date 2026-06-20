@@ -9,12 +9,13 @@ use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use TYPO3\CMS\Fluid\Core\ViewHelper\ViewHelperResolverFactoryInterface;
 use TYPO3Fluid\Fluid\Core\Component\ComponentDefinitionProviderInterface;
 use TYPO3Fluid\Fluid\Core\Component\ComponentTemplateResolverInterface;
+use TYPO3Fluid\Fluid\Core\ViewHelper\ViewHelperResolverDelegateInterface;
 
 #[Autoconfigure(public: true)]
 class ComponentCollectionService
 {
     public function __construct(
-        private ViewHelperResolverFactoryInterface $viewHelperResolverFactory,
+        private readonly ViewHelperResolverFactoryInterface $viewHelperResolverFactory,
     ) {}
 
     public function getCollectionByViewHelperName(string $viewHelperName): ComponentDefinitionProviderInterface&ComponentTemplateResolverInterface
@@ -31,7 +32,7 @@ class ComponentCollectionService
 
         $viewHelperResolver = $this->viewHelperResolverFactory->create();
         $viewHelperResolverDelegate = $viewHelperResolver->getResponsibleDelegate($explodedNamespace, $explodedName);
-        if (!$viewHelperResolverDelegate) {
+        if (!$viewHelperResolverDelegate instanceof ViewHelperResolverDelegateInterface) {
             throw new RuntimeException(
                 'Could not resolve component collection for ' .
                 $explodedNamespace .

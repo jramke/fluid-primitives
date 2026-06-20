@@ -63,6 +63,6 @@ abstract class ViewHelperTestCase extends TestCase
         // Normalize multiple whitespace to single space
         $html = preg_replace('/\s+/', ' ', $html);
         // Remove whitespace between tags
-        return preg_replace('/>\s+</', '><', $html);
+        return preg_replace('/>\s+</', '><', (string)$html);
     }
 }

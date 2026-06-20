@@ -35,21 +35,20 @@ class CallViewHelper extends AbstractViewHelper
     {
         $object = $this->renderChildren();
         if (!$object) {
-            throw new \RuntimeException('No object provided to call method on.');
+            throw new \RuntimeException('No object provided to call method on.', 2131365274);
         }
 
         $method = $this->arguments['method'];
         $args = $this->arguments['arguments'] ?? [];
 
         if (!is_object($object)) {
-            throw new \RuntimeException('The provided value is not an object.');
+            throw new \RuntimeException('The provided value is not an object.', 2653378988);
         }
         if (!method_exists($object, $method)) {
-            throw new \RuntimeException(sprintf(
-                'Method "%s" does not exist on object of type %s',
-                $method,
-                get_class($object),
-            ));
+            throw new \RuntimeException(
+                sprintf('Method "%s" does not exist on object of type %s', $method, $object::class),
+                9125095715,
+            );
         }
 
         return call_user_func_array([$object, $method], $args);

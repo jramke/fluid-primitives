@@ -33,11 +33,11 @@ class PortalContainerViewHelper extends AbstractViewHelper
     {
         $portalledHtmlStrings = PortalRegistry::getAllByName($this->arguments['name']);
 
-        if (empty($portalledHtmlStrings)) {
+        if ($portalledHtmlStrings === []) {
             return '';
         }
 
-        $concatenatedHtml = implode("\n", array_map('trim', $portalledHtmlStrings));
+        $concatenatedHtml = implode("\n", array_map(trim(...), $portalledHtmlStrings));
 
         PortalRegistry::clearByName($this->arguments['name']);
 

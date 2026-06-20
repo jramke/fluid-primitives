@@ -16,6 +16,7 @@ class ConcreteTestContext extends AbstractComponentContext
         $this->testVars = $vars;
     }
 
+    #[\Override]
     public function get(string $key): mixed
     {
         // Direct key lookup first

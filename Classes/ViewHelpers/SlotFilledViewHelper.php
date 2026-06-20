@@ -36,7 +36,7 @@ class SlotFilledViewHelper extends AbstractViewHelper
         $slot = $variableContainer->get(SlotViewHelper::class, $this->arguments['name']);
         $content = trim(is_callable($slot) ? (string)$slot() : '');
 
-        if (empty($content)) {
+        if ($content === '' || $content === '0') {
             return false;
         }
 

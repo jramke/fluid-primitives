@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Jramke\FluidPrimitives\Component\ComponentPrimitivesCollection;
 use Jramke\FluidPrimitives\Constants;
 use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -16,7 +17,7 @@ $GLOBALS['TYPO3_CONF_VARS']['SYS']['fluid']['namespaces']['ui'][] = 'Jramke\\Flu
 
 // Register primitives namespace
 $GLOBALS['TYPO3_CONF_VARS']['SYS']['fluid']['namespaces']['primitives'] = [
-    'Jramke\\FluidPrimitives\\Component\\ComponentPrimitivesCollection',
+    ComponentPrimitivesCollection::class,
 ];
 
 // Exclude specific arguments from storybook controls when using EXT:storybook

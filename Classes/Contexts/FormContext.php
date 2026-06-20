@@ -8,7 +8,6 @@ use Jramke\FluidPrimitives\Enum\FormState;
 use Psr\Http\Message\ServerRequestInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use TYPO3\CMS\Core\Page\PageRenderer;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Mvc\Controller\MvcPropertyMappingConfigurationService;
 use TYPO3\CMS\Extbase\Mvc\RequestInterface;
 use TYPO3\CMS\Extbase\Mvc\Web\Routing\UriBuilder;
@@ -21,6 +20,7 @@ class FormContext extends AbstractComponentContext
         protected readonly MvcPropertyMappingConfigurationService $mvcPropertyMappingConfigurationService,
         protected readonly ExtensionService $extensionService,
         protected readonly PageRenderer $pageRenderer,
+        private readonly UriBuilder $uriBuilder,
     ) {}
 
     public function afterRendering(string &$html): void
@@ -34,13 +34,13 @@ class FormContext extends AbstractComponentContext
 
     public function getResolvedAction(): ?string
     {
-        if (!empty($this->get('actionUri'))) {
+        if ((string)$this->get('actionUri') !== '') {
             return $this->get('actionUri');
         }
 
         $request = $this->getExtbaseRequestOrThrow();
 
-        $uriBuilder = GeneralUtility::makeInstance(UriBuilder::class);
+        $uriBuilder = $this->uriBuilder;
         $uriBuilder->reset()->setRequest($request)// TODO: enable these options as arguments?
         // ->setTargetPageType((int)($this->arguments['pageType'] ?? 0))
         // ->setNoCache((bool)($this->arguments['noCache'] ?? false))
@@ -96,23 +96,17 @@ class FormContext extends AbstractComponentContext
     {
         try {
             $request = $this->getExtbaseRequestOrThrow();
-        } catch (\RuntimeException $e) {
+        } catch (\RuntimeException) {
             return '';
         }
 
-        if (!empty($this->get('extensionName'))) {
-            $extensionName = $this->get('extensionName');
-        } else {
-            $extensionName = $request->getControllerExtensionName();
-        }
+        $extensionName = (string)$this->get('extensionName') === ''
+            ? $request->getControllerExtensionName()
+            : $this->get('extensionName');
 
-        if (!empty($this->get('pluginName'))) {
-            $pluginName = $this->get('pluginName');
-        } else {
-            $pluginName = $request->getPluginName();
-        }
+        $pluginName = (string)$this->get('pluginName') === '' ? $request->getPluginName() : $this->get('pluginName');
 
-        if ($extensionName !== null && $pluginName != null) {
+        if ($extensionName !== null && $pluginName !== null) {
             return $this->extensionService->getPluginNamespace($extensionName, $pluginName);
         }
 
@@ -157,7 +151,7 @@ class FormContext extends AbstractComponentContext
             return '';
         }
 
-        if (!empty($objectName)) {
+        if (!in_array($objectName, [null, '', '0'], true)) {
             $fieldName = $objectName . '[' . $fieldName . ']';
         }
 

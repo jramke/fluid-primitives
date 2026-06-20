@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use TYPO3\TestingFramework\Core\Testbase;
+
 /**
  * Bootstrap for all tests (unit and functional).
  *
@@ -13,13 +15,13 @@ declare(strict_types=1);
  */
 
 // Only load autoloader if not already loaded (when running from root)
-if (!class_exists(\TYPO3\TestingFramework\Core\Testbase::class)) {
+if (!class_exists(Testbase::class)) {
     require dirname(__DIR__) . '/vendor/autoload.php';
 }
 
 // Initialize TYPO3 testing framework for functional tests
 (static function () {
-    $testbase = new \TYPO3\TestingFramework\Core\Testbase();
+    $testbase = new Testbase();
     $testbase->defineOriginalRootPath();
     $testbase->createDirectory(ORIGINAL_ROOT . 'typo3temp/var/tests');
     $testbase->createDirectory(ORIGINAL_ROOT . 'typo3temp/var/transient');

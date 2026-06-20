@@ -47,7 +47,7 @@ class ListCollectionViewHelper extends AbstractViewHelper
 
     public function initializeArguments(): void
     {
-        $this->registerArgument('as', 'string', 'Variable name to assign the result to', false);
+        $this->registerArgument('as', 'string', 'Variable name to assign the result to', false, '');
         $this->registerArgument(
             'items',
             'array',
@@ -77,9 +77,8 @@ class ListCollectionViewHelper extends AbstractViewHelper
             $this->arguments['groupSort'] ?? null,
         );
 
-        $as = $this->arguments['as'] ?? '';
-
-        if (!empty($as)) {
+        $as = $this->arguments['as'];
+        if ($as !== '') {
             $this->renderingContext->getVariableProvider()->add($as, $collection);
             return '';
         } else {

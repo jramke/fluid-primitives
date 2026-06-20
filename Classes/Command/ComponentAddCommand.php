@@ -62,6 +62,7 @@ class ComponentAddCommand extends Command
         $this->addOption('force', 'f', InputOption::VALUE_NONE, 'Force overwriting existing component.');
     }
 
+    // @mago-expect lint:halstead
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
@@ -86,7 +87,7 @@ class ComponentAddCommand extends Command
             $defaultExtension =
                 $this->extensionConfiguration->get('fluid_primitives', 'cli')['add']['defaultExtension'] ?? '';
 
-            if (!empty($defaultExtension) && array_key_exists($defaultExtension, $availablePackages)) {
+            if ($defaultExtension !== '' && array_key_exists($defaultExtension, $availablePackages)) {
                 $extension = $defaultExtension;
             } else {
                 $availablePackagesForDisplay = $this->packageResolver->getAvailablePackagesForDisplay();

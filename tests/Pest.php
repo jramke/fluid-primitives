@@ -2,6 +2,10 @@
 
 declare(strict_types=1);
 
+use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
+use Jramke\FluidPrimitives\Tests\TestCase;
+use Jramke\FluidPrimitives\Tests\ViewHelperTestCase;
+
 /*
  |--------------------------------------------------------------------------
  | Test Case
@@ -14,9 +18,9 @@ declare(strict_types=1);
  |
  */
 
-pest()->extend(Jramke\FluidPrimitives\Tests\TestCase::class)->in('Unit');
-pest()->extend(Jramke\FluidPrimitives\Tests\ViewHelperTestCase::class)->in('Functional/ViewHelpers');
-pest()->extend(Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase::class)->in('Functional/Components');
+pest()->extend(TestCase::class)->in('Unit');
+pest()->extend(ViewHelperTestCase::class)->in('Functional/ViewHelpers');
+pest()->extend(FunctionalTestCase::class)->in('Functional/Components');
 
 /*
  |--------------------------------------------------------------------------
