@@ -2,65 +2,76 @@
 
 declare(strict_types=1);
 
+namespace Jramke\FluidPrimitives\Tests\Unit;
+
+use Jramke\FluidPrimitives\Tests\TestCase;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
+use PHPUnit\Framework\Attributes\Test;
 
-describe('ComponentUtility', function () {
-    describe('id', function () {
-        it('generates unique IDs with prefix', function () {
-            $id1 = ComponentUtility::id();
-            $id2 = ComponentUtility::id();
-            $id3 = ComponentUtility::id('custom');
+final class ComponentUtilityTest extends TestCase
+{
+    #[Test]
+    public function generatesUniqueIdsWithPrefix(): void
+    {
+        $id1 = ComponentUtility::id();
+        $id2 = ComponentUtility::id();
+        $id3 = ComponentUtility::id('custom');
 
-            expect($id1)->toStartWith('«f');
-            expect($id1)->toEndWith('»');
-            expect($id3)->toStartWith('«custom');
-            expect($id1)->not->toBe($id2);
-        });
-    });
+        $this->assertStringStartsWith('«f', $id1);
+        $this->assertStringEndsWith('»', $id1);
+        $this->assertStringStartsWith('«custom', $id3);
+        $this->assertNotSame($id1, $id2);
+    }
 
-    describe('getComponentFullNameFromViewHelperName', function () {
-        it('handles complex names with multiple capitals', function () {
-            $result = ComponentUtility::getComponentFullNameFromViewHelperName('ScrollArea.Root');
-            expect($result)->toBe('scroll-area.root');
-        });
-    });
+    #[Test]
+    public function handlesComplexNamesWithMultipleCapitals(): void
+    {
+        $result = ComponentUtility::getComponentFullNameFromViewHelperName('ScrollArea.Root');
+        $this->assertSame('scroll-area.root', $result);
+    }
 
-    describe('getComponentBaseNameFromViewHelperName', function () {
-        it('skips primitives namespace', function () {
-            $result = ComponentUtility::getComponentBaseNameFromViewHelperName('Primitives.Dialog.Root');
-            expect($result)->toBe('dialog');
-        });
+    #[Test]
+    public function skipsPrimitivesNamespace(): void
+    {
+        $result = ComponentUtility::getComponentBaseNameFromViewHelperName('Primitives.Dialog.Root');
+        $this->assertSame('dialog', $result);
+    }
 
-        it('extracts base name from compound component', function () {
-            $result = ComponentUtility::getComponentBaseNameFromViewHelperName('Accordion.Item');
-            expect($result)->toBe('accordion');
-        });
-    });
+    #[Test]
+    public function extractsBaseNameFromCompoundComponent(): void
+    {
+        $result = ComponentUtility::getComponentBaseNameFromViewHelperName('Accordion.Item');
+        $this->assertSame('accordion', $result);
+    }
 
-    describe('getSubcomponentNameFromViewHelperName', function () {
-        it('returns full subcomponent path for deep names', function () {
-            $result = ComponentUtility::getSubcomponentNameFromViewHelperName('Accordion.Item.Trigger');
-            expect($result)->toBe('item.trigger');
-        });
-    });
+    #[Test]
+    public function returnsFullSubcomponentPathForDeepNames(): void
+    {
+        $result = ComponentUtility::getSubcomponentNameFromViewHelperName('Accordion.Item.Trigger');
+        $this->assertSame('item.trigger', $result);
+    }
 
-    describe('isRootComponent', function () {
-        it('returns true for single part component name', function () {
-            expect(ComponentUtility::isRootComponent('Collapsible'))->toBeTrue();
-        });
+    #[Test]
+    public function returnsTrueForSinglePartComponentName(): void
+    {
+        $this->assertTrue(ComponentUtility::isRootComponent('Collapsible'));
+    }
 
-        it('returns true when second part is Root', function () {
-            expect(ComponentUtility::isRootComponent('Accordion.Root'))->toBeTrue();
-        });
+    #[Test]
+    public function returnsTrueWhenSecondPartIsRoot(): void
+    {
+        $this->assertTrue(ComponentUtility::isRootComponent('Accordion.Root'));
+    }
 
-        it('returns false for item components', function () {
-            expect(ComponentUtility::isRootComponent('Accordion.Item'))->toBeFalse();
-        });
+    #[Test]
+    public function returnsFalseForItemComponents(): void
+    {
+        $this->assertFalse(ComponentUtility::isRootComponent('Accordion.Item'));
+    }
 
-        it('handles primitives namespace - second part is dialog not root', function () {
-            // Primitives.Dialog.Root has parts: ['primitives', 'dialog', 'root']
-            // The check looks at $componentParts[1] which is 'dialog', not 'root'
-            expect(ComponentUtility::isRootComponent('Primitives.Dialog.Root'))->toBeFalse();
-        });
-    });
-});
+    #[Test]
+    public function handlesPrimitivesNamespaceSecondPartIsNotRoot(): void
+    {
+        $this->assertFalse(ComponentUtility::isRootComponent('Primitives.Dialog.Root'));
+    }
+}

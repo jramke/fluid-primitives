@@ -2,109 +2,105 @@
 
 declare(strict_types=1);
 
-use Jramke\FluidPrimitives\Contexts\AbstractComponentContext;
+namespace Jramke\FluidPrimitives\Tests\Unit;
 
-/**
- * Tests for AbstractComponentContext methods.
- */
-class ConcreteTestContext extends AbstractComponentContext
+use Jramke\FluidPrimitives\Component\ComponentCollectionInterface;
+use Jramke\FluidPrimitives\Factory\ComponentContextFactory;
+use Jramke\FluidPrimitives\Tests\Helper\ConcreteTestContext;
+use Jramke\FluidPrimitives\Tests\TestCase;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
+use PHPUnit\Framework\Attributes\Test;
+use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
+
+#[AllowMockObjectsWithoutExpectations]
+final class AbstractComponentContextTest extends TestCase
 {
-    private array $testVars = [];
+    private RenderingContextInterface $renderingContext;
+    private RenderingContextInterface $parentRenderingContext;
+    private ComponentCollectionInterface $componentResolver;
 
-    public function setTestVariables(array $vars): void
+    protected function setUp(): void
     {
-        $this->testVars = $vars;
+        parent::setUp();
+
+        $this->renderingContext = $this->createMock(RenderingContextInterface::class);
+        $this->parentRenderingContext = $this->createMock(RenderingContextInterface::class);
+        $this->componentResolver = $this->createMock(ComponentCollectionInterface::class);
     }
 
-    #[\Override]
-    public function get(string $key): mixed
+    private function createContext(array $contextVariables = []): ConcreteTestContext
     {
-        // Direct key lookup first
-        if (array_key_exists($key, $this->testVars)) {
-            return $this->testVars[$key];
-        }
+        $factory = new ComponentContextFactory();
 
-        // Support dot notation for nested array access
-        if (!str_contains($key, '.')) {
-            return null;
-        }
+        return $factory->create(
+            ConcreteTestContext::class,
+            $this->renderingContext,
+            $this->parentRenderingContext,
+            $this->componentResolver,
+            $contextVariables,
+        );
+    }
 
-        $segments = explode('.', $key);
-        $value = $this->testVars;
+    #[Test]
+    public function supportsNestedPropertyAccessViaDotNotation(): void
+    {
+        $context = $this->createContext([
+            'scrollbar' => [
+                'orientation' => 'vertical',
+                'size' => 'small',
+            ],
+            'nested' => [
+                'level1' => [
+                    'level2' => 'deep-value',
+                ],
+            ],
+        ]);
 
-        foreach ($segments as $segment) {
-            if (!is_array($value) || !array_key_exists($segment, $value)) {
-                return null;
-            }
-            $value = $value[$segment];
-        }
+        $this->assertSame('vertical', $context->get('scrollbar.orientation'));
+        $this->assertSame('small', $context->get('scrollbar.size'));
+        $this->assertSame('deep-value', $context->get('nested.level1.level2'));
+    }
 
-        return $value;
+    #[Test]
+    public function returnsNullForNonExistentNestedPaths(): void
+    {
+        $context = $this->createContext([
+            'scrollbar' => [
+                'orientation' => 'vertical',
+            ],
+        ]);
+
+        $this->assertNull($context->get('scrollbar.nonexistent'));
+        $this->assertNull($context->get('nonexistent.path'));
+        $this->assertNull($context->get('scrollbar.orientation.deeper'));
+    }
+
+    #[Test]
+    public function prefersDirectKeyLookupOverDotNotationParsing(): void
+    {
+        $context = $this->createContext([
+            'my.dotted.key' => 'direct-value',
+            'my' => [
+                'dotted' => [
+                    'key' => 'nested-value',
+                ],
+            ],
+        ]);
+
+        $this->assertSame('direct-value', $context->get('my.dotted.key'));
+    }
+
+    #[Test]
+    public function supportsArrayStyleAccessForContextVariables(): void
+    {
+        $context = $this->createContext([
+            'orientation' => 'horizontal',
+            'nested' => ['value' => 'test'],
+        ]);
+
+        $this->assertSame('horizontal', $context['orientation']);
+        $this->assertSame('test', $context['nested.value']);
+        $this->assertTrue(isset($context['orientation']));
+        $this->assertFalse(isset($context['nonexistent']));
     }
 }
-
-describe('AbstractComponentContext', function () {
-    beforeEach(function () {
-        $this->context = new ConcreteTestContext();
-    });
-
-    describe('get with dot notation', function () {
-        it('supports nested property access via dot notation', function () {
-            $this->context->setTestVariables([
-                'scrollbar' => [
-                    'orientation' => 'vertical',
-                    'size' => 'small',
-                ],
-                'nested' => [
-                    'level1' => [
-                        'level2' => 'deep-value',
-                    ],
-                ],
-            ]);
-
-            expect($this->context->get('scrollbar.orientation'))->toBe('vertical');
-            expect($this->context->get('scrollbar.size'))->toBe('small');
-            expect($this->context->get('nested.level1.level2'))->toBe('deep-value');
-        });
-
-        it('returns null for non-existent nested paths', function () {
-            $this->context->setTestVariables([
-                'scrollbar' => [
-                    'orientation' => 'vertical',
-                ],
-            ]);
-
-            expect($this->context->get('scrollbar.nonexistent'))->toBeNull();
-            expect($this->context->get('nonexistent.path'))->toBeNull();
-            expect($this->context->get('scrollbar.orientation.deeper'))->toBeNull();
-        });
-
-        it('prefers direct key lookup over dot notation parsing', function () {
-            // When a key literally contains a dot, it should be found directly
-            $this->context->setTestVariables([
-                'my.dotted.key' => 'direct-value',
-                'my' => [
-                    'dotted' => [
-                        'key' => 'nested-value',
-                    ],
-                ],
-            ]);
-
-            expect($this->context->get('my.dotted.key'))->toBe('direct-value');
-        });
-    });
-
-    describe('ArrayAccess interface', function () {
-        it('supports array-style access for context variables', function () {
-            $this->context->setTestVariables([
-                'orientation' => 'horizontal',
-                'nested' => ['value' => 'test'],
-            ]);
-
-            expect($this->context['orientation'])->toBe('horizontal');
-            expect($this->context['nested.value'])->toBe('test');
-            expect(isset($this->context['orientation']))->toBeTrue();
-            expect(isset($this->context['nonexistent']))->toBeFalse();
-        });
-    });
-});

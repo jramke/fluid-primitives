@@ -2,63 +2,76 @@
 
 declare(strict_types=1);
 
+namespace Jramke\FluidPrimitives\Tests\Unit;
+
 use Jramke\FluidPrimitives\Domain\Model\TagAttributes;
+use Jramke\FluidPrimitives\Tests\TestCase;
+use PHPUnit\Framework\Attributes\Test;
 
-describe('TagAttributes', function () {
-    describe('rendering', function () {
-        it('renders key-value and boolean attributes', function () {
-            $attrs = new TagAttributes(['class' => 'test', 'id' => 'myId', 'disabled' => true]);
-            expect((string)$attrs)->toBe('class="test" id="myId" disabled');
-        });
+final class TagAttributesTest extends TestCase
+{
+    #[Test]
+    public function rendersKeyValueAndBooleanAttributes(): void
+    {
+        $attrs = new TagAttributes(['class' => 'test', 'id' => 'myId', 'disabled' => true]);
+        $this->assertSame('class="test" id="myId" disabled', (string)$attrs);
+    }
 
-        it('renders aria- attributes with boolean values as strings', function () {
-            $attrs = new TagAttributes(['aria-expanded' => true, 'aria-hidden' => false]);
-            expect((string)$attrs)->toBe('aria-expanded="1" aria-hidden');
-        });
+    #[Test]
+    public function rendersAriaAttributesWithBooleanValuesAsStrings(): void
+    {
+        $attrs = new TagAttributes(['aria-expanded' => true, 'aria-hidden' => false]);
+        $this->assertSame('aria-expanded="1" aria-hidden', (string)$attrs);
+    }
 
-        it('escapes HTML in values and keys', function () {
-            $attrs = new TagAttributes([
-                'data-value' => '<script>alert("xss")</script>',
-                'data-<test>' => 'value',
-            ]);
-            expect((string)$attrs)->toContain('&lt;script&gt;');
-            expect((string)$attrs)->toContain('data-&lt;test&gt;');
-        });
+    #[Test]
+    public function escapesHtmlInValuesAndKeys(): void
+    {
+        $attrs = new TagAttributes([
+            'data-value' => '<script>alert("xss")</script>',
+            'data-<test>' => 'value',
+        ]);
+        $this->assertStringContainsString('&lt;script&gt;', (string)$attrs);
+        $this->assertStringContainsString('data-&lt;test&gt;', (string)$attrs);
+    }
 
-        it('encodes arrays and objects as JSON', function () {
-            $obj = new \stdClass();
-            $obj->name = 'test';
-            $attrs = new TagAttributes(['data-items' => ['a', 'b'], 'data-obj' => $obj]);
-            expect((string)$attrs)->toContain('data-items="[&quot;a&quot;,&quot;b&quot;]"');
-            expect((string)$attrs)->toContain('data-obj="{&quot;name&quot;:&quot;test&quot;}"');
-        });
-    });
+    #[Test]
+    public function encodesArraysAndObjectsAsJson(): void
+    {
+        $obj = new \stdClass();
+        $obj->name = 'test';
+        $attrs = new TagAttributes(['data-items' => ['a', 'b'], 'data-obj' => $obj]);
+        $this->assertStringContainsString('data-items="[&quot;a&quot;,&quot;b&quot;]"', (string)$attrs);
+        $this->assertStringContainsString('data-obj="{&quot;name&quot;:&quot;test&quot;}"', (string)$attrs);
+    }
 
-    describe('renderWithOnly', function () {
-        it('filters to specified keys only', function () {
-            $attrs = new TagAttributes(['class' => 'test', 'id' => 'myId', 'disabled' => true]);
-            expect($attrs->renderWithOnly(['class']))->toBe('class="test"');
-            expect($attrs->renderWithOnly(['class'], true))->toBe(['class' => 'test']);
-        });
-    });
+    #[Test]
+    public function filtersToSpecifiedKeysOnly(): void
+    {
+        $attrs = new TagAttributes(['class' => 'test', 'id' => 'myId', 'disabled' => true]);
+        $this->assertSame('class="test"', $attrs->renderWithOnly(['class']));
+        $this->assertSame(['class' => 'test'], $attrs->renderWithOnly(['class'], true));
+    }
 
-    describe('renderWithSkip', function () {
-        it('excludes specified keys', function () {
-            $attrs = new TagAttributes(['class' => 'test', 'id' => 'myId', 'disabled' => true]);
-            expect($attrs->renderWithSkip(['id', 'disabled']))->toBe('class="test"');
-            expect($attrs->renderWithSkip(['id'], true))->toBe(['class' => 'test', 'disabled' => '']);
-        });
-    });
+    #[Test]
+    public function excludesSpecifiedKeys(): void
+    {
+        $attrs = new TagAttributes(['class' => 'test', 'id' => 'myId', 'disabled' => true]);
+        $this->assertSame('class="test"', $attrs->renderWithSkip(['id', 'disabled']));
+        $this->assertSame(['class' => 'test', 'disabled' => ''], $attrs->renderWithSkip(['id'], true));
+    }
 
-    describe('stringToArray', function () {
-        it('parses mixed key-value and boolean attributes', function () {
-            $result = TagAttributes::stringToArray('class="test" disabled');
-            expect($result)->toBe(['class' => 'test', 'disabled' => true]);
-        });
+    #[Test]
+    public function parsesMixedKeyValueAndBooleanAttributes(): void
+    {
+        $result = TagAttributes::stringToArray('class="test" disabled');
+        $this->assertSame(['class' => 'test', 'disabled' => true], $result);
+    }
 
-        it('handles values with equals signs', function () {
-            $result = TagAttributes::stringToArray('data-equation="1+1=2"');
-            expect($result)->toBe(['data-equation' => '1+1=2']);
-        });
-    });
-});
+    #[Test]
+    public function handlesValuesWithEqualsSigns(): void
+    {
+        $result = TagAttributes::stringToArray('data-equation="1+1=2"');
+        $this->assertSame(['data-equation' => '1+1=2'], $result);
+    }
+}

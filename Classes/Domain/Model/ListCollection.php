@@ -8,7 +8,8 @@ use IteratorAggregate;
 use JsonSerializable;
 use Traversable;
 
-// @mago-expect lint:kan-defect
+// TODO: can we refactor this into smaller parts?
+// @mago-expect lint:halstead,kan-defect,too-many-methods,cyclomatic-complexity
 class ListCollection implements JsonSerializable, IteratorAggregate
 {
     /** @var ListCollectionItem[]|null Cached normalized items */

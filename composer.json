@@ -18,7 +18,6 @@
         "typo3fluid/fluid": "^4.6 || ^5"
     },
     "require-dev": {
-        "pestphp/pest": "^4.4",
         "typo3/testing-framework": "^9.4"
     },
     "config": {
@@ -29,7 +28,9 @@
         }
     },
     "scripts": {
-        "test": "pest",
+        "test": "php ../../vendor/bin/phpunit -c phpunit.xml --testdox --colors=always --display-notices",
+        "test:unit": "@test --testsuite=Unit",
+        "test:functional": "@test --testsuite=Functional",
         "prepare-release": [
             "rm -rf .github",
             "rm -f .gitignore",

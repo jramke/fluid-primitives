@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Tests;
 
-use PHPUnit\Framework\TestCase as BaseTestCase;
+use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
 /**
  * Base test case for unit tests.
@@ -12,7 +12,4 @@ use PHPUnit\Framework\TestCase as BaseTestCase;
  * Use this for testing isolated PHP classes that don't require
  * Fluid templating or TYPO3 context.
  */
-abstract class TestCase extends BaseTestCase
-{
-    // Add common test utilities here
-}
+abstract class TestCase extends UnitTestCase {}

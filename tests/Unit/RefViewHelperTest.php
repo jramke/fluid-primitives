@@ -2,167 +2,176 @@
 
 declare(strict_types=1);
 
+namespace Jramke\FluidPrimitives\Tests\Unit;
+
+use Jramke\FluidPrimitives\Tests\TestCase;
 use Jramke\FluidPrimitives\ViewHelpers\RefViewHelper;
+use PHPUnit\Framework\Attributes\Test;
+use RuntimeException;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContext;
 use TYPO3Fluid\Fluid\Core\Variables\StandardVariableProvider;
 
-describe('RefViewHelper', function () {
-    beforeEach(function () {
+final class RefViewHelperTest extends TestCase
+{
+    private RenderingContext $renderingContext;
+    private StandardVariableProvider $variableProvider;
+    private RefViewHelper $viewHelper;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
         $this->renderingContext = new RenderingContext();
         $this->variableProvider = new StandardVariableProvider();
         $this->renderingContext->setVariableProvider($this->variableProvider);
 
         $this->viewHelper = new RefViewHelper();
         $this->viewHelper->setRenderingContext($this->renderingContext);
-    });
+    }
 
-    describe('within component context', function () {
-        beforeEach(function () {
-            // Set up component context
-            $this->variableProvider->add('component', [
-                'fullName' => 'Collapsible.Root',
-            ]);
-            $this->variableProvider->add('rootId', '«f1»');
-        });
+    #[Test]
+    public function rendersDataAttributesForARef(): void
+    {
+        $this->variableProvider->add('component', ['fullName' => 'Collapsible.Root']);
+        $this->variableProvider->add('rootId', '«f1»');
 
-        it('renders data attributes for a ref', function () {
-            $this->viewHelper->setArguments([
-                'name' => 'trigger',
-                'asArray' => false,
-                'data' => [],
-            ]);
+        $this->viewHelper->setArguments([
+            'name' => 'trigger',
+            'asArray' => false,
+            'data' => [],
+        ]);
 
-            $result = $this->viewHelper->render();
+        $result = $this->viewHelper->render();
 
-            expect($result)->toContain('data-scope="collapsible"');
-            expect($result)->toContain('data-part="trigger"');
-            expect($result)->toContain('data-hydrate-collapsible="«f1»"');
-        });
+        $this->assertStringContainsString('data-scope="collapsible"', $result);
+        $this->assertStringContainsString('data-part="trigger"', $result);
+        $this->assertStringContainsString('data-hydrate-collapsible="«f1»"', $result);
+    }
 
-        it('renders root ref correctly', function () {
-            $this->viewHelper->setArguments([
-                'name' => 'root',
-                'asArray' => false,
-                'data' => [],
-            ]);
+    #[Test]
+    public function rendersRootRefCorrectly(): void
+    {
+        $this->variableProvider->add('component', ['fullName' => 'Collapsible.Root']);
+        $this->variableProvider->add('rootId', '«f1»');
 
-            $result = $this->viewHelper->render();
+        $this->viewHelper->setArguments([
+            'name' => 'root',
+            'asArray' => false,
+            'data' => [],
+        ]);
 
-            expect($result)->toContain('data-part="root"');
-            expect($result)->toContain('data-hydrate-collapsible="«f1»"');
-        });
+        $result = $this->viewHelper->render();
 
-        it('includes additional data attributes', function () {
-            $this->viewHelper->setArguments([
-                'name' => 'trigger',
-                'asArray' => false,
-                'data' => [
-                    'action' => 'toggle',
-                    'state' => 'collapsed',
-                ],
-            ]);
+        $this->assertStringContainsString('data-part="root"', $result);
+        $this->assertStringContainsString('data-hydrate-collapsible="«f1»"', $result);
+    }
 
-            $result = $this->viewHelper->render();
+    #[Test]
+    public function includesAdditionalDataAttributes(): void
+    {
+        $this->variableProvider->add('component', ['fullName' => 'Collapsible.Root']);
+        $this->variableProvider->add('rootId', '«f1»');
 
-            expect($result)->toContain('data-action="toggle"');
-            expect($result)->toContain('data-state="collapsed"');
-        });
+        $this->viewHelper->setArguments([
+            'name' => 'trigger',
+            'asArray' => false,
+            'data' => [
+                'action' => 'toggle',
+                'state' => 'collapsed',
+            ],
+        ]);
 
-        it('returns array when asArray is true', function () {
-            $this->viewHelper->setArguments([
-                'name' => 'trigger',
-                'asArray' => true,
-                'data' => [],
-            ]);
+        $result = $this->viewHelper->render();
 
-            $result = $this->viewHelper->render();
+        $this->assertStringContainsString('data-action="toggle"', $result);
+        $this->assertStringContainsString('data-state="collapsed"', $result);
+    }
 
-            expect($result)->toBeArray();
-            expect($result)->toHaveKey('data-scope');
-            expect($result)->toHaveKey('data-part');
-            expect($result)->toHaveKey('data-hydrate-collapsible');
-            expect($result['data-scope'])->toBe('collapsible');
-            expect($result['data-part'])->toBe('trigger');
-            expect($result['data-hydrate-collapsible'])->toBe('«f1»');
-        });
+    #[Test]
+    public function returnsArrayWhenAsArrayIsTrue(): void
+    {
+        $this->variableProvider->add('component', ['fullName' => 'Collapsible.Root']);
+        $this->variableProvider->add('rootId', '«f1»');
 
-        it('handles accordion component name correctly', function () {
-            // Override the component context for this test
-            // Accordion.Item is NOT a root component, so needs context.rootId
-            $this->variableProvider->remove('component');
-            $this->variableProvider->remove('rootId');
-            $this->variableProvider->add('component', [
-                'fullName' => 'Accordion.Item',
-            ]);
-            $this->variableProvider->add('context', [
-                'rootId' => '«f1»',
-            ]);
+        $this->viewHelper->setArguments([
+            'name' => 'trigger',
+            'asArray' => true,
+            'data' => [],
+        ]);
 
-            $this->viewHelper->setArguments([
-                'name' => 'item',
-                'asArray' => false,
-                'data' => [],
-            ]);
+        $result = $this->viewHelper->render();
 
-            $result = $this->viewHelper->render();
+        $this->assertIsArray($result);
+        $this->assertArrayHasKey('data-scope', $result);
+        $this->assertArrayHasKey('data-part', $result);
+        $this->assertArrayHasKey('data-hydrate-collapsible', $result);
+        $this->assertSame('collapsible', $result['data-scope']);
+        $this->assertSame('trigger', $result['data-part']);
+        $this->assertSame('«f1»', $result['data-hydrate-collapsible']);
+    }
 
-            expect($result)->toContain('data-scope="accordion"');
-        });
+    #[Test]
+    public function handlesAccordionComponentNameCorrectly(): void
+    {
+        $this->variableProvider->add('component', ['fullName' => 'Accordion.Item']);
+        $this->variableProvider->add('context', ['rootId' => '«f1»']);
 
-        it('handles primitives namespace correctly', function () {
-            // Override the component context for this test
-            // Primitives.Dialog.Root - the second part is 'dialog' not 'root', so NOT a root component
-            // Therefore it needs context.rootId
-            $this->variableProvider->remove('component');
-            $this->variableProvider->remove('rootId');
-            $this->variableProvider->add('component', [
-                'fullName' => 'Primitives.Dialog.Root',
-            ]);
-            $this->variableProvider->add('context', [
-                'rootId' => '«f1»',
-            ]);
+        $this->viewHelper->setArguments([
+            'name' => 'item',
+            'asArray' => false,
+            'data' => [],
+        ]);
 
-            $this->viewHelper->setArguments([
-                'name' => 'root',
-                'asArray' => false,
-                'data' => [],
-            ]);
+        $result = $this->viewHelper->render();
 
-            $result = $this->viewHelper->render();
+        $this->assertStringContainsString('data-scope="accordion"', $result);
+    }
 
-            // Should extract 'dialog' as base name, skipping 'primitives'
-            expect($result)->toContain('data-scope="dialog"');
-        });
-    });
+    #[Test]
+    public function handlesPrimitivesNamespaceCorrectly(): void
+    {
+        $this->variableProvider->add('component', ['fullName' => 'Primitives.Dialog.Root']);
+        $this->variableProvider->add('context', ['rootId' => '«f1»']);
 
-    describe('outside component context', function () {
-        it('throws exception when used outside component', function () {
-            // No component context set
-            $this->viewHelper->setArguments([
-                'name' => 'trigger',
-                'asArray' => false,
-                'data' => [],
-            ]);
+        $this->viewHelper->setArguments([
+            'name' => 'root',
+            'asArray' => false,
+            'data' => [],
+        ]);
 
-            expect(fn() => $this->viewHelper->render())
-                ->toThrow(RuntimeException::class, 'can only be used inside a component context');
-        });
-    });
+        $result = $this->viewHelper->render();
 
-    describe('missing rootId', function () {
-        it('throws exception when rootId is missing', function () {
-            $this->variableProvider->add('component', [
-                'fullName' => 'Collapsible.Root',
-            ]);
-            // rootId not set
+        $this->assertStringContainsString('data-scope="dialog"', $result);
+    }
 
-            $this->viewHelper->setArguments([
-                'name' => 'trigger',
-                'asArray' => false,
-                'data' => [],
-            ]);
+    #[Test]
+    public function throwsExceptionWhenUsedOutsideComponent(): void
+    {
+        $this->viewHelper->setArguments([
+            'name' => 'trigger',
+            'asArray' => false,
+            'data' => [],
+        ]);
 
-            expect(fn() => $this->viewHelper->render())->toThrow(RuntimeException::class, 'No rootId found');
-        });
-    });
-});
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('can only be used inside a component context');
+
+        $this->viewHelper->render();
+    }
+
+    #[Test]
+    public function throwsExceptionWhenRootIdIsMissing(): void
+    {
+        $this->variableProvider->add('component', ['fullName' => 'Collapsible.Root']);
+
+        $this->viewHelper->setArguments([
+            'name' => 'trigger',
+            'asArray' => false,
+            'data' => [],
+        ]);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('No rootId found');
+
+        $this->viewHelper->render();
+    }
+}

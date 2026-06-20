@@ -146,6 +146,6 @@ class CnViewHelper extends AbstractViewHelper
             return false;
         }
 
-        return !!$value;
+        return (bool)$value;
     }
 }

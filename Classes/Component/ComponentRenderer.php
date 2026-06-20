@@ -26,7 +26,8 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\ViewHelperVariableContainer;
 use TYPO3Fluid\Fluid\View\TemplateView;
 use TYPO3Fluid\Fluid\ViewHelpers\SlotViewHelper;
 
-// @mago-expect lint:cyclomatic-complexity,kan-defect
+// TODO: refactor into smaller parts
+// @mago-expect lint:cyclomatic-complexity,halstead,kan-defect
 final readonly class ComponentRenderer implements ComponentRendererInterface
 {
     public function __construct(

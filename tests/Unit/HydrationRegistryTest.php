@@ -2,11 +2,25 @@
 
 declare(strict_types=1);
 
+namespace Jramke\FluidPrimitives\Tests\Unit;
+
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
+use Jramke\FluidPrimitives\Tests\TestCase;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
+use PHPUnit\Framework\Attributes\Test;
 use TYPO3\CMS\Core\Page\AssetCollector;
 
-describe('HydrationRegistry', function () {
-    beforeEach(function () {
+#[AllowMockObjectsWithoutExpectations]
+final class HydrationRegistryTest extends TestCase
+{
+    private ?string $capturedJs = null;
+    private ?array $capturedAttributes = null;
+    private AssetCollector $assetCollector;
+    private HydrationRegistry $registry;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
         $this->capturedJs = null;
         $this->capturedAttributes = null;
 
@@ -20,38 +34,40 @@ describe('HydrationRegistry', function () {
             });
 
         $this->registry = new HydrationRegistry($this->assetCollector);
-    });
+    }
 
-    describe('registry operations', function () {
-        it('stores and retrieves multiple component types', function () {
-            $this->registry->add('accordion', '«f1»', ['type' => 'accordion']);
-            $this->registry->add('dialog', '«f2»', ['type' => 'dialog']);
+    #[Test]
+    public function storesAndRetrievesMultipleComponentTypes(): void
+    {
+        $this->registry->add('accordion', '«f1»', ['type' => 'accordion']);
+        $this->registry->add('dialog', '«f2»', ['type' => 'dialog']);
 
-            $all = $this->registry->getAll();
+        $all = $this->registry->getAll();
 
-            expect($all['accordion']['«f1»'])->toBe(['type' => 'accordion']);
-            expect($all['dialog']['«f2»'])->toBe(['type' => 'dialog']);
-        });
+        $this->assertSame(['type' => 'accordion'], $all['accordion']['«f1»']);
+        $this->assertSame(['type' => 'dialog'], $all['dialog']['«f2»']);
+    }
 
-        it('clears the registry', function () {
-            $this->registry->add('accordion', '«f1»', ['props' => []]);
-            $this->registry->clear();
+    #[Test]
+    public function clearsTheRegistry(): void
+    {
+        $this->registry->add('accordion', '«f1»', ['props' => []]);
+        $this->registry->clear();
 
-            expect($this->registry->getAll())->toBe([]);
-        });
-    });
+        $this->assertSame([], $this->registry->getAll());
+    }
 
-    describe('AssetCollector integration', function () {
-        it('adds inline JavaScript with component data', function () {
-            $this->registry->add('accordion', '«f1»', [
-                'controlled' => false,
-                'props' => ['multiple' => true],
-            ]);
+    #[Test]
+    public function addsInlineJavaScriptWithComponentData(): void
+    {
+        $this->registry->add('accordion', '«f1»', [
+            'controlled' => false,
+            'props' => ['multiple' => true],
+        ]);
 
-            expect($this->capturedJs)->toContain('window.FluidPrimitives');
-            expect($this->capturedJs)->toContain('"accordion"');
-            expect($this->capturedJs)->toContain('"«f1»"');
-            expect($this->capturedJs)->toContain('"multiple":true');
-        });
-    });
-});
+        $this->assertStringContainsString('window.FluidPrimitives', $this->capturedJs);
+        $this->assertStringContainsString('"accordion"', $this->capturedJs);
+        $this->assertStringContainsString('"«f1»"', $this->capturedJs);
+        $this->assertStringContainsString('"multiple":true', $this->capturedJs);
+    }
+}
