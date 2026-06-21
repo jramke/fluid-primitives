@@ -7,51 +7,51 @@ import { registerCheckboxGroup, unregisterCheckboxGroup } from './src/checkbox-g
 import type { CheckboxGroupApi, CheckboxGroupProps } from './src/checkbox-group.types';
 
 export class CheckboxGroup extends FieldAwareComponent<CheckboxGroupProps, CheckboxGroupApi> {
-	static name = 'checkbox-group';
+    static name = 'checkbox-group';
 
-	propsWithField(props: CheckboxGroupProps, fieldMachine: FieldMachine): CheckboxGroupProps {
-		return {
-			...props,
-			disabled: props.disabled ?? fieldMachine.context.get('disabled'),
-			readOnly: props.readOnly ?? fieldMachine.context.get('readOnly'),
-			required: props.required ?? fieldMachine.context.get('required'),
-			invalid: props.invalid ?? fieldMachine.context.get('invalid'),
-			name: props.name ?? fieldMachine.prop('name'),
-			ids: {
-				...props.ids,
-				label: fieldDom.getLabelId(fieldMachine.scope),
-			},
-		};
-	}
+    propsWithField(props: CheckboxGroupProps, fieldMachine: FieldMachine): CheckboxGroupProps {
+        return {
+            ...props,
+            disabled: props.disabled ?? fieldMachine.context.get('disabled'),
+            readOnly: props.readOnly ?? fieldMachine.context.get('readOnly'),
+            required: props.required ?? fieldMachine.context.get('required'),
+            invalid: props.invalid ?? fieldMachine.context.get('invalid'),
+            name: props.name ?? fieldMachine.prop('name'),
+            ids: {
+                ...props.ids,
+                label: fieldDom.getLabelId(fieldMachine.scope),
+            },
+        };
+    }
 
-	initMachine(props: CheckboxGroupProps) {
-		props = this.withFieldProps(props);
-		const createdMachine = new Machine(machine, props);
-		registerCheckboxGroup(this.getElement('root'), createdMachine);
-		return createdMachine;
-	}
+    initMachine(props: CheckboxGroupProps) {
+        props = this.withFieldProps(props);
+        const createdMachine = new Machine(machine, props);
+        registerCheckboxGroup(this.getElement('root'), createdMachine);
+        return createdMachine;
+    }
 
-	initApi() {
-		return connect(this.machine.service, normalizeProps);
-	}
+    initApi() {
+        return connect(this.machine.service, normalizeProps);
+    }
 
-	render() {
-		this.subscribeToFieldService();
+    render() {
+        this.subscribeToFieldService();
 
-		const rootEl = this.getElement('root');
-		if (rootEl) {
-			const mergedProps = mergeProps(this.api.getRootProps(), {
-				'aria-describedby': this.fieldMachine?.context.get('describeIds') || undefined,
-			});
-			this.spreadProps(rootEl, mergedProps);
-		}
+        const rootEl = this.getElement('root');
+        if (rootEl) {
+            const mergedProps = mergeProps(this.api.getRootProps(), {
+                'aria-describedby': this.fieldMachine?.context.get('describeIds') || undefined,
+            });
+            this.spreadProps(rootEl, mergedProps);
+        }
 
-		const labelEl = this.getElement('label');
-		if (labelEl) this.spreadProps(labelEl, this.api.getLabelProps());
-	}
+        const labelEl = this.getElement('label');
+        if (labelEl) this.spreadProps(labelEl, this.api.getLabelProps());
+    }
 
-	destroy() {
-		unregisterCheckboxGroup(this.getElement('root'));
-		super.destroy();
-	}
+    destroy() {
+        unregisterCheckboxGroup(this.getElement('root'));
+        super.destroy();
+    }
 }

@@ -6,41 +6,41 @@ import { registerFieldMachine } from './src/field.registry';
 import type { FieldApi, FieldProps } from './src/field.types';
 
 export class Field extends Component<FieldProps, FieldApi> {
-	static name = 'field';
+    static name = 'field';
 
-	initMachine(props: FieldProps) {
-		const createdMachine = new Machine(machine, props);
-		registerFieldMachine(this.getElement('root'), createdMachine);
-		registerFieldMachineForForm(this.getElement('root'), createdMachine);
-		return createdMachine;
-	}
+    initMachine(props: FieldProps) {
+        const createdMachine = new Machine(machine, props);
+        registerFieldMachine(this.getElement('root'), createdMachine);
+        registerFieldMachineForForm(this.getElement('root'), createdMachine);
+        return createdMachine;
+    }
 
-	initApi() {
-		return connect(this.machine.service, normalizeProps);
-	}
+    initApi() {
+        return connect(this.machine.service, normalizeProps);
+    }
 
-	render() {
-		const rootEl = this.getElement('root');
-		if (rootEl) {
-			this.spreadProps(rootEl, this.api.getRootProps());
-		}
+    render() {
+        const rootEl = this.getElement('root');
+        if (rootEl) {
+            this.spreadProps(rootEl, this.api.getRootProps());
+        }
 
-		const labelEl = this.getElement('label');
-		if (labelEl) this.spreadProps(labelEl, this.api.getLabelProps());
+        const labelEl = this.getElement('label');
+        if (labelEl) this.spreadProps(labelEl, this.api.getLabelProps());
 
-		const controlEl = this.getElement('control');
-		if (controlEl) this.spreadProps(controlEl, this.api.getControlProps());
+        const controlEl = this.getElement('control');
+        if (controlEl) this.spreadProps(controlEl, this.api.getControlProps());
 
-		const descriptionEl = this.getElement('description');
-		if (descriptionEl) this.spreadProps(descriptionEl, this.api.getDescriptionProps());
+        const descriptionEl = this.getElement('description');
+        if (descriptionEl) this.spreadProps(descriptionEl, this.api.getDescriptionProps());
 
-		const errorEl = this.getElement('error');
-		if (errorEl) {
-			this.spreadProps(errorEl, this.api.getErrorProps());
-			const msg = this.api.getErrorText();
-			if (msg) {
-				errorEl.textContent = msg;
-			}
-		}
-	}
+        const errorEl = this.getElement('error');
+        if (errorEl) {
+            this.spreadProps(errorEl, this.api.getErrorProps());
+            const msg = this.api.getErrorText();
+            if (msg) {
+                errorEl.textContent = msg;
+            }
+        }
+    }
 }

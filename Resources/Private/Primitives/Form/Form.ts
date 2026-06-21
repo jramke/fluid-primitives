@@ -7,77 +7,77 @@ import type { FormApi, FormProps, FormState } from './src/form.types';
 const formStates: FormState[] = ['ready', 'invalid', 'submitting', 'success', 'error'];
 
 export class Form extends Component<FormProps, FormApi> {
-	static name = 'form';
+    static name = 'form';
 
-	private fieldSubscriptions = new Map<FieldMachine, () => void>();
+    private fieldSubscriptions = new Map<FieldMachine, () => void>();
 
-	initMachine(props: FormProps) {
-		const createdMachine = new Machine(machine, props);
-		registerFormMachine(this.getElement('form'), createdMachine);
-		return createdMachine;
-	}
+    initMachine(props: FormProps) {
+        const createdMachine = new Machine(machine, props);
+        registerFormMachine(this.getElement('form'), createdMachine);
+        return createdMachine;
+    }
 
-	initApi() {
-		return connect(this.machine.service, normalizeProps);
-	}
+    initApi() {
+        return connect(this.machine.service, normalizeProps);
+    }
 
-	private subscribeToFieldMachines(formEl: HTMLFormElement) {
-		for (const fieldMachine of getFieldMachinesFor(formEl).values()) {
-			if (this.fieldSubscriptions.has(fieldMachine)) continue;
+    private subscribeToFieldMachines(formEl: HTMLFormElement) {
+        for (const fieldMachine of getFieldMachinesFor(formEl).values()) {
+            if (this.fieldSubscriptions.has(fieldMachine)) continue;
 
-			const unsubscribe = fieldMachine.subscribe(() => {
-				this.api = this.initApi();
-				this.render();
-			});
+            const unsubscribe = fieldMachine.subscribe(() => {
+                this.api = this.initApi();
+                this.render();
+            });
 
-			this.fieldSubscriptions.set(fieldMachine, unsubscribe);
-		}
-	}
+            this.fieldSubscriptions.set(fieldMachine, unsubscribe);
+        }
+    }
 
-	render() {
-		const formEl = this.getElement('form') as HTMLFormElement | null;
-		if (!formEl) return;
+    render() {
+        const formEl = this.getElement('form') as HTMLFormElement | null;
+        if (!formEl) return;
 
-		this.subscribeToFieldMachines(formEl);
+        this.subscribeToFieldMachines(formEl);
 
-		this.spreadProps(formEl, this.api.getFormProps());
+        this.spreadProps(formEl, this.api.getFormProps());
 
-		this.getElements('content').forEach(contentEl => {
-			this.spreadProps(contentEl, this.api.getContentProps());
-		});
+        this.getElements('content').forEach(contentEl => {
+            this.spreadProps(contentEl, this.api.getContentProps());
+        });
 
-		formStates.forEach(state => {
-			this.getElements(`indicator-${state}`).forEach(indicatorEl => {
-				this.spreadProps(indicatorEl, this.api.getIndicatorProps(state));
-			});
-		});
+        formStates.forEach(state => {
+            this.getElements(`indicator-${state}`).forEach(indicatorEl => {
+                this.spreadProps(indicatorEl, this.api.getIndicatorProps(state));
+            });
+        });
 
-		this.getElements('error-text').forEach(errorTextEl => {
-			this.spreadProps(errorTextEl, this.api.getErrorTextProps());
-			syncStatusText(errorTextEl, this.api.getErrorText());
-		});
+        this.getElements('error-text').forEach(errorTextEl => {
+            this.spreadProps(errorTextEl, this.api.getErrorTextProps());
+            syncStatusText(errorTextEl, this.api.getErrorText());
+        });
 
-		this.getElements('success-text').forEach(successTextEl => {
-			this.spreadProps(successTextEl, this.api.getSuccessTextProps());
-			syncStatusText(successTextEl, this.api.getSuccessText());
-		});
+        this.getElements('success-text').forEach(successTextEl => {
+            this.spreadProps(successTextEl, this.api.getSuccessTextProps());
+            syncStatusText(successTextEl, this.api.getSuccessText());
+        });
 
-		this.api._userRenderFn?.(this);
-	}
+        this.api._userRenderFn?.(this);
+    }
 
-	destroy() {
-		for (const unsubscribe of this.fieldSubscriptions.values()) {
-			unsubscribe();
-		}
-		this.fieldSubscriptions.clear();
-		super.destroy();
-	}
+    destroy() {
+        for (const unsubscribe of this.fieldSubscriptions.values()) {
+            unsubscribe();
+        }
+        this.fieldSubscriptions.clear();
+        super.destroy();
+    }
 }
 
 function syncStatusText(element: HTMLElement, text: string | null) {
-	if (element.dataset.defaultText === undefined) {
-		element.dataset.defaultText = element.textContent ?? '';
-	}
+    if (element.dataset.defaultText === undefined) {
+        element.dataset.defaultText = element.textContent ?? '';
+    }
 
-	element.textContent = text ?? element.dataset.defaultText;
+    element.textContent = text ?? element.dataset.defaultText;
 }
