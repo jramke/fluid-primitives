@@ -22,9 +22,19 @@ export class NumberInput extends FieldAwareComponent<numberInput.Props, numberIn
 		};
 	}
 
+	transformProps(props: numberInput.Props): numberInput.Props {
+		return {
+			...props,
+			onValueChange: details => {
+				this.getElement('input')?.dispatchEvent(new Event('input', { bubbles: true }));
+				props?.onValueChange?.(details);
+			},
+		};
+	}
+
 	initMachine(props: numberInput.Props): Machine<any> {
 		props = this.withFieldProps(props);
-		return new Machine(numberInput.machine, props);
+		return new Machine(numberInput.machine, this.transformProps(props));
 	}
 
 	initApi() {
