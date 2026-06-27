@@ -5,7 +5,7 @@ import type { FieldHandle } from '../../Field/src/field.types';
 import { parts } from './form.anatomy';
 import * as dom from './form.dom';
 import type { FormApi, FormDirty, FormErrors, FormSchema, FormTouched } from './form.types';
-import { formDataToObject, getFieldElement, getRegisteredFieldMachines } from './form.utils';
+import { formDataToObject, getRegisteredFieldMachines } from './form.utils';
 
 export function connect<T extends PropTypes>(
     service: Service<FormSchema>,
@@ -119,9 +119,6 @@ export function connect<T extends PropTypes>(
         },
         getField(name) {
             return this.getAllFields().get(name);
-        },
-        getFormControl(name) {
-            return formEl ? getFieldElement(formEl, name) : null;
         },
         getAction() {
             return formEl?.getAttribute('action') || '';
