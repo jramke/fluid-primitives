@@ -1,12 +1,14 @@
 import * as dom from './form.dom';
 import { getFieldMachinesFor } from './form.registry';
-import type {
-    AnyFormControlElement,
-    FormErrors,
-    FormValidation,
-    StandardSchemaIssue,
-    StandardSchemaResult,
-    StandardSchemaV1,
+import {
+    FormError,
+    ValidationError,
+    type AnyFormControlElement,
+    type FormErrors,
+    type FormValidation,
+    type StandardSchemaIssue,
+    type StandardSchemaResult,
+    type StandardSchemaV1,
 } from './form.types';
 
 export function validateWithValidation(
@@ -19,13 +21,19 @@ export function validateWithValidation(
     }
 
     if (typeof validation === 'function') {
-        return withCurrentValues(validation({ formData, fieldName }) ?? {}, formData);
+        return withCurrentValues(
+            validation({ formData, fieldName, validateWithStandardSchema }) ?? {},
+            formData
+        );
     }
 
-    return validateWithStandardSchema(validation, formData);
+    return withCurrentValues(validateWithStandardSchema(validation, formData), formData);
 }
 
-function validateWithStandardSchema(schema: StandardSchemaV1, formData: FormData): FormErrors {
+export function validateWithStandardSchema(
+    schema: StandardSchemaV1,
+    formData: FormData
+): FormErrors {
     const dataObject = formDataToObject(formData);
     const validationResult = schema['~standard'].validate(dataObject);
 
@@ -39,7 +47,7 @@ function validateWithStandardSchema(schema: StandardSchemaV1, formData: FormData
         return {};
     }
 
-    return withCurrentValues(errorsFromIssues(validationResult.issues), formData);
+    return errorsFromIssues(validationResult.issues);
 }
 
 function errorsFromIssues(issues: readonly StandardSchemaIssue[]): FormErrors {
@@ -83,11 +91,15 @@ function isPromiseLike(result: StandardSchemaResult | Promise<StandardSchemaResu
     return typeof result === 'object' && result !== null && 'then' in result;
 }
 
-export function errorsFromServer(
+export function throwErrorsFromServer(
     responseErrors: Record<string, string[]>,
     objectName: string | undefined,
     formData: FormData
-): FormErrors {
+): void {
+    if (objectName && responseErrors[objectName]?.[0]) {
+        throw new FormError(responseErrors[objectName]);
+    }
+
     const out: FormErrors = {};
     for (const key in responseErrors) {
         let newKey = key;
@@ -99,7 +111,8 @@ export function errorsFromServer(
             value: getFieldValue(formData, newKey),
         };
     }
-    return out;
+
+    throw new ValidationError(out);
 }
 
 export function normalizeFieldName(fieldName: string) {

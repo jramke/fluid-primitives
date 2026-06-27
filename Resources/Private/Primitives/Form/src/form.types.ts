@@ -2,6 +2,7 @@ import type { EventObject } from '@zag-js/core';
 import type { JSX, PropTypes } from '@zag-js/types';
 import type { FieldHandle } from '../../Field/src/field.types';
 import type { Form } from '../Form';
+import type { validateWithStandardSchema } from './form.utils';
 
 export interface FieldError {
     messages: string[];
@@ -44,6 +45,7 @@ export interface StandardSchemaV1<Output = unknown> {
 export interface FormValidationContext {
     formData: FormData;
     fieldName?: string;
+    validateWithStandardSchema: typeof validateWithStandardSchema;
 }
 
 export type FormState = 'invalid' | 'ready' | 'submitting' | 'success' | 'error';
@@ -68,6 +70,13 @@ export class ValidationError extends Error {
     constructor(public errors: FormErrors) {
         super('Server validation failed');
         this.name = 'ValidationError';
+    }
+}
+
+export class FormError extends Error {
+    constructor(public errors: string[]) {
+        super('Server form validation failed');
+        this.name = 'FormError';
     }
 }
 
@@ -128,7 +137,6 @@ export interface FormApi {
     _userRenderFn: FormProps['render'];
     getAllFields(): Map<string, FieldHandle>;
     getField(name: string): FieldHandle | undefined;
-    getFormControl(name: string): AnyFormControlElement | null;
     getFormEl(): HTMLFormElement | null;
     getAction(): string;
     reset(): void;

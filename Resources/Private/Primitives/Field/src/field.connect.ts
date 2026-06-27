@@ -5,10 +5,11 @@ import * as dom from './field.dom';
 import type { FieldApi, FieldHandle, FieldMeta, FieldSchema } from './field.types';
 import { isFieldValueEqual } from './field.utils';
 
-type FieldServiceLike = Pick<Service<FieldSchema>, 'prop' | 'context'>;
+type FieldServiceLike = Pick<Service<FieldSchema>, 'prop' | 'context' | 'scope'>;
 
 export function createFieldHandle(service: FieldServiceLike): FieldHandle {
-    const { prop, context } = service;
+    const { prop, context, scope } = service;
+
     const invalid = context.get('invalid');
     const disabled = context.get('disabled');
     const required = context.get('required');
@@ -16,6 +17,7 @@ export function createFieldHandle(service: FieldServiceLike): FieldHandle {
     const errors = context.get('errors');
     const value = context.get('value');
     const initialValue = context.get('initialValue');
+
     const meta: FieldMeta = {
         isTouched: context.get('touched'),
         isDirty: context.get('dirty'),
@@ -24,16 +26,22 @@ export function createFieldHandle(service: FieldServiceLike): FieldHandle {
         isDefaultValue: isFieldValueEqual(value, initialValue),
     };
 
+    // TODO: is it possible that we can expose the fields child control machine (if any and not a native input) here
+    // so the user can acces its machine api to do more custom stuff
     return {
         getFormMachine: () => context.get('formMachine'),
-        meta,
-        value,
-        invalid,
-        disabled,
-        required,
-        readOnly,
-        errors,
+        getRootEl: () => dom.getRootEl(scope),
         name: prop('name'),
+        value,
+        meta,
+        disabled,
+        setDisabled: disabled => context.set('disabled', disabled),
+        required,
+        setRequired: required => context.set('required', required),
+        readOnly,
+        setReadOnly: readOnly => context.set('readOnly', readOnly),
+        invalid,
+        errors,
         getErrorText() {
             return errors.length > 0 ? errors.join(' ') : null;
         },

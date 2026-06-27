@@ -2,10 +2,9 @@ import { createMachine } from '@zag-js/core';
 import { nextTick } from '@zag-js/dom-query';
 import * as dom from './form.dom';
 import type { FormErrors, FormSchema } from './form.types';
-import { ValidationError } from './form.types';
+import { FormError, ValidationError } from './form.types';
 import {
     distributeFieldErrors,
-    errorsFromServer,
     getErrorForValue,
     getErrorsForCurrentValues,
     getFieldElement,
@@ -19,6 +18,7 @@ import {
     resetFieldMachines,
     setFieldMachineErrors,
     syncAllFieldMachines,
+    throwErrorsFromServer,
     validateWithValidation,
     withCurrentValues,
 } from './form.utils';
@@ -144,9 +144,7 @@ export const machine = createMachine<FormSchema>({
 
                                 if (response.status === 422) {
                                     const responseErrors = await response.json();
-                                    throw new ValidationError(
-                                        errorsFromServer(responseErrors, objectName, data)
-                                    );
+                                    throwErrorsFromServer(responseErrors, objectName, data);
                                 }
 
                                 return response;
@@ -175,6 +173,15 @@ export const machine = createMachine<FormSchema>({
 
                         send({ type: 'ERROR' });
                     } catch (error) {
+                        if (error instanceof FormError) {
+                            send({
+                                type: 'SET_ERROR_TEXT',
+                                detail: { text: error.errors.join(' ') },
+                            });
+                            send({ type: 'ERROR' });
+                            return;
+                        }
+
                         if (error instanceof ValidationError) {
                             invalidateWithErrors(error.errors);
                             return;

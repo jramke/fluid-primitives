@@ -47,6 +47,10 @@ export interface FieldSchema {
 
 export interface FieldHandle {
     getFormMachine(): FieldSchema['context']['formMachine'];
+    getRootEl(): HTMLElement | null;
+    setDisabled(disabled: boolean): void;
+    setRequired(required: boolean): void;
+    setReadOnly(readOnly: boolean): void;
     meta: FieldMeta;
     value: FieldValue;
     invalid: boolean;
