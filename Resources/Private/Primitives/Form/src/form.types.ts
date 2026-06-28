@@ -2,7 +2,6 @@ import type { EventObject } from '@zag-js/core';
 import type { JSX, PropTypes } from '@zag-js/types';
 import type { FieldHandle } from '../../Field/src/field.types';
 import type { Form } from '../Form';
-import type { validateWithStandardSchema } from './form.utils';
 
 export interface FieldError {
     messages: string[];
@@ -11,6 +10,23 @@ export interface FieldError {
 export type FormErrors = Record<string, FieldError>;
 export type FormDirty = Record<string, boolean>;
 export type FormTouched = Record<string, boolean>;
+export type FormValueLeaf = string | File;
+
+export interface FormValuesObject {
+    [key: string]: FormValueTree;
+}
+
+export interface FormValuesArray extends Array<FormValueTree> {}
+
+export type FormValueTree = FormValueLeaf | FormValuesObject | FormValuesArray;
+
+export interface FormValues {
+    get(path: string): FormValueLeaf | null;
+    getAll(path: string): FormValueLeaf[];
+    has(path: string): boolean;
+    pick(path: string): FormValueTree | null;
+    toObject(): FormValuesObject;
+}
 
 export interface StandardSchemaPathSegment {
     readonly key: PropertyKey;
@@ -43,9 +59,9 @@ export interface StandardSchemaV1<Output = unknown> {
 }
 
 export interface FormValidationContext {
-    formData: FormData;
+    values: FormValues;
     fieldName?: string;
-    validateWithStandardSchema: typeof validateWithStandardSchema;
+    validateWithStandardSchema: <Output = unknown>(schema: StandardSchemaV1<Output>) => FormErrors;
 }
 
 export type FormState = 'invalid' | 'ready' | 'submitting' | 'success' | 'error';
@@ -86,15 +102,15 @@ export interface FormProps {
     objectName?: string;
     inputDebounceMs?: number;
     onSubmit?: ({
-        formData,
+        values,
         api,
         event,
         post,
     }: {
-        formData: FormData;
+        values: FormValues;
         api: FormApi;
         event: JSX.FormEvent<HTMLElement>;
-        post: (url: string, data: FormData) => Promise<Response>;
+        post: (url: string) => Promise<Response>;
     }) => Promise<FormSubmitResult> | FormSubmitResult;
     render?: (form: Form) => void;
 }
@@ -125,7 +141,7 @@ export interface FormApi {
     getIndicatorProps(state: FormState): PropTypes['element'];
     getErrorTextProps(): PropTypes['element'];
     getSuccessTextProps(): PropTypes['element'];
-    getValues(): FormData;
+    getValues(): FormValues;
     getErrors(): FormErrors;
     getDirty(): FormDirty;
     getTouched(): FormTouched;
@@ -140,5 +156,4 @@ export interface FormApi {
     getFormEl(): HTMLFormElement | null;
     getAction(): string;
     reset(): void;
-    formDataToObject(): Record<string, FormDataEntryValue | FormDataEntryValue[]>;
 }

@@ -151,20 +151,50 @@ class FormContext extends AbstractComponentContext
             return '';
         }
 
+        $fieldPath = $this->parseFieldPath($fieldName);
+
         if (!in_array($objectName, [null, '', '0'], true)) {
-            $fieldName = $objectName . '[' . $fieldName . ']';
+            array_unshift($fieldPath, $objectName);
         }
 
         $prefix = $this->getFieldNamePrefix();
-        if ($prefix === '') {
-            return $fieldName;
+        if ($prefix !== '') {
+            array_unshift($fieldPath, $prefix);
         }
 
-        $fieldNameSegments = explode('[', $fieldName, 2);
-        $fieldName = $prefix . '[' . $fieldNameSegments[0] . ']';
+        return $this->stringifyFieldPathAsBrackets($fieldPath);
+    }
 
-        if (count($fieldNameSegments) > 1) {
-            $fieldName .= '[' . $fieldNameSegments[1];
+    /** @return list<string> */
+    protected function parseFieldPath(string $fieldName): array
+    {
+        preg_match_all('/([^.[\]]+)|\[(.*?)\]/', $fieldName, $matches, PREG_SET_ORDER);
+
+        $fieldPath = [];
+        foreach ($matches as $match) {
+            if (($match[1] ?? '') !== '') {
+                $fieldPath[] = $match[1];
+                continue;
+            }
+
+            $fieldPath[] = $match[2] ?? '';
+        }
+
+        return $fieldPath;
+    }
+
+    /** @param list<string> $fieldPath */
+    protected function stringifyFieldPathAsBrackets(array $fieldPath): string
+    {
+        $fieldName = '';
+
+        foreach ($fieldPath as $segment) {
+            if ($segment === '') {
+                $fieldName .= '[]';
+                continue;
+            }
+
+            $fieldName .= $fieldName === '' ? $segment : '[' . $segment . ']';
         }
 
         return $fieldName;

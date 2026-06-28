@@ -1,27 +1,29 @@
 import { createMachine } from '@zag-js/core';
 import { nextTick } from '@zag-js/dom-query';
 import * as dom from './form.dom';
-import type { FormErrors, FormSchema } from './form.types';
-import { FormError, ValidationError } from './form.types';
 import {
     distributeFieldErrors,
-    getErrorForValue,
-    getErrorsForCurrentValues,
     getFieldElement,
-    getFieldValue,
     getFirstInvalidFieldMachine,
     getFormData,
     getRegisteredFieldMachines,
     hasInvalidFieldMachines,
-    normalizeFieldName,
-    prefixFieldName,
     resetFieldMachines,
     setFieldMachineErrors,
     syncAllFieldMachines,
-    throwErrorsFromServer,
+} from './form.fields';
+import { normalizeFieldName, prefixFieldName } from './form.path';
+import type { FormErrors, FormSchema } from './form.types';
+import { FormError, ValidationError } from './form.types';
+import {
+    attachErrorValues,
+    filterErrorsForCurrentValues,
+    getCurrentErrorForField,
+    getFormErrorMessages,
+    mapServerErrors,
     validateWithValidation,
-    withCurrentValues,
-} from './form.utils';
+} from './form.validation';
+import { createFormValues } from './form.values';
 
 export const machine = createMachine<FormSchema>({
     initialState() {
@@ -70,17 +72,18 @@ export const machine = createMachine<FormSchema>({
                 syncAllFieldMachines(scope);
 
                 const submittedFormData = getFormData(scope);
+                const submittedValues = createFormValues(submittedFormData);
 
-                const cachedServerErrors = getErrorsForCurrentValues(
+                const cachedServerErrors = filterErrorsForCurrentValues(
                     refs.get('serverErrors'),
-                    submittedFormData
+                    submittedValues
                 );
                 let errors = cachedServerErrors;
 
                 if (validation) {
                     errors = {
                         ...cachedServerErrors,
-                        ...validateWithValidation(validation, submittedFormData),
+                        ...validateWithValidation(validation, submittedValues),
                     };
                 }
 
@@ -107,7 +110,7 @@ export const machine = createMachine<FormSchema>({
 
                 (async () => {
                     const invalidateWithErrors = (nextErrors: FormErrors) => {
-                        const currentErrors = withCurrentValues(nextErrors, submittedFormData);
+                        const currentErrors = attachErrorValues(nextErrors, submittedValues);
                         refs.set('serverErrors', { ...refs.get('serverErrors'), ...currentErrors });
                         distributeFieldErrors(scope, currentErrors);
                         send({ type: 'INVALID' });
@@ -116,17 +119,17 @@ export const machine = createMachine<FormSchema>({
 
                     try {
                         const result = await onSubmit({
-                            formData: submittedFormData,
+                            values: submittedValues,
                             api: event.detail.api,
                             event: event.detail.event,
-                            post: async (url: string, data: FormData): Promise<Response> => {
+                            post: async (url: string): Promise<Response> => {
                                 const prefixedData = new FormData();
                                 const objectName = prop('objectName');
                                 const formEl = dom.getFormEl(scope);
                                 const prefix = formEl?.getAttribute('data-field-name-prefix') || '';
 
-                                for (const [key, value] of data.entries()) {
-                                    if (key.includes(prefix)) {
+                                for (const [key, value] of submittedFormData.entries()) {
+                                    if (prefix && key.startsWith(`${prefix}[`)) {
                                         prefixedData.append(key, value);
                                         continue;
                                     }
@@ -144,7 +147,17 @@ export const machine = createMachine<FormSchema>({
 
                                 if (response.status === 422) {
                                     const responseErrors = await response.json();
-                                    throwErrorsFromServer(responseErrors, objectName, data);
+                                    const formErrorMessages = getFormErrorMessages(
+                                        responseErrors,
+                                        objectName
+                                    );
+                                    if (formErrorMessages) {
+                                        throw new FormError(formErrorMessages);
+                                    }
+
+                                    throw new ValidationError(
+                                        mapServerErrors(responseErrors, objectName, submittedValues)
+                                    );
                                 }
 
                                 return response;
@@ -198,11 +211,11 @@ export const machine = createMachine<FormSchema>({
 
                 const normalizedFieldName = normalizeFieldName(fieldName);
                 const formData = getFormData(scope);
-                const currentValue = getFieldValue(formData, normalizedFieldName);
-                const serverError = getErrorForValue(
+                const values = createFormValues(formData);
+                const serverError = getCurrentErrorForField(
                     refs.get('serverErrors'),
                     normalizedFieldName,
-                    currentValue
+                    values
                 );
 
                 let fieldErrors: string[] = serverError?.messages ?? [];
@@ -210,7 +223,7 @@ export const machine = createMachine<FormSchema>({
                     const validation = prop('validation');
                     if (validation) {
                         fieldErrors =
-                            validateWithValidation(validation, formData, normalizedFieldName)[
+                            validateWithValidation(validation, values, normalizedFieldName)[
                                 normalizedFieldName
                             ]?.messages ?? [];
                     }

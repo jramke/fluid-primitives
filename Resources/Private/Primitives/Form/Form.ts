@@ -3,6 +3,17 @@ import { connect } from './src/form.connect';
 import { machine } from './src/form.machine';
 import { getFieldMachinesFor, registerFormMachine, type FieldMachine } from './src/form.registry';
 import type { FormApi, FormProps, FormState } from './src/form.types';
+export type {
+    FormApi,
+    FormErrors,
+    FormProps,
+    FormSubmitResult,
+    FormValidation,
+    FormValueLeaf,
+    FormValues,
+    FormValuesObject,
+    FormValueTree,
+} from './src/form.types';
 
 const formStates: FormState[] = ['ready', 'invalid', 'submitting', 'success', 'error'];
 

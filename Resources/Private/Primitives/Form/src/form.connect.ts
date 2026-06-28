@@ -4,8 +4,9 @@ import { createFieldHandle } from '../../Field/src/field.connect';
 import type { FieldHandle } from '../../Field/src/field.types';
 import { parts } from './form.anatomy';
 import * as dom from './form.dom';
+import { getRegisteredFieldMachines } from './form.fields';
 import type { FormApi, FormDirty, FormErrors, FormSchema, FormTouched } from './form.types';
-import { formDataToObject, getRegisteredFieldMachines } from './form.utils';
+import { createFormValues } from './form.values';
 
 export function connect<T extends PropTypes>(
     service: Service<FormSchema>,
@@ -25,7 +26,7 @@ export function connect<T extends PropTypes>(
     }
 
     function getValues() {
-        return formEl ? new FormData(formEl) : new FormData();
+        return createFormValues(formEl ? new FormData(formEl) : new FormData());
     }
 
     function getErrors(): FormErrors {
@@ -123,11 +124,6 @@ export function connect<T extends PropTypes>(
         getAction() {
             return formEl?.getAttribute('action') || '';
         },
-
-        formDataToObject() {
-            return formDataToObject(getValues());
-        },
-
         reset() {
             send({ type: 'RESET' });
         },
