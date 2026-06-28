@@ -381,8 +381,6 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
             'context',
             'class',
             'asChild',
-            'asChildData',
-            '__tagAttributes',
         ];
 
         $contextVariables = $variableProvider->getAll();
