@@ -5,9 +5,9 @@
 <ui:prop name="readOnly" type="boolean" optional="{true}" client="{true}" description="Whether the field is read-only." />
 <ui:prop name="defaultValue" type="mixed" optional="{true}" client="{true}" description="The initial value that child controls can use when rendered inside the field." />
 
+<f:variable name="refData" value="{pristine: '{true}', default-value: '{true}'}" />
+
 <div
-    data-pristine
-    data-default-value
     data-name="{name}"
     {f:if(condition: invalid, then: 'data-invalid' )}
     {f:if(condition: disabled, then: 'data-disabled' )}
@@ -15,7 +15,7 @@
     {f:if(condition: required, then: 'data-required' )}
     {f:if(condition: class, then: 'class="{class}"' )}
     {f:if(condition: context.ids.root, then: 'id="{context.ids.root}"' )}
-    {ui:ref(name: 'root' )}
+    {ui:ref(name: 'root' , data: refData )}
     {ui:attributes()}>
     <f:slot />
 </div>
