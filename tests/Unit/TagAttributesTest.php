@@ -74,4 +74,17 @@ final class TagAttributesTest extends TestCase
         $result = TagAttributes::stringToArray('data-equation="1+1=2"');
         $this->assertSame(['data-equation' => '1+1=2'], $result);
     }
+
+    #[Test]
+    public function rendersZeroValuesLiterallyInsteadOfAsBooleanAttributes(): void
+    {
+        // Regression test: a "0" value (e.g. a recurring field's row index)
+        // must not be treated like an empty/falsy boolean attribute, or the
+        // value is silently dropped from the rendered attribute.
+        $attrs = new TagAttributes(['data-index' => 0]);
+        $this->assertSame('data-index="0"', (string)$attrs);
+
+        $attrs = new TagAttributes(['data-index' => '0']);
+        $this->assertSame('data-index="0"', (string)$attrs);
+    }
 }

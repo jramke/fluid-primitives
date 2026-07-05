@@ -88,7 +88,7 @@ class TagAttributes implements \Countable, \Stringable
         $result = [];
 
         foreach ($attributes as $key => $value) {
-            if (in_array($key, [0, '', '0'], true) || $value === null) {
+            if ($key === '' || $value === null) {
                 continue;
             }
 
@@ -114,7 +114,7 @@ class TagAttributes implements \Countable, \Stringable
 
     protected function buildSingleAttributeString(string $key, string $value): string
     {
-        if ($value === '' || $value === '0') {
+        if ($value === '') {
             return htmlspecialchars((string)$key);
         }
         return sprintf('%s="%s"', htmlspecialchars((string)$key), htmlspecialchars((string)$value));
@@ -122,7 +122,7 @@ class TagAttributes implements \Countable, \Stringable
 
     public static function stringToArray(string $attributesString): array
     {
-        if ($attributesString === '' || $attributesString === '0') {
+        if ($attributesString === '') {
             return [];
         }
 
