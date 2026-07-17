@@ -3,7 +3,7 @@
 <ui:error when="!{context.item.value}" message="The {component.fullName} must only be used inside an accordion.item component" />
 
 <f:variable name="value" value="{context.item.value}" />
-<f:variable name="refData" value="{value: context.item.value}" />
+<f:variable name="refData" value="{value: value}" />
 
 <h{level}
     {f:if(condition: class, then: 'class="{class}"' )}

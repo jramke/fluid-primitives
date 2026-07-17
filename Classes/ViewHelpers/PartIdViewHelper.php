@@ -46,7 +46,7 @@ class PartIdViewHelper extends AbstractViewHelper
     public function render(): string
     {
         if (!ComponentUtility::isComponent($this->renderingContext)) {
-            throw new \RuntimeException('The partId ViewHelper can only be used inside a component context.', 1752000001);
+            throw new \RuntimeException('The partId ViewHelper can only be used inside a component context. Make sure it is placed inside a fluid-primitives component template file.', 1752000001);
         }
 
         $part = $this->arguments['part'];
