@@ -1,6 +1,6 @@
 <div
     {f:if(condition: class, then: 'class="{class}"' )}
-    {f:if(condition: context.ids.positioner, then: 'id="{context.ids.positioner}"' )}
+    id="{ui:partId(part: 'positioner')}"
     {ui:ref(name: 'positioner' )}
     {ui:attributes()}
     style="{settings.defaultFloatingStyles}">

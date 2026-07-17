@@ -2,7 +2,7 @@
 
 <div
     {f:if(condition: class, then: 'class="{class}"' )}
-    {f:if(condition: context.ids.scrollbar, then: 'id="{context.ids.scrollbar}"' )}
+    id="{ui:partId(part: 'scrollbar', value: orientation)}"
     {ui:ref(name: 'scrollbar' , data: {orientation: orientation} )}
     style="{context.scrollbarStyles}"
     {ui:attributes()}>

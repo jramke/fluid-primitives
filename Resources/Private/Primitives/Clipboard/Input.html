@@ -2,6 +2,6 @@
     readonly
     value="{context.value}"
     {f:if(condition: class, then: 'class="{class}"' )}
-    {f:if(condition: context.ids.input, then: 'id="{context.ids.input}"' )}
+    id="{ui:partId(part: 'input')}"
     {ui:ref(name: 'input' )}
     {ui:attributes()} />

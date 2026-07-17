@@ -8,7 +8,7 @@
     type="radio"
     aria-invalid="{f:if(condition: itemState.invalid, then: 'true', else: 'false')}"
     {f:if(condition: class, then: 'class="{class}"' )}
-    {f:if(condition: context.ids.item-hidden-input, then: 'id="{context.ids.item-hidden-input}"' )}
+    id="{ui:partId(part: 'item-hidden-input', value: itemState.value)}"
     {f:if(condition: context.form, then: 'form="{context.form}"' )}
     {f:if(condition: context.name, then: 'name="{context.name}"' )}
     {f:if(condition: '{itemState.disabled} || {context.readOnly}' , then: 'disabled' )}

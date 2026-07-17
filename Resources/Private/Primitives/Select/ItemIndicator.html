@@ -8,7 +8,7 @@
     {f:if(condition: itemState.selected, else: 'hidden="true"')}
     aria-hidden="true"
     {f:if(condition: class, then: 'class="{class}"' )}
-    {f:if(condition: context.ids.item-indicator, then: 'id="{context.ids.item-indicator}"' )}
+    id="{ui:partId(part: 'item-indicator', value: item.value)}"
     {ui:ref(name: 'item-indicator' , data: refData )}
     {ui:attributes()}>
     <f:slot />

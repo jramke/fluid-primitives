@@ -1,6 +1,6 @@
 <div
     {f:if(condition: class, then: 'class="{class}"' )}
-    {f:if(condition: context.ids.viewport, then: 'id="{context.ids.viewport}"' )}
+    id="{ui:partId(part: 'viewport')}"
     {ui:ref(name: 'viewport' )}
     role="presentation"
     style="overflow: auto;"

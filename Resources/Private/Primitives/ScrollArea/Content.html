@@ -1,6 +1,6 @@
 <div
     {f:if(condition: class, then: 'class="{class}"' )}
-    {f:if(condition: context.ids.content, then: 'id="{context.ids.content}"' )}
+    id="{ui:partId(part: 'content')}"
     {ui:ref(name: 'content' )}
     role="presentation"
     style="min-width: fit-content;"

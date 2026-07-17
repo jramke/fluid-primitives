@@ -6,7 +6,7 @@
     tabindex="-1"
     {f:if(condition: context.translations.incrementLabel, then: 'aria-label="{context.translations.incrementLabel}"' )}
     {f:if(condition: class, then: 'class="{class}"' )}
-    {f:if(condition: context.ids.increment-trigger, then: 'id="{context.ids.increment-trigger}"' )}
+    id="{ui:partId(part: 'increment-trigger')}"
     {f:if(condition: isDisabled, then: 'disabled' )}
     {ui:ref(name: 'increment-trigger' , data: refData )}
     {ui:attributes()}>

@@ -9,7 +9,7 @@
 
 <div
     {f:if(condition: class, then: 'class="{class}"' )}
-    {f:if(condition: context.ids.item, then: 'id="{context.ids.item}"' )}
+    id="{ui:partId(part: 'item', value: value)}"
     {ui:ref(name: 'item' , data: refData)}
     {ui:attributes()}>
     <f:slot />

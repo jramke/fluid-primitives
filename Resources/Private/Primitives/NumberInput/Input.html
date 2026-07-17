@@ -15,7 +15,7 @@
     {f:if(condition: context.translations.valueText, then: 'aria-valuetext="{context.translations.valueText}"' )}
     {f:if(condition: '{context.formatOptions}' , then: '' , else: 'pattern="{context.pattern}"' )}
     {f:if(condition: class, then: 'class="{class}"' )}
-    {f:if(condition: context.ids.input, then: 'id="{context.ids.input}"' )}
+    id="{ui:partId(part: 'input')}"
     {f:if(condition: context.form, then: 'form="{context.form}"' )}
     {f:if(condition: context.name, then: 'name="{context.name}"' )}
     {f:if(condition: context.defaultValue, then: 'value="{context.formattedValue}"' )}

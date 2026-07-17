@@ -5,7 +5,7 @@
 <button
     type="button"
     {f:if(condition: class, then: 'class="{class}"' )}
-    {f:if(condition: context.ids.trigger, then: 'id="{context.ids.trigger}"' )}
+    id="{ui:partId(part: 'trigger')}"
     {ui:ref(name: 'trigger' , data: refData )}
     {ui:attributes()}>
     <f:slot />

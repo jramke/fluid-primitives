@@ -1,7 +1,7 @@
 <div
     {f:if(condition: '!{invalid}', then: 'hidden' )}
     {f:if(condition: class, then: 'class="{class}"' )}
-    {f:if(condition: context.ids.error, then: 'id="{context.ids.error}"' )}
+    id="{ui:partId(part: 'error')}"
     {ui:ref(name: 'error' )}
     {ui:attributes()}>
     <f:slot />
