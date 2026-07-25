@@ -156,4 +156,12 @@ export interface FormApi {
     getFormEl(): HTMLFormElement | null;
     getAction(): string;
     reset(): void;
+    syncFields(): void;
+    /**
+     * Renames a registered field, updating its `name` prop and re-keying the
+     * Form's internal field registry, without touching its value/touched/
+     * dirty/error state. Useful for keeping recurring-field rows contiguously
+     * indexed after removing a row from the middle of the list.
+     */
+    renameField(oldName: string, newName: string): void;
 }

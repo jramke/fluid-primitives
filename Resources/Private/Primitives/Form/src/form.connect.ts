@@ -4,7 +4,8 @@ import { createFieldHandle } from '../../Field/src/field.connect';
 import type { FieldHandle } from '../../Field/src/field.types';
 import { parts } from './form.anatomy';
 import * as dom from './form.dom';
-import { getRegisteredFieldMachines } from './form.fields';
+import { getRegisteredFieldMachines, renameFieldMachine } from './form.fields';
+import { normalizeFieldName } from './form.path';
 import type { FormApi, FormDirty, FormErrors, FormSchema, FormTouched } from './form.types';
 import { createFormValues } from './form.values';
 
@@ -119,13 +120,21 @@ export function connect<T extends PropTypes>(
             return getFieldHandles();
         },
         getField(name) {
-            return this.getAllFields().get(name);
+            return this.getAllFields().get(normalizeFieldName(name));
         },
         getAction() {
             return formEl?.getAttribute('action') || '';
         },
         reset() {
             send({ type: 'RESET' });
+        },
+
+        syncFields() {
+            send({ type: 'SYNC_FIELDS' });
+        },
+
+        renameField(oldName, newName) {
+            renameFieldMachine(scope, oldName, newName);
         },
 
         getContentProps() {

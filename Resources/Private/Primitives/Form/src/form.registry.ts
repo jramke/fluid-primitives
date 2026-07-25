@@ -1,4 +1,5 @@
 import type { Machine } from '../../../Client';
+import { normalizeFieldName } from './form.path';
 
 export type FormMachine = Machine<any>;
 export type FieldMachine = Machine<any>;
@@ -27,13 +28,17 @@ export function registerFieldMachineForForm(el: Element | null, fieldMachine: Fi
     if (!form) return;
 
     const handleEntry = (entry: RegistryEntry) => {
-        entry.fields.set(fieldMachine.prop('name'), fieldMachine);
+        entry.fields.set(normalizeFieldName(fieldMachine.prop('name')), fieldMachine);
 
         // trigger initial form render when all fields are registered
         if (entry.fields.size === entry.expectedFieldCount) {
             // notify is marked as private but that does not prevent runtime access
             // @ts-expect-error
             entry.machine.notify();
+        } else if (entry.fields.size > entry.expectedFieldCount) {
+            // Support dynamically added fields (e.g. recurring array rows added client-side)
+            // @ts-expect-error
+            entry.machine.notify?.();
         }
     };
 
@@ -54,6 +59,30 @@ export function registerFieldMachineForForm(el: Element | null, fieldMachine: Fi
 
 export function unregisterFormMachine(form: HTMLFormElement) {
     registry.delete(form);
+}
+
+/**
+ * Re-keys a registered field machine under a new field name and updates its
+ * `name` prop, without touching its value/touched/dirty/error state. This is
+ * how recurring-field rows stay contiguously indexed after removing a row in
+ * the middle: later rows are renamed down by one instead of copying values
+ * between DOM elements, which keeps working regardless of what kind of
+ * control (native input, Select, NumberInput, ...) the field wraps.
+ */
+export function renameFieldMachineForForm(el: Element | null, oldName: string, newName: string) {
+    const form = resolveElToForm(el);
+    if (!form) return;
+
+    const entry = registry.get(form);
+    if (!entry) return;
+
+    const normalizedOldName = normalizeFieldName(oldName);
+    const fieldMachine = entry.fields.get(normalizedOldName);
+    if (!fieldMachine) return;
+
+    entry.fields.delete(normalizedOldName);
+    fieldMachine.updateProps({ name: newName });
+    entry.fields.set(normalizeFieldName(newName), fieldMachine);
 }
 
 function resolveElToForm(el: Element | null): HTMLFormElement | null {

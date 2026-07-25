@@ -8,6 +8,7 @@ import {
     getFormData,
     getRegisteredFieldMachines,
     hasInvalidFieldMachines,
+    pruneStaleFieldMachines,
     resetFieldMachines,
     setFieldMachineErrors,
     syncAllFieldMachines,
@@ -55,6 +56,7 @@ export const machine = createMachine<FormSchema>({
         SUBMIT: { target: 'submitting', actions: ['clearStatusText', 'validateAll'] },
         VALIDATE: { actions: ['validateAll'] },
         VALIDATE_FIELD: { actions: ['validateField'] },
+        SYNC_FIELDS: { actions: ['syncFields'] },
         INVALID: { target: 'invalid' },
         RESET: { target: 'ready', actions: ['resetForm'] },
         ERROR: { target: 'error' },
@@ -288,6 +290,11 @@ export const machine = createMachine<FormSchema>({
                 for (const [, fieldMachine] of getRegisteredFieldMachines(scope)) {
                     fieldMachine.send({ type: 'CLEAR_ERRORS' });
                 }
+            },
+
+            syncFields({ scope }) {
+                pruneStaleFieldMachines(scope);
+                syncAllFieldMachines(scope);
             },
         },
     },

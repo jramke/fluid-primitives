@@ -5,15 +5,27 @@ import {
     type FieldMachine,
 } from '../../../Primitives/Field/src/field.registry';
 
-const fieldProps = ['invalid', 'disabled', 'readOnly', 'required'] as const;
+const booleanFieldProps = ['invalid', 'disabled', 'readOnly', 'required'] as const;
+// `name` is tracked reactively too (not just merged once at mount) so that
+// renaming a field (e.g. Form.api.renameField(), used to keep recurring
+// field rows contiguously indexed) also updates Field-aware primitives like
+// NumberInput/Select/Checkbox/RadioGroup that wrap a field, not just plain
+// asChild-wrapped native inputs (whose `name` attribute is already kept in
+// sync directly by Field's own control props).
+const fieldProps = [...booleanFieldProps, 'name'] as const;
 type FieldProps = (typeof fieldProps)[number];
 
-const fieldAccessors: Record<FieldProps, (s: Service<any>) => boolean> = {
+const fieldAccessors: Record<FieldProps, (s: Service<any>) => boolean | string | undefined> = {
     disabled: s => s.context.get('disabled'),
     readOnly: s => s.context.get('readOnly'),
     required: s => s.context.get('required'),
     invalid: s => s.context.get('invalid'),
+    name: s => s.prop('name'),
 };
+
+function isBooleanFieldProp(prop: FieldProps): prop is (typeof booleanFieldProps)[number] {
+    return (booleanFieldProps as readonly string[]).includes(prop);
+}
 
 export abstract class FieldAwareComponent<Props, Api> extends Component<Props, Api> {
     protected subscribedToField = false;
@@ -68,11 +80,22 @@ export abstract class FieldAwareComponent<Props, Api> extends Component<Props, A
         if (this.fieldMachine) {
             this.fieldMachine.subscribe(snapshot => {
                 queueMicrotask(() => {
-                    let propsToUpdate: Partial<Record<FieldProps, boolean>> = {};
+                    let propsToUpdate: Partial<Record<FieldProps, boolean | string | undefined>> =
+                        {};
 
                     for (const prop of fieldProps) {
-                        const newValue = !!fieldAccessors[prop](snapshot);
-                        const currentValue = !!this.machine.prop(prop);
+                        if (isBooleanFieldProp(prop)) {
+                            const newValue = !!fieldAccessors[prop](snapshot);
+                            const currentValue = !!this.machine.prop(prop);
+
+                            if (newValue !== currentValue) {
+                                propsToUpdate[prop] = newValue;
+                            }
+                            continue;
+                        }
+
+                        const newValue = fieldAccessors[prop](snapshot);
+                        const currentValue = this.machine.prop(prop);
 
                         if (newValue !== currentValue) {
                             propsToUpdate[prop] = newValue;

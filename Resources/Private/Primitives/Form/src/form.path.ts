@@ -13,7 +13,8 @@ export function parseFieldPath(fieldName: string): FieldPathSegment[] {
 
     for (const match of fieldName.matchAll(fieldPathSegmentPattern)) {
         if (match[1]) {
-            fieldPath.push(match[1]);
+            const segment = match[1];
+            fieldPath.push(/^\d+$/.test(segment) ? Number(segment) : segment);
             continue;
         }
 

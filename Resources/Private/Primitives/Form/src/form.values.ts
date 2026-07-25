@@ -64,27 +64,31 @@ function formDataToObject(formData: FormData): FormValuesObject {
 }
 
 function getFieldFormDataValue(formData: FormData, fieldName: string) {
-    const normalizedFieldName = normalizeFieldName(fieldName);
-    const arrayEntries = formData.getAll(`${normalizedFieldName}[]`);
-    const entries = getFieldValues(formData, fieldName);
-    const isArrayValue = fieldName.endsWith('[]') || arrayEntries.length > 0 || entries.length > 1;
-
-    if (isArrayValue) {
-        return entries;
-    }
-
-    return entries[0] ?? null;
+    const { entries, isArrayValue } = readFieldEntries(formData, fieldName);
+    return isArrayValue ? entries : (entries[0] ?? null);
 }
 
 function getFieldValues(formData: FormData, fieldName: string): FormValueLeaf[] {
+    return readFieldEntries(formData, fieldName).entries;
+}
+
+/**
+ * Reads the raw FormData entries for a field name, checking both the direct
+ * and `[]`-suffixed key so callers don't each re-query FormData themselves.
+ */
+function readFieldEntries(
+    formData: FormData,
+    fieldName: string
+): { entries: FormValueLeaf[]; isArrayValue: boolean } {
     const normalizedFieldName = normalizeFieldName(fieldName);
     const directEntries = formData.getAll(normalizedFieldName);
+    const bracketEntries = formData.getAll(`${normalizedFieldName}[]`);
+    const entries = directEntries.length > 0 ? directEntries : bracketEntries;
 
-    if (directEntries.length > 0) {
-        return directEntries;
-    }
+    const isArrayValue =
+        fieldName.endsWith('[]') || bracketEntries.length > 0 || entries.length > 1;
 
-    return formData.getAll(`${normalizedFieldName}[]`);
+    return { entries, isArrayValue };
 }
 
 function createContainerForFieldPathSegment(
