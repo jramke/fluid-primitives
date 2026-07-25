@@ -13,7 +13,7 @@ trait AjaxValidationTrait
     {
         if (!method_exists($this, 'jsonResponse')) {
             throw new \RuntimeException(
-                'Method jsonResponse does not exist in the parent class. The respondJson method can only be used in Classes that extend ' .
+                'Method jsonResponse does not exist in the parent class. The jsonResponse method can only be used in Classes that extend ' .
                 ActionController::class,
                 1768514275,
             );
@@ -35,6 +35,8 @@ trait AjaxValidationTrait
             return;
         }
 
+        // TODO: maybe we should alternatively provide a method that returns a valid psr7 response
+        // would this work?
         $response = $this->jsonResponse(json_encode($messages))->withStatus(422);
         throw new PropagateResponseException($response, 422);
     }

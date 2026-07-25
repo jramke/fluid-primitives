@@ -14,14 +14,17 @@ class ComponentUtility
 {
     private static array $cachedSettings = [];
 
-    public static function id(string $prefix = 'f'): string
+    public static function id(string $prefix = 'ui'): string
     {
-        static $id = 0;
+        static $counter = 0;
+        static $requestSalt = null;
 
-        $id++;
-        $base36 = base_convert((string)$id, 10, 36);
+        if ($requestSalt === null) {
+            // 6 bytes => 48 bits => 8 base64url chars, generated once per request
+            $requestSalt = rtrim(strtr(base64_encode(random_bytes(6)), '+/', '-_'), '=');
+        }
 
-        return '«' . $prefix . $base36 . '»';
+        return '«' . $prefix . $requestSalt . base_convert((string)++$counter, 10, 36) . '»';
     }
 
     public static function isComponent(RenderingContextInterface $renderingContext): bool
@@ -130,6 +133,12 @@ class ComponentUtility
     {
         $result = GeneralUtility::camelCaseToLowerCaseUnderscored($string);
         return str_replace('_', '-', $result);
+    }
+
+    public static function lowerCaseDashedToCamelCase(string $string): string
+    {
+        $result = str_replace('-', '_', $string);
+        return GeneralUtility::underscoredToUpperCamelCase($result);
     }
 
     public static function getSettings(): array

@@ -69,4 +69,24 @@ class ComponentCollectionService
 
         return $viewHelperResolverDelegate;
     }
+
+    public function getViewHelperNamespaceIdentifierByCollectionClassName(string $collectionClassName): ?string
+    {
+        $viewHelperResolver = $this->viewHelperResolverFactory->create();
+        $registeredNamespaces = $viewHelperResolver->getNamespaces();
+
+        if ($registeredNamespaces === null || $registeredNamespaces === []) {
+            return null;
+        }
+
+        foreach ($registeredNamespaces as $namespaceIdentifier => $delegateClassNames) {
+            foreach ($delegateClassNames as $delegateClassName) {
+                if (is_a($delegateClassName, $collectionClassName, true)) {
+                    return $namespaceIdentifier;
+                }
+            }
+        }
+
+        return null;
+    }
 }

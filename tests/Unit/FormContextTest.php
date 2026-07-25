@@ -35,6 +35,10 @@ final class FormContextTest extends TestCase
             'persons[0].name',
             'eventRegistration',
         ));
+        $this->assertSame('tx_docs_registration[eventRegistration][persons][0][name]', $context->exposePrefixFieldName(
+            'persons.0.name',
+            'eventRegistration',
+        ));
         $this->assertSame('tx_docs_registration[eventRegistration][tags][]', $context->exposePrefixFieldName(
             'tags[]',
             'eventRegistration',

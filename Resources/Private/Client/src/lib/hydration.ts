@@ -45,6 +45,12 @@ export function getGlobal<T = unknown>(key: string): T | undefined {
     return globals[key] as T;
 }
 
+/**
+ * Mounts every not-yet-mounted, uncontrolled hydration instance of
+ * `componentName`. Safe to call more than once (e.g. after
+ * {@see mergeHydrationData} adds instances for lazily-inserted DOM) - already
+ * mounted instances are skipped rather than re-instantiated.
+ */
 export function mount(
     componentName: string,
     callback: (
@@ -54,8 +60,15 @@ export function mount(
     const hydrationInstances = getHydrationData(componentName);
     if (!hydrationInstances) return;
 
+    if (!window.FluidPrimitives.uncontrolledInstances[componentName]) {
+        window.FluidPrimitives.uncontrolledInstances[componentName] = {};
+    }
+    const mountedInstances = window.FluidPrimitives.uncontrolledInstances[componentName];
+
     Object.keys(hydrationInstances).forEach(id => {
         if (hydrationInstances[id].controlled) return;
+        if (mountedInstances[id]) return;
+
         const instance = callback({
             ...hydrationInstances[id],
             createHydrator: () =>
@@ -63,11 +76,52 @@ export function mount(
         });
         if (!instance) return;
 
-        if (!window.FluidPrimitives.uncontrolledInstances[componentName]) {
-            window.FluidPrimitives.uncontrolledInstances[componentName] = {};
-        }
-        window.FluidPrimitives.uncontrolledInstances[componentName][id] = instance;
+        mountedInstances[id] = instance;
     });
+}
+
+/**
+ * Folds a fragment's own hydration payload (as returned by a component
+ * fragment endpoint, see `Jramke\FluidPrimitives\Service\ComponentFragmentRenderer`
+ * on the PHP side) into the page-wide `window.FluidPrimitives.hydrationData`,
+ * so a subsequent {@see mount} call picks up the newly inserted instances.
+ */
+export function mergeHydrationData(
+    data: Record<string, Record<string, ComponentHydrationData>> | null | undefined
+) {
+    if (!data || !window.FluidPrimitives) return;
+
+    for (const [componentName, instances] of Object.entries(data)) {
+        if (!window.FluidPrimitives.hydrationData[componentName]) {
+            window.FluidPrimitives.hydrationData[componentName] = {};
+        }
+        Object.assign(window.FluidPrimitives.hydrationData[componentName], instances);
+    }
+}
+
+/**
+ * Destroys every mounted, uncontrolled component instance whose root element
+ * is `root` itself or a descendant of it, and drops them from the tracked
+ * instance registry. Intended for cleaning up before removing a subtree from
+ * the DOM (e.g. a lazily-mounted recurring-field row).
+ */
+export function destroyComponentsWithin(root: Element | Document) {
+    if (!window.FluidPrimitives) return;
+
+    for (const instances of Object.values(window.FluidPrimitives.uncontrolledInstances)) {
+        for (const [id, instance] of Object.entries(instances)) {
+            const componentPartsInNode = root.querySelectorAll(
+                `[id^="${instance.getName()}:${id}"]`
+            );
+            const hasComponentPartsInNode = componentPartsInNode.length > 0;
+
+            if (hasComponentPartsInNode) {
+                console.log(`Destroying component instance: ${instance.getName()}:${id}`);
+                instance.destroy();
+                delete instances[id];
+            }
+        }
+    }
 }
 
 export function mountControlled<T>(
