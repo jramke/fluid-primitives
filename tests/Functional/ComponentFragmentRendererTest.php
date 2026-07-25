@@ -7,6 +7,7 @@ namespace Jramke\FluidPrimitives\Tests\Functional;
 use Jramke\FluidPrimitives\Service\ComponentFragmentRenderer;
 use PHPUnit\Framework\Attributes\Test;
 use Psr\Http\Message\ServerRequestInterface;
+use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 
 final class ComponentFragmentRendererTest extends FunctionalTestCase
 {
@@ -16,8 +17,8 @@ final class ComponentFragmentRendererTest extends FunctionalTestCase
         // Triggers the base class' request/site/language bootstrapping so a
         // real ServerRequestInterface is available in $GLOBALS.
         $this->getView();
-        $request = $GLOBALS['TYPO3_REQUEST'];
-        self::assertInstanceOf(ServerRequestInterface::class, $request);
+        $renderingContext = $this->getView()->getRenderingContext();
+        self::assertInstanceOf(RenderingContextInterface::class, $renderingContext);
 
         $renderer = $this->get(ComponentFragmentRenderer::class);
 
@@ -27,7 +28,7 @@ final class ComponentFragmentRendererTest extends FunctionalTestCase
                 'rootId' => 'fragment-test',
                 'defaultOpen' => true,
             ],
-            $request,
+            $renderingContext,
         );
 
         self::assertArrayHasKey('html', $result);
@@ -42,17 +43,17 @@ final class ComponentFragmentRendererTest extends FunctionalTestCase
     public function onlyReturnsHydrationDataForTheRequestedFragmentNotLeftoverState(): void
     {
         $this->getView();
-        $request = $GLOBALS['TYPO3_REQUEST'];
-        self::assertInstanceOf(ServerRequestInterface::class, $request);
+        $renderingContext = $this->getView()->getRenderingContext();
+        self::assertInstanceOf(RenderingContextInterface::class, $renderingContext);
 
         $renderer = $this->get(ComponentFragmentRenderer::class);
 
         // Render once so the shared HydrationRegistry singleton is not empty...
-        $renderer->render('primitives:collapsible.root', ['rootId' => 'first'], $request);
+        $renderer->render('primitives:collapsible.root', ['rootId' => 'first'], $renderingContext);
 
         // ...then render a second, unrelated fragment and make sure its
         // hydrationData does not still contain the first one.
-        $result = $renderer->render('primitives:collapsible.root', ['rootId' => 'second'], $request);
+        $result = $renderer->render('primitives:collapsible.root', ['rootId' => 'second'], $renderingContext);
 
         self::assertArrayNotHasKey('first', $result['hydrationData']['collapsible']);
         self::assertArrayHasKey('second', $result['hydrationData']['collapsible']);
@@ -62,12 +63,12 @@ final class ComponentFragmentRendererTest extends FunctionalTestCase
     public function throwsForInvalidComponentNameFormat(): void
     {
         $this->getView();
-        $request = $GLOBALS['TYPO3_REQUEST'];
-        self::assertInstanceOf(ServerRequestInterface::class, $request);
+        $renderingContext = $this->getView()->getRenderingContext();
+        self::assertInstanceOf(RenderingContextInterface::class, $renderingContext);
 
         $renderer = $this->get(ComponentFragmentRenderer::class);
 
         $this->expectException(\RuntimeException::class);
-        $renderer->render('collapsible-without-namespace', [], $request);
+        $renderer->render('collapsible-without-namespace', [], $renderingContext);
     }
 }
