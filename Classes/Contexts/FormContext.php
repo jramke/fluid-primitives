@@ -13,6 +13,7 @@ use TYPO3\CMS\Extbase\Mvc\RequestInterface;
 use TYPO3\CMS\Extbase\Mvc\Web\Routing\UriBuilder;
 use TYPO3\CMS\Extbase\Service\ExtensionService;
 
+// @mago-expect lint:too-many-methods
 #[Autoconfigure(public: true)]
 class FormContext extends AbstractComponentContext
 {

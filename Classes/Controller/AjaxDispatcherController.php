@@ -17,7 +17,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
 use TYPO3\CMS\Fluid\Core\Rendering\RenderingContextFactory;
 
-class AjaxDispatcherController extends ActionController
+final class AjaxDispatcherController extends ActionController
 {
     public function __construct(
         private readonly RenderingContextFactory $renderingContextFactory,

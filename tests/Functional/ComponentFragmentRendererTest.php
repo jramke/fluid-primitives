@@ -6,7 +6,6 @@ namespace Jramke\FluidPrimitives\Tests\Functional;
 
 use Jramke\FluidPrimitives\Service\ComponentFragmentRenderer;
 use PHPUnit\Framework\Attributes\Test;
-use Psr\Http\Message\ServerRequestInterface;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 
 final class ComponentFragmentRendererTest extends FunctionalTestCase

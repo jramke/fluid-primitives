@@ -9,9 +9,9 @@ use TYPO3\CMS\Extbase\Mvc\RequestInterface;
 class AjaxComponentActionDemand
 {
     public function __construct(
-        private string $fullComponentName,
-        private string $method,
-        private array $arguments = [],
+        private readonly string $fullComponentName,
+        private readonly string $method,
+        private readonly array $arguments = [],
         private array $props = [],
     ) {}
 

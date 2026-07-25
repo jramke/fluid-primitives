@@ -5,10 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Service;
 
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
-use Psr\Http\Message\ServerRequestInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Fluid\Core\Rendering\RenderingContextFactory;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 
 /**
@@ -51,7 +48,7 @@ class ComponentFragmentRenderer
         $name = $this->getComponentName($viewHelperName);
         $collection = $this->componentCollectionService->getCollectionByViewHelperName($viewHelperName);
         $componentRenderer = $collection->getComponentRenderer();
-        
+
         // ComponentRenderer always writes hydration data through the
         // HydrationRegistry::getInstance() static accessor (a hard singleton,
         // not a container-resolved one), so we must read through the exact
