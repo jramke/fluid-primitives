@@ -127,7 +127,7 @@ abstract class AbstractComponentCollection implements ComponentCollectionInterfa
                 'boolean',
                 'If true the component uses its child only without the component template. Like Radix UI asChild or Base UI render props.',
                 false,
-                false,
+                null,
             );
 
             if ($isRootComponent) {

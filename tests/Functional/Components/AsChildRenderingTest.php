@@ -2,268 +2,289 @@
 
 declare(strict_types=1);
 
+namespace Jramke\FluidPrimitives\Tests\Functional\Components;
+
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
+use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
+use PHPUnit\Framework\Attributes\Test;
 
-describe('asChild Rendering', function () {
-    describe('basic functionality', function () {
-        it('renders component template element when asChild is false', function () {
-            $html = $this->renderTemplate('
-                <primitives:dialog.root>
-                    <primitives:dialog.trigger asChild="{false}">Open</primitives:dialog.trigger>
-                    <primitives:dialog.content>Content</primitives:dialog.content>
-                </primitives:dialog.root>
-            ');
+final class AsChildRenderingTest extends FunctionalTestCase
+{
+    #[Test]
+    public function rendersComponentTemplateElementWhenAsChildFalse(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:dialog.root>
+                <primitives:dialog.trigger asChild="{false}">Open</primitives:dialog.trigger>
+                <primitives:dialog.content>Content</primitives:dialog.content>
+            </primitives:dialog.root>
+        ');
 
-            expect($html)->toContain('<button');
-            expect($html)->toContain('data-part="trigger"');
-            expect($html)->toContain('Open');
-        });
+        $this->assertStringContainsString('<button', $html);
+        $this->assertStringContainsString('data-part="trigger"', $html);
+        $this->assertStringContainsString('Open', $html);
+    }
 
-        it('renders child element with component attributes when asChild is true', function () {
-            $html = $this->renderTemplate('
-                <primitives:dialog.root>
-                    <primitives:dialog.trigger asChild="{true}">
-                        <a href="/some-link">Open Dialog</a>
-                    </primitives:dialog.trigger>
-                    <primitives:dialog.content>Content</primitives:dialog.content>
-                </primitives:dialog.root>
-            ');
+    #[Test]
+    public function rendersChildElementWithComponentAttributesWhenAsChildTrue(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:dialog.root>
+                <primitives:dialog.trigger asChild="{true}">
+                    <a href="/some-link">Open Dialog</a>
+                </primitives:dialog.trigger>
+                <primitives:dialog.content>Content</primitives:dialog.content>
+            </primitives:dialog.root>
+        ');
 
-            expect($html)->toContain('<a');
-            expect($html)->toContain('href="/some-link"');
-            expect($html)->toContain('data-part="trigger"');
-            expect($html)->toContain('data-scope="dialog"');
-            expect($html)->toContain('Open Dialog');
-            expect($html)->not->toMatch('/<button[^>]*data-part="trigger"/');
-        });
+        $this->assertStringContainsString('<a', $html);
+        $this->assertStringContainsString('href="/some-link"', $html);
+        $this->assertStringContainsString('data-part="trigger"', $html);
+        $this->assertStringContainsString('data-scope="dialog"', $html);
+        $this->assertStringContainsString('Open Dialog', $html);
+        $this->assertDoesNotMatchRegularExpression('/<button[^>]*data-part="trigger"/', $html);
+    }
 
-        it('preserves child element attributes when spreading', function () {
-            $html = $this->renderTemplate('
-                <primitives:dialog.root>
-                    <primitives:dialog.trigger asChild="{true}">
-                        <button type="submit" class="my-custom-class" data-custom="value">Open</button>
-                    </primitives:dialog.trigger>
-                    <primitives:dialog.content>Content</primitives:dialog.content>
-                </primitives:dialog.root>
-            ');
+    #[Test]
+    public function preservesChildElementAttributesWhenSpreading(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:dialog.root>
+                <primitives:dialog.trigger asChild="{true}">
+                    <button type="submit" class="my-custom-class" data-custom="value">Open</button>
+                </primitives:dialog.trigger>
+                <primitives:dialog.content>Content</primitives:dialog.content>
+            </primitives:dialog.root>
+        ');
 
-            expect($html)->toContain('type="submit"');
-            expect($html)->toContain('class="my-custom-class"');
-            expect($html)->toContain('data-custom="value"');
-            expect($html)->toContain('data-part="trigger"');
-            expect($html)->toContain('data-scope="dialog"');
-        });
+        $this->assertStringContainsString('type="submit"', $html);
+        $this->assertStringContainsString('class="my-custom-class"', $html);
+        $this->assertStringContainsString('data-custom="value"', $html);
+        $this->assertStringContainsString('data-part="trigger"', $html);
+        $this->assertStringContainsString('data-scope="dialog"', $html);
+    }
 
-        it('child attributes take precedence over component attributes', function () {
-            $html = $this->renderTemplate('
-                <primitives:dialog.root>
-                    <primitives:dialog.trigger asChild="{true}">
-                        <button class="child-class">Open</button>
-                    </primitives:dialog.trigger>
-                    <primitives:dialog.content>Content</primitives:dialog.content>
-                </primitives:dialog.root>
-            ');
+    #[Test]
+    public function childAttributesTakePrecedenceOverComponentAttributes(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:dialog.root>
+                <primitives:dialog.trigger asChild="{true}">
+                    <button class="child-class">Open</button>
+                </primitives:dialog.trigger>
+                <primitives:dialog.content>Content</primitives:dialog.content>
+            </primitives:dialog.root>
+        ');
 
-            expect($html)->toContain('class="child-class"');
-        });
-    });
+        $this->assertStringContainsString('class="child-class"', $html);
+    }
 
-    describe('with different element types', function () {
-        it('works with div elements', function () {
-            $html = $this->renderTemplate('
-                <primitives:dialog.root>
-                    <primitives:dialog.trigger asChild="{true}">
-                        <div role="button" tabindex="0">Clickable Div</div>
-                    </primitives:dialog.trigger>
-                    <primitives:dialog.content>Content</primitives:dialog.content>
-                </primitives:dialog.root>
-            ');
+    #[Test]
+    public function worksWithDivElements(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:dialog.root>
+                <primitives:dialog.trigger asChild="{true}">
+                    <div role="button" tabindex="0">Clickable Div</div>
+                </primitives:dialog.trigger>
+                <primitives:dialog.content>Content</primitives:dialog.content>
+            </primitives:dialog.root>
+        ');
 
-            expect($html)->toContain('<div');
-            expect($html)->toContain('role="button"');
-            expect($html)->toContain('tabindex="0"');
-            expect($html)->toContain('data-part="trigger"');
-        });
+        $this->assertStringContainsString('<div', $html);
+        $this->assertStringContainsString('role="button"', $html);
+        $this->assertStringContainsString('tabindex="0"', $html);
+        $this->assertStringContainsString('data-part="trigger"', $html);
+    }
 
-        it('works with span elements', function () {
-            $html = $this->renderTemplate('
-                <primitives:dialog.root>
-                    <primitives:dialog.trigger asChild="{true}">
-                        <span class="trigger-span">Click me</span>
-                    </primitives:dialog.trigger>
-                    <primitives:dialog.content>Content</primitives:dialog.content>
-                </primitives:dialog.root>
-            ');
+    #[Test]
+    public function worksWithSpanElements(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:dialog.root>
+                <primitives:dialog.trigger asChild="{true}">
+                    <span class="trigger-span">Click me</span>
+                </primitives:dialog.trigger>
+                <primitives:dialog.content>Content</primitives:dialog.content>
+            </primitives:dialog.root>
+        ');
 
-            expect($html)->toContain('<span');
-            expect($html)->toContain('class="trigger-span"');
-            expect($html)->toContain('data-part="trigger"');
-        });
+        $this->assertStringContainsString('<span', $html);
+        $this->assertStringContainsString('class="trigger-span"', $html);
+        $this->assertStringContainsString('data-part="trigger"', $html);
+    }
 
-        it('works with custom data attributes on elements', function () {
-            $html = $this->renderTemplate('
-                <primitives:dialog.root>
-                    <primitives:dialog.trigger asChild="{true}">
-                        <button data-variant="primary" data-size="large">Custom Button</button>
-                    </primitives:dialog.trigger>
-                    <primitives:dialog.content>Content</primitives:dialog.content>
-                </primitives:dialog.root>
-            ');
+    #[Test]
+    public function worksWithCustomDataAttributesOnElements(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:dialog.root>
+                <primitives:dialog.trigger asChild="{true}">
+                    <button data-variant="primary" data-size="large">Custom Button</button>
+                </primitives:dialog.trigger>
+                <primitives:dialog.content>Content</primitives:dialog.content>
+            </primitives:dialog.root>
+        ');
 
-            expect($html)->toContain('<button');
-            expect($html)->toContain('data-variant="primary"');
-            expect($html)->toContain('data-size="large"');
-            expect($html)->toContain('data-part="trigger"');
-        });
-    });
+        $this->assertStringContainsString('<button', $html);
+        $this->assertStringContainsString('data-variant="primary"', $html);
+        $this->assertStringContainsString('data-size="large"', $html);
+        $this->assertStringContainsString('data-part="trigger"', $html);
+    }
 
-    describe('with accordion component', function () {
-        it('spreads attributes to custom trigger element', function () {
-            $html = $this->renderTemplate('
-                <primitives:accordion.root>
-                    <primitives:accordion.item value="item-1">
-                        <primitives:accordion.itemTrigger asChild="{true}">
-                            <div class="custom-accordion-trigger">
-                                <span>Toggle Section</span>
-                                <svg class="icon"></svg>
-                            </div>
-                        </primitives:accordion.itemTrigger>
-                        <primitives:accordion.itemContent>Content 1</primitives:accordion.itemContent>
-                    </primitives:accordion.item>
-                </primitives:accordion.root>
-            ');
+    #[Test]
+    public function spreadsAttributesToCustomTriggerElementInAccordion(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:accordion.root>
+                <primitives:accordion.item value="item-1">
+                    <primitives:accordion.itemTrigger asChild="{true}">
+                        <div class="custom-accordion-trigger">
+                            <span>Toggle Section</span>
+                            <svg class="icon"></svg>
+                        </div>
+                    </primitives:accordion.itemTrigger>
+                    <primitives:accordion.itemContent>Content 1</primitives:accordion.itemContent>
+                </primitives:accordion.item>
+            </primitives:accordion.root>
+        ');
 
-            expect($html)->toContain('<div');
-            expect($html)->toContain('class="custom-accordion-trigger"');
-            expect($html)->toContain('data-part="item-trigger"');
-            expect($html)->toContain('Toggle Section');
-        });
-    });
+        $this->assertStringContainsString('<div', $html);
+        $this->assertStringContainsString('class="custom-accordion-trigger"', $html);
+        $this->assertStringContainsString('data-part="item-trigger"', $html);
+        $this->assertStringContainsString('Toggle Section', $html);
+    }
 
-    describe('with close trigger', function () {
-        it('spreads attributes to custom close element', function () {
-            $html = $this->renderTemplate('
-                <primitives:dialog.root>
-                    <primitives:dialog.trigger>Open</primitives:dialog.trigger>
-                    <primitives:dialog.content>
-                        <primitives:dialog.closeTrigger asChild="{true}">
-                            <span class="close-icon" aria-label="Close">×</span>
-                        </primitives:dialog.closeTrigger>
-                    </primitives:dialog.content>
-                </primitives:dialog.root>
-            ');
+    #[Test]
+    public function spreadsAttributesToCustomCloseElement(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:dialog.root>
+                <primitives:dialog.trigger>Open</primitives:dialog.trigger>
+                <primitives:dialog.content>
+                    <primitives:dialog.closeTrigger asChild="{true}">
+                        <span class="close-icon" aria-label="Close">×</span>
+                    </primitives:dialog.closeTrigger>
+                </primitives:dialog.content>
+            </primitives:dialog.root>
+        ');
 
-            expect($html)->toContain('<span');
-            expect($html)->toContain('class="close-icon"');
-            expect($html)->toContain('aria-label="Close"');
-            expect($html)->toContain('data-part="close-trigger"');
-        });
-    });
+        $this->assertStringContainsString('<span', $html);
+        $this->assertStringContainsString('class="close-icon"', $html);
+        $this->assertStringContainsString('aria-label="Close"', $html);
+        $this->assertStringContainsString('data-part="close-trigger"', $html);
+    }
 
-    describe('hydration data', function () {
-        it('correctly registers hydration data when using asChild', function () {
-            $html = $this->renderTemplate('
-                <primitives:dialog.root rootId="as-child-dialog">
-                    <primitives:dialog.trigger asChild="{true}">
-                        <button class="custom-btn">Open</button>
-                    </primitives:dialog.trigger>
-                    <primitives:dialog.content>Content</primitives:dialog.content>
-                </primitives:dialog.root>
-            ');
+    #[Test]
+    public function correctlyRegistersHydrationDataWhenUsingAsChild(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:dialog.root rootId="as-child-dialog">
+                <primitives:dialog.trigger asChild="{true}">
+                    <button class="custom-btn">Open</button>
+                </primitives:dialog.trigger>
+                <primitives:dialog.content>Content</primitives:dialog.content>
+            </primitives:dialog.root>
+        ');
 
-            $hydrationData = HydrationRegistry::getInstance()->getAll();
+        $hydrationData = HydrationRegistry::getInstance()->getAll();
 
-            expect($hydrationData)->toHaveKey('dialog');
-            expect($hydrationData['dialog'])->toHaveKey('as-child-dialog');
-            expect($html)->toContain('data-hydrate-dialog="as-child-dialog"');
-        });
-    });
+        $this->assertArrayHasKey('dialog', $hydrationData);
+        $this->assertArrayHasKey('as-child-dialog', $hydrationData['dialog']);
+        $this->assertStringContainsString('data-hydrate-dialog="as-child-dialog"', $html);
+    }
 
-    describe('nested asChild usage', function () {
-        it('works with multiple asChild components in the same dialog', function () {
-            $html = $this->renderTemplate('
-                <primitives:dialog.root rootId="multi-aschild">
-                    <primitives:dialog.trigger asChild="{true}">
-                        <a href="#" class="open-link">Open</a>
-                    </primitives:dialog.trigger>
-                    <primitives:dialog.content>
-                        <p>Dialog content here</p>
-                        <primitives:dialog.closeTrigger asChild="{true}">
-                            <a href="#" class="close-link">Close</a>
-                        </primitives:dialog.closeTrigger>
-                    </primitives:dialog.content>
-                </primitives:dialog.root>
-            ');
+    #[Test]
+    public function worksWithMultipleAsChildComponentsInSameDialog(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:dialog.root rootId="multi-aschild">
+                <primitives:dialog.trigger asChild="{true}">
+                    <a href="#" class="open-link">Open</a>
+                </primitives:dialog.trigger>
+                <primitives:dialog.content>
+                    <p>Dialog content here</p>
+                    <primitives:dialog.closeTrigger asChild="{true}">
+                        <a href="#" class="close-link">Close</a>
+                    </primitives:dialog.closeTrigger>
+                </primitives:dialog.content>
+            </primitives:dialog.root>
+        ');
 
-            expect($html)->toContain('class="open-link"');
-            expect($html)->toContain('class="close-link"');
-            expect($html)->toContain('data-part="trigger"');
-            expect($html)->toContain('data-part="close-trigger"');
+        $this->assertStringContainsString('class="open-link"', $html);
+        $this->assertStringContainsString('class="close-link"', $html);
+        $this->assertStringContainsString('data-part="trigger"', $html);
+        $this->assertStringContainsString('data-part="close-trigger"', $html);
 
-            preg_match_all('/data-hydrate-dialog="multi-aschild"/', $html, $matches);
-            expect(count($matches[0]))->toBeGreaterThanOrEqual(3);
-        });
-    });
+        preg_match_all('/data-hydrate-dialog="multi-aschild"/', $html, $matches);
+        $this->assertGreaterThanOrEqual(3, count($matches[0]));
+    }
 
-    describe('edge cases', function () {
-        it('handles boolean attributes on child element', function () {
-            $html = $this->renderTemplate('
-                <primitives:dialog.root>
-                    <primitives:dialog.trigger asChild="{true}">
-                        <button disabled autofocus>Open</button>
-                    </primitives:dialog.trigger>
-                    <primitives:dialog.content>Content</primitives:dialog.content>
-                </primitives:dialog.root>
-            ');
+    #[Test]
+    public function handlesBooleanAttributesOnChildElement(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:dialog.root>
+                <primitives:dialog.trigger asChild="{true}">
+                    <button disabled autofocus>Open</button>
+                </primitives:dialog.trigger>
+                <primitives:dialog.content>Content</primitives:dialog.content>
+            </primitives:dialog.root>
+        ');
 
-            expect($html)->toContain('disabled');
-            expect($html)->toContain('autofocus');
-            expect($html)->toContain('data-part="trigger"');
-        });
+        $this->assertStringContainsString('disabled', $html);
+        $this->assertStringContainsString('autofocus', $html);
+        $this->assertStringContainsString('data-part="trigger"', $html);
+    }
 
-        it('handles empty child content gracefully', function () {
-            $html = $this->renderTemplate('
-                <primitives:dialog.root>
-                    <primitives:dialog.trigger asChild="{true}">
-                        <button></button>
-                    </primitives:dialog.trigger>
-                    <primitives:dialog.content>Content</primitives:dialog.content>
-                </primitives:dialog.root>
-            ');
+    #[Test]
+    public function handlesEmptyChildContentGracefully(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:dialog.root>
+                <primitives:dialog.trigger asChild="{true}">
+                    <button></button>
+                </primitives:dialog.trigger>
+                <primitives:dialog.content>Content</primitives:dialog.content>
+            </primitives:dialog.root>
+        ');
 
-            expect($html)->toContain('data-part="trigger"');
-        });
+        $this->assertStringContainsString('data-part="trigger"', $html);
+    }
 
-        it('handles self-closing child elements', function () {
-            $html = $this->renderTemplate('
-                <primitives:dialog.root>
-                    <primitives:dialog.trigger asChild="{true}">
-                        <input type="button" value="Open" />
-                    </primitives:dialog.trigger>
-                    <primitives:dialog.content>Content</primitives:dialog.content>
-                </primitives:dialog.root>
-            ');
+    #[Test]
+    public function handlesSelfClosingChildElements(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:dialog.root>
+                <primitives:dialog.trigger asChild="{true}">
+                    <input type="button" value="Open" />
+                </primitives:dialog.trigger>
+                <primitives:dialog.content>Content</primitives:dialog.content>
+            </primitives:dialog.root>
+        ');
 
-            expect($html)->toContain('<input');
-            expect($html)->toContain('type="button"');
-            expect($html)->toContain('value="Open"');
-            expect($html)->toContain('data-part="trigger"');
-        });
+        $this->assertStringContainsString('<input', $html);
+        $this->assertStringContainsString('type="button"', $html);
+        $this->assertStringContainsString('value="Open"', $html);
+        $this->assertStringContainsString('data-part="trigger"', $html);
+    }
 
-        it('handles child with data attributes', function () {
-            $html = $this->renderTemplate('
-                <primitives:dialog.root>
-                    <primitives:dialog.trigger asChild="{true}">
-                        <button data-testid="dialog-trigger" data-analytics="open-dialog">Open</button>
-                    </primitives:dialog.trigger>
-                    <primitives:dialog.content>Content</primitives:dialog.content>
-                </primitives:dialog.root>
-            ');
+    #[Test]
+    public function handlesChildWithDataAttributes(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:dialog.root>
+                <primitives:dialog.trigger asChild="{true}">
+                    <button data-testid="dialog-trigger" data-analytics="open-dialog">Open</button>
+                </primitives:dialog.trigger>
+                <primitives:dialog.content>Content</primitives:dialog.content>
+            </primitives:dialog.root>
+        ');
 
-            expect($html)->toContain('data-testid="dialog-trigger"');
-            expect($html)->toContain('data-analytics="open-dialog"');
-            expect($html)->toContain('data-part="trigger"');
-            expect($html)->toContain('data-scope="dialog"');
-        });
-    });
-});
+        $this->assertStringContainsString('data-testid="dialog-trigger"', $html);
+        $this->assertStringContainsString('data-analytics="open-dialog"', $html);
+        $this->assertStringContainsString('data-part="trigger"', $html);
+        $this->assertStringContainsString('data-scope="dialog"', $html);
+    }
+}

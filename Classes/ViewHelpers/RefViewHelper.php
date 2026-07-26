@@ -64,7 +64,7 @@ class RefViewHelper extends AbstractViewHelper
 
         $componentName = ComponentUtility::getComponentBaseNameFromContext($this->renderingContext);
         $rootId = ComponentUtility::getRootIdFromContext($this->renderingContext);
-        if (!$rootId) {
+        if ($rootId === '' || $rootId === '0') {
             throw new \RuntimeException(
                 'No rootId found for component ' .
                 ComponentUtility::getComponentFullNameFromContext($this->renderingContext) .
@@ -73,8 +73,8 @@ class RefViewHelper extends AbstractViewHelper
             );
         }
 
-        $additionalData = $this->arguments['data'] ?? [];
-        if (!empty($additionalData)) {
+        $additionalData = $this->arguments['data'];
+        if ($additionalData !== []) {
             $additionalData = array_combine(
                 array_map(static fn($key) => "data-{$key}", array_keys($this->arguments['data'])),
                 array_values($this->arguments['data']),

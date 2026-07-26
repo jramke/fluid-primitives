@@ -26,8 +26,8 @@ class ContextViewHelper extends AbstractViewHelper
 
     public function initializeArguments(): void
     {
-        $this->registerArgument('name', 'string', 'The name of the component of which we want the context', true);
-        $this->registerArgument('as', 'string', 'Variable name to assign the result to');
+        $this->registerArgument('name', 'string', 'The name of the component of which we want the context', true, '');
+        $this->registerArgument('as', 'string', 'Variable name to assign the result to', false, '');
     }
 
     public function render(): ?ComponentContextInterface
@@ -36,7 +36,7 @@ class ContextViewHelper extends AbstractViewHelper
             throw new \RuntimeException('The context ViewHelper can only be used inside a component.', 1754253443);
         }
 
-        if (empty($this->arguments['name'])) {
+        if ($this->arguments['name'] === '') {
             throw new \RuntimeException('The "name" argument is required for the context ViewHelper.', 1754253444);
         }
 

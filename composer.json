@@ -14,11 +14,12 @@
     ],
     "require": {
         "php": ">=8.2",
+        "typo3/cms-core": "^13 || ^14",
+        "typo3/cms-extbase": "^13 || ^14",
         "typo3/cms-fluid": "^13.4 || ^14",
         "typo3fluid/fluid": "^4.6 || ^5"
     },
     "require-dev": {
-        "pestphp/pest": "^4.4",
         "typo3/testing-framework": "^9.4"
     },
     "config": {
@@ -29,7 +30,10 @@
         }
     },
     "scripts": {
-        "test": "pest",
+        "test": "php vendor/bin/phpunit -c phpunit.xml --testdox --colors=always --display-notices",
+        "test:unit": "@test --testsuite=Unit",
+        "test:functional": "@test --testsuite=Functional",
+        "test:fromdocs": "php ../../vendor/bin/phpunit -c phpunit.xml --testdox --colors=always --display-notices",
         "prepare-release": [
             "rm -rf .github",
             "rm -f .gitignore",

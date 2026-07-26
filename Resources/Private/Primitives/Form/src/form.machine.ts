@@ -1,337 +1,305 @@
 import { createMachine } from '@zag-js/core';
-import { getClosestFieldName, isFocusMovingWithinSameField } from '../../Field/src/field.dom';
+import { nextTick } from '@zag-js/dom-query';
 import * as dom from './form.dom';
-import type { FormDirty, FormErrors, FormSchema, FormTouched } from './form.types';
-import { ValidationError } from './form.types';
 import {
-	errorsFromServer,
-	getErrorForValue,
-	getErrorsForCurrentValues,
-	getFieldElement,
-	getFieldValue,
-	getInputValue,
-	normalizeFieldName,
-	prefixFieldName,
-	validateWithSchema,
-	withCurrentValues,
-} from './form.utils';
+    distributeFieldErrors,
+    getFieldElement,
+    getFirstInvalidFieldMachine,
+    getFormData,
+    getRegisteredFieldMachines,
+    hasInvalidFieldMachines,
+    pruneStaleFieldMachines,
+    resetFieldMachines,
+    setFieldMachineErrors,
+    syncAllFieldMachines,
+} from './form.fields';
+import { normalizeFieldName, prefixFieldName } from './form.path';
+import type { FormErrors, FormSchema } from './form.types';
+import { FormError, ValidationError } from './form.types';
+import {
+    attachErrorValues,
+    filterErrorsForCurrentValues,
+    getCurrentErrorForField,
+    getFormErrorMessages,
+    mapServerErrors,
+    validateWithValidation,
+} from './form.validation';
+import { createFormValues } from './form.values';
 
 export const machine = createMachine<FormSchema>({
-	initialState() {
-		return 'ready';
-	},
+    initialState() {
+        return 'ready';
+    },
 
-	context({ bindable }) {
-		return {
-			values: bindable(() => ({ defaultValue: new FormData() })),
-			initialValues: bindable(() => ({ defaultValue: new FormData() })),
-			errors: bindable(() => ({ defaultValue: {} as FormErrors })),
-			dirty: bindable(() => ({ defaultValue: {} as FormDirty })),
-			touched: bindable(() => ({ defaultValue: {} as FormTouched })),
-		};
-	},
+    context({ bindable }) {
+        return {
+            errorText: bindable(() => ({ defaultValue: null as string | null })),
+            successText: bindable(() => ({ defaultValue: null as string | null })),
+        };
+    },
 
-	refs() {
-		return {
-			submitCount: 0,
-			serverErrors: {} as FormErrors,
-		};
-	},
+    refs() {
+        return {
+            serverErrors: {} as FormErrors,
+        };
+    },
 
-	states: {
-		ready: {},
-		invalid: {},
-		submitting: {},
-		success: {},
-		error: {},
-	},
+    states: {
+        ready: {},
+        invalid: {},
+        submitting: {},
+        success: {},
+        error: {},
+    },
 
-	on: {
-		SUBMIT: { target: 'submitting', actions: ['validateAll'] },
-		VALIDATE: { actions: ['validateAll'] },
-		VALIDATE_FIELD: { actions: ['validateField'] },
-		INVALID: { target: 'invalid' },
-		INPUT: { actions: ['handleInput'] },
-		FIELD_FOCUS: { actions: ['handleFocus'] },
-		FIELD_BLUR: { actions: ['handleBlur'] },
-		RESET: { target: 'ready', actions: ['resetForm'] },
-		ERROR: { target: 'error' },
-		SUCCESS: { target: 'success', actions: ['clearErrors'] },
-	},
+    on: {
+        SUBMIT: { target: 'submitting', actions: ['clearStatusText', 'validateAll'] },
+        VALIDATE: { actions: ['validateAll'] },
+        VALIDATE_FIELD: { actions: ['validateField'] },
+        SYNC_FIELDS: { actions: ['syncFields'] },
+        INVALID: { target: 'invalid' },
+        RESET: { target: 'ready', actions: ['resetForm'] },
+        ERROR: { target: 'error' },
+        SUCCESS: { target: 'success', actions: ['clearErrors'] },
+        SET_ERROR_TEXT: { actions: ['setErrorText'] },
+        SET_SUCCESS_TEXT: { actions: ['setSuccessText'] },
+        CLEAR_STATUS_TEXT: { actions: ['clearStatusText'] },
+    },
 
-	entry: ['setupFormListeners', 'getInitialValues'],
+    implementations: {
+        actions: {
+            validateAll({ send, prop, state, action, event, scope, refs }) {
+                const submitting = state.matches('submitting');
+                const validation = prop('validation');
+                syncAllFieldMachines(scope);
 
-	implementations: {
-		actions: {
-			validateAll({ context, send, prop, state, action, event, scope, refs }) {
-				const submitting = state.matches('submitting');
-				const schema = prop('schema');
-				const formData = context.get('values');
+                const submittedFormData = getFormData(scope);
+                const submittedValues = createFormValues(submittedFormData);
 
-				if (submitting) {
-					const submitCount = refs.get('submitCount');
-					refs.set('submitCount', submitCount + 1);
-				}
+                const cachedServerErrors = filterErrorsForCurrentValues(
+                    refs.get('serverErrors'),
+                    submittedValues
+                );
+                let errors = cachedServerErrors;
 
-				const cachedServerErrors = getErrorsForCurrentValues(
-					refs.get('serverErrors'),
-					formData
-				);
-				let errs = cachedServerErrors;
+                if (validation) {
+                    errors = {
+                        ...cachedServerErrors,
+                        ...validateWithValidation(validation, submittedValues),
+                    };
+                }
 
-				if (schema) {
-					errs = { ...cachedServerErrors, ...validateWithSchema(schema, formData) };
-				}
+                distributeFieldErrors(scope, errors);
 
-				context.set('errors', errs);
+                if (Object.keys(errors).length > 0) {
+                    send({ type: 'INVALID' });
+                    if (submitting) {
+                        action(['focusFirstInvalid']);
+                    }
+                    return;
+                }
 
-				if (Object.keys(errs).length > 0) {
-					send({ type: 'INVALID' });
-					if (submitting) {
-						action(['focusFirstInvalid']);
-					}
-					return;
-				}
+                if (!submitting) {
+                    state.set('ready');
+                    return;
+                }
 
-				if (!submitting) {
-					state.set('ready');
-					return;
-				}
+                const onSubmit = prop('onSubmit');
+                if (!onSubmit) {
+                    send({ type: 'SUCCESS' });
+                    return;
+                }
 
-				const onSubmit = prop('onSubmit');
-				if (!onSubmit) {
-					send({ type: 'SUCCESS' });
-					return;
-				}
+                (async () => {
+                    const invalidateWithErrors = (nextErrors: FormErrors) => {
+                        const currentErrors = attachErrorValues(nextErrors, submittedValues);
+                        refs.set('serverErrors', { ...refs.get('serverErrors'), ...currentErrors });
+                        distributeFieldErrors(scope, currentErrors);
+                        send({ type: 'INVALID' });
+                        action(['focusFirstInvalid']);
+                    };
 
-				// Async IIFE to handle both sync and async onSubmit with single try/catch
-				(async () => {
-					try {
-						const result = await onSubmit({
-							formData: context.get('values'),
-							api: event.detail.api,
-							event: event.detail.event,
-							post: async (url: string, data: FormData): Promise<Response> => {
-								const prefixedData = new FormData();
-								const objectName = prop('objectName');
-								const formEl = dom.getFormEl(scope);
-								const prefix = formEl?.getAttribute('data-field-name-prefix') || '';
+                    try {
+                        const result = await onSubmit({
+                            values: submittedValues,
+                            api: event.detail.api,
+                            event: event.detail.event,
+                            post: async (url: string): Promise<Response> => {
+                                const prefixedData = new FormData();
+                                const objectName = prop('objectName');
+                                const formEl = dom.getFormEl(scope);
+                                const prefix = formEl?.getAttribute('data-field-name-prefix') || '';
 
-								for (const [key, value] of data.entries()) {
-									if (key.includes(prefix)) {
-										prefixedData.append(key, value);
-										continue;
-									}
-									prefixedData.append(
-										prefixFieldName(key, prefix, objectName),
-										value
-									);
-								}
+                                for (const [key, value] of submittedFormData.entries()) {
+                                    if (prefix && key.startsWith(`${prefix}[`)) {
+                                        prefixedData.append(key, value);
+                                        continue;
+                                    }
 
-								const response = await fetch(url, {
-									method: 'POST',
-									body: prefixedData,
-								});
+                                    prefixedData.append(
+                                        prefixFieldName(key, prefix, objectName),
+                                        value
+                                    );
+                                }
 
-								if (response.status === 422) {
-									const errors = await response.json();
-									const formErrors = errorsFromServer(errors, objectName, data);
-									throw new ValidationError(formErrors);
-								}
+                                const response = await fetch(url, {
+                                    method: 'POST',
+                                    body: prefixedData,
+                                });
 
-								return response;
-							},
-						});
+                                if (response.status === 422) {
+                                    const responseErrors = await response.json();
+                                    const formErrorMessages = getFormErrorMessages(
+                                        responseErrors,
+                                        objectName
+                                    );
+                                    if (formErrorMessages) {
+                                        throw new FormError(formErrorMessages);
+                                    }
 
-						if (result) {
-							send({ type: 'SUCCESS' });
-						} else {
-							send({ type: 'ERROR' });
-						}
-					} catch (error) {
-						if (error instanceof ValidationError) {
-							const errors = withCurrentValues(error.errors, context.get('values'));
-							refs.set('serverErrors', { ...refs.get('serverErrors'), ...errors });
-							context.set('errors', errors);
-							send({ type: 'INVALID' });
-							action(['focusFirstInvalid']);
-							return;
-						}
-						send({ type: 'ERROR' });
-					}
-				})();
-			},
+                                    throw new ValidationError(
+                                        mapServerErrors(responseErrors, objectName, submittedValues)
+                                    );
+                                }
 
-			validateField({ context, prop, event, refs }) {
-				const fieldName = event.detail?.fieldName;
-				if (!fieldName) return;
-				const normalizedFieldName = normalizeFieldName(fieldName);
+                                return response;
+                            },
+                        });
 
-				const formData = context.get('values');
-				const currentErrors = context.get('errors');
-				const currentValue = getFieldValue(formData, fieldName);
-				const updatedErrors = { ...currentErrors };
-				const serverError = getErrorForValue(
-					refs.get('serverErrors'),
-					normalizedFieldName,
-					currentValue
-				);
+                        if (result === true) {
+                            send({ type: 'SUCCESS' });
+                            return;
+                        }
 
-				if (serverError) {
-					updatedErrors[normalizedFieldName] = serverError;
-					context.set('errors', updatedErrors);
-					return;
-				}
+                        if (result === false) {
+                            send({ type: 'ERROR' });
+                            return;
+                        }
 
-				delete updatedErrors[normalizedFieldName];
+                        if (isFormErrors(result)) {
+                            if (Object.keys(result).length === 0) {
+                                send({ type: 'SUCCESS' });
+                                return;
+                            }
 
-				const schema = prop('schema');
-				if (!schema) {
-					context.set('errors', updatedErrors);
-					return;
-				}
+                            invalidateWithErrors(result);
+                            return;
+                        }
 
-				const allErrors = validateWithSchema(schema, formData);
+                        send({ type: 'ERROR' });
+                    } catch (error) {
+                        if (error instanceof FormError) {
+                            send({
+                                type: 'SET_ERROR_TEXT',
+                                detail: { text: error.errors.join(' ') },
+                            });
+                            send({ type: 'ERROR' });
+                            return;
+                        }
 
-				// Update only errors for the specific field
-				if (allErrors[normalizedFieldName]) {
-					updatedErrors[normalizedFieldName] = allErrors[normalizedFieldName];
-				} else {
-					delete updatedErrors[normalizedFieldName];
-				}
+                        if (error instanceof ValidationError) {
+                            invalidateWithErrors(error.errors);
+                            return;
+                        }
 
-				context.set('errors', updatedErrors);
-			},
+                        send({ type: 'ERROR' });
+                    }
+                })();
+            },
 
-			handleInput({ context, event, send }) {
-				const e = event as any;
-				const target = e?.detail?.target ?? e?.target ?? e?.currentTarget;
-				const name: string | undefined = target?.name;
-				if (!name) return;
+            validateField({ event, prop, refs, scope, state }) {
+                const fieldName = event.detail?.fieldName;
+                if (!fieldName) return;
 
-				const value = e?.detail?.value ?? getInputValue(target);
+                const normalizedFieldName = normalizeFieldName(fieldName);
+                const formData = getFormData(scope);
+                const values = createFormValues(formData);
+                const serverError = getCurrentErrorForField(
+                    refs.get('serverErrors'),
+                    normalizedFieldName,
+                    values
+                );
 
-				const values = context.get('values');
-				values.set(name, value);
-				context.set('values', values);
+                let fieldErrors: string[] = serverError?.messages ?? [];
+                if (!serverError) {
+                    const validation = prop('validation');
+                    if (validation) {
+                        fieldErrors =
+                            validateWithValidation(validation, values, normalizedFieldName)[
+                                normalizedFieldName
+                            ]?.messages ?? [];
+                    }
+                }
 
-				const initial = context.get('initialValues').get(name);
-				const dirty = { ...context.get('dirty') };
-				dirty[name] = JSON.stringify(values.get(name)) !== JSON.stringify(initial);
-				context.set('dirty', dirty);
+                setFieldMachineErrors(scope, normalizedFieldName, fieldErrors);
 
-				// Revalidate on input if field has errors OR if any validation has occurred
-				// This ensures errors clear immediately when fixed
-				const currentErrors = context.get('errors');
-				const touched = context.get('touched');
-				const normalizedName = normalizeFieldName(name);
-				const hasFieldError = !!currentErrors[normalizedName];
-				const fieldTouched = !!touched[normalizedName];
+                if (hasInvalidFieldMachines(scope)) {
+                    state.set('invalid');
+                } else if (!state.matches('submitting')) {
+                    state.set('ready');
+                }
+            },
 
-				if (hasFieldError || fieldTouched) {
-					send({ type: 'VALIDATE_FIELD', detail: { fieldName: name } });
-				}
-			},
+            resetForm({ context, scope, event, refs }) {
+                const form = dom.getFormEl(scope);
 
-			handleFocus({ context, event }) {
-				const e = event as any;
-				const target = e?.detail?.target ?? e?.target ?? e?.currentTarget;
+                if (form && !event?.detail?.omitManualReset) {
+                    form.reset();
+                }
 
-				const name = getClosestFieldName(target);
-				if (!name) return;
+                context.set('errorText', null);
+                context.set('successText', null);
+                refs.set('serverErrors', {});
+                resetFieldMachines(scope);
+            },
 
-				const touched = { ...context.get('touched') };
-				touched[normalizeFieldName(name)] = true;
-				context.set('touched', touched);
-			},
+            setErrorText({ context, event }) {
+                context.set('errorText', event.detail?.text ?? null);
+            },
 
-			handleBlur({ context, send, prop, event }) {
-				const e = event as any;
-				const target = e?.detail?.target;
+            setSuccessText({ context, event }) {
+                context.set('successText', event.detail?.text ?? null);
+            },
 
-				const name = getClosestFieldName(target);
-				if (!name) return;
+            clearStatusText({ context }) {
+                context.set('errorText', null);
+                context.set('successText', null);
+            },
 
-				// Get current form values from DOM to ensure we have latest
-				const form = target.form as HTMLFormElement | null;
-				if (form) {
-					const values = new FormData(form);
-					context.set('values', values);
-				}
+            focusFirstInvalid({ scope }) {
+                nextTick(() => {
+                    const firstInvalidField = getFirstInvalidFieldMachine(scope);
+                    if (!firstInvalidField) return;
 
-				// Validate the field on blur
-				if (isFocusMovingWithinSameField(target, e?.detail?.relatedTarget)) return;
+                    const form = dom.getFormEl(scope);
+                    if (!form) return;
 
-				const schema = prop('schema');
-				if (schema || context.get('errors')[normalizeFieldName(name)]) {
-					send({ type: 'VALIDATE_FIELD', detail: { fieldName: name } });
-				}
-			},
+                    const invalidEl = getFieldElement(form, firstInvalidField);
+                    invalidEl?.focus();
+                    if (
+                        invalidEl instanceof HTMLInputElement ||
+                        invalidEl instanceof HTMLTextAreaElement
+                    ) {
+                        invalidEl.select();
+                    }
+                });
+            },
 
-			resetForm({ context, scope, event, refs }) {
-				const form = dom.getFormEl(scope);
+            clearErrors({ scope, refs }) {
+                refs.set('serverErrors', {});
+                for (const [, fieldMachine] of getRegisteredFieldMachines(scope)) {
+                    fieldMachine.send({ type: 'CLEAR_ERRORS' });
+                }
+            },
 
-				if (form && !event?.detail?.omitManualReset) {
-					form.reset();
-				}
-
-				const initial = form ? new FormData(form) : context.get('initialValues');
-
-				context.set('values', initial);
-				context.set('initialValues', initial);
-				context.set('errors', {});
-				refs.set('serverErrors', {});
-				context.set('touched', {});
-				context.set('dirty', {});
-			},
-
-			focusFirstInvalid({ context, scope }) {
-				const errors = context.get('errors');
-				const firstKey = Object.keys(errors)[0];
-				if (!firstKey) return;
-
-				const form = dom.getFormEl(scope);
-				if (!form) return;
-
-				const invalidEl = getFieldElement(form, firstKey);
-				invalidEl?.focus();
-				if (
-					invalidEl instanceof HTMLInputElement ||
-					invalidEl instanceof HTMLTextAreaElement
-				) {
-					invalidEl.select();
-				}
-			},
-
-			setupFormListeners({ scope, send }) {
-				const form = dom.getFormEl(scope);
-				if (!form) return;
-
-				// We need to listen to the change event to capture changes in select elements or checkboxes
-				// The input event does not always fire for these elements in all browsers
-				// Also zag-js spreadProps maps onChange to onInput so we need to manually listen to change events here
-				form.addEventListener(
-					'change',
-					event => {
-						send({ type: 'INPUT', detail: { target: event.target } });
-					},
-					true
-				);
-			},
-
-			clearErrors({ context, refs }) {
-				context.set('errors', {});
-				refs.set('serverErrors', {});
-				context.set('touched', {});
-			},
-
-			// TODO: maybe this can be moved to the context default value declaration with zag v2
-			getInitialValues({ scope, context }) {
-				const form = dom.getFormEl(scope);
-				if (!form) return;
-
-				context.set('initialValues', new FormData(form));
-			},
-		},
-	},
+            syncFields({ scope }) {
+                pruneStaleFieldMachines(scope);
+                syncAllFieldMachines(scope);
+            },
+        },
+    },
 });
+
+function isFormErrors(result: unknown): result is FormErrors {
+    return typeof result === 'object' && result !== null && !Array.isArray(result);
+}

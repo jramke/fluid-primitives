@@ -2,83 +2,99 @@
 
 declare(strict_types=1);
 
+namespace Jramke\FluidPrimitives\Tests\Functional\Components;
+
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
+use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
+use PHPUnit\Framework\Attributes\Test;
 
-describe('NumberInput Component Rendering', function () {
-    beforeEach(function () {
+final class NumberInputRenderingTest extends FunctionalTestCase
+{
+    protected function setUp(): void
+    {
+        parent::setUp();
         HydrationRegistry::getInstance()->clear();
-    });
+    }
 
-    describe('translations', function () {
-        it('renders english labels by default', function () {
-            $html = $this->renderTemplate('
-                <primitives:numberInput.root>
-                    <primitives:numberInput.control>
-                        <primitives:numberInput.incrementTrigger>+</primitives:numberInput.incrementTrigger>
-                        <primitives:numberInput.input />
-                        <primitives:numberInput.decrementTrigger>-</primitives:numberInput.decrementTrigger>
-                    </primitives:numberInput.control>
-                </primitives:numberInput.root>
-            ');
+    #[Test]
+    public function rendersEnglishLabelsByDefault(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:numberInput.root>
+                <primitives:numberInput.control>
+                    <primitives:numberInput.incrementTrigger>+</primitives:numberInput.incrementTrigger>
+                    <primitives:numberInput.input />
+                    <primitives:numberInput.decrementTrigger>-</primitives:numberInput.decrementTrigger>
+                </primitives:numberInput.control>
+            </primitives:numberInput.root>
+        ');
 
-            expect($html)->toContain('aria-label="Increment value"');
-            expect($html)->toContain('aria-label="Decrement value"');
-        });
+        $this->assertStringContainsString('aria-label="Increment value"', $html);
+        $this->assertStringContainsString('aria-label="Decrement value"', $html);
+    }
 
-        it('renders german labels when locale is german', function () {
-            $this->setRequestLocale('de_DE');
+    #[Test]
+    public function rendersGermanLabelsWhenLocaleIsGerman(): void
+    {
+        $this->setRequestLocale('de_DE');
 
-            $html = $this->renderTemplate('
-                <primitives:numberInput.root>
-                    <primitives:numberInput.control>
-                        <primitives:numberInput.incrementTrigger>+</primitives:numberInput.incrementTrigger>
-                        <primitives:numberInput.input />
-                        <primitives:numberInput.decrementTrigger>-</primitives:numberInput.decrementTrigger>
-                    </primitives:numberInput.control>
-                </primitives:numberInput.root>
-            ');
+        $html = $this->renderTemplate('
+            <primitives:numberInput.root>
+                <primitives:numberInput.control>
+                    <primitives:numberInput.incrementTrigger>+</primitives:numberInput.incrementTrigger>
+                    <primitives:numberInput.input />
+                    <primitives:numberInput.decrementTrigger>-</primitives:numberInput.decrementTrigger>
+                </primitives:numberInput.control>
+            </primitives:numberInput.root>
+        ');
 
-            expect($html)->toContain('aria-label="Wert erhöhen"');
-            expect($html)->toContain('aria-label="Wert verringern"');
-        });
+        $this->assertStringContainsString('aria-label="Wert erhöhen"', $html);
+        $this->assertStringContainsString('aria-label="Wert verringern"', $html);
+    }
 
-        it('prefers prop overrides over localized defaults', function () {
-            $this->setRequestLocale('de_DE');
+    #[Test]
+    public function prefersPropOverridesOverLocalizedDefaults(): void
+    {
+        $this->setRequestLocale('de_DE');
 
-            $html = $this->renderTemplate('
-                <primitives:numberInput.root translations="{incrementLabel: \'Steigern\', decrementLabel: \'Senken\'}">
-                    <primitives:numberInput.control>
-                        <primitives:numberInput.incrementTrigger>+</primitives:numberInput.incrementTrigger>
-                        <primitives:numberInput.input />
-                        <primitives:numberInput.decrementTrigger>-</primitives:numberInput.decrementTrigger>
-                    </primitives:numberInput.control>
-                </primitives:numberInput.root>
-            ');
+        $html = $this->renderTemplate('
+            <primitives:numberInput.root translations="{incrementLabel: \'Steigern\', decrementLabel: \'Senken\'}">
+                <primitives:numberInput.control>
+                    <primitives:numberInput.incrementTrigger>+</primitives:numberInput.incrementTrigger>
+                    <primitives:numberInput.input />
+                    <primitives:numberInput.decrementTrigger>-</primitives:numberInput.decrementTrigger>
+                </primitives:numberInput.control>
+            </primitives:numberInput.root>
+        ');
 
-            expect($html)->toContain('aria-label="Steigern"');
-            expect($html)->toContain('aria-label="Senken"');
-        });
+        $this->assertStringContainsString('aria-label="Steigern"', $html);
+        $this->assertStringContainsString('aria-label="Senken"', $html);
+    }
 
-        it('includes merged translations in hydration data', function () {
-            $this->setRequestLocale('de_DE');
+    #[Test]
+    public function includesMergedTranslationsInHydrationData(): void
+    {
+        $this->setRequestLocale('de_DE');
 
-            $this->renderTemplate('
-                <primitives:numberInput.root translations="{incrementLabel: \'Steigern\'}">
-                    <primitives:numberInput.control>
-                        <primitives:numberInput.incrementTrigger>+</primitives:numberInput.incrementTrigger>
-                        <primitives:numberInput.input />
-                        <primitives:numberInput.decrementTrigger>-</primitives:numberInput.decrementTrigger>
-                    </primitives:numberInput.control>
-                </primitives:numberInput.root>
-            ');
+        $this->renderTemplate('
+            <primitives:numberInput.root translations="{incrementLabel: \'Steigern\'}">
+                <primitives:numberInput.control>
+                    <primitives:numberInput.incrementTrigger>+</primitives:numberInput.incrementTrigger>
+                    <primitives:numberInput.input />
+                    <primitives:numberInput.decrementTrigger>-</primitives:numberInput.decrementTrigger>
+                </primitives:numberInput.control>
+            </primitives:numberInput.root>
+        ');
 
-            $hydrationData = HydrationRegistry::getInstance()->getAll();
-            $numberInputData = array_values($hydrationData['number-input'])[0];
+        $hydrationData = HydrationRegistry::getInstance()->getAll();
+        $numberInputData = array_values($hydrationData['number-input'])[0];
 
-            expect($numberInputData['props']['translations'])->toBe([
+        $this->assertSame(
+            [
                 'incrementLabel' => 'Steigern',
                 'decrementLabel' => 'Wert verringern',
-            ]);
-        });
-    });
-});
+            ],
+            $numberInputData['props']['translations'],
+        );
+    }
+}

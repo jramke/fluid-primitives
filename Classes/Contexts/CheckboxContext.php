@@ -17,7 +17,7 @@ class CheckboxContext extends AbstractComponentContext
         return [
             'readonly' => $this->get('readOnly') ?? null,
             'disabled' => $this->get('disabled') ?? null,
-            'state' => $this->isIndeterminate() ? 'indeterminate' : ($this->isChecked() ? 'checked' : 'unchecked'),
+            'state' => $this->getState(),
             'invalid' => $this->get('invalid') ?? null,
             'required' => $this->get('required') ?? null,
         ];
@@ -33,5 +33,18 @@ class CheckboxContext extends AbstractComponentContext
     {
         $checked = $this->get('defaultChecked') ?? null;
         return $checked === 'indeterminate';
+    }
+
+    private function getState(): string
+    {
+        if ($this->isIndeterminate()) {
+            return 'indeterminate';
+        }
+
+        if ($this->isChecked()) {
+            return 'checked';
+        }
+
+        return 'unchecked';
     }
 }

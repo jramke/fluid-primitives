@@ -20,7 +20,8 @@ class SelectContext extends AbstractComponentContext
     #[ExposeToClient(excludeIfNull: true)]
     public function getDefaultValue(): ?array
     {
-        if (empty($this->get('defaultValue'))) {
+        $defaultValue = $this->get('defaultValue');
+        if ($defaultValue === null || $defaultValue === []) {
             return null;
         }
 

@@ -116,8 +116,8 @@ abstract class AbstractComponentContext implements ComponentContextInterface, \A
     public function offsetExists($offset): bool
     {
         // We use the same logic as `has` to check for existence, which also supports computed properties via `getX` methods.
-        if (method_exists($this, 'get' . ucfirst($offset))) {
-            return $this->{'get' . ucfirst($offset)}() !== null;
+        if (method_exists($this, 'get' . ucfirst((string)$offset))) {
+            return $this->{'get' . ucfirst((string)$offset)}() !== null;
         }
 
         return $this->has($offset);
@@ -125,8 +125,8 @@ abstract class AbstractComponentContext implements ComponentContextInterface, \A
 
     public function offsetGet($offset): mixed
     {
-        if (method_exists($this, 'get' . ucfirst($offset))) {
-            return $this->{'get' . ucfirst($offset)}();
+        if (method_exists($this, 'get' . ucfirst((string)$offset))) {
+            return $this->{'get' . ucfirst((string)$offset)}();
         }
 
         return $this->get($offset);
@@ -134,8 +134,8 @@ abstract class AbstractComponentContext implements ComponentContextInterface, \A
 
     public function offsetSet($offset, $value): void
     {
-        if (method_exists($this, 'set' . ucfirst($offset))) {
-            $this->{'set' . ucfirst($offset)}($value);
+        if (method_exists($this, 'set' . ucfirst((string)$offset))) {
+            $this->{'set' . ucfirst((string)$offset)}($value);
             return;
         }
 
@@ -144,8 +144,8 @@ abstract class AbstractComponentContext implements ComponentContextInterface, \A
 
     public function offsetUnset($offset): void
     {
-        if (method_exists($this, 'unset' . ucfirst($offset))) {
-            $this->{'unset' . ucfirst($offset)}();
+        if (method_exists($this, 'unset' . ucfirst((string)$offset))) {
+            $this->{'unset' . ucfirst((string)$offset)}();
             return;
         }
 

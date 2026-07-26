@@ -27,7 +27,7 @@ class ContextService
         $variableContainer = $renderingContext->getViewHelperVariableContainer();
         $stack = $variableContainer->get(self::class, $name);
 
-        if (!is_array($stack) || empty($stack)) {
+        if (!is_array($stack) || $stack === []) {
             return null;
         }
 
@@ -45,7 +45,7 @@ class ContextService
 
         $result = [];
         foreach ($allStacks as $name => $stack) {
-            if (!(is_array($stack) && !empty($stack))) {
+            if (!(is_array($stack) && $stack !== [])) {
                 continue;
             }
 
@@ -100,7 +100,7 @@ class ContextService
 
         $stack = $variableContainer->get(self::class, $name);
 
-        if (!is_array($stack) || empty($stack)) {
+        if (!is_array($stack) || $stack === []) {
             $variableContainer->remove(self::class, $name);
             return;
         }
@@ -108,7 +108,7 @@ class ContextService
         // Pop the topmost context
         array_pop($stack);
 
-        if (empty($stack)) {
+        if ($stack === []) {
             // No more contexts, remove the key entirely
             $variableContainer->remove(self::class, $name);
         } else {

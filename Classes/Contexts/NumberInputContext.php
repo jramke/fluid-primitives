@@ -15,8 +15,8 @@ class NumberInputContext extends AbstractComponentContext
         protected readonly TranslatorService $translator,
     ) {}
 
-    #[ExposeToClient(excludeIfNull: true)]
-    public function getDefaultValue(): mixed
+    #[ExposeToClient]
+    public function getDefaultValue(): string
     {
         return (string)$this->get('defaultValue');
     }
@@ -42,8 +42,8 @@ class NumberInputContext extends AbstractComponentContext
 
     public function getFormattedValue(): string
     {
-        $value = $this->get('defaultValue');
-        if ($value === null || $value === '') {
+        $value = $this->getDefaultValue();
+        if ($value === '') {
             return '';
         }
 
@@ -54,10 +54,10 @@ class NumberInputContext extends AbstractComponentContext
 
     public function getCanDecrement(): bool
     {
-        $value = $this->get('defaultValue');
+        $value = $this->getDefaultValue();
         $min = $this->get('min');
 
-        if (empty($value) || $min === null) {
+        if ($value === '' || $min === null) {
             return true;
         }
 
@@ -66,10 +66,10 @@ class NumberInputContext extends AbstractComponentContext
 
     public function getCanIncrement(): bool
     {
-        $value = $this->get('defaultValue');
+        $value = $this->getDefaultValue();
         $max = $this->get('max');
 
-        if (empty($value) || $max === null) {
+        if ($value === '' || $max === null) {
             return true;
         }
 

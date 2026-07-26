@@ -16,21 +16,25 @@ class ComponentUtility
 
     public static function id(string $prefix = 'f'): string
     {
-        static $id = 0;
+        static $counter = 0;
+        static $requestSalt = null;
 
-        $id++;
-        $base36 = base_convert((string)$id, 10, 36);
+        if ($requestSalt === null) {
+            // 6 bytes => 48 bits => 8 base64url chars, generated once per request
+            $requestSalt = rtrim(strtr(base64_encode(random_bytes(6)), '+/', '-_'), '=');
+        }
 
-        return '«' . $prefix . $base36 . '»';
+        return '«' . $prefix . $requestSalt . base_convert((string)++$counter, 10, 36) . '»';
     }
 
     public static function isComponent(RenderingContextInterface $renderingContext): bool
     {
         $componentProp = $renderingContext->getVariableProvider()->get('component');
-        if (is_array($componentProp) && isset($componentProp['fullName']) && !empty($componentProp['fullName'])) {
-            return true;
-        }
-        return false;
+        return (
+            is_array($componentProp) &&
+            is_string($componentProp['fullName'] ?? null) &&
+            $componentProp['fullName'] !== ''
+        );
     }
 
     public static function getComponentFullNameFromViewHelperName(string $viewHelperName): string
@@ -87,12 +91,14 @@ class ComponentUtility
             $viewHelperName = $viewHelperNameOrRenderingContext;
         }
 
-        if (empty($viewHelperName))
+        if ($viewHelperName === '' || $viewHelperName === '0') {
             return false;
+        }
 
         $componentParts = explode('.', $viewHelperName);
-        if (count($componentParts) === 0)
+        if (count($componentParts) === 0) {
             return false;
+        }
 
         if (count($componentParts) === 1) {
             return true; // Single part components are considered root components
@@ -106,14 +112,12 @@ class ComponentUtility
     // but its (currently) only used for exposing the `context` variable, so it's acceptable for now.
     public static function isComposableComponent(string $viewHelperName): bool
     {
-        if (empty($viewHelperName))
+        if ($viewHelperName === '' || $viewHelperName === '0') {
             return false;
+        }
 
         $componentParts = explode('.', $viewHelperName);
-        if (count($componentParts) > 1)
-            return true;
-
-        return false;
+        return count($componentParts) > 1;
     }
 
     public static function getRootIdFromContext(RenderingContextInterface $renderingContext): string
@@ -131,9 +135,15 @@ class ComponentUtility
         return str_replace('_', '-', $result);
     }
 
+    public static function lowerCaseDashedToCamelCase(string $string): string
+    {
+        $result = str_replace('-', '_', $string);
+        return GeneralUtility::underscoredToUpperCamelCase($result);
+    }
+
     public static function getSettings(): array
     {
-        if (!empty(self::$cachedSettings)) {
+        if (self::$cachedSettings !== []) {
             return self::$cachedSettings;
         }
 
@@ -149,7 +159,7 @@ class ComponentUtility
         $fluidPrimitivesSettings = $settings['plugin.']['tx_fluidprimitives.']['settings.'] ?? [];
 
         $contentElementSettings = $settings['lib.']['contentElement.']['settings.'] ?? [];
-        if (!empty($contentElementSettings)) {
+        if ($contentElementSettings !== []) {
             $fluidPrimitivesSettings = array_merge($contentElementSettings, $fluidPrimitivesSettings);
         }
 

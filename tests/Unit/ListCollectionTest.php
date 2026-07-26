@@ -2,236 +2,263 @@
 
 declare(strict_types=1);
 
+namespace Jramke\FluidPrimitives\Tests\Unit;
+
 use Jramke\FluidPrimitives\Domain\Model\ListCollection;
 use Jramke\FluidPrimitives\Domain\Model\ListCollectionItem;
+use Jramke\FluidPrimitives\Tests\TestCase;
+use PHPUnit\Framework\Attributes\Test;
 
-describe('ListCollection', function () {
-    describe('item normalization', function () {
-        it('normalizes items with default value/label keys', function () {
-            $collection = new ListCollection([
-                ['value' => 'a', 'label' => 'Option A'],
-                ['value' => 'b', 'label' => 'Option B'],
-            ]);
+// @mago-expect lint:too-many-methods
+final class ListCollectionTest extends TestCase
+{
+    #[Test]
+    public function normalizesItemsWithDefaultValueLabelKeys(): void
+    {
+        $collection = new ListCollection([
+            ['value' => 'a', 'label' => 'Option A'],
+            ['value' => 'b', 'label' => 'Option B'],
+        ]);
 
-            $items = $collection->getItems();
+        $items = $collection->getItems();
 
-            expect($items)->toHaveCount(2);
-            expect($items[0])->toBeInstanceOf(ListCollectionItem::class);
-            expect($items[0]->value)->toBe('a');
-            expect($items[0]->label)->toBe('Option A');
-        });
+        $this->assertCount(2, $items);
+        $this->assertInstanceOf(ListCollectionItem::class, $items[0]);
+        $this->assertSame('a', $items[0]->value);
+        $this->assertSame('Option A', $items[0]->label);
+    }
 
-        it('normalizes items with custom key mappings', function () {
-            $collection = new ListCollection(
-                items: [
-                    ['id' => 'usr-1', 'name' => 'John', 'isInactive' => true],
-                    ['id' => 'usr-2', 'name' => 'Jane', 'isInactive' => false],
-                ],
-                itemToValueKey: 'id',
-                itemToStringKey: 'name',
-                isItemDisabledKey: 'isInactive',
-            );
+    #[Test]
+    public function normalizesItemsWithCustomKeyMappings(): void
+    {
+        $collection = new ListCollection(
+            items: [
+                ['id' => 'usr-1', 'name' => 'John', 'isInactive' => true],
+                ['id' => 'usr-2', 'name' => 'Jane', 'isInactive' => false],
+            ],
+            itemToValueKey: 'id',
+            itemToStringKey: 'name',
+            isItemDisabledKey: 'isInactive',
+        );
 
-            $items = $collection->getItems();
+        $items = $collection->getItems();
 
-            expect($items[0]->value)->toBe('usr-1');
-            expect($items[0]->label)->toBe('John');
-            expect($items[0]->disabled)->toBeTrue();
-            expect($items[1]->disabled)->toBeFalse();
-        });
+        $this->assertSame('usr-1', $items[0]->value);
+        $this->assertSame('John', $items[0]->label);
+        $this->assertTrue($items[0]->disabled);
+        $this->assertFalse($items[1]->disabled);
+    }
 
-        it('supports dot notation for nested key access', function () {
-            $collection = new ListCollection(
-                items: [
-                    ['meta' => ['id' => 'nested-1'], 'display' => ['title' => 'Nested Title']],
-                ],
-                itemToValueKey: 'meta.id',
-                itemToStringKey: 'display.title',
-            );
+    #[Test]
+    public function supportsDotNotationForNestedKeyAccess(): void
+    {
+        $collection = new ListCollection(
+            items: [
+                ['meta' => ['id' => 'nested-1'], 'display' => ['title' => 'Nested Title']],
+            ],
+            itemToValueKey: 'meta.id',
+            itemToStringKey: 'display.title',
+        );
 
-            $item = $collection->at(0);
+        $item = $collection->at(0);
 
-            expect($item->value)->toBe('nested-1');
-            expect($item->label)->toBe('Nested Title');
-        });
+        $this->assertSame('nested-1', $item->value);
+        $this->assertSame('Nested Title', $item->label);
+    }
 
-        it('caches normalized items for performance', function () {
-            $collection = new ListCollection([
-                ['value' => 'a', 'label' => 'A'],
-            ]);
+    #[Test]
+    public function cachesNormalizedItemsForPerformance(): void
+    {
+        $collection = new ListCollection([
+            ['value' => 'a', 'label' => 'A'],
+        ]);
 
-            $items1 = $collection->getItems();
-            $items2 = $collection->getItems();
+        $items1 = $collection->getItems();
+        $items2 = $collection->getItems();
 
-            expect($items1)->toBe($items2); // Same array reference
-        });
+        $this->assertSame($items1, $items2);
+    }
 
-        it('preserves original data in normalized items', function () {
-            $original = ['value' => 'x', 'label' => 'X', 'customField' => 'custom'];
-            $collection = new ListCollection([$original]);
+    #[Test]
+    public function preservesOriginalDataInNormalizedItems(): void
+    {
+        $original = ['value' => 'x', 'label' => 'X', 'customField' => 'custom'];
+        $collection = new ListCollection([$original]);
 
-            $item = $collection->at(0);
+        $item = $collection->at(0);
 
-            expect($item->original)->toBe($original);
-            expect($item->original['customField'])->toBe('custom');
-        });
-    });
+        $this->assertSame($original, $item->original);
+        $this->assertSame('custom', $item->original['customField']);
+    }
 
-    describe('find operations', function () {
-        it('finds item by value and returns normalized ListCollectionItem', function () {
-            $collection = new ListCollection([
-                ['value' => 'a', 'label' => 'Option A'],
-                ['value' => 'b', 'label' => 'Option B'],
-            ]);
+    #[Test]
+    public function findsItemByValue(): void
+    {
+        $collection = new ListCollection([
+            ['value' => 'a', 'label' => 'Option A'],
+            ['value' => 'b', 'label' => 'Option B'],
+        ]);
 
-            $found = $collection->find('b');
+        $found = $collection->find('b');
 
-            expect($found)->toBeInstanceOf(ListCollectionItem::class);
-            expect($found->value)->toBe('b');
-            expect($found->label)->toBe('Option B');
-        });
+        $this->assertInstanceOf(ListCollectionItem::class, $found);
+        $this->assertSame('b', $found->value);
+    }
 
-        it('returns null when value not found', function () {
-            $collection = new ListCollection([
-                ['value' => 'a', 'label' => 'A'],
-            ]);
+    #[Test]
+    public function returnsNullWhenValueNotFound(): void
+    {
+        $collection = new ListCollection([
+            ['value' => 'a', 'label' => 'A'],
+        ]);
 
-            expect($collection->find('nonexistent'))->toBeNull();
-            expect($collection->find(null))->toBeNull();
-        });
+        $this->assertNull($collection->find('nonexistent'));
+        $this->assertNull($collection->find(null));
+    }
 
-        it('finds multiple items by values', function () {
-            $collection = new ListCollection([
-                ['value' => 'a', 'label' => 'A'],
-                ['value' => 'b', 'label' => 'B'],
-                ['value' => 'c', 'label' => 'C'],
-            ]);
+    #[Test]
+    public function findsMultipleItemsByValues(): void
+    {
+        $collection = new ListCollection([
+            ['value' => 'a', 'label' => 'A'],
+            ['value' => 'b', 'label' => 'B'],
+            ['value' => 'c', 'label' => 'C'],
+        ]);
 
-            $found = $collection->findMany(['a', 'c', 'nonexistent']);
+        $found = $collection->findMany(['a', 'c', 'nonexistent']);
 
-            expect($found)->toHaveCount(2);
-            expect($found[0]->value)->toBe('a');
-            expect($found[1]->value)->toBe('c');
-        });
-    });
+        $this->assertCount(2, $found);
+        $this->assertSame('a', $found[0]->value);
+        $this->assertSame('c', $found[1]->value);
+    }
 
-    describe('first/last value with disabled items', function () {
-        it('skips disabled items when finding first value', function () {
-            $collection = new ListCollection([
-                ['value' => 'disabled-first', 'label' => 'D1', 'disabled' => true],
-                ['value' => 'disabled-second', 'label' => 'D2', 'disabled' => true],
-                ['value' => 'enabled', 'label' => 'E'],
-            ]);
+    #[Test]
+    public function skipsDisabledItemsWhenFindingFirstValue(): void
+    {
+        $collection = new ListCollection([
+            ['value' => 'disabled-first', 'label' => 'D1', 'disabled' => true],
+            ['value' => 'disabled-second', 'label' => 'D2', 'disabled' => true],
+            ['value' => 'enabled', 'label' => 'E'],
+        ]);
 
-            expect($collection->getFirstValue())->toBe('enabled');
-        });
+        $this->assertSame('enabled', $collection->getFirstValue());
+    }
 
-        it('skips disabled items when finding last value', function () {
-            $collection = new ListCollection([
-                ['value' => 'enabled', 'label' => 'E'],
-                ['value' => 'disabled-last', 'label' => 'D', 'disabled' => true],
-            ]);
+    #[Test]
+    public function skipsDisabledItemsWhenFindingLastValue(): void
+    {
+        $collection = new ListCollection([
+            ['value' => 'enabled', 'label' => 'E'],
+            ['value' => 'disabled-last', 'label' => 'D', 'disabled' => true],
+        ]);
 
-            expect($collection->getLastValue())->toBe('enabled');
-        });
+        $this->assertSame('enabled', $collection->getLastValue());
+    }
 
-        it('returns null when all items are disabled', function () {
-            $collection = new ListCollection([
-                ['value' => 'a', 'label' => 'A', 'disabled' => true],
-                ['value' => 'b', 'label' => 'B', 'disabled' => true],
-            ]);
+    #[Test]
+    public function returnsNullWhenAllItemsAreDisabled(): void
+    {
+        $collection = new ListCollection([
+            ['value' => 'a', 'label' => 'A', 'disabled' => true],
+            ['value' => 'b', 'label' => 'B', 'disabled' => true],
+        ]);
 
-            expect($collection->getFirstValue())->toBeNull();
-            expect($collection->getLastValue())->toBeNull();
-        });
-    });
+        $this->assertNull($collection->getFirstValue());
+        $this->assertNull($collection->getLastValue());
+    }
 
-    describe('grouping', function () {
-        it('groups items by specified key', function () {
-            $collection = new ListCollection(items: [
-                ['value' => 'a1', 'label' => 'A1', 'category' => 'A'],
-                ['value' => 'b1', 'label' => 'B1', 'category' => 'B'],
-                ['value' => 'a2', 'label' => 'A2', 'category' => 'A'],
-            ], groupByKey: 'category');
+    #[Test]
+    public function groupsItemsBySpecifiedKey(): void
+    {
+        $collection = new ListCollection(items: [
+            ['value' => 'a1', 'label' => 'A1', 'category' => 'A'],
+            ['value' => 'b1', 'label' => 'B1', 'category' => 'B'],
+            ['value' => 'a2', 'label' => 'A2', 'category' => 'A'],
+        ], groupByKey: 'category');
 
-            $groups = $collection->group();
+        $groups = $collection->group();
 
-            expect(array_keys($groups))->toBe(['A', 'B']);
-            expect($groups['A'])->toHaveCount(2);
-            expect($groups['B'])->toHaveCount(1);
-            expect($groups['A'][0])->toBeInstanceOf(ListCollectionItem::class);
-        });
+        $this->assertSame(['A', 'B'], array_keys($groups));
+        $this->assertCount(2, $groups['A']);
+        $this->assertCount(1, $groups['B']);
+        $this->assertInstanceOf(ListCollectionItem::class, $groups['A'][0]);
+    }
 
-        it('sorts groups by custom order array', function () {
-            $collection = new ListCollection(
-                items: [
-                    ['value' => 'a', 'label' => 'A', 'cat' => 'first'],
-                    ['value' => 'b', 'label' => 'B', 'cat' => 'second'],
-                    ['value' => 'c', 'label' => 'C', 'cat' => 'third'],
-                ],
-                groupByKey: 'cat',
-                groupSort: ['third', 'first', 'second'],
-            );
+    #[Test]
+    public function sortsGroupsByCustomOrderArray(): void
+    {
+        $collection = new ListCollection(
+            items: [
+                ['value' => 'a', 'label' => 'A', 'cat' => 'first'],
+                ['value' => 'b', 'label' => 'B', 'cat' => 'second'],
+                ['value' => 'c', 'label' => 'C', 'cat' => 'third'],
+            ],
+            groupByKey: 'cat',
+            groupSort: ['third', 'first', 'second'],
+        );
 
-            $groups = $collection->group();
+        $groups = $collection->group();
 
-            expect(array_keys($groups))->toBe(['third', 'first', 'second']);
-        });
+        $this->assertSame(['third', 'first', 'second'], array_keys($groups));
+    }
 
-        it('sorts groups alphabetically when groupSort is asc/desc', function () {
-            $collection = new ListCollection(
-                items: [
-                    ['value' => 'c', 'label' => 'C', 'cat' => 'Zebra'],
-                    ['value' => 'a', 'label' => 'A', 'cat' => 'Apple'],
-                    ['value' => 'b', 'label' => 'B', 'cat' => 'Mango'],
-                ],
-                groupByKey: 'cat',
-                groupSort: 'asc',
-            );
+    #[Test]
+    public function sortsGroupsAlphabeticallyWhenGroupSortIsAsc(): void
+    {
+        $collection = new ListCollection(
+            items: [
+                ['value' => 'c', 'label' => 'C', 'cat' => 'Zebra'],
+                ['value' => 'a', 'label' => 'A', 'cat' => 'Apple'],
+                ['value' => 'b', 'label' => 'B', 'cat' => 'Mango'],
+            ],
+            groupByKey: 'cat',
+            groupSort: 'asc',
+        );
 
-            expect(array_keys($collection->group()))->toBe(['Apple', 'Mango', 'Zebra']);
-        });
-    });
+        $this->assertSame(['Apple', 'Mango', 'Zebra'], array_keys($collection->group()));
+    }
 
-    describe('stringifyItems', function () {
-        it('joins labels of normalized ListCollectionItems', function () {
-            $collection = new ListCollection([
-                ['value' => 'a', 'label' => 'Apple'],
-                ['value' => 'b', 'label' => 'Banana'],
-            ]);
+    #[Test]
+    public function joinsLabelsOfNormalizedItems(): void
+    {
+        $collection = new ListCollection([
+            ['value' => 'a', 'label' => 'Apple'],
+            ['value' => 'b', 'label' => 'Banana'],
+        ]);
 
-            $items = $collection->findMany(['a', 'b']);
-            $result = $collection->stringifyItems($items);
+        $items = $collection->findMany(['a', 'b']);
+        $result = $collection->stringifyItems($items);
 
-            expect($result)->toBe('Apple, Banana');
-        });
+        $this->assertSame('Apple, Banana', $result);
+    }
 
-        it('uses custom separator', function () {
-            $collection = new ListCollection([
-                ['value' => 'a', 'label' => 'A'],
-                ['value' => 'b', 'label' => 'B'],
-            ]);
+    #[Test]
+    public function stringifyItemsUsesCustomSeparator(): void
+    {
+        $collection = new ListCollection([
+            ['value' => 'a', 'label' => 'A'],
+            ['value' => 'b', 'label' => 'B'],
+        ]);
 
-            $result = $collection->stringifyItems($collection->getItems(), ' | ');
+        $result = $collection->stringifyItems($collection->getItems(), ' | ');
 
-            expect($result)->toBe('A | B');
-        });
-    });
+        $this->assertSame('A | B', $result);
+    }
 
-    describe('iteration', function () {
-        it('iterates over normalized items via foreach', function () {
-            $collection = new ListCollection([
-                ['value' => 'a', 'label' => 'A'],
-                ['value' => 'b', 'label' => 'B'],
-            ]);
+    #[Test]
+    public function iteratesOverNormalizedItemsViaForeach(): void
+    {
+        $collection = new ListCollection([
+            ['value' => 'a', 'label' => 'A'],
+            ['value' => 'b', 'label' => 'B'],
+        ]);
 
-            $values = [];
-            foreach ($collection as $item) {
-                expect($item)->toBeInstanceOf(ListCollectionItem::class);
-                $values[] = $item->value;
-            }
+        $values = [];
+        foreach ($collection as $item) {
+            $this->assertInstanceOf(ListCollectionItem::class, $item);
+            $values[] = $item->value;
+        }
 
-            expect($values)->toBe(['a', 'b']);
-        });
-    });
-});
+        $this->assertSame(['a', 'b'], $values);
+    }
+}

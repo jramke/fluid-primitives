@@ -4,3 +4,22 @@ plugin.tx_fluidprimitives {
         defaultFloatingStyles = position: absolute; isolation: isolate; top: 0px; left: 0px;
     }
 }
+
+tx_fluidprimitives_ajax_dispatcher = PAGE
+tx_fluidprimitives_ajax_dispatcher {
+    typeNum = 1783366837
+    config {
+        disableAllHeaderCode = 1
+        additionalHeaders = Content-type:application/json
+        admPanel = 0
+    }
+
+    10 = EXTBASEPLUGIN
+    10 {
+        extensionName = FluidPrimitives
+        pluginName = AjaxDispatcher
+    }
+    // 10 = COA_INT
+    // 10 {
+    // }
+}

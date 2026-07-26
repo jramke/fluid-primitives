@@ -84,6 +84,10 @@
         "./navigation-menu": {
             "import": "./dist/navigation-menu.js",
             "types": "./dist/navigation-menu.d.ts"
+        },
+        "./morph": {
+            "import": "./dist/morph.js",
+            "types": "./dist/morph.d.ts"
         }
     },
     "scripts": {
@@ -93,15 +97,20 @@
         "bump-zag": "node scripts/bump-zag.js"
     },
     "peerDependencies": {
+        "idiomorph": "^0.7.4",
         "zod": "^4.0.0"
     },
     "peerDependenciesMeta": {
+        "idiomorph": {
+            "optional": true
+        },
         "zod": {
             "optional": true
         }
     },
     "devDependencies": {
         "@types/node": "^22.15.17",
+        "idiomorph": "^0.7.4",
         "tsdown": "^0.21.7",
         "typescript": "^5.8.3",
         "valibot": "^1.1.0",

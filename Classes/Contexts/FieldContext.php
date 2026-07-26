@@ -12,14 +12,15 @@ class FieldContext extends AbstractComponentContext
     public function beforeRendering(): void
     {
         $parentRenderingContext = $this->getParentRenderingContext();
-        if (!$parentRenderingContext)
+        if (!$parentRenderingContext) {
             return;
+        }
 
         $variableContainer = $parentRenderingContext->getViewHelperVariableContainer();
         $variableContainer->add(self::class, $this->get('rootId'), ['name' => $this->get('name')]);
 
         $formContext = ContextService::getFromRenderingContext($parentRenderingContext, 'form');
-        if ($formContext) {
+        if ($formContext instanceof ComponentContextInterface) {
             $formObject = $formContext->get('object');
             if ($formObject && $this->has('name')) {
                 $this->set('defaultValue', ObjectAccess::getPropertyPath($formObject, (string)$this->get('name')));

@@ -2,182 +2,235 @@
 
 declare(strict_types=1);
 
-describe('CnViewHelper', function () {
-    describe('basic class rendering', function () {
-        it('renders a simple class string', function () {
-            $result = $this->renderTemplate('{ui:cn(value: \'my-class\')}');
-            expect($result)->toBe('my-class');
-        });
+namespace Jramke\FluidPrimitives\Tests\Functional\ViewHelpers;
 
-        it('renders multiple space-separated classes', function () {
-            $result = $this->renderTemplate('{ui:cn(value: \'class-one class-two class-three\')}');
-            expect($result)->toBe('class-one class-two class-three');
-        });
+use Jramke\FluidPrimitives\Tests\ViewHelperTestCase;
+use PHPUnit\Framework\Attributes\Test;
 
-        it('trims whitespace from class names', function () {
-            $result = $this->renderTemplate('{ui:cn(value: \'  my-class  \')}');
-            expect($result)->toBe('my-class');
-        });
+// @mago-expect lint:too-many-methods
+final class CnViewHelperTest extends ViewHelperTestCase
+{
+    #[Test]
+    public function rendersASimpleClassString(): void
+    {
+        $result = $this->renderTemplate('{ui:cn(value: \'my-class\')}');
+        $this->assertSame('my-class', $result);
+    }
 
-        it('normalizes multiple spaces between classes', function () {
-            $result = $this->renderTemplate('{ui:cn(value: \'class-one    class-two\')}');
-            expect($result)->toBe('class-one class-two');
-        });
+    #[Test]
+    public function rendersMultipleSpaceSeparatedClasses(): void
+    {
+        $result = $this->renderTemplate('{ui:cn(value: \'class-one class-two class-three\')}');
+        $this->assertSame('class-one class-two class-three', $result);
+    }
 
-        it('handles multiline class strings', function () {
-            $result = $this->renderTemplate("<ui:cn value=\"class-one\n    class-two\n    class-three\" />");
-            expect($result)->toBe('class-one class-two class-three');
-        });
+    #[Test]
+    public function trimsWhitespaceFromClassNames(): void
+    {
+        $result = $this->renderTemplate('{ui:cn(value: \'  my-class  \')}');
+        $this->assertSame('my-class', $result);
+    }
 
-        it('returns empty string for empty value', function () {
-            $result = $this->renderTemplate('{ui:cn(value: \'\')}');
-            expect($result)->toBe('');
-        });
+    #[Test]
+    public function normalizesMultipleSpacesBetweenClasses(): void
+    {
+        $result = $this->renderTemplate('{ui:cn(value: \'class-one    class-two\')}');
+        $this->assertSame('class-one class-two', $result);
+    }
 
-        it('returns empty string for whitespace-only value', function () {
-            $result = $this->renderTemplate('{ui:cn(value: \'   \')}');
-            expect($result)->toBe('');
-        });
+    #[Test]
+    public function handlesMultilineClassStrings(): void
+    {
+        $result = $this->renderTemplate("<ui:cn value=\"class-one\n    class-two\n    class-three\" />");
+        $this->assertSame('class-one class-two class-three', $result);
+    }
 
-        it('deduplicates repeated classes', function () {
-            $result = $this->renderTemplate('{ui:cn(value: \'my-class my-class my-class\')}');
-            expect($result)->toBe('my-class');
-        });
-    });
+    #[Test]
+    public function returnsEmptyStringForEmptyValue(): void
+    {
+        $result = $this->renderTemplate('{ui:cn(value: \'\')}');
+        $this->assertSame('', $result);
+    }
 
-    describe('conditional classes with when argument', function () {
-        it('includes class when condition is true', function () {
-            $this->assign('conditions', ['conditional-class' => true]);
-            $result = $this->renderTemplate('{ui:cn(when: conditions)}');
-            expect($result)->toBe('conditional-class');
-        });
+    #[Test]
+    public function returnsEmptyStringForWhitespaceOnlyValue(): void
+    {
+        $result = $this->renderTemplate('{ui:cn(value: \'   \')}');
+        $this->assertSame('', $result);
+    }
 
-        it('excludes class when condition is false', function () {
-            $this->assign('conditions', ['conditional-class' => false]);
-            $result = $this->renderTemplate('{ui:cn(when: conditions)}');
-            expect($result)->toBe('');
-        });
+    #[Test]
+    public function deduplicatesRepeatedClasses(): void
+    {
+        $result = $this->renderTemplate('{ui:cn(value: \'my-class my-class my-class\')}');
+        $this->assertSame('my-class', $result);
+    }
 
-        it('handles mixed true/false conditions', function () {
-            $this->assign('conditions', [
-                'included' => true,
-                'excluded' => false,
-                'also-included' => true,
-            ]);
-            $result = $this->renderTemplate('{ui:cn(when: conditions)}');
-            expect($result)->toBe('included also-included');
-        });
+    #[Test]
+    public function includesClassWhenConditionIsTrue(): void
+    {
+        $this->assign('conditions', ['conditional-class' => true]);
+        $result = $this->renderTemplate('{ui:cn(when: conditions)}');
+        $this->assertSame('conditional-class', $result);
+    }
 
-        it('combines value and when arguments', function () {
-            $this->assign('conditions', ['conditional' => true]);
-            $result = $this->renderTemplate('{ui:cn(value: \'base-class\', when: conditions)}');
-            expect($result)->toBe('base-class conditional');
-        });
+    #[Test]
+    public function excludesClassWhenConditionIsFalse(): void
+    {
+        $this->assign('conditions', ['conditional-class' => false]);
+        $result = $this->renderTemplate('{ui:cn(when: conditions)}');
+        $this->assertSame('', $result);
+    }
 
-        it('supports multiple classes per condition', function () {
-            $this->assign('conditions', ['class-one class-two' => true]);
-            $result = $this->renderTemplate('{ui:cn(when: conditions)}');
-            expect($result)->toBe('class-one class-two');
-        });
+    #[Test]
+    public function handlesMixedTrueFalseConditions(): void
+    {
+        $this->assign('conditions', [
+            'included' => true,
+            'excluded' => false,
+            'also-included' => true,
+        ]);
+        $result = $this->renderTemplate('{ui:cn(when: conditions)}');
+        $this->assertSame('included also-included', $result);
+    }
 
-        it('handles indexed array values as unconditional classes', function () {
-            $this->assign('conditions', ['always-included', 'also-always']);
-            $result = $this->renderTemplate('{ui:cn(when: conditions)}');
-            expect($result)->toBe('always-included also-always');
-        });
+    #[Test]
+    public function combinesValueAndWhenArguments(): void
+    {
+        $this->assign('conditions', ['conditional' => true]);
+        $result = $this->renderTemplate('{ui:cn(value: \'base-class\', when: conditions)}');
+        $this->assertSame('base-class conditional', $result);
+    }
 
-        it('handles mixed indexed and associative arrays', function () {
-            $this->assign('conditions', [
-                'unconditional',
-                'conditional' => true,
-                'excluded' => false,
-            ]);
-            $result = $this->renderTemplate('{ui:cn(when: conditions)}');
-            expect($result)->toBe('unconditional conditional');
-        });
-    });
+    #[Test]
+    public function supportsMultipleClassesPerCondition(): void
+    {
+        $this->assign('conditions', ['class-one class-two' => true]);
+        $result = $this->renderTemplate('{ui:cn(when: conditions)}');
+        $this->assertSame('class-one class-two', $result);
+    }
 
-    describe('truthiness evaluation', function () {
-        it('treats string "false" as falsy', function () {
-            $this->assign('conditions', ['my-class' => 'false']);
-            $result = $this->renderTemplate('{ui:cn(when: conditions)}');
-            expect($result)->toBe('');
-        });
+    #[Test]
+    public function handlesIndexedArrayValuesAsUnconditionalClasses(): void
+    {
+        $this->assign('conditions', ['always-included', 'also-always']);
+        $result = $this->renderTemplate('{ui:cn(when: conditions)}');
+        $this->assertSame('always-included also-always', $result);
+    }
 
-        it('treats string "0" as falsy', function () {
-            $this->assign('conditions', ['my-class' => '0']);
-            $result = $this->renderTemplate('{ui:cn(when: conditions)}');
-            expect($result)->toBe('');
-        });
+    #[Test]
+    public function handlesMixedIndexedAndAssociativeArrays(): void
+    {
+        $this->assign('conditions', [
+            'unconditional',
+            'conditional' => true,
+            'excluded' => false,
+        ]);
+        $result = $this->renderTemplate('{ui:cn(when: conditions)}');
+        $this->assertSame('unconditional conditional', $result);
+    }
 
-        it('treats empty string as falsy', function () {
-            $this->assign('conditions', ['my-class' => '']);
-            $result = $this->renderTemplate('{ui:cn(when: conditions)}');
-            expect($result)->toBe('');
-        });
+    #[Test]
+    public function treatsStringFalseAsFalsy(): void
+    {
+        $this->assign('conditions', ['my-class' => 'false']);
+        $result = $this->renderTemplate('{ui:cn(when: conditions)}');
+        $this->assertSame('', $result);
+    }
 
-        it('treats non-empty string as truthy', function () {
-            $this->assign('conditions', ['my-class' => 'yes']);
-            $result = $this->renderTemplate('{ui:cn(when: conditions)}');
-            expect($result)->toBe('my-class');
-        });
+    #[Test]
+    public function treatsStringZeroAsFalsy(): void
+    {
+        $this->assign('conditions', ['my-class' => '0']);
+        $result = $this->renderTemplate('{ui:cn(when: conditions)}');
+        $this->assertSame('', $result);
+    }
 
-        it('treats numeric 0 as falsy', function () {
-            $this->assign('conditions', ['my-class' => 0]);
-            $result = $this->renderTemplate('{ui:cn(when: conditions)}');
-            expect($result)->toBe('');
-        });
+    #[Test]
+    public function treatsEmptyStringAsFalsy(): void
+    {
+        $this->assign('conditions', ['my-class' => '']);
+        $result = $this->renderTemplate('{ui:cn(when: conditions)}');
+        $this->assertSame('', $result);
+    }
 
-        it('treats numeric 1 as truthy', function () {
-            $this->assign('conditions', ['my-class' => 1]);
-            $result = $this->renderTemplate('{ui:cn(when: conditions)}');
-            expect($result)->toBe('my-class');
-        });
+    #[Test]
+    public function treatsNonEmptyStringAsTruthy(): void
+    {
+        $this->assign('conditions', ['my-class' => 'yes']);
+        $result = $this->renderTemplate('{ui:cn(when: conditions)}');
+        $this->assertSame('my-class', $result);
+    }
 
-        it('treats null as falsy', function () {
-            $this->assign('conditions', ['my-class' => null]);
-            $result = $this->renderTemplate('{ui:cn(when: conditions)}');
-            expect($result)->toBe('');
-        });
+    #[Test]
+    public function treatsNumericZeroAsFalsy(): void
+    {
+        $this->assign('conditions', ['my-class' => 0]);
+        $result = $this->renderTemplate('{ui:cn(when: conditions)}');
+        $this->assertSame('', $result);
+    }
 
-        it('treats empty array as falsy', function () {
-            $this->assign('conditions', ['my-class' => []]);
-            $result = $this->renderTemplate('{ui:cn(when: conditions)}');
-            expect($result)->toBe('');
-        });
+    #[Test]
+    public function treatsNumericOneAsTruthy(): void
+    {
+        $this->assign('conditions', ['my-class' => 1]);
+        $result = $this->renderTemplate('{ui:cn(when: conditions)}');
+        $this->assertSame('my-class', $result);
+    }
 
-        it('treats non-empty array as truthy', function () {
-            $this->assign('conditions', ['my-class' => ['item']]);
-            $result = $this->renderTemplate('{ui:cn(when: conditions)}');
-            expect($result)->toBe('my-class');
-        });
-    });
+    #[Test]
+    public function treatsNullAsFalsy(): void
+    {
+        $this->assign('conditions', ['my-class' => null]);
+        $result = $this->renderTemplate('{ui:cn(when: conditions)}');
+        $this->assertSame('', $result);
+    }
 
-    describe('as argument for variable assignment', function () {
-        it('assigns result to variable instead of outputting', function () {
-            $result = $this->renderTemplate('<ui:cn value="my-class" as="className" />{className}');
-            expect($result)->toBe('my-class');
-        });
+    #[Test]
+    public function treatsEmptyArrayAsFalsy(): void
+    {
+        $this->assign('conditions', ['my-class' => []]);
+        $result = $this->renderTemplate('{ui:cn(when: conditions)}');
+        $this->assertSame('', $result);
+    }
 
-        it('returns empty string when using as argument', function () {
-            $result = $this->renderTemplate('{ui:cn(value: \'my-class\', as: \'className\')}');
-            expect($result)->toBe('');
-        });
-    });
+    #[Test]
+    public function treatsNonEmptyArrayAsTruthy(): void
+    {
+        $this->assign('conditions', ['my-class' => ['item']]);
+        $result = $this->renderTemplate('{ui:cn(when: conditions)}');
+        $this->assertSame('my-class', $result);
+    }
 
-    describe('tag-style usage', function () {
-        it('renders class from tag content', function () {
-            $result = $this->renderTemplate('<ui:cn>my-class</ui:cn>');
-            expect($result)->toBe('my-class');
-        });
+    #[Test]
+    public function assignsResultToVariableInsteadOfOutputting(): void
+    {
+        $result = $this->renderTemplate('<ui:cn value="my-class" as="className" />{className}');
+        $this->assertSame('my-class', $result);
+    }
 
-        it('handles multiline content in tag style', function () {
-            $result = $this->renderTemplate('<ui:cn>
+    #[Test]
+    public function returnsEmptyStringWhenUsingAsArgument(): void
+    {
+        $result = $this->renderTemplate('{ui:cn(value: \'my-class\', as: \'className\')}');
+        $this->assertSame('', $result);
+    }
+
+    #[Test]
+    public function rendersClassFromTagContent(): void
+    {
+        $result = $this->renderTemplate('<ui:cn>my-class</ui:cn>');
+        $this->assertSame('my-class', $result);
+    }
+
+    #[Test]
+    public function handlesMultilineContentInTagStyle(): void
+    {
+        $result = $this->renderTemplate('<ui:cn>
                 class-one
                 class-two
                 class-three
             </ui:cn>');
-            expect($result)->toBe('class-one class-two class-three');
-        });
-    });
-});
+        $this->assertSame('class-one class-two class-three', $result);
+    }
+}

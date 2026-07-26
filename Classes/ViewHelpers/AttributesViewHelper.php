@@ -69,12 +69,12 @@ class AttributesViewHelper extends AbstractViewHelper
         $asArray = $this->arguments['asArray'] ?? false;
 
         $tagAttributes = $this->renderingContext->getViewHelperVariableContainer()->get(self::class, 'attributes');
-        if (empty($tagAttributes)) {
+        if ($tagAttributes === null || $tagAttributes === []) {
             return $asArray ? [] : '';
         }
 
         if (!$tagAttributes instanceof TagAttributes) {
-            $tagAttributes = new TagAttributes($tagAttributes);
+            $tagAttributes = new TagAttributes((array)$tagAttributes);
         }
 
         if (count($tagAttributes) === 0) {
@@ -90,12 +90,12 @@ class AttributesViewHelper extends AbstractViewHelper
         }
 
         $skip = $this->arguments['skip'] ? GeneralUtility::trimExplode(',', $this->arguments['skip']) : [];
-        if (!empty($skip)) {
+        if ($skip !== []) {
             return $tagAttributes->renderWithSkip($skip, $asArray);
         }
 
         $only = $this->arguments['only'] ? GeneralUtility::trimExplode(',', $this->arguments['only']) : [];
-        if (!empty($only)) {
+        if ($only !== []) {
             return $tagAttributes->renderWithOnly($only, $asArray);
         }
 

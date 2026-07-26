@@ -2,74 +2,92 @@
 
 declare(strict_types=1);
 
+namespace Jramke\FluidPrimitives\Tests\Functional\Components;
+
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
+use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
+use PHPUnit\Framework\Attributes\Test;
 
-describe('Clipboard Component Rendering', function () {
-    beforeEach(function () {
+final class ClipboardRenderingTest extends FunctionalTestCase
+{
+    protected function setUp(): void
+    {
+        parent::setUp();
         HydrationRegistry::getInstance()->clear();
-    });
+    }
 
-    describe('translations', function () {
-        it('renders english trigger label by default', function () {
-            $html = $this->renderTemplate('
-                <primitives:clipboard.root value="Copy me">
-                    <primitives:clipboard.trigger>Copy</primitives:clipboard.trigger>
-                </primitives:clipboard.root>
-            ');
+    #[Test]
+    public function rendersEnglishTriggerLabelByDefault(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:clipboard.root value="Copy me">
+                <primitives:clipboard.trigger>Copy</primitives:clipboard.trigger>
+            </primitives:clipboard.root>
+        ');
 
-            expect($html)->toContain('aria-label="Copy to clipboard"');
-        });
+        $this->assertStringContainsString('aria-label="Copy to clipboard"', $html);
+    }
 
-        it('renders german trigger label when locale is german', function () {
-            $this->setRequestLocale('de_DE');
+    #[Test]
+    public function rendersGermanTriggerLabelWhenLocaleIsGerman(): void
+    {
+        $this->setRequestLocale('de_DE');
 
-            $html = $this->renderTemplate('
-                <primitives:clipboard.root value="Copy me">
-                    <primitives:clipboard.trigger>Copy</primitives:clipboard.trigger>
-                </primitives:clipboard.root>
-            ');
+        $html = $this->renderTemplate('
+            <primitives:clipboard.root value="Copy me">
+                <primitives:clipboard.trigger>Copy</primitives:clipboard.trigger>
+            </primitives:clipboard.root>
+        ');
 
-            expect($html)->toContain('aria-label="In Zwischenablage kopieren"');
-        });
+        $this->assertStringContainsString('aria-label="In Zwischenablage kopieren"', $html);
+    }
 
-        it('prefers prop overrides over localized defaults', function () {
-            $this->setRequestLocale('de_DE');
+    #[Test]
+    public function prefersPropOverridesOverLocalizedDefaults(): void
+    {
+        $this->setRequestLocale('de_DE');
 
-            $html = $this->renderTemplate('
-                <primitives:clipboard.root value="Copy me" translations="{triggerLabelIdle: \'Link kopieren\'}">
-                    <primitives:clipboard.trigger>Copy</primitives:clipboard.trigger>
-                </primitives:clipboard.root>
-            ');
+        $html = $this->renderTemplate('
+            <primitives:clipboard.root value="Copy me" translations="{triggerLabelIdle: \'Link kopieren\'}">
+                <primitives:clipboard.trigger>Copy</primitives:clipboard.trigger>
+            </primitives:clipboard.root>
+        ');
 
-            expect($html)->toContain('aria-label="Link kopieren"');
-        });
+        $this->assertStringContainsString('aria-label="Link kopieren"', $html);
+    }
 
-        it('allows disabling trigger aria labels', function () {
-            $html = $this->renderTemplate('
-                <primitives:clipboard.root value="Copy me" translations="{triggerLabelIdle: false, triggerLabelCopied: false}">
-                    <primitives:clipboard.trigger>Copy</primitives:clipboard.trigger>
-                </primitives:clipboard.root>
-            ');
+    #[Test]
+    public function allowsDisablingTriggerAriaLabels(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:clipboard.root value="Copy me" translations="{triggerLabelIdle: false, triggerLabelCopied: false}">
+                <primitives:clipboard.trigger>Copy</primitives:clipboard.trigger>
+            </primitives:clipboard.root>
+        ');
 
-            expect($html)->not->toContain('aria-label=');
-        });
+        $this->assertStringNotContainsString('aria-label=', $html);
+    }
 
-        it('includes merged translations in hydration data', function () {
-            $this->setRequestLocale('de_DE');
+    #[Test]
+    public function includesMergedTranslationsInHydrationData(): void
+    {
+        $this->setRequestLocale('de_DE');
 
-            $this->renderTemplate('
-                <primitives:clipboard.root value="Copy me" translations="{triggerLabelIdle: \'Link kopieren\', triggerLabelCopied: false}">
-                    <primitives:clipboard.trigger>Copy</primitives:clipboard.trigger>
-                </primitives:clipboard.root>
-            ');
+        $this->renderTemplate('
+            <primitives:clipboard.root value="Copy me" translations="{triggerLabelIdle: \'Link kopieren\', triggerLabelCopied: false}">
+                <primitives:clipboard.trigger>Copy</primitives:clipboard.trigger>
+            </primitives:clipboard.root>
+        ');
 
-            $hydrationData = HydrationRegistry::getInstance()->getAll();
-            $clipboardData = array_values($hydrationData['clipboard'])[0];
+        $hydrationData = HydrationRegistry::getInstance()->getAll();
+        $clipboardData = array_values($hydrationData['clipboard'])[0];
 
-            expect($clipboardData['props']['translations'])->toBe([
+        $this->assertSame(
+            [
                 'triggerLabelIdle' => 'Link kopieren',
                 'triggerLabelCopied' => false,
-            ]);
-        });
-    });
-});
+            ],
+            $clipboardData['props']['translations'],
+        );
+    }
+}

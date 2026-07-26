@@ -1,148 +1,192 @@
 import type { Service } from '@zag-js/core';
 import type { NormalizeProps, PropTypes } from '@zag-js/types';
-import { debounce } from '@zag-js/utils';
-import { getClosestFieldRoot } from '../../Field/src/field.dom';
+import { createFieldHandle } from '../../Field/src/field.connect';
+import type { FieldHandle } from '../../Field/src/field.types';
 import { parts } from './form.anatomy';
 import * as dom from './form.dom';
-import { getFieldMachinesFor } from './form.registry';
-import type { FormApi, FormSchema } from './form.types';
-import { formDataToObject, getFieldElement } from './form.utils';
+import { getRegisteredFieldMachines, renameFieldMachine } from './form.fields';
+import { normalizeFieldName } from './form.path';
+import type { FormApi, FormDirty, FormErrors, FormSchema, FormTouched } from './form.types';
+import { createFormValues } from './form.values';
 
 export function connect<T extends PropTypes>(
-	service: Service<FormSchema>,
-	normalize: NormalizeProps<T>
+    service: Service<FormSchema>,
+    normalize: NormalizeProps<T>
 ): FormApi {
-	const { context, state, send, scope, prop } = service;
+    const { context, state, send, scope, prop } = service;
 
-	function getValues() {
-		return context.get('values');
-	}
-	function getErrors() {
-		return context.get('errors');
-	}
-	function getDirty() {
-		return context.get('dirty');
-	}
-	function getTouched() {
-		return context.get('touched');
-	}
+    const formEl = dom.getFormEl(scope);
 
-	function getFormEl() {
-		return dom.getFormEl(scope);
-	}
+    function getFieldHandles(): Map<string, FieldHandle> {
+        return new Map(
+            Array.from(getRegisteredFieldMachines(scope), ([name, fieldMachine]) => [
+                name,
+                createFieldHandle(fieldMachine),
+            ])
+        );
+    }
 
-	const isSubmitting = state.matches('submitting');
-	const isDirty = Object.values(getDirty()).length > 0;
-	const isInvalid = Object.keys(getErrors()).length > 0;
-	const isSuccessful = state.matches('success');
-	const isError = state.matches('error');
-	const isTouched = Object.values(getTouched()).length > 0;
-	const stateValue = state.get();
+    function getValues() {
+        return createFormValues(formEl ? new FormData(formEl) : new FormData());
+    }
 
-	const inputDebounceMs = prop('inputDebounceMs') ?? 100;
-	const debouncedSendInput =
-		inputDebounceMs > 0
-			? debounce((target: EventTarget | null) => {
-					send({ type: 'INPUT', detail: { target } });
-				}, inputDebounceMs)
-			: (target: EventTarget | null) => {
-					send({ type: 'INPUT', detail: { target } });
-				};
+    function getErrors(): FormErrors {
+        const errors: FormErrors = {};
 
-	return {
-		isSubmitting,
-		isDirty,
-		isInvalid,
-		isSuccessful,
-		isError,
+        for (const [name, field] of getFieldHandles()) {
+            if (field.errors.length === 0) continue;
+            errors[name] = {
+                messages: [...field.errors],
+                value: field.value,
+            };
+        }
 
-		getValues,
-		getErrors,
-		getDirty,
-		getTouched,
+        return errors;
+    }
 
-		_userRenderFn: prop('render'),
+    function getDirty(): FormDirty {
+        const dirty: FormDirty = {};
 
-		getFormEl,
-		getAllFields() {
-			return getFieldMachinesFor(dom.getFormEl(scope));
-		},
-		getField(name) {
-			return this.getAllFields().get(name);
-		},
-		getFormControl(name) {
-			return getFieldElement(dom.getFormEl(scope), name);
-		},
-		getAction() {
-			const formEl = getFormEl();
-			return formEl?.getAttribute('action') || '';
-		},
+        for (const [name, field] of getFieldHandles()) {
+            if (field.meta.isDirty) {
+                dirty[name] = true;
+            }
+        }
 
-		formDataToObject() {
-			return formDataToObject(getValues());
-		},
+        return dirty;
+    }
 
-		reset() {
-			send({ type: 'RESET' });
-		},
+    function getTouched(): FormTouched {
+        const touched: FormTouched = {};
 
-		getFormProps() {
-			return normalize.element({
-				...parts.form.attrs,
-				noValidate: true,
-				id: dom.getFormId(scope),
-				'data-state': stateValue,
-				'data-submitting': isSubmitting ? '' : undefined,
-				'data-invalid': isInvalid ? '' : undefined,
-				'data-dirty': isDirty ? '' : undefined,
-				'data-touched': isTouched ? '' : undefined,
-				onSubmit: event => {
-					event.preventDefault();
-					if (isSubmitting) return;
-					const form = event.currentTarget as HTMLFormElement;
-					context.set('values', new FormData(form));
-					send({ type: 'SUBMIT', detail: { event, api: this } });
-				},
-				onReset: () => {
-					send({ type: 'RESET', detail: { omitManualReset: true } });
-				},
-				// for things like inputs, others like select elements are handeled via `setupFormListeners`
-				onInput: event => {
-					debouncedSendInput(event.target);
-				},
-				onBlur: event => {
-					const target = event.target as
-						| HTMLInputElement
-						| HTMLTextAreaElement
-						| HTMLSelectElement
-						| HTMLButtonElement
-						| null;
+        for (const [name, field] of getFieldHandles()) {
+            if (field.meta.isTouched) {
+                touched[name] = true;
+            }
+        }
 
-					// Ensure target is a form field
-					if (
-						!(target instanceof HTMLInputElement) &&
-						!(target instanceof HTMLTextAreaElement) &&
-						!(target instanceof HTMLSelectElement) &&
-						!(
-							target instanceof HTMLButtonElement &&
-							target.getAttribute('data-scope') === 'select'
-						)
-					) {
-						return;
-					}
+        return touched;
+    }
 
-					send({
-						type: 'FIELD_BLUR',
-						detail: { target, relatedTarget: event.relatedTarget },
-					});
-				},
-				onFocus: event => {
-					const target = event.target as Element | null;
-					if (!getClosestFieldRoot(target)) return;
+    function getErrorText() {
+        return context.get('errorText');
+    }
 
-					send({ type: 'FIELD_FOCUS', detail: { target } });
-				},
-			});
-		},
-	};
+    function getSuccessText() {
+        return context.get('successText');
+    }
+
+    const fieldHandles = getFieldHandles();
+    const isSubmitting = state.matches('submitting');
+    const isDirty = Array.from(fieldHandles.values()).some(field => field.meta.isDirty);
+    const isInvalid = Array.from(fieldHandles.values()).some(field => field.invalid);
+    const isSuccessful = state.matches('success');
+    const isError = state.matches('error');
+    const isTouched = Array.from(fieldHandles.values()).some(field => field.meta.isTouched);
+    const stateValue = state.get();
+
+    return {
+        isSubmitting,
+        isDirty,
+        isInvalid,
+        isSuccessful,
+        isError,
+
+        getValues,
+        getErrors,
+        getDirty,
+        getTouched,
+        getErrorText,
+        getSuccessText,
+
+        setErrorText(text) {
+            send({ type: 'SET_ERROR_TEXT', detail: { text } });
+        },
+
+        setSuccessText(text) {
+            send({ type: 'SET_SUCCESS_TEXT', detail: { text } });
+        },
+
+        clearStatusText() {
+            send({ type: 'CLEAR_STATUS_TEXT' });
+        },
+
+        _userRenderFn: prop('render'),
+
+        getFormEl() {
+            return formEl;
+        },
+        getAllFields() {
+            return getFieldHandles();
+        },
+        getField(name) {
+            return this.getAllFields().get(normalizeFieldName(name));
+        },
+        getAction() {
+            return formEl?.getAttribute('action') || '';
+        },
+        reset() {
+            send({ type: 'RESET' });
+        },
+
+        syncFields() {
+            send({ type: 'SYNC_FIELDS' });
+        },
+
+        renameField(oldName, newName) {
+            renameFieldMachine(scope, oldName, newName);
+        },
+
+        getContentProps() {
+            return normalize.element({
+                ...parts.content.attrs,
+                hidden: isError || isSuccessful,
+            });
+        },
+
+        getIndicatorProps(indicatorState) {
+            return normalize.element({
+                ...parts.indicator.attrs,
+                hidden: stateValue !== indicatorState,
+            });
+        },
+
+        getErrorTextProps() {
+            return normalize.element({
+                ...parts['error-text'].attrs,
+                hidden: !isError,
+                role: 'alert',
+            });
+        },
+
+        getSuccessTextProps() {
+            return normalize.element({
+                ...parts['success-text'].attrs,
+                hidden: !isSuccessful,
+                role: 'status',
+                'aria-live': 'polite',
+            });
+        },
+
+        getFormProps() {
+            return normalize.element({
+                ...parts.form.attrs,
+                noValidate: true,
+                id: dom.getFormId(scope),
+                'data-state': stateValue,
+                'data-submitting': isSubmitting ? '' : undefined,
+                'data-invalid': isInvalid ? '' : undefined,
+                'data-dirty': isDirty ? '' : undefined,
+                'data-touched': isTouched ? '' : undefined,
+                onSubmit: event => {
+                    event.preventDefault();
+                    if (isSubmitting) return;
+                    send({ type: 'SUBMIT', detail: { event, api: this } });
+                },
+                onReset: () => {
+                    send({ type: 'RESET', detail: { omitManualReset: true } });
+                },
+            });
+        },
+    };
 }

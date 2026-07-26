@@ -1,91 +1,167 @@
 import type { EventObject } from '@zag-js/core';
 import type { JSX, PropTypes } from '@zag-js/types';
-import * as z from 'zod';
+import type { FieldHandle } from '../../Field/src/field.types';
 import type { Form } from '../Form';
-import type { FieldMachine } from './form.registry';
 
 export interface FieldError {
-	messages: string[];
-	value?: FormDataEntryValue | FormDataEntryValue[] | null;
+    messages: string[];
+    value?: FormDataEntryValue | FormDataEntryValue[] | null;
 }
 export type FormErrors = Record<string, FieldError>;
 export type FormDirty = Record<string, boolean>;
 export type FormTouched = Record<string, boolean>;
+export type FormValueLeaf = string | File;
+
+export interface FormValuesObject {
+    [key: string]: FormValueTree;
+}
+
+export interface FormValuesArray extends Array<FormValueTree> {}
+
+export type FormValueTree = FormValueLeaf | FormValuesObject | FormValuesArray;
+
+export interface FormValues {
+    get(path: string): FormValueLeaf | null;
+    getAll(path: string): FormValueLeaf[];
+    has(path: string): boolean;
+    pick(path: string): FormValueTree | null;
+    toObject(): FormValuesObject;
+}
+
+export interface StandardSchemaPathSegment {
+    readonly key: PropertyKey;
+}
+
+export interface StandardSchemaIssue {
+    readonly message: string;
+    readonly path?: readonly (PropertyKey | StandardSchemaPathSegment)[];
+}
+
+export interface StandardSchemaSuccessResult<Output = unknown> {
+    readonly value: Output;
+    readonly issues?: undefined;
+}
+
+export interface StandardSchemaFailureResult {
+    readonly issues: readonly StandardSchemaIssue[];
+}
+
+export type StandardSchemaResult<Output = unknown> =
+    | StandardSchemaSuccessResult<Output>
+    | StandardSchemaFailureResult;
+
+export interface StandardSchemaV1<Output = unknown> {
+    readonly '~standard': {
+        readonly validate: (
+            value: unknown
+        ) => StandardSchemaResult<Output> | Promise<StandardSchemaResult<Output>>;
+    };
+}
+
+export interface FormValidationContext {
+    values: FormValues;
+    fieldName?: string;
+    validateWithStandardSchema: <Output = unknown>(schema: StandardSchemaV1<Output>) => FormErrors;
+}
+
+export type FormState = 'invalid' | 'ready' | 'submitting' | 'success' | 'error';
+
+export type FormValidation =
+    | StandardSchemaV1
+    | ((context: FormValidationContext) => FormErrors | null | void);
+
+export type FormSubmitResult = true | false | FormErrors;
 
 export type AnyFormControlElement =
-	| HTMLInputElement
-	| HTMLTextAreaElement
-	| HTMLSelectElement
-	| HTMLButtonElement;
+    | HTMLInputElement
+    | HTMLTextAreaElement
+    | HTMLSelectElement
+    | HTMLButtonElement;
 
 /**
  * Error thrown by post() when server returns 422 validation errors.
  * The machine catches this and transitions to 'invalid' state.
  */
 export class ValidationError extends Error {
-	constructor(public errors: FormErrors) {
-		super('Server validation failed');
-		this.name = 'ValidationError';
-	}
+    constructor(public errors: FormErrors) {
+        super('Server validation failed');
+        this.name = 'ValidationError';
+    }
 }
 
-export type ZodFormSchema = z.ZodObject | undefined;
+export class FormError extends Error {
+    constructor(public errors: string[]) {
+        super('Server form validation failed');
+        this.name = 'FormError';
+    }
+}
 
 export interface FormProps {
-	id: string;
-	schema?: ZodFormSchema;
-	objectName?: string;
-	inputDebounceMs?: number;
-	onSubmit?: ({
-		formData,
-		api,
-		event,
-		post,
-	}: {
-		formData: FormData;
-		api: FormApi;
-		event: JSX.FormEvent<HTMLElement>;
-		post: (url: string, data: FormData) => Promise<Response>;
-	}) => Promise<boolean> | boolean;
-	render?: (form: Form) => void;
+    id: string;
+    validation?: FormValidation;
+    objectName?: string;
+    inputDebounceMs?: number;
+    onSubmit?: ({
+        values,
+        api,
+        event,
+        post,
+    }: {
+        values: FormValues;
+        api: FormApi;
+        event: JSX.FormEvent<HTMLElement>;
+        post: (url: string) => Promise<Response>;
+    }) => Promise<FormSubmitResult> | FormSubmitResult;
+    render?: (form: Form) => void;
 }
 
 export interface FormSchema {
-	props: FormProps;
-	context: {
-		values: FormData;
-		initialValues: FormData;
-		errors: FormErrors;
-		dirty: FormDirty;
-		touched: FormTouched;
-	};
-	refs: {
-		submitCount: number;
-		serverErrors: FormErrors;
-	};
-	state: 'invalid' | 'ready' | 'submitting' | 'success' | 'error';
-	event: EventObject;
-	action: string;
-	effect: string;
+    props: FormProps;
+    context: {
+        errorText: string | null;
+        successText: string | null;
+    };
+    refs: {
+        serverErrors: FormErrors;
+    };
+    state: FormState;
+    event: EventObject;
+    action: string;
+    effect: string;
 }
 
 export interface FormApi {
-	isSubmitting: boolean;
-	isDirty: boolean;
-	isInvalid: boolean;
-	isSuccessful: boolean;
-	isError: boolean;
-	getFormProps(): PropTypes['element'];
-	getValues(): FormData;
-	getErrors(): FormErrors;
-	getDirty(): FormDirty;
-	getTouched(): FormTouched;
-	_userRenderFn: FormProps['render'];
-	getAllFields(): Map<string, FieldMachine>;
-	getField(name: string): FieldMachine | undefined;
-	getFormControl(name: string): AnyFormControlElement | null;
-	getFormEl(): HTMLFormElement | null;
-	getAction(): string;
-	reset(): void;
-	formDataToObject(): Record<string, FormDataEntryValue | FormDataEntryValue[]>;
+    isSubmitting: boolean;
+    isDirty: boolean;
+    isInvalid: boolean;
+    isSuccessful: boolean;
+    isError: boolean;
+    getFormProps(): PropTypes['element'];
+    getContentProps(): PropTypes['element'];
+    getIndicatorProps(state: FormState): PropTypes['element'];
+    getErrorTextProps(): PropTypes['element'];
+    getSuccessTextProps(): PropTypes['element'];
+    getValues(): FormValues;
+    getErrors(): FormErrors;
+    getDirty(): FormDirty;
+    getTouched(): FormTouched;
+    getErrorText(): string | null;
+    setErrorText(text: string | null): void;
+    getSuccessText(): string | null;
+    setSuccessText(text: string | null): void;
+    clearStatusText(): void;
+    _userRenderFn: FormProps['render'];
+    getAllFields(): Map<string, FieldHandle>;
+    getField(name: string): FieldHandle | undefined;
+    getFormEl(): HTMLFormElement | null;
+    getAction(): string;
+    reset(): void;
+    syncFields(): void;
+    /**
+     * Renames a registered field, updating its `name` prop and re-keying the
+     * Form's internal field registry, without touching its value/touched/
+     * dirty/error state. Useful for keeping recurring-field rows contiguously
+     * indexed after removing a row from the middle of the list.
+     */
+    renameField(oldName: string, newName: string): void;
 }

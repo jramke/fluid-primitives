@@ -12,7 +12,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 class HydrationRegistry
 {
-    private const SCRIPT_ID = 'fluid-primitives-hydration-data';
+    private const string SCRIPT_ID = 'fluid-primitives-hydration-data';
 
     private array $registry = [];
     private static ?self $instance = null;
@@ -25,7 +25,7 @@ class HydrationRegistry
 
     public static function getInstance(): self
     {
-        if (self::$instance === null) {
+        if (!self::$instance instanceof \Jramke\FluidPrimitives\Registry\HydrationRegistry) {
             $container = GeneralUtility::getContainer();
             self::$instance = $container->get(self::class);
         }
@@ -69,7 +69,7 @@ class HydrationRegistry
 
     private function updateAssetCollector(): void
     {
-        if (empty($this->registry)) {
+        if ($this->registry === []) {
             return;
         }
 
@@ -93,7 +93,7 @@ class HydrationRegistry
             $js = str_replace("\n", '', $js);
             $js = str_replace("\r", '', $js);
             $js = preg_replace('/\s+/', ' ', $js); // replace multiple whitespaces with one space
-            $js = preg_replace('/\s*([{}();=])\s*/', '$1', $js); // remove spaces around special characters
+            $js = preg_replace('/\s*([{}();=])\s*/', '$1', (string)$js); // remove spaces around special characters
             unset($scriptAttributes['id']);
         }
 
@@ -112,7 +112,7 @@ class HydrationRegistry
         $this->globalsResolved = true;
         $request = $this->getRequest();
 
-        if (!$request) {
+        if (!$request instanceof ServerRequestInterface) {
             return;
         }
 

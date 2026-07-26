@@ -25,7 +25,13 @@ class HydrationDataViewHelper extends AbstractViewHelper
 {
     public function initializeArguments(): void
     {
-        $this->registerArgument('name', 'string', 'The name under which the hydration data should be exposed', true);
+        $this->registerArgument(
+            'name',
+            'string',
+            'The name under which the hydration data should be exposed',
+            true,
+            '',
+        );
         $this->registerArgument(
             'id',
             'string',
@@ -49,7 +55,7 @@ class HydrationDataViewHelper extends AbstractViewHelper
 
     public function render(): void
     {
-        if (empty($this->arguments['name'])) {
+        if ($this->arguments['name'] === '') {
             throw new \RuntimeException('The "name" argument is required', 1766249544);
         }
 

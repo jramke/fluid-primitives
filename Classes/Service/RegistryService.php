@@ -20,7 +20,7 @@ class RegistryService
 
     public function fetchComponent(string $componentKey): array
     {
-        if (empty($componentKey)) {
+        if ($componentKey === '' || $componentKey === '0') {
             throw new \InvalidArgumentException('Component key must not be empty.', 1767042111);
         }
 
@@ -37,7 +37,7 @@ class RegistryService
             ];
         }
 
-        if (empty($data['files'] ?? []) || empty($data['name'] ?? null)) {
+        if (($data['files'] ?? []) === [] || ($data['name'] ?? '') === '') {
             $error = [
                 'message' => 'Invalid component manifest received from registry.',
                 'details' => null,
@@ -49,7 +49,7 @@ class RegistryService
 
     public function fetchComponentFile(string $componentKey, string $filePath): array
     {
-        if (empty($componentKey) || empty($filePath)) {
+        if ($componentKey === '' || $componentKey === '0' || ($filePath === '' || $filePath === '0')) {
             throw new \InvalidArgumentException('Component key and file path must not be empty.', 1767042112);
         }
 

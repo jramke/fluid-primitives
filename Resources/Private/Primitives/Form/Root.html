@@ -9,7 +9,7 @@
 <ui:prop name="object" type="mixed" optional="{true}" description="The bound object used for form value mapping." />
 <ui:prop name="method" type="string" optional="{true}" default="post" description="The HTTP method used for form submission." />
 
-<f:variable name="refData" value="{state: 'ready', field-name-prefix: context.fieldNamePrefix, object-name: objectName}" />
+<f:variable name="refData" value="{state: context.state, field-name-prefix: context.fieldNamePrefix, object-name: objectName}" />
 
 <form
     novalidate

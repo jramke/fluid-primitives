@@ -4,15 +4,16 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Contexts;
 
+use Jramke\FluidPrimitives\Enum\FormState;
 use Psr\Http\Message\ServerRequestInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use TYPO3\CMS\Core\Page\PageRenderer;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Mvc\Controller\MvcPropertyMappingConfigurationService;
 use TYPO3\CMS\Extbase\Mvc\RequestInterface;
 use TYPO3\CMS\Extbase\Mvc\Web\Routing\UriBuilder;
 use TYPO3\CMS\Extbase\Service\ExtensionService;
 
+// @mago-expect lint:too-many-methods
 #[Autoconfigure(public: true)]
 class FormContext extends AbstractComponentContext
 {
@@ -20,6 +21,7 @@ class FormContext extends AbstractComponentContext
         protected readonly MvcPropertyMappingConfigurationService $mvcPropertyMappingConfigurationService,
         protected readonly ExtensionService $extensionService,
         protected readonly PageRenderer $pageRenderer,
+        private readonly UriBuilder $uriBuilder,
     ) {}
 
     public function afterRendering(string &$html): void
@@ -33,13 +35,13 @@ class FormContext extends AbstractComponentContext
 
     public function getResolvedAction(): ?string
     {
-        if (!empty($this->get('actionUri'))) {
+        if ((string)$this->get('actionUri') !== '') {
             return $this->get('actionUri');
         }
 
         $request = $this->getExtbaseRequestOrThrow();
 
-        $uriBuilder = GeneralUtility::makeInstance(UriBuilder::class);
+        $uriBuilder = $this->uriBuilder;
         $uriBuilder->reset()->setRequest($request)// TODO: enable these options as arguments?
         // ->setTargetPageType((int)($this->arguments['pageType'] ?? 0))
         // ->setNoCache((bool)($this->arguments['noCache'] ?? false))
@@ -65,28 +67,47 @@ class FormContext extends AbstractComponentContext
         );
     }
 
+    public function getState(): string
+    {
+        return FormState::Ready->value;
+    }
+
+    public function getContentHidden(): bool
+    {
+        return in_array($this->getState(), [FormState::Error->value, FormState::Success->value], true);
+    }
+
+    public function isIndicatorHidden(FormState $state): bool
+    {
+        return $this->getState() !== $state->value;
+    }
+
+    public function getErrorTextHidden(): bool
+    {
+        return $this->getState() !== FormState::Error->value;
+    }
+
+    public function getSuccessTextHidden(): bool
+    {
+        return $this->getState() !== FormState::Success->value;
+    }
+
     // TODO: The form viewhelper has an argument to override the field name prefix, is this needed here?
     public function getFieldNamePrefix(): string
     {
         try {
             $request = $this->getExtbaseRequestOrThrow();
-        } catch (\RuntimeException $e) {
+        } catch (\RuntimeException) {
             return '';
         }
 
-        if (!empty($this->get('extensionName'))) {
-            $extensionName = $this->get('extensionName');
-        } else {
-            $extensionName = $request->getControllerExtensionName();
-        }
+        $extensionName = (string)$this->get('extensionName') === ''
+            ? $request->getControllerExtensionName()
+            : $this->get('extensionName');
 
-        if (!empty($this->get('pluginName'))) {
-            $pluginName = $this->get('pluginName');
-        } else {
-            $pluginName = $request->getPluginName();
-        }
+        $pluginName = (string)$this->get('pluginName') === '' ? $request->getPluginName() : $this->get('pluginName');
 
-        if ($extensionName !== null && $pluginName != null) {
+        if ($extensionName !== null && $pluginName !== null) {
             return $this->extensionService->getPluginNamespace($extensionName, $pluginName);
         }
 
@@ -131,20 +152,50 @@ class FormContext extends AbstractComponentContext
             return '';
         }
 
-        if (!empty($objectName)) {
-            $fieldName = $objectName . '[' . $fieldName . ']';
+        $fieldPath = $this->parseFieldPath($fieldName);
+
+        if (!in_array($objectName, [null, '', '0'], true)) {
+            array_unshift($fieldPath, $objectName);
         }
 
         $prefix = $this->getFieldNamePrefix();
-        if ($prefix === '') {
-            return $fieldName;
+        if ($prefix !== '') {
+            array_unshift($fieldPath, $prefix);
         }
 
-        $fieldNameSegments = explode('[', $fieldName, 2);
-        $fieldName = $prefix . '[' . $fieldNameSegments[0] . ']';
+        return $this->stringifyFieldPathAsBrackets($fieldPath);
+    }
 
-        if (count($fieldNameSegments) > 1) {
-            $fieldName .= '[' . $fieldNameSegments[1];
+    /** @return list<string> */
+    protected function parseFieldPath(string $fieldName): array
+    {
+        preg_match_all('/([^.[\]]+)|\[(.*?)\]/', $fieldName, $matches, PREG_SET_ORDER);
+
+        $fieldPath = [];
+        foreach ($matches as $match) {
+            if (($match[1] ?? '') !== '') {
+                $fieldPath[] = $match[1];
+                continue;
+            }
+
+            $fieldPath[] = $match[2] ?? '';
+        }
+
+        return $fieldPath;
+    }
+
+    /** @param list<string> $fieldPath */
+    protected function stringifyFieldPathAsBrackets(array $fieldPath): string
+    {
+        $fieldName = '';
+
+        foreach ($fieldPath as $segment) {
+            if ($segment === '') {
+                $fieldName .= '[]';
+                continue;
+            }
+
+            $fieldName .= $fieldName === '' ? $segment : '[' . $segment . ']';
         }
 
         return $fieldName;

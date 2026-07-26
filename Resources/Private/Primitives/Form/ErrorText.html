@@ -1,0 +1,8 @@
+<span
+    {f:if(condition: context.errorTextHidden, then: 'hidden' )}
+    {f:if(condition: class, then: 'class="{class}"' )}
+    role="alert"
+    {ui:ref(name: 'error-text' )}
+    {ui:attributes()}>
+    <f:slot />
+</span>
