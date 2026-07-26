@@ -30,9 +30,10 @@
         }
     },
     "scripts": {
-        "test": "php ../../vendor/bin/phpunit -c phpunit.xml --testdox --colors=always --display-notices",
+        "test": "php vendor/bin/phpunit -c phpunit.xml --testdox --colors=always --display-notices",
         "test:unit": "@test --testsuite=Unit",
         "test:functional": "@test --testsuite=Functional",
+        "test:fromdocs": "php ../../vendor/bin/phpunit -c phpunit.xml --testdox --colors=always --display-notices",
         "prepare-release": [
             "rm -rf .github",
             "rm -f .gitignore",
