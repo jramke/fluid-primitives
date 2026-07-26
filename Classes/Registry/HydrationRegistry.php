@@ -12,7 +12,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 class HydrationRegistry
 {
-    private const string SCRIPT_ID = 'fluid-primitives-hydration-data';
+    private const SCRIPT_ID = 'fluid-primitives-hydration-data';
 
     private array $registry = [];
     private static ?self $instance = null;

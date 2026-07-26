@@ -20,7 +20,7 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\ViewHelperResolverDelegateInterface;
  */
 final class TemplateStructureViewHelperResolver extends ViewHelperResolver
 {
-    private const array STRUCTURE_VIEWHELPERS = [
+    private const STRUCTURE_VIEWHELPERS = [
         'layout',
         'section',
         'argument',
