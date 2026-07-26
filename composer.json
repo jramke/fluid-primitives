@@ -14,10 +14,10 @@
     ],
     "require": {
         "php": ">=8.2",
-        "typo3/cms-core": "^13 || ^14",
-        "typo3/cms-extbase": "^13 || ^14",
-        "typo3/cms-fluid": "^13.4 || ^14",
-        "typo3fluid/fluid": "^4.6 || ^5"
+        "typo3/cms-core": "^14",
+        "typo3/cms-extbase": "^14",
+        "typo3/cms-fluid": "^14",
+        "typo3fluid/fluid": "^5"
     },
     "require-dev": {
         "typo3/testing-framework": "^9.4"

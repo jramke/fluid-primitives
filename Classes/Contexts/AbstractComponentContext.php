@@ -52,7 +52,6 @@ abstract class AbstractComponentContext implements ComponentContextInterface, \A
         return $this->contextVariables;
     }
 
-    // TODO: remove `$this->getRenderingContext()->getRequest()` when v13 support is dropped
     public function getRequest(): ServerRequestInterface
     {
         if (
@@ -60,11 +59,10 @@ abstract class AbstractComponentContext implements ComponentContextInterface, \A
             method_exists($this->getRenderingContext(), 'hasAttribute') &&
             $this->getRenderingContext()->hasAttribute(ServerRequestInterface::class)
         ) {
-            $request = $this->getRenderingContext()->getAttribute(ServerRequestInterface::class);
-        } else {
-            $request = $this->getRenderingContext()->getRequest();
+            return $this->getRenderingContext()->getAttribute(ServerRequestInterface::class);
         }
-        return $request;
+
+        throw new \RuntimeException('Rendering context does not have a ServerRequestInterface attribute.', 1785067721);
     }
 
     /**

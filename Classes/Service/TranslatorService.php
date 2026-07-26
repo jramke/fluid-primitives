@@ -24,13 +24,6 @@ final class TranslatorService
     public function translate(string $key, ServerRequestInterface $request, array $arguments = []): ?string
     {
         return $this->getTranslator($request)->translate($key, self::TRANSLATIONS_FILE, $arguments);
-
-        $llString = $this->getTranslator($request)->sL('fluid_primitives.messages:');
-        if ($llString === '' || $llString === '0') {
-            return null;
-        }
-
-        return sprintf($llString, ...$arguments);
     }
 
     public function getLocale(ServerRequestInterface $request): ?string

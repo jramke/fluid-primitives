@@ -15,20 +15,15 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # TYPO3 13.4 LTS combinations
-          - php: '8.3'
-            typo3: '13.4'
-            fluid: '4'
-          - php: '8.4'
-            typo3: '13.4'
-            fluid: '4'
-
           # TYPO3 14.x combinations
+          - php: '8.2'
+            typo3: '14.3'
+            fluid: '5'
           - php: '8.3'
-            typo3: '14.1'
+            typo3: '14.3'
             fluid: '5'
           - php: '8.4'
-            typo3: '14.1'
+            typo3: '14.3'
             fluid: '5'
 
     steps:
@@ -60,6 +55,7 @@ jobs:
         run: |
           composer require --no-update \
             "typo3/cms-core:^${{ matrix.typo3 }}" \
+            "typo3/cms-extbase:^${{ matrix.typo3 }}" \
             "typo3/cms-fluid:^${{ matrix.typo3 }}" \
             "typo3fluid/fluid:^${{ matrix.fluid }}"
           composer update --prefer-dist --no-progress
