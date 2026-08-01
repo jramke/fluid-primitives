@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\ViewHelpers;
 
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
+use Jramke\FluidPrimitives\Utility\EnumUtility;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
 /**
@@ -36,7 +37,7 @@ class PartIdViewHelper extends AbstractViewHelper
         $this->registerArgument('part', 'string', 'The part name of the component', true);
         $this->registerArgument(
             'value',
-            'string',
+            'string|BackedEnum|UnitEnum|null|array',
             'Optional value for multi-instance parts (e.g. accordion items, tab triggers)',
             false,
             null,
@@ -46,11 +47,14 @@ class PartIdViewHelper extends AbstractViewHelper
     public function render(): string
     {
         if (!ComponentUtility::isComponent($this->renderingContext)) {
-            throw new \RuntimeException('The partId ViewHelper can only be used inside a component context. Make sure it is placed inside a fluid-primitives component template file.', 1752000001);
+            throw new \RuntimeException(
+                'The partId ViewHelper can only be used inside a component context. Make sure it is placed inside a fluid-primitives component template file.',
+                1752000001,
+            );
         }
 
         $part = $this->arguments['part'];
-        $value = $this->arguments['value'];
+        $value = EnumUtility::normalize($this->arguments['value']);
 
         // Check for explicit ID override from the ids prop
         $ids = $this->renderingContext->getVariableProvider()->getByPath('context.ids') ?? [];
