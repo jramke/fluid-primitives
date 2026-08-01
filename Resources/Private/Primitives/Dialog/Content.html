@@ -5,7 +5,6 @@
 
 <div
     {f:if(condition: class, then: 'class="{class}"' )}
-    id="{ui:partId(part: 'content')}"
     {ui:ref(name: 'content' , data: refData )}
     {ui:attributes(skip: 'hidden' )}
     {f:if(condition: hidden, then: 'hidden="{hidden}"' )}>

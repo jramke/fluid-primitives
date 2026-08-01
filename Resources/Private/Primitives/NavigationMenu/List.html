@@ -7,7 +7,6 @@
 <ul
     role="list"
     {f:if(condition: class, then: 'class="{class}"' )}
-    id="{ui:partId(part: 'list')}"
     {ui:ref(name: 'list' , data: refData)}
     {ui:attributes()}>
     <f:slot />

@@ -6,8 +6,7 @@
 <div
     aria-hidden="true"
     {f:if(condition: class, then: 'class="{class}"' )}
-    id="{ui:partId(part: 'item-control', value: value)}"
-    {ui:ref(name: 'item-control' , data: itemDataAttributes )}
+    {ui:ref(name: 'item-control' , value: value, data: itemDataAttributes )}
     {ui:attributes()}>
     <f:slot />
 </div>

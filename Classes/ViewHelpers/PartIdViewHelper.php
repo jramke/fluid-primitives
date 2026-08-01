@@ -57,13 +57,6 @@ class PartIdViewHelper extends AbstractViewHelper
         $part = $this->arguments['part'];
         $value = EnumUtility::normalize($this->arguments['value']);
 
-        // Check for explicit ID override from the ids prop
-        $ids = $this->renderingContext->getVariableProvider()->getByPath('context.ids') ?? [];
-        if (is_array($ids) && isset($ids[$part]) && $ids[$part] !== '') {
-            return (string)$ids[$part];
-        }
-
-        // Generate deterministic ID based on component name, root ID and part
         $componentName = ComponentUtility::getComponentBaseNameFromContext($this->renderingContext);
         $rootId = ComponentUtility::getRootIdFromContext($this->renderingContext);
 
@@ -76,15 +69,10 @@ class PartIdViewHelper extends AbstractViewHelper
             );
         }
 
-        if ($value !== null && $value !== '') {
-            return "{$componentName}:{$rootId}:{$part}:{$value}";
-        }
+        // Check for explicit ID override from the ids prop
+        $ids = $this->renderingContext->getVariableProvider()->getByPath('context.ids') ?? [];
+        $idsArray = is_array($ids) ? $ids : [];
 
-        // For the root part, zag-js omits the part name: `{componentName}:{rootId}`
-        if ($part === 'root') {
-            return "{$componentName}:{$rootId}";
-        }
-
-        return "{$componentName}:{$rootId}:{$part}";
+        return ComponentUtility::generatePartId($componentName, $rootId, $part, $value, $idsArray);
     }
 }

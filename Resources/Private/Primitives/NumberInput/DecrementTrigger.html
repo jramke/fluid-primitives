@@ -6,7 +6,6 @@
     tabindex="-1"
     {f:if(condition: context.translations.decrementLabel, then: 'aria-label="{context.translations.decrementLabel}"' )}
     {f:if(condition: class, then: 'class="{class}"' )}
-    id="{ui:partId(part: 'decrement-trigger')}"
     {f:if(condition: isDisabled, then: 'disabled' )}
     {ui:ref(name: 'decrement-trigger' , data: refData )}
     {ui:attributes()}>

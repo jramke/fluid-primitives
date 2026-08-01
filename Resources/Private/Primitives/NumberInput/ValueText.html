@@ -2,7 +2,6 @@
 
 <span
     {f:if(condition: class, then: 'class="{class}"' )}
-    id="{ui:partId(part: 'value-text')}"
     {ui:ref(name: 'value-text' )}
     {ui:attributes()}>
     {f:slot() -> f:or(alternative: context.formattedValue)}

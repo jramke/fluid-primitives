@@ -2,7 +2,6 @@
     type="button"
     {f:if(condition: context.translations.triggerLabelIdle, then: 'aria-label="{context.translations.triggerLabelIdle}"' )}
     {f:if(condition: class, then: 'class="{class}"' )}
-    id="{ui:partId(part: 'trigger')}"
     {ui:ref(name: 'trigger' )}
     {ui:attributes()}>
     <f:slot />

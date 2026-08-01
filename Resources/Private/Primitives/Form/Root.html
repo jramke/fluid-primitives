@@ -16,7 +16,6 @@
     method="{method}"
     {f:if(condition: context.resolvedAction, then: 'action="{context.resolvedAction}"' )}
     {f:if(condition: class, then: 'class="{class}"' )}
-    id="{ui:partId(part: 'form')}"
     {ui:ref(name: 'form' , data: refData )}
     {ui:attributes()}>
     <f:slot />

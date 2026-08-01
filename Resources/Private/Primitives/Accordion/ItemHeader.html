@@ -7,8 +7,7 @@
 
 <h{level}
     {f:if(condition: class, then: 'class="{class}"' )}
-    id="{ui:partId(part: 'item-header', value: value)}"
-    {ui:ref(name: 'item-header' , data: refData )}
+    {ui:ref(name: 'item-header' , value: value, data: refData )}
     {ui:attributes()}>
     <f:slot />
 </h{level}>

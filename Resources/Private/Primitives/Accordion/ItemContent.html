@@ -10,8 +10,7 @@
     role="region"
     {f:if(condition: '!{itemState.expanded}' , then: 'hidden' )}
     {f:if(condition: class, then: 'class="{class}"' )}
-    id="{ui:partId(part: 'item-content', value: value)}"
-    {ui:ref(name: 'item-content' , data: refData )}
+    {ui:ref(name: 'item-content' , value: value, data: refData )}
     {ui:attributes()}>
     <f:slot />
 </div>

@@ -14,7 +14,6 @@
     role="combobox"
     aria-haspopup="listbox"
     {f:if(condition: class, then: 'class="{class}"' )}
-    id="{ui:partId(part: 'trigger')}"
     {ui:ref(name: 'trigger' , data: refData )}
     {f:if(condition: context.disabled, then: 'disabled' )}
     aria-invalid="{context.invalid}"

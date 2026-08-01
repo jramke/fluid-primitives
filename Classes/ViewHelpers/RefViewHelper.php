@@ -6,13 +6,15 @@ namespace Jramke\FluidPrimitives\ViewHelpers;
 
 use Jramke\FluidPrimitives\Domain\Model\TagAttributes;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
+use Jramke\FluidPrimitives\Utility\EnumUtility;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
 /**
  * Generates a reference to a part of a component.
  *
  * This is used to mark parts of a component for JavaScript interaction or styling.
- * It generates data attributes that can be used to identify the part within the component's scope.
+ * It generates the element `id` (using the same deterministic formula as `ui:partId()`)
+ * along with `data-scope` and `data-part` attributes.
  *
  * ## Example
  * ```html
@@ -20,18 +22,29 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
  * ```
  * This will generate:
  * ```html
- * <div data-scope="my-component" data-part="button" data-hydrate-my-component="«uniqueRootId»">Click me</div>
+ * <div id="my-component:«uniqueRootId»:button" data-scope="my-component" data-part="button">Click me</div>
  * ```
+ *
+ * For multi-instance parts (e.g. accordion items, tab panels) pass a `value:` discriminator:
+ * ```html
+ * <div {ui:ref(name: 'item', value: value)}">...</div>
+ * ```
+ * This will generate: `id="accordion:«f1»:item:my-value" data-scope="accordion" data-part="item"`
  *
  * You can also pass additional data attributes:
  * ```html
- * <div {ui:ref(name: 'button', data: { action: 'submit', id: '123' })}">Click me</div>
+ * <div {ui:ref(name: 'button', data: { action: 'submit' })}">Click me</div>
  * ```
  * This will generate:
  * ```html
- * <div data-scope="my-component" data-part="button" data-hydrate-my-component="«uniqueRootId»" data-action="submit" data-id="123">Click me</div>
+ * <div id="..." data-scope="my-component" data-part="button" data-action="submit">Click me</div>
  * ```
  *
+ * Use `withId: false` to suppress the `id` attribute (e.g. for parts that have no unique
+ * discriminator and would produce duplicate IDs):
+ * ```html
+ * <div {ui:ref(name: 'item-group-label', withId: false)}>...</div>
+ * ```
  */
 class RefViewHelper extends AbstractViewHelper
 {
@@ -54,6 +67,20 @@ class RefViewHelper extends AbstractViewHelper
             false,
             [],
         );
+        $this->registerArgument(
+            'value',
+            'string|BackedEnum|UnitEnum|null|array',
+            'Optional discriminator for multi-instance parts (e.g. accordion items, tab triggers). Mirrors the value argument of ui:partId().',
+            false,
+            null,
+        );
+        $this->registerArgument(
+            'withId',
+            'boolean',
+            'Whether to emit the id attribute. Set to false for parts that have no unique discriminator and would produce duplicate IDs.',
+            false,
+            true,
+        );
     }
 
     public function render(): mixed
@@ -73,6 +100,9 @@ class RefViewHelper extends AbstractViewHelper
             );
         }
 
+        $part = $this->arguments['name'];
+        $value = EnumUtility::normalize($this->arguments['value']);
+
         $additionalData = $this->arguments['data'];
         if ($additionalData !== []) {
             $additionalData = array_combine(
@@ -81,11 +111,19 @@ class RefViewHelper extends AbstractViewHelper
             );
         }
 
-        $attributes = new TagAttributes(array_merge([
+        $baseAttributes = [
             'data-scope' => $componentName,
-            'data-part' => $this->arguments['name'],
-            "data-hydrate-{$componentName}" => $rootId,
-        ], $additionalData));
+            'data-part' => $part,
+        ];
+
+        if ($this->arguments['withId']) {
+            $ids = $this->renderingContext->getVariableProvider()->getByPath('context.ids') ?? [];
+            $idsArray = is_array($ids) ? $ids : [];
+            $id = ComponentUtility::generatePartId($componentName, $rootId, $part, $value, $idsArray);
+            $baseAttributes = array_merge(['id' => $id], $baseAttributes);
+        }
+
+        $attributes = new TagAttributes(array_merge($baseAttributes, $additionalData));
 
         if ($this->arguments['asArray']) {
             return $attributes->renderAsArray();
@@ -94,3 +132,4 @@ class RefViewHelper extends AbstractViewHelper
         return (string)$attributes;
     }
 }
+

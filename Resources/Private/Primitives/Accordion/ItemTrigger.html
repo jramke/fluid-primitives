@@ -11,8 +11,7 @@
     {f:if(condition: itemState.disabled, then: 'disabled' )}
     aria-disabled="{f:if(condition: itemState.disabled, then: 'true', else: 'false')}"
     {f:if(condition: class, then: 'class="{class}"' )}
-    id="{ui:partId(part: 'item-trigger', value: value)}"
-    {ui:ref(name: 'item-trigger' , data: refData )}
+    {ui:ref(name: 'item-trigger' , value: value, data: refData )}
     {ui:attributes()}>
     <f:slot />
 </button>

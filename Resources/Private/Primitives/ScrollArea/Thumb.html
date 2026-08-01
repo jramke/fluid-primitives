@@ -2,8 +2,7 @@
 
 <div
     {f:if(condition: class, then: 'class="{class}"' )}
-    id="{ui:partId(part: 'thumb', value: resolvedOrientation)}"
-    {ui:ref(name: 'thumb' , data: {orientation: resolvedOrientation} )}
+    {ui:ref(name: 'thumb' , value: resolvedOrientation, data: {orientation: resolvedOrientation} )}
     style="{context.thumbStyles}"
     {ui:attributes()}>
 </div>

@@ -10,7 +10,6 @@
 
 <nav
     {f:if(condition: class, then: 'class="{class}"' )}
-    id="{ui:partId(part: 'root')}"
     {ui:ref(name: 'root' , data: refData)}
     {ui:attributes()}>
     <f:slot />

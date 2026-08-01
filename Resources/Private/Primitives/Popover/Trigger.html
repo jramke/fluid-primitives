@@ -5,7 +5,6 @@
     aria-haspopup="dialog"
     aria-expanded="{f:if(condition: context.defaultOpen, then: 'true', else: 'false')}"
     {f:if(condition: class, then: 'class="{class}"' )}
-    id="{ui:partId(part: 'trigger')}"
     {ui:ref(name: 'trigger' , data: refData )}
     {ui:attributes()}>
     <f:slot />

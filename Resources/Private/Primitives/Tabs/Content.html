@@ -8,8 +8,7 @@
     role="tabpanel"
     tabindex="{f:if(condition: context.composite, then: '0', else: '-1')}"
     {f:if(condition: class, then: 'class="{class}"' )}
-    id="{ui:partId(part: 'content', value: value)}"
-    {ui:ref(name: 'content' , data: refData )}
+    {ui:ref(name: 'content' , value: value, data: refData )}
     {ui:attributes(skip: 'hidden' )}
     {f:if(condition: '!{selected}' , then: 'hidden' )}>
     <f:slot />

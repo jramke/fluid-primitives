@@ -14,7 +14,6 @@
     {f:if(condition: readOnly, then: 'data-readonly' )}
     {f:if(condition: required, then: 'data-required' )}
     {f:if(condition: class, then: 'class="{class}"' )}
-    id="{ui:partId(part: 'root')}"
     {ui:ref(name: 'root' , data: refData )}
     {ui:attributes()}>
     <f:slot />
