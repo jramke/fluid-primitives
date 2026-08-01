@@ -39,7 +39,7 @@ final class PartIdViewHelperTest extends TestCase
 
         $result = $this->render('root');
 
-        $this->assertSame('collapsible:«f1»:root', $result);
+        $this->assertSame('collapsible:«f1»', $result);
     }
 
     #[Test]
@@ -83,7 +83,7 @@ final class PartIdViewHelperTest extends TestCase
 
         $result = $this->render('root');
 
-        $this->assertSame('collapsible:«f1»:root', $result);
+        $this->assertSame('collapsible:«f1»', $result);
     }
 
     #[Test]

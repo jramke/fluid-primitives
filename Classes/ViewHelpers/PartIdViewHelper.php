@@ -20,7 +20,8 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
  * ```html
  * <div id="{ui:partId(part: 'root')}">...</div>
  * ```
- * This will generate: `id="field:«f1»:root"` (or the user-provided ID if set via `ids` prop)
+ * This will generate: `id="field:«f1»"` (or the user-provided ID if set via `ids` prop).
+ * The root part omits the part name suffix, matching the zag-js convention.
  *
  * For multi-instance parts (e.g. accordion items, tab panels):
  * ```html
@@ -77,6 +78,11 @@ class PartIdViewHelper extends AbstractViewHelper
 
         if ($value !== null && $value !== '') {
             return "{$componentName}:{$rootId}:{$part}:{$value}";
+        }
+
+        // For the root part, zag-js omits the part name: `{componentName}:{rootId}`
+        if ($part === 'root') {
+            return "{$componentName}:{$rootId}";
         }
 
         return "{$componentName}:{$rootId}:{$part}";
