@@ -2,137 +2,163 @@
 
 declare(strict_types=1);
 
+namespace Jramke\FluidPrimitives\Tests\Unit\ViewHelpers;
+
+use Jramke\FluidPrimitives\Tests\TestCase;
 use Jramke\FluidPrimitives\ViewHelpers\PartIdViewHelper;
+use PHPUnit\Framework\Attributes\Test;
+use RuntimeException;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContext;
 use TYPO3Fluid\Fluid\Core\Variables\StandardVariableProvider;
 
-describe('PartIdViewHelper', function () {
-    beforeEach(function () {
+final class PartIdViewHelperTest extends TestCase
+{
+    private RenderingContext $renderingContext;
+
+    private StandardVariableProvider $variableProvider;
+
+    private PartIdViewHelper $viewHelper;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
         $this->renderingContext = new RenderingContext();
         $this->variableProvider = new StandardVariableProvider();
+
         $this->renderingContext->setVariableProvider($this->variableProvider);
 
         $this->viewHelper = new PartIdViewHelper();
         $this->viewHelper->setRenderingContext($this->renderingContext);
-    });
+    }
 
-    describe('within root component context (rootId available directly)', function () {
-        beforeEach(function () {
-            $this->variableProvider->add('component', [
-                'fullName' => 'Collapsible.Root',
-            ]);
-            $this->variableProvider->add('rootId', '«f1»');
-            $this->variableProvider->add('context', ['ids' => []]);
-        });
+    #[Test]
+    public function generatesDeterministicIdForPartWithinRootComponent(): void
+    {
+        $this->setupRootComponent();
 
-        it('generates deterministic ID for a part', function () {
-            $this->viewHelper->setArguments([
-                'part' => 'root',
-                'value' => null,
-            ]);
+        $result = $this->render('root');
 
-            $result = $this->viewHelper->render();
+        $this->assertSame('collapsible:«f1»:root', $result);
+    }
 
-            expect($result)->toBe('collapsible:«f1»:root');
-        });
+    #[Test]
+    public function generatesIdWithValueForMultiInstancePart(): void
+    {
+        $this->setupRootComponent();
 
-        it('generates ID with value for multi-instance parts', function () {
-            $this->viewHelper->setArguments([
-                'part' => 'trigger',
-                'value' => 'tab-1',
-            ]);
+        $result = $this->render('trigger', 'tab-1');
 
-            $result = $this->viewHelper->render();
+        $this->assertSame('collapsible:«f1»:trigger:tab-1', $result);
+    }
 
-            expect($result)->toBe('collapsible:«f1»:trigger:tab-1');
-        });
+    #[Test]
+    public function usesExplicitIdFromIdsConfiguration(): void
+    {
+        $this->setupRootComponent();
 
-        it('uses explicit ID from ids prop when provided', function () {
-            $this->variableProvider->remove('context');
-            $this->variableProvider->add('context', ['ids' => ['root' => 'my-custom-root-id']]);
+        $this->variableProvider->remove('context');
+        $this->variableProvider->add('context', [
+            'ids' => [
+                'root' => 'my-custom-root-id',
+            ],
+        ]);
 
-            $this->viewHelper->setArguments([
-                'part' => 'root',
-                'value' => null,
-            ]);
+        $result = $this->render('root');
 
-            $result = $this->viewHelper->render();
+        $this->assertSame('my-custom-root-id', $result);
+    }
 
-            expect($result)->toBe('my-custom-root-id');
-        });
+    #[Test]
+    public function fallsBackToGeneratedIdWhenExplicitIdIsEmpty(): void
+    {
+        $this->setupRootComponent();
 
-        it('falls back to generated ID when explicit ID is empty string', function () {
-            $this->variableProvider->remove('context');
-            $this->variableProvider->add('context', ['ids' => ['root' => '']]);
+        $this->variableProvider->remove('context');
+        $this->variableProvider->add('context', [
+            'ids' => [
+                'root' => '',
+            ],
+        ]);
 
-            $this->viewHelper->setArguments([
-                'part' => 'root',
-                'value' => null,
-            ]);
+        $result = $this->render('root');
 
-            $result = $this->viewHelper->render();
+        $this->assertSame('collapsible:«f1»:root', $result);
+    }
 
-            expect($result)->toBe('collapsible:«f1»:root');
-        });
+    #[Test]
+    public function supportsDashedPartNames(): void
+    {
+        $this->setupRootComponent();
 
-        it('uses dashed part names correctly', function () {
-            $this->viewHelper->setArguments([
-                'part' => 'item-trigger',
-                'value' => 'item-1',
-            ]);
+        $result = $this->render('item-trigger', 'item-1');
 
-            $result = $this->viewHelper->render();
+        $this->assertSame('collapsible:«f1»:item-trigger:item-1', $result);
+    }
 
-            expect($result)->toBe('collapsible:«f1»:item-trigger:item-1');
-        });
-    });
+    #[Test]
+    public function generatesIdUsingRootIdFromNestedComponentContext(): void
+    {
+        $this->variableProvider->add('component', [
+            'fullName' => 'Accordion.Item',
+        ]);
 
-    describe('within non-root component context (rootId via context.rootId)', function () {
-        beforeEach(function () {
-            $this->variableProvider->add('component', [
-                'fullName' => 'Accordion.Item',
-            ]);
-            $this->variableProvider->add('context', ['rootId' => '«f2»', 'ids' => []]);
-        });
+        $this->variableProvider->add('context', [
+            'rootId' => '«f2»',
+            'ids' => [],
+        ]);
 
-        it('generates ID using rootId from context', function () {
-            $this->viewHelper->setArguments([
-                'part' => 'item',
-                'value' => 'my-item',
-            ]);
+        $result = $this->render('item', 'my-item');
 
-            $result = $this->viewHelper->render();
+        $this->assertSame('accordion:«f2»:item:my-item', $result);
+    }
 
-            expect($result)->toBe('accordion:«f2»:item:my-item');
-        });
-    });
+    #[Test]
+    public function throwsExceptionOutsideComponentContext(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('can only be used inside a component context');
 
-    describe('outside component context', function () {
-        it('throws exception when used outside component', function () {
-            $this->viewHelper->setArguments([
-                'part' => 'root',
-                'value' => null,
-            ]);
+        $this->render('root');
+    }
 
-            expect(fn() => $this->viewHelper->render())
-                ->toThrow(RuntimeException::class, 'can only be used inside a component context');
-        });
-    });
+    #[Test]
+    public function throwsExceptionWhenRootIdIsMissing(): void
+    {
+        $this->variableProvider->add('component', [
+            'fullName' => 'Collapsible.Root',
+        ]);
 
-    describe('missing rootId', function () {
-        it('throws exception when rootId is missing', function () {
-            $this->variableProvider->add('component', [
-                'fullName' => 'Collapsible.Root',
-            ]);
-            $this->variableProvider->add('context', ['ids' => []]);
-            // rootId not set
+        $this->variableProvider->add('context', [
+            'ids' => [],
+        ]);
 
-            $this->viewHelper->setArguments([
-                'part' => 'root',
-                'value' => null,
-            ]);
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('No rootId found');
 
-            expect(fn() => $this->viewHelper->render())->toThrow(RuntimeException::class, 'No rootId found');
-        });
-    });
-});
+        $this->render('root');
+    }
+
+    private function setupRootComponent(): void
+    {
+        $this->variableProvider->add('component', [
+            'fullName' => 'Collapsible.Root',
+        ]);
+
+        $this->variableProvider->add('rootId', '«f1»');
+
+        $this->variableProvider->add('context', [
+            'ids' => [],
+        ]);
+    }
+
+    private function render(string $part, ?string $value = null): string
+    {
+        $this->viewHelper->setArguments([
+            'part' => $part,
+            'value' => $value,
+        ]);
+
+        return $this->viewHelper->render();
+    }
+}
