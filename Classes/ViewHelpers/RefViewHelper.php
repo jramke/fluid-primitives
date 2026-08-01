@@ -13,7 +13,7 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
  * Generates a reference to a part of a component.
  *
  * This is used to mark parts of a component for JavaScript interaction or styling.
- * It generates the element `id` (using the same deterministic formula as `ui:partId()`)
+ * It generates the element `id` (using a deterministic formula based on component name, root ID and part name)
  * along with `data-scope` and `data-part` attributes.
  *
  * ## Example
@@ -29,7 +29,6 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
  * ```html
  * <div {ui:ref(name: 'item', value: value)}">...</div>
  * ```
- * This will generate: `id="accordion:«f1»:item:my-value" data-scope="accordion" data-part="item"`
  *
  * You can also pass additional data attributes:
  * ```html
@@ -70,7 +69,7 @@ class RefViewHelper extends AbstractViewHelper
         $this->registerArgument(
             'value',
             'string|BackedEnum|UnitEnum|null|array',
-            'Optional discriminator for multi-instance parts (e.g. accordion items, tab triggers). Mirrors the value argument of ui:partId().',
+            'Optional discriminator for multi-instance parts (e.g. accordion items, tab triggers).',
             false,
             null,
         );
