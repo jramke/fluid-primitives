@@ -191,7 +191,7 @@ final class AsChildRenderingTest extends FunctionalTestCase
 
         $this->assertArrayHasKey('dialog', $hydrationData);
         $this->assertArrayHasKey('as-child-dialog', $hydrationData['dialog']);
-        $this->assertStringContainsString('data-hydrate-dialog="as-child-dialog"', $html);
+        $this->assertStringContainsString('id="dialog:as-child-dialog"', $html);
     }
 
     #[Test]
@@ -216,7 +216,8 @@ final class AsChildRenderingTest extends FunctionalTestCase
         $this->assertStringContainsString('data-part="trigger"', $html);
         $this->assertStringContainsString('data-part="close-trigger"', $html);
 
-        preg_match_all('/data-hydrate-dialog="multi-aschild"/', $html, $matches);
+        // Check that multiple parts within the same dialog instance have IDs using the instance's rootId
+        preg_match_all('/id="dialog:multi-aschild/', $html, $matches);
         $this->assertGreaterThanOrEqual(3, count($matches[0]));
     }
 

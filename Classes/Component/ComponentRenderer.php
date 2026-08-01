@@ -313,7 +313,9 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
             }
 
             // only register the components props for hydration if the user used the ui:ref viewhelper
-            $hasRef = preg_match('/data-hydrate-[^=]*="' . preg_quote($rootId, '/') . '"/', $rendered) === 1;
+            // ui:ref always emits data-scope="{componentName}", so that's our detection signal
+            $componentBaseName = ComponentUtility::getComponentBaseNameFromContext($renderingContext);
+            $hasRef = str_contains($rendered, 'data-scope="' . $componentBaseName . '"');
             $manuallyExposedToClient = str_contains($rendered, Constants::MANUALLY_EXPOSED_TO_CLIENT_MARKER);
             if ($hasRef || $manuallyExposedToClient) {
                 if ($manuallyExposedToClient) {
