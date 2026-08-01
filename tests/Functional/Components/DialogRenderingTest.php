@@ -35,7 +35,7 @@ final class DialogRenderingTest extends FunctionalTestCase
             </primitives:dialog.root>
         ');
 
-        $this->assertMatchesRegularExpression('/data-hydrate-dialog="[^"]+"/', $html);
+        $this->assertMatchesRegularExpression('/id="dialog:[^"]+"/', $html);
     }
 
     #[Test]
@@ -48,7 +48,7 @@ final class DialogRenderingTest extends FunctionalTestCase
             </primitives:dialog.root>
         ');
 
-        $this->assertStringContainsString('data-hydrate-dialog="my-custom-dialog"', $html);
+        $this->assertStringContainsString('id="dialog:my-custom-dialog"', $html);
     }
 
     #[Test]
@@ -172,7 +172,7 @@ final class DialogRenderingTest extends FunctionalTestCase
         ');
 
         $this->assertStringContainsString('data-part="close-trigger"', $html);
-        $this->assertStringContainsString('data-hydrate-dialog="parent-dialog"', $html);
+        $this->assertStringContainsString('id="dialog:parent-dialog"', $html);
 
         preg_match_all('/data-part="close-trigger"/', $html, $closeMatches);
         $this->assertCount(2, $closeMatches[0]);

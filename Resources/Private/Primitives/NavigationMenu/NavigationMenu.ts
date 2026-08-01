@@ -19,7 +19,7 @@ export class NavigationMenu extends Component<navigationMenu.Props, navigationMe
         const listEl = this.getElement('list');
         if (listEl) this.spreadProps(listEl, this.api.getListProps());
 
-        // hydrate indicator-track wrapper (no specific Zag API, just remove data-hydrate attributes)
+        // hydrate indicator-track wrapper (no specific Zag API)
         this.getElement('indicator-track');
 
         const itemEls = this.getElements('item');

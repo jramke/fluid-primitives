@@ -15,7 +15,6 @@
     aria-disabled="{f:if(condition: disabled, then: 'true', else: 'false')}"
     aria-readonly="{f:if(condition: readOnly, then: 'true', else: 'false')}"
     {f:if(condition: class, then: 'class="{class}"' )}
-    {f:if(condition: context.ids.root, then: 'id="{context.ids.root}"' )}
     {ui:ref(name: 'root' , data: refData )}
     {ui:attributes()}>
     <f:slot />

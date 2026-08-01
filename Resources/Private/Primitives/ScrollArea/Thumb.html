@@ -1,7 +1,8 @@
+<f:variable name="resolvedOrientation" value="{f:if(condition: context.scrollbar.orientation, then: context.scrollbar.orientation, else: 'vertical')}" />
+
 <div
     {f:if(condition: class, then: 'class="{class}"' )}
-    {f:if(condition: context.ids.thumb, then: 'id="{context.ids.thumb}"' )}
-    {ui:ref(name: 'thumb' , data: {orientation: context.scrollbar.orientation} )}
+    {ui:ref(name: 'thumb' , value: resolvedOrientation, data: {orientation: resolvedOrientation} )}
     style="{context.thumbStyles}"
     {ui:attributes()}>
 </div>

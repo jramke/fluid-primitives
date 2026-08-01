@@ -160,27 +160,40 @@ export class ComponentHydrator {
         this.ids = ids;
     }
 
+    /**
+     * Computes the deterministic part ID following the zag-js / fluid-primitives convention:
+     * - Explicit override in `this.ids[part]` takes priority.
+     * - Root part returns `{componentName}:{rootId}` (no suffix).
+     * - Multi-instance parts with a value return `{componentName}:{rootId}:{part}:{value}`.
+     * - All other parts return `{componentName}:{rootId}:{part}`.
+     */
+    private computePartId(part: string, value?: string): string {
+        if (this.ids[part]) return this.ids[part];
+        if (value !== undefined && value !== '') return `${this.componentName}:${this.rootId}:${part}:${value}`;
+        if (part === 'root') return `${this.componentName}:${this.rootId}`;
+        return `${this.componentName}:${this.rootId}:${part}`;
+    }
+
     getElement<T extends Element>(part: string, parent: Element | Document = this.doc): T | null {
         if (this.elementRefs.has(part)) {
             return (this.elementRefs.get(part) as T) || null;
         }
 
         let element: T | null = null;
+        const isDoc = parent === this.doc;
 
-        if (this.ids[part]) {
-            element = parent.querySelector<T>(`#${this.ids[part]}`);
+        if (isDoc) {
+            // Use getElementById (no CSS-escaping needed; IDs may contain colons)
+            element = this.doc.getElementById(this.computePartId(part)) as T | null;
         } else {
-            element = parent.querySelector<T>(
-                `[data-hydrate-${this.componentName}="${this.rootId}"][data-part="${part}"][data-scope="${this.componentName}"]`
+            // Searching within a specific parent element (e.g. item-group-label inside item-group)
+            element = (parent as Element).querySelector<T>(
+                `[data-scope="${this.componentName}"][data-part="${part}"]`
             );
         }
 
-        if (element) {
-            if (parent === this.doc) {
-                this.elementRefs.set(part, element);
-            }
-            element.removeAttribute(`data-hydrate-${this.componentName}`);
-            (element as any).__rootId = this.rootId;
+        if (element && isDoc) {
+            this.elementRefs.set(part, element);
         }
 
         return element;
@@ -191,48 +204,41 @@ export class ComponentHydrator {
             return this.elementRefs.get(part) as T[];
         }
 
-        let elements: T[] = [];
+        const isDoc = parent === this.doc;
+        let searchScope: Element | Document;
 
-        if (this.ids[part]) {
-            elements = Array.from(parent.querySelectorAll<T>(`#${this.ids[part]}`));
+        if (!isDoc) {
+            searchScope = parent;
         } else {
-            elements = Array.from(
-                parent.querySelectorAll<T>(
-                    `[data-hydrate-${this.componentName}="${this.rootId}"][data-part="${part}"][data-scope="${this.componentName}"]`
-                )
-            );
+            // Scope queries under the root element so we stay within this component instance
+            searchScope = this.doc.getElementById(this.computePartId('root')) || this.doc;
         }
 
-        if (parent === this.doc) {
+        const elements = Array.from(
+            searchScope.querySelectorAll<T>(
+                `[data-scope="${this.componentName}"][data-part="${part}"]`
+            )
+        );
+
+        if (isDoc) {
             this.elementRefs.set(part, elements);
         }
-        elements.forEach(el => el.removeAttribute(`data-hydrate-${this.componentName}`));
 
         return elements;
     }
 
-    generateRefAttributesString(part: string): string {
-        const id = this.ids[part] || `${this.rootId}-${part}`;
-        return `data-scope="${this.componentName}" data-part="${part}" data-hydrate-${this.componentName}="${id}"`;
+    generateRefAttributesString(part: string, value?: string): string {
+        const id = this.computePartId(part, value);
+        return `id="${id}" data-scope="${this.componentName}" data-part="${part}"`;
     }
 
-    setRefAttributes(element: Element, part: string): void {
-        const attributes = this.generateRefAttributesString(part);
-        const attributesArray = attributes.split(' ').map(attr => attr.trim());
-        attributesArray.forEach(attr => {
-            const [key, value] = attr.split('=');
-            element.setAttribute(key, value.replace(/"/g, ''));
-        });
+    setRefAttributes(element: Element, part: string, value?: string): void {
+        element.setAttribute('id', this.computePartId(part, value));
+        element.setAttribute('data-scope', this.componentName);
+        element.setAttribute('data-part', part);
     }
 
     destroy() {
-        this.elementRefs.forEach(el => {
-            if (el instanceof Element) {
-                el.setAttribute(`data-hydrate-${this.componentName}`, this.rootId);
-            } else {
-                el.forEach(e => e.setAttribute(`data-hydrate-${this.componentName}`, this.rootId));
-            }
-        });
         this.elementRefs.clear();
     }
 }

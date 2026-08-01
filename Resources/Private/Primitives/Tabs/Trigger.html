@@ -14,8 +14,7 @@
     {f:if(condition: disabled, then: 'disabled' )}
     tabindex="{tabindex}"
     {f:if(condition: class, then: 'class="{class}"' )}
-    {f:if(condition: context.ids.trigger, then: 'id="{context.ids.trigger}"' )}
-    {ui:ref(name: 'trigger' , data: refData )}
+    {ui:ref(name: 'trigger' , value: value, data: refData )}
     {ui:attributes()}>
     <f:slot />
 </button>
