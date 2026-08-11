@@ -48,7 +48,8 @@ final class DialogRenderingTest extends FunctionalTestCase
             </primitives:dialog.root>
         ');
 
-        $this->assertStringContainsString('id="dialog:my-custom-dialog"', $html);
+        $this->assertStringContainsString('id="dialog:my-custom-dialog:trigger"', $html);
+        $this->assertStringContainsString('id="dialog:my-custom-dialog:content"', $html);
     }
 
     #[Test]
@@ -172,7 +173,12 @@ final class DialogRenderingTest extends FunctionalTestCase
         ');
 
         $this->assertStringContainsString('data-part="close-trigger"', $html);
-        $this->assertStringContainsString('id="dialog:parent-dialog"', $html);
+
+        $this->assertStringContainsString('id="dialog:parent-dialog:trigger"', $html);
+        $this->assertStringContainsString('id="dialog:parent-dialog:content"', $html);
+
+        $this->assertStringContainsString('id="dialog:child-dialog:trigger"', $html);
+        $this->assertStringContainsString('id="dialog:child-dialog:content"', $html);
 
         preg_match_all('/data-part="close-trigger"/', $html, $closeMatches);
         $this->assertCount(2, $closeMatches[0]);

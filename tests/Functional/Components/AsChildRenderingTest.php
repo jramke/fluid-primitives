@@ -191,7 +191,8 @@ final class AsChildRenderingTest extends FunctionalTestCase
 
         $this->assertArrayHasKey('dialog', $hydrationData);
         $this->assertArrayHasKey('as-child-dialog', $hydrationData['dialog']);
-        $this->assertStringContainsString('id="dialog:as-child-dialog"', $html);
+        $this->assertStringContainsString('id="dialog:as-child-dialog:trigger"', $html);
+        $this->assertStringContainsString('id="dialog:as-child-dialog:content"', $html);
     }
 
     #[Test]
