@@ -160,17 +160,19 @@ export class ComponentHydrator {
         this.ids = ids;
     }
 
-    /**
-     * Computes the deterministic part ID following the zag-js / fluid-primitives convention:
-     * - Explicit override in `this.ids[part]` takes priority.
-     * - Root part returns `{componentName}:{rootId}` (no suffix).
-     * - Multi-instance parts with a value return `{componentName}:{rootId}:{part}:{value}`.
-     * - All other parts return `{componentName}:{rootId}:{part}`.
-     */
     private computePartId(part: string, value?: string): string {
-        if (this.ids[part]) return this.ids[part];
-        if (value !== undefined && value !== '') return `${this.componentName}:${this.rootId}:${part}:${value}`;
-        if (part === 'root') return `${this.componentName}:${this.rootId}`;
+        if (this.ids[part]) {
+            return this.ids[part];
+        }
+
+        if (part === 'root') {
+            return `${this.componentName}:${this.rootId}`;
+        }
+
+        if (value !== undefined && value !== '') {
+            return `${this.componentName}:${this.rootId}:${part}:${value}`;
+        }
+
         return `${this.componentName}:${this.rootId}:${part}`;
     }
 
