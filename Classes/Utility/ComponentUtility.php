@@ -120,6 +120,36 @@ class ComponentUtility
         return count($componentParts) > 1;
     }
 
+    /**
+     * Generates a deterministic part ID following the zag-js DOM convention.
+     *
+     * - Explicit override in `$idsOverrides[$part]` takes priority.
+     * - The root part returns `{componentName}:{rootId}` (no suffix), matching zag-js.
+     * - Multi-instance parts with a `$value` return `{componentName}:{rootId}:{part}:{value}`.
+     * - All other parts return `{componentName}:{rootId}:{part}`.
+     */
+    public static function generatePartId(
+        string $componentName,
+        string $rootId,
+        string $part,
+        ?string $value = null,
+        array $idsOverrides = [],
+    ): string {
+        if (isset($idsOverrides[$part]) && $idsOverrides[$part] !== '') {
+            return (string)$idsOverrides[$part];
+        }
+
+        if ($value !== null && $value !== '') {
+            return "{$componentName}:{$rootId}:{$part}:{$value}";
+        }
+
+        if ($part === 'root') {
+            return "{$componentName}:{$rootId}";
+        }
+
+        return "{$componentName}:{$rootId}:{$part}";
+    }
+
     public static function getRootIdFromContext(RenderingContextInterface $renderingContext): string
     {
         $isRootComponent = self::isRootComponent($renderingContext);

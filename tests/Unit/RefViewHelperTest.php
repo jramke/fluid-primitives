@@ -33,18 +33,22 @@ final class RefViewHelperTest extends TestCase
     {
         $this->variableProvider->add('component', ['fullName' => 'Collapsible.Root']);
         $this->variableProvider->add('rootId', '«f1»');
+        $this->variableProvider->add('context', ['ids' => []]);
 
         $this->viewHelper->setArguments([
             'name' => 'trigger',
             'asArray' => false,
             'data' => [],
+            'value' => null,
+            'withId' => true,
         ]);
 
         $result = $this->viewHelper->render();
 
+        $this->assertStringContainsString('id="collapsible:«f1»:trigger"', $result);
         $this->assertStringContainsString('data-scope="collapsible"', $result);
         $this->assertStringContainsString('data-part="trigger"', $result);
-        $this->assertStringContainsString('data-hydrate-collapsible="«f1»"', $result);
+        $this->assertStringNotContainsString('data-hydrate-', $result);
     }
 
     #[Test]
@@ -52,17 +56,83 @@ final class RefViewHelperTest extends TestCase
     {
         $this->variableProvider->add('component', ['fullName' => 'Collapsible.Root']);
         $this->variableProvider->add('rootId', '«f1»');
+        $this->variableProvider->add('context', ['ids' => []]);
 
         $this->viewHelper->setArguments([
             'name' => 'root',
             'asArray' => false,
             'data' => [],
+            'value' => null,
+            'withId' => true,
         ]);
 
         $result = $this->viewHelper->render();
 
+        $this->assertStringContainsString('id="collapsible:«f1»"', $result);
         $this->assertStringContainsString('data-part="root"', $result);
-        $this->assertStringContainsString('data-hydrate-collapsible="«f1»"', $result);
+        $this->assertStringNotContainsString('data-hydrate-', $result);
+    }
+
+    #[Test]
+    public function generatesIdWithValueForMultiInstancePart(): void
+    {
+        $this->variableProvider->add('component', ['fullName' => 'Accordion.Item']);
+        $this->variableProvider->add('context', ['rootId' => '«f2»', 'ids' => []]);
+
+        $this->viewHelper->setArguments([
+            'name' => 'item',
+            'asArray' => false,
+            'data' => [],
+            'value' => 'my-item',
+            'withId' => true,
+        ]);
+
+        $result = $this->viewHelper->render();
+
+        $this->assertStringContainsString('id="accordion:«f2»:item:my-item"', $result);
+        $this->assertStringContainsString('data-part="item"', $result);
+    }
+
+    #[Test]
+    public function suppressesIdWhenWithIdIsFalse(): void
+    {
+        $this->variableProvider->add('component', ['fullName' => 'Select.Root']);
+        $this->variableProvider->add('rootId', '«f1»');
+        $this->variableProvider->add('context', ['ids' => []]);
+
+        $this->viewHelper->setArguments([
+            'name' => 'item-group-label',
+            'asArray' => false,
+            'data' => [],
+            'value' => null,
+            'withId' => false,
+        ]);
+
+        $result = $this->viewHelper->render();
+
+        $this->assertStringNotContainsString('id=', $result);
+        $this->assertStringContainsString('data-scope="select"', $result);
+        $this->assertStringContainsString('data-part="item-group-label"', $result);
+    }
+
+    #[Test]
+    public function usesExplicitIdFromIdsConfiguration(): void
+    {
+        $this->variableProvider->add('component', ['fullName' => 'Collapsible.Root']);
+        $this->variableProvider->add('rootId', '«f1»');
+        $this->variableProvider->add('context', ['ids' => ['trigger' => 'my-custom-trigger-id']]);
+
+        $this->viewHelper->setArguments([
+            'name' => 'trigger',
+            'asArray' => false,
+            'data' => [],
+            'value' => null,
+            'withId' => true,
+        ]);
+
+        $result = $this->viewHelper->render();
+
+        $this->assertStringContainsString('id="my-custom-trigger-id"', $result);
     }
 
     #[Test]
@@ -70,6 +140,7 @@ final class RefViewHelperTest extends TestCase
     {
         $this->variableProvider->add('component', ['fullName' => 'Collapsible.Root']);
         $this->variableProvider->add('rootId', '«f1»');
+        $this->variableProvider->add('context', ['ids' => []]);
 
         $this->viewHelper->setArguments([
             'name' => 'trigger',
@@ -78,6 +149,8 @@ final class RefViewHelperTest extends TestCase
                 'action' => 'toggle',
                 'state' => 'collapsed',
             ],
+            'value' => null,
+            'withId' => true,
         ]);
 
         $result = $this->viewHelper->render();
@@ -91,34 +164,40 @@ final class RefViewHelperTest extends TestCase
     {
         $this->variableProvider->add('component', ['fullName' => 'Collapsible.Root']);
         $this->variableProvider->add('rootId', '«f1»');
+        $this->variableProvider->add('context', ['ids' => []]);
 
         $this->viewHelper->setArguments([
             'name' => 'trigger',
             'asArray' => true,
             'data' => [],
+            'value' => null,
+            'withId' => true,
         ]);
 
         $result = $this->viewHelper->render();
 
         $this->assertIsArray($result);
+        $this->assertArrayHasKey('id', $result);
         $this->assertArrayHasKey('data-scope', $result);
         $this->assertArrayHasKey('data-part', $result);
-        $this->assertArrayHasKey('data-hydrate-collapsible', $result);
+        $this->assertArrayNotHasKey('data-hydrate-collapsible', $result);
+        $this->assertSame('collapsible:«f1»:trigger', $result['id']);
         $this->assertSame('collapsible', $result['data-scope']);
         $this->assertSame('trigger', $result['data-part']);
-        $this->assertSame('«f1»', $result['data-hydrate-collapsible']);
     }
 
     #[Test]
     public function handlesAccordionComponentNameCorrectly(): void
     {
         $this->variableProvider->add('component', ['fullName' => 'Accordion.Item']);
-        $this->variableProvider->add('context', ['rootId' => '«f1»']);
+        $this->variableProvider->add('context', ['rootId' => '«f1»', 'ids' => []]);
 
         $this->viewHelper->setArguments([
             'name' => 'item',
             'asArray' => false,
             'data' => [],
+            'value' => null,
+            'withId' => true,
         ]);
 
         $result = $this->viewHelper->render();
@@ -130,12 +209,14 @@ final class RefViewHelperTest extends TestCase
     public function handlesPrimitivesNamespaceCorrectly(): void
     {
         $this->variableProvider->add('component', ['fullName' => 'Primitives.Dialog.Root']);
-        $this->variableProvider->add('context', ['rootId' => '«f1»']);
+        $this->variableProvider->add('context', ['rootId' => '«f1»', 'ids' => []]);
 
         $this->viewHelper->setArguments([
             'name' => 'root',
             'asArray' => false,
             'data' => [],
+            'value' => null,
+            'withId' => true,
         ]);
 
         $result = $this->viewHelper->render();
@@ -150,6 +231,8 @@ final class RefViewHelperTest extends TestCase
             'name' => 'trigger',
             'asArray' => false,
             'data' => [],
+            'value' => null,
+            'withId' => true,
         ]);
 
         $this->expectException(RuntimeException::class);
@@ -167,6 +250,8 @@ final class RefViewHelperTest extends TestCase
             'name' => 'trigger',
             'asArray' => false,
             'data' => [],
+            'value' => null,
+            'withId' => true,
         ]);
 
         $this->expectException(RuntimeException::class);

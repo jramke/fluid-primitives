@@ -39,7 +39,7 @@ final class AccordionRenderingTest extends FunctionalTestCase
             </primitives:accordion.root>
         ');
 
-        $this->assertMatchesRegularExpression('/data-hydrate-accordion="[^"]+"/', $html);
+        $this->assertMatchesRegularExpression('/id="accordion:[^"]+"/', $html);
     }
 
     #[Test]
