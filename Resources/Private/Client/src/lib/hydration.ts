@@ -189,9 +189,7 @@ export class ComponentHydrator {
             element = this.doc.getElementById(this.computePartId(part)) as T | null;
         } else {
             // Searching within a specific parent element (e.g. item-group-label inside item-group)
-            element = (parent as Element).querySelector<T>(
-                `[data-scope="${this.componentName}"][data-part="${part}"]`
-            );
+            element = (parent as Element).querySelector<T>(`#${this.computePartId(part)}`);
         }
 
         if (element && isDoc) {
@@ -209,20 +207,24 @@ export class ComponentHydrator {
         const isDoc = parent === this.doc;
         let searchScope: Element | Document;
 
-        if (!isDoc) {
-            searchScope = parent;
+        if (isDoc) {
+            searchScope = this.getElement('root') || this.doc;
         } else {
-            // Scope queries under the root element so we stay within this component instance
-            searchScope = this.doc.getElementById(this.computePartId('root')) || this.doc;
+            searchScope = parent;
+        }
+
+        if (!searchScope) {
+            console.warn(
+                `Search scope not found for component ${this.componentName} with root ID ${this.rootId}. Cannot query for part "${part}".`
+            );
+            return [];
         }
 
         const elements = Array.from(
-            searchScope.querySelectorAll<T>(
-                `[data-scope="${this.componentName}"][data-part="${part}"]`
-            )
+            searchScope.querySelectorAll<T>(`[id^="${this.computePartId(part)}"]`)
         );
 
-        if (isDoc) {
+        if (searchScope === this.doc) {
             this.elementRefs.set(part, elements);
         }
 
