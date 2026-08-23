@@ -142,12 +142,12 @@ class ComponentUtility
         $idNamespace = self::getIdNamespace($componentName);
         $partSegment = self::getPartSegment($componentName, $part);
 
-        if ($value !== null && $value !== '') {
-            return "{$idNamespace}:{$rootId}:{$partSegment}:{$value}";
-        }
-
         if ($part === 'root') {
             return "{$idNamespace}:{$rootId}";
+        }
+
+        if ($value !== null && $value !== '') {
+            return "{$idNamespace}:{$rootId}:{$partSegment}:{$value}";
         }
 
         return "{$idNamespace}:{$rootId}:{$partSegment}";

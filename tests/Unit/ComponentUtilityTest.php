@@ -127,6 +127,20 @@ final class ComponentUtilityTest extends TestCase
     }
 
     #[Test]
+    public function mapsNavigationMenuNonRootPartToNavMenuNamespace(): void
+    {
+        $id = ComponentUtility::generatePartId('navigation-menu', 'my-id', 'viewport');
+        $this->assertSame('nav-menu:my-id:viewport', $id);
+    }
+
+    #[Test]
+    public function ignoresValueForRootPartIds(): void
+    {
+        $id = ComponentUtility::generatePartId('navigation-menu', 'my-id', 'root', 'ignored');
+        $this->assertSame('nav-menu:my-id', $id);
+    }
+
+    #[Test]
     public function mapsRadioGroupItemPartToRadioSegment(): void
     {
         $id = ComponentUtility::generatePartId('radio-group', 'my-id', 'item', 'option-a');
