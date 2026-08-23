@@ -2,14 +2,12 @@ import { ListCollection, type CollectionItem } from '@zag-js/collection';
 import type { ComponentHydrationData, FluidPrimitivesGlobals } from '../types';
 import { Component } from './component';
 
-// Keep in sync with:
-// /home/runner/work/fluid-primitives/fluid-primitives/Classes/Utility/ComponentUtility.php
+// Keep in sync with: Classes/Utility/ComponentUtility.php
 const ID_NAMESPACE_OVERRIDES: Record<string, string> = {
     'navigation-menu': 'nav-menu',
 };
 
-// Keep in sync with:
-// /home/runner/work/fluid-primitives/fluid-primitives/Classes/Utility/ComponentUtility.php
+// Keep in sync with: Classes/Utility/ComponentUtility.php
 const PART_SEGMENT_OVERRIDES: Record<string, Record<string, string>> = {
     'radio-group': {
         item: 'radio',

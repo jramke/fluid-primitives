@@ -13,14 +13,13 @@ use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 class ComponentUtility
 {
     private static array $cachedSettings = [];
-    // Keep in sync with:
-    // /home/runner/work/fluid-primitives/fluid-primitives/Resources/Private/Client/src/lib/hydration.ts
+
+    // Keep in sync with: Resources/Private/Client/src/lib/hydration.ts
     private const ID_NAMESPACE_OVERRIDES = [
         'navigation-menu' => 'nav-menu',
     ];
 
-    // Keep in sync with:
-    // /home/runner/work/fluid-primitives/fluid-primitives/Resources/Private/Client/src/lib/hydration.ts
+    // Keep in sync with: Resources/Private/Client/src/lib/hydration.ts
     private const PART_SEGMENT_OVERRIDES = [
         'radio-group' => [
             'item' => 'radio',
@@ -140,9 +139,10 @@ class ComponentUtility
      * Generates a deterministic part ID following the zag-js DOM convention.
      *
      * - Explicit override in `$idsOverrides[$part]` takes priority.
-     * - The root part returns `{componentName}:{rootId}` (no suffix), matching zag-js.
-     * - Multi-instance parts with a `$value` return `{componentName}:{rootId}:{part}:{value}`.
-     * - All other parts return `{componentName}:{rootId}:{part}`.
+     * - The root part returns `{idNamespace}:{rootId}` (no suffix), matching zag-js.
+     *   Any provided `$value` is ignored for the root part.
+     * - Multi-instance parts with a `$value` return `{idNamespace}:{rootId}:{partSegment}:{value}`.
+     * - All other parts return `{idNamespace}:{rootId}:{partSegment}`.
      */
     public static function generatePartId(
         string $componentName,
