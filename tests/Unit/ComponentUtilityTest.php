@@ -118,4 +118,39 @@ final class ComponentUtilityTest extends TestCase
     {
         $this->assertFalse(ComponentUtility::isRootComponent('Primitives.Dialog.Root'));
     }
+
+    #[Test]
+    public function mapsNavigationMenuRootToNavMenuNamespace(): void
+    {
+        $id = ComponentUtility::generatePartId('navigation-menu', 'my-id', 'root');
+        $this->assertSame('nav-menu:my-id', $id);
+    }
+
+    #[Test]
+    public function mapsRadioGroupItemPartToRadioSegment(): void
+    {
+        $id = ComponentUtility::generatePartId('radio-group', 'my-id', 'item', 'option-a');
+        $this->assertSame('radio-group:my-id:radio:option-a', $id);
+    }
+
+    #[Test]
+    public function mapsRadioGroupItemControlPartToRadioControlSegment(): void
+    {
+        $id = ComponentUtility::generatePartId('radio-group', 'my-id', 'item-control', 'option-a');
+        $this->assertSame('radio-group:my-id:radio:control:option-a', $id);
+    }
+
+    #[Test]
+    public function mapsRadioGroupItemHiddenInputPartToRadioInputSegment(): void
+    {
+        $id = ComponentUtility::generatePartId('radio-group', 'my-id', 'item-hidden-input', 'option-a');
+        $this->assertSame('radio-group:my-id:radio:input:option-a', $id);
+    }
+
+    #[Test]
+    public function mapsRadioGroupItemTextPartToRadioLabelSegment(): void
+    {
+        $id = ComponentUtility::generatePartId('radio-group', 'my-id', 'item-text', 'option-a');
+        $this->assertSame('radio-group:my-id:radio:label:option-a', $id);
+    }
 }

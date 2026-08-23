@@ -139,15 +139,41 @@ class ComponentUtility
             return (string)$idsOverrides[$part];
         }
 
+        $idNamespace = self::getIdNamespace($componentName);
+        $partSegment = self::getPartSegment($componentName, $part);
+
         if ($value !== null && $value !== '') {
-            return "{$componentName}:{$rootId}:{$part}:{$value}";
+            return "{$idNamespace}:{$rootId}:{$partSegment}:{$value}";
         }
 
         if ($part === 'root') {
-            return "{$componentName}:{$rootId}";
+            return "{$idNamespace}:{$rootId}";
         }
 
-        return "{$componentName}:{$rootId}:{$part}";
+        return "{$idNamespace}:{$rootId}:{$partSegment}";
+    }
+
+    private static function getIdNamespace(string $componentName): string
+    {
+        return match ($componentName) {
+            'navigation-menu' => 'nav-menu',
+            default => $componentName,
+        };
+    }
+
+    private static function getPartSegment(string $componentName, string $part): string
+    {
+        if ($componentName !== 'radio-group') {
+            return $part;
+        }
+
+        return match ($part) {
+            'item' => 'radio',
+            'item-hidden-input' => 'radio:input',
+            'item-control' => 'radio:control',
+            'item-text' => 'radio:label',
+            default => $part,
+        };
     }
 
     public static function getRootIdFromContext(RenderingContextInterface $renderingContext): string

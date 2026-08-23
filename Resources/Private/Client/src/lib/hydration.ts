@@ -160,20 +160,51 @@ export class ComponentHydrator {
         this.ids = ids;
     }
 
+    private getIdNamespace(): string {
+        switch (this.componentName) {
+            case 'navigation-menu':
+                return 'nav-menu';
+            default:
+                return this.componentName;
+        }
+    }
+
+    private getPartSegment(part: string): string {
+        if (this.componentName !== 'radio-group') {
+            return part;
+        }
+
+        switch (part) {
+            case 'item':
+                return 'radio';
+            case 'item-hidden-input':
+                return 'radio:input';
+            case 'item-control':
+                return 'radio:control';
+            case 'item-text':
+                return 'radio:label';
+            default:
+                return part;
+        }
+    }
+
     private computePartId(part: string, value?: string): string {
         if (this.ids[part]) {
             return this.ids[part];
         }
 
+        const idNamespace = this.getIdNamespace();
+        const partSegment = this.getPartSegment(part);
+
         if (part === 'root') {
-            return `${this.componentName}:${this.rootId}`;
+            return `${idNamespace}:${this.rootId}`;
         }
 
         if (value !== undefined && value !== '') {
-            return `${this.componentName}:${this.rootId}:${part}:${value}`;
+            return `${idNamespace}:${this.rootId}:${partSegment}:${value}`;
         }
 
-        return `${this.componentName}:${this.rootId}:${part}`;
+        return `${idNamespace}:${this.rootId}:${partSegment}`;
     }
 
     getElement<T extends Element>(part: string, parent: Element | Document = this.doc): T | null {
