@@ -2,6 +2,23 @@ import { ListCollection, type CollectionItem } from '@zag-js/collection';
 import type { ComponentHydrationData, FluidPrimitivesGlobals } from '../types';
 import { Component } from './component';
 
+// Keep in sync with:
+// /home/runner/work/fluid-primitives/fluid-primitives/Classes/Utility/ComponentUtility.php
+const ID_NAMESPACE_OVERRIDES: Record<string, string> = {
+    'navigation-menu': 'nav-menu',
+};
+
+// Keep in sync with:
+// /home/runner/work/fluid-primitives/fluid-primitives/Classes/Utility/ComponentUtility.php
+const PART_SEGMENT_OVERRIDES: Record<string, Record<string, string>> = {
+    'radio-group': {
+        item: 'radio',
+        'item-hidden-input': 'radio:input',
+        'item-control': 'radio:control',
+        'item-text': 'radio:label',
+    },
+};
+
 export function getHydrationData(component: string): Record<string, ComponentHydrationData> | null;
 export function getHydrationData(component: string, id: string): ComponentHydrationData | null;
 export function getHydrationData(component?: string, id?: string) {
@@ -161,31 +178,11 @@ export class ComponentHydrator {
     }
 
     private getIdNamespace(): string {
-        switch (this.componentName) {
-            case 'navigation-menu':
-                return 'nav-menu';
-            default:
-                return this.componentName;
-        }
+        return ID_NAMESPACE_OVERRIDES[this.componentName] ?? this.componentName;
     }
 
     private getPartSegment(part: string): string {
-        if (this.componentName !== 'radio-group') {
-            return part;
-        }
-
-        switch (part) {
-            case 'item':
-                return 'radio';
-            case 'item-hidden-input':
-                return 'radio:input';
-            case 'item-control':
-                return 'radio:control';
-            case 'item-text':
-                return 'radio:label';
-            default:
-                return part;
-        }
+        return PART_SEGMENT_OVERRIDES[this.componentName]?.[part] ?? part;
     }
 
     private computePartId(part: string, value?: string): string {

@@ -13,6 +13,22 @@ use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 class ComponentUtility
 {
     private static array $cachedSettings = [];
+    // Keep in sync with:
+    // /home/runner/work/fluid-primitives/fluid-primitives/Resources/Private/Client/src/lib/hydration.ts
+    private const ID_NAMESPACE_OVERRIDES = [
+        'navigation-menu' => 'nav-menu',
+    ];
+
+    // Keep in sync with:
+    // /home/runner/work/fluid-primitives/fluid-primitives/Resources/Private/Client/src/lib/hydration.ts
+    private const PART_SEGMENT_OVERRIDES = [
+        'radio-group' => [
+            'item' => 'radio',
+            'item-hidden-input' => 'radio:input',
+            'item-control' => 'radio:control',
+            'item-text' => 'radio:label',
+        ],
+    ];
 
     public static function id(string $prefix = 'f'): string
     {
@@ -155,25 +171,12 @@ class ComponentUtility
 
     private static function getIdNamespace(string $componentName): string
     {
-        return match ($componentName) {
-            'navigation-menu' => 'nav-menu',
-            default => $componentName,
-        };
+        return self::ID_NAMESPACE_OVERRIDES[$componentName] ?? $componentName;
     }
 
     private static function getPartSegment(string $componentName, string $part): string
     {
-        if ($componentName !== 'radio-group') {
-            return $part;
-        }
-
-        return match ($part) {
-            'item' => 'radio',
-            'item-hidden-input' => 'radio:input',
-            'item-control' => 'radio:control',
-            'item-text' => 'radio:label',
-            default => $part,
-        };
+        return self::PART_SEGMENT_OVERRIDES[$componentName][$part] ?? $part;
     }
 
     public static function getRootIdFromContext(RenderingContextInterface $renderingContext): string
