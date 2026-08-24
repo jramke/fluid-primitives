@@ -27,6 +27,16 @@ class ComponentUtility
             'item-control' => 'radio:control',
             'item-text' => 'radio:label',
         ],
+        'accordion' => [
+            'item-trigger' => 'trigger',
+            'item-content' => 'content',
+        ],
+        'select' => [
+            'hidden-select' => 'select',
+            'item-group' => 'optgroup',
+            'item-group-label' => 'optgroup-label',
+            'item' => 'option',
+        ],
     ];
 
     public static function id(string $prefix = 'f'): string

@@ -15,6 +15,16 @@ const PART_SEGMENT_OVERRIDES: Record<string, Record<string, string>> = {
         'item-control': 'radio:control',
         'item-text': 'radio:label',
     },
+    accordion: {
+        'item-trigger': 'trigger',
+        'item-content': 'content',
+    },
+    select: {
+        'hidden-select': 'select',
+        'item-group': 'optgroup',
+        'item-group-label': 'optgroup-label',
+        item: 'option',
+    },
 };
 
 export function getHydrationData(component: string): Record<string, ComponentHydrationData> | null;
