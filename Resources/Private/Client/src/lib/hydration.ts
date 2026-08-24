@@ -214,8 +214,9 @@ export class ComponentHydrator {
             // Use getElementById (no CSS-escaping needed; IDs may contain colons)
             element = this.doc.getElementById(this.computePartId(part)) as T | null;
         } else {
-            // Searching within a specific parent element (e.g. item-group-label inside item-group)
-            element = (parent as Element).querySelector<T>(`#${this.computePartId(part)}`);
+            element = (parent as Element).querySelector<T>(
+                `[id="${CSS.escape(this.computePartId(part))}"][data-part="${part}"],[id^="${CSS.escape(this.computePartId(part))}"][data-part="${part}"]`
+            );
         }
 
         if (element && isDoc) {
@@ -247,7 +248,9 @@ export class ComponentHydrator {
         }
 
         const elements = Array.from(
-            searchScope.querySelectorAll<T>(`[id^="${this.computePartId(part)}"]`)
+            searchScope.querySelectorAll<T>(
+                `[id="${CSS.escape(this.computePartId(part))}"][data-part="${part}"],[id^="${CSS.escape(this.computePartId(part))}"][data-part="${part}"]`
+            )
         );
 
         if (searchScope === this.doc) {
