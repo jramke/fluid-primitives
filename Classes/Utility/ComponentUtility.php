@@ -14,6 +14,21 @@ class ComponentUtility
 {
     private static array $cachedSettings = [];
 
+    // Keep in sync with: Resources/Private/Client/src/lib/hydration.ts
+    private const ID_NAMESPACE_OVERRIDES = [
+        'navigation-menu' => 'nav-menu',
+    ];
+
+    // Keep in sync with: Resources/Private/Client/src/lib/hydration.ts
+    private const PART_SEGMENT_OVERRIDES = [
+        'radio-group' => [
+            'item' => 'radio',
+            'item-hidden-input' => 'radio:input',
+            'item-control' => 'radio:control',
+            'item-text' => 'radio:label',
+        ],
+    ];
+
     public static function id(string $prefix = 'f'): string
     {
         static $counter = 0;
@@ -124,9 +139,10 @@ class ComponentUtility
      * Generates a deterministic part ID following the zag-js DOM convention.
      *
      * - Explicit override in `$idsOverrides[$part]` takes priority.
-     * - The root part returns `{componentName}:{rootId}` (no suffix), matching zag-js.
-     * - Multi-instance parts with a `$value` return `{componentName}:{rootId}:{part}:{value}`.
-     * - All other parts return `{componentName}:{rootId}:{part}`.
+     * - The root part returns `{idNamespace}:{rootId}` (no suffix), matching zag-js.
+     *   Any provided `$value` is ignored for the root part.
+     * - Multi-instance parts with a `$value` return `{idNamespace}:{rootId}:{partSegment}:{value}`.
+     * - All other parts return `{idNamespace}:{rootId}:{partSegment}`.
      */
     public static function generatePartId(
         string $componentName,
@@ -139,15 +155,28 @@ class ComponentUtility
             return (string)$idsOverrides[$part];
         }
 
-        if ($value !== null && $value !== '') {
-            return "{$componentName}:{$rootId}:{$part}:{$value}";
-        }
+        $idNamespace = self::getIdNamespace($componentName);
+        $partSegment = self::getPartSegment($componentName, $part);
 
         if ($part === 'root') {
-            return "{$componentName}:{$rootId}";
+            return "{$idNamespace}:{$rootId}";
         }
 
-        return "{$componentName}:{$rootId}:{$part}";
+        if ($value !== null && $value !== '') {
+            return "{$idNamespace}:{$rootId}:{$partSegment}:{$value}";
+        }
+
+        return "{$idNamespace}:{$rootId}:{$partSegment}";
+    }
+
+    private static function getIdNamespace(string $componentName): string
+    {
+        return self::ID_NAMESPACE_OVERRIDES[$componentName] ?? $componentName;
+    }
+
+    private static function getPartSegment(string $componentName, string $part): string
+    {
+        return self::PART_SEGMENT_OVERRIDES[$componentName][$part] ?? $part;
     }
 
     public static function getRootIdFromContext(RenderingContextInterface $renderingContext): string

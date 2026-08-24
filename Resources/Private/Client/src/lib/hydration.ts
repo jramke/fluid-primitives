@@ -2,6 +2,21 @@ import { ListCollection, type CollectionItem } from '@zag-js/collection';
 import type { ComponentHydrationData, FluidPrimitivesGlobals } from '../types';
 import { Component } from './component';
 
+// Keep in sync with: Classes/Utility/ComponentUtility.php
+const ID_NAMESPACE_OVERRIDES: Record<string, string> = {
+    'navigation-menu': 'nav-menu',
+};
+
+// Keep in sync with: Classes/Utility/ComponentUtility.php
+const PART_SEGMENT_OVERRIDES: Record<string, Record<string, string>> = {
+    'radio-group': {
+        item: 'radio',
+        'item-hidden-input': 'radio:input',
+        'item-control': 'radio:control',
+        'item-text': 'radio:label',
+    },
+};
+
 export function getHydrationData(component: string): Record<string, ComponentHydrationData> | null;
 export function getHydrationData(component: string, id: string): ComponentHydrationData | null;
 export function getHydrationData(component?: string, id?: string) {
@@ -160,20 +175,31 @@ export class ComponentHydrator {
         this.ids = ids;
     }
 
+    private getIdNamespace(): string {
+        return ID_NAMESPACE_OVERRIDES[this.componentName] ?? this.componentName;
+    }
+
+    private getPartSegment(part: string): string {
+        return PART_SEGMENT_OVERRIDES[this.componentName]?.[part] ?? part;
+    }
+
     private computePartId(part: string, value?: string): string {
         if (this.ids[part]) {
             return this.ids[part];
         }
 
+        const idNamespace = this.getIdNamespace();
+        const partSegment = this.getPartSegment(part);
+
         if (part === 'root') {
-            return `${this.componentName}:${this.rootId}`;
+            return `${idNamespace}:${this.rootId}`;
         }
 
         if (value !== undefined && value !== '') {
-            return `${this.componentName}:${this.rootId}:${part}:${value}`;
+            return `${idNamespace}:${this.rootId}:${partSegment}:${value}`;
         }
 
-        return `${this.componentName}:${this.rootId}:${part}`;
+        return `${idNamespace}:${this.rootId}:${partSegment}`;
     }
 
     getElement<T extends Element>(part: string, parent: Element | Document = this.doc): T | null {
