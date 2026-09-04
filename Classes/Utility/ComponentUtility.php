@@ -39,8 +39,8 @@ class ComponentUtility
             'item' => 'option',
         ],
         'tabs' => [
-            'trigger' => 'trigger-',
-            'content' => 'content-',
+            'trigger' => ['segment' => 'trigger', 'valueSeparator' => '-'],
+            'content' => ['segment' => 'content', 'valueSeparator' => '-'],
         ],
     ];
 
@@ -171,17 +171,14 @@ class ComponentUtility
         }
 
         $idNamespace = self::getIdNamespace($componentName);
-        $partSegment = self::getPartSegment($componentName, $part);
+        ['segment' => $partSegment, 'valueSeparator' => $valueSeparator] = self::getPartConfig($componentName, $part);
 
         if ($part === 'root') {
             return "{$idNamespace}:{$rootId}";
         }
 
         if ($value !== null && $value !== '') {
-            if (str_ends_with($partSegment, '-')) {
-                return "{$idNamespace}:{$rootId}:{$partSegment}{$value}";
-            }
-            return "{$idNamespace}:{$rootId}:{$partSegment}:{$value}";
+            return "{$idNamespace}:{$rootId}:{$partSegment}{$valueSeparator}{$value}";
         }
 
         return "{$idNamespace}:{$rootId}:{$partSegment}";
@@ -192,9 +189,19 @@ class ComponentUtility
         return self::ID_NAMESPACE_OVERRIDES[$componentName] ?? $componentName;
     }
 
-    private static function getPartSegment(string $componentName, string $part): string
+    /**
+     * @return array{segment: string, valueSeparator: string}
+     */
+    private static function getPartConfig(string $componentName, string $part): array
     {
-        return self::PART_SEGMENT_OVERRIDES[$componentName][$part] ?? $part;
+        $override = self::PART_SEGMENT_OVERRIDES[$componentName][$part] ?? null;
+        if (!is_array($override)) {
+            return ['segment' => is_string($override) ? $override : $part, 'valueSeparator' => ':'];
+        }
+
+        $segment = (string)($override['segment'] ?? $part);
+        $valueSeparator = (string)($override['valueSeparator'] ?? ':');
+        return ['segment' => $segment, 'valueSeparator' => $valueSeparator];
     }
 
     public static function getRootIdFromContext(RenderingContextInterface $renderingContext): string
