@@ -21,6 +21,7 @@ class ComponentUtility
 
     // Keep in sync with: Resources/Private/Client/src/lib/hydration.ts
     private const PART_SEGMENT_OVERRIDES = [
+        // TODO: Revisit this override map after upgrading to zag-js v2.
         'radio-group' => [
             'item' => 'radio',
             'item-hidden-input' => 'radio:input',
@@ -36,6 +37,10 @@ class ComponentUtility
             'item-group' => 'optgroup',
             'item-group-label' => 'optgroup-label',
             'item' => 'option',
+        ],
+        'tabs' => [
+            'trigger' => ['segment' => 'trigger', 'valueSeparator' => '-'],
+            'content' => ['segment' => 'content', 'valueSeparator' => '-'],
         ],
     ];
 
@@ -166,14 +171,14 @@ class ComponentUtility
         }
 
         $idNamespace = self::getIdNamespace($componentName);
-        $partSegment = self::getPartSegment($componentName, $part);
+        ['segment' => $partSegment, 'valueSeparator' => $valueSeparator] = self::getPartConfig($componentName, $part);
 
         if ($part === 'root') {
             return "{$idNamespace}:{$rootId}";
         }
 
         if ($value !== null && $value !== '') {
-            return "{$idNamespace}:{$rootId}:{$partSegment}:{$value}";
+            return "{$idNamespace}:{$rootId}:{$partSegment}{$valueSeparator}{$value}";
         }
 
         return "{$idNamespace}:{$rootId}:{$partSegment}";
@@ -184,9 +189,19 @@ class ComponentUtility
         return self::ID_NAMESPACE_OVERRIDES[$componentName] ?? $componentName;
     }
 
-    private static function getPartSegment(string $componentName, string $part): string
+    /**
+     * @return array{segment: string, valueSeparator: string}
+     */
+    private static function getPartConfig(string $componentName, string $part): array
     {
-        return self::PART_SEGMENT_OVERRIDES[$componentName][$part] ?? $part;
+        $override = self::PART_SEGMENT_OVERRIDES[$componentName][$part] ?? null;
+        if (!is_array($override)) {
+            return ['segment' => is_string($override) ? $override : $part, 'valueSeparator' => ':'];
+        }
+
+        $segment = (string)($override['segment'] ?? $part);
+        $valueSeparator = (string)($override['valueSeparator'] ?? ':');
+        return ['segment' => $segment, 'valueSeparator' => $valueSeparator];
     }
 
     public static function getRootIdFromContext(RenderingContextInterface $renderingContext): string

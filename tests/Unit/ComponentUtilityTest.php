@@ -167,4 +167,18 @@ final class ComponentUtilityTest extends TestCase
         $id = ComponentUtility::generatePartId('radio-group', 'my-id', 'item-text', 'option-a');
         $this->assertSame('radio-group:my-id:radio:label:option-a', $id);
     }
+
+    #[Test]
+    public function mapsTabsTriggerPartToHyphenatedSegment(): void
+    {
+        $id = ComponentUtility::generatePartId('tabs', 'my-id', 'trigger', 'tab-1');
+        $this->assertSame('tabs:my-id:trigger-tab-1', $id);
+    }
+
+    #[Test]
+    public function mapsTabsContentPartToHyphenatedSegment(): void
+    {
+        $id = ComponentUtility::generatePartId('tabs', 'my-id', 'content', 'tab-1');
+        $this->assertSame('tabs:my-id:content-tab-1', $id);
+    }
 }

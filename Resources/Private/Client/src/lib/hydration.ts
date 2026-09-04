@@ -8,7 +8,10 @@ const ID_NAMESPACE_OVERRIDES: Record<string, string> = {
 };
 
 // Keep in sync with: Classes/Utility/ComponentUtility.php
-const PART_SEGMENT_OVERRIDES: Record<string, Record<string, string>> = {
+type PartSegmentOverride = string | { segment: string; valueSeparator?: string };
+
+const PART_SEGMENT_OVERRIDES: Record<string, Record<string, PartSegmentOverride>> = {
+    // TODO: Revisit this override map after upgrading to zag-js v2.
     'radio-group': {
         item: 'radio',
         'item-hidden-input': 'radio:input',
@@ -24,6 +27,10 @@ const PART_SEGMENT_OVERRIDES: Record<string, Record<string, string>> = {
         'item-group': 'optgroup',
         'item-group-label': 'optgroup-label',
         item: 'option',
+    },
+    tabs: {
+        trigger: { segment: 'trigger', valueSeparator: '-' },
+        content: { segment: 'content', valueSeparator: '-' },
     },
 };
 
@@ -189,8 +196,19 @@ export class ComponentHydrator {
         return ID_NAMESPACE_OVERRIDES[this.componentName] ?? this.componentName;
     }
 
-    private getPartSegment(part: string): string {
-        return PART_SEGMENT_OVERRIDES[this.componentName]?.[part] ?? part;
+    private getPartConfig(part: string): { segment: string; valueSeparator: string } {
+        const override = PART_SEGMENT_OVERRIDES[this.componentName]?.[part];
+        if (!override) {
+            return { segment: part, valueSeparator: ':' };
+        }
+        if (typeof override === 'string') {
+            return { segment: override, valueSeparator: ':' };
+        }
+
+        return {
+            segment: override.segment,
+            valueSeparator: override.valueSeparator ?? ':',
+        };
     }
 
     private computePartId(part: string, value?: string): string {
@@ -199,14 +217,14 @@ export class ComponentHydrator {
         }
 
         const idNamespace = this.getIdNamespace();
-        const partSegment = this.getPartSegment(part);
+        const { segment: partSegment, valueSeparator } = this.getPartConfig(part);
 
         if (part === 'root') {
             return `${idNamespace}:${this.rootId}`;
         }
 
         if (value !== undefined && value !== '') {
-            return `${idNamespace}:${this.rootId}:${partSegment}:${value}`;
+            return `${idNamespace}:${this.rootId}:${partSegment}${valueSeparator}${value}`;
         }
 
         return `${idNamespace}:${this.rootId}:${partSegment}`;
