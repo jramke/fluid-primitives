@@ -1,0 +1,9 @@
+<f:variable name="isEmpty">{f:if(condition: context.collection.size, then: '{false}', else: '{true}')}</f:variable>
+
+<div
+    {f:if(condition: isEmpty, then: 'data-empty="true"' )}
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'list' )}
+    {ui:attributes()}>
+    <f:slot />
+</div>

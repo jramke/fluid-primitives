@@ -20,6 +20,12 @@
             <trans-unit id="popover.closeTriggerLabel" approved="yes">
                 <target>Schließen</target>
             </trans-unit>
+            <trans-unit id="combobox.triggerLabel" approved="yes">
+                <target>Vorschläge umschalten</target>
+            </trans-unit>
+            <trans-unit id="combobox.clearTriggerLabel" approved="yes">
+                <target>Wert löschen</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

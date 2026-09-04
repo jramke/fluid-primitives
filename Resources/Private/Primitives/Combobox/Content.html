@@ -1,0 +1,16 @@
+<f:variable name="state">{context.defaultOpen ? 'open' : 'closed'}</f:variable>
+<f:variable name="isEmpty">{f:if(condition: context.collection.size, then: '{false}', else: '{true}')}</f:variable>
+<f:variable name="refData" value="{state: state, empty: isEmpty}" />
+
+<div
+    role="listbox"
+    tabindex="-1"
+    {f:if(condition: context.defaultOpen, then: '' , else: 'hidden="true"' )}
+    {f:if(condition: isEmpty, then: 'data-empty="true"' )}
+    {f:if(condition: context.multiple, then: 'aria-multiselectable="true"' )}
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.content, then: 'id="{context.ids.content}"' )}
+    {ui:ref(name: 'content' , data: refData )}
+    {ui:attributes()}>
+    <f:slot />
+</div>

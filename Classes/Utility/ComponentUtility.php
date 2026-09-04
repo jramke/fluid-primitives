@@ -37,6 +37,14 @@ class ComponentUtility
             'item-group-label' => 'optgroup-label',
             'item' => 'option',
         ],
+        'combobox' => [
+            'positioner' => 'popper',
+            'trigger' => 'toggle-btn',
+            'clear-trigger' => 'clear-btn',
+            'item-group' => 'optgroup',
+            'item-group-label' => 'optgroup-label',
+            'item' => 'option',
+        ],
     ];
 
     public static function id(string $prefix = 'f'): string

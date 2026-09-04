@@ -39,6 +39,10 @@
             "import": "./dist/clipboard.js",
             "types": "./dist/clipboard.d.ts"
         },
+        "./combobox": {
+            "import": "./dist/combobox.js",
+            "types": "./dist/combobox.d.ts"
+        },
         "./collapsible": {
             "import": "./dist/collapsible.js",
             "types": "./dist/collapsible.d.ts"
@@ -125,9 +129,11 @@
         "@zag-js/clipboard": "^1.43.3",
         "@zag-js/collapsible": "^1.43.3",
         "@zag-js/collection": "^1.43.3",
+        "@zag-js/combobox": "^1.43.3",
         "@zag-js/core": "^1.43.3",
         "@zag-js/dialog": "^1.43.3",
         "@zag-js/dom-query": "^1.43.3",
+        "@zag-js/i18n-utils": "^1.43.3",
         "@zag-js/navigation-menu": "^1.43.3",
         "@zag-js/number-input": "^1.43.3",
         "@zag-js/popover": "^1.43.3",

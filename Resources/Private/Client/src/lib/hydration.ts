@@ -25,6 +25,14 @@ const PART_SEGMENT_OVERRIDES: Record<string, Record<string, string>> = {
         'item-group-label': 'optgroup-label',
         item: 'option',
     },
+    combobox: {
+        positioner: 'popper',
+        trigger: 'toggle-btn',
+        'clear-trigger': 'clear-btn',
+        'item-group': 'optgroup',
+        'item-group-label': 'optgroup-label',
+        item: 'option',
+    },
 };
 
 export function getHydrationData(component: string): Record<string, ComponentHydrationData> | null;
@@ -259,9 +267,20 @@ export class ComponentHydrator {
 
         const elements = Array.from(
             searchScope.querySelectorAll<T>(
-                `[id="${CSS.escape(this.computePartId(part))}"][data-part="${part}"],[id^="${CSS.escape(this.computePartId(part))}"][data-part="${part}"]`
+                `[id="${CSS.escape(this.computePartId(part))}"][data-part="${part}"],[id^="${CSS.escape(this.computePartId(part) + ':')}"][data-part="${part}"]`
             )
         );
+
+        if (part === 'item') {
+            console.log({
+                has: this.elementRefs.has(part),
+                searchScope,
+                elements,
+                part,
+                rootId: this.rootId,
+                idPart: this.computePartId(part),
+            });
+        }
 
         if (searchScope === this.doc) {
             this.elementRefs.set(part, elements);
