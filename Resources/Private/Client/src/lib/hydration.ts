@@ -9,6 +9,7 @@ const ID_NAMESPACE_OVERRIDES: Record<string, string> = {
 
 // Keep in sync with: Classes/Utility/ComponentUtility.php
 const PART_SEGMENT_OVERRIDES: Record<string, Record<string, string>> = {
+    // TODO: Revisit this override map after upgrading to zag-js v2.
     'radio-group': {
         item: 'radio',
         'item-hidden-input': 'radio:input',
@@ -24,6 +25,10 @@ const PART_SEGMENT_OVERRIDES: Record<string, Record<string, string>> = {
         'item-group': 'optgroup',
         'item-group-label': 'optgroup-label',
         item: 'option',
+    },
+    tabs: {
+        trigger: 'trigger-',
+        content: 'content-',
     },
 };
 
@@ -206,6 +211,9 @@ export class ComponentHydrator {
         }
 
         if (value !== undefined && value !== '') {
+            if (partSegment.endsWith('-')) {
+                return `${idNamespace}:${this.rootId}:${partSegment}${value}`;
+            }
             return `${idNamespace}:${this.rootId}:${partSegment}:${value}`;
         }
 
