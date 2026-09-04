@@ -3,16 +3,18 @@ import * as combobox from '@zag-js/combobox';
 import { createFilter } from '@zag-js/i18n-utils';
 import { FieldAwareComponent, Machine, mergeProps, normalizeProps } from '../../Client';
 import { getGlobal, getListCollectionFromHydrationData } from '../../Client/src/lib/hydration';
-import type {
-    ComboboxFilterHook,
-    ComboboxFilterHookResult,
-    ComboboxFilterResolver,
-} from '../../Client/src/types';
+import type { ComboboxFilterHookResult, ComboboxFilterResolver } from '../../Client/src/types';
 import * as fieldDom from '../Field/src/field.dom';
 import type { FieldMachine } from '../Field/src/field.registry';
 
 type ComboboxPrimitiveProps = combobox.Props & {
-    filterHook?: string;
+    /**
+     * Set from a `mountControlled` callback's `controlled` flag. When `true` and no
+     * `filterResolver` is set via `setFilter()`, the built-in default filter is skipped entirely,
+     * leaving the collection exactly as the consumer's own code last set it (e.g. driven by an
+     * async search).
+     */
+    controlled?: boolean;
 };
 
 export class Combobox extends FieldAwareComponent<ComboboxPrimitiveProps, combobox.Api> {
@@ -46,7 +48,9 @@ export class Combobox extends FieldAwareComponent<ComboboxPrimitiveProps, combob
     }
 
     transformProps(props: ComboboxPrimitiveProps) {
-        const collection = getListCollectionFromHydrationData(props.collection!);
+        // `collection` is omitted from hydration data entirely when not passed (e.g. a
+        // searchUrl-only, purely async combobox) - default to an empty one rather than crashing.
+        const collection = getListCollectionFromHydrationData(props.collection ?? { items: [] });
 
         return {
             ...props,
@@ -74,11 +78,23 @@ export class Combobox extends FieldAwareComponent<ComboboxPrimitiveProps, combob
         this.updateProps({ collection });
     }
 
+    /**
+     * Whether built-in filtering (default substring match or a registered `filterResolver`)
+     * should be skipped entirely, deferring all collection updates to the consumer (e.g. an async
+     * search wired up in userland).
+     */
+    private hasManualFiltering(): boolean {
+        return !!this.userProps?.controlled && !this.filterResolver;
+    }
+
     private resetCollection() {
+        if (this.hasManualFiltering()) return;
         this.setCollection(this.getSourceCollection());
     }
 
     private filterCollection(inputValue: string) {
+        if (this.hasManualFiltering()) return;
+
         const sourceCollection = this.getSourceCollection();
         const query = inputValue.trim();
 
@@ -87,9 +103,8 @@ export class Combobox extends FieldAwareComponent<ComboboxPrimitiveProps, combob
             return;
         }
 
-        const filterHook = this.filterResolver ?? this.getFilterHook(this.userProps?.filterHook);
-        if (filterHook) {
-            const result = filterHook({
+        if (this.filterResolver) {
+            const result = this.filterResolver({
                 inputValue,
                 collection: sourceCollection,
                 component: this,
@@ -117,14 +132,6 @@ export class Combobox extends FieldAwareComponent<ComboboxPrimitiveProps, combob
         this.filterCollection(inputValue);
     }
 
-    private getFilterHook(hookName: unknown): ComboboxFilterHook | null {
-        if (typeof hookName !== 'string' || hookName === '') {
-            return null;
-        }
-
-        return window.FluidPrimitives.hooks?.combobox?.filters?.[hookName] ?? null;
-    }
-
     private normalizeFilterResult(
         result: ComboboxFilterHookResult,
         sourceCollection: ListCollection<CollectionItem>
@@ -142,7 +149,7 @@ export class Combobox extends FieldAwareComponent<ComboboxPrimitiveProps, combob
 
     initMachine(props: ComboboxPrimitiveProps): Machine<any> {
         props = this.withFieldProps(props);
-        const transformedProps = this.transformProps(props);
+        const { controlled, ...transformedProps } = this.transformProps(props);
 
         return new Machine(combobox.machine, {
             ...transformedProps,
@@ -230,16 +237,22 @@ export class Combobox extends FieldAwareComponent<ComboboxPrimitiveProps, combob
         const itemEls = this.getElements('item');
         const sourceCollection = this.getSourceCollection();
         itemEls.forEach(itemEl => {
-            const item = sourceCollection.find(itemEl.dataset.value);
+            const sourceItem = sourceCollection.find(itemEl.dataset.value);
+            const item = sourceItem ?? this.api.collection.find(itemEl.dataset.value);
             if (item) {
-                itemEl.hidden = !this.api.collection.has(item.value);
+                // Static/server-rendered items keep the existing sync-filter hide/show behavior.
+                // Dynamically-inserted (async) items are only ever in the DOM because they're a
+                // current result - never auto-hidden here.
+                itemEl.hidden = sourceItem ? !this.api.collection.has(item.value) : false;
                 this.spreadProps(itemEl, this.api.getItemProps({ item }));
             }
         });
 
         const itemTextEls = this.getElements('item-text');
         itemTextEls.forEach(itemTextEl => {
-            const item = sourceCollection.find(itemTextEl.dataset.value);
+            const item =
+                sourceCollection.find(itemTextEl.dataset.value) ??
+                this.api.collection.find(itemTextEl.dataset.value);
             if (item) {
                 this.spreadProps(itemTextEl, this.api.getItemTextProps({ item }));
             }
@@ -247,7 +260,9 @@ export class Combobox extends FieldAwareComponent<ComboboxPrimitiveProps, combob
 
         const itemIndicatorEls = this.getElements('item-indicator');
         itemIndicatorEls.forEach(itemIndicatorEl => {
-            const item = sourceCollection.find(itemIndicatorEl.dataset.value);
+            const item =
+                sourceCollection.find(itemIndicatorEl.dataset.value) ??
+                this.api.collection.find(itemIndicatorEl.dataset.value);
             if (item) {
                 this.spreadProps(itemIndicatorEl, this.api.getItemIndicatorProps({ item }));
             }

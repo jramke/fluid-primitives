@@ -12,4 +12,5 @@ export { Machine } from './machine';
 export { mergeProps } from './merge-props';
 export { normalizeProps } from './normalize-props';
 export { spreadProps } from './spread-props';
+export { TemplateFragment, createTemplateInstance } from './template';
 export { uid } from './uid';

@@ -1,8 +1,12 @@
 <ui:prop name="item" type="mixed" optional="{true}" context="{true}" />
+<ui:prop name="renderedOnClient" type="boolean" optional="{true}" default="{false}" context="{true}" description="Whether this item's real data/state is filled in later, client-side (e.g. inside a ui:template block, from an async search result). When true, `item` is not required and item state (selected/disabled/highlighted) is not computed server-side - the client sets the real data-value/id (e.g. via ComponentHydrator.setRefAttributes) after cloning, and correct ARIA state is picked up automatically on the next render once the item is in the DOM." />
 
-<ui:error when="!{item}" message="The 'item' prop of {component.fullName} is missing or invalid." />
+<ui:error when="!{item} && !{renderedOnClient}" message="The {component.fullName} requires an 'item' prop, unless 'renderedOnClient' is set." />
 
-<f:variable name="itemState">{context -> ui:call(method: 'getItemState', arguments: {0: item})}</f:variable>
+<f:variable name="itemState" value="{value: '', selected: false, disabled: false, highlighted: false}" />
+<f:if condition="!{renderedOnClient}">
+    <f:variable name="itemState">{context -> ui:call(method: 'getItemState', arguments: {0: item})}</f:variable>
+</f:if>
 <f:variable name="refData" value="{item: item, value: itemState.value, disabled: itemState.disabled, selected: itemState.selected, highlighted: itemState.highlighted}" />
 
 <div

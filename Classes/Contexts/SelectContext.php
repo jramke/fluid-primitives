@@ -77,7 +77,7 @@ class SelectContext extends AbstractComponentContext
     /**
      * Get the collection from context.
      */
-    protected function getCollection(): ?ListCollection
+    public function getCollection(): ?ListCollection
     {
         $collection = $this->get('collection');
         return $collection instanceof ListCollection ? $collection : null;

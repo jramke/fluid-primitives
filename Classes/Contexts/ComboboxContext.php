@@ -109,7 +109,7 @@ class ComboboxContext extends AbstractComponentContext
         return array_merge($defaults, $overrides);
     }
 
-    protected function getCollection(): ?ListCollection
+    public function getCollection(): ?ListCollection
     {
         $collection = $this->get('collection');
         return $collection instanceof ListCollection ? $collection : null;

@@ -9,9 +9,7 @@
         "url": "git+https://github.com/jramke/fluid-primitives.git"
     },
     "author": "Joost Ramke <hey@joostramke.com>",
-    "files": [
-        "./dist"
-    ],
+    "files": ["./dist"],
     "main": "./dist/client.js",
     "types": "./dist/client.d.ts",
     "exports": {
@@ -125,6 +123,7 @@
     "dependencies": {
         "@zag-js/accordion": "^1.43.3",
         "@zag-js/anatomy": "^1.43.3",
+        "@zag-js/async-list": "^1.43.3",
         "@zag-js/checkbox": "^1.43.3",
         "@zag-js/clipboard": "^1.43.3",
         "@zag-js/collapsible": "^1.43.3",

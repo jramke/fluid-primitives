@@ -1,0 +1,88 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Jramke\FluidPrimitives\Tests\Functional\ViewHelpers;
+
+use Jramke\FluidPrimitives\Domain\Model\ListCollection;
+use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
+use PHPUnit\Framework\Attributes\Test;
+
+final class TemplateViewHelperTest extends FunctionalTestCase
+{
+    #[Test]
+    public function rendersATemplateElementWithRefAttributes(): void
+    {
+        $collection = new ListCollection([]);
+
+        $html = $this->renderTemplate('
+            <primitives:combobox.root collection="{collection}">
+                <ui:template name="item-template" component="combobox">
+                    <span>static content</span>
+                </ui:template>
+            </primitives:combobox.root>
+        ', ['collection' => $collection]);
+
+        $this->assertStringContainsString('<template', $html);
+        $this->assertStringContainsString('data-part="item-template"', $html);
+        $this->assertStringContainsString('<span>static content</span>', $html);
+        $this->assertMatchesRegularExpression(
+            '/<template id="combobox:[^"]*:item-template" data-scope="combobox" data-part="item-template">/',
+            $html,
+        );
+    }
+
+    #[Test]
+    public function makesBareUiRefResolveToTheEnclosingComponentInsideItsChildren(): void
+    {
+        $collection = new ListCollection([]);
+
+        $html = $this->renderTemplate('
+            <primitives:combobox.root collection="{collection}">
+                <ui:template name="item-template" component="combobox">
+                    <span {ui:ref(name: \'title\', withId: false)}></span>
+                </ui:template>
+            </primitives:combobox.root>
+        ', ['collection' => $collection]);
+
+        $this->assertStringContainsString('<span data-scope="combobox" data-part="title">', $html);
+    }
+
+    #[Test]
+    public function restoresThePreviousComponentContextAfterRendering(): void
+    {
+        $collection = new ListCollection([]);
+
+        $html = $this->renderTemplate('
+            <primitives:combobox.root collection="{collection}">
+                <ui:template name="item-template" component="combobox">
+                    <span {ui:ref(name: \'title\', withId: false)}></span>
+                </ui:template>
+                <primitives:combobox.input />
+            </primitives:combobox.root>
+        ', ['collection' => $collection]);
+
+        // The real combobox.input part (a dedicated component tag, rendered right after the
+        // ui:template block within the same root's slot) must still resolve to the real combobox
+        // context - not whatever ui:template temporarily set - proving the finally-restoration works.
+        $this->assertStringContainsString('data-scope="combobox"', $html);
+        $this->assertStringContainsString('data-part="input"', $html);
+        $this->assertStringContainsString('role="combobox"', $html);
+    }
+
+    #[Test]
+    public function throwsWhenNoMatchingComponentIsActive(): void
+    {
+        $collection = new ListCollection([]);
+
+        $this->expectExceptionMessage('ui:template could not find an active "select" component to attach to.');
+
+        $this->renderTemplate('
+            <primitives:combobox.root collection="{collection}">
+                <ui:template name="item-template" component="select">
+                    <span>content</span>
+                </ui:template>
+            </primitives:combobox.root>
+        ', ['collection' => $collection]);
+    }
+}

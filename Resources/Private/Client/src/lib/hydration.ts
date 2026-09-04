@@ -271,17 +271,6 @@ export class ComponentHydrator {
             )
         );
 
-        if (part === 'item') {
-            console.log({
-                has: this.elementRefs.has(part),
-                searchScope,
-                elements,
-                part,
-                rootId: this.rootId,
-                idPart: this.computePartId(part),
-            });
-        }
-
         if (searchScope === this.doc) {
             this.elementRefs.set(part, elements);
         }

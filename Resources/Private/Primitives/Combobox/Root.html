@@ -10,7 +10,7 @@
 <ui:prop name="defaultValue" type="mixed" optional="{true}" client="{true}" description="The initial value of the combobox's selected items when rendered. Use when you don't need to control the value of the combobox's selected items." />
 <ui:prop name="defaultInputValue" type="string" optional="{true}" client="{true}" description="The initial value of the combobox's input when rendered. Use when you don't need to control the value of the combobox's input." />
 <ui:prop name="defaultHighlightedValue" type="string" optional="{true}" client="{true}" description="The initial highlighted value of the combobox when rendered. Use when you don't need to control the highlighted value of the combobox." />
-<ui:prop name="openOnClick" type="boolean" optional="{true}" client="{true}" default="{true}" description="Whether to open the combobox popup on initial click on the input." />
+<ui:prop name="openOnClick" type="boolean" optional="{true}" client="{true}" default="{false}" description="Whether to open the combobox popup on initial click on the input." />
 <ui:prop name="openOnKeyPress" type="boolean" optional="{true}" client="{true}" default="{true}" description="Whether to open the combobox on arrow key press." />
 <ui:prop name="openOnChange" type="boolean" optional="{true}" client="{true}" default="{true}" description="Whether to show the combobox when the input value changes." />
 <ui:prop name="closeOnSelect" type="boolean" optional="{true}" client="{true}" description="Whether to close the combobox when an item is selected. Defaults to `true` or if multiple enabled `false`." />
@@ -23,8 +23,8 @@
 <ui:prop name="composite" type="boolean" optional="{true}" client="{true}" default="{true}" description="Whether the combobox is a composed with other composite widgets like tabs." />
 <ui:prop name="autoFocus" type="boolean" optional="{true}" client="{true}" description="Whether to autofocus the input on mount." />
 <ui:prop name="positioning" type="array" optional="{true}" client="{true}" default="{ placement: 'bottom', sameWidth: '{true}' }" description="The positioning options to dynamically position the menu." />
-<ui:prop name="filterHook" type="string" optional="{true}" client="{true}" description="The name of the hook to filter the combobox items." />
 <ui:prop name="translations" type="array" optional="{true}" client="{true}" description="Localized combobox labels. Set entries to `{false}` to omit the corresponding `aria-label`. Use `f:translate` for per-template localization overrides when needed." />
+<ui:prop name="searchUrl" type="string" optional="{true}" client="{true}" description="Endpoint queried for async search results (e.g. built with f:uri.action in the consuming template). The consumer's own controller/entry.ts owns the request/response shape." />
 
 <f:variable name="refData" value="{invalid: invalid, readonly: readOnly}" />
 

@@ -51,8 +51,9 @@ class ListCollectionViewHelper extends AbstractViewHelper
         $this->registerArgument(
             'items',
             'array',
-            'The items of the collection. `{value: string, label: string, disabled: boolean}`',
-            true,
+            'The items of the collection. `{value: string, label: string, disabled: boolean}`.',
+            false,
+            [],
         );
         $this->registerArgument('itemToValueKey', 'string', 'The key to use for the item value.', false);
         $this->registerArgument('itemToStringKey', 'string', 'The key to use for the item label.', false);
@@ -65,7 +66,7 @@ class ListCollectionViewHelper extends AbstractViewHelper
     {
         $items = $this->arguments['items'] ?? null;
         if (!is_array($items) && !$items instanceof \Traversable) {
-            throw new \InvalidArgumentException('The "items" argument must be an array or Traversable.', 1759769689);
+            throw new \InvalidArgumentException('The "items" argument must be an array or Traversable.', 1_759_769_689);
         }
 
         $collection = new ListCollection(

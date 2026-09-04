@@ -15,9 +15,9 @@ export type ComboboxFilterHookResult =
     | null
     | undefined;
 
-export type ComboboxFilterHook = (details: ComboboxFilterHookDetails) => ComboboxFilterHookResult;
-
-export type ComboboxFilterResolver = ComboboxFilterHook;
+export type ComboboxFilterResolver = (
+    details: ComboboxFilterHookDetails
+) => ComboboxFilterHookResult;
 
 declare global {
     interface Window {
@@ -28,11 +28,6 @@ declare global {
                 };
             };
             globals?: FluidPrimitivesGlobals;
-            hooks?: {
-                combobox?: {
-                    filters?: Record<string, ComboboxFilterHook>;
-                };
-            };
             uncontrolledInstances: {
                 [componentName: string]: {
                     [id: string]: Component<unknown, unknown>;

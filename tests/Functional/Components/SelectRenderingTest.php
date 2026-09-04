@@ -12,6 +12,21 @@ use PHPUnit\Framework\Attributes\Test;
 final class SelectRenderingTest extends FunctionalTestCase
 {
     #[Test]
+    public function rendersWithCollectionOmittedEntirely(): void
+    {
+        // Regression test: SelectContext::getCollection() was `protected`, which crashed with a
+        // visibility error the moment Fluid's own property-path resolution (context.collection.items
+        // in HiddenSelect.html) tried to read it while genuinely null (collection not provided at all).
+        $html = $this->renderTemplate('
+            <primitives:select.root>
+                <primitives:select.hiddenSelect />
+            </primitives:select.root>
+        ');
+
+        $this->assertStringContainsString('data-scope="select"', $html);
+    }
+
+    #[Test]
     public function rendersSelectRootWithDataAttributes(): void
     {
         $collection = new ListCollection([
