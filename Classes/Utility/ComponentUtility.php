@@ -6,6 +6,7 @@ namespace Jramke\FluidPrimitives\Utility;
 
 use Jramke\FluidPrimitives\Contexts\AbstractComponentContext;
 use Jramke\FluidPrimitives\Contexts\BaseContext;
+use Jramke\FluidPrimitives\Service\ContextService;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Configuration\ConfigurationManagerInterface;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
@@ -17,6 +18,27 @@ class ComponentUtility
     // Keep in sync with: Resources/Private/Client/src/lib/hydration.ts
     private const ID_NAMESPACE_OVERRIDES = [
         'navigation-menu' => 'nav-menu',
+    ];
+
+    // Maps a component's `ui:ref` part name to the enclosing Field's `fieldIds` key ('label' or
+    // 'control') it represents. Keep in sync with each field-aware Primitive's `propsWithField()`
+    // override in its .ts file (client-side counterpart, via field.dom.ts's getLabelId/getControlId).
+    private const FIELD_ID_PARTS = [
+        'select' => ['label' => 'label', 'hidden-select' => 'control'],
+        'combobox' => ['label' => 'label', 'input' => 'control'],
+        'number-input' => ['label' => 'label', 'input' => 'control'],
+        'switch' => ['label' => 'label', 'hidden-input' => 'control'],
+        'checkbox' => ['label' => 'label', 'hidden-input' => 'control'],
+        'checkbox-group' => ['label' => 'label'],
+    ];
+
+    // A component's FIELD_ID_PARTS override is suppressed while an ancestor context of this name
+    // is on the ContextService stack. Mirrors Checkbox.ts's client-side getClosestCheckboxGroup()
+    // check: a checkbox nested in a CheckboxGroup must not claim the enclosing Field's label/control
+    // id for itself - each checkbox in the group has its own, separate hidden input, so all of them
+    // doing so would produce duplicate ids. The group itself (not the individual checkbox) owns it.
+    private const FIELD_ID_EXCLUDED_WHEN_NESTED_IN = [
+        'checkbox' => 'checkbox-group',
     ];
 
     // Keep in sync with: Resources/Private/Client/src/lib/hydration.ts
@@ -185,6 +207,44 @@ class ComponentUtility
         }
 
         return "{$idNamespace}:{$rootId}:{$partSegment}";
+    }
+
+    /**
+     * Resolves a part's id to the enclosing Field's own control/label id, when `$part` is one of
+     * `FIELD_ID_PARTS` for `$componentName` and a `context.fieldIds` was forwarded by FieldContext
+     * (i.e. the component is rendering inside a `<ui:field.root>`).
+     *
+     * This is the server-side mirror of what each field-aware primitive's `propsWithField()`
+     * already does on the client via `field.dom.ts`'s `getLabelId`/`getControlId` - both must
+     * agree on the same id, since client-side hydration locates elements by it.
+     */
+    public static function getFieldIdOverride(
+        string $componentName,
+        string $part,
+        RenderingContextInterface $renderingContext,
+    ): ?string {
+        $fieldIdKey = self::FIELD_ID_PARTS[$componentName][$part] ?? null;
+        if ($fieldIdKey === null) {
+            return null;
+        }
+
+        $excludingAncestor = self::FIELD_ID_EXCLUDED_WHEN_NESTED_IN[$componentName] ?? null;
+        if ($excludingAncestor !== null) {
+            $context = $renderingContext->getVariableProvider()->getByPath('context');
+            // ContextService's stack lives on the ViewHelperVariableContainer of the rendering
+            // context that was active when the ancestor pushed itself - not necessarily the one
+            // this part's own template renders with - so check via the component's own context
+            // object, which already carries that exact reference.
+            $ancestorCheckRenderingContext = $context instanceof AbstractComponentContext
+                ? $context->getParentRenderingContext()
+                : $renderingContext;
+            if (ContextService::getFromRenderingContext($ancestorCheckRenderingContext, $excludingAncestor) !== null) {
+                return null;
+            }
+        }
+
+        $fieldId = $renderingContext->getVariableProvider()->getByPath("context.fieldIds.{$fieldIdKey}");
+        return is_string($fieldId) && $fieldId !== '' ? $fieldId : null;
     }
 
     private static function getIdNamespace(string $componentName): string

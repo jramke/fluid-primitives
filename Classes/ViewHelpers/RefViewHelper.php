@@ -118,6 +118,14 @@ class RefViewHelper extends AbstractViewHelper
         if ($this->arguments['withId']) {
             $ids = $this->renderingContext->getVariableProvider()->getByPath('context.ids') ?? [];
             $idsArray = is_array($ids) ? $ids : [];
+
+            if (!isset($idsArray[$part])) {
+                $fieldId = ComponentUtility::getFieldIdOverride($componentName, $part, $this->renderingContext);
+                if ($fieldId !== null) {
+                    $idsArray[$part] = $fieldId;
+                }
+            }
+
             $id = ComponentUtility::generatePartId($componentName, $rootId, $part, $value, $idsArray);
             $baseAttributes = array_merge(['id' => $id], $baseAttributes);
         }
