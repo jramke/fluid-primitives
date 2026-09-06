@@ -40,6 +40,19 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
         this.machine.start();
     }
 
+    /**
+     * Forces a fresh render() pass with no prop change behind it - use after mutating the DOM
+     * directly (e.g. inserting a new `Template` instance) for a primitive with no prop that
+     * naturally triggers a re-render on its own (unlike Combobox/Select, where updateProps({
+     * collection }) already causes one). Reaches past `machine.notify`'s type-only privacy the
+     * same way FieldAwareComponent's own field-sync logic already does internally.
+     */
+    refresh(): void {
+        // notify is marked as private but that does not prevent runtime access
+        // @ts-expect-error
+        this.machine.notify();
+    }
+
     getName() {
         return (this.constructor as typeof Component).name;
     }
@@ -71,6 +84,27 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
 
     getElements<T extends HTMLElement>(part: string, parent?: HTMLElement | Document): T[] {
         return this.hydrator?.getElements<T>(part, parent) || [];
+    }
+
+    /**
+     * For every element matching `part`, reads its own `data-value` and hands `{el, value}` to
+     * `getProps`; if it returns a props object, spreads it onto that element via `spreadProps`.
+     * Returning `null`/`undefined` skips the element (e.g. a value that no longer resolves
+     * against a collection). Deliberately does not read any other attribute
+     * (disabled/invalid/current/...) or resolve a collection itself - callers read whatever flags
+     * they need off `el` and do their own value resolution, since both vary per primitive.
+     */
+    protected spreadPropsByValue(
+        part: string,
+        getProps: (ctx: { el: HTMLElement; value: string }) => Attrs | null | undefined,
+        parent?: HTMLElement | Document
+    ): void {
+        this.getElements<HTMLElement>(part, parent).forEach(el => {
+            const value = el.dataset.value;
+            if (value === undefined) return;
+            const props = getProps({ el, value });
+            if (props) this.spreadProps(el, props);
+        });
     }
 
     abstract render(): void;

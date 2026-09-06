@@ -112,28 +112,19 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
             }
         });
 
-        const itemEls = this.getElements('item');
-        itemEls.forEach(itemEl => {
-            const item = this.api.collection.find(itemEl.dataset.value);
-            if (item) {
-                this.spreadProps(itemEl, this.api.getItemProps({ item }));
-            }
+        this.spreadPropsByValue('item', ({ value }) => {
+            const item = this.api.collection.find(value);
+            return item ? this.api.getItemProps({ item }) : null;
         });
 
-        const itemTextEls = this.getElements('item-text');
-        itemTextEls.forEach(itemTextEl => {
-            const item = this.api.collection.find(itemTextEl.dataset.value);
-            if (item) {
-                this.spreadProps(itemTextEl, this.api.getItemTextProps({ item }));
-            }
+        this.spreadPropsByValue('item-text', ({ value }) => {
+            const item = this.api.collection.find(value);
+            return item ? this.api.getItemTextProps({ item }) : null;
         });
 
-        const itemIndicatorEls = this.getElements('item-indicator');
-        itemIndicatorEls.forEach(itemIndicatorEl => {
-            const item = this.api.collection.find(itemIndicatorEl.dataset.value);
-            if (item) {
-                this.spreadProps(itemIndicatorEl, this.api.getItemIndicatorProps({ item }));
-            }
+        this.spreadPropsByValue('item-indicator', ({ value }) => {
+            const item = this.api.collection.find(value);
+            return item ? this.api.getItemIndicatorProps({ item }) : null;
         });
 
         const clearTriggerEl = this.getElement('clear-trigger');

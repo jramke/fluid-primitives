@@ -234,39 +234,36 @@ export class Combobox extends FieldAwareComponent<ComboboxPrimitiveProps, combob
             }
         });
 
-        const itemEls = this.getElements('item');
         const sourceCollection = this.getSourceCollection();
-        itemEls.forEach(itemEl => {
-            const sourceItem = sourceCollection.find(itemEl.dataset.value);
-            const item = sourceItem ?? this.api.collection.find(itemEl.dataset.value);
-            if (item) {
-                // Static/server-rendered items keep the existing sync-filter hide/show behavior.
-                // Dynamically-inserted (async) items are only ever in the DOM because they're a
-                // current result - never auto-hidden here.
-                itemEl.hidden = sourceItem ? !this.api.collection.has(item.value) : false;
-                this.spreadProps(itemEl, this.api.getItemProps({ item }));
-            }
+        // Returns both the resolved item and whether it came from sourceCollection specifically -
+        // the item callback below needs that distinction for its hidden-toggle logic, so it's
+        // exposed here instead of collapsed away, letting every callback resolve in one lookup.
+        const resolveItem = (value: string) => {
+            const sourceItem = sourceCollection.find(value);
+            return { sourceItem, item: sourceItem ?? this.api.collection.find(value) };
+        };
+
+        this.spreadPropsByValue('item', ({ el, value }) => {
+            const { sourceItem, item } = resolveItem(value);
+            if (!item) return null;
+            // Static/server-rendered items keep the existing sync-filter hide/show behavior.
+            // Dynamically-inserted (async) items are only ever in the DOM because they're a
+            // current result - never auto-hidden here.
+            el.hidden = sourceItem ? !this.api.collection.has(item.value) : false;
+            return this.api.getItemProps({ item });
         });
 
-        const itemTextEls = this.getElements('item-text');
-        itemTextEls.forEach(itemTextEl => {
-            const item =
-                sourceCollection.find(itemTextEl.dataset.value) ??
-                this.api.collection.find(itemTextEl.dataset.value);
-            if (item) {
-                this.spreadProps(itemTextEl, this.api.getItemTextProps({ item }));
-            }
+        this.spreadPropsByValue('item-text', ({ value }) => {
+            const { item } = resolveItem(value);
+            return item ? this.api.getItemTextProps({ item }) : null;
         });
 
-        const itemIndicatorEls = this.getElements('item-indicator');
-        itemIndicatorEls.forEach(itemIndicatorEl => {
-            const item =
-                sourceCollection.find(itemIndicatorEl.dataset.value) ??
-                this.api.collection.find(itemIndicatorEl.dataset.value);
-            if (item) {
-                this.spreadProps(itemIndicatorEl, this.api.getItemIndicatorProps({ item }));
-            }
+        this.spreadPropsByValue('item-indicator', ({ value }) => {
+            const { item } = resolveItem(value);
+            return item ? this.api.getItemIndicatorProps({ item }) : null;
         });
+
+        const itemEls = this.getElements('item');
 
         itemGroupEls.forEach(itemGroupEl => {
             const hasVisibleItems = this.getElements('item', itemGroupEl).some(

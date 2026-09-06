@@ -289,6 +289,44 @@ export class ComponentHydrator {
         element.setAttribute('data-part', part);
     }
 
+    /**
+     * Re-stamps every ref'd element within `root` (root included) that was originally rendered
+     * with a `value:` discriminator, for a new, real `value` - identified by the same signal
+     * `ui:ref` itself uses to decide whether a part needs a unique identity at all: it has an
+     * `id`. `withId: false` parts (shared/static, e.g. a plain `title`/`description` span) never
+     * get one and are left untouched. Scoped to this component (`data-scope`) so a nested,
+     * unrelated component's own value-scoped parts aren't touched.
+     *
+     * Use after cloning a `<template>` (see `Template`) to make the clone represent one real
+     * item/row in a single call, instead of manually recomputing
+     * `id`/`data-scope`/`data-part`/`data-value` for the root and separately for every nested
+     * value-scoped part (e.g. a combobox item's own `item-text`/`item-indicator`). Fully generic -
+     * not combobox-specific - so it applies unmodified to any future dynamic-item scenario
+     * (file-upload item previews, recurring/array form-field rows, or another primitive's own
+     * async items).
+     *
+     * `flags`, if given, are additionally set as boolean data attributes (e.g. `{ disabled: true }`
+     * -> a bare `data-disabled` attribute) on the same elements `value` is applied to - for
+     * primitives whose `render()` reads plain per-element flags rather than resolving a collection
+     * item (e.g. RadioGroup's `disabled`/`invalid`, NavigationMenu's `Link` `current`).
+     */
+    restampValue(root: Element, value: string, flags?: Record<string, boolean>): void {
+        const restamp = (el: Element) => {
+            const part = el.getAttribute('data-part');
+            if (!part) return;
+            this.setRefAttributes(el, part, value);
+            el.setAttribute('data-value', value);
+            for (const [name, flagValue] of Object.entries(flags ?? {})) {
+                el.toggleAttribute(`data-${name}`, flagValue);
+            }
+        };
+
+        if (root.getAttribute('data-scope') === this.componentName && root.hasAttribute('id')) {
+            restamp(root);
+        }
+        root.querySelectorAll(`[data-scope="${this.componentName}"][id]`).forEach(restamp);
+    }
+
     destroy() {
         this.elementRefs.clear();
     }

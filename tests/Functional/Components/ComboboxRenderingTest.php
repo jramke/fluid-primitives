@@ -35,7 +35,7 @@ final class ComboboxRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
-    public function rendersItemWithRenderedOnClientAndNoAriaSelected(): void
+    public function rendersItemInsideTemplateWithNoAriaSelected(): void
     {
         $collection = new ListCollection([]);
 
@@ -43,7 +43,7 @@ final class ComboboxRenderingTest extends FunctionalTestCase
             <primitives:combobox.root collection="{collection}">
                 <primitives:combobox.content>
                     <ui:template name="item-template" component="combobox">
-                        <primitives:combobox.item renderedOnClient="{true}">
+                        <primitives:combobox.item>
                             <span>placeholder</span>
                         </primitives:combobox.item>
                     </ui:template>
@@ -57,11 +57,11 @@ final class ComboboxRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
-    public function throwsWhenNeitherItemNorRenderedOnClientIsGiven(): void
+    public function throwsWhenItemIsMissingOutsideTemplate(): void
     {
         $collection = new ListCollection([]);
 
-        $this->expectExceptionMessage("requires an 'item' prop, unless 'renderedOnClient' is set");
+        $this->expectExceptionMessage("requires an 'item' prop, unless used inside a ui:template block");
 
         $this->renderTemplate('
             <primitives:combobox.root collection="{collection}">
@@ -114,8 +114,8 @@ final class ComboboxRenderingTest extends FunctionalTestCase
             <primitives:combobox.root collection="{collection}">
                 <primitives:combobox.content>
                     <ui:template name="item-template" component="combobox">
-                        <primitives:combobox.item renderedOnClient="{true}">
-                            <primitives:combobox.itemText renderedOnClient="{true}">
+                        <primitives:combobox.item>
+                            <primitives:combobox.itemText>
                                 <span {ui:ref(name: \'title\', withId: false)}></span>
                             </primitives:combobox.itemText>
                         </primitives:combobox.item>
@@ -126,5 +126,30 @@ final class ComboboxRenderingTest extends FunctionalTestCase
 
         $this->assertMatchesRegularExpression('/<template id="combobox:[^"]*:item-template"/', $html);
         $this->assertStringContainsString('<span data-scope="combobox" data-part="title">', $html);
+    }
+
+    #[Test]
+    public function itemTextAndItemIndicatorAutoDetectInsideTemplateWithNoLeakedProp(): void
+    {
+        $collection = new ListCollection([]);
+
+        $html = $this->renderTemplate('
+            <primitives:combobox.root collection="{collection}">
+                <primitives:combobox.content>
+                    <ui:template name="item-template" component="combobox">
+                        <primitives:combobox.item>
+                            <primitives:combobox.itemText>
+                                <span {ui:ref(name: \'title\', withId: false)}></span>
+                            </primitives:combobox.itemText>
+                            <primitives:combobox.itemIndicator />
+                        </primitives:combobox.item>
+                    </ui:template>
+                </primitives:combobox.content>
+            </primitives:combobox.root>
+        ', ['collection' => $collection]);
+
+        $this->assertStringContainsString('data-part="item-text"', $html);
+        $this->assertStringContainsString('data-part="item-indicator"', $html);
+        $this->assertStringNotContainsString('renderedOnClient', $html);
     }
 }

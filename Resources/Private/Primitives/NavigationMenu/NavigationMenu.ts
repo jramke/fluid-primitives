@@ -22,68 +22,27 @@ export class NavigationMenu extends Component<navigationMenu.Props, navigationMe
         // hydrate indicator-track wrapper (no specific Zag API)
         this.getElement('indicator-track');
 
-        const itemEls = this.getElements('item');
-        itemEls.forEach(itemEl => {
-            this.spreadProps(
-                itemEl,
-                this.api.getItemProps({
-                    value: itemEl.dataset.value!,
-                    disabled: itemEl.hasAttribute('data-disabled'),
-                })
-            );
-        });
+        this.spreadPropsByValue('item', ({ el, value }) =>
+            this.api.getItemProps({ value, disabled: el.hasAttribute('data-disabled') })
+        );
 
-        const triggerEls = this.getElements('trigger');
-        triggerEls.forEach(triggerEl => {
-            this.spreadProps(
-                triggerEl,
-                this.api.getTriggerProps({
-                    value: triggerEl.dataset.value!,
-                    disabled: triggerEl.hasAttribute('data-disabled'),
-                })
-            );
-        });
+        this.spreadPropsByValue('trigger', ({ el, value }) =>
+            this.api.getTriggerProps({ value, disabled: el.hasAttribute('data-disabled') })
+        );
 
-        const triggerProxyEls = this.getElements('trigger-proxy');
-        triggerProxyEls.forEach(triggerProxyEl => {
-            this.spreadProps(
-                triggerProxyEl,
-                this.api.getTriggerProxyProps({
-                    value: triggerProxyEl.dataset.value!,
-                })
-            );
-        });
+        this.spreadPropsByValue('trigger-proxy', ({ value }) =>
+            this.api.getTriggerProxyProps({ value })
+        );
 
-        const viewportProxyEls = this.getElements('viewport-proxy');
-        viewportProxyEls.forEach(viewportProxyEl => {
-            this.spreadProps(
-                viewportProxyEl,
-                this.api.getViewportProxyProps({
-                    value: viewportProxyEl.dataset.value!,
-                })
-            );
-        });
+        this.spreadPropsByValue('viewport-proxy', ({ value }) =>
+            this.api.getViewportProxyProps({ value })
+        );
 
-        const contentEls = this.getElements('content');
-        contentEls.forEach(contentEl => {
-            this.spreadProps(
-                contentEl,
-                this.api.getContentProps({
-                    value: contentEl.dataset.value!,
-                })
-            );
-        });
+        this.spreadPropsByValue('content', ({ value }) => this.api.getContentProps({ value }));
 
-        const linkEls = this.getElements('link');
-        linkEls.forEach(linkEl => {
-            this.spreadProps(
-                linkEl,
-                this.api.getLinkProps({
-                    value: linkEl.dataset.value!,
-                    current: linkEl.hasAttribute('data-current'),
-                })
-            );
-        });
+        this.spreadPropsByValue('link', ({ el, value }) =>
+            this.api.getLinkProps({ value, current: el.hasAttribute('data-current') })
+        );
 
         const indicatorEl = this.getElement('indicator');
         if (indicatorEl) this.spreadProps(indicatorEl, this.api.getIndicatorProps());
@@ -105,15 +64,8 @@ export class NavigationMenu extends Component<navigationMenu.Props, navigationMe
             this.spreadProps(viewportEl, this.api.getViewportProps({ align }));
         }
 
-        const itemIndicatorEls = this.getElements('item-indicator');
-        itemIndicatorEls.forEach(itemIndicatorEl => {
-            this.spreadProps(
-                itemIndicatorEl,
-                this.api.getItemIndicatorProps({
-                    value: itemIndicatorEl.dataset.value!,
-                    disabled: itemIndicatorEl.hasAttribute('data-disabled'),
-                })
-            );
-        });
+        this.spreadPropsByValue('item-indicator', ({ el, value }) =>
+            this.api.getItemIndicatorProps({ value, disabled: el.hasAttribute('data-disabled') })
+        );
     }
 }

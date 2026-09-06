@@ -32,13 +32,18 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
  * recurring/array form-field rows) - clone the `<template>`'s content, find its `ui:ref`'d
  * elements, and populate them directly.
  *
+ * Also marks a `isRenderStencil` flag on the component context for the duration of rendering
+ * children, so a nested component (e.g. `combobox.item`) can detect on its own that it's being
+ * rendered as a client-filled stencil rather than a real instance, without the template author
+ * having to pass an explicit prop for it.
+ *
  * ## Example
  * ```html
  * <ui:combobox.root>
  *   ...
  *   <ui:combobox.content>
  *     <ui:template name="item-template" component="combobox">
- *         <ui:combobox.item renderedOnClient="{true}">
+ *         <ui:combobox.item>
  *             <span {ui:ref(name: 'title', withId: false)}></span>
  *         </ui:combobox.item>
  *     </ui:template>
@@ -100,6 +105,14 @@ class TemplateViewHelper extends AbstractViewHelper
         }
         $variableProvider->add('context', $context);
 
+        // Marks the context as "rendering a client-filled stencil" for the duration of rendering
+        // our children, so a nested component (e.g. combobox.item/.itemText/.itemIndicator) can
+        // detect this automatically via `context.isRenderStencil`, instead of requiring an
+        // explicit prop from the template author. Saved/restored like component/context above,
+        // for correct behavior if ui:template is ever nested.
+        $wasRenderStencil = $context->get('isRenderStencil');
+        $context->set('isRenderStencil', true);
+
         try {
             $refAttributes = new TagAttributes([
                 'id' => ComponentUtility::generatePartId(
@@ -113,6 +126,8 @@ class TemplateViewHelper extends AbstractViewHelper
 
             return '<template ' . $refAttributes . '>' . $this->renderChildren() . '</template>';
         } finally {
+            $context->set('isRenderStencil', $wasRenderStencil);
+
             $variableProvider->remove('component');
             if ($hadComponent) {
                 $variableProvider->add('component', $previousComponent);

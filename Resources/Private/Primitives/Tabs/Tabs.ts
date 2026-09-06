@@ -19,26 +19,11 @@ export class Tabs extends Component<tabs.Props, tabs.Api> {
         const listEl = this.getElement('list');
         if (listEl) this.spreadProps(listEl, this.api.getListProps());
 
-        const triggerEls = this.getElements('trigger');
-        triggerEls.forEach(triggerEl => {
-            this.spreadProps(
-                triggerEl,
-                this.api.getTriggerProps({
-                    value: triggerEl.dataset.value!,
-                    disabled: triggerEl.hasAttribute('data-disabled'),
-                })
-            );
-        });
+        this.spreadPropsByValue('trigger', ({ el, value }) =>
+            this.api.getTriggerProps({ value, disabled: el.hasAttribute('data-disabled') })
+        );
 
-        const contentEls = this.getElements('content');
-        contentEls.forEach(contentEl => {
-            this.spreadProps(
-                contentEl,
-                this.api.getContentProps({
-                    value: contentEl.dataset.value!,
-                })
-            );
-        });
+        this.spreadPropsByValue('content', ({ value }) => this.api.getContentProps({ value }));
 
         const indicatorEl = this.getElement('indicator');
         if (indicatorEl) {

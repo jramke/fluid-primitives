@@ -20,49 +20,21 @@ export class Accordion extends Component<accordion.Props, accordion.Api> {
             this.spreadProps(rootEl, this.api.getRootProps());
         }
 
-        const itemEls = this.getElements('item');
-        itemEls.forEach(itemEl => {
-            this.spreadProps(
-                itemEl,
-                this.api.getItemProps({
-                    value: itemEl.getAttribute('data-value')!,
-                    disabled: itemEl.hasAttribute('data-disabled'),
-                })
-            );
-        });
+        this.spreadPropsByValue('item', ({ el, value }) =>
+            this.api.getItemProps({ value, disabled: el.hasAttribute('data-disabled') })
+        );
 
-        const triggers = this.getElements('item-trigger');
-        triggers.forEach(trigger => {
-            this.spreadProps(
-                trigger,
-                this.api.getItemTriggerProps({
-                    value: trigger.getAttribute('data-value')!,
-                    disabled: trigger.hasAttribute('data-disabled'),
-                })
-            );
-        });
+        this.spreadPropsByValue('item-trigger', ({ el, value }) =>
+            this.api.getItemTriggerProps({ value, disabled: el.hasAttribute('data-disabled') })
+        );
 
-        const contentEls = this.getElements('item-content');
-        contentEls.forEach(contentEl => {
-            this.spreadProps(
-                contentEl,
-                this.api.getItemContentProps({
-                    value: contentEl.getAttribute('data-value')!,
-                    disabled: contentEl.hasAttribute('data-disabled'),
-                })
-            );
-        });
+        this.spreadPropsByValue('item-content', ({ el, value }) =>
+            this.api.getItemContentProps({ value, disabled: el.hasAttribute('data-disabled') })
+        );
 
-        const indicatorEls = this.getElements('item-indicator');
-        indicatorEls.forEach(indicatorEl => {
-            this.spreadProps(
-                indicatorEl,
-                this.api.getItemIndicatorProps({
-                    value: indicatorEl.getAttribute('data-value')!,
-                    disabled: indicatorEl.hasAttribute('data-disabled'),
-                })
-            );
-        });
+        this.spreadPropsByValue('item-indicator', ({ el, value }) =>
+            this.api.getItemIndicatorProps({ value, disabled: el.hasAttribute('data-disabled') })
+        );
 
         // just so they are hydrated (data-attributes removed)
         this.getElements('item-header');

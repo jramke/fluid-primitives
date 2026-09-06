@@ -16,7 +16,7 @@
     data-uid="{context.rootId}"
     {f:if(condition: class, then: 'class="{class}"' )}
     {f:if(condition: '!{itemState.open}' , then: 'hidden' )}
-    {ui:ref(name: 'content' , data: refData)}
+    {ui:ref(name: 'content' , value: contentValue, data: refData)}
     {ui:attributes(skip: 'hidden' )}>
     <f:slot />
 </div>
