@@ -17,8 +17,6 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
         };
     }
 
-    // TODO: we need to make sure that selecting a value does correctly dispatch a change/input event beause the form relies on it to update the formdata.
-    // currently form validation does not show the current error state on item change (see numberinput for example)
     transformProps(props: select.Props): select.Props {
         return {
             ...props,
@@ -46,8 +44,6 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
         const controlEl = this.getElement('control');
         if (controlEl) this.spreadProps(controlEl, this.api.getControlProps());
 
-        // TODO: we need to handle the select state for the options manually since zag-js dont do it (maybe we can provide a pr),
-        // the formData would choose the first option as the value for the select when no option is selected
         const hiddenSelectEl = this.getElement('hiddenSelect');
         if (hiddenSelectEl) {
             const mergedProps = mergeProps(this.api.getHiddenSelectProps(), {
