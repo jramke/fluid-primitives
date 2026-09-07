@@ -5,6 +5,7 @@ import { Component } from './component';
 // Keep in sync with: Classes/Utility/ComponentUtility.php
 const ID_NAMESPACE_OVERRIDES: Record<string, string> = {
     'navigation-menu': 'nav-menu',
+    clipboard: 'clip',
 };
 
 // Keep in sync with: Classes/Utility/ComponentUtility.php
@@ -39,6 +40,21 @@ const PART_SEGMENT_OVERRIDES: Record<string, Record<string, PartSegmentOverride>
     tabs: {
         trigger: { segment: 'trigger', valueSeparator: '-' },
         content: { segment: 'content', valueSeparator: '-' },
+    },
+    'number-input': {
+        incrementTrigger: 'inc',
+        decrementTrigger: 'dec',
+    },
+    popover: {
+        positioner: 'popper',
+        description: 'desc',
+        closeTrigger: 'close',
+    },
+    switch: {
+        hiddenInput: 'input',
+    },
+    tooltip: {
+        positioner: 'popper',
     },
 };
 

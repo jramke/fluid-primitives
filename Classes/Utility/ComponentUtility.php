@@ -18,6 +18,7 @@ class ComponentUtility
     // Keep in sync with: Resources/Private/Client/src/lib/hydration.ts
     private const ID_NAMESPACE_OVERRIDES = [
         'navigation-menu' => 'nav-menu',
+        'clipboard' => 'clip',
     ];
 
     // Maps a component's `ui:ref` part name to the enclosing Field's `fieldIds` key ('label' or
@@ -73,6 +74,21 @@ class ComponentUtility
         'tabs' => [
             'trigger' => ['segment' => 'trigger', 'valueSeparator' => '-'],
             'content' => ['segment' => 'content', 'valueSeparator' => '-'],
+        ],
+        'number-input' => [
+            'incrementTrigger' => 'inc',
+            'decrementTrigger' => 'dec',
+        ],
+        'popover' => [
+            'positioner' => 'popper',
+            'description' => 'desc',
+            'closeTrigger' => 'close',
+        ],
+        'switch' => [
+            'hiddenInput' => 'input',
+        ],
+        'tooltip' => [
+            'positioner' => 'popper',
         ],
     ];
 
