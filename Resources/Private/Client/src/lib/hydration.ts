@@ -250,6 +250,11 @@ export class ComponentHydrator {
         return `${idNamespace}:${this.rootId}:${partSegment}`;
     }
 
+    private getValueSeparatorForPart(part: string): string {
+        const { valueSeparator } = this.getPartConfig(part);
+        return valueSeparator;
+    }
+
     getElement<T extends Element>(part: string, parent: Element | Document = this.doc): T | null {
         if (this.elementRefs.has(part)) {
             return (this.elementRefs.get(part) as T) || null;
@@ -299,7 +304,7 @@ export class ComponentHydrator {
         const dataPart = toKebabCase(part);
         const elements = Array.from(
             searchScope.querySelectorAll<T>(
-                `[id="${CSS.escape(this.computePartId(part))}"][data-part="${dataPart}"],[id^="${CSS.escape(this.computePartId(part) + ':')}"][data-part="${dataPart}"]`
+                `[id="${CSS.escape(this.computePartId(part))}"][data-part="${dataPart}"],[id^="${CSS.escape(this.computePartId(part) + this.getValueSeparatorForPart(part))}"][data-part="${dataPart}"]`
             )
         );
 
