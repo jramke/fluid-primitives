@@ -3,7 +3,7 @@ import { debounce } from '@zag-js/utils';
 import { getFormMachineFor, type FormMachine } from '../../Form/src/form.registry';
 import * as dom from './field.dom';
 import type { FieldSchema } from './field.types';
-import { getCurrentFieldValue, getDefaultFieldValue, isFieldValueEqual } from './field.utils';
+import { getCurrentFieldValue, getDefaultFieldValue } from './field.utils';
 
 export const machine = createMachine<FieldSchema>({
     initialState() {
@@ -126,13 +126,7 @@ export const machine = createMachine<FieldSchema>({
                 context.set('errors', []);
             },
             handleValueChange({ context, prop, action }) {
-                const previousValue = context.get('value');
                 action(['syncValueFromDom']);
-                const nextValue = context.get('value');
-
-                if (isFieldValueEqual(previousValue, nextValue)) {
-                    return;
-                }
 
                 context.set('touched', true);
                 context.set('dirty', true);

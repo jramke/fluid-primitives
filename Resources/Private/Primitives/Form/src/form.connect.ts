@@ -153,7 +153,7 @@ export function connect<T extends PropTypes>(
 
         getErrorTextProps() {
             return normalize.element({
-                ...parts['error-text'].attrs,
+                ...parts['errorText'].attrs,
                 hidden: !isError,
                 role: 'alert',
             });
@@ -161,7 +161,7 @@ export function connect<T extends PropTypes>(
 
         getSuccessTextProps() {
             return normalize.element({
-                ...parts['success-text'].attrs,
+                ...parts['successText'].attrs,
                 hidden: !isSuccessful,
                 role: 'status',
                 'aria-live': 'polite',

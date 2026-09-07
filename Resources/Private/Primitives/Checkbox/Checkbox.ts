@@ -6,7 +6,6 @@ import {
     type CheckboxGroupMachine,
 } from '../CheckboxGroup/src/checkbox-group.registry';
 import type { CheckboxGroupApi } from '../CheckboxGroup/src/checkbox-group.types';
-import * as fieldDom from '../Field/src/field.dom';
 import type { FieldMachine } from '../Field/src/field.registry';
 
 export class Checkbox extends FieldAwareComponent<checkbox.Props, checkbox.Api> {
@@ -20,8 +19,6 @@ export class Checkbox extends FieldAwareComponent<checkbox.Props, checkbox.Api> 
     private syncingFromGroup = false; // Prevents callback loop when syncing from group
 
     propsWithField(props: checkbox.Props, fieldMachine: FieldMachine): checkbox.Props {
-        const isInGroup = !!this.getClosestCheckboxGroup();
-
         return {
             ...props,
             disabled: props.disabled ?? fieldMachine.context.get('disabled'),
@@ -29,11 +26,6 @@ export class Checkbox extends FieldAwareComponent<checkbox.Props, checkbox.Api> 
             required: props.required ?? fieldMachine.context.get('required'),
             invalid: props.invalid ?? fieldMachine.context.get('invalid'),
             name: props.name ?? fieldMachine.prop('name'),
-            ids: {
-                ...props.ids,
-                label: isInGroup ? undefined : fieldDom.getLabelId(fieldMachine.scope),
-                hiddenInput: isInGroup ? undefined : fieldDom.getControlId(fieldMachine.scope),
-            },
         };
     }
 
@@ -149,7 +141,7 @@ export class Checkbox extends FieldAwareComponent<checkbox.Props, checkbox.Api> 
         const indicatorEl = this.getElement('indicator');
         if (indicatorEl) this.spreadProps(indicatorEl, this.api.getIndicatorProps());
 
-        const hiddenInputEl = this.getElement('hidden-input');
+        const hiddenInputEl = this.getElement('hiddenInput');
         if (hiddenInputEl) {
             const mergedProps = mergeProps(this.api.getHiddenInputProps(), {
                 'aria-describedby': this.fieldMachine?.context.get('describeIds') || undefined,

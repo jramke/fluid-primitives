@@ -1,0 +1,25 @@
+<f:variable name="state">{context.defaultOpen ? 'open' : 'closed'}</f:variable>
+<f:variable name="defaultInputValue">{context -> ui:call(method: 'getInitialInputValue')}</f:variable>
+<f:variable name="refData" value="{state: state, disabled: context.disabled, invalid: context.invalid}" />
+
+<input
+    type="text"
+    role="combobox"
+    autocomplete="off"
+    autocorrect="off"
+    autocapitalize="none"
+    spellcheck="false"
+    aria-expanded="{f:if(condition: context.defaultOpen, then: 'true', else: 'false')}"
+    aria-invalid="{f:if(condition: context.invalid, then: 'true', else: 'false')}"
+    aria-controls="{context.ids.content}"
+    aria-autocomplete="list"
+    data-state="{state}"
+    {f:if(condition: context.form, then: 'form="{context.form}"' )}
+    {f:if(condition: context.name, then: 'name="{context.name}"' )}
+    {f:if(condition: context.placeholder, then: 'placeholder="{context.placeholder}"' )}
+    {f:if(condition: defaultInputValue, then: 'value="{defaultInputValue}"' )}
+    {f:if(condition: context.disabled, then: 'disabled' )}
+    {f:if(condition: context.required, then: 'required' )}
+    {f:if(condition: context.readOnly, then: 'readonly' )}
+    {ui:ref(name: 'input' , data: refData )}
+    {ui:attributes()} />

@@ -7,7 +7,7 @@
 <a
     {f:if(condition: current, then: 'aria-current="page"' )}
     {f:if(condition: class, then: 'class="{class}"' )}
-    {ui:ref(name: 'link' , data: refData)}
+    {ui:ref(name: 'link' , value: linkValue, data: refData)}
     {ui:attributes()}>
     <f:slot />
 </a>

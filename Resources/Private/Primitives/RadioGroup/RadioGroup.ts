@@ -41,53 +41,40 @@ export class RadioGroup extends FieldAwareComponent<radioGroup.Props, radioGroup
         const labelEl = this.getElement('label');
         if (labelEl) this.spreadProps(labelEl, this.api.getLabelProps());
 
-        const itemEls = this.getElements('item');
-        itemEls.forEach(itemEl => {
-            this.spreadProps(
-                itemEl,
-                this.api.getItemProps({
-                    value: itemEl.dataset.value!,
-                    disabled: itemEl.getAttribute('data-disabled') === 'true',
-                    invalid: itemEl.getAttribute('data-invalid') === 'true',
-                })
-            );
-        });
+        // Note: previously read `getAttribute('data-disabled'/'data-invalid') === 'true'`, which
+        // could never match - TagAttributes only ever renders these as bare boolean attributes
+        // (present/absent), never as the literal string "true". `hasAttribute` is the fix.
+        this.spreadPropsByValue('item', ({ el, value }) =>
+            this.api.getItemProps({
+                value,
+                disabled: el.hasAttribute('data-disabled'),
+                invalid: el.hasAttribute('data-invalid'),
+            })
+        );
 
-        const itemTextEls = this.getElements('item-text');
-        itemTextEls.forEach(itemTextEl => {
-            this.spreadProps(
-                itemTextEl,
-                this.api.getItemTextProps({
-                    value: itemTextEl.dataset.value!,
-                    disabled: itemTextEl.getAttribute('data-disabled') === 'true',
-                    invalid: itemTextEl.getAttribute('data-invalid') === 'true',
-                })
-            );
-        });
+        this.spreadPropsByValue('itemText', ({ el, value }) =>
+            this.api.getItemTextProps({
+                value,
+                disabled: el.hasAttribute('data-disabled'),
+                invalid: el.hasAttribute('data-invalid'),
+            })
+        );
 
-        const itemControlEls = this.getElements('item-control');
-        itemControlEls.forEach(itemControlEl => {
-            this.spreadProps(
-                itemControlEl,
-                this.api.getItemControlProps({
-                    value: itemControlEl.dataset.value!,
-                    disabled: itemControlEl.getAttribute('data-disabled') === 'true',
-                    invalid: itemControlEl.getAttribute('data-invalid') === 'true',
-                })
-            );
-        });
+        this.spreadPropsByValue('itemControl', ({ el, value }) =>
+            this.api.getItemControlProps({
+                value,
+                disabled: el.hasAttribute('data-disabled'),
+                invalid: el.hasAttribute('data-invalid'),
+            })
+        );
 
-        const itemHiddenInputEls = this.getElements('item-hidden-input');
-        itemHiddenInputEls.forEach(itemHiddenInputEl => {
-            this.spreadProps(
-                itemHiddenInputEl,
-                this.api.getItemHiddenInputProps({
-                    value: itemHiddenInputEl.dataset.value!,
-                    disabled: itemHiddenInputEl.getAttribute('data-disabled') === 'true',
-                    invalid: itemHiddenInputEl.getAttribute('data-invalid') === 'true',
-                })
-            );
-        });
+        this.spreadPropsByValue('itemHiddenInput', ({ el, value }) =>
+            this.api.getItemHiddenInputProps({
+                value,
+                disabled: el.hasAttribute('data-disabled'),
+                invalid: el.hasAttribute('data-invalid'),
+            })
+        );
 
         const indicatorEl = this.getElement('indicator');
         if (indicatorEl) this.spreadProps(indicatorEl, this.api.getIndicatorProps());

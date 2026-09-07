@@ -1,0 +1,21 @@
+<f:variable name="state">{context.defaultOpen ? 'open' : 'closed'}</f:variable>
+<f:variable name="refData" value="{
+    disabled: context.disabled,
+    invalid: context.invalid,
+    readonly: context.readOnly,
+    state: state
+}" />
+
+<button
+    type="button"
+    aria-label="{context.translations.triggerLabel}"
+    aria-haspopup="listbox"
+    aria-expanded="{f:if(condition: context.defaultOpen, then: 'true', else: 'false')}"
+    data-state="{state}"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.trigger, then: 'id="{context.ids.trigger}"' )}
+    {f:if(condition: context.disabled, then: 'disabled' )}
+    {ui:ref(name: 'trigger' , data: refData )}
+    {ui:attributes()}>
+    <f:slot />
+</button>

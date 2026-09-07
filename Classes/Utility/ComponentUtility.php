@@ -6,6 +6,7 @@ namespace Jramke\FluidPrimitives\Utility;
 
 use Jramke\FluidPrimitives\Contexts\AbstractComponentContext;
 use Jramke\FluidPrimitives\Contexts\BaseContext;
+use Jramke\FluidPrimitives\Service\ContextService;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Configuration\ConfigurationManagerInterface;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
@@ -19,23 +20,54 @@ class ComponentUtility
         'navigation-menu' => 'nav-menu',
     ];
 
+    // Maps a component's `ui:ref` part name to the enclosing Field's `fieldIds` key ('label' or
+    // 'control') it represents. Keep in sync with each field-aware Primitive's `propsWithField()`
+    // override in its .ts file (client-side counterpart, via field.dom.ts's getLabelId/getControlId).
+    private const FIELD_ID_PARTS = [
+        'select' => ['label' => 'label', 'control' => 'hiddenSelect'],
+        'combobox' => ['label' => 'label', 'control' => 'input'],
+        'number-input' => ['label' => 'label', 'control' => 'input'],
+        'switch' => ['label' => 'label', 'control' => 'hiddenInput'],
+        'checkbox' => ['label' => 'label', 'control' => 'hiddenInput'],
+        'checkbox-group' => ['label' => 'label'],
+    ];
+
+    private const FIELD_ID_OVERRIDE_KEYS = ['label', 'control'];
+
+    // A component's FIELD_ID_PARTS override is suppressed while an ancestor context of this name
+    // is on the ContextService stack. Mirrors Checkbox.ts's client-side getClosestCheckboxGroup()
+    // check: a checkbox nested in a CheckboxGroup must not claim the enclosing Field's label/control
+    // id for itself - each checkbox in the group has its own, separate hidden input, so all of them
+    // doing so would produce duplicate ids. The group itself (not the individual checkbox) owns it.
+    private const FIELD_ID_EXCLUDED_WHEN_NESTED_IN = [
+        'checkbox' => ['checkbox-group'],
+    ];
+
     // Keep in sync with: Resources/Private/Client/src/lib/hydration.ts
     private const PART_SEGMENT_OVERRIDES = [
         // TODO: Revisit this override map after upgrading to zag-js v2.
         'radio-group' => [
             'item' => 'radio',
-            'item-hidden-input' => 'radio:input',
-            'item-control' => 'radio:control',
-            'item-text' => 'radio:label',
+            'itemHiddenInput' => 'radio:input',
+            'itemControl' => 'radio:control',
+            'itemText' => 'radio:label',
         ],
         'accordion' => [
-            'item-trigger' => 'trigger',
-            'item-content' => 'content',
+            'itemTrigger' => 'trigger',
+            'itemContent' => 'content',
         ],
         'select' => [
-            'hidden-select' => 'select',
-            'item-group' => 'optgroup',
-            'item-group-label' => 'optgroup-label',
+            'hiddenSelect' => 'select',
+            'itemGroup' => 'optgroup',
+            'itemGroupLabel' => 'optgroup-label',
+            'item' => 'option',
+        ],
+        'combobox' => [
+            'positioner' => 'popper',
+            'trigger' => 'toggle-btn',
+            'clearTrigger' => 'clear-btn',
+            'itemGroup' => 'optgroup',
+            'itemGroupLabel' => 'optgroup-label',
             'item' => 'option',
         ],
         'tabs' => [
@@ -182,6 +214,21 @@ class ComponentUtility
         }
 
         return "{$idNamespace}:{$rootId}:{$partSegment}";
+    }
+
+    public static function getOverrideFieldIdKey(string $componentName, string $part): ?string
+    {
+        return self::FIELD_ID_PARTS[$componentName][$part] ?? null;
+    }
+
+    public static function shouldSkipFieldIdsInheritanceWhenNestedIn(string $nestedComponent): array
+    {
+        return self::FIELD_ID_EXCLUDED_WHEN_NESTED_IN[$nestedComponent] ?? [];
+    }
+
+    public static function getFieldIdOverrideKeys(): array
+    {
+        return self::FIELD_ID_OVERRIDE_KEYS ?? [];
     }
 
     private static function getIdNamespace(string $componentName): string

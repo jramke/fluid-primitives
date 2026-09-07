@@ -9,9 +9,7 @@
         "url": "git+https://github.com/jramke/fluid-primitives.git"
     },
     "author": "Joost Ramke <hey@joostramke.com>",
-    "files": [
-        "./dist"
-    ],
+    "files": ["./dist"],
     "main": "./dist/client.js",
     "types": "./dist/client.d.ts",
     "exports": {
@@ -38,6 +36,10 @@
         "./clipboard": {
             "import": "./dist/clipboard.js",
             "types": "./dist/clipboard.d.ts"
+        },
+        "./combobox": {
+            "import": "./dist/combobox.js",
+            "types": "./dist/combobox.d.ts"
         },
         "./collapsible": {
             "import": "./dist/collapsible.js",
@@ -121,13 +123,16 @@
     "dependencies": {
         "@zag-js/accordion": "^1.43.3",
         "@zag-js/anatomy": "^1.43.3",
+        "@zag-js/async-list": "^1.43.3",
         "@zag-js/checkbox": "^1.43.3",
         "@zag-js/clipboard": "^1.43.3",
         "@zag-js/collapsible": "^1.43.3",
         "@zag-js/collection": "^1.43.3",
+        "@zag-js/combobox": "^1.43.3",
         "@zag-js/core": "^1.43.3",
         "@zag-js/dialog": "^1.43.3",
         "@zag-js/dom-query": "^1.43.3",
+        "@zag-js/i18n-utils": "^1.43.3",
         "@zag-js/navigation-menu": "^1.43.3",
         "@zag-js/number-input": "^1.43.3",
         "@zag-js/popover": "^1.43.3",

@@ -14,18 +14,26 @@ const PART_SEGMENT_OVERRIDES: Record<string, Record<string, PartSegmentOverride>
     // TODO: Revisit this override map after upgrading to zag-js v2.
     'radio-group': {
         item: 'radio',
-        'item-hidden-input': 'radio:input',
-        'item-control': 'radio:control',
-        'item-text': 'radio:label',
+        itemHiddenInput: 'radio:input',
+        itemControl: 'radio:control',
+        itemText: 'radio:label',
     },
     accordion: {
-        'item-trigger': 'trigger',
-        'item-content': 'content',
+        itemTrigger: 'trigger',
+        itemContent: 'content',
     },
     select: {
-        'hidden-select': 'select',
-        'item-group': 'optgroup',
-        'item-group-label': 'optgroup-label',
+        hiddenSelect: 'select',
+        itemGroup: 'optgroup',
+        itemGroupLabel: 'optgroup-label',
+        item: 'option',
+    },
+    combobox: {
+        positioner: 'popper',
+        trigger: 'toggle-btn',
+        clearTrigger: 'clear-btn',
+        itemGroup: 'optgroup',
+        itemGroupLabel: 'optgroup-label',
         item: 'option',
     },
     tabs: {
@@ -33,6 +41,18 @@ const PART_SEGMENT_OVERRIDES: Record<string, Record<string, PartSegmentOverride>
         content: { segment: 'content', valueSeparator: '-' },
     },
 };
+
+// A part's own name is lowerCamelCase (mirroring zag-js's own `ids` prop keys, so overriding a
+// part's id reads the same way it does in zag itself), but `data-part` always renders lower-kebab
+// for CSS/selector consistency. Keep in sync with: Classes/Utility/ComponentUtility.php's
+// camelCaseToLowerCaseDashed()/lowerCaseDashedToCamelCase().
+function toKebabCase(part: string): string {
+    return part.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
+}
+
+function toCamelCase(part: string): string {
+    return part.replace(/-([a-z0-9])/g, (_match, char: string) => char.toUpperCase());
+}
 
 export function getHydrationData(component: string): Record<string, ComponentHydrationData> | null;
 export function getHydrationData(component: string, id: string): ComponentHydrationData | null;
@@ -242,8 +262,9 @@ export class ComponentHydrator {
             // Use getElementById (no CSS-escaping needed; IDs may contain colons)
             element = this.doc.getElementById(this.computePartId(part)) as T | null;
         } else {
+            const dataPart = toKebabCase(part);
             element = (parent as Element).querySelector<T>(
-                `[id="${CSS.escape(this.computePartId(part))}"][data-part="${part}"],[id^="${CSS.escape(this.computePartId(part))}"][data-part="${part}"]`
+                `[id="${CSS.escape(this.computePartId(part))}"][data-part="${dataPart}"],[id^="${CSS.escape(this.computePartId(part))}"][data-part="${dataPart}"]`
             );
         }
 
@@ -275,9 +296,10 @@ export class ComponentHydrator {
             return [];
         }
 
+        const dataPart = toKebabCase(part);
         const elements = Array.from(
             searchScope.querySelectorAll<T>(
-                `[id="${CSS.escape(this.computePartId(part))}"][data-part="${part}"],[id^="${CSS.escape(this.computePartId(part))}"][data-part="${part}"]`
+                `[id="${CSS.escape(this.computePartId(part))}"][data-part="${dataPart}"],[id^="${CSS.escape(this.computePartId(part) + ':')}"][data-part="${dataPart}"]`
             )
         );
 
@@ -290,13 +312,52 @@ export class ComponentHydrator {
 
     generateRefAttributesString(part: string, value?: string): string {
         const id = this.computePartId(part, value);
-        return `id="${id}" data-scope="${this.componentName}" data-part="${part}"`;
+        return `id="${id}" data-scope="${this.componentName}" data-part="${toKebabCase(part)}"`;
     }
 
     setRefAttributes(element: Element, part: string, value?: string): void {
         element.setAttribute('id', this.computePartId(part, value));
         element.setAttribute('data-scope', this.componentName);
-        element.setAttribute('data-part', part);
+        element.setAttribute('data-part', toKebabCase(part));
+    }
+
+    /**
+     * Re-stamps every ref'd element within `root` (root included) that was originally rendered
+     * with a `value:` discriminator, for a new, real `value` - identified by the same signal
+     * `ui:ref` itself uses to decide whether a part needs a unique identity at all: it has an
+     * `id`. `withId: false` parts (shared/static, e.g. a plain `title`/`description` span) never
+     * get one and are left untouched. Scoped to this component (`data-scope`) so a nested,
+     * unrelated component's own value-scoped parts aren't touched.
+     *
+     * Use after cloning a `<template>` (see `Template`) to make the clone represent one real
+     * item/row in a single call, instead of manually recomputing
+     * `id`/`data-scope`/`data-part`/`data-value` for the root and separately for every nested
+     * value-scoped part (e.g. a combobox item's own `item-text`/`item-indicator`). Fully generic -
+     * not combobox-specific - so it applies unmodified to any future dynamic-item scenario
+     * (file-upload item previews, recurring/array form-field rows, or another primitive's own
+     * async items).
+     *
+     * `flags`, if given, are additionally set as boolean data attributes (e.g. `{ disabled: true }`
+     * -> a bare `data-disabled` attribute) on the same elements `value` is applied to - for
+     * primitives whose `render()` reads plain per-element flags rather than resolving a collection
+     * item (e.g. RadioGroup's `disabled`/`invalid`, NavigationMenu's `Link` `current`).
+     */
+    restampValue(root: Element, value: string, flags?: Record<string, boolean>): void {
+        const restamp = (el: Element) => {
+            const rawPart = el.getAttribute('data-part');
+            if (!rawPart) return;
+            const part = toCamelCase(rawPart);
+            this.setRefAttributes(el, part, value);
+            el.setAttribute('data-value', value);
+            for (const [name, flagValue] of Object.entries(flags ?? {})) {
+                el.toggleAttribute(`data-${name}`, flagValue);
+            }
+        };
+
+        if (root.getAttribute('data-scope') === this.componentName && root.hasAttribute('id')) {
+            restamp(root);
+        }
+        root.querySelectorAll(`[data-scope="${this.componentName}"][id]`).forEach(restamp);
     }
 
     destroy() {

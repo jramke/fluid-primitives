@@ -29,7 +29,7 @@ export class Popover extends Component<popover.Props, popover.Api> {
         const arrowEl = this.getElement('arrow');
         if (arrowEl) this.spreadProps(arrowEl, this.api.getArrowProps());
 
-        const arrowTipEl = this.getElement('arrow-tip');
+        const arrowTipEl = this.getElement('arrowTip');
         if (arrowTipEl) this.spreadProps(arrowTipEl, this.api.getArrowTipProps());
 
         const contentEl = this.getElement('content');
@@ -41,7 +41,7 @@ export class Popover extends Component<popover.Props, popover.Api> {
         const descriptionEl = this.getElement('description');
         if (descriptionEl) this.spreadProps(descriptionEl, this.api.getDescriptionProps());
 
-        const closeTriggerEl = this.getElement('close-trigger');
+        const closeTriggerEl = this.getElement('closeTrigger');
         if (closeTriggerEl) {
             const closeTriggerProps = mergeProps(this.api.getCloseTriggerProps(), {
                 'aria-label': this.userProps?.translations?.closeTriggerLabel || null,

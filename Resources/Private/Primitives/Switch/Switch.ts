@@ -1,6 +1,5 @@
 import * as zagSwitch from '@zag-js/switch';
 import { FieldAwareComponent, Machine, mergeProps, normalizeProps } from '../../Client';
-import * as fieldDom from '../Field/src/field.dom';
 import type { FieldMachine } from '../Field/src/field.registry';
 
 export class Switch extends FieldAwareComponent<zagSwitch.Props, zagSwitch.Api> {
@@ -14,11 +13,6 @@ export class Switch extends FieldAwareComponent<zagSwitch.Props, zagSwitch.Api> 
             required: props.required ?? fieldMachine.context.get('required'),
             invalid: props.invalid ?? fieldMachine.context.get('invalid'),
             name: props.name ?? fieldMachine.prop('name'),
-            ids: {
-                ...props.ids,
-                label: fieldDom.getLabelId(fieldMachine.scope),
-                hiddenInput: fieldDom.getControlId(fieldMachine.scope),
-            },
         };
     }
 
@@ -46,7 +40,7 @@ export class Switch extends FieldAwareComponent<zagSwitch.Props, zagSwitch.Api> 
         const thumbEl = this.getElement('thumb');
         if (thumbEl) this.spreadProps(thumbEl, this.api.getThumbProps());
 
-        const hiddenInputEl = this.getElement('hidden-input');
+        const hiddenInputEl = this.getElement('hiddenInput');
         if (hiddenInputEl) {
             const mergedProps = mergeProps(this.api.getHiddenInputProps(), {
                 'aria-describedby': this.fieldMachine?.context.get('describeIds') || undefined,
@@ -54,28 +48,13 @@ export class Switch extends FieldAwareComponent<zagSwitch.Props, zagSwitch.Api> 
             this.spreadProps(hiddenInputEl, mergedProps);
         }
 
-        const checkedIndicatorEl = this.getElement('indicator-checked');
-        if (checkedIndicatorEl) {
-            this.spreadProps(
-                checkedIndicatorEl,
-                normalizeProps.element({
-                    'aria-hidden': true,
-                    hidden: this.api.checked ? undefined : true,
-                    'data-state': 'checked',
-                })
-            );
-        }
-
-        const uncheckedIndicatorEl = this.getElement('indicator-unchecked');
-        if (uncheckedIndicatorEl) {
-            this.spreadProps(
-                uncheckedIndicatorEl,
-                normalizeProps.element({
-                    'aria-hidden': true,
-                    hidden: this.api.checked ? true : undefined,
-                    'data-state': 'unchecked',
-                })
-            );
-        }
+        this.spreadPropsByValue('indicator', ({ value }) => {
+            const isActive = (value === 'checked') === this.api.checked;
+            return normalizeProps.element({
+                'aria-hidden': true,
+                hidden: isActive ? undefined : true,
+                'data-state': value,
+            });
+        });
     }
 }

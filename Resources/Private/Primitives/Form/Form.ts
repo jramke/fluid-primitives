@@ -15,8 +15,6 @@ export type {
     FormValueTree,
 } from './src/form.types';
 
-const formStates: FormState[] = ['ready', 'invalid', 'submitting', 'success', 'error'];
-
 export class Form extends Component<FormProps, FormApi> {
     static name = 'form';
 
@@ -57,18 +55,16 @@ export class Form extends Component<FormProps, FormApi> {
             this.spreadProps(contentEl, this.api.getContentProps());
         });
 
-        formStates.forEach(state => {
-            this.getElements(`indicator-${state}`).forEach(indicatorEl => {
-                this.spreadProps(indicatorEl, this.api.getIndicatorProps(state));
-            });
-        });
+        this.spreadPropsByValue('indicator', ({ value }) =>
+            this.api.getIndicatorProps(value as FormState)
+        );
 
-        this.getElements('error-text').forEach(errorTextEl => {
+        this.getElements('errorText').forEach(errorTextEl => {
             this.spreadProps(errorTextEl, this.api.getErrorTextProps());
             syncStatusText(errorTextEl, this.api.getErrorText());
         });
 
-        this.getElements('success-text').forEach(successTextEl => {
+        this.getElements('successText').forEach(successTextEl => {
             this.spreadProps(successTextEl, this.api.getSuccessTextProps());
             syncStatusText(successTextEl, this.api.getSuccessText());
         });

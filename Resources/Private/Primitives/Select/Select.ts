@@ -1,7 +1,6 @@
 import * as select from '@zag-js/select';
 import { FieldAwareComponent, Machine, mergeProps, normalizeProps } from '../../Client';
 import { getListCollectionFromHydrationData } from '../../Client/src/lib/hydration';
-import * as fieldDom from '../Field/src/field.dom';
 import type { FieldMachine } from '../Field/src/field.registry';
 
 export class Select extends FieldAwareComponent<select.Props, select.Api> {
@@ -15,11 +14,6 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
             required: props.required ?? fieldMachine.context.get('required'),
             invalid: props.invalid ?? fieldMachine.context.get('invalid'),
             name: props.name ?? fieldMachine.prop('name'),
-            ids: {
-                ...props.ids,
-                label: fieldDom.getLabelId(fieldMachine.scope),
-                hiddenSelect: fieldDom.getControlId(fieldMachine.scope),
-            },
         };
     }
 
@@ -50,12 +44,19 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
         const controlEl = this.getElement('control');
         if (controlEl) this.spreadProps(controlEl, this.api.getControlProps());
 
-        const hiddenSelectEl = this.getElement('hidden-select');
+        const hiddenSelectEl = this.getElement('hiddenSelect');
         if (hiddenSelectEl) {
             const mergedProps = mergeProps(this.api.getHiddenSelectProps(), {
                 'aria-describedby': this.fieldMachine?.context.get('describeIds') || undefined,
             });
             this.spreadProps(hiddenSelectEl, mergedProps);
+
+            // We need to handle this client side so the select can default to an empty string
+            // Setting the select attribute server side has no effect
+            // There is no need to mirror the selected property on the other options since the select inputs value is correctly updated by the machine
+            const isValueEmpty = this.api.value.length === 0;
+            const defaultOption = hiddenSelectEl.querySelector('option');
+            if (defaultOption) defaultOption.selected = isValueEmpty;
         }
 
         const labelEl = this.getElement('label');
@@ -73,7 +74,7 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
         // We need to make sure the element is rerendered because otherwise safari doesnt update the spans value in the a11y tree
         // and the button would announce an old value when it receives focus.
         // see: https://github.com/chakra-ui/zag/issues/3099
-        const valueTextEl = this.getElement('value-text');
+        const valueTextEl = this.getElement('valueText');
         if (valueTextEl) {
             const currentText = valueTextEl.textContent || valueTextEl.dataset.placeholder || '';
             const nextValue = this.api.valueAsString || valueTextEl.dataset.placeholder || '';
@@ -87,7 +88,7 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
 
             if (nextValue !== currentText) {
                 queueMicrotask(() => {
-                    const el = this.getElement('value-text');
+                    const el = this.getElement('valueText');
                     if (el?.isConnected) {
                         const next = el.cloneNode(true) as HTMLElement;
                         el.replaceWith(next);
@@ -97,13 +98,13 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
             }
         }
 
-        const itemGroupEls = this.getElements('item-group');
+        const itemGroupEls = this.getElements('itemGroup');
         itemGroupEls.forEach(itemGroupEl => {
             this.spreadProps(
                 itemGroupEl,
                 this.api.getItemGroupProps({ id: itemGroupEl.dataset.id! })
             );
-            const itemGroupLabelEl = this.getElement('item-group-label', itemGroupEl);
+            const itemGroupLabelEl = this.getElement('itemGroupLabel', itemGroupEl);
             if (itemGroupLabelEl) {
                 this.spreadProps(
                     itemGroupLabelEl,
@@ -112,31 +113,22 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
             }
         });
 
-        const itemEls = this.getElements('item');
-        itemEls.forEach(itemEl => {
-            const item = this.api.collection.find(itemEl.dataset.value);
-            if (item) {
-                this.spreadProps(itemEl, this.api.getItemProps({ item }));
-            }
+        this.spreadPropsByValue('item', ({ value }) => {
+            const item = this.api.collection.find(value);
+            return item ? this.api.getItemProps({ item }) : null;
         });
 
-        const itemTextEls = this.getElements('item-text');
-        itemTextEls.forEach(itemTextEl => {
-            const item = this.api.collection.find(itemTextEl.dataset.value);
-            if (item) {
-                this.spreadProps(itemTextEl, this.api.getItemTextProps({ item }));
-            }
+        this.spreadPropsByValue('itemText', ({ value }) => {
+            const item = this.api.collection.find(value);
+            return item ? this.api.getItemTextProps({ item }) : null;
         });
 
-        const itemIndicatorEls = this.getElements('item-indicator');
-        itemIndicatorEls.forEach(itemIndicatorEl => {
-            const item = this.api.collection.find(itemIndicatorEl.dataset.value);
-            if (item) {
-                this.spreadProps(itemIndicatorEl, this.api.getItemIndicatorProps({ item }));
-            }
+        this.spreadPropsByValue('itemIndicator', ({ value }) => {
+            const item = this.api.collection.find(value);
+            return item ? this.api.getItemIndicatorProps({ item }) : null;
         });
 
-        const clearTriggerEl = this.getElement('clear-trigger');
+        const clearTriggerEl = this.getElement('clearTrigger');
         if (clearTriggerEl) {
             const clearTriggerProps = mergeProps(this.api.getClearTriggerProps(), {
                 'aria-label': this.userProps?.translations?.clearTriggerLabel || null,

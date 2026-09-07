@@ -1,0 +1,13 @@
+<f:variable name="id">{ui:id()}</f:variable>
+<f:variable name="isEmpty">{f:if(condition: context.collection.size, then: '{false}', else: '{true}')}</f:variable>
+<f:variable name="refData" value="{disabled: context.disabled, id: id, empty: isEmpty}" />
+
+<div
+    role="group"
+    {f:if(condition: isEmpty, then: 'data-empty="true"' )}
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.ids.item-group, then: 'id="{context.ids.item-group}"' )}
+    {ui:ref(name: 'itemGroup' , data: refData )}
+    {ui:attributes()}>
+    <f:slot />
+</div>

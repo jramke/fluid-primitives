@@ -1,0 +1,18 @@
+<ui:error when="!{context.item} || (!{context.item.item} && !{context.isRenderStencil})" message="The {component.fullName} must only be used within a `combobox.item` element." />
+
+<f:variable name="item" value="{context.item.item}" />
+<f:variable name="itemState" value="{value: '', selected: false, disabled: false, highlighted: false}" />
+<f:if condition="!{context.isRenderStencil}">
+    <f:variable name="itemState">{context -> ui:call(method: 'getItemState', arguments: {0: item})}</f:variable>
+</f:if>
+<f:variable name="refData" value="{value: itemState.value, disabled: itemState.disabled, selected: itemState.selected, highlighted: itemState.highlighted}" />
+
+<div
+    data-state="{f:if(condition: itemState.selected, then: 'checked', else: 'unchecked')}"
+    {f:if(condition: itemState.disabled, then: 'data-disabled="true"' )}
+    {f:if(condition: itemState.highlighted, then: 'data-highlighted="true"' )}
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'itemText' , value: itemState.value, data: refData )}
+    {ui:attributes()}>
+    <f:slot />
+</div>

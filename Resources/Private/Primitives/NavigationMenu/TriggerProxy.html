@@ -10,7 +10,7 @@
     aria-hidden="true"
     {f:if(condition: '!{itemState.open}' , then: 'hidden="true"' )}
     {f:if(condition: class, then: 'class="{class}"' )}
-    {ui:ref(name: 'trigger-proxy' , data: refData)}
+    {ui:ref(name: 'triggerProxy' , value: context.item.value, data: refData)}
     style="{settings.visuallyHiddenStyles}"
     {ui:attributes()}>
 </span>

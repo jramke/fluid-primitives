@@ -1,6 +1,5 @@
 import * as numberInput from '@zag-js/number-input';
 import { FieldAwareComponent, Machine, mergeProps, normalizeProps } from '../../Client';
-import * as fieldDom from '../Field/src/field.dom';
 import type { FieldMachine } from '../Field/src/field.registry';
 
 export class NumberInput extends FieldAwareComponent<numberInput.Props, numberInput.Api> {
@@ -14,11 +13,6 @@ export class NumberInput extends FieldAwareComponent<numberInput.Props, numberIn
             required: props.required ?? fieldMachine.context.get('required'),
             invalid: props.invalid ?? fieldMachine.context.get('invalid'),
             name: props.name ?? fieldMachine.prop('name'),
-            ids: {
-                ...props.ids,
-                label: fieldDom.getLabelId(fieldMachine.scope),
-                input: fieldDom.getControlId(fieldMachine.scope),
-            },
         };
     }
 
@@ -61,7 +55,7 @@ export class NumberInput extends FieldAwareComponent<numberInput.Props, numberIn
             this.spreadProps(inputEl, mergedProps);
         }
 
-        const incrementTriggerEl = this.getElement('increment-trigger');
+        const incrementTriggerEl = this.getElement('incrementTrigger');
         if (incrementTriggerEl) {
             const triggerProps = mergeProps(this.api.getIncrementTriggerProps(), {
                 'aria-label': this.userProps?.translations?.incrementLabel || null,
@@ -69,7 +63,7 @@ export class NumberInput extends FieldAwareComponent<numberInput.Props, numberIn
             this.spreadProps(incrementTriggerEl, triggerProps);
         }
 
-        const decrementTriggerEl = this.getElement('decrement-trigger');
+        const decrementTriggerEl = this.getElement('decrementTrigger');
         if (decrementTriggerEl) {
             const triggerProps = mergeProps(this.api.getDecrementTriggerProps(), {
                 'aria-label': this.userProps?.translations?.decrementLabel || null,
@@ -77,7 +71,7 @@ export class NumberInput extends FieldAwareComponent<numberInput.Props, numberIn
             this.spreadProps(decrementTriggerEl, triggerProps);
         }
 
-        const valueTextEl = this.getElement('value-text');
+        const valueTextEl = this.getElement('valueText');
         if (valueTextEl) this.spreadProps(valueTextEl, this.api.getValueTextProps());
 
         const scrubberEl = this.getElement('scrubber');

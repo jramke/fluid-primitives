@@ -30,13 +30,9 @@ export class Clipboard extends Component<clipboard.Props, clipboard.Api> {
         const inputEl = this.getElement('input');
         if (inputEl) this.spreadProps(inputEl, this.api.getInputProps());
 
-        const indicatorCopiedEl = this.getElement('indicator-copied');
-        if (indicatorCopiedEl)
-            this.spreadProps(indicatorCopiedEl, this.api.getIndicatorProps({ copied: true }));
-
-        const indicatorIdleEl = this.getElement('indicator-idle');
-        if (indicatorIdleEl)
-            this.spreadProps(indicatorIdleEl, this.api.getIndicatorProps({ copied: false }));
+        this.spreadPropsByValue('indicator', ({ value }) =>
+            this.api.getIndicatorProps({ copied: value === 'copied' })
+        );
 
         const triggerEl = this.getElement('trigger');
         if (triggerEl) {

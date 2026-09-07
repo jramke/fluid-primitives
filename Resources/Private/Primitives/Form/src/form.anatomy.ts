@@ -4,7 +4,7 @@ const anatomy = createAnatomy('form').parts(
     'form',
     'content',
     'indicator',
-    'error-text',
-    'success-text'
+    'errorText',
+    'successText'
 );
 export const parts = anatomy.build();

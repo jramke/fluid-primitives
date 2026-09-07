@@ -5,11 +5,12 @@
     {f:if(condition: context.disabled, then: 'disabled' )}
     {f:if(condition: context.multiple, then: 'multiple' )}
     {f:if(condition: context.required, then: 'required' )}
-    {ui:ref(name: 'hidden-select' )}
+    {ui:ref(name: 'hiddenSelect' )}
     aria-hidden="true"
     tabindex="-1"
     style="{settings.visuallyHiddenStyles}"
     {ui:attributes(skip: 'style' )}>
+    <option value="" hidden></option>
     <f:for each="{context.collection.items}" as="item" iteration="i">
         <f:variable name="itemState">{context -> ui:call(method: 'getItemState', arguments: {0: item})}</f:variable>
         <option value="{item.value}" {f:if(condition: itemState.disabled, then: 'disabled' )} {f:if(condition: itemState.selected, then: 'selected' )}>

@@ -9,6 +9,7 @@ export default defineConfig({
         dialog: './Resources/Private/Primitives/Dialog/Dialog.ts',
         clipboard: './Resources/Private/Primitives/Clipboard/Clipboard.ts',
         collapsible: './Resources/Private/Primitives/Collapsible/Collapsible.ts',
+        combobox: './Resources/Private/Primitives/Combobox/Combobox.ts',
         field: './Resources/Private/Primitives/Field/Field.ts',
         form: './Resources/Private/Primitives/Form/Form.ts',
         'navigation-menu': './Resources/Private/Primitives/NavigationMenu/NavigationMenu.ts',

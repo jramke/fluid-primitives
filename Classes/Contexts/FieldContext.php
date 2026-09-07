@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Contexts;
 
 use Jramke\FluidPrimitives\Service\ContextService;
+use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use TYPO3\CMS\Extbase\Reflection\ObjectAccess;
 
 class FieldContext extends AbstractComponentContext
@@ -30,6 +31,14 @@ class FieldContext extends AbstractComponentContext
 
     public function getChildVariables(): array
     {
+        $rootId = $this->get('rootId');
+
+        $givenIds = (array)($this->get('ids') ?? []);
+        $ids = array_merge($givenIds, [
+            'control' => ComponentUtility::generatePartId('field', (string)$rootId, 'control'),
+            'label' => ComponentUtility::generatePartId('field', (string)$rootId, 'label'),
+        ]);
+
         return [
             'name' => $this->get('name') ?? null,
             'disabled' => $this->get('disabled') ?? null,
@@ -37,6 +46,7 @@ class FieldContext extends AbstractComponentContext
             'required' => $this->get('required') ?? null,
             'invalid' => $this->get('invalid') ?? null,
             'defaultValue' => $this->get('defaultValue') ?? null,
+            'ids' => $ids,
         ];
     }
 }

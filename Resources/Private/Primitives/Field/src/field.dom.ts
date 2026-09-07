@@ -1,6 +1,6 @@
 import type { Scope } from '@zag-js/core';
 
-export const getRootId = (scope: Scope) => scope.ids?.root ?? `field:${scope.id}:root`;
+export const getRootId = (scope: Scope) => scope.ids?.root ?? `field:${scope.id}`;
 export const getLabelId = (scope: Scope) => scope.ids?.label ?? `field:${scope.id}:label`;
 export const getControlId = (scope: Scope) => scope.ids?.control ?? `field:${scope.id}:control`;
 export const getErrorId = (scope: Scope) => scope.ids?.error ?? `field:${scope.id}:error`;

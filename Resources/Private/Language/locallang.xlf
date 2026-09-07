@@ -20,6 +20,12 @@
             <trans-unit id="popover.closeTriggerLabel" approved="yes">
                 <source>Close</source>
             </trans-unit>
+            <trans-unit id="combobox.triggerLabel" approved="yes">
+                <source>Toggle suggestions</source>
+            </trans-unit>
+            <trans-unit id="combobox.clearTriggerLabel" approved="yes">
+                <source>Clear value</source>
+            </trans-unit>
         </body>
     </file>
 </xliff>

@@ -150,21 +150,21 @@ final class ComponentUtilityTest extends TestCase
     #[Test]
     public function mapsRadioGroupItemControlPartToRadioControlSegment(): void
     {
-        $id = ComponentUtility::generatePartId('radio-group', 'my-id', 'item-control', 'option-a');
+        $id = ComponentUtility::generatePartId('radio-group', 'my-id', 'itemControl', 'option-a');
         $this->assertSame('radio-group:my-id:radio:control:option-a', $id);
     }
 
     #[Test]
     public function mapsRadioGroupItemHiddenInputPartToRadioInputSegment(): void
     {
-        $id = ComponentUtility::generatePartId('radio-group', 'my-id', 'item-hidden-input', 'option-a');
+        $id = ComponentUtility::generatePartId('radio-group', 'my-id', 'itemHiddenInput', 'option-a');
         $this->assertSame('radio-group:my-id:radio:input:option-a', $id);
     }
 
     #[Test]
     public function mapsRadioGroupItemTextPartToRadioLabelSegment(): void
     {
-        $id = ComponentUtility::generatePartId('radio-group', 'my-id', 'item-text', 'option-a');
+        $id = ComponentUtility::generatePartId('radio-group', 'my-id', 'itemText', 'option-a');
         $this->assertSame('radio-group:my-id:radio:label:option-a', $id);
     }
 
