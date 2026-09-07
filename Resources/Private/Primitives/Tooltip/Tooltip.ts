@@ -30,7 +30,7 @@ export class Tooltip extends Component<tooltip.Props, tooltip.Api> {
         const arrowEl = this.getElement('arrow');
         if (arrowEl) this.spreadProps(arrowEl, this.api.getArrowProps());
 
-        const arrowTipEl = this.getElement('arrow-tip');
+        const arrowTipEl = this.getElement('arrowTip');
         if (arrowTipEl) this.spreadProps(arrowTipEl, this.api.getArrowTipProps());
 
         const contentEl = this.getElement('content');

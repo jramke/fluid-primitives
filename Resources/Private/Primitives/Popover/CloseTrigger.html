@@ -2,7 +2,7 @@
     type="button"
     {f:if(condition: context.translations.closeTriggerLabel, then: 'aria-label="{context.translations.closeTriggerLabel}"' )}
     {f:if(condition: class, then: 'class="{class}"' )}
-    {ui:ref(name: 'close-trigger' )}
+    {ui:ref(name: 'closeTrigger' )}
     {ui:attributes()}>
     <f:slot />
 </button>

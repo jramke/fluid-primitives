@@ -12,7 +12,7 @@
     aria-hidden="true"
     data-state="{f:if(condition: itemState.selected, then: 'checked', else: 'unchecked')}"
     {f:if(condition: class, then: 'class="{class}"' )}
-    {ui:ref(name: 'item-indicator' , value: itemState.value, data: refData )}
+    {ui:ref(name: 'itemIndicator' , value: itemState.value, data: refData )}
     {ui:attributes()}>
     <f:slot />
 </div>

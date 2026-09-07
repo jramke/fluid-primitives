@@ -12,7 +12,7 @@
     {f:if(condition: itemState.disabled, then: 'data-disabled="true"' )}
     {f:if(condition: itemState.highlighted, then: 'data-highlighted="true"' )}
     {f:if(condition: class, then: 'class="{class}"' )}
-    {ui:ref(name: 'item-text' , value: itemState.value, data: refData )}
+    {ui:ref(name: 'itemText' , value: itemState.value, data: refData )}
     {ui:attributes()}>
     <f:slot />
 </div>

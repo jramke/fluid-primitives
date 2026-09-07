@@ -91,7 +91,7 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
         // We need to make sure the element is rerendered because otherwise safari doesnt update the spans value in the a11y tree
         // and the button would announce an old value when it receives focus.
         // see: https://github.com/chakra-ui/zag/issues/3099
-        const valueTextEl = this.getElement('value-text');
+        const valueTextEl = this.getElement('valueText');
         if (valueTextEl) {
             const currentText = valueTextEl.textContent || valueTextEl.dataset.placeholder || '';
             const nextValue = this.api.valueAsString || valueTextEl.dataset.placeholder || '';
@@ -105,7 +105,7 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
 
             if (nextValue !== currentText) {
                 queueMicrotask(() => {
-                    const el = this.getElement('value-text');
+                    const el = this.getElement('valueText');
                     if (el?.isConnected) {
                         const next = el.cloneNode(true) as HTMLElement;
                         el.replaceWith(next);
@@ -115,13 +115,13 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
             }
         }
 
-        const itemGroupEls = this.getElements('item-group');
+        const itemGroupEls = this.getElements('itemGroup');
         itemGroupEls.forEach(itemGroupEl => {
             this.spreadProps(
                 itemGroupEl,
                 this.api.getItemGroupProps({ id: itemGroupEl.dataset.id! })
             );
-            const itemGroupLabelEl = this.getElement('item-group-label', itemGroupEl);
+            const itemGroupLabelEl = this.getElement('itemGroupLabel', itemGroupEl);
             if (itemGroupLabelEl) {
                 this.spreadProps(
                     itemGroupLabelEl,
@@ -135,17 +135,17 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
             return item ? this.api.getItemProps({ item }) : null;
         });
 
-        this.spreadPropsByValue('item-text', ({ value }) => {
+        this.spreadPropsByValue('itemText', ({ value }) => {
             const item = this.api.collection.find(value);
             return item ? this.api.getItemTextProps({ item }) : null;
         });
 
-        this.spreadPropsByValue('item-indicator', ({ value }) => {
+        this.spreadPropsByValue('itemIndicator', ({ value }) => {
             const item = this.api.collection.find(value);
             return item ? this.api.getItemIndicatorProps({ item }) : null;
         });
 
-        const clearTriggerEl = this.getElement('clear-trigger');
+        const clearTriggerEl = this.getElement('clearTrigger');
         if (clearTriggerEl) {
             const clearTriggerProps = mergeProps(this.api.getClearTriggerProps(), {
                 'aria-label': this.userProps?.translations?.clearTriggerLabel || null,

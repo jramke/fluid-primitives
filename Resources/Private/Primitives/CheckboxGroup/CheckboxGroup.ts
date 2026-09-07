@@ -1,5 +1,4 @@
 import { FieldAwareComponent, Machine, mergeProps, normalizeProps } from '../../Client';
-import * as fieldDom from '../Field/src/field.dom';
 import type { FieldMachine } from '../Form/src/form.registry';
 import { connect } from './src/checkbox-group.connect';
 import { machine } from './src/checkbox-group.machine';
@@ -17,10 +16,6 @@ export class CheckboxGroup extends FieldAwareComponent<CheckboxGroupProps, Check
             required: props.required ?? fieldMachine.context.get('required'),
             invalid: props.invalid ?? fieldMachine.context.get('invalid'),
             name: props.name ?? fieldMachine.prop('name'),
-            ids: {
-                ...props.ids,
-                label: fieldDom.getLabelId(fieldMachine.scope),
-            },
         };
     }
 

@@ -24,19 +24,19 @@ export class Accordion extends Component<accordion.Props, accordion.Api> {
             this.api.getItemProps({ value, disabled: el.hasAttribute('data-disabled') })
         );
 
-        this.spreadPropsByValue('item-trigger', ({ el, value }) =>
+        this.spreadPropsByValue('itemTrigger', ({ el, value }) =>
             this.api.getItemTriggerProps({ value, disabled: el.hasAttribute('data-disabled') })
         );
 
-        this.spreadPropsByValue('item-content', ({ el, value }) =>
+        this.spreadPropsByValue('itemContent', ({ el, value }) =>
             this.api.getItemContentProps({ value, disabled: el.hasAttribute('data-disabled') })
         );
 
-        this.spreadPropsByValue('item-indicator', ({ el, value }) =>
+        this.spreadPropsByValue('itemIndicator', ({ el, value }) =>
             this.api.getItemIndicatorProps({ value, disabled: el.hasAttribute('data-disabled') })
         );
 
         // just so they are hydrated (data-attributes removed)
-        this.getElements('item-header');
+        this.getElements('itemHeader');
     }
 }

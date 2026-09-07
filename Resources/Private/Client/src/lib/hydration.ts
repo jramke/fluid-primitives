@@ -11,29 +11,41 @@ const ID_NAMESPACE_OVERRIDES: Record<string, string> = {
 const PART_SEGMENT_OVERRIDES: Record<string, Record<string, string>> = {
     'radio-group': {
         item: 'radio',
-        'item-hidden-input': 'radio:input',
-        'item-control': 'radio:control',
-        'item-text': 'radio:label',
+        itemHiddenInput: 'radio:input',
+        itemControl: 'radio:control',
+        itemText: 'radio:label',
     },
     accordion: {
-        'item-trigger': 'trigger',
-        'item-content': 'content',
+        itemTrigger: 'trigger',
+        itemContent: 'content',
     },
     select: {
         hiddenSelect: 'select',
-        'item-group': 'optgroup',
-        'item-group-label': 'optgroup-label',
+        itemGroup: 'optgroup',
+        itemGroupLabel: 'optgroup-label',
         item: 'option',
     },
     combobox: {
         positioner: 'popper',
         trigger: 'toggle-btn',
-        'clear-trigger': 'clear-btn',
-        'item-group': 'optgroup',
-        'item-group-label': 'optgroup-label',
+        clearTrigger: 'clear-btn',
+        itemGroup: 'optgroup',
+        itemGroupLabel: 'optgroup-label',
         item: 'option',
     },
 };
+
+// A part's own name is lowerCamelCase (mirroring zag-js's own `ids` prop keys, so overriding a
+// part's id reads the same way it does in zag itself), but `data-part` always renders lower-kebab
+// for CSS/selector consistency. Keep in sync with: Classes/Utility/ComponentUtility.php's
+// camelCaseToLowerCaseDashed()/lowerCaseDashedToCamelCase().
+function toKebabCase(part: string): string {
+    return part.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
+}
+
+function toCamelCase(part: string): string {
+    return part.replace(/-([a-z0-9])/g, (_match, char: string) => char.toUpperCase());
+}
 
 export function getHydrationData(component: string): Record<string, ComponentHydrationData> | null;
 export function getHydrationData(component: string, id: string): ComponentHydrationData | null;
@@ -232,8 +244,9 @@ export class ComponentHydrator {
             // Use getElementById (no CSS-escaping needed; IDs may contain colons)
             element = this.doc.getElementById(this.computePartId(part)) as T | null;
         } else {
+            const dataPart = toKebabCase(part);
             element = (parent as Element).querySelector<T>(
-                `[id="${CSS.escape(this.computePartId(part))}"][data-part="${part}"],[id^="${CSS.escape(this.computePartId(part))}"][data-part="${part}"]`
+                `[id="${CSS.escape(this.computePartId(part))}"][data-part="${dataPart}"],[id^="${CSS.escape(this.computePartId(part))}"][data-part="${dataPart}"]`
             );
         }
 
@@ -265,9 +278,10 @@ export class ComponentHydrator {
             return [];
         }
 
+        const dataPart = toKebabCase(part);
         const elements = Array.from(
             searchScope.querySelectorAll<T>(
-                `[id="${CSS.escape(this.computePartId(part))}"][data-part="${part}"],[id^="${CSS.escape(this.computePartId(part) + ':')}"][data-part="${part}"]`
+                `[id="${CSS.escape(this.computePartId(part))}"][data-part="${dataPart}"],[id^="${CSS.escape(this.computePartId(part) + ':')}"][data-part="${dataPart}"]`
             )
         );
 
@@ -280,13 +294,13 @@ export class ComponentHydrator {
 
     generateRefAttributesString(part: string, value?: string): string {
         const id = this.computePartId(part, value);
-        return `id="${id}" data-scope="${this.componentName}" data-part="${part}"`;
+        return `id="${id}" data-scope="${this.componentName}" data-part="${toKebabCase(part)}"`;
     }
 
     setRefAttributes(element: Element, part: string, value?: string): void {
         element.setAttribute('id', this.computePartId(part, value));
         element.setAttribute('data-scope', this.componentName);
-        element.setAttribute('data-part', part);
+        element.setAttribute('data-part', toKebabCase(part));
     }
 
     /**
@@ -312,8 +326,9 @@ export class ComponentHydrator {
      */
     restampValue(root: Element, value: string, flags?: Record<string, boolean>): void {
         const restamp = (el: Element) => {
-            const part = el.getAttribute('data-part');
-            if (!part) return;
+            const rawPart = el.getAttribute('data-part');
+            if (!rawPart) return;
+            const part = toCamelCase(rawPart);
             this.setRefAttributes(el, part, value);
             el.setAttribute('data-value', value);
             for (const [name, flagValue] of Object.entries(flags ?? {})) {

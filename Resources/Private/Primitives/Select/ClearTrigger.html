@@ -2,7 +2,7 @@
     type="button"
     {f:if(condition: context.translations.clearTriggerLabel, then: 'aria-label="{context.translations.clearTriggerLabel}"' )}
     {f:if(condition: class, then: 'class="{class}"' )}
-    {ui:ref(name: 'clear-trigger' )}
+    {ui:ref(name: 'clearTrigger' )}
     {f:if(condition: context.disabled, then: 'disabled' )}
     {f:if(condition: context.defaultValue, then: '' , else: 'hidden="true"' )}
     {ui:attributes()}>

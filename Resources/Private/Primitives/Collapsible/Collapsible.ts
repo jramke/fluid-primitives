@@ -21,26 +21,12 @@ export class Collapsible extends Component<collapsible.Props, collapsible.Api> {
             this.spreadProps(triggerEl, this.api.getTriggerProps());
         });
 
-        const openIndicatorEls = this.getElements('indicator-open');
-        openIndicatorEls.forEach(openIndicatorEl => {
-            this.spreadProps(
-                openIndicatorEl,
-                normalizeProps.element({
-                    hidden: !this.api.open,
-                    'data-state': 'open',
-                })
-            );
-        });
-
-        const closedIndicatorEls = this.getElements('indicator-closed');
-        closedIndicatorEls.forEach(closedIndicatorEl => {
-            this.spreadProps(
-                closedIndicatorEl,
-                normalizeProps.element({
-                    hidden: this.api.open,
-                    'data-state': 'closed',
-                })
-            );
+        this.spreadPropsByValue('indicator', ({ value }) => {
+            const isActive = (value === 'open') === this.api.open;
+            return normalizeProps.element({
+                hidden: isActive ? undefined : true,
+                'data-state': value,
+            });
         });
 
         const contentEl = this.getElement('content');

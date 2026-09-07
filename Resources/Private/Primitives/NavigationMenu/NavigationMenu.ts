@@ -20,7 +20,7 @@ export class NavigationMenu extends Component<navigationMenu.Props, navigationMe
         if (listEl) this.spreadProps(listEl, this.api.getListProps());
 
         // hydrate indicator-track wrapper (no specific Zag API)
-        this.getElement('indicator-track');
+        this.getElement('indicatorTrack');
 
         this.spreadPropsByValue('item', ({ el, value }) =>
             this.api.getItemProps({ value, disabled: el.hasAttribute('data-disabled') })
@@ -30,11 +30,11 @@ export class NavigationMenu extends Component<navigationMenu.Props, navigationMe
             this.api.getTriggerProps({ value, disabled: el.hasAttribute('data-disabled') })
         );
 
-        this.spreadPropsByValue('trigger-proxy', ({ value }) =>
+        this.spreadPropsByValue('triggerProxy', ({ value }) =>
             this.api.getTriggerProxyProps({ value })
         );
 
-        this.spreadPropsByValue('viewport-proxy', ({ value }) =>
+        this.spreadPropsByValue('viewportProxy', ({ value }) =>
             this.api.getViewportProxyProps({ value })
         );
 
@@ -50,7 +50,7 @@ export class NavigationMenu extends Component<navigationMenu.Props, navigationMe
         const arrowEl = this.getElement('arrow');
         if (arrowEl) this.spreadProps(arrowEl, this.api.getArrowProps());
 
-        const viewportPositionerEl = this.getElement('viewport-positioner');
+        const viewportPositionerEl = this.getElement('viewportPositioner');
         if (viewportPositionerEl) {
             const align = (viewportPositionerEl.dataset.align ||
                 undefined) as navigationMenu.ViewportProps['align'];
@@ -64,7 +64,7 @@ export class NavigationMenu extends Component<navigationMenu.Props, navigationMe
             this.spreadProps(viewportEl, this.api.getViewportProps({ align }));
         }
 
-        this.spreadPropsByValue('item-indicator', ({ el, value }) =>
+        this.spreadPropsByValue('itemIndicator', ({ el, value }) =>
             this.api.getItemIndicatorProps({ value, disabled: el.hasAttribute('data-disabled') })
         );
     }

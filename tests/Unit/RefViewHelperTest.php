@@ -101,7 +101,7 @@ final class RefViewHelperTest extends TestCase
         $this->variableProvider->add('context', ['ids' => []]);
 
         $this->viewHelper->setArguments([
-            'name' => 'item-group-label',
+            'name' => 'itemGroupLabel',
             'asArray' => false,
             'data' => [],
             'value' => null,

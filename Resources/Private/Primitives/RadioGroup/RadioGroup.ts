@@ -52,7 +52,7 @@ export class RadioGroup extends FieldAwareComponent<radioGroup.Props, radioGroup
             })
         );
 
-        this.spreadPropsByValue('item-text', ({ el, value }) =>
+        this.spreadPropsByValue('itemText', ({ el, value }) =>
             this.api.getItemTextProps({
                 value,
                 disabled: el.hasAttribute('data-disabled'),
@@ -60,7 +60,7 @@ export class RadioGroup extends FieldAwareComponent<radioGroup.Props, radioGroup
             })
         );
 
-        this.spreadPropsByValue('item-control', ({ el, value }) =>
+        this.spreadPropsByValue('itemControl', ({ el, value }) =>
             this.api.getItemControlProps({
                 value,
                 disabled: el.hasAttribute('data-disabled'),
@@ -68,7 +68,7 @@ export class RadioGroup extends FieldAwareComponent<radioGroup.Props, radioGroup
             })
         );
 
-        this.spreadPropsByValue('item-hidden-input', ({ el, value }) =>
+        this.spreadPropsByValue('itemHiddenInput', ({ el, value }) =>
             this.api.getItemHiddenInputProps({
                 value,
                 disabled: el.hasAttribute('data-disabled'),

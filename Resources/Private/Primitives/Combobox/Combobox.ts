@@ -4,7 +4,6 @@ import { createFilter } from '@zag-js/i18n-utils';
 import { FieldAwareComponent, Machine, mergeProps, normalizeProps } from '../../Client';
 import { getGlobal, getListCollectionFromHydrationData } from '../../Client/src/lib/hydration';
 import type { ComboboxFilterHookResult, ComboboxFilterResolver } from '../../Client/src/types';
-import * as fieldDom from '../Field/src/field.dom';
 import type { FieldMachine } from '../Field/src/field.registry';
 
 type ComboboxPrimitiveProps = combobox.Props & {
@@ -39,11 +38,6 @@ export class Combobox extends FieldAwareComponent<ComboboxPrimitiveProps, combob
             required: props.required ?? fieldMachine.context.get('required'),
             invalid: props.invalid ?? fieldMachine.context.get('invalid'),
             name: props.name ?? fieldMachine.prop('name'),
-            ids: {
-                ...props.ids,
-                label: fieldDom.getLabelId(fieldMachine.scope),
-                input: fieldDom.getControlId(fieldMachine.scope),
-            },
         };
     }
 
@@ -207,7 +201,7 @@ export class Combobox extends FieldAwareComponent<ComboboxPrimitiveProps, combob
         const triggerEl = this.getElement('trigger');
         if (triggerEl) this.spreadProps(triggerEl, this.api.getTriggerProps());
 
-        const clearTriggerEl = this.getElement('clear-trigger');
+        const clearTriggerEl = this.getElement('clearTrigger');
         if (clearTriggerEl) this.spreadProps(clearTriggerEl, this.api.getClearTriggerProps());
 
         const positionerEl = this.getElement('positioner');
@@ -219,13 +213,13 @@ export class Combobox extends FieldAwareComponent<ComboboxPrimitiveProps, combob
         const listEl = this.getElement('list');
         if (listEl) this.spreadProps(listEl, this.api.getListProps());
 
-        const itemGroupEls = this.getElements('item-group');
+        const itemGroupEls = this.getElements('itemGroup');
         itemGroupEls.forEach(itemGroupEl => {
             this.spreadProps(
                 itemGroupEl,
                 this.api.getItemGroupProps({ id: itemGroupEl.dataset.id! })
             );
-            const itemGroupLabelEl = this.getElement('item-group-label', itemGroupEl);
+            const itemGroupLabelEl = this.getElement('itemGroupLabel', itemGroupEl);
             if (itemGroupLabelEl) {
                 this.spreadProps(
                     itemGroupLabelEl,
@@ -253,12 +247,12 @@ export class Combobox extends FieldAwareComponent<ComboboxPrimitiveProps, combob
             return this.api.getItemProps({ item });
         });
 
-        this.spreadPropsByValue('item-text', ({ value }) => {
+        this.spreadPropsByValue('itemText', ({ value }) => {
             const { item } = resolveItem(value);
             return item ? this.api.getItemTextProps({ item }) : null;
         });
 
-        this.spreadPropsByValue('item-indicator', ({ value }) => {
+        this.spreadPropsByValue('itemIndicator', ({ value }) => {
             const { item } = resolveItem(value);
             return item ? this.api.getItemIndicatorProps({ item }) : null;
         });

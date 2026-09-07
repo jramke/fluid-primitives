@@ -27,8 +27,8 @@ class ComponentUtility
         'select' => ['label' => 'label', 'control' => 'hiddenSelect'],
         'combobox' => ['label' => 'label', 'control' => 'input'],
         'number-input' => ['label' => 'label', 'control' => 'input'],
-        'switch' => ['label' => 'label', 'control' => 'hidden-select'],
-        'checkbox' => ['label' => 'label', 'control' => 'hidden-select'],
+        'switch' => ['label' => 'label', 'control' => 'hiddenInput'],
+        'checkbox' => ['label' => 'label', 'control' => 'hiddenInput'],
         'checkbox-group' => ['label' => 'label'],
     ];
 
@@ -47,26 +47,26 @@ class ComponentUtility
     private const PART_SEGMENT_OVERRIDES = [
         'radio-group' => [
             'item' => 'radio',
-            'item-hidden-input' => 'radio:input',
-            'item-control' => 'radio:control',
-            'item-text' => 'radio:label',
+            'itemHiddenInput' => 'radio:input',
+            'itemControl' => 'radio:control',
+            'itemText' => 'radio:label',
         ],
         'accordion' => [
-            'item-trigger' => 'trigger',
-            'item-content' => 'content',
+            'itemTrigger' => 'trigger',
+            'itemContent' => 'content',
         ],
         'select' => [
             'hiddenSelect' => 'select',
-            'item-group' => 'optgroup',
-            'item-group-label' => 'optgroup-label',
+            'itemGroup' => 'optgroup',
+            'itemGroupLabel' => 'optgroup-label',
             'item' => 'option',
         ],
         'combobox' => [
             'positioner' => 'popper',
             'trigger' => 'toggle-btn',
-            'clear-trigger' => 'clear-btn',
-            'item-group' => 'optgroup',
-            'item-group-label' => 'optgroup-label',
+            'clearTrigger' => 'clear-btn',
+            'itemGroup' => 'optgroup',
+            'itemGroupLabel' => 'optgroup-label',
             'item' => 'option',
         ],
     ];
