@@ -51,6 +51,13 @@ export class Combobox extends FieldAwareComponent<ComboboxPrimitiveProps, combob
             get collection() {
                 return collection;
             },
+            // when selecting an item for example when the suggestions list is opened by the toggle there is no input/change event dispatched,
+            // but thats needed for our form to update the formdata and validation
+            // we use the change event because the input event opens the suggestions list again
+            onSelect: details => {
+                this.getElement('input')?.dispatchEvent(new Event('change', { bubbles: true }));
+                props?.onSelect?.(details);
+            },
         };
     }
 
