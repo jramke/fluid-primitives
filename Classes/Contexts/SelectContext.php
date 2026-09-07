@@ -32,12 +32,6 @@ class SelectContext extends AbstractComponentContext
         return $this->get('defaultValue');
     }
 
-    public function hasDefaultValue(): bool
-    {
-        $defaultValue = $this->getDefaultValue();
-        return $defaultValue !== null && $defaultValue !== [];
-    }
-
     #[ExposeToClient]
     public function getTranslations(): array
     {

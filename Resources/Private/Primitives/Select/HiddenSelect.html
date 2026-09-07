@@ -10,7 +10,7 @@
     tabindex="-1"
     style="{settings.visuallyHiddenStyles}"
     {ui:attributes(skip: 'style' )}>
-    <option value="" hidden {f:if(condition: '!{context.hasDefaultValue}' , then: 'selected' )}></option>
+    <option value="" hidden></option>
     <f:for each="{context.collection.items}" as="item" iteration="i">
         <f:variable name="itemState">{context -> ui:call(method: 'getItemState', arguments: {0: item})}</f:variable>
         <option value="{item.value}" {f:if(condition: itemState.disabled, then: 'disabled' )} {f:if(condition: itemState.selected, then: 'selected' )}>

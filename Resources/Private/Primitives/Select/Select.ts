@@ -55,25 +55,12 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
             });
             this.spreadProps(hiddenSelectEl, mergedProps);
 
-            const options = Array.from(hiddenSelectEl.querySelectorAll('option'));
-            const collection = this.api.collection;
-
+            // We need to handle this client side so the select can default to an empty string
+            // Setting the select attribute server side has no effect
+            // There is no need to mirror the selected property on the other options since the select inputs value is correctly updated by the machine
             const isValueEmpty = this.api.value.length === 0;
-            console.log({ options, collection, isValueEmpty });
-
-            options[0].selected = isValueEmpty;
-            options.shift();
-
-            console.log({ options });
-
-            // for (const option of options) {
-            //     const item = collection.find(option.value);
-            //     if (item) {
-            //         const itemState = this.api.getItemState(item);
-            //         option.disabled = itemState.disabled;
-            //         option.selected = itemState.selected;
-            //     }
-            // }
+            const defaultOption = hiddenSelectEl.querySelector('option');
+            if (defaultOption) defaultOption.selected = isValueEmpty;
         }
 
         const labelEl = this.getElement('label');
