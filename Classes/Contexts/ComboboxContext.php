@@ -98,12 +98,11 @@ class ComboboxContext extends AbstractComponentContext
     #[ExposeToClient]
     public function getTranslations(): array
     {
-        // TODO: fix
         $overrides = $this->get('translations') ?? [];
 
         $defaults = [
-            'triggerLabelIdle' => $this->translator->translate('clipboard.triggerLabelIdle', $this->getRequest()),
-            'triggerLabelCopied' => $this->translator->translate('clipboard.triggerLabelCopied', $this->getRequest()),
+            'triggerLabel' => $this->translator->translate('combobox.triggerLabel', $this->getRequest()),
+            'clearTriggerLabel' => $this->translator->translate('combobox.clearTriggerLabel', $this->getRequest()),
         ];
 
         return array_merge($defaults, $overrides);
