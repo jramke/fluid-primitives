@@ -247,7 +247,68 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
                     if ($varValue === null) {
                         continue;
                     }
-                    $view->getRenderingContext()->getVariableProvider()->remove($varName);
+
+                    if ($varName === 'ids' && is_array($varValue)) {
+                        $userIds = (array)($arguments['ids'] ?? []);
+                        $ids = array_merge($userIds, $varValue);
+
+                        // Remove field id parts if the current component is nested in a parent component that should exclude the field id inheritance
+                        $excludeIdInheritanceForParents =
+                            ComponentUtility::shouldSkipFieldIdsInheritanceWhenNestedIn($baseName);
+                        if ($excludeIdInheritanceForParents !== []) {
+                            foreach ($excludeIdInheritanceForParents as $parentBaseName) {
+                                if (!!($otherComponentContexts[$parentBaseName] ?? false)) {
+                                    foreach (ComponentUtility::getFieldIdOverrideKeys() as $fieldIdKey) {
+                                        unset($ids[$fieldIdKey]);
+                                    }
+                                }
+                            }
+                        }
+
+                        // Override the inherited field ids keys to map the corresponding component part, eg. control -> hidden-select
+                        $updatedIds = $ids;
+                        // krexx([
+                        //     'baseName' => $baseName,
+                        //     'fieldRootId' => $fieldRootId,
+                        //     'userIds' => $userIds,
+                        //     'ids' => $ids,
+                        //     'updatedIds' => $updatedIds,
+                        // ]);
+                        foreach ($ids as $fieldIdKey => $fieldIdValue) {
+                            if (!is_string($fieldIdKey) || !is_string($fieldIdValue)) {
+                                continue;
+                            }
+
+                            $overrideFieldIdKey = ComponentUtility::getOverrideFieldIdKey($baseName, $fieldIdKey);
+                            // krexx([
+                            //     'baseName' => $baseName,
+                            //     'fieldIdKey' => $fieldIdKey,
+                            //     'fieldIdValue' => $fieldIdValue,
+                            //     'overrideFieldIdKey' => $overrideFieldIdKey,
+                            // ]);
+                            if ($overrideFieldIdKey === null) {
+                                $updatedIds[$fieldIdKey] = $fieldIdValue;
+                                continue;
+                            }
+
+                            // krexx([
+                            //     'baseName' => $baseName,
+                            //     'fieldIdKey' => $fieldIdKey,
+                            //     'overrideFieldIdKey' => $overrideFieldIdKey,
+                            // ]);
+
+                            unset($updatedIds[$fieldIdKey]);
+                            $updatedIds[$overrideFieldIdKey] = $fieldIdValue;
+                        }
+
+                        // krexx([
+                        //     'baseName' => $baseName,
+                        //     'updatedIds' => $updatedIds,
+                        // ]);
+
+                        $varValue = $updatedIds;
+                    }
+
                     $view->getRenderingContext()->getVariableProvider()->add($varName, $varValue);
                     $arguments[$varName] = $varValue;
                     if ($ctx instanceof AbstractComponentContext) {

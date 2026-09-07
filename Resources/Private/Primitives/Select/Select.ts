@@ -1,7 +1,6 @@
 import * as select from '@zag-js/select';
 import { FieldAwareComponent, Machine, mergeProps, normalizeProps } from '../../Client';
 import { getListCollectionFromHydrationData } from '../../Client/src/lib/hydration';
-import * as fieldDom from '../Field/src/field.dom';
 import type { FieldMachine } from '../Field/src/field.registry';
 
 export class Select extends FieldAwareComponent<select.Props, select.Api> {
@@ -15,14 +14,11 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
             required: props.required ?? fieldMachine.context.get('required'),
             invalid: props.invalid ?? fieldMachine.context.get('invalid'),
             name: props.name ?? fieldMachine.prop('name'),
-            ids: {
-                ...props.ids,
-                label: fieldDom.getLabelId(fieldMachine.scope),
-                hiddenSelect: fieldDom.getControlId(fieldMachine.scope),
-            },
         };
     }
 
+    // TODO: we need to make sure that selecting a value does correctly dispatch a change/input event beause the form relies on it to update the formdata.
+    // currently form validation does not show the current error state on item change (see numberinput for example)
     transformProps(props: select.Props): select.Props {
         return {
             ...props,
@@ -50,12 +46,34 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
         const controlEl = this.getElement('control');
         if (controlEl) this.spreadProps(controlEl, this.api.getControlProps());
 
-        const hiddenSelectEl = this.getElement('hidden-select');
+        // TODO: we need to handle the select state for the options manually since zag-js dont do it (maybe we can provide a pr),
+        // the formData would choose the first option as the value for the select when no option is selected
+        const hiddenSelectEl = this.getElement('hiddenSelect');
         if (hiddenSelectEl) {
             const mergedProps = mergeProps(this.api.getHiddenSelectProps(), {
                 'aria-describedby': this.fieldMachine?.context.get('describeIds') || undefined,
             });
             this.spreadProps(hiddenSelectEl, mergedProps);
+
+            const options = Array.from(hiddenSelectEl.querySelectorAll('option'));
+            const collection = this.api.collection;
+
+            const isValueEmpty = this.api.value.length === 0;
+            console.log({ options, collection, isValueEmpty });
+
+            options[0].selected = isValueEmpty;
+            options.shift();
+
+            console.log({ options });
+
+            // for (const option of options) {
+            //     const item = collection.find(option.value);
+            //     if (item) {
+            //         const itemState = this.api.getItemState(item);
+            //         option.disabled = itemState.disabled;
+            //         option.selected = itemState.selected;
+            //     }
+            // }
         }
 
         const labelEl = this.getElement('label');

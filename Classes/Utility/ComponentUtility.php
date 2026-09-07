@@ -24,13 +24,15 @@ class ComponentUtility
     // 'control') it represents. Keep in sync with each field-aware Primitive's `propsWithField()`
     // override in its .ts file (client-side counterpart, via field.dom.ts's getLabelId/getControlId).
     private const FIELD_ID_PARTS = [
-        'select' => ['label' => 'label', 'hidden-select' => 'control'],
-        'combobox' => ['label' => 'label', 'input' => 'control'],
-        'number-input' => ['label' => 'label', 'input' => 'control'],
-        'switch' => ['label' => 'label', 'hidden-input' => 'control'],
-        'checkbox' => ['label' => 'label', 'hidden-input' => 'control'],
+        'select' => ['label' => 'label', 'control' => 'hiddenSelect'],
+        'combobox' => ['label' => 'label', 'control' => 'input'],
+        'number-input' => ['label' => 'label', 'control' => 'input'],
+        'switch' => ['label' => 'label', 'control' => 'hidden-select'],
+        'checkbox' => ['label' => 'label', 'control' => 'hidden-select'],
         'checkbox-group' => ['label' => 'label'],
     ];
+
+    private const FIELD_ID_OVERRIDE_KEYS = ['label', 'control'];
 
     // A component's FIELD_ID_PARTS override is suppressed while an ancestor context of this name
     // is on the ContextService stack. Mirrors Checkbox.ts's client-side getClosestCheckboxGroup()
@@ -38,7 +40,7 @@ class ComponentUtility
     // id for itself - each checkbox in the group has its own, separate hidden input, so all of them
     // doing so would produce duplicate ids. The group itself (not the individual checkbox) owns it.
     private const FIELD_ID_EXCLUDED_WHEN_NESTED_IN = [
-        'checkbox' => 'checkbox-group',
+        'checkbox' => ['checkbox-group'],
     ];
 
     // Keep in sync with: Resources/Private/Client/src/lib/hydration.ts
@@ -54,7 +56,7 @@ class ComponentUtility
             'item-content' => 'content',
         ],
         'select' => [
-            'hidden-select' => 'select',
+            'hiddenSelect' => 'select',
             'item-group' => 'optgroup',
             'item-group-label' => 'optgroup-label',
             'item' => 'option',
@@ -209,42 +211,19 @@ class ComponentUtility
         return "{$idNamespace}:{$rootId}:{$partSegment}";
     }
 
-    /**
-     * Resolves a part's id to the enclosing Field's own control/label id, when `$part` is one of
-     * `FIELD_ID_PARTS` for `$componentName` and a `context.fieldIds` was forwarded by FieldContext
-     * (i.e. the component is rendering inside a `<ui:field.root>`).
-     *
-     * This is the server-side mirror of what each field-aware primitive's `propsWithField()`
-     * already does on the client via `field.dom.ts`'s `getLabelId`/`getControlId` - both must
-     * agree on the same id, since client-side hydration locates elements by it.
-     */
-    public static function getFieldIdOverride(
-        string $componentName,
-        string $part,
-        RenderingContextInterface $renderingContext,
-    ): ?string {
-        $fieldIdKey = self::FIELD_ID_PARTS[$componentName][$part] ?? null;
-        if ($fieldIdKey === null) {
-            return null;
-        }
+    public static function getOverrideFieldIdKey(string $componentName, string $part): ?string
+    {
+        return self::FIELD_ID_PARTS[$componentName][$part] ?? null;
+    }
 
-        $excludingAncestor = self::FIELD_ID_EXCLUDED_WHEN_NESTED_IN[$componentName] ?? null;
-        if ($excludingAncestor !== null) {
-            $context = $renderingContext->getVariableProvider()->getByPath('context');
-            // ContextService's stack lives on the ViewHelperVariableContainer of the rendering
-            // context that was active when the ancestor pushed itself - not necessarily the one
-            // this part's own template renders with - so check via the component's own context
-            // object, which already carries that exact reference.
-            $ancestorCheckRenderingContext = $context instanceof AbstractComponentContext
-                ? $context->getParentRenderingContext()
-                : $renderingContext;
-            if (ContextService::getFromRenderingContext($ancestorCheckRenderingContext, $excludingAncestor) !== null) {
-                return null;
-            }
-        }
+    public static function shouldSkipFieldIdsInheritanceWhenNestedIn(string $nestedComponent): array
+    {
+        return self::FIELD_ID_EXCLUDED_WHEN_NESTED_IN[$nestedComponent] ?? [];
+    }
 
-        $fieldId = $renderingContext->getVariableProvider()->getByPath("context.fieldIds.{$fieldIdKey}");
-        return is_string($fieldId) && $fieldId !== '' ? $fieldId : null;
+    public static function getFieldIdOverrideKeys(): array
+    {
+        return self::FIELD_ID_OVERRIDE_KEYS ?? [];
     }
 
     private static function getIdNamespace(string $componentName): string

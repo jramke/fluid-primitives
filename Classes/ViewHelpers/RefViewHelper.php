@@ -99,7 +99,7 @@ class RefViewHelper extends AbstractViewHelper
             );
         }
 
-        $part = $this->arguments['name'];
+        $part = (string)$this->arguments['name'];
         $value = EnumUtility::normalize($this->arguments['value']);
 
         $additionalData = $this->arguments['data'];
@@ -112,19 +112,12 @@ class RefViewHelper extends AbstractViewHelper
 
         $baseAttributes = [
             'data-scope' => $componentName,
-            'data-part' => $part,
+            'data-part' => ComponentUtility::camelCaseToLowerCaseDashed($part),
         ];
 
         if ($this->arguments['withId']) {
             $ids = $this->renderingContext->getVariableProvider()->getByPath('context.ids') ?? [];
             $idsArray = is_array($ids) ? $ids : [];
-
-            if (!isset($idsArray[$part])) {
-                $fieldId = ComponentUtility::getFieldIdOverride($componentName, $part, $this->renderingContext);
-                if ($fieldId !== null) {
-                    $idsArray[$part] = $fieldId;
-                }
-            }
 
             $id = ComponentUtility::generatePartId($componentName, $rootId, $part, $value, $idsArray);
             $baseAttributes = array_merge(['id' => $id], $baseAttributes);
@@ -139,4 +132,3 @@ class RefViewHelper extends AbstractViewHelper
         return (string)$attributes;
     }
 }
-

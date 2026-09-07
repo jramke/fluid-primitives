@@ -17,6 +17,7 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
     constructor(props: Props, userDocument: Document = document) {
         this.document = userDocument;
         this.userProps = this.transformProps(props);
+        // TODO: should we pass the transformed props to initHydrator and initMachine? Or should we pass the original props?
         this.hydrator = this.initHydrator(props);
         this.machine = this.initMachine(props);
         this.api = this.initApi();

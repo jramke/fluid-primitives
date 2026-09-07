@@ -20,7 +20,7 @@ const PART_SEGMENT_OVERRIDES: Record<string, Record<string, string>> = {
         'item-content': 'content',
     },
     select: {
-        'hidden-select': 'select',
+        hiddenSelect: 'select',
         'item-group': 'optgroup',
         'item-group-label': 'optgroup-label',
         item: 'option',
