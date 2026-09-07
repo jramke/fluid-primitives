@@ -90,6 +90,9 @@ class ComponentUtility
         'tooltip' => [
             'positioner' => 'popper',
         ],
+        'dialog' => [
+            'closeTrigger' => 'close',
+        ]
     ];
 
     public static function id(string $prefix = 'f'): string

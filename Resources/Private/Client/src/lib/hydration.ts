@@ -56,6 +56,9 @@ const PART_SEGMENT_OVERRIDES: Record<string, Record<string, PartSegmentOverride>
     tooltip: {
         positioner: 'popper',
     },
+    dialog: {
+        closeTrigger: 'close',
+    },
 };
 
 // A part's own name is lowerCamelCase (mirroring zag-js's own `ids` prop keys, so overriding a
