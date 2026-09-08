@@ -1,0 +1,11 @@
+<ui:prop name="type" type="string" optional="{true}" default="accepted" description="The item's kind, e.g. `accepted`, `rejected`, or a custom value such as `existing` for an already-persisted file authored directly rather than populated from a `ui:template` stencil." />
+
+<f:variable name="refData" value="{disabled: context.disabled}" />
+
+<li
+    data-type="{type}"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'item' , data: refData )}
+    {ui:attributes()}>
+    <f:slot />
+</li>

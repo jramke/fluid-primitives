@@ -49,6 +49,10 @@
             "import": "./dist/field.js",
             "types": "./dist/field.d.ts"
         },
+        "./file-upload": {
+            "import": "./dist/file-upload.js",
+            "types": "./dist/file-upload.d.ts"
+        },
         "./form": {
             "import": "./dist/form.js",
             "types": "./dist/form.d.ts"
@@ -132,6 +136,8 @@
         "@zag-js/core": "^1.43.3",
         "@zag-js/dialog": "^1.43.3",
         "@zag-js/dom-query": "^1.43.3",
+        "@zag-js/file-upload": "^1.43.3",
+        "@zag-js/file-utils": "^1.43.3",
         "@zag-js/i18n-utils": "^1.43.3",
         "@zag-js/navigation-menu": "^1.43.3",
         "@zag-js/number-input": "^1.43.3",

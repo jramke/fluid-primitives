@@ -26,6 +26,15 @@
             <trans-unit id="combobox.clearTriggerLabel" approved="yes">
                 <target>Wert löschen</target>
             </trans-unit>
+            <trans-unit id="fileUpload.dropzoneLabel" approved="yes">
+                <target>Dateien hierher ziehen oder zum Durchsuchen klicken</target>
+            </trans-unit>
+            <trans-unit id="fileUpload.itemPreviewLabel" approved="yes">
+                <target>Vorschau von %fileName%</target>
+            </trans-unit>
+            <trans-unit id="fileUpload.deleteFileLabel" approved="yes">
+                <target>Datei %fileName% löschen</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

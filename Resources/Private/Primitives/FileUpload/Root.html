@@ -1,0 +1,24 @@
+<ui:prop name="name" type="string" optional="{true}" client="{true}" description="The name of the underlying file input. Inherited from a surrounding field when available." />
+<ui:prop name="disabled" type="boolean" optional="{true}" client="{true}" description="Whether the file upload is disabled. Inherited from a surrounding field when available." />
+<ui:prop name="invalid" type="boolean" optional="{true}" client="{true}" description="Whether the file upload is invalid. Inherited from a surrounding field when available." />
+<ui:prop name="required" type="boolean" optional="{true}" client="{true}" description="Whether the file upload is required. Inherited from a surrounding field when available." />
+<ui:prop name="readOnly" type="boolean" optional="{true}" client="{true}" description="Whether the file upload is read-only. Inherited from a surrounding field when available." />
+<ui:prop name="accept" type="mixed" optional="{true}" client="{true}" description="The accepted file types, e.g. `image/*` or `{ 'image/png': ['.png'] }`." />
+<ui:prop name="allowDrop" type="boolean" optional="{true}" client="{true}" default="{true}" description="Whether to allow drag and drop in the dropzone element." />
+<ui:prop name="maxFiles" type="integer" optional="{true}" client="{true}" default="1" description="The maximum number of files that can be selected." />
+<ui:prop name="existingFilesCount" type="integer" optional="{true}" client="{true}" default="0" description="The number of already-persisted files shown outside the machine's own file list (e.g. as `type=\"existing\"` items), so it can be subtracted from `maxFiles` and the remaining-slots count also accounts for them. Deliberately a plain count, not a list of `File` objects: whatever ends up in the machine's own accepted files also ends up in the hidden input's `FileList` and gets resubmitted on the next form post, which would silently overwrite an already-stored file with placeholder content reconstructed from just its name/size." />
+<ui:prop name="maxFileSize" type="integer" optional="{true}" client="{true}" description="The maximum file size in bytes." />
+<ui:prop name="minFileSize" type="integer" optional="{true}" client="{true}" description="The minimum file size in bytes." />
+<ui:prop name="preventDocumentDrop" type="boolean" optional="{true}" client="{true}" default="{true}" description="Whether to prevent a file drop outside of the dropzone from navigating the document." />
+<ui:prop name="capture" type="string" optional="{true}" client="{true}" description="The camera to use to capture media on mobile devices. Either `user` or `environment`." />
+<ui:prop name="directory" type="boolean" optional="{true}" client="{true}" default="{false}" description="Whether to accept whole directories instead of files. Only works in webkit based browsers." />
+<ui:prop name="translations" type="array" optional="{true}" client="{true}" description="Localized file upload labels. Set entries to `{false}` to omit the corresponding `aria-label`. Use `f:translate` for per-template localization overrides when needed." />
+
+<f:variable name="refData" value="{disabled: disabled, readonly: readOnly}" />
+
+<div
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'root' , data: refData )}
+    {ui:attributes()}>
+    <f:slot />
+</div>

@@ -1,0 +1,12 @@
+<ui:prop name="type" type="Jramke\FluidPrimitives\Enum\FileUploadItemType" optional="{true}" default="{f:constant(name: 'Jramke\FluidPrimitives\Enum\FileUploadItemType::Accepted')}" description="Which file list this group renders, `accepted` or `rejected`." />
+
+<f:variable name="refData" value="{disabled: context.disabled}" />
+
+<ul
+    role="list"
+    data-type="{type.value}"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'itemGroup' , value: type, data: refData )}
+    {ui:attributes()}>
+    <f:slot />
+</ul>

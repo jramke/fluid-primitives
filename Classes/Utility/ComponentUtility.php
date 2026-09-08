@@ -19,6 +19,7 @@ class ComponentUtility
     private const ID_NAMESPACE_OVERRIDES = [
         'navigation-menu' => 'nav-menu',
         'clipboard' => 'clip',
+        'file-upload' => 'file',
     ];
 
     // Maps a component's `ui:ref` part name to the enclosing Field's `fieldIds` key ('label' or
@@ -30,6 +31,7 @@ class ComponentUtility
         'number-input' => ['label' => 'label', 'control' => 'input'],
         'switch' => ['label' => 'label', 'control' => 'hiddenInput'],
         'checkbox' => ['label' => 'label', 'control' => 'hiddenInput'],
+        'file-upload' => ['label' => 'label', 'control' => 'hiddenInput'],
         'checkbox-group' => ['label' => 'label'],
     ];
 
@@ -86,6 +88,11 @@ class ComponentUtility
         ],
         'switch' => [
             'hiddenInput' => 'input',
+        ],
+        'file-upload' => [
+            'hiddenInput' => 'input',
+            'itemSizeText' => 'item-size',
+            'itemDeleteTrigger' => 'item-delete',
         ],
         'tooltip' => [
             'positioner' => 'popper',

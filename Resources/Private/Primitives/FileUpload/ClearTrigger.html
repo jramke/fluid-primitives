@@ -1,0 +1,11 @@
+<f:variable name="refData" value="{disabled: context.disabled, readonly: context.readOnly}" />
+
+<button
+    type="button"
+    hidden
+    {f:if(condition: '{context.disabled} || {context.readOnly}', then: 'disabled' )}
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'clearTrigger' , data: refData )}
+    {ui:attributes()}>
+    <f:slot />
+</button>

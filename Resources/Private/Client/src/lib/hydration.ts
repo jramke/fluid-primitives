@@ -6,6 +6,7 @@ import { Component } from './component';
 const ID_NAMESPACE_OVERRIDES: Record<string, string> = {
     'navigation-menu': 'nav-menu',
     clipboard: 'clip',
+    'file-upload': 'file',
 };
 
 // Keep in sync with: Classes/Utility/ComponentUtility.php
@@ -53,6 +54,11 @@ const PART_SEGMENT_OVERRIDES: Record<string, Record<string, PartSegmentOverride>
     switch: {
         hiddenInput: 'input',
     },
+    'file-upload': {
+        hiddenInput: 'input',
+        itemSizeText: 'item-size',
+        itemDeleteTrigger: 'item-delete',
+    },
     tooltip: {
         positioner: 'popper',
     },
@@ -65,7 +71,7 @@ const PART_SEGMENT_OVERRIDES: Record<string, Record<string, PartSegmentOverride>
 // part's id reads the same way it does in zag itself), but `data-part` always renders lower-kebab
 // for CSS/selector consistency. Keep in sync with: Classes/Utility/ComponentUtility.php's
 // camelCaseToLowerCaseDashed()/lowerCaseDashedToCamelCase().
-function toKebabCase(part: string): string {
+export function toKebabCase(part: string): string {
     return part.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
 }
 

@@ -30,14 +30,8 @@ class CheckboxGroupContext extends AbstractComponentContext
             $disabled = true;
         }
 
-        $name = $this->get('name') ?? null;
-        if ($name !== null) {
-            // Append [] to name for checkbox groups to handle multiple values
-            $name .= '[]';
-        }
-
         return [
-            'name' => $name,
+            'name' => $this->get('name') ?? null,
             'disabled' => $disabled ?? $this->get('disabled') ?? null,
             'readOnly' => $this->get('readOnly') ?? null,
             'invalid' => $itemInvalid ?? $this->get('invalid') ?? null,
