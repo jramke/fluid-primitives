@@ -2,7 +2,7 @@
 
 <f:variable name="selected">{f:if(condition: '{value}=={context.defaultValue}', then: '{true}', else: '{false}')}</f:variable>
 
-<f:variable name="refData" value="{value: value, orientation: context.orientation, selected: selected}" />
+<f:variable name="refData" value="{orientation: context.orientation, selected: selected}" />
 
 <div
     role="tabpanel"

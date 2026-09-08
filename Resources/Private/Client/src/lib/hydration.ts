@@ -336,13 +336,16 @@ export class ComponentHydrator {
 
     generateRefAttributesString(part: string, value?: string): string {
         const id = this.computePartId(part, value);
-        return `id="${id}" data-scope="${this.componentName}" data-part="${toKebabCase(part)}"`;
+        return `id="${id}" data-scope="${this.componentName}" data-part="${toKebabCase(part)}"${value !== undefined ? ` data-value="${value}"` : ''}`;
     }
 
     setRefAttributes(element: Element, part: string, value?: string): void {
         element.setAttribute('id', this.computePartId(part, value));
         element.setAttribute('data-scope', this.componentName);
         element.setAttribute('data-part', toKebabCase(part));
+        if (value !== undefined) {
+            element.setAttribute('data-value', value);
+        }
     }
 
     /**

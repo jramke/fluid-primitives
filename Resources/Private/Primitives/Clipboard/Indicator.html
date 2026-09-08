@@ -1,11 +1,9 @@
 <ui:prop name="state" type="Jramke\FluidPrimitives\Enum\ClipboardIndicatorState" optional="{true}" requiredAtRuntime="{true}" description="The indicator state to render." />
 
-<f:variable name="refData" value="{value: state.value}" />
-
 <span
     {f:if(condition: '{state.value}==copied' , then: 'hidden' )}
     {f:if(condition: class, then: 'class="{class}"' )}
-    {ui:ref(name: 'indicator' , value: state.value, data: refData )}
+    {ui:ref(name: 'indicator' , value: state.value )}
     {ui:attributes()}>
     <f:slot />
 </span>

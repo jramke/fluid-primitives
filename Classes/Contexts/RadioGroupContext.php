@@ -19,7 +19,6 @@ class RadioGroupContext extends AbstractComponentContext
             'invalid' => $itemState['invalid'],
             'state' => $itemState['checked'] ? 'checked' : 'unchecked',
             'orientation' => $this->get('orientation') ?? null,
-            'value' => $itemState['value'] ?? null,
         ];
     }
 

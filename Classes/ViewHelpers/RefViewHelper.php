@@ -115,6 +115,10 @@ class RefViewHelper extends AbstractViewHelper
             'data-part' => ComponentUtility::camelCaseToLowerCaseDashed($part),
         ];
 
+        if ($value !== null) {
+            $baseAttributes['data-value'] = (string)$value;
+        }
+
         if ($this->arguments['withId']) {
             $ids = $this->renderingContext->getVariableProvider()->getByPath('context.ids') ?? [];
             $idsArray = is_array($ids) ? $ids : [];

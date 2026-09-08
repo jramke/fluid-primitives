@@ -3,11 +3,10 @@
 <ui:error when="!{context.item.value}" message="The {component.fullName} must only be used inside an accordion.item component" />
 
 <f:variable name="value" value="{context.item.value}" />
-<f:variable name="refData" value="{value: value}" />
 
 <h{level}
     {f:if(condition: class, then: 'class="{class}"' )}
-    {ui:ref(name: 'itemHeader' , value: value, data: refData )}
+    {ui:ref(name: 'itemHeader' , value: value )}
     {ui:attributes()}>
     <f:slot />
 </h{level}>

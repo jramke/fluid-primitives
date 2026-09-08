@@ -1,6 +1,6 @@
 <ui:prop name="state" type="Jramke\FluidPrimitives\Enum\CollapsibleIndicatorState" optional="{true}" requiredAtRuntime="{true}" description="The indicator state to render." />
 
-<f:variable name="refData" value="{variant: state, value: state.value}" />
+<f:variable name="refData" value="{variant: state}" />
 <f:variable name="isHidden" value="{context -> ui:call(method: 'isIndicatorHidden', arguments: {0: state})}" />
 
 <span

@@ -2,7 +2,7 @@
 
 <f:variable name="itemState">{context -> ui:call(method: 'getItemState', arguments: {0: context.item})}</f:variable>
 
-<f:variable name="refData" value="{value: itemState.value, disabled: itemState.disabled, invalid: itemState.invalid}" />
+<f:variable name="refData" value="{disabled: itemState.disabled, invalid: itemState.invalid}" />
 
 <input
     type="radio"

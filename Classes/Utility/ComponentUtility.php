@@ -92,7 +92,7 @@ class ComponentUtility
         ],
         'dialog' => [
             'closeTrigger' => 'close',
-        ]
+        ],
     ];
 
     public static function id(string $prefix = 'f'): string

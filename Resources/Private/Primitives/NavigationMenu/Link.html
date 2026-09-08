@@ -2,7 +2,7 @@
 <ui:prop name="current" type="boolean" optional="{true}" description="Whether the link is the current page." />
 
 <f:variable name="linkValue">{f:if(condition: value, then: value, else: context.item.value)}</f:variable>
-<f:variable name="refData" value="{value: linkValue, current: current}" />
+<f:variable name="refData" value="{current: current}" />
 
 <a
     {f:if(condition: current, then: 'aria-current="page"' )}

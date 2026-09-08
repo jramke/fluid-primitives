@@ -4,7 +4,7 @@
 <f:variable name="selected">{f:if(condition: '{value}=={context.defaultValue}', then: '{true}', else: '{false}')}</f:variable>
 <f:variable name="tabindex">{f:if(condition: '{selected} && {context.composite}', then: '0', else: '-1')}</f:variable>
 
-<f:variable name="refData" value="{value: value, orientation: context.orientation, disabled: disabled, selected: selected}" />
+<f:variable name="refData" value="{orientation: context.orientation, disabled: disabled, selected: selected}" />
 
 <button
     role="tab"

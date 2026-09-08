@@ -1,6 +1,6 @@
 <ui:prop name="state" type="Jramke\FluidPrimitives\Enum\SwitchIndicatorState" optional="{true}" requiredAtRuntime="{true}" description="The indicator state to render." />
 
-<f:variable name="refData" value="{state: context.state, value: state.value}" />
+<f:variable name="refData" value="{state: context.state}" />
 <f:variable name="isHidden" value="{f:if(condition: '{context.state} !== {state.value}', then: '{true}', else: '{false}')}" />
 
 <span
