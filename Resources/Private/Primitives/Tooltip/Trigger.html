@@ -1,3 +1,5 @@
+<ui:prop name="value" type="string" optional="{true}" />
+
 <f:variable name="state">{context.defaultOpen ? 'open' : 'closed'}</f:variable>
 <f:variable name="expanded">{context.defaultOpen ? '' : null}</f:variable>
 <f:variable name="refData" value="{state: state, expanded: expanded}" />
@@ -5,7 +7,7 @@
 <button
     type="button"
     {f:if(condition: class, then: 'class="{class}"' )}
-    {ui:ref(name: 'trigger' , data: refData )}
+    {ui:ref(name: 'trigger' , value: value, data: refData )}
     {ui:attributes()}>
     <f:slot />
 </button>

@@ -1,11 +1,11 @@
+<ui:prop name="value" type="string" optional="{true}" />
+
 <f:variable name="refData" value="{state: context.state}" />
 
 <button
     type="button"
-    aria-haspopup="dialog"
-    aria-expanded="{f:if(condition: context.defaultOpen, then: 'true', else: 'false')}"
     {f:if(condition: class, then: 'class="{class}"' )}
-    {ui:ref(name: 'trigger' , data: refData )}
+    {ui:ref(name: 'trigger' , value: value, data: refData )}
     {ui:attributes()}>
     <f:slot />
 </button>

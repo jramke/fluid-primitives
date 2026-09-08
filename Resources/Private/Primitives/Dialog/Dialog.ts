@@ -13,10 +13,9 @@ export class Dialog extends Component<dialog.Props, dialog.Api> {
     }
 
     render() {
-        const triggers = this.getElements('trigger');
-        triggers.forEach(trigger => {
-            this.spreadProps(trigger, this.api.getTriggerProps());
-        });
+        this.spreadPropsByOptionalValue('trigger', ({ value }) =>
+            this.api.getTriggerProps({ value })
+        );
 
         const backdropEl = this.getElement('backdrop');
         if (backdropEl) {

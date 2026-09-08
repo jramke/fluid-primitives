@@ -98,11 +98,23 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
     protected spreadPropsByValue(
         part: string,
         getProps: (ctx: { el: HTMLElement; value: string }) => Attrs | null | undefined,
-        parent?: HTMLElement | Document
+        options?: { parent?: HTMLElement | Document }
     ): void {
-        this.getElements<HTMLElement>(part, parent).forEach(el => {
+        this.getElements<HTMLElement>(part, options?.parent).forEach(el => {
             const value = el.dataset.value;
             if (value === undefined) return;
+            const props = getProps({ el, value });
+            if (props) this.spreadProps(el, props);
+        });
+    }
+
+    protected spreadPropsByOptionalValue(
+        part: string,
+        getProps: (ctx: { el: HTMLElement; value?: string }) => Attrs | null | undefined,
+        options?: { parent?: HTMLElement | Document }
+    ): void {
+        this.getElements<HTMLElement>(part, options?.parent).forEach(el => {
+            const value = el.dataset.value;
             const props = getProps({ el, value });
             if (props) this.spreadProps(el, props);
         });
