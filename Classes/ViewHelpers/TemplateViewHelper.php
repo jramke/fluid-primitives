@@ -86,6 +86,23 @@ class TemplateViewHelper extends AbstractViewHelper
         );
 
         $variableProvider = $this->renderingContext->getVariableProvider();
+        // if (!$context instanceof ComponentContextInterface) {
+        //     // The ContextService stack only covers slot content evaluated against the *original*
+        //    // caller's rendering context (see the class doc comment above). `ui:template` written
+        //    // directly inside a reusable component's own .html definition file - e.g. a `ui:` wrapper
+        //    // around a `primitives:` root, so it can be shared by every subcomponent instance instead
+        //    // of being duplicated at every call site - renders against a freshly cloned rendering
+        //    // context instead, where only the plain `component`/`context` variables
+        //    // (ComponentRenderer::getRootComponentContext()'s own fallback) carry over. Mirror that
+        //    // fallback here so `ui:template` works in both places.
+        //    $variableProvider = $this->renderingContext->getVariableProvider();
+        //    if ($variableProvider->getByPath('component.baseName') === $componentName) {
+        //        $fallbackContext = $variableProvider->get('context');
+        //        if ($fallbackContext instanceof ComponentContextInterface) {
+        //            $context = $fallbackContext;
+        //        }
+        //    }
+        //}
 
         $hadComponent = $variableProvider->exists('component');
         $previousComponent = $hadComponent ? $variableProvider->get('component') : null;
