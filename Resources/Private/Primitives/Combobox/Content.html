@@ -9,7 +9,6 @@
     {f:if(condition: isEmpty, then: 'data-empty="true"' )}
     {f:if(condition: context.multiple, then: 'aria-multiselectable="true"' )}
     {f:if(condition: class, then: 'class="{class}"' )}
-    {f:if(condition: context.ids.content, then: 'id="{context.ids.content}"' )}
     {ui:ref(name: 'content' , data: refData )}
     {ui:attributes()}>
     <f:slot />

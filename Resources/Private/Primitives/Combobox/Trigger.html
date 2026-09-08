@@ -13,7 +13,6 @@
     aria-expanded="{f:if(condition: context.defaultOpen, then: 'true', else: 'false')}"
     data-state="{state}"
     {f:if(condition: class, then: 'class="{class}"' )}
-    {f:if(condition: context.ids.trigger, then: 'id="{context.ids.trigger}"' )}
     {f:if(condition: context.disabled, then: 'disabled' )}
     {ui:ref(name: 'trigger' , data: refData )}
     {ui:attributes()}>
