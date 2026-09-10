@@ -14,8 +14,6 @@
     aria-controls="{context.ids.content}"
     aria-autocomplete="list"
     data-state="{state}"
-    {f:if(condition: context.form, then: 'form="{context.form}"' )}
-    {f:if(condition: context.name, then: 'name="{context.name}"' )}
     {f:if(condition: context.placeholder, then: 'placeholder="{context.placeholder}"' )}
     {f:if(condition: defaultInputValue, then: 'value="{defaultInputValue}"' )}
     {f:if(condition: context.disabled, then: 'disabled' )}

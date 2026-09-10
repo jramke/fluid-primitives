@@ -1,5 +1,6 @@
 import type { CollectionItem, ListCollection } from '@zag-js/collection';
 import * as combobox from '@zag-js/combobox';
+import { visuallyHiddenStyle } from '@zag-js/dom-query';
 import { createFilter } from '@zag-js/i18n-utils';
 import { FieldAwareComponent, Machine, mergeProps, normalizeProps } from '../../Client';
 import { getGlobal, getListCollectionFromHydrationData } from '../../Client/src/lib/hydration';
@@ -148,6 +149,57 @@ export class Combobox extends FieldAwareComponent<ComboboxPrimitiveProps, combob
         return result;
     }
 
+    private getHiddenInputProps(
+        value: string,
+        attrs: { name?: string; form?: string; disabled?: boolean }
+    ) {
+        return normalizeProps.input({
+            type: 'text',
+            'aria-hidden': true,
+            tabIndex: -1,
+            style: visuallyHiddenStyle,
+            name: attrs.name,
+            form: attrs.form,
+            disabled: attrs.disabled,
+            value,
+            // mirrors `@zag-js/select`'s own `getHiddenSelectProps()`.
+            onFocus: () => {
+                this.getElement<HTMLInputElement>('input')?.focus({ preventScroll: true });
+            },
+        });
+    }
+
+    // This should be a zag-js native feature, but since it's currently not, we implement it here.
+    // Ensures the FormData gets the real value of the collection item(s) rather than the visible input's label.
+    // See https://github.com/chakra-ui/zag/discussions/3333
+    private syncHiddenInput(attrs: { name?: string; form?: string; disabled?: boolean }) {
+        const rootEl = this.getElement('root');
+        if (!rootEl) return;
+
+        this.getElements<HTMLInputElement>('hiddenInput').forEach(el => el.remove());
+
+        const values = this.api.value;
+
+        // With `allowCustomValue`, the input can hold free text that never resolved to a
+        // collection item - carry that raw text through as the submitted value instead of
+        // silently dropping it. Mirrors the machine's own (internal, unexposed) `isCustomValue`
+        // computation: the input's text no longer matches what the current selection stringifies to.
+        const inputValue = this.api.inputValue;
+        const isCustomValue =
+            !!this.userProps?.allowCustomValue &&
+            inputValue.trim() !== '' &&
+            inputValue !== this.api.valueAsString;
+
+        const resolvedValues = values.length > 0 ? values : isCustomValue ? [inputValue] : [];
+
+        resolvedValues.forEach(value => {
+            const inputEl = this.doc.createElement('input');
+            this.hydrator?.setRefAttributes(inputEl, 'hiddenInput', value);
+            this.spreadProps(inputEl, this.getHiddenInputProps(value, attrs));
+            rootEl.appendChild(inputEl);
+        });
+    }
+
     initMachine(props: ComboboxPrimitiveProps): Machine<any> {
         props = this.withFieldProps(props);
         const { controlled, ...transformedProps } = this.transformProps(props);
@@ -197,13 +249,24 @@ export class Combobox extends FieldAwareComponent<ComboboxPrimitiveProps, combob
         const controlEl = this.getElement('control');
         if (controlEl) this.spreadProps(controlEl, this.api.getControlProps());
 
+        // `name`/`form` are stripped from the visible input's props before spreading - it holds the
+        // item's label (or, with `allowCustomValue`, arbitrary free text), never the underlying
+        // value the form should submit. `hiddenInput` carries the real value(s) instead, see below.
+        const { name, form, ...inputProps } = this.api.getInputProps() as Record<string, unknown>;
+
         const inputEl = this.getElement('input');
         if (inputEl) {
-            const mergedProps = mergeProps(this.api.getInputProps(), {
+            const mergedProps = mergeProps(inputProps, {
                 'aria-describedby': this.fieldMachine?.context.get('describeIds') || undefined,
             });
             this.spreadProps(inputEl, mergedProps);
         }
+
+        this.syncHiddenInput({
+            name: name as string | undefined,
+            form: form as string | undefined,
+            disabled: inputProps.disabled as boolean | undefined,
+        });
 
         const triggerEl = this.getElement('trigger');
         if (triggerEl) this.spreadProps(triggerEl, this.api.getTriggerProps());

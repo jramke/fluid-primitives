@@ -129,6 +129,65 @@ final class ComboboxRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function rendersNoHiddenInputWhenNothingIsSelected(): void
+    {
+        // Regression test: no `defaultValue` at all must not crash (ComboboxContext::getDefaultValue()
+        // returning null) and must render zero hidden inputs - unlike a native `<select>`, there's no
+        // "first option gets auto-selected" quirk to work around here.
+        $html = $this->renderTemplate('
+            <primitives:combobox.root>
+                <primitives:combobox.hiddenInput />
+            </primitives:combobox.root>
+        ');
+
+        $this->assertStringContainsString('data-scope="combobox"', $html);
+        $this->assertStringNotContainsString('data-part="hidden-input"', $html);
+    }
+
+    #[Test]
+    public function hiddenInputSubmitsTheItemValueInsteadOfItsLabel(): void
+    {
+        $collection = new ListCollection([
+            ['value' => 'us', 'label' => 'United States'],
+            ['value' => 'de', 'label' => 'Germany'],
+        ]);
+
+        $html = $this->renderTemplate('
+            <primitives:combobox.root collection="{collection}" name="country" defaultValue="us">
+                <primitives:combobox.hiddenInput />
+            </primitives:combobox.root>
+        ', ['collection' => $collection]);
+
+        $this->assertStringContainsString('data-part="hidden-input"', $html);
+        $this->assertMatchesRegularExpression('/<input[^>]*type="text"[^>]*name="country"[^>]*value="us"/', $html);
+        $this->assertStringContainsString('aria-hidden="true"', $html);
+        $this->assertStringContainsString('tabindex="-1"', $html);
+        $this->assertStringNotContainsString('value="United States"', $html);
+        $this->assertStringNotContainsString('United States', $html);
+    }
+
+    #[Test]
+    public function rendersOneHiddenInputPerSelectedValueWhenMultiple(): void
+    {
+        $collection = new ListCollection([
+            ['value' => 'us', 'label' => 'United States'],
+            ['value' => 'de', 'label' => 'Germany'],
+            ['value' => 'fr', 'label' => 'France'],
+        ]);
+
+        $html = $this->renderTemplate('
+            <primitives:combobox.root collection="{collection}" name="countries[]" multiple="{true}" defaultValue="{0: \'us\', 1: \'fr\'}">
+                <primitives:combobox.hiddenInput />
+            </primitives:combobox.root>
+        ', ['collection' => $collection]);
+
+        $this->assertMatchesRegularExpression('/<input[^>]*value="us"/', $html);
+        $this->assertMatchesRegularExpression('/<input[^>]*value="fr"/', $html);
+        $this->assertStringNotContainsString('value="de"', $html);
+        $this->assertSame(2, substr_count($html, 'data-part="hidden-input"'));
+    }
+
+    #[Test]
     public function itemTextAndItemIndicatorAutoDetectInsideTemplateWithNoLeakedProp(): void
     {
         $collection = new ListCollection([]);
