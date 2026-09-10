@@ -1,0 +1,10 @@
+<f:variable name="isEmpty">{f:if(condition: context.collection.size, then: '{false}', else: '{true}')}</f:variable>
+
+<div
+    role="presentation"
+    {f:if(condition: isEmpty, then: '' , else: 'hidden' )}
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'empty' )}
+    {ui:attributes()}>
+    <f:slot />
+</div>
