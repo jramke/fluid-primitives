@@ -220,7 +220,6 @@ export class ComponentHydrator {
     doc: Document;
     rootId: string;
     ids: { [key: string]: string };
-    elementRefs = new Map<string, Element | Element[]>();
 
     constructor(
         componentName: string,
@@ -281,43 +280,24 @@ export class ComponentHydrator {
     }
 
     getElement<T extends Element>(part: string, parent: Element | Document = this.doc): T | null {
-        if (this.elementRefs.has(part)) {
-            return (this.elementRefs.get(part) as T) || null;
-        }
-
-        let element: T | null = null;
         const isDoc = parent === this.doc;
 
         if (isDoc) {
             // Use getElementById (no CSS-escaping needed; IDs may contain colons)
-            element = this.doc.getElementById(this.computePartId(part)) as T | null;
-        } else {
-            const dataPart = toKebabCase(part);
-            element = (parent as Element).querySelector<T>(
-                `[id="${CSS.escape(this.computePartId(part))}"][data-part="${dataPart}"],[id^="${CSS.escape(this.computePartId(part))}"][data-part="${dataPart}"]`
-            );
+            return this.doc.getElementById(this.computePartId(part)) as T | null;
         }
 
-        if (element && isDoc) {
-            this.elementRefs.set(part, element);
-        }
-
-        return element;
+        const dataPart = toKebabCase(part);
+        return (parent as Element).querySelector<T>(
+            `[id="${CSS.escape(this.computePartId(part))}"][data-part="${dataPart}"],[id^="${CSS.escape(this.computePartId(part))}"][data-part="${dataPart}"]`
+        );
     }
 
     getElements<T extends Element>(part: string, parent: Element | Document = this.doc): T[] {
-        if (this.elementRefs.has(part)) {
-            return this.elementRefs.get(part) as T[];
-        }
-
         const isDoc = parent === this.doc;
-        let searchScope: Element | Document;
-
-        if (isDoc) {
-            searchScope = this.getElement('root') || this.doc;
-        } else {
-            searchScope = parent;
-        }
+        const searchScope: Element | Document = isDoc
+            ? this.getElement('root') || this.doc
+            : parent;
 
         if (!searchScope) {
             console.warn(
@@ -327,17 +307,11 @@ export class ComponentHydrator {
         }
 
         const dataPart = toKebabCase(part);
-        const elements = Array.from(
+        return Array.from(
             searchScope.querySelectorAll<T>(
                 `[id="${CSS.escape(this.computePartId(part))}"][data-part="${dataPart}"],[id^="${CSS.escape(this.computePartId(part) + this.getValueSeparatorForPart(part))}"][data-part="${dataPart}"]`
             )
         );
-
-        if (searchScope === this.doc) {
-            this.elementRefs.set(part, elements);
-        }
-
-        return elements;
     }
 
     generateRefAttributesString(part: string, value?: string): string {
@@ -394,7 +368,7 @@ export class ComponentHydrator {
     }
 
     destroy() {
-        this.elementRefs.clear();
+        // No-op for now; if we ever need to clean up anything, do it here.
     }
 }
 
