@@ -71,6 +71,29 @@ final class TemplateViewHelperTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function defaultsToTheAmbientComponentWhenContextIsOmitted(): void
+    {
+        // No `context` on the inner ui:template - it's not slot content passed into another
+        // component, it's written directly where a component's own template body already has
+        // `component`/`context` ambiently active (here, the outer ui:template's own, standing in
+        // for what a custom, single-file component's own body would have set up for real).
+        $collection = new ListCollection([]);
+
+        $html = $this->renderTemplate('
+            <primitives:combobox.root collection="{collection}">
+                <ui:template name="outerTemplate" context="combobox">
+                    <ui:template name="innerTemplate">
+                        <span {ui:ref(name: \'title\', withId: false)}></span>
+                    </ui:template>
+                </ui:template>
+            </primitives:combobox.root>
+        ', ['collection' => $collection]);
+
+        $this->assertStringContainsString('data-part="inner-template"', $html);
+        $this->assertStringContainsString('<span data-scope="combobox" data-part="title">', $html);
+    }
+
+    #[Test]
     public function throwsWhenNoMatchingComponentIsActive(): void
     {
         $collection = new ListCollection([]);
@@ -84,5 +107,20 @@ final class TemplateViewHelperTest extends FunctionalTestCase
                 </ui:template>
             </primitives:combobox.root>
         ', ['collection' => $collection]);
+    }
+
+    #[Test]
+    public function throwsWithoutContextWhenNoComponentIsAmbientlyActiveEither(): void
+    {
+        // No `context` argument, and this ui:template isn't inside any component's own template
+        // body (it's plain top-level content in the test) - neither resolution path applies, so it
+        // should fail with a message pointing at the fix, not the generic "no active X" one above.
+        $this->expectExceptionMessage('ui:template could not determine which component to attach to');
+
+        $this->renderTemplate('
+            <ui:template name="itemTemplate">
+                <span>content</span>
+            </ui:template>
+        ');
     }
 }

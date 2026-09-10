@@ -245,7 +245,7 @@ export class FileUpload extends FieldAwareComponent<FileUploadPrimitiveProps, fi
         if (!this.hydrator) return;
 
         entries.forEach(({ file, type, errors }) => {
-            const instance = new Template(this.hydrator!, 'item-template', {
+            const instance = new Template(this.hydrator!, 'itemTemplate', {
                 value: fileValue(file),
             });
             const itemEl = instance.root;

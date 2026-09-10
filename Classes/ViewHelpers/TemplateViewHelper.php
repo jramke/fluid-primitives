@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\ViewHelpers;
 
+use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
 use Jramke\FluidPrimitives\Domain\Model\TagAttributes;
 use Jramke\FluidPrimitives\Service\ContextService;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
@@ -42,6 +43,14 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
  * kebab-cased for `data-part` (e.g. `itemTemplate` -> `data-part="item-template"`) while the `id`
  * keeps it verbatim, for CSS/selector consistency with every other part in the DOM.
  *
+ * `context` is only required when this `ui:template` sits inside slot content passed into
+ * *another* component - the common case: item/row markup a consumer authors for a primitive like
+ * `combobox`/`fileUpload` to clone, where the ambient component is whatever encloses that slot
+ * content, not the primitive itself. Omit it when `ui:template` is written directly inside a
+ * component's own template body instead (e.g. a custom, single-file component) - it then defaults
+ * to whichever component is already ambiently active there, the same way a bare `ui:ref` (no
+ * `context` argument) already does.
+ *
  * ## Example
  * ```html
  * <ui:combobox.root>
@@ -71,38 +80,17 @@ class TemplateViewHelper extends AbstractViewHelper
         $this->registerArgument(
             'context',
             'string',
-            'Base name of the enclosing component this template belongs to, e.g. "combobox"',
-            true,
+            'Base name of the enclosing component this template belongs to, e.g. "combobox". Only needed when this ui:template is slot content passed into another component - omit it when writing ui:template directly inside a component\'s own template body, where it defaults to whichever component is already ambiently active (the same fallback a bare `ui:ref` uses).',
+            false,
+            '',
         );
     }
 
     public function render(): string
     {
-        $componentName = $this->arguments['context'];
-        $context = ContextService::requireFromRenderingContext(
-            $this->renderingContext,
-            $componentName,
-            'ui:template',
-        );
+        [$componentName, $context] = $this->resolveContext();
 
         $variableProvider = $this->renderingContext->getVariableProvider();
-        // if (!$context instanceof ComponentContextInterface) {
-        //     // The ContextService stack only covers slot content evaluated against the *original*
-        //    // caller's rendering context (see the class doc comment above). `ui:template` written
-        //    // directly inside a reusable component's own .html definition file - e.g. a `ui:` wrapper
-        //    // around a `primitives:` root, so it can be shared by every subcomponent instance instead
-        //    // of being duplicated at every call site - renders against a freshly cloned rendering
-        //    // context instead, where only the plain `component`/`context` variables
-        //    // (ComponentRenderer::getRootComponentContext()'s own fallback) carry over. Mirror that
-        //    // fallback here so `ui:template` works in both places.
-        //    $variableProvider = $this->renderingContext->getVariableProvider();
-        //    if ($variableProvider->getByPath('component.baseName') === $componentName) {
-        //        $fallbackContext = $variableProvider->get('context');
-        //        if ($fallbackContext instanceof ComponentContextInterface) {
-        //            $context = $fallbackContext;
-        //        }
-        //    }
-        //}
 
         $hadComponent = $variableProvider->exists('component');
         $previousComponent = $hadComponent ? $variableProvider->get('component') : null;
@@ -154,5 +142,38 @@ class TemplateViewHelper extends AbstractViewHelper
                 $variableProvider->add('context', $previousContext);
             }
         }
+    }
+
+    /**
+     * @return array{0: string, 1: ComponentContextInterface}
+     */
+    private function resolveContext(): array
+    {
+        $explicitContextName = (string)($this->arguments['context'] ?? '');
+
+        if ($explicitContextName !== '') {
+            return [
+                $explicitContextName,
+                ContextService::requireFromRenderingContext(
+                    $this->renderingContext,
+                    $explicitContextName,
+                    'ui:template',
+                ),
+            ];
+        }
+
+        $variableProvider = $this->renderingContext->getVariableProvider();
+        $ambientContext = $variableProvider->exists('context') ? $variableProvider->get('context') : null;
+
+        if (ComponentUtility::isComponent($this->renderingContext) && $ambientContext instanceof ComponentContextInterface) {
+            return [ComponentUtility::getComponentBaseNameFromContext($this->renderingContext), $ambientContext];
+        }
+
+        throw new \RuntimeException(
+            'ui:template could not determine which component to attach to. Pass `context` explicitly ' .
+            '(e.g. context="combobox") when this ui:template is slot content passed into another ' .
+            'component, rather than written directly inside a component\'s own template body.',
+            1_767_900_200,
+        );
     }
 }
