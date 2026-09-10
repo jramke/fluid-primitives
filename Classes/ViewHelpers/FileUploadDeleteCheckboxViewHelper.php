@@ -25,7 +25,7 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
  * Must be used inside a `<ui:form.root objectName="...">`, where `objectName` matches the
  * controller action argument name. Use `property` to declare which model property the file
  * reference belongs to - when used inside a `<ui:field.root name="...">`, the field's `name` is
- * used as a fallback.
+ * used as a fallback (core's version always requires `property` explicitly).
  *
  * ## Example
  * ```html
