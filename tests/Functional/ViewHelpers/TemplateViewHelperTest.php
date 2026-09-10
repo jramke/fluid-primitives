@@ -17,7 +17,7 @@ final class TemplateViewHelperTest extends FunctionalTestCase
 
         $html = $this->renderTemplate('
             <primitives:combobox.root collection="{collection}">
-                <ui:template name="item-template" component="combobox">
+                <ui:template name="itemTemplate" context="combobox">
                     <span>static content</span>
                 </ui:template>
             </primitives:combobox.root>
@@ -27,7 +27,7 @@ final class TemplateViewHelperTest extends FunctionalTestCase
         $this->assertStringContainsString('data-part="item-template"', $html);
         $this->assertStringContainsString('<span>static content</span>', $html);
         $this->assertMatchesRegularExpression(
-            '/<template id="combobox:[^"]*:item-template" data-scope="combobox" data-part="item-template">/',
+            '/<template id="combobox:[^"]*:itemTemplate" data-scope="combobox" data-part="item-template">/',
             $html,
         );
     }
@@ -39,7 +39,7 @@ final class TemplateViewHelperTest extends FunctionalTestCase
 
         $html = $this->renderTemplate('
             <primitives:combobox.root collection="{collection}">
-                <ui:template name="item-template" component="combobox">
+                <ui:template name="itemTemplate" context="combobox">
                     <span {ui:ref(name: \'title\', withId: false)}></span>
                 </ui:template>
             </primitives:combobox.root>
@@ -55,7 +55,7 @@ final class TemplateViewHelperTest extends FunctionalTestCase
 
         $html = $this->renderTemplate('
             <primitives:combobox.root collection="{collection}">
-                <ui:template name="item-template" component="combobox">
+                <ui:template name="itemTemplate" context="combobox">
                     <span {ui:ref(name: \'title\', withId: false)}></span>
                 </ui:template>
                 <primitives:combobox.input />
@@ -79,7 +79,7 @@ final class TemplateViewHelperTest extends FunctionalTestCase
 
         $this->renderTemplate('
             <primitives:combobox.root collection="{collection}">
-                <ui:template name="item-template" component="select">
+                <ui:template name="itemTemplate" context="select">
                     <span>content</span>
                 </ui:template>
             </primitives:combobox.root>

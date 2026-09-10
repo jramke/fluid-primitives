@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\ViewHelpers;
 
-use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
 use Jramke\FluidPrimitives\Domain\Model\TagAttributes;
 use Jramke\FluidPrimitives\Service\ContextService;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
@@ -25,7 +24,9 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
  * `ui:template` fixes this generically for any component, by reading the real, currently-active
  * component context (which - unlike the plain `component`/`context`
  * variables `ui:ref` reads - is threaded correctly through slot-content nesting) and temporarily
- * re-exposing it as those ordinary variables.
+ * re-exposing it as those ordinary variables. `ui:ref` itself accepts the same `context` argument
+ * directly, for hand-authored elements that need this without being wrapped in a `<template>` -
+ * see its own docblock for when to reach for that instead.
  *
  * Intended for content whose real data doesn't exist yet at server-render time and is filled in
  * later, client-side (e.g. a combobox's async search results, file-upload item previews,
@@ -37,12 +38,16 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
  * rendered as a client-filled stencil rather than a real instance, without the template author
  * having to pass an explicit prop for it.
  *
+ * `name` follows the same camelCase convention as `ui:ref`'s own `name` argument - it's likewise
+ * kebab-cased for `data-part` (e.g. `itemTemplate` -> `data-part="item-template"`) while the `id`
+ * keeps it verbatim, for CSS/selector consistency with every other part in the DOM.
+ *
  * ## Example
  * ```html
  * <ui:combobox.root>
  *   ...
  *   <ui:combobox.content>
- *     <ui:template name="item-template" component="combobox">
+ *     <ui:template name="itemTemplate" context="combobox">
  *         <ui:combobox.item>
  *             <span {ui:ref(name: 'title', withId: false)}></span>
  *         </ui:combobox.item>
@@ -57,9 +62,14 @@ class TemplateViewHelper extends AbstractViewHelper
 
     public function initializeArguments(): void
     {
-        $this->registerArgument('name', 'string', 'Ref name for the wrapping `<template>` element', true);
         $this->registerArgument(
-            'component',
+            'name',
+            'string',
+            'Ref name for the wrapping `<template>` element, camelCase (e.g. "itemTemplate") like `ui:ref`\'s own `name` argument.',
+            true,
+        );
+        $this->registerArgument(
+            'context',
             'string',
             'Base name of the enclosing component this template belongs to, e.g. "combobox"',
             true,
@@ -68,40 +78,14 @@ class TemplateViewHelper extends AbstractViewHelper
 
     public function render(): string
     {
-        $componentName = $this->arguments['component'];
-        $context = ContextService::getFromRenderingContext($this->renderingContext, $componentName);
+        $componentName = $this->arguments['context'];
+        $context = ContextService::requireFromRenderingContext(
+            $this->renderingContext,
+            $componentName,
+            'ui:template',
+        );
 
-        if (!$context instanceof ComponentContextInterface) {
-            // The ContextService stack only covers slot content evaluated against the *original*
-            // caller's rendering context (see the class doc comment above). `ui:template` written
-            // directly inside a reusable component's own .html definition file - e.g. a `ui:` wrapper
-            // around a `primitives:` root, so it can be shared by every subcomponent instance instead
-            // of being duplicated at every call site - renders against a freshly cloned rendering
-            // context instead, where only the plain `component`/`context` variables
-            // (ComponentRenderer::getRootComponentContext()'s own fallback) carry over. Mirror that
-            // fallback here so `ui:template` works in both places.
-            $variableProvider = $this->renderingContext->getVariableProvider();
-            if ($variableProvider->getByPath('component.baseName') === $componentName) {
-                $fallbackContext = $variableProvider->get('context');
-                if ($fallbackContext instanceof ComponentContextInterface) {
-                    $context = $fallbackContext;
-                }
-            }
-        }
-
-        if (!$context instanceof ComponentContextInterface) {
-            throw new \RuntimeException(
-                'ui:template could not find an active "' .
-                $componentName .
-                '" component to attach to. ' .
-                'Make sure it is used inside a <ui:' .
-                $componentName .
-                '.root> (or similar).',
-                1_767_900_100,
-            );
-        }
-
-        $variableProvider ??= $this->renderingContext->getVariableProvider();
+        $variableProvider = $this->renderingContext->getVariableProvider();
 
         $hadComponent = $variableProvider->exists('component');
         $previousComponent = $hadComponent ? $variableProvider->get('component') : null;
@@ -132,14 +116,11 @@ class TemplateViewHelper extends AbstractViewHelper
         $context->set('isRenderStencil', true);
 
         try {
+            $part = (string)$this->arguments['name'];
             $refAttributes = new TagAttributes([
-                'id' => ComponentUtility::generatePartId(
-                    $componentName,
-                    (string)$context->get('rootId'),
-                    $this->arguments['name'],
-                ),
+                'id' => ComponentUtility::generatePartId($componentName, (string)$context->get('rootId'), $part),
                 'data-scope' => $componentName,
-                'data-part' => $this->arguments['name'],
+                'data-part' => ComponentUtility::camelCaseToLowerCaseDashed($part),
             ]);
 
             return '<template ' . $refAttributes . '>' . $this->renderChildren() . '</template>';
