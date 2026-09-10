@@ -100,6 +100,11 @@ class ComponentUtility
         'dialog' => [
             'closeTrigger' => 'close',
         ],
+        'scroll-area' => [
+            'root' => ['segment' => 'root', 'rootIdSeparator' => '-'],
+            'viewport' => ['segment' => 'viewport', 'rootIdSeparator' => '-'],
+            'content' => ['segment' => 'content', 'rootIdSeparator' => '-'],
+        ],
     ];
 
     public static function id(string $prefix = 'f'): string
@@ -229,17 +234,17 @@ class ComponentUtility
         }
 
         $idNamespace = self::getIdNamespace($componentName);
-        ['segment' => $partSegment, 'valueSeparator' => $valueSeparator] = self::getPartConfig($componentName, $part);
+        ['segment' => $partSegment, 'valueSeparator' => $valueSeparator, 'rootIdSeparator' => $rootIdSeparator] = self::getPartConfig($componentName, $part);
 
         if ($part === 'root') {
-            return "{$idNamespace}:{$rootId}";
+            return "{$idNamespace}{$rootIdSeparator}{$rootId}";
         }
 
         if ($value !== null && $value !== '') {
-            return "{$idNamespace}:{$rootId}:{$partSegment}{$valueSeparator}{$value}";
+            return "{$idNamespace}{$rootIdSeparator}{$rootId}:{$partSegment}{$valueSeparator}{$value}";
         }
 
-        return "{$idNamespace}:{$rootId}:{$partSegment}";
+        return "{$idNamespace}{$rootIdSeparator}{$rootId}:{$partSegment}";
     }
 
     public static function getOverrideFieldIdKey(string $componentName, string $part): ?string
@@ -263,18 +268,23 @@ class ComponentUtility
     }
 
     /**
-     * @return array{segment: string, valueSeparator: string}
+     * @return array{segment: string, valueSeparator: string, rootIdSeparator: string}
      */
     private static function getPartConfig(string $componentName, string $part): array
     {
         $override = self::PART_SEGMENT_OVERRIDES[$componentName][$part] ?? null;
         if (!is_array($override)) {
-            return ['segment' => is_string($override) ? $override : $part, 'valueSeparator' => ':'];
+            return [
+                'segment' => is_string($override) ? $override : $part,
+                'valueSeparator' => ':',
+                'rootIdSeparator' => ':',
+            ];
         }
 
         $segment = (string)($override['segment'] ?? $part);
         $valueSeparator = (string)($override['valueSeparator'] ?? ':');
-        return ['segment' => $segment, 'valueSeparator' => $valueSeparator];
+        $rootIdSeparator = (string)($override['rootIdSeparator'] ?? ':');
+        return ['segment' => $segment, 'valueSeparator' => $valueSeparator, 'rootIdSeparator' => $rootIdSeparator];
     }
 
     public static function getRootIdFromContext(RenderingContextInterface $renderingContext): string

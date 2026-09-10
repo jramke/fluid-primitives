@@ -171,11 +171,7 @@ class RefViewHelper extends AbstractViewHelper
      */
     private function resolveExplicitContext(string $explicitContextName): array
     {
-        $context = ContextService::requireFromRenderingContext(
-            $this->renderingContext,
-            $explicitContextName,
-            'ui:ref',
-        );
+        $context = ContextService::requireFromRenderingContext($this->renderingContext, $explicitContextName, 'ui:ref');
 
         return [$explicitContextName, (string)($context->get('rootId') ?? ''), $context->get('ids') ?? []];
     }
