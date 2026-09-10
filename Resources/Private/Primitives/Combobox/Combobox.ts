@@ -345,5 +345,8 @@ export class Combobox extends FieldAwareComponent<ComboboxPrimitiveProps, combob
         if (listEl) {
             listEl.toggleAttribute('data-empty', !hasVisibleItems);
         }
+
+        const emptyEl = this.getElement('empty');
+        if (emptyEl) emptyEl.hidden = hasVisibleItems;
     }
 }

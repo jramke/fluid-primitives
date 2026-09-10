@@ -42,7 +42,7 @@ final class ComboboxRenderingTest extends FunctionalTestCase
         $html = $this->renderTemplate('
             <primitives:combobox.root collection="{collection}">
                 <primitives:combobox.content>
-                    <ui:template name="item-template" component="combobox">
+                    <ui:template name="itemTemplate" context="combobox">
                         <primitives:combobox.item>
                             <span>placeholder</span>
                         </primitives:combobox.item>
@@ -106,6 +106,86 @@ final class ComboboxRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function rendersEmptyVisibleWhenCollectionHasNoItems(): void
+    {
+        $collection = new ListCollection([]);
+
+        $html = $this->renderTemplate('
+            <primitives:combobox.root collection="{collection}">
+                <primitives:combobox.content>
+                    <primitives:combobox.empty>No results found</primitives:combobox.empty>
+                </primitives:combobox.content>
+            </primitives:combobox.root>
+        ', ['collection' => $collection]);
+
+        $this->assertStringContainsString('data-part="empty"', $html);
+        $this->assertStringContainsString('role="presentation"', $html);
+        $this->assertStringContainsString('No results found', $html);
+        $this->assertDoesNotMatchRegularExpression('/<div[^>]*\bhidden\b[^>]*data-part="empty"/', $html);
+    }
+
+    #[Test]
+    public function rendersEmptyHiddenWhenCollectionHasItems(): void
+    {
+        $collection = new ListCollection([
+            ['value' => 'berlin', 'label' => 'Berlin'],
+        ]);
+
+        $html = $this->renderTemplate('
+            <primitives:combobox.root collection="{collection}">
+                <primitives:combobox.content>
+                    <primitives:combobox.empty>No results found</primitives:combobox.empty>
+                </primitives:combobox.content>
+            </primitives:combobox.root>
+        ', ['collection' => $collection]);
+
+        $this->assertMatchesRegularExpression('/<div[^>]*\bhidden\b[^>]*data-part="empty"/', $html);
+    }
+
+    #[Test]
+    public function refWithExplicitContextResolvesInsideHandAuthoredSlotContent(): void
+    {
+        // Unlike the itemTemplate case, this span is neither a component's own template body
+        // nor wrapped in ui:template - it's plain, hand-authored slot content, several layers deep
+        // (root -> content -> empty). `context` targets the "combobox" ancestor explicitly instead
+        // of relying on whichever component happens to be ambiently active.
+        $collection = new ListCollection([]);
+
+        $html = $this->renderTemplate('
+            <primitives:combobox.root collection="{collection}">
+                <primitives:combobox.content>
+                    <primitives:combobox.empty>
+                        <span {ui:ref(name: \'statusText\', context: \'combobox\')}>Loading…</span>
+                    </primitives:combobox.empty>
+                </primitives:combobox.content>
+            </primitives:combobox.root>
+        ', ['collection' => $collection]);
+
+        $this->assertMatchesRegularExpression(
+            '/<span[^>]*data-scope="combobox"[^>]*data-part="status-text"[^>]*>Loading…<\/span>/',
+            $html,
+        );
+    }
+
+    #[Test]
+    public function refWithUnknownExplicitContextThrows(): void
+    {
+        $collection = new ListCollection([]);
+
+        $this->expectExceptionMessage('ui:ref could not find an active "select" component to attach to.');
+
+        $this->renderTemplate('
+            <primitives:combobox.root collection="{collection}">
+                <primitives:combobox.content>
+                    <primitives:combobox.empty>
+                        <span {ui:ref(name: \'statusText\', context: \'select\')}>Loading…</span>
+                    </primitives:combobox.empty>
+                </primitives:combobox.content>
+            </primitives:combobox.root>
+        ', ['collection' => $collection]);
+    }
+
+    #[Test]
     public function itemTemplateProducesATemplateElementWithMarkerlessRefs(): void
     {
         $collection = new ListCollection([]);
@@ -113,7 +193,7 @@ final class ComboboxRenderingTest extends FunctionalTestCase
         $html = $this->renderTemplate('
             <primitives:combobox.root collection="{collection}">
                 <primitives:combobox.content>
-                    <ui:template name="item-template" component="combobox">
+                    <ui:template name="itemTemplate" context="combobox">
                         <primitives:combobox.item>
                             <primitives:combobox.itemText>
                                 <span {ui:ref(name: \'title\', withId: false)}></span>
@@ -124,7 +204,7 @@ final class ComboboxRenderingTest extends FunctionalTestCase
             </primitives:combobox.root>
         ', ['collection' => $collection]);
 
-        $this->assertMatchesRegularExpression('/<template id="combobox:[^"]*:item-template"/', $html);
+        $this->assertMatchesRegularExpression('/<template id="combobox:[^"]*:itemTemplate"/', $html);
         $this->assertStringContainsString('<span data-scope="combobox" data-part="title">', $html);
     }
 
@@ -195,7 +275,7 @@ final class ComboboxRenderingTest extends FunctionalTestCase
         $html = $this->renderTemplate('
             <primitives:combobox.root collection="{collection}">
                 <primitives:combobox.content>
-                    <ui:template name="item-template" component="combobox">
+                    <ui:template name="itemTemplate" context="combobox">
                         <primitives:combobox.item>
                             <primitives:combobox.itemText>
                                 <span {ui:ref(name: \'title\', withId: false)}></span>
