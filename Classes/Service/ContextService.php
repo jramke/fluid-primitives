@@ -36,6 +36,34 @@ class ContextService
     }
 
     /**
+     * Same as {@see getFromRenderingContext}, but throws when no context is currently active for
+     * `$name` - for ViewHelpers (`ui:ref`'s `context` argument, `ui:template`'s `context` argument)
+     * that explicitly target a named ancestor component rather than relying on whichever one is
+     * ambiently active, and need a clear error when that ancestor isn't actually there.
+     */
+    public static function requireFromRenderingContext(
+        RenderingContextInterface $renderingContext,
+        string $name,
+        string $viewHelperTag,
+    ): ComponentContextInterface {
+        $context = self::getFromRenderingContext($renderingContext, $name);
+
+        if (!$context instanceof ComponentContextInterface) {
+            throw new \RuntimeException(
+                $viewHelperTag .
+                ' could not find an active "' .
+                $name .
+                '" component to attach to. Make sure it is used inside a <ui:' .
+                $name .
+                '.root> (or similar).',
+                1_767_900_100,
+            );
+        }
+
+        return $context;
+    }
+
+    /**
      * Get all component contexts (returns the topmost context for each component type).
      */
     public static function getAllFromRenderingContext(RenderingContextInterface $renderingContext): array
