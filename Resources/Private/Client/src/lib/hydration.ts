@@ -9,7 +9,9 @@ const ID_NAMESPACE_OVERRIDES: Record<string, string> = {
 };
 
 // Keep in sync with: Classes/Utility/ComponentUtility.php
-type PartSegmentOverride = string | { segment: string; valueSeparator?: string };
+type PartSegmentOverride =
+    | string
+    | { segment: string; valueSeparator?: string; rootIdSeparator?: string };
 
 const PART_SEGMENT_OVERRIDES: Record<string, Record<string, PartSegmentOverride>> = {
     // TODO: Revisit this override map after upgrading to zag-js v2.
@@ -58,6 +60,11 @@ const PART_SEGMENT_OVERRIDES: Record<string, Record<string, PartSegmentOverride>
     },
     dialog: {
         closeTrigger: 'close',
+    },
+    'scroll-area': {
+        root: { segment: 'root', rootIdSeparator: '-' },
+        viewport: { segment: 'viewport', rootIdSeparator: '-' },
+        content: { segment: 'content', rootIdSeparator: '-' },
     },
 };
 
@@ -234,18 +241,23 @@ export class ComponentHydrator {
         return ID_NAMESPACE_OVERRIDES[this.componentName] ?? this.componentName;
     }
 
-    private getPartConfig(part: string): { segment: string; valueSeparator: string } {
+    private getPartConfig(part: string): {
+        segment: string;
+        valueSeparator: string;
+        rootIdSeparator?: string;
+    } {
         const override = PART_SEGMENT_OVERRIDES[this.componentName]?.[part];
         if (!override) {
-            return { segment: part, valueSeparator: ':' };
+            return { segment: part, valueSeparator: ':', rootIdSeparator: ':' };
         }
         if (typeof override === 'string') {
-            return { segment: override, valueSeparator: ':' };
+            return { segment: override, valueSeparator: ':', rootIdSeparator: ':' };
         }
 
         return {
             segment: override.segment,
             valueSeparator: override.valueSeparator ?? ':',
+            rootIdSeparator: override.rootIdSeparator ?? ':',
         };
     }
 
@@ -255,17 +267,17 @@ export class ComponentHydrator {
         }
 
         const idNamespace = this.getIdNamespace();
-        const { segment: partSegment, valueSeparator } = this.getPartConfig(part);
+        const { segment: partSegment, valueSeparator, rootIdSeparator } = this.getPartConfig(part);
 
         if (part === 'root') {
-            return `${idNamespace}:${this.rootId}`;
+            return `${idNamespace}${rootIdSeparator}${this.rootId}`;
         }
 
         if (value !== undefined && value !== '') {
-            return `${idNamespace}:${this.rootId}:${partSegment}${valueSeparator}${value}`;
+            return `${idNamespace}${rootIdSeparator}${this.rootId}:${partSegment}${valueSeparator}${value}`;
         }
 
-        return `${idNamespace}:${this.rootId}:${partSegment}`;
+        return `${idNamespace}${rootIdSeparator}${this.rootId}:${partSegment}`;
     }
 
     private getValueSeparatorForPart(part: string): string {
@@ -275,15 +287,18 @@ export class ComponentHydrator {
 
     getElement<T extends Element>(part: string, parent: Element | Document = this.doc): T | null {
         const isDoc = parent === this.doc;
+        const partId = this.computePartId(part);
 
         if (isDoc) {
             // Use getElementById (no CSS-escaping needed; IDs may contain colons)
-            return this.doc.getElementById(this.computePartId(part)) as T | null;
+            return this.doc.getElementById(partId) as T | null;
         }
 
         const dataPart = toKebabCase(part);
+        const escapedPartId = CSS.escape(partId);
+
         return (parent as Element).querySelector<T>(
-            `[id="${CSS.escape(this.computePartId(part))}"][data-part="${dataPart}"],[id^="${CSS.escape(this.computePartId(part))}"][data-part="${dataPart}"]`
+            `[id="${escapedPartId}"][data-part="${dataPart}"],[id^="${escapedPartId}"][data-part="${dataPart}"]`
         );
     }
 
@@ -301,9 +316,12 @@ export class ComponentHydrator {
         }
 
         const dataPart = toKebabCase(part);
+        const escapedPartId = CSS.escape(this.computePartId(part));
+        const escapedValueSeparator = CSS.escape(this.getValueSeparatorForPart(part));
+
         return Array.from(
             searchScope.querySelectorAll<T>(
-                `[id="${CSS.escape(this.computePartId(part))}"][data-part="${dataPart}"],[id^="${CSS.escape(this.computePartId(part) + this.getValueSeparatorForPart(part))}"][data-part="${dataPart}"]`
+                `[id="${escapedPartId}"][data-part="${dataPart}"],[id^="${escapedPartId + escapedValueSeparator}"][data-part="${dataPart}"]`
             )
         );
     }
