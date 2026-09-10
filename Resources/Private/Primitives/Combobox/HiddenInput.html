@@ -1,0 +1,14 @@
+<f:for each="{context.defaultValue}" as="value">
+    <input
+        type="text"
+        aria-hidden="true"
+        tabindex="-1"
+        {f:if(condition: class, then: 'class="{class}"' )}
+        {f:if(condition: context.form, then: 'form="{context.form}"' )}
+        {f:if(condition: context.name, then: 'name="{context.name}"' )}
+        {f:if(condition: context.disabled, then: 'disabled' )}
+        value="{value}"
+        {ui:ref(name: 'hiddenInput' , value: value)}
+        style="{settings.visuallyHiddenStyles}"
+        {ui:attributes(skip: 'style' )} />
+</f:for>
