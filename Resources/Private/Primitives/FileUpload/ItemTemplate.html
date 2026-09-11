@@ -1,0 +1,14 @@
+<ui:prop name="type" type="Jramke\FluidPrimitives\Enum\FileUploadItemType" optional="{true}" default="{f:constant(name: 'Jramke\FluidPrimitives\Enum\FileUploadItemType::Accepted')}" description="Which files this template is for. `accepted` (the default) also doubles as the fallback rejected items use when no dedicated `rejected` template is given - see FileUpload.ts's resolveItemTemplatePart()." />
+
+<f:if condition="{type.value} == 'rejected'">
+    <f:then>
+        <ui:template name="rejectedItemTemplate">
+            <f:slot />
+        </ui:template>
+    </f:then>
+    <f:else>
+        <ui:template name="itemTemplate">
+            <f:slot />
+        </ui:template>
+    </f:else>
+</f:if>

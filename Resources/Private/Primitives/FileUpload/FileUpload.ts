@@ -28,10 +28,16 @@ function resolveMaxFiles(props: FileUploadPrimitiveProps): number | undefined {
     return Math.max(0, props.maxFiles - existingFilesCount);
 }
 
-/** Matches zag-js's own `getFileId` intent (`@zag-js/file-upload`) - a stable, per-file identity
- * used to give every stamped item template instance a unique `data-value`/id, without needing to
- * import zag's internal (non-exported) hashing helper. */
-function fileValue(file: File): string {
+/**
+ * The stable, per-file identity stamped onto every rendered item's `data-value` (and folded into
+ * its `id`) - matches zag-js's own `getFileId` intent (`@zag-js/file-upload`), which does the same
+ * thing internally but isn't part of that package's public API (only its main entry and `./anatomy`
+ * are exported; the `.dom` module `getFileId` lives in isn't), and returns a hash rather than this
+ * plain, readable string. Exported so userland code can go from a rendered item's `data-value` back
+ * to the real `File` it represents (e.g. `acceptedFiles.find(f => fileValue(f) === value)`) without
+ * reimplementing this exact format - see the FileUpload "Custom Item Layout" docs example.
+ */
+export function fileValue(file: File): string {
     return `${file.name}-${file.size}`;
 }
 
@@ -176,7 +182,7 @@ export class FileUpload extends FieldAwareComponent<FileUploadPrimitiveProps, fi
                         ? rejectedFiles.map(({ file, errors }) => ({ file, type, errors }))
                         : acceptedFiles.map(file => ({ file, type }));
 
-                this.renderItems(itemGroupEl, entries);
+                this.renderItems(itemGroupEl, entries, type);
             }
 
             this.updateEmptyState(itemGroupEl);
@@ -233,7 +239,21 @@ export class FileUpload extends FieldAwareComponent<FileUploadPrimitiveProps, fi
         });
     }
 
-    private renderItems(itemGroupEl: HTMLElement, entries: ItemEntry[]) {
+    /**
+     * `rejectedItemTemplate` is an optional second `ui:template`, letting a consumer author
+     * completely different markup for rejected items (e.g. no preview, shown in its own list below
+     * the accepted files) instead of reusing `itemTemplate` for both - see the "Custom Item Layout"
+     * docs example. Falls back to `itemTemplate` when it isn't present, so existing single-template
+     * consumers are unaffected.
+     */
+    private resolveItemTemplatePart(type: ItemType): string {
+        if (type === 'rejected' && this.getElement('rejectedItemTemplate')) {
+            return 'rejectedItemTemplate';
+        }
+        return 'itemTemplate';
+    }
+
+    private renderItems(itemGroupEl: HTMLElement, entries: ItemEntry[], type: ItemType) {
         itemGroupEl
             .querySelectorAll<HTMLElement>('[data-part="item"]:not([data-type="existing"])')
             .forEach(el => {
@@ -244,18 +264,20 @@ export class FileUpload extends FieldAwareComponent<FileUploadPrimitiveProps, fi
 
         if (!this.hydrator) return;
 
+        const templatePart = this.resolveItemTemplatePart(type);
+
         entries.forEach(({ file, type, errors }) => {
-            const instance = new Template(this.hydrator!, 'itemTemplate', {
+            const instance = new Template(this.hydrator!, templatePart, {
                 value: fileValue(file),
             });
             const itemEl = instance.root;
 
             this.spreadProps(itemEl, this.api.getItemProps({ file, type }));
 
-            const errorsEl = instance.getElement<HTMLElement>('itemErrors');
-            if (errorsEl) {
-                errorsEl.hidden = !errors?.length;
-                errorsEl.textContent = errors?.join(', ') ?? '';
+            const errorEl = instance.getElement<HTMLElement>('itemError');
+            if (errorEl) {
+                errorEl.hidden = !errors?.length;
+                errorEl.textContent = errors?.join(', ') ?? '';
             }
 
             const nameEl = instance.getElement<HTMLElement>('itemName');
@@ -299,7 +321,7 @@ export class FileUpload extends FieldAwareComponent<FileUploadPrimitiveProps, fi
 
             this.spreadProps(el, this.api.getItemPreviewProps({ file, type }));
 
-            const fallbackEl = el.querySelector<HTMLElement>('[data-part="preview-fallback"]');
+            const fallbackEl = el.querySelector<HTMLElement>('[data-part="item-preview-fallback"]');
             if (fallbackEl) fallbackEl.textContent = fileExtension(file.name);
         });
 

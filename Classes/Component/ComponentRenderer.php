@@ -12,6 +12,7 @@ use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
 use Jramke\FluidPrimitives\Domain\Model\TagAttributes;
 use Jramke\FluidPrimitives\Factory\ComponentContextFactory;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
+use Jramke\FluidPrimitives\Registry\PortalRegistry;
 use Jramke\FluidPrimitives\Service\ContextService;
 use Jramke\FluidPrimitives\Utility\ClientPropsContextExtractor;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
@@ -349,6 +350,13 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
             $ctx->beforeRendering();
         }
 
+        // ui:portal renders empty at its own position and buffers its real markup in PortalRegistry
+        // for ui:portalContainer to flush elsewhere, so a root component whose every ref'd part sits
+        // behind a portal (e.g. a triggerless Dialog/Popover - everything portaled, nothing rendered
+        // inline) would otherwise never contain the data-scope="..." string the check below looks
+        // for. Snapshotting the registry lets us also search whatever this render pass portaled away.
+        $portalRegistrySnapshotBeforeRender = $isRootComponent ? PortalRegistry::getAll() : null;
+
         if ($arguments['asChild'] ?? false) {
             $renderedChild = isset($slots['default']) && is_callable($slots['default'])
                 ? (string)$slots['default']()
@@ -376,8 +384,16 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
             // only register the components props for hydration if the user used the ui:ref viewhelper
             // ui:ref always emits data-scope="{componentName}", so that's our detection signal
             $componentBaseName = ComponentUtility::getComponentBaseNameFromContext($renderingContext);
-            $hasRef = str_contains($rendered, 'data-scope="' . $componentBaseName . '"');
+            $newlyPortaledHtml = self::extractNewlyPortaledHtml(
+                $portalRegistrySnapshotBeforeRender ?? [],
+                PortalRegistry::getAll(),
+            );
+            $hasRef =
+                str_contains($rendered, 'data-scope="' . $componentBaseName . '"') ||
+                str_contains($newlyPortaledHtml, 'data-scope="' . $componentBaseName . '"');
+
             $manuallyExposedToClient = str_contains($rendered, Constants::MANUALLY_EXPOSED_TO_CLIENT_MARKER);
+
             if ($hasRef || $manuallyExposedToClient) {
                 if ($manuallyExposedToClient) {
                     $rendered = str_replace(Constants::MANUALLY_EXPOSED_TO_CLIENT_MARKER, '', $rendered);
@@ -565,5 +581,28 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
     protected function componentSupportsField(string $baseName): bool
     {
         return in_array($baseName, Constants::COMPONENTS_THAT_SUPPORT_FIELD, true);
+    }
+
+    /**
+     * Concatenates whatever `PortalRegistry` entries were added between `$before` and `$after` -
+     * i.e. everything `ui:portal` buffered away while rendering this component, across every named
+     * portal bucket. Diffed by per-bucket length rather than array-diffed by value, since two
+     * unrelated portaled fragments could legitimately render identical markup (e.g. two dialogs
+     * with the same content) and would otherwise be indistinguishable/collapsed.
+     *
+     * @param array<string, string[]> $before
+     * @param array<string, string[]> $after
+     */
+    private static function extractNewlyPortaledHtml(array $before, array $after): string
+    {
+        $newlyPortaledHtml = '';
+        foreach ($after as $name => $entries) {
+            $previousCount = count($before[$name] ?? []);
+            foreach (array_slice($entries, $previousCount) as $entry) {
+                $newlyPortaledHtml .= $entry;
+            }
+        }
+
+        return $newlyPortaledHtml;
     }
 }

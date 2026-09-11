@@ -165,7 +165,10 @@ class TemplateViewHelper extends AbstractViewHelper
         $variableProvider = $this->renderingContext->getVariableProvider();
         $ambientContext = $variableProvider->exists('context') ? $variableProvider->get('context') : null;
 
-        if (ComponentUtility::isComponent($this->renderingContext) && $ambientContext instanceof ComponentContextInterface) {
+        if (
+            ComponentUtility::isComponent($this->renderingContext) &&
+            $ambientContext instanceof ComponentContextInterface
+        ) {
             return [ComponentUtility::getComponentBaseNameFromContext($this->renderingContext), $ambientContext];
         }
 
