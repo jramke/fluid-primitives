@@ -22,7 +22,7 @@ export class Form extends Component<FormProps, FormApi> {
 
     initMachine(props: FormProps) {
         const createdMachine = new Machine(machine, props);
-        registerFormMachine(this.getElement('form'), createdMachine);
+        registerFormMachine(this.getElement('root'), createdMachine);
         return createdMachine;
     }
 
@@ -44,7 +44,7 @@ export class Form extends Component<FormProps, FormApi> {
     }
 
     render() {
-        const formEl = this.getElement('form') as HTMLFormElement | null;
+        const formEl = this.getElement('root') as HTMLFormElement | null;
         if (!formEl) return;
 
         this.subscribeToFieldMachines(formEl);
