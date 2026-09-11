@@ -2,7 +2,7 @@ import * as navigationMenu from '@zag-js/navigation-menu';
 import { Component, Machine, normalizeProps } from '../../Client';
 
 export class NavigationMenu extends Component<navigationMenu.Props, navigationMenu.Api> {
-    static name = 'navigation-menu';
+    static componentName = 'navigation-menu';
 
     initMachine(props: navigationMenu.Props): Machine<any> {
         return new Machine(navigationMenu.machine, props);

@@ -1,0 +1,17 @@
+<f:variable name="acceptAttr">{context.acceptAttr}</f:variable>
+
+<input
+    type="file"
+    tabindex="-1"
+    aria-hidden="true"
+    {f:if(condition: context.name, then: 'name="{context.name}"' )}
+    {f:if(condition: acceptAttr, then: 'accept="{acceptAttr}"' )}
+    {f:if(condition: '{context.maxFiles} > 1' , then: 'multiple' )}
+    {f:if(condition: context.directory, then: 'webkitdirectory' )}
+    {f:if(condition: context.capture, then: 'capture="{context.capture}"' )}
+    {f:if(condition: context.required, then: 'required' )}
+    {f:if(condition: '{context.disabled} || {context.readOnly}' , then: 'disabled' )}
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'hiddenInput' )}
+    style="{settings.visuallyHiddenStyles}"
+    {ui:attributes(skip: 'style' )} />

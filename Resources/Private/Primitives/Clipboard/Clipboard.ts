@@ -7,7 +7,7 @@ type ClipboardTranslations = {
 };
 
 export class Clipboard extends Component<clipboard.Props, clipboard.Api> {
-    static name = 'clipboard';
+    static componentName = 'clipboard';
 
     initMachine(props: clipboard.Props): Machine<any> {
         return new Machine(clipboard.machine, { ...props, translations: undefined });

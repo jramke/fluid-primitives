@@ -16,13 +16,13 @@ export type {
 } from './src/form.types';
 
 export class Form extends Component<FormProps, FormApi> {
-    static name = 'form';
+    static componentName = 'form';
 
     private fieldSubscriptions = new Map<FieldMachine, () => void>();
 
     initMachine(props: FormProps) {
         const createdMachine = new Machine(machine, props);
-        registerFormMachine(this.getElement('form'), createdMachine);
+        registerFormMachine(this.getElement('root'), createdMachine);
         return createdMachine;
     }
 
@@ -44,7 +44,7 @@ export class Form extends Component<FormProps, FormApi> {
     }
 
     render() {
-        const formEl = this.getElement('form') as HTMLFormElement | null;
+        const formEl = this.getElement('root') as HTMLFormElement | null;
         if (!formEl) return;
 
         this.subscribeToFieldMachines(formEl);

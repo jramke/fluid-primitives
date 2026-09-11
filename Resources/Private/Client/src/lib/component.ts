@@ -8,7 +8,7 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
     api: Api;
     hydrator: ComponentHydrator | null = null;
     userProps?: Partial<Props>;
-    static name: string;
+    static componentName: string;
 
     get doc(): Document {
         return this.document;
@@ -55,7 +55,7 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
     }
 
     getName() {
-        return (this.constructor as typeof Component).name;
+        return (this.constructor as typeof Component).componentName;
     }
 
     /**

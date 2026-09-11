@@ -4,7 +4,7 @@ import { getListCollectionFromHydrationData } from '../../Client/src/lib/hydrati
 import type { FieldMachine } from '../Field/src/field.registry';
 
 export class Select extends FieldAwareComponent<select.Props, select.Api> {
-    static name = 'select';
+    static componentName = 'select';
 
     propsWithField(props: select.Props, fieldMachine: FieldMachine): select.Props {
         return {

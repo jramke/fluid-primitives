@@ -1,0 +1,10 @@
+<f:variable name="refData" value="{invalid: context.invalid, disabled: context.disabled, readonly: context.readOnly}" />
+
+<button
+    type="button"
+    {f:if(condition: '{context.disabled} || {context.readOnly}' , then: 'disabled' )}
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'trigger' , data: refData )}
+    {ui:attributes()}>
+    <f:slot />
+</button>

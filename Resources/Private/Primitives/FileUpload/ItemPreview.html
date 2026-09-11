@@ -1,0 +1,9 @@
+<ui:prop name="match" type="string" optional="{true}" default=".*" description="A file MIME type pattern (e.g. `image/*`) this preview variant should be used for. The first `itemPreview` whose `match` matches the file wins; use `.*` as a catch-all fallback." />
+
+<div
+    data-match="{match}"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'itemPreview' )}
+    {ui:attributes()}>
+    <f:slot />
+</div>

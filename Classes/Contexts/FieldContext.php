@@ -24,7 +24,13 @@ class FieldContext extends AbstractComponentContext
         if ($formContext instanceof ComponentContextInterface) {
             $formObject = $formContext->get('object');
             if ($formObject && $this->has('name')) {
-                $this->set('defaultValue', ObjectAccess::getPropertyPath($formObject, (string)$this->get('name')));
+                // A trailing "[]" (e.g. `name="a11yNeeds[]"`, the manual-bracket convention
+                // CheckboxGroup and FileUpload's multi-file `name` prop both rely on) is a
+                // submission-name detail, not part of the property path - ObjectAccess has no
+                // concept of it and throws when it's left in.
+                $name = (string)$this->get('name');
+                $propertyPath = str_ends_with($name, '[]') ? substr($name, 0, -2) : $name;
+                $this->set('defaultValue', ObjectAccess::getPropertyPath($formObject, $propertyPath));
             }
         }
     }

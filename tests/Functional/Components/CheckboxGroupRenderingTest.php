@@ -62,6 +62,23 @@ final class CheckboxGroupRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function passesNameThroughUnchangedWithoutAppendingBrackets(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:checkboxGroup.root name="a11yNeeds[]">
+                <primitives:checkbox.root value="wheelchair">
+                    <primitives:checkbox.control />
+                    <primitives:checkbox.label>Wheelchair</primitives:checkbox.label>
+                    <primitives:checkbox.hiddenInput />
+                </primitives:checkbox.root>
+            </primitives:checkboxGroup.root>
+        ');
+
+        $this->assertStringContainsString('name="a11yNeeds[]"', $html);
+        $this->assertStringNotContainsString('name="a11yNeeds[][]"', $html);
+    }
+
+    #[Test]
     public function allowsMultipleCheckboxesToBeChecked(): void
     {
         $html = $this->renderTemplate('

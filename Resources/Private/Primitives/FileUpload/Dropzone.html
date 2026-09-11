@@ -1,0 +1,12 @@
+<f:variable name="refData" value="{invalid: context.invalid, disabled: context.disabled, readonly: context.readOnly}" />
+
+<div
+    role="button"
+    {f:if(condition: context.translations.dropzone, then: 'aria-label="{context.translations.dropzone}"' )}
+    {f:if(condition: '{context.disabled} || {context.readOnly}' , then: 'aria-disabled="true"' )}
+    {f:if(condition: '!{context.disabled} && !{context.readOnly}' , then: 'tabindex="0"' )}
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'dropzone' , data: refData )}
+    {ui:attributes()}>
+    <f:slot />
+</div>

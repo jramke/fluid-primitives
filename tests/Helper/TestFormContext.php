@@ -13,6 +13,11 @@ final class TestFormContext extends FormContext
         return $this->prefixFieldName($fieldName, $objectName);
     }
 
+    public function exposeRenderHiddenIdentityField(): string
+    {
+        return $this->renderHiddenIdentityField();
+    }
+
     public function setTestFieldNamePrefix(string $fieldNamePrefix): void
     {
         $this->set('testFieldNamePrefix', $fieldNamePrefix);

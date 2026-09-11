@@ -25,6 +25,35 @@ final class DialogRenderingTest extends FunctionalTestCase
         $this->assertStringContainsString('data-part="content"', $html);
     }
 
+    /**
+     * `ComponentRenderer` registers a root component for hydration when its own rendered output
+     * contains a `data-scope="{component}"` ref (`ui:ref` always emits one, that's the detection
+     * signal) - but `ui:portal` renders empty at its own position and buffers the real markup
+     * elsewhere for `ui:portalContainer` to flush, so a dialog whose every ref'd part
+     * (content/title/...) is portaled, and which has no `trigger` (the one part that's never
+     * portaled), has nothing inline to detect. This is exactly the shape of a dialog meant to be
+     * opened only programmatically (e.g. a delete confirmation triggered from another component's
+     * click handler, see the FileUpload "Confirm File Deletion" docs example) - so
+     * `ComponentRenderer` also checks whatever this render pass portaled away, not just its own
+     * directly-rendered output.
+     */
+    #[Test]
+    public function registersForHydrationWhenEveryRefIsPortaledAndThereIsNoTrigger(): void
+    {
+        HydrationRegistry::getInstance()->clear();
+
+        $this->renderTemplate('
+            <primitives:dialog.root rootId="portaled-only-dialog">
+                <ui:portal>
+                    <primitives:dialog.content>Content</primitives:dialog.content>
+                </ui:portal>
+            </primitives:dialog.root>
+        ');
+
+        $hydrationData = HydrationRegistry::getInstance()->getAll();
+        $this->assertArrayHasKey('portaled-only-dialog', $hydrationData['dialog'] ?? []);
+    }
+
     #[Test]
     public function generatesUniqueRootIdForHydration(): void
     {

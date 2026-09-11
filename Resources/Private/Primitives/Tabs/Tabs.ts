@@ -2,7 +2,7 @@ import * as tabs from '@zag-js/tabs';
 import { Component, Machine, normalizeProps } from '../../Client';
 
 export class Tabs extends Component<tabs.Props, tabs.Api> {
-    static name = 'tabs';
+    static componentName = 'tabs';
 
     initMachine(props: tabs.Props): Machine<any> {
         return new Machine(tabs.machine, props);

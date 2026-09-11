@@ -18,7 +18,7 @@ type ComboboxPrimitiveProps = combobox.Props & {
 };
 
 export class Combobox extends FieldAwareComponent<ComboboxPrimitiveProps, combobox.Api> {
-    static name = 'combobox';
+    static componentName = 'combobox';
 
     private static defaultFilter = createFilter({
         sensitivity: 'base',

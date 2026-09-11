@@ -1,4 +1,4 @@
-import type { ComponentHydrator } from './hydration';
+import { toKebabCase, type ComponentHydrator } from './hydration';
 
 export interface TemplateOptions {
     /**
@@ -57,10 +57,10 @@ export class Template extends DocumentFragment {
     }
 
     getElement<T extends Element>(part: string): T | null {
-        return this.querySelector<T>(`[data-part="${part}"]`);
+        return this.querySelector<T>(`[data-part="${toKebabCase(part)}"]`);
     }
 
     getElements<T extends Element>(part: string): T[] {
-        return Array.from(this.querySelectorAll<T>(`[data-part="${part}"]`));
+        return Array.from(this.querySelectorAll<T>(`[data-part="${toKebabCase(part)}"]`));
     }
 }

@@ -3,7 +3,7 @@ import { FieldAwareComponent, Machine, mergeProps, normalizeProps } from '../../
 import type { FieldMachine } from '../Field/src/field.registry';
 
 export class Switch extends FieldAwareComponent<zagSwitch.Props, zagSwitch.Api> {
-    static name = 'switch';
+    static componentName = 'switch';
 
     propsWithField(props: zagSwitch.Props, fieldMachine: FieldMachine): zagSwitch.Props {
         return {

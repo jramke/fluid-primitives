@@ -26,6 +26,7 @@ class Constants
         'checkbox',
         'checkbox-group',
         'combobox',
+        'file-upload',
         'select',
         'number-input',
         'radio-group',

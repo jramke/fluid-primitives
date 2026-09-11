@@ -1,0 +1,6 @@
+<div
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'emptyState' , withId: false )}
+    {ui:attributes()}>
+    <f:slot />
+</div>

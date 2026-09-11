@@ -11,6 +11,7 @@ export default defineConfig({
         collapsible: './Resources/Private/Primitives/Collapsible/Collapsible.ts',
         combobox: './Resources/Private/Primitives/Combobox/Combobox.ts',
         field: './Resources/Private/Primitives/Field/Field.ts',
+        'file-upload': './Resources/Private/Primitives/FileUpload/FileUpload.ts',
         form: './Resources/Private/Primitives/Form/Form.ts',
         'navigation-menu': './Resources/Private/Primitives/NavigationMenu/NavigationMenu.ts',
         'number-input': './Resources/Private/Primitives/NumberInput/NumberInput.ts',
