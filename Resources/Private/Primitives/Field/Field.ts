@@ -29,7 +29,13 @@ export class Field extends Component<FieldProps, FieldApi> {
         if (labelEl) this.spreadProps(labelEl, this.api.getLabelProps());
 
         const controlEl = this.getElement('control');
-        if (controlEl) this.spreadProps(controlEl, this.api.getControlProps());
+        // For field-aware primitives, this id is shared with one of their own parts (see
+        // ComponentUtility::FIELD_ID_PARTS) just so `<label for>` targets the right element - that
+        // element already manages its own name/disabled/required/etc, so only apply ours when
+        // `control` is the bare native element Field wraps directly (asChild).
+        if (controlEl?.dataset.scope === 'field') {
+            this.spreadProps(controlEl, this.api.getControlProps());
+        }
 
         const descriptionEl = this.getElement('description');
         if (descriptionEl) this.spreadProps(descriptionEl, this.api.getDescriptionProps());
