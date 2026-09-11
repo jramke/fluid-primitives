@@ -6,7 +6,7 @@ import { registerCheckboxGroup, unregisterCheckboxGroup } from './src/checkbox-g
 import type { CheckboxGroupApi, CheckboxGroupProps } from './src/checkbox-group.types';
 
 export class CheckboxGroup extends FieldAwareComponent<CheckboxGroupProps, CheckboxGroupApi> {
-    static name = 'checkbox-group';
+    static componentName = 'checkbox-group';
 
     propsWithField(props: CheckboxGroupProps, fieldMachine: FieldMachine): CheckboxGroupProps {
         return {

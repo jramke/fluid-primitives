@@ -89,7 +89,7 @@ function resolveTranslations(
 }
 
 export class FileUpload extends FieldAwareComponent<FileUploadPrimitiveProps, fileUpload.Api> {
-    static name = 'file-upload';
+    static componentName = 'file-upload';
 
     private previewCleanups = new Map<Element, () => void>();
     private lastAcceptedFiles: File[] | null = null;

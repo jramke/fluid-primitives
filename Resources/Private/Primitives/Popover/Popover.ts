@@ -2,7 +2,7 @@ import * as popover from '@zag-js/popover';
 import { Component, Machine, mergeProps, normalizeProps } from '../../Client';
 
 export class Popover extends Component<popover.Props, popover.Api> {
-    static name = 'popover';
+    static componentName = 'popover';
 
     initMachine(props: popover.Props): Machine<any> {
         return new Machine(popover.machine, {

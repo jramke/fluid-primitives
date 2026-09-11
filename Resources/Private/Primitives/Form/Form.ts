@@ -16,7 +16,7 @@ export type {
 } from './src/form.types';
 
 export class Form extends Component<FormProps, FormApi> {
-    static name = 'form';
+    static componentName = 'form';
 
     private fieldSubscriptions = new Map<FieldMachine, () => void>();
 

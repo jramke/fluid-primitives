@@ -6,7 +6,7 @@ import { registerFieldMachine } from './src/field.registry';
 import type { FieldApi, FieldProps } from './src/field.types';
 
 export class Field extends Component<FieldProps, FieldApi> {
-    static name = 'field';
+    static componentName = 'field';
 
     initMachine(props: FieldProps) {
         const createdMachine = new Machine(machine, props);
