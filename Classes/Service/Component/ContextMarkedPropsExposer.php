@@ -8,6 +8,7 @@ use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
 use Jramke\FluidPrimitives\Service\ContextService;
 use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
+use TYPO3Fluid\Fluid\Core\ViewHelper\ArgumentDefinition;
 
 /**
  * Exposes props marked `context="{true}"` (via {@see \Jramke\FluidPrimitives\ViewHelpers\PropViewHelper})
@@ -19,6 +20,7 @@ final readonly class ContextMarkedPropsExposer
     /**
      * @param array<string, true> $propsMarkedForContext
      * @param array<string, mixed> $arguments
+     * @param array<string, ArgumentDefinition> $argumentDefinitions
      */
     public function expose(
         array $propsMarkedForContext,
