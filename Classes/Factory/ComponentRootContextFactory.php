@@ -58,6 +58,9 @@ final readonly class ComponentRootContextFactory
 
     // This is somewhat what is already done by the template view when we call the render method but we need the variables earlier so we can expose them to the context.
     // We also dont throw anything here as the validation is handled by the mentioned render method.
+    /**
+     * @param array<string, ArgumentDefinition> $argumentDefinitions
+     */
     private function buildContextVariables(
         array $argumentDefinitions,
         VariableProviderInterface $variableProvider,

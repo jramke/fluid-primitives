@@ -72,8 +72,21 @@ class ListCollectionViewHelper extends AbstractViewHelper
 
         $groupSort = $this->arguments['groupSort'];
 
-        $collection = new ListCollection(
+        $normalizedItems = array_map(
+            static function (mixed $item): array|object {
+                if (!is_array($item) && !is_object($item)) {
+                    throw new \InvalidArgumentException(
+                        'Each item in the "items" argument must be an array or object.',
+                        1_788_200_001,
+                    );
+                }
+                return $item;
+            },
             is_array($items) ? $items : iterator_to_array($items),
+        );
+
+        $collection = new ListCollection(
+            $normalizedItems,
             Typed::stringOrNull($this->arguments['itemToValueKey']),
             Typed::stringOrNull($this->arguments['itemToStringKey']),
             Typed::stringOrNull($this->arguments['isItemDisabledKey']),

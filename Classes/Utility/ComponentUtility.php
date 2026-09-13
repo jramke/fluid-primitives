@@ -44,7 +44,7 @@ class ComponentUtility
         $rootId = $isRootComponent
             ? $renderingContext->getVariableProvider()->getByPath('rootId')
             : $renderingContext->getVariableProvider()->getByPath('context.rootId');
-        return $rootId ?? '';
+        return Typed::string($rootId);
     }
 
     public static function getSettings(): array
@@ -62,9 +62,11 @@ class ComponentUtility
             return [];
         }
 
-        $fluidPrimitivesSettings = $settings['plugin.']['tx_fluidprimitives.']['settings.'] ?? [];
+        $fluidPrimitivesSettings = Typed::arrayOrNull(
+            $settings['plugin.']['tx_fluidprimitives.']['settings.'] ?? null,
+        ) ?? [];
 
-        $contentElementSettings = $settings['lib.']['contentElement.']['settings.'] ?? [];
+        $contentElementSettings = Typed::arrayOrNull($settings['lib.']['contentElement.']['settings.'] ?? null) ?? [];
         if ($contentElementSettings !== []) {
             $fluidPrimitivesSettings = array_merge($contentElementSettings, $fluidPrimitivesSettings);
         }
@@ -74,6 +76,7 @@ class ComponentUtility
     }
 
     /**
+     * @param string[] $additionalNamespaces
      * @return class-string<ComponentContextInterface>
      */
     public static function getContextClassNameFromViewHelperName(
