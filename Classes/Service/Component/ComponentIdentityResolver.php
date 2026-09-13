@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Jramke\FluidPrimitives\Component;
+namespace Jramke\FluidPrimitives\Service\Component;
 
+use Jramke\FluidPrimitives\Domain\Dto\ComponentIdentity;
 use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
@@ -18,8 +19,11 @@ final readonly class ComponentIdentityResolver
     /**
      * @param array<string, mixed> $arguments
      */
-    public function resolve(string $viewHelperName, array $arguments, RenderingContextInterface $renderingContext): ComponentIdentity
-    {
+    public function resolve(
+        string $viewHelperName,
+        array $arguments,
+        RenderingContextInterface $renderingContext,
+    ): ComponentIdentity {
         $isRootComponent = ComponentNameUtility::isRootComponent($viewHelperName);
         if (isset($arguments['spreadProps']) && $arguments['spreadProps'] === true) {
             $isRootComponent = false;

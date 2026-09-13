@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Jramke\FluidPrimitives\Component;
+namespace Jramke\FluidPrimitives\Service\Component;
 
 /**
  * Implements the `asChild` prop pattern: instead of rendering its own wrapping tag, a component
@@ -47,12 +47,7 @@ final readonly class AsChildAttributeSpreader
      */
     private function parseAttributes(string $attrString): array
     {
-        preg_match_all(
-            '/([a-zA-Z_:][-a-zA-Z0-9_:.]*)(?:="([^"]*)")?/',
-            $attrString,
-            $matches,
-            PREG_SET_ORDER,
-        );
+        preg_match_all('/([a-zA-Z_:][-a-zA-Z0-9_:.]*)(?:="([^"]*)")?/', $attrString, $matches, PREG_SET_ORDER);
 
         $attrs = [];
         foreach ($matches as $match) {

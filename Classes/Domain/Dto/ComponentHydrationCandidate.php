@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Jramke\FluidPrimitives\Component;
+namespace Jramke\FluidPrimitives\Domain\Dto;
 
 use Jramke\FluidPrimitives\Contexts\AbstractComponentContext;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;

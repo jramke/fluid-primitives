@@ -15,22 +15,26 @@ final class ExtbaseFormFieldNamerTest extends TestCase
     {
         $namer = new ExtbaseFormFieldNamer();
 
-        $this->assertSame(
-            'tx_docs_registration[eventRegistration][person][name]',
-            $namer->prefixFieldName('person.name', 'eventRegistration', 'tx_docs_registration'),
-        );
-        $this->assertSame(
-            'tx_docs_registration[eventRegistration][persons][0][name]',
-            $namer->prefixFieldName('persons[0].name', 'eventRegistration', 'tx_docs_registration'),
-        );
-        $this->assertSame(
-            'tx_docs_registration[eventRegistration][persons][0][name]',
-            $namer->prefixFieldName('persons.0.name', 'eventRegistration', 'tx_docs_registration'),
-        );
-        $this->assertSame(
-            'tx_docs_registration[eventRegistration][tags][]',
-            $namer->prefixFieldName('tags[]', 'eventRegistration', 'tx_docs_registration'),
-        );
+        $this->assertSame('tx_docs_registration[eventRegistration][person][name]', $namer->prefixFieldName(
+            'person.name',
+            'eventRegistration',
+            'tx_docs_registration',
+        ));
+        $this->assertSame('tx_docs_registration[eventRegistration][persons][0][name]', $namer->prefixFieldName(
+            'persons[0].name',
+            'eventRegistration',
+            'tx_docs_registration',
+        ));
+        $this->assertSame('tx_docs_registration[eventRegistration][persons][0][name]', $namer->prefixFieldName(
+            'persons.0.name',
+            'eventRegistration',
+            'tx_docs_registration',
+        ));
+        $this->assertSame('tx_docs_registration[eventRegistration][tags][]', $namer->prefixFieldName(
+            'tags[]',
+            'eventRegistration',
+            'tx_docs_registration',
+        ));
     }
 
     #[Test]

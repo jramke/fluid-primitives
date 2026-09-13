@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Contexts;
 
 use Jramke\FluidPrimitives\Enum\FormState;
+use Jramke\FluidPrimitives\Service\ExtbaseFormHiddenFieldsRenderer;
 use Jramke\FluidPrimitives\Traits\HasIndicatorStateTrait;
-use Jramke\FluidPrimitives\Utility\ExtbaseFormHiddenFieldsRenderer;
 use Jramke\FluidPrimitives\Utility\ExtbasePersistedObjectResolver;
 use Jramke\FluidPrimitives\Utility\ExtbaseRequestResolver;
 use Psr\Http\Message\ServerRequestInterface;
@@ -45,7 +45,12 @@ class FormContext extends AbstractComponentContext
         $fieldNamePrefix = $this->getFieldNamePrefix();
         $xhtmlCompliant = $this->shouldUseXHtmlSlash();
 
-        $hiddenFields = $this->hiddenFieldsRenderer->renderIdentityFields($objects, $objectName, $fieldNamePrefix, $xhtmlCompliant);
+        $hiddenFields = $this->hiddenFieldsRenderer->renderIdentityFields(
+            $objects,
+            $objectName,
+            $fieldNamePrefix,
+            $xhtmlCompliant,
+        );
         $hiddenFields .= $this->hiddenFieldsRenderer->renderTrustedPropertiesField(
             $fieldContextInformations,
             $objects,

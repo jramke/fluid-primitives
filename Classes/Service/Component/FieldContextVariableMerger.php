@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Jramke\FluidPrimitives\Component;
+namespace Jramke\FluidPrimitives\Service\Component;
 
 use Jramke\FluidPrimitives\Contexts\AbstractComponentContext;
 use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
@@ -42,7 +42,12 @@ final readonly class FieldContextVariableMerger
             }
 
             if ($varName === 'ids' && is_array($varValue)) {
-                $varValue = $this->remapFieldIds($baseName, (array)($arguments['ids'] ?? []), $varValue, $otherComponentContexts);
+                $varValue = $this->remapFieldIds(
+                    $baseName,
+                    (array)($arguments['ids'] ?? []),
+                    $varValue,
+                    $otherComponentContexts,
+                );
             }
 
             $view->getRenderingContext()->getVariableProvider()->add($varName, $varValue);
@@ -64,8 +69,12 @@ final readonly class FieldContextVariableMerger
      *
      * @param array<string, ComponentContextInterface> $otherComponentContexts
      */
-    private function remapFieldIds(string $baseName, array $userIds, array $fieldIds, array $otherComponentContexts): array
-    {
+    private function remapFieldIds(
+        string $baseName,
+        array $userIds,
+        array $fieldIds,
+        array $otherComponentContexts,
+    ): array {
         $ids = array_merge($userIds, $fieldIds);
         $ids = $this->excludeInheritedIdsWhenNested($baseName, $ids, $otherComponentContexts);
 

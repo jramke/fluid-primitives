@@ -2,8 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Jramke\FluidPrimitives\Utility;
+namespace Jramke\FluidPrimitives\Service;
 
+use Jramke\FluidPrimitives\Domain\Dto\ResolvedFormPersistedObjects;
+use Jramke\FluidPrimitives\Utility\ExtbaseFormFieldNamer;
 use TYPO3\CMS\Extbase\DomainObject\AbstractDomainObject;
 use TYPO3\CMS\Extbase\Mvc\Controller\MvcPropertyMappingConfigurationService;
 
@@ -32,10 +34,22 @@ final readonly class ExtbaseFormHiddenFieldsRenderer
         string $fieldNamePrefix,
         bool $xhtmlCompliant,
     ): string {
-        $html = $this->renderHiddenIdentityField($objects->boundObject, null, $objectName, $fieldNamePrefix, $xhtmlCompliant);
+        $html = $this->renderHiddenIdentityField(
+            $objects->boundObject,
+            null,
+            $objectName,
+            $fieldNamePrefix,
+            $xhtmlCompliant,
+        );
 
         foreach ($objects->nestedObjects as $propertyPath => $nestedObject) {
-            $html .= $this->renderHiddenIdentityField($nestedObject, $propertyPath, $objectName, $fieldNamePrefix, $xhtmlCompliant);
+            $html .= $this->renderHiddenIdentityField(
+                $nestedObject,
+                $propertyPath,
+                $objectName,
+                $fieldNamePrefix,
+                $xhtmlCompliant,
+            );
         }
 
         return $html;
@@ -64,7 +78,11 @@ final readonly class ExtbaseFormHiddenFieldsRenderer
                 continue;
             }
 
-            $fieldNames[] = $this->fieldNamer->prefixFieldName($fieldContextData['name'], $objectName, $fieldNamePrefix);
+            $fieldNames[] = $this->fieldNamer->prefixFieldName(
+                $fieldContextData['name'],
+                $objectName,
+                $fieldNamePrefix,
+            );
         }
 
         if ($objects->boundObject !== null) {
@@ -72,7 +90,11 @@ final readonly class ExtbaseFormHiddenFieldsRenderer
         }
 
         foreach (array_keys($objects->nestedObjects) as $propertyPath) {
-            $fieldNames[] = $this->fieldNamer->prefixFieldName($propertyPath . '.__identity', $objectName, $fieldNamePrefix);
+            $fieldNames[] = $this->fieldNamer->prefixFieldName(
+                $propertyPath . '.__identity',
+                $objectName,
+                $fieldNamePrefix,
+            );
         }
 
         $requestHash = $this->mvcPropertyMappingConfigurationService->generateTrustedPropertiesToken(

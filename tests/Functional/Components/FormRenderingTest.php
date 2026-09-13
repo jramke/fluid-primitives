@@ -56,10 +56,7 @@ final class FormRenderingTest extends FunctionalTestCase
         // core's `<f:form>` - Extbase always reads it back from this fixed top-level key), unlike
         // the field names hashed into its value, which are. It would still carry the plugin's own
         // field name prefix in a real request; this functional test environment has none.
-        $this->assertMatchesRegularExpression(
-            '/name="__trustedProperties"[^>]*value="[^"]+"[^>]*>\s*<\/form>/',
-            $html,
-        );
+        $this->assertMatchesRegularExpression('/name="__trustedProperties"[^>]*value="[^"]+"[^>]*>\s*<\/form>/', $html);
     }
 
     #[Test]

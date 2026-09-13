@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Contexts;
 
 use Jramke\FluidPrimitives\Attributes\ExposeToClient;
-use Jramke\FluidPrimitives\Domain\Model\ListCollectionItem;
+use Jramke\FluidPrimitives\Domain\Dto\ListCollectionItem;
 use Jramke\FluidPrimitives\Service\TranslatorService;
 use Jramke\FluidPrimitives\Traits\HasListCollectionTrait;
 use Jramke\FluidPrimitives\Traits\HasTranslationsTrait;

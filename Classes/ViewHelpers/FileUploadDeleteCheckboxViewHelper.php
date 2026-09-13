@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\ViewHelpers;
 
 use Jramke\FluidPrimitives\Contexts\FormContext;
-use Jramke\FluidPrimitives\Domain\Model\TagAttributes;
+use Jramke\FluidPrimitives\Domain\Dto\TagAttributes;
 use Jramke\FluidPrimitives\Service\ContextService;
 use TYPO3\CMS\Core\Crypto\HashService;
 use TYPO3\CMS\Extbase\Domain\Model\FileReference;

@@ -74,9 +74,7 @@ final class ComponentAddCommandTest extends TestCase
     private function createRegistryService(array $files, string $fileContent = '<div>content</div>'): RegistryService
     {
         $registryService = $this->createMock(RegistryService::class);
-        $registryService
-            ->method('fetchComponent')
-            ->willReturn([null, ['name' => 'my-component', 'files' => $files]]);
+        $registryService->method('fetchComponent')->willReturn([null, ['name' => 'my-component', 'files' => $files]]);
         $registryService->method('fetchComponentFile')->willReturn([null, $fileContent]);
 
         return $registryService;

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Tests\Unit;
 
-use Jramke\FluidPrimitives\Domain\Model\ListCollection;
-use Jramke\FluidPrimitives\Domain\Model\ListCollectionItem;
+use Jramke\FluidPrimitives\Domain\Dto\ListCollection;
+use Jramke\FluidPrimitives\Domain\Dto\ListCollectionItem;
 use Jramke\FluidPrimitives\Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
 

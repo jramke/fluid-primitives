@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Traits;
 
-use Jramke\FluidPrimitives\Domain\Model\ListCollection;
+use Jramke\FluidPrimitives\Domain\Dto\ListCollection;
 
 /**
  * Shared by Context classes for components built around a `collection` prop (e.g. Select, Combobox).

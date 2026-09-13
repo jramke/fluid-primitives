@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Utility;
 
+use Jramke\FluidPrimitives\Domain\Dto\ResolvedFormPersistedObjects;
 use TYPO3\CMS\Extbase\DomainObject\AbstractDomainObject;
 use TYPO3\CMS\Extbase\Persistence\Generic\LazyLoadingProxy;
 use TYPO3\CMS\Extbase\Reflection\ObjectAccess;
@@ -25,10 +26,10 @@ final readonly class ExtbasePersistedObjectResolver
     {
         $boundObject = $this->resolve($rawBoundObject);
 
-        return new ResolvedFormPersistedObjects(
+        return new ResolvedFormPersistedObjects($boundObject, $this->getNestedPersistedObjects(
             $boundObject,
-            $this->getNestedPersistedObjects($boundObject, $fieldContextInformations),
-        );
+            $fieldContextInformations,
+        ));
     }
 
     /**

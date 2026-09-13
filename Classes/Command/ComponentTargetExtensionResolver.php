@@ -57,17 +57,17 @@ final class ComponentTargetExtensionResolver
     {
         $availablePackagesForDisplay = $this->packageResolver->getAvailablePackagesForDisplay();
         if ($availablePackagesForDisplay === []) {
-            $io->writeln(
-                '<comment>No local extensions found. Displaying all installed extensions instead.</comment>',
-            );
+            $io->writeln('<comment>No local extensions found. Displaying all installed extensions instead.</comment>');
             $io->writeln('<comment>Maybe you forgot to install a site package?</comment>');
             $availablePackagesForDisplay = $availablePackages;
         }
 
-        $extension = $io->askQuestion(new ChoiceQuestion(
-            'Choose an extension in which the Component should be stored',
-            $this->getPackageTitles($availablePackagesForDisplay),
-        ));
+        $extension = $io->askQuestion(
+            new ChoiceQuestion(
+                'Choose an extension in which the Component should be stored',
+                $this->getPackageTitles($availablePackagesForDisplay),
+            ),
+        );
         if ($extension === null) {
             throw new MissingInputException('Aborted.', 1766948173);
         }

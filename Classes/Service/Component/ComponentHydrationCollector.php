@@ -2,10 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Jramke\FluidPrimitives\Component;
+namespace Jramke\FluidPrimitives\Service\Component;
 
 use Jramke\FluidPrimitives\Constants;
 use Jramke\FluidPrimitives\Contexts\AbstractComponentContext;
+use Jramke\FluidPrimitives\Domain\Dto\ComponentHydrationCandidate;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Registry\PortalRegistry;
 use Jramke\FluidPrimitives\Utility\ClientPropsContextExtractor;
@@ -62,7 +63,8 @@ final readonly class ComponentHydrationCollector
                 continue;
             }
 
-            $propsMarkedForClientValues[$name] = $arguments[$name] ?? $argumentDefinitions[$name]->getDefaultValue() ?? null;
+            $propsMarkedForClientValues[$name] =
+                $arguments[$name] ?? $argumentDefinitions[$name]->getDefaultValue() ?? null;
         }
 
         // we dont want to send null values to the client, defaults should be defined in the component ts file

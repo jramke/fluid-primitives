@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Tests\Unit;
 
-use Jramke\FluidPrimitives\Domain\Model\TagAttributesStringParser;
 use Jramke\FluidPrimitives\Tests\TestCase;
+use Jramke\FluidPrimitives\Utility\TagAttributesStringParser;
 use PHPUnit\Framework\Attributes\Test;
 
 final class TagAttributesStringParserTest extends TestCase

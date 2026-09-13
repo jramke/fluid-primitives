@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Jramke\FluidPrimitives\Component;
+namespace Jramke\FluidPrimitives\Domain\Dto;
 
 /**
  * Result of {@see ComponentIdentityResolver::resolve()}.

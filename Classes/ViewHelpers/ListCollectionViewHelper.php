@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\ViewHelpers;
 
-use Jramke\FluidPrimitives\Domain\Model\ListCollection;
+use Jramke\FluidPrimitives\Domain\Dto\ListCollection;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
 /**

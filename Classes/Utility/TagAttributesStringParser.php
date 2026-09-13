@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Jramke\FluidPrimitives\Domain\Model;
+namespace Jramke\FluidPrimitives\Utility;
 
 /**
  * Parses a raw HTML attribute string (e.g. `class="test" disabled`) into a plain associative array,

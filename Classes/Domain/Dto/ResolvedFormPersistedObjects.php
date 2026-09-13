@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Jramke\FluidPrimitives\Utility;
+namespace Jramke\FluidPrimitives\Domain\Dto;
 
 use TYPO3\CMS\Extbase\DomainObject\AbstractDomainObject;
 

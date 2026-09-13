@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Tests\Unit;
 
+use Jramke\FluidPrimitives\Domain\Dto\ResolvedFormPersistedObjects;
+use Jramke\FluidPrimitives\Service\ExtbaseFormHiddenFieldsRenderer;
 use Jramke\FluidPrimitives\Tests\Helper\TestEntity;
 use Jramke\FluidPrimitives\Tests\TestCase;
-use Jramke\FluidPrimitives\Utility\ExtbaseFormHiddenFieldsRenderer;
 use Jramke\FluidPrimitives\Utility\ExtbasePersistedObjectResolver;
-use Jramke\FluidPrimitives\Utility\ResolvedFormPersistedObjects;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\Test;
 use TYPO3\CMS\Extbase\Mvc\Controller\MvcPropertyMappingConfigurationService;
@@ -27,7 +27,12 @@ final class ExtbaseFormHiddenFieldsRendererTest extends TestCase
         $renderer = $this->createRenderer();
         $objects = new ResolvedFormPersistedObjects(null, []);
 
-        $this->assertSame('', $renderer->renderIdentityFields($objects, 'eventRegistration', 'tx_docs_registration', false));
+        $this->assertSame('', $renderer->renderIdentityFields(
+            $objects,
+            'eventRegistration',
+            'tx_docs_registration',
+            false,
+        ));
     }
 
     #[Test]
@@ -38,7 +43,12 @@ final class ExtbaseFormHiddenFieldsRendererTest extends TestCase
 
         $renderer = $this->createRenderer();
 
-        $this->assertSame('', $renderer->renderIdentityFields($objects, 'eventRegistration', 'tx_docs_registration', false));
+        $this->assertSame('', $renderer->renderIdentityFields(
+            $objects,
+            'eventRegistration',
+            'tx_docs_registration',
+            false,
+        ));
     }
 
     #[Test]
@@ -50,10 +60,12 @@ final class ExtbaseFormHiddenFieldsRendererTest extends TestCase
 
         $renderer = $this->createRenderer();
 
-        $this->assertSame(
-            '<input type="hidden" name="tx_docs_registration[eventRegistration][__identity]" value="42" >',
-            $renderer->renderIdentityFields($objects, 'eventRegistration', 'tx_docs_registration', false),
-        );
+        $this->assertSame('<input type="hidden" name="tx_docs_registration[eventRegistration][__identity]" value="42" >', $renderer->renderIdentityFields(
+            $objects,
+            'eventRegistration',
+            'tx_docs_registration',
+            false,
+        ));
     }
 
     #[Test]
@@ -65,10 +77,12 @@ final class ExtbaseFormHiddenFieldsRendererTest extends TestCase
 
         $renderer = $this->createRenderer();
 
-        $this->assertSame(
-            '<input type="hidden" name="tx_docs_registration[eventRegistration][__identity]" value="42" />',
-            $renderer->renderIdentityFields($objects, 'eventRegistration', 'tx_docs_registration', true),
-        );
+        $this->assertSame('<input type="hidden" name="tx_docs_registration[eventRegistration][__identity]" value="42" />', $renderer->renderIdentityFields(
+            $objects,
+            'eventRegistration',
+            'tx_docs_registration',
+            true,
+        ));
     }
 
     #[Test]

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Jramke\FluidPrimitives\Domain\Model;
+namespace Jramke\FluidPrimitives\Domain\Dto;
 
 use Jramke\FluidPrimitives\Utility\EnumUtility;
 

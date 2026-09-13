@@ -2,12 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Jramke\FluidPrimitives\Component;
+namespace Jramke\FluidPrimitives\Service\Component;
 
 use Jramke\FluidPrimitives\Annotations\ClientArgumentAnnotation;
 use Jramke\FluidPrimitives\Annotations\ContextArgumentAnnotation;
-use Jramke\FluidPrimitives\Domain\Model\TagAttributes;
-use Jramke\FluidPrimitives\Domain\Model\TagAttributesStringParser;
+use Jramke\FluidPrimitives\Domain\Dto\ResolvedComponentArguments;
+use Jramke\FluidPrimitives\Domain\Dto\TagAttributes;
+use Jramke\FluidPrimitives\Utility\TagAttributesStringParser;
 use Jramke\FluidPrimitives\ViewHelpers\AttributesViewHelper;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 use TYPO3Fluid\Fluid\Core\ViewHelper\ArgumentDefinition;
@@ -58,7 +59,12 @@ final readonly class ComponentArgumentResolver
 
         $arguments = $this->resolveSpreadProps($arguments, $renderingContext, $parentRenderingContext);
 
-        return new ResolvedComponentArguments($arguments, $additionalArguments, $propsMarkedForClient, $propsMarkedForContext);
+        return new ResolvedComponentArguments(
+            $arguments,
+            $additionalArguments,
+            $propsMarkedForClient,
+            $propsMarkedForContext,
+        );
     }
 
     /**

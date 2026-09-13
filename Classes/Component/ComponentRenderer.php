@@ -7,7 +7,16 @@ namespace Jramke\FluidPrimitives\Component;
 use Jramke\FluidPrimitives\Constants;
 use Jramke\FluidPrimitives\Contexts\AbstractComponentContext;
 use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
+use Jramke\FluidPrimitives\Domain\Dto\ComponentHydrationCandidate;
+use Jramke\FluidPrimitives\Factory\ComponentRootContextFactory;
 use Jramke\FluidPrimitives\Registry\PortalRegistry;
+use Jramke\FluidPrimitives\Service\Component\AsChildAttributeSpreader;
+use Jramke\FluidPrimitives\Service\Component\CheckboxGroupContextVariableMerger;
+use Jramke\FluidPrimitives\Service\Component\ComponentArgumentResolver;
+use Jramke\FluidPrimitives\Service\Component\ComponentHydrationCollector;
+use Jramke\FluidPrimitives\Service\Component\ComponentIdentityResolver;
+use Jramke\FluidPrimitives\Service\Component\ContextMarkedPropsExposer;
+use Jramke\FluidPrimitives\Service\Component\FieldContextVariableMerger;
 use Jramke\FluidPrimitives\Service\ContextService;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use TYPO3Fluid\Fluid\Core\Component\ComponentRendererInterface;
@@ -112,14 +121,24 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         $view->assign('component', $componentData);
 
         // Expose additional arguments as tag attributes so they can be used by the ui:attributes view helper
-        $this->argumentResolver->exposeAdditionalAttributes($renderingContext, $arguments, $resolvedArguments->additionalArguments);
+        $this->argumentResolver->exposeAdditionalAttributes(
+            $renderingContext,
+            $arguments,
+            $resolvedArguments->additionalArguments,
+        );
 
         // render() call includes validation of provided arguments
         $view->assignMultiple($this->componentResolver->getAdditionalVariables($viewHelperName));
 
         // Expose variables as context so it can be picked up in other components rendered inside this component.
         if ($isRootComponent) {
-            $this->rootContextFactory->create($argumentDefinitions, $view, $viewHelperName, $renderingContext, $parentRenderingContext);
+            $this->rootContextFactory->create(
+                $argumentDefinitions,
+                $view,
+                $viewHelperName,
+                $renderingContext,
+                $parentRenderingContext,
+            );
         }
 
         if ($propsMarkedForContext !== [] && !$isRootComponent) {
@@ -140,12 +159,23 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
 
         $fieldRootId = null;
         if ($isRootComponent && $this->componentSupportsField($baseName)) {
-            $fieldRootId = $this->fieldContextVariableMerger->apply($otherComponentContexts, $baseName, $view, $arguments, $ctx);
+            $fieldRootId = $this->fieldContextVariableMerger->apply(
+                $otherComponentContexts,
+                $baseName,
+                $view,
+                $arguments,
+                $ctx,
+            );
         }
 
         $checkboxGroupRootId = null;
         if ($isRootComponent && $baseName === 'checkbox') {
-            $checkboxGroupRootId = $this->checkboxGroupContextVariableMerger->apply($otherComponentContexts, $view, $arguments, $ctx);
+            $checkboxGroupRootId = $this->checkboxGroupContextVariableMerger->apply(
+                $otherComponentContexts,
+                $view,
+                $arguments,
+                $ctx,
+            );
         }
 
         // Assign context if available
@@ -184,18 +214,20 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
                 $ctx->afterRendering($rendered);
             }
 
-            $rendered = $this->hydrationCollector->collectForRootComponent(new ComponentHydrationCandidate(
-                $rendered,
-                $viewHelperName,
-                $renderingContext,
-                $baseName,
-                $arguments,
-                $argumentDefinitions,
-                $propsMarkedForClient,
-                $ctx,
-                ['field' => $fieldRootId, 'checkboxGroup' => $checkboxGroupRootId],
-                $portalRegistrySnapshotBeforeRender,
-            ));
+            $rendered = $this->hydrationCollector->collectForRootComponent(
+                new ComponentHydrationCandidate(
+                    $rendered,
+                    $viewHelperName,
+                    $renderingContext,
+                    $baseName,
+                    $arguments,
+                    $argumentDefinitions,
+                    $propsMarkedForClient,
+                    $ctx,
+                    ['field' => $fieldRootId, 'checkboxGroup' => $checkboxGroupRootId],
+                    $portalRegistrySnapshotBeforeRender,
+                ),
+            );
         }
 
         return $rendered;

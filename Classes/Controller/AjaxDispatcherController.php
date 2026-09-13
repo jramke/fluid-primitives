@@ -6,7 +6,7 @@ namespace Jramke\FluidPrimitives\Controller;
 
 use Jramke\FluidPrimitives\Attributes\Ajax;
 use Jramke\FluidPrimitives\Component\ComponentCollectionInterface;
-use Jramke\FluidPrimitives\Domain\Model\AjaxComponentActionDemand;
+use Jramke\FluidPrimitives\Domain\Dto\AjaxComponentActionDemand;
 use Jramke\FluidPrimitives\Factory\ComponentContextFactory;
 use Jramke\FluidPrimitives\Service\ComponentCollectionService;
 use Jramke\FluidPrimitives\Service\ContextService;
@@ -123,7 +123,9 @@ final class AjaxDispatcherController extends ActionController implements LoggerA
 
             return $this->jsonResponse(json_encode([
                 'success' => false,
-                'error' => $this->isDevelopment() ? $th->getMessage() : 'An error occurred while processing the request.',
+                'error' => $this->isDevelopment()
+                    ? $th->getMessage()
+                    : 'An error occurred while processing the request.',
             ]))->withStatus(500);
         }
     }

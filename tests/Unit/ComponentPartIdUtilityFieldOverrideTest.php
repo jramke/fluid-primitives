@@ -20,7 +20,10 @@ final class ComponentPartIdUtilityFieldOverrideTest extends TestCase
     #[Test]
     public function shouldSkipFieldIdsInheritanceWhenNestedInReturnsExclusionsForCheckbox(): void
     {
-        $this->assertSame(['checkbox-group'], ComponentPartIdUtility::shouldSkipFieldIdsInheritanceWhenNestedIn('checkbox'));
+        $this->assertSame(
+            ['checkbox-group'],
+            ComponentPartIdUtility::shouldSkipFieldIdsInheritanceWhenNestedIn('checkbox'),
+        );
         $this->assertSame([], ComponentPartIdUtility::shouldSkipFieldIdsInheritanceWhenNestedIn('switch'));
     }
 }

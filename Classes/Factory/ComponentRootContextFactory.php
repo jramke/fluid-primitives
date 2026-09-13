@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Jramke\FluidPrimitives\Component;
+namespace Jramke\FluidPrimitives\Factory;
 
-use Jramke\FluidPrimitives\Factory\ComponentContextFactory;
+use Jramke\FluidPrimitives\Component\ComponentCollectionInterface;
 use Jramke\FluidPrimitives\Service\ContextService;
 use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
-use TYPO3Fluid\Fluid\Core\ViewHelper\StrictArgumentProcessor;
 use TYPO3Fluid\Fluid\Core\Variables\VariableProviderInterface;
+use TYPO3Fluid\Fluid\Core\ViewHelper\StrictArgumentProcessor;
 use TYPO3Fluid\Fluid\View\TemplateView;
 
 /**

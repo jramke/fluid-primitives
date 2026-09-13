@@ -39,7 +39,10 @@ final class ScrollAreaRenderingTest extends FunctionalTestCase
         ');
 
         $this->assertStringContainsString('data-value="vertical"', $html);
-        $this->assertMatchesRegularExpression('/data-part="scrollbar"[^>]*style="[^"]*bottom: var\(--corner-height\)/', $html);
+        $this->assertMatchesRegularExpression(
+            '/data-part="scrollbar"[^>]*style="[^"]*bottom: var\(--corner-height\)/',
+            $html,
+        );
     }
 
     #[Test]
@@ -54,7 +57,10 @@ final class ScrollAreaRenderingTest extends FunctionalTestCase
         ');
 
         $this->assertStringContainsString('data-value="horizontal"', $html);
-        $this->assertMatchesRegularExpression('/data-part="scrollbar"[^>]*style="[^"]*inset-inline-end: var\(--corner-width\)/', $html);
+        $this->assertMatchesRegularExpression(
+            '/data-part="scrollbar"[^>]*style="[^"]*inset-inline-end: var\(--corner-width\)/',
+            $html,
+        );
     }
 
     #[Test]

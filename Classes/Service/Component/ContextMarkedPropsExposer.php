@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Jramke\FluidPrimitives\Component;
+namespace Jramke\FluidPrimitives\Service\Component;
 
 use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
 use Jramke\FluidPrimitives\Service\ContextService;
@@ -35,7 +35,8 @@ final readonly class ContextMarkedPropsExposer
                 continue;
             }
 
-            $propsMarkedForContextValues[$name] = $arguments[$name] ?? $argumentDefinitions[$name]->getDefaultValue() ?? null;
+            $propsMarkedForContextValues[$name] =
+                $arguments[$name] ?? $argumentDefinitions[$name]->getDefaultValue() ?? null;
         }
 
         $context = ContextService::getFromRenderingContext($parentRenderingContext, $baseName);
