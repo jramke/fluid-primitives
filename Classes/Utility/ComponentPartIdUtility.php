@@ -145,11 +145,17 @@ class ComponentPartIdUtility
         return self::FIELD_ID_PARTS[$componentName][$part] ?? null;
     }
 
+    /**
+     * @return string[]
+     */
     public static function shouldSkipFieldIdsInheritanceWhenNestedIn(string $nestedComponent): array
     {
         return self::FIELD_ID_EXCLUDED_WHEN_NESTED_IN[$nestedComponent] ?? [];
     }
 
+    /**
+     * @return string[]
+     */
     public static function getFieldIdOverrideKeys(): array
     {
         return self::FIELD_ID_OVERRIDE_KEYS;

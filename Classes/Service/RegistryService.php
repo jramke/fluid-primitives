@@ -51,6 +51,9 @@ class RegistryService
         return [$error, $data];
     }
 
+    /**
+     * @return array{0: array{message: string, details: mixed}|null, 1: string|null}
+     */
     public function fetchComponentFile(string $componentKey, string $filePath): array
     {
         if ($componentKey === '' || $componentKey === '0' || ($filePath === '' || $filePath === '0')) {

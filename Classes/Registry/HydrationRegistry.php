@@ -13,6 +13,7 @@ class HydrationRegistry
 {
     private const SCRIPT_ID = 'fluid-primitives-hydration-data';
 
+    /** @var array<string, array<string, mixed>> */
     private array $registry = [];
     private static ?self $instance = null;
     private array $globals = [];
@@ -40,7 +41,9 @@ class HydrationRegistry
             $this->registry[$componentType] = [];
         }
 
-        $this->registry[$componentType][$id] = EnumUtility::normalize($props);
+        /** @var array<string, mixed> $normalizedProps */
+        $normalizedProps = EnumUtility::normalize($props);
+        $this->registry[$componentType][$id] = $normalizedProps;
 
         // Update the asset collector whenever data changes
         $this->updateAssetCollector();
@@ -48,9 +51,17 @@ class HydrationRegistry
 
     public function get(string $componentType, string $id): ?array
     {
-        return $this->registry[$componentType][$id] ?? null;
+        // Not actually redundant - the assignment is what the @var narrows; inlining it into the
+        // return statement would lose that annotation and bring back the mixed-return-statement error.
+        // @mago-expect lint:inline-variable-return
+        /** @var array<string, mixed>|null $props */
+        $props = $this->registry[$componentType][$id] ?? null;
+        return $props;
     }
 
+    /**
+     * @return array<string, array<string, mixed>>
+     */
     public function getAll(): array
     {
         return $this->registry;
