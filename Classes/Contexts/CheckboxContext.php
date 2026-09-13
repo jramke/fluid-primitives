@@ -28,7 +28,7 @@ class CheckboxContext extends AbstractComponentContext
         return $checked === 'indeterminate';
     }
 
-    private function getState(): string
+    protected function getState(): string
     {
         if ($this->isIndeterminate()) {
             return 'indeterminate';

@@ -18,6 +18,11 @@ class PopoverContext extends AbstractComponentContext
         private readonly TranslatorService $translator,
     ) {}
 
+    protected function getTranslator(): TranslatorService
+    {
+        return $this->translator;
+    }
+
     public function getState(): string
     {
         return $this->get('defaultOpen') ? 'open' : 'closed';

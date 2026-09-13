@@ -11,6 +11,8 @@ use Jramke\FluidPrimitives\Domain\Model\ListCollection;
  */
 trait HasListCollectionTrait
 {
+    abstract public function get(string $key): mixed;
+
     public function getCollection(): ?ListCollection
     {
         $collection = $this->get('collection');

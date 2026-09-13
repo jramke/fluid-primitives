@@ -21,6 +21,11 @@ class ComboboxContext extends AbstractComponentContext
         private readonly TranslatorService $translator,
     ) {}
 
+    protected function getTranslator(): TranslatorService
+    {
+        return $this->translator;
+    }
+
     #[ExposeToClient(excludeIfNull: true)]
     public function getDefaultValue(): ?array
     {

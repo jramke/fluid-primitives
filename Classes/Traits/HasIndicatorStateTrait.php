@@ -12,6 +12,8 @@ use BackedEnum;
  */
 trait HasIndicatorStateTrait
 {
+    abstract public function getState(): string;
+
     public function isIndicatorHidden(BackedEnum $state): bool
     {
         return $this->getState() !== $state->value;

@@ -18,6 +18,11 @@ class ClipboardContext extends AbstractComponentContext
         private readonly TranslatorService $translator,
     ) {}
 
+    protected function getTranslator(): TranslatorService
+    {
+        return $this->translator;
+    }
+
     #[ExposeToClient]
     public function getTranslations(): array
     {

@@ -18,6 +18,11 @@ class NumberInputContext extends AbstractComponentContext
         protected readonly TranslatorService $translator,
     ) {}
 
+    protected function getTranslator(): TranslatorService
+    {
+        return $this->translator;
+    }
+
     #[ExposeToClient]
     public function getDefaultValue(): string
     {

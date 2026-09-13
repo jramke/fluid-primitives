@@ -18,6 +18,11 @@ class FileUploadContext extends AbstractComponentContext
         protected readonly TranslatorService $translator,
     ) {}
 
+    protected function getTranslator(): TranslatorService
+    {
+        return $this->translator;
+    }
+
     /**
      * `itemPreview`/`deleteFile` are functions in zag-js (`(file: File) => string`), since they're
      * meant to interpolate the file's name - but Fluid/PHP has no callbacks to hand over, and the

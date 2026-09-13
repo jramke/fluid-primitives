@@ -10,6 +10,10 @@ namespace Jramke\FluidPrimitives\Traits;
  */
 trait HasCheckedStateDataAttributesTrait
 {
+    abstract public function get(string $key): mixed;
+
+    abstract protected function getState(): string;
+
     public function getDataAttributes(): array
     {
         return [
