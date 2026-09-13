@@ -42,33 +42,24 @@ class TagAttributes implements \Countable, \Stringable
 
     public function renderWithOnly(array $attributeKeys, bool $asArray = false): string|array
     {
-        if ($this->attributes === []) {
-            return $asArray ? [] : '';
-        }
+        $attributesToRender = $attributeKeys === []
+            ? $this->attributes
+            : array_intersect_key($this->attributes, array_flip($attributeKeys));
 
-        $attributesToRender = $this->attributes;
-        if ($attributeKeys !== []) {
-            $attributesToRender = array_intersect_key($this->attributes, array_flip($attributeKeys));
-        }
-
-        if ($attributesToRender === []) {
-            return $asArray ? [] : '';
-        }
-
-        return $asArray ? $this->renderAsArray($attributesToRender) : $this->buildAttributesString($attributesToRender);
+        return $this->renderFiltered($attributesToRender, $asArray);
     }
 
     public function renderWithSkip(array $attributeKeys, bool $asArray = false): string|array
     {
-        if ($this->attributes === []) {
-            return $asArray ? [] : '';
-        }
+        $attributesToRender = $attributeKeys === []
+            ? $this->attributes
+            : array_diff_key($this->attributes, array_flip($attributeKeys));
 
-        $attributesToRender = $this->attributes;
-        if ($attributeKeys !== []) {
-            $attributesToRender = array_diff_key($this->attributes, array_flip($attributeKeys));
-        }
+        return $this->renderFiltered($attributesToRender, $asArray);
+    }
 
+    private function renderFiltered(array $attributesToRender, bool $asArray): string|array
+    {
         if ($attributesToRender === []) {
             return $asArray ? [] : '';
         }
@@ -118,24 +109,5 @@ class TagAttributes implements \Countable, \Stringable
             return htmlspecialchars((string)$key);
         }
         return sprintf('%s="%s"', htmlspecialchars((string)$key), htmlspecialchars((string)$value));
-    }
-
-    public static function stringToArray(string $attributesString): array
-    {
-        if ($attributesString === '') {
-            return [];
-        }
-
-        $attributes = [];
-        $parts = explode(' ', trim($attributesString));
-        foreach ($parts as $part) {
-            if (str_contains($part, '=')) {
-                [$key, $value] = explode('=', $part, 2);
-                $attributes[trim($key)] = trim($value, '"');
-            } else {
-                $attributes[trim($part)] = true; // boolean attribute
-            }
-        }
-        return $attributes;
     }
 }

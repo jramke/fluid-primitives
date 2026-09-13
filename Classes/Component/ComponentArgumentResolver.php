@@ -7,6 +7,7 @@ namespace Jramke\FluidPrimitives\Component;
 use Jramke\FluidPrimitives\Annotations\ClientArgumentAnnotation;
 use Jramke\FluidPrimitives\Annotations\ContextArgumentAnnotation;
 use Jramke\FluidPrimitives\Domain\Model\TagAttributes;
+use Jramke\FluidPrimitives\Domain\Model\TagAttributesStringParser;
 use Jramke\FluidPrimitives\ViewHelpers\AttributesViewHelper;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 use TYPO3Fluid\Fluid\Core\ViewHelper\ArgumentDefinition;
@@ -79,7 +80,7 @@ final readonly class ComponentArgumentResolver
 
         $attributes = is_array($attributesArgument)
             ? $attributesArgument
-            : TagAttributes::stringToArray($attributesArgument ?? '');
+            : TagAttributesStringParser::parse($attributesArgument ?? '');
         $mergedAttributes = array_merge($additionalArguments, $attributes);
 
         $renderingContext->getViewHelperVariableContainer()->add(

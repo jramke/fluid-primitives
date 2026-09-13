@@ -62,20 +62,6 @@ final class TagAttributesTest extends TestCase
     }
 
     #[Test]
-    public function parsesMixedKeyValueAndBooleanAttributes(): void
-    {
-        $result = TagAttributes::stringToArray('class="test" disabled');
-        $this->assertSame(['class' => 'test', 'disabled' => true], $result);
-    }
-
-    #[Test]
-    public function handlesValuesWithEqualsSigns(): void
-    {
-        $result = TagAttributes::stringToArray('data-equation="1+1=2"');
-        $this->assertSame(['data-equation' => '1+1=2'], $result);
-    }
-
-    #[Test]
     public function rendersZeroValuesLiterallyInsteadOfAsBooleanAttributes(): void
     {
         // Regression test: a "0" value (e.g. a recurring field's row index)
