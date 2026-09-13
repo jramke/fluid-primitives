@@ -13,25 +13,17 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use TYPO3\CMS\Core\Cache\CacheManager;
-use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 
 #[AsCommand(name: 'ui:add', description: 'Add a new component from Fluid Primitives')]
 class ComponentAddCommand extends Command
 {
-    private readonly ComponentTargetExtensionResolver $extensionResolver;
-
-    private readonly ComponentFileWriter $fileWriter;
-
     public function __construct(
         protected readonly PackageResolver $packageResolver,
-        CacheManager $cacheManager,
-        ExtensionConfiguration $extensionConfiguration,
         protected readonly RegistryService $registryService,
+        private readonly ComponentTargetExtensionResolver $extensionResolver,
+        private readonly ComponentFileWriter $fileWriter,
     ) {
         parent::__construct();
-        $this->extensionResolver = new ComponentTargetExtensionResolver($packageResolver, $extensionConfiguration);
-        $this->fileWriter = new ComponentFileWriter($registryService, $cacheManager);
     }
 
     protected function configure(): void

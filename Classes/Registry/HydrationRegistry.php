@@ -18,13 +18,10 @@ class HydrationRegistry
     private array $globals = [];
     private bool $globalsResolved = false;
 
-    private readonly HydrationScriptBuilder $scriptBuilder;
-
     public function __construct(
         private readonly AssetCollector $assetCollector,
-    ) {
-        $this->scriptBuilder = new HydrationScriptBuilder();
-    }
+        private readonly HydrationScriptBuilder $scriptBuilder = new HydrationScriptBuilder(),
+    ) {}
 
     public static function getInstance(): self
     {

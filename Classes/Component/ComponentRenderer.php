@@ -19,41 +19,44 @@ use Jramke\FluidPrimitives\Service\Component\ContextMarkedPropsExposer;
 use Jramke\FluidPrimitives\Service\Component\FieldContextVariableMerger;
 use Jramke\FluidPrimitives\Service\ContextService;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
+use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use TYPO3Fluid\Fluid\Core\Component\ComponentRendererInterface;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 use TYPO3Fluid\Fluid\Core\ViewHelper\ViewHelperVariableContainer;
 use TYPO3Fluid\Fluid\View\TemplateView;
 use TYPO3Fluid\Fluid\ViewHelpers\SlotViewHelper;
 
+// This is deliberately not container-shared: renderComponent() binds a component-collection-specific
+// componentResolver onto the instance after construction (see setComponentResolver()), which a shared
+// instance would leak across unrelated ComponentCollectionInterface implementations.
+#[Autoconfigure(public: true, shared: false)]
 final readonly class ComponentRenderer implements ComponentRendererInterface
 {
-    private ComponentIdentityResolver $identityResolver;
-
-    private ComponentArgumentResolver $argumentResolver;
-
-    private ComponentRootContextFactory $rootContextFactory;
-
-    private ContextMarkedPropsExposer $contextMarkedPropsExposer;
-
-    private FieldContextVariableMerger $fieldContextVariableMerger;
-
-    private CheckboxGroupContextVariableMerger $checkboxGroupContextVariableMerger;
-
-    private ComponentHydrationCollector $hydrationCollector;
-
-    private AsChildAttributeSpreader $asChildAttributeSpreader;
+    private ComponentCollectionInterface $componentResolver;
 
     public function __construct(
-        private ComponentCollectionInterface $componentResolver,
-    ) {
-        $this->identityResolver = new ComponentIdentityResolver();
-        $this->argumentResolver = new ComponentArgumentResolver();
-        $this->rootContextFactory = new ComponentRootContextFactory($componentResolver);
-        $this->contextMarkedPropsExposer = new ContextMarkedPropsExposer();
-        $this->fieldContextVariableMerger = new FieldContextVariableMerger();
-        $this->checkboxGroupContextVariableMerger = new CheckboxGroupContextVariableMerger();
-        $this->hydrationCollector = new ComponentHydrationCollector();
-        $this->asChildAttributeSpreader = new AsChildAttributeSpreader();
+        private ComponentIdentityResolver $identityResolver,
+        private ComponentArgumentResolver $argumentResolver,
+        private ComponentRootContextFactory $rootContextFactory,
+        private ContextMarkedPropsExposer $contextMarkedPropsExposer,
+        private FieldContextVariableMerger $fieldContextVariableMerger,
+        private CheckboxGroupContextVariableMerger $checkboxGroupContextVariableMerger,
+        private ComponentHydrationCollector $hydrationCollector,
+        private AsChildAttributeSpreader $asChildAttributeSpreader,
+    ) {}
+
+    /**
+     * Binds the component collection this renderer resolves components through. Not constructor-
+     * injected: it's the calling {@see AbstractComponentCollection} instance itself ("$this" from
+     * getComponentRenderer()), not a generically autowireable service.
+     */
+    public function setComponentResolver(ComponentCollectionInterface $componentResolver): void
+    {
+        // getComponentRenderer() is this property's only caller and calls it exactly once, right
+        // after construction, so double-initialization can't happen in practice - mago can't prove
+        // that invariant across the two methods, only that a single call site respects it.
+        // @mago-expect analysis:possibly-invalid-property-write
+        $this->componentResolver = $componentResolver;
     }
 
     /**
@@ -136,8 +139,8 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
                 $argumentDefinitions,
                 $view,
                 $viewHelperName,
-                $renderingContext,
                 $parentRenderingContext,
+                $this->componentResolver,
             );
         }
 

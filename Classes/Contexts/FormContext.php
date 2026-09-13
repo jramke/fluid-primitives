@@ -12,7 +12,6 @@ use Jramke\FluidPrimitives\Utility\ExtbaseRequestResolver;
 use Psr\Http\Message\ServerRequestInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use TYPO3\CMS\Core\Type\DocType;
-use TYPO3\CMS\Extbase\Mvc\Controller\MvcPropertyMappingConfigurationService;
 use TYPO3\CMS\Extbase\Mvc\Web\Routing\UriBuilder;
 use TYPO3\CMS\Extbase\Service\ExtensionService;
 
@@ -21,21 +20,13 @@ class FormContext extends AbstractComponentContext
 {
     use HasIndicatorStateTrait;
 
-    private readonly ExtbasePersistedObjectResolver $persistedObjectResolver;
-
-    private readonly ExtbaseFormHiddenFieldsRenderer $hiddenFieldsRenderer;
-
-    private readonly ExtbaseRequestResolver $requestResolver;
-
     public function __construct(
-        MvcPropertyMappingConfigurationService $mvcPropertyMappingConfigurationService,
+        private readonly ExtbasePersistedObjectResolver $persistedObjectResolver,
+        private readonly ExtbaseFormHiddenFieldsRenderer $hiddenFieldsRenderer,
+        private readonly ExtbaseRequestResolver $requestResolver,
         protected readonly ExtensionService $extensionService,
         private readonly UriBuilder $uriBuilder,
-    ) {
-        $this->persistedObjectResolver = new ExtbasePersistedObjectResolver();
-        $this->hiddenFieldsRenderer = new ExtbaseFormHiddenFieldsRenderer($mvcPropertyMappingConfigurationService);
-        $this->requestResolver = new ExtbaseRequestResolver();
-    }
+    ) {}
 
     public function afterRendering(string &$html): void
     {

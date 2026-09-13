@@ -8,7 +8,6 @@ use Jramke\FluidPrimitives\Component\ComponentCollectionInterface;
 use Jramke\FluidPrimitives\Service\ContextService;
 use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 use TYPO3Fluid\Fluid\Core\Variables\VariableProviderInterface;
 use TYPO3Fluid\Fluid\Core\ViewHelper\StrictArgumentProcessor;
@@ -22,7 +21,7 @@ use TYPO3Fluid\Fluid\View\TemplateView;
 final readonly class ComponentRootContextFactory
 {
     public function __construct(
-        private ComponentCollectionInterface $componentResolver,
+        private ComponentContextFactory $contextFactory,
     ) {}
 
     /**
@@ -32,8 +31,8 @@ final readonly class ComponentRootContextFactory
         array $argumentDefinitions,
         TemplateView $view,
         string $viewHelperName,
-        RenderingContextInterface $renderingContext,
         RenderingContextInterface $parentRenderingContext,
+        ComponentCollectionInterface $componentResolver,
     ): void {
         $baseName = ComponentNameUtility::getComponentBaseNameFromViewHelperName($viewHelperName);
 
@@ -43,14 +42,13 @@ final readonly class ComponentRootContextFactory
         );
         $contextClassName = ComponentUtility::getContextClassNameFromViewHelperName(
             $viewHelperName,
-            $this->componentResolver->getContextNamespaces(),
+            $componentResolver->getContextNamespaces(),
         );
-        $contextFactory = GeneralUtility::makeInstance(ComponentContextFactory::class);
-        $context = $contextFactory->create(
+        $context = $this->contextFactory->create(
             $contextClassName,
-            $renderingContext,
+            $view->getRenderingContext(),
             $parentRenderingContext,
-            $this->componentResolver,
+            $componentResolver,
             $contextVariables,
         );
 

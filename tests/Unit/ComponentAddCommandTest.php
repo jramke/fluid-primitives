@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Tests\Unit;
 
 use Jramke\FluidPrimitives\Command\ComponentAddCommand;
+use Jramke\FluidPrimitives\Command\ComponentFileWriter;
+use Jramke\FluidPrimitives\Command\ComponentTargetExtensionResolver;
 use Jramke\FluidPrimitives\Service\PackageResolver;
 use Jramke\FluidPrimitives\Service\RegistryService;
 use Jramke\FluidPrimitives\Tests\TestCase;
@@ -66,7 +68,10 @@ final class ComponentAddCommandTest extends TestCase
         $extensionConfiguration = $this->createMock(ExtensionConfiguration::class);
         $extensionConfiguration->method('get')->willReturn([]);
 
-        $command = new ComponentAddCommand($packageResolver, $cacheManager, $extensionConfiguration, $registryService);
+        $extensionResolver = new ComponentTargetExtensionResolver($packageResolver, $extensionConfiguration);
+        $fileWriter = new ComponentFileWriter($registryService, $cacheManager);
+
+        $command = new ComponentAddCommand($packageResolver, $registryService, $extensionResolver, $fileWriter);
 
         return new CommandTester($command);
     }
