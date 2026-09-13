@@ -12,13 +12,18 @@ use Jramke\FluidPrimitives\Service\ComponentCollectionService;
 use Jramke\FluidPrimitives\Service\ContextService;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerAwareTrait;
 use ReflectionClass;
+use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
 use TYPO3\CMS\Fluid\Core\Rendering\RenderingContextFactory;
 
-final class AjaxDispatcherController extends ActionController
+final class AjaxDispatcherController extends ActionController implements LoggerAwareInterface
 {
+    use LoggerAwareTrait;
+
     public function __construct(
         private readonly RenderingContextFactory $renderingContextFactory,
         private readonly ComponentCollectionService $componentCollectionService,
@@ -113,10 +118,21 @@ final class AjaxDispatcherController extends ActionController
                 'data' => $result,
             ]))->withStatus(200);
         } catch (\Throwable $th) {
+            $this->logger?->error('AJAX component dispatch failed.', ['exception' => $th]);
+
             return $this->jsonResponse(json_encode([
                 'success' => false,
-                'error' => $th->getMessage(),
+                'error' => $this->isDevelopment() ? $th->getMessage() : 'An error occurred while processing the request.',
             ]))->withStatus(500);
+        }
+    }
+
+    private function isDevelopment(): bool
+    {
+        try {
+            return Environment::getContext()->isDevelopment();
+        } catch (\Throwable) {
+            return false;
         }
     }
 }

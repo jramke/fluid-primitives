@@ -268,44 +268,20 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
 
                         // Override the inherited field ids keys to map the corresponding component part, eg. control -> hidden-select
                         $updatedIds = $ids;
-                        // krexx([
-                        //     'baseName' => $baseName,
-                        //     'fieldRootId' => $fieldRootId,
-                        //     'userIds' => $userIds,
-                        //     'ids' => $ids,
-                        //     'updatedIds' => $updatedIds,
-                        // ]);
                         foreach ($ids as $fieldIdKey => $fieldIdValue) {
                             if (!is_string($fieldIdKey) || !is_string($fieldIdValue)) {
                                 continue;
                             }
 
                             $overrideFieldIdKey = ComponentUtility::getOverrideFieldIdKey($baseName, $fieldIdKey);
-                            // krexx([
-                            //     'baseName' => $baseName,
-                            //     'fieldIdKey' => $fieldIdKey,
-                            //     'fieldIdValue' => $fieldIdValue,
-                            //     'overrideFieldIdKey' => $overrideFieldIdKey,
-                            // ]);
                             if ($overrideFieldIdKey === null) {
                                 $updatedIds[$fieldIdKey] = $fieldIdValue;
                                 continue;
                             }
 
-                            // krexx([
-                            //     'baseName' => $baseName,
-                            //     'fieldIdKey' => $fieldIdKey,
-                            //     'overrideFieldIdKey' => $overrideFieldIdKey,
-                            // ]);
-
                             unset($updatedIds[$fieldIdKey]);
                             $updatedIds[$overrideFieldIdKey] = $fieldIdValue;
                         }
-
-                        // krexx([
-                        //     'baseName' => $baseName,
-                        //     'updatedIds' => $updatedIds,
-                        // ]);
 
                         $varValue = $updatedIds;
                     }
