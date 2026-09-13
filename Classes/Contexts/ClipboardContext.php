@@ -6,11 +6,14 @@ namespace Jramke\FluidPrimitives\Contexts;
 
 use Jramke\FluidPrimitives\Attributes\ExposeToClient;
 use Jramke\FluidPrimitives\Service\TranslatorService;
+use Jramke\FluidPrimitives\Traits\HasTranslationsTrait;
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 
 #[Autoconfigure(public: true)]
 class ClipboardContext extends AbstractComponentContext
 {
+    use HasTranslationsTrait;
+
     public function __construct(
         private readonly TranslatorService $translator,
     ) {}
@@ -18,13 +21,9 @@ class ClipboardContext extends AbstractComponentContext
     #[ExposeToClient]
     public function getTranslations(): array
     {
-        $overrides = $this->get('translations') ?? [];
-
-        $defaults = [
-            'triggerLabelIdle' => $this->translator->translate('clipboard.triggerLabelIdle', $this->getRequest()),
-            'triggerLabelCopied' => $this->translator->translate('clipboard.triggerLabelCopied', $this->getRequest()),
-        ];
-
-        return array_merge($defaults, $overrides);
+        return $this->translationsWithDefaults([
+            'triggerLabelIdle' => 'clipboard.triggerLabelIdle',
+            'triggerLabelCopied' => 'clipboard.triggerLabelCopied',
+        ]);
     }
 }

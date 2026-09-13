@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Contexts;
 
 use Jramke\FluidPrimitives\Enum\FormState;
+use Jramke\FluidPrimitives\Traits\HasIndicatorStateTrait;
 use Psr\Http\Message\ServerRequestInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use TYPO3\CMS\Core\Type\DocType;
@@ -20,6 +21,8 @@ use TYPO3\CMS\Extbase\Service\ExtensionService;
 #[Autoconfigure(public: true)]
 class FormContext extends AbstractComponentContext
 {
+    use HasIndicatorStateTrait;
+
     public function __construct(
         protected readonly MvcPropertyMappingConfigurationService $mvcPropertyMappingConfigurationService,
         protected readonly ExtensionService $extensionService,
@@ -82,11 +85,6 @@ class FormContext extends AbstractComponentContext
     public function getContentHidden(): bool
     {
         return in_array($this->getState(), [FormState::Error->value, FormState::Success->value], true);
-    }
-
-    public function isIndicatorHidden(FormState $state): bool
-    {
-        return $this->getState() !== $state->value;
     }
 
     public function getErrorTextHidden(): bool

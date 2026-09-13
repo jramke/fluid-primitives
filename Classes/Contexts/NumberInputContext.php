@@ -6,11 +6,14 @@ namespace Jramke\FluidPrimitives\Contexts;
 
 use Jramke\FluidPrimitives\Attributes\ExposeToClient;
 use Jramke\FluidPrimitives\Service\TranslatorService;
+use Jramke\FluidPrimitives\Traits\HasTranslationsTrait;
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 
 #[Autoconfigure(public: true)]
 class NumberInputContext extends AbstractComponentContext
 {
+    use HasTranslationsTrait;
+
     public function __construct(
         protected readonly TranslatorService $translator,
     ) {}
@@ -30,14 +33,10 @@ class NumberInputContext extends AbstractComponentContext
     #[ExposeToClient]
     public function getTranslations(): array
     {
-        $overrides = $this->get('translations') ?? [];
-
-        $defaults = [
-            'incrementLabel' => $this->translator->translate('numberInput.incrementLabel', $this->getRequest()),
-            'decrementLabel' => $this->translator->translate('numberInput.decrementLabel', $this->getRequest()),
-        ];
-
-        return array_merge($defaults, $overrides);
+        return $this->translationsWithDefaults([
+            'incrementLabel' => 'numberInput.incrementLabel',
+            'decrementLabel' => 'numberInput.decrementLabel',
+        ]);
     }
 
     public function getFormattedValue(): string

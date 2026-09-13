@@ -4,14 +4,11 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Contexts;
 
-use Jramke\FluidPrimitives\Enum\CollapsibleIndicatorState;
+use Jramke\FluidPrimitives\Traits\HasIndicatorStateTrait;
 
 class CollapsibleContext extends AbstractComponentContext
 {
-    public function isIndicatorHidden(CollapsibleIndicatorState $state): bool
-    {
-        return $this->getState() !== $state->value;
-    }
+    use HasIndicatorStateTrait;
 
     public function getState(): string
     {

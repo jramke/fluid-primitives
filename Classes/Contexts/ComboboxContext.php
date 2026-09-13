@@ -5,14 +5,18 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Contexts;
 
 use Jramke\FluidPrimitives\Attributes\ExposeToClient;
-use Jramke\FluidPrimitives\Domain\Model\ListCollection;
 use Jramke\FluidPrimitives\Domain\Model\ListCollectionItem;
 use Jramke\FluidPrimitives\Service\TranslatorService;
+use Jramke\FluidPrimitives\Traits\HasListCollectionTrait;
+use Jramke\FluidPrimitives\Traits\HasTranslationsTrait;
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 
 #[Autoconfigure(public: true)]
 class ComboboxContext extends AbstractComponentContext
 {
+    use HasListCollectionTrait;
+    use HasTranslationsTrait;
+
     public function __construct(
         private readonly TranslatorService $translator,
     ) {}
@@ -98,19 +102,9 @@ class ComboboxContext extends AbstractComponentContext
     #[ExposeToClient]
     public function getTranslations(): array
     {
-        $overrides = $this->get('translations') ?? [];
-
-        $defaults = [
-            'triggerLabel' => $this->translator->translate('combobox.triggerLabel', $this->getRequest()),
-            'clearTriggerLabel' => $this->translator->translate('combobox.clearTriggerLabel', $this->getRequest()),
-        ];
-
-        return array_merge($defaults, $overrides);
-    }
-
-    public function getCollection(): ?ListCollection
-    {
-        $collection = $this->get('collection');
-        return $collection instanceof ListCollection ? $collection : null;
+        return $this->translationsWithDefaults([
+            'triggerLabel' => 'combobox.triggerLabel',
+            'clearTriggerLabel' => 'combobox.clearTriggerLabel',
+        ]);
     }
 }

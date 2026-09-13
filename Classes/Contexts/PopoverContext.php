@@ -6,16 +6,19 @@ namespace Jramke\FluidPrimitives\Contexts;
 
 use Jramke\FluidPrimitives\Attributes\ExposeToClient;
 use Jramke\FluidPrimitives\Service\TranslatorService;
+use Jramke\FluidPrimitives\Traits\HasTranslationsTrait;
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 
 #[Autoconfigure(public: true)]
 class PopoverContext extends AbstractComponentContext
 {
+    use HasTranslationsTrait;
+
     public function __construct(
         private readonly TranslatorService $translator,
     ) {}
 
-    public function getState()
+    public function getState(): string
     {
         return $this->get('defaultOpen') ? 'open' : 'closed';
     }
@@ -23,12 +26,8 @@ class PopoverContext extends AbstractComponentContext
     #[ExposeToClient]
     public function getTranslations(): array
     {
-        $overrides = $this->get('translations') ?? [];
-
-        $defaults = [
-            'closeTriggerLabel' => $this->translator->translate('popover.closeTriggerLabel', $this->getRequest()),
-        ];
-
-        return array_merge($defaults, $overrides);
+        return $this->translationsWithDefaults([
+            'closeTriggerLabel' => 'popover.closeTriggerLabel',
+        ]);
     }
 }

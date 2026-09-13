@@ -4,23 +4,16 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Contexts;
 
+use Jramke\FluidPrimitives\Traits\HasCheckedStateDataAttributesTrait;
+
 class CheckboxContext extends AbstractComponentContext
 {
+    use HasCheckedStateDataAttributesTrait;
+
     public function isValueValid(): bool
     {
         $defaultValue = $this->get('defaultChecked') ?? null;
         return is_bool($defaultValue) || $defaultValue === 'indeterminate';
-    }
-
-    public function getDataAttributes(): array
-    {
-        return [
-            'readonly' => $this->get('readOnly') ?? null,
-            'disabled' => $this->get('disabled') ?? null,
-            'state' => $this->getState(),
-            'invalid' => $this->get('invalid') ?? null,
-            'required' => $this->get('required') ?? null,
-        ];
     }
 
     public function isChecked(): bool
