@@ -15,7 +15,6 @@ class ListCollection implements JsonSerializable, IteratorAggregate
     /** @var ListCollectionItem[]|null Cached normalized items */
     private ?array $normalizedItems = null;
 
-    // @mago-expect lint:excessive-parameter-list
     public function __construct(
         protected array $items = [],
         protected ?string $itemToValueKey = null,

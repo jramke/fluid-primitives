@@ -110,6 +110,10 @@ class HydrationRegistry
 
     private function getRequest(): ?ServerRequestInterface
     {
+        // This registry is a hard singleton with no request-scoped construction path (see
+        // getInstance()), so it has no other way to reach the current request than TYPO3's own
+        // global - there is no DI-injectable alternative available here.
+        // @mago-expect lint:no-global
         $request = $GLOBALS['TYPO3_REQUEST'] ?? null;
 
         return $request instanceof ServerRequestInterface ? $request : null;

@@ -12,6 +12,9 @@ use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 /**
  * Interface for the component contexts.
  */
+// This is the public contract every .fluid.html template's `context.X` access relies on across all
+// Context subclasses; the method count is the interface, not internal complexity to delegate elsewhere.
+// @mago-expect lint:too-many-methods
 interface ComponentContextInterface extends ContainerInterface
 {
     public function initialize(

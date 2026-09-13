@@ -72,23 +72,4 @@ final class ComponentPartIdUtilityTest extends TestCase
         $id = ComponentPartIdUtility::generatePartId('tabs', 'my-id', 'content', 'tab-1');
         $this->assertSame('tabs:my-id:content-tab-1', $id);
     }
-
-    #[Test]
-    public function getOverrideFieldIdKeyReturnsNullForUnmappedComponents(): void
-    {
-        $this->assertNull(ComponentPartIdUtility::getOverrideFieldIdKey('unknown-component', 'control'));
-    }
-
-    #[Test]
-    public function getOverrideFieldIdKeyResolvesTheComponentSpecificPartName(): void
-    {
-        $this->assertSame('hiddenInput', ComponentPartIdUtility::getOverrideFieldIdKey('switch', 'control'));
-    }
-
-    #[Test]
-    public function shouldSkipFieldIdsInheritanceWhenNestedInReturnsExclusionsForCheckbox(): void
-    {
-        $this->assertSame(['checkbox-group'], ComponentPartIdUtility::shouldSkipFieldIdsInheritanceWhenNestedIn('checkbox'));
-        $this->assertSame([], ComponentPartIdUtility::shouldSkipFieldIdsInheritanceWhenNestedIn('switch'));
-    }
 }

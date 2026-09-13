@@ -10,6 +10,9 @@ use Jramke\FluidPrimitives\Utility\EnumUtility;
 use Psr\Http\Message\ServerRequestInterface;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 
+// Method count is dictated by ComponentContextInterface (11 methods) plus the 4 ArrayAccess methods
+// PHP requires on the implementing class itself - not internal complexity to delegate elsewhere.
+// @mago-expect lint:too-many-methods
 abstract class AbstractComponentContext implements ComponentContextInterface, \ArrayAccess
 {
     private RenderingContextInterface $renderingContext;

@@ -11,19 +11,28 @@ use TYPO3\CMS\Extbase\Utility\ExtensionUtility;
 
 defined('TYPO3') || die();
 
+// ext_localconf.php is TYPO3's own bootstrap convention for registering Fluid namespaces and
+// extension configuration - $GLOBALS['TYPO3_CONF_VARS'] is the only API for it, there is no
+// DI-injectable alternative at this stage of the framework's bootstrap.
+
 // Make ui a global namespace
+// @mago-expect lint:no-global,no-isset
 if (!isset($GLOBALS['TYPO3_CONF_VARS']['SYS']['fluid']['namespaces']['ui'])) {
+    // @mago-expect lint:no-global
     $GLOBALS['TYPO3_CONF_VARS']['SYS']['fluid']['namespaces']['ui'] = [];
 }
+// @mago-expect lint:no-global
 $GLOBALS['TYPO3_CONF_VARS']['SYS']['fluid']['namespaces']['ui'][] = 'Jramke\\FluidPrimitives\\ViewHelpers';
 
 // Register primitives namespace
+// @mago-expect lint:no-global
 $GLOBALS['TYPO3_CONF_VARS']['SYS']['fluid']['namespaces']['primitives'] = [
     ComponentPrimitivesCollection::class,
 ];
 
 // Exclude specific arguments from storybook controls when using EXT:storybook
 if (ExtensionManagementUtility::isLoaded('storybook')) {
+    // @mago-expect lint:no-global
     $existing = $GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS']['storybook']['excludeArguments'] ?? '';
     $existingArr = GeneralUtility::trimExplode(',', $existing, true);
 
@@ -31,6 +40,7 @@ if (ExtensionManagementUtility::isLoaded('storybook')) {
 
     $merged = array_values(array_unique(array_merge($existingArr, $globalPropsWithoutClass)));
 
+    // @mago-expect lint:no-global
     $GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS']['storybook']['excludeArguments'] = implode(',', $merged);
 }
 
