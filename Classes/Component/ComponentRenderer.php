@@ -18,18 +18,33 @@ use TYPO3Fluid\Fluid\ViewHelpers\SlotViewHelper;
 
 final readonly class ComponentRenderer implements ComponentRendererInterface
 {
+    private ComponentIdentityResolver $identityResolver;
+
     private ComponentArgumentResolver $argumentResolver;
 
-    private ComponentContextPropagator $contextPropagator;
+    private ComponentRootContextFactory $rootContextFactory;
+
+    private ContextMarkedPropsExposer $contextMarkedPropsExposer;
+
+    private FieldContextVariableMerger $fieldContextVariableMerger;
+
+    private CheckboxGroupContextVariableMerger $checkboxGroupContextVariableMerger;
 
     private ComponentHydrationCollector $hydrationCollector;
+
+    private AsChildAttributeSpreader $asChildAttributeSpreader;
 
     public function __construct(
         private ComponentCollectionInterface $componentResolver,
     ) {
+        $this->identityResolver = new ComponentIdentityResolver();
         $this->argumentResolver = new ComponentArgumentResolver();
-        $this->contextPropagator = new ComponentContextPropagator($componentResolver);
+        $this->rootContextFactory = new ComponentRootContextFactory($componentResolver);
+        $this->contextMarkedPropsExposer = new ContextMarkedPropsExposer();
+        $this->fieldContextVariableMerger = new FieldContextVariableMerger();
+        $this->checkboxGroupContextVariableMerger = new CheckboxGroupContextVariableMerger();
         $this->hydrationCollector = new ComponentHydrationCollector();
+        $this->asChildAttributeSpreader = new AsChildAttributeSpreader();
     }
 
     /**
@@ -53,22 +68,11 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         $renderingContext->setTemplatePaths($this->componentResolver->getTemplatePaths());
         $renderingContext->setViewHelperResolver($renderingContext->getViewHelperResolver()->getScopedCopy());
 
-        $isRootComponent = ComponentUtility::isRootComponent($viewHelperName);
-        if (isset($arguments['spreadProps']) && $arguments['spreadProps'] === true) {
-            $isRootComponent = false;
-        }
-
-        $isComposableComponent = ComponentUtility::isComposableComponent($viewHelperName);
-
-        $rootId = $arguments['rootId'] ?? null;
-        if (!isset($rootId)) {
-            if ($isRootComponent) {
-                $rootId = ComponentUtility::id();
-            } else {
-                // We assign the rootId to each rendered component so this line gets the rootId of the parent component when rendering subcomponents.
-                $rootId = $renderingContext->getVariableProvider()->get('rootId') ?? null;
-            }
-        }
+        $identity = $this->identityResolver->resolve($viewHelperName, $arguments, $renderingContext);
+        $isRootComponent = $identity->isRootComponent;
+        $isComposableComponent = $identity->isComposableComponent;
+        $rootId = $identity->rootId;
+        $baseName = $identity->baseName;
 
         $argumentDefinitions = $this->componentResolver
             ->getComponentDefinition($viewHelperName)
@@ -99,8 +103,6 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         $view->getRenderingContext()->getVariableProvider()->remove('settings');
         $view->assign('settings', ComponentUtility::getSettings());
 
-        $baseName = ComponentUtility::getComponentBaseNameFromViewHelperName($viewHelperName);
-
         $componentData = [
             'fullName' => $viewHelperName,
             'baseName' => $baseName,
@@ -117,11 +119,11 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
 
         // Expose variables as context so it can be picked up in other components rendered inside this component.
         if ($isRootComponent) {
-            $this->contextPropagator->createRootContext($argumentDefinitions, $view, $viewHelperName, $renderingContext, $parentRenderingContext);
+            $this->rootContextFactory->create($argumentDefinitions, $view, $viewHelperName, $renderingContext, $parentRenderingContext);
         }
 
         if ($propsMarkedForContext !== [] && !$isRootComponent) {
-            $this->contextPropagator->exposePropsMarkedForContext(
+            $this->contextMarkedPropsExposer->expose(
                 $propsMarkedForContext,
                 $arguments,
                 $argumentDefinitions,
@@ -138,12 +140,12 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
 
         $fieldRootId = null;
         if ($isRootComponent && $this->componentSupportsField($baseName)) {
-            $fieldRootId = $this->contextPropagator->applyFieldContextVariables($otherComponentContexts, $baseName, $view, $arguments, $ctx);
+            $fieldRootId = $this->fieldContextVariableMerger->apply($otherComponentContexts, $baseName, $view, $arguments, $ctx);
         }
 
         $checkboxGroupRootId = null;
         if ($isRootComponent && $baseName === 'checkbox') {
-            $checkboxGroupRootId = $this->contextPropagator->applyCheckboxGroupContextVariables($otherComponentContexts, $view, $arguments, $ctx);
+            $checkboxGroupRootId = $this->checkboxGroupContextVariableMerger->apply($otherComponentContexts, $view, $arguments, $ctx);
         }
 
         // Assign context if available
@@ -168,7 +170,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
                 ? (string)$slots['default']()
                 : '';
             $renderedComponent = (string)$view->render($this->componentResolver->resolveTemplateName($viewHelperName));
-            $rendered = $this->spreadComponentAttributesToChild($renderedChild, $renderedComponent);
+            $rendered = $this->asChildAttributeSpreader->spread($renderedChild, $renderedComponent);
         } else {
             $rendered = (string)$view->render($this->componentResolver->resolveTemplateName($viewHelperName));
         }
@@ -191,8 +193,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
                 $argumentDefinitions,
                 $propsMarkedForClient,
                 $ctx,
-                $fieldRootId,
-                $checkboxGroupRootId,
+                ['field' => $fieldRootId, 'checkboxGroup' => $checkboxGroupRootId],
                 $portalRegistrySnapshotBeforeRender,
             ));
         }
@@ -236,56 +237,6 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         }
 
         return $ctx;
-    }
-
-    protected function spreadComponentAttributesToChild(string $childHtml, string $componentHtml): string
-    {
-        // Extract child tag + attributes
-        if (!preg_match('/^\s*<([a-zA-Z0-9]+)([^>]*)>/', $childHtml, $childMatches)) {
-            return $childHtml; // fallback
-        }
-        $childTag = $childMatches[1];
-        $childAttrString = trim($childMatches[2]);
-
-        // Parse child attributes into map
-        preg_match_all(
-            '/([a-zA-Z_:][-a-zA-Z0-9_:.]*)(?:="([^"]*)")?/',
-            $childAttrString,
-            $childAttrMatches,
-            PREG_SET_ORDER,
-        );
-        $childAttrs = [];
-        foreach ($childAttrMatches as $m) {
-            $childAttrs[$m[1]] = $m[2] ?? null; // supports boolean attrs
-        }
-
-        // Extract parent/component attributes
-        if (!preg_match('/^\s*<([a-zA-Z0-9]+)([^>]*)>/', $componentHtml, $compMatches)) {
-            return $childHtml;
-        }
-        $compAttrString = trim($compMatches[2]);
-        preg_match_all(
-            '/([a-zA-Z_:][-a-zA-Z0-9_:.]*)(?:="([^"]*)")?/',
-            $compAttrString,
-            $compAttrMatches,
-            PREG_SET_ORDER,
-        );
-        foreach ($compAttrMatches as $m) {
-            $name = $m[1];
-            $value = $m[2] ?? null; // supports boolean attrs
-            if (!isset($childAttrs[$name])) {
-                $childAttrs[$name] = $value;
-            }
-        }
-
-        // Rebuild attributes
-        $finalAttrs = '';
-        foreach ($childAttrs as $k => $v) {
-            $finalAttrs .= $v === null ? " {$k}" : ' ' . $k . '="' . htmlspecialchars($v, ENT_QUOTES) . '"';
-        }
-
-        // Replace child opening tag
-        return preg_replace('/^\s*<' . $childTag . '[^>]*>/', '<' . $childTag . $finalAttrs . '>', $childHtml, 1);
     }
 
     protected function componentSupportsField(string $baseName): bool

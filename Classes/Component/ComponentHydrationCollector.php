@@ -82,13 +82,8 @@ final readonly class ComponentHydrationCollector
                 'ids' => $arguments['ids'] ?? [],
                 ...$props,
             ],
+            ...array_filter($candidate->relatedContextRootIds),
         ];
-        if ($candidate->fieldRootId) {
-            $data['field'] = $candidate->fieldRootId;
-        }
-        if ($candidate->checkboxGroupRootId) {
-            $data['checkboxGroup'] = $candidate->checkboxGroupRootId;
-        }
 
         HydrationRegistry::getInstance()->add($candidate->baseName, $rootId, $data);
 
