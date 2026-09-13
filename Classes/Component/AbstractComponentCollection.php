@@ -216,6 +216,11 @@ abstract class AbstractComponentCollection implements ComponentCollectionInterfa
         return GeneralUtility::makeInstance(ComponentRendererFactory::class)->create($this);
     }
 
+    // $viewHelperName matches every other method on this class (resolveTemplateName,
+    // getComponentDefinition, getAdditionalVariables, ...) rather than the parent
+    // ViewHelperResolverDelegateInterface's generic $name - nothing calls this with named arguments
+    // expecting Fluid's own parameter name.
+    // @mago-expect analysis:incompatible-parameter-name
     final public function resolveViewHelperClassName(string $viewHelperName): string
     {
         $expectedTemplateName = $this->resolveTemplateName($viewHelperName);
@@ -236,6 +241,9 @@ abstract class AbstractComponentCollection implements ComponentCollectionInterfa
         return ComponentAdapter::class;
     }
 
+    /**
+     * @return class-string
+     */
     final public function getNamespace(): string
     {
         return static::class;

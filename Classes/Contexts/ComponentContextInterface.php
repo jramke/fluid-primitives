@@ -27,6 +27,11 @@ interface ComponentContextInterface extends ContainerInterface
     /**
      * Gets a context variable by its key.
      */
+    // get()/has() extend ContainerInterface only to gain its array-access-like get/has shape for
+    // Fluid's context.* template lookups - $key (matching set()'s own parameter and every docblock
+    // below) is more meaningful here than ContainerInterface's generic DI-container $id, and nothing
+    // in this codebase calls these with named arguments expecting PSR container semantics.
+    // @mago-expect analysis:incompatible-parameter-name
     public function get(string $key): mixed;
 
     /**
@@ -37,6 +42,7 @@ interface ComponentContextInterface extends ContainerInterface
     /**
      * Checks if a context variable exists.
      */
+    // @mago-expect analysis:incompatible-parameter-name
     public function has(string $key): bool;
 
     /**

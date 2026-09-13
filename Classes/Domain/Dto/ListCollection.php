@@ -10,11 +10,18 @@ use Traversable;
 
 // TODO: can we refactor this into smaller parts?
 // @mago-expect lint:kan-defect,too-many-methods,cyclomatic-complexity
-class ListCollection implements JsonSerializable, IteratorAggregate
+/**
+ * @implements IteratorAggregate<array-key, ListCollectionItem>
+ */
+final class ListCollection implements JsonSerializable, IteratorAggregate
 {
     /** @var ListCollectionItem[]|null Cached normalized items */
     private ?array $normalizedItems = null;
 
+    /**
+     * @param array<string>|string|null $groupSort Explicit group-key order; alternatively 'asc'/'desc'
+     *   to sort group keys, or null for insertion order.
+     */
     public function __construct(
         protected array $items = [],
         protected ?string $itemToValueKey = null,
@@ -26,7 +33,7 @@ class ListCollection implements JsonSerializable, IteratorAggregate
 
     public function copy(?array $items = null): static
     {
-        return new static(
+        return new self(
             $items ?? $this->items,
             $this->itemToValueKey,
             $this->itemToStringKey,
@@ -96,6 +103,9 @@ class ListCollection implements JsonSerializable, IteratorAggregate
                 continue;
             }
 
+            // $segment is a dot-notation path fragment - dynamic property access is inherent to
+            // supporting arbitrary nested object paths here, not something a rewrite would resolve.
+            // @mago-expect analysis:string-member-selector
             if (is_object($current) && ($current->{$segment} ?? null) !== null) {
                 $current = $current->{$segment};
                 continue;
@@ -121,9 +131,6 @@ class ListCollection implements JsonSerializable, IteratorAggregate
 
     public function stringifyItem(array|object $item): ?string
     {
-        if ($item === null) {
-            return null;
-        }
         if ($this->itemToStringKey) {
             return (string)($this->getFromKey($item, $this->itemToStringKey) ?? '');
         }
@@ -204,10 +211,15 @@ class ListCollection implements JsonSerializable, IteratorAggregate
             return -1;
         }
 
-        foreach ($this->getItems() as $index => $item) {
+        // A manual counter rather than the foreach key, since getItems() preserves whatever keys the
+        // raw $items array happened to use (not necessarily a sequential list) - "index" here means
+        // position in iteration order, matching how at()/getFirstValue()/getLastValue() use it.
+        $index = 0;
+        foreach ($this->getItems() as $item) {
             if ($item->value === $value) {
                 return $index;
             }
+            $index++;
         }
         return -1;
     }
