@@ -62,7 +62,6 @@ class ComponentAddCommand extends Command
         $this->addOption('force', 'f', InputOption::VALUE_NONE, 'Force overwriting existing component.');
     }
 
-    // @mago-expect lint:halstead
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
@@ -74,53 +73,7 @@ class ComponentAddCommand extends Command
             throw new \RuntimeException('No packages were found in which to store the Component.', 1766947893);
         }
 
-        if ($input->getOption('extension')) {
-            $extension = $input->getOption('extension');
-            if (!array_key_exists($extension, $availablePackages)) {
-                throw new \RuntimeException(
-                    'The extension "' . $extension . '" could not be found. Please choose one of these extensions: '
-                        . implode(', ', $this->getPackageKeys($availablePackages)),
-                    1678781015,
-                );
-            }
-        } else {
-            $defaultExtension =
-                $this->extensionConfiguration->get('fluid_primitives', 'cli')['add']['defaultExtension'] ?? '';
-
-            if ($defaultExtension !== '' && array_key_exists($defaultExtension, $availablePackages)) {
-                $extension = $defaultExtension;
-            } else {
-                $availablePackagesForDisplay = $this->packageResolver->getAvailablePackagesForDisplay();
-                if ($availablePackagesForDisplay === []) {
-                    $io->writeln(
-                        '<comment>No local extensions found. Displaying all installed extensions instead.</comment>',
-                    );
-                    $io->writeln('<comment>Maybe you forgot to install a site package?</comment>');
-                    $availablePackagesForDisplay = $availablePackages;
-                }
-                $availablePackageTitles = $this->getPackageTitles($availablePackagesForDisplay);
-                $extension = $io->askQuestion(new ChoiceQuestion(
-                    'Choose an extension in which the Component should be stored',
-                    $availablePackageTitles,
-                ));
-                if ($extension === null) {
-                    throw new MissingInputException('Aborted.', 1766948173);
-                }
-
-                if ($io->confirm(
-                    'Do you want to set "' . $extension . '" as the default extension for new components?',
-                )) {
-                    $settings = $this->extensionConfiguration->get('fluid_primitives');
-                    if (!is_array($settings)) {
-                        $settings = [];
-                    }
-                    $settings['cli']['add']['defaultExtension'] = $extension;
-                    $this->extensionConfiguration->set('fluid_primitives', $settings);
-
-                    $io->success(sprintf('Default extension "%s" saved.', $extension));
-                }
-            }
-        }
+        $extension = $this->resolveTargetExtension($input, $io, $availablePackages);
 
         [$error, $manifest] = $this->registryService->fetchComponent($componentKey);
         if ($error) {
@@ -137,6 +90,84 @@ class ComponentAddCommand extends Command
 
         $targetFolder =
             $availablePackages[$extension]->getPackagePath() . $input->getOption('path') . $componentFolderName . '/';
+
+        $writeResult = $this->writeComponentFiles($io, $componentKey, $files, [
+            'targetFolder' => $targetFolder,
+            'useFluidSuffix' => $useFluidSuffix,
+            'force' => (bool)$input->getOption('force'),
+        ]);
+
+        $this->reportResult($io, $componentKey, $extension, $writeResult);
+
+        return Command::SUCCESS;
+    }
+
+    /**
+     * Resolves which package the component should be written into: the explicit `--extension` option,
+     * the previously-saved default, or an interactive prompt (optionally saving the choice as the new
+     * default).
+     */
+    private function resolveTargetExtension(InputInterface $input, SymfonyStyle $io, array $availablePackages): string
+    {
+        $extension = $input->getOption('extension');
+        if ($extension) {
+            if (!array_key_exists($extension, $availablePackages)) {
+                throw new \RuntimeException(
+                    'The extension "' . $extension . '" could not be found. Please choose one of these extensions: '
+                        . implode(', ', $this->getPackageKeys($availablePackages)),
+                    1678781015,
+                );
+            }
+            return $extension;
+        }
+
+        $defaultExtension =
+            $this->extensionConfiguration->get('fluid_primitives', 'cli')['add']['defaultExtension'] ?? '';
+        if ($defaultExtension !== '' && array_key_exists($defaultExtension, $availablePackages)) {
+            return $defaultExtension;
+        }
+
+        $availablePackagesForDisplay = $this->packageResolver->getAvailablePackagesForDisplay();
+        if ($availablePackagesForDisplay === []) {
+            $io->writeln(
+                '<comment>No local extensions found. Displaying all installed extensions instead.</comment>',
+            );
+            $io->writeln('<comment>Maybe you forgot to install a site package?</comment>');
+            $availablePackagesForDisplay = $availablePackages;
+        }
+        $availablePackageTitles = $this->getPackageTitles($availablePackagesForDisplay);
+        $extension = $io->askQuestion(new ChoiceQuestion(
+            'Choose an extension in which the Component should be stored',
+            $availablePackageTitles,
+        ));
+        if ($extension === null) {
+            throw new MissingInputException('Aborted.', 1766948173);
+        }
+
+        if ($io->confirm('Do you want to set "' . $extension . '" as the default extension for new components?')) {
+            $settings = $this->extensionConfiguration->get('fluid_primitives');
+            if (!is_array($settings)) {
+                $settings = [];
+            }
+            $settings['cli']['add']['defaultExtension'] = $extension;
+            $this->extensionConfiguration->set('fluid_primitives', $settings);
+
+            $io->success(sprintf('Default extension "%s" saved.', $extension));
+        }
+
+        return $extension;
+    }
+
+    /**
+     * Fetches and writes each component file to disk, skipping existing files unless `force` is set.
+     *
+     * @param string[] $files
+     * @param array{targetFolder: string, useFluidSuffix: bool, force: bool} $options
+     * @return array{skipped: bool, updated: bool, created: bool}
+     */
+    private function writeComponentFiles(SymfonyStyle $io, string $componentKey, array $files, array $options): array
+    {
+        ['targetFolder' => $targetFolder, 'useFluidSuffix' => $useFluidSuffix, 'force' => $force] = $options;
 
         $someSkipped = false;
         $someUpdated = false;
@@ -158,7 +189,7 @@ class ComponentAddCommand extends Command
             }
 
             if (file_exists($targetFilePath)) {
-                if (!$input->getOption('force')) {
+                if (!$force) {
                     $io->writeln('Skipped: ' . $targetFileName);
                     $someSkipped = true;
                     continue;
@@ -175,29 +206,38 @@ class ComponentAddCommand extends Command
             $someCreated = true;
         }
 
+        return ['skipped' => $someSkipped, 'updated' => $someUpdated, 'created' => $someCreated];
+    }
+
+    /**
+     * @param array{skipped: bool, updated: bool, created: bool} $writeResult
+     */
+    private function reportResult(SymfonyStyle $io, string $componentKey, string $extension, array $writeResult): void
+    {
+        ['skipped' => $someSkipped, 'updated' => $someUpdated, 'created' => $someCreated] = $writeResult;
+
         if ($someSkipped && !$someCreated && !$someUpdated) {
             $io->warning([
                 'Component "' . $componentKey . '" already exists in extension "' . $extension . '".',
                 'No files were changed.',
                 'Use the --force option to overwrite existing files.',
             ]);
-        } else {
-            if ($someSkipped) {
-                $io->writeln(
-                    '<comment>Some files were skipped. Use the --force option to overwrite existing files.</comment>',
-                );
-            }
-
-            if ($someUpdated) {
-                $io->success('Component "' . $componentKey . '" updated in extension "' . $extension . '".');
-            } elseif ($someCreated) {
-                $io->success('Component "' . $componentKey . '" added to extension "' . $extension . '".');
-            }
-
-            $this->cacheManager->flushCachesInGroup('pages');
+            return;
         }
 
-        return Command::SUCCESS;
+        if ($someSkipped) {
+            $io->writeln(
+                '<comment>Some files were skipped. Use the --force option to overwrite existing files.</comment>',
+            );
+        }
+
+        if ($someUpdated) {
+            $io->success('Component "' . $componentKey . '" updated in extension "' . $extension . '".');
+        } elseif ($someCreated) {
+            $io->success('Component "' . $componentKey . '" added to extension "' . $extension . '".');
+        }
+
+        $this->cacheManager->flushCachesInGroup('pages');
     }
 
     private function getPackageTitles(array $availablePackages): array
