@@ -9,6 +9,10 @@ use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Utility\ExtensionUtility;
 
+// The standard TYPO3 extension bootstrap guard: aborts if this file is somehow included outside a
+// TYPO3 request. Its value is intentionally discarded - die() never returns, so there's nothing to do
+// with the left-hand side once it's reached.
+// @mago-expect analysis:unused-statement
 defined('TYPO3') || die();
 
 // ext_localconf.php is TYPO3's own bootstrap convention for registering Fluid namespaces and

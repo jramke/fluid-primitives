@@ -18,6 +18,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Service;
 
 use Composer\InstalledVersions;
+use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Package\PackageInterface;
 use TYPO3\CMS\Core\Package\PackageManager;
@@ -87,8 +88,15 @@ readonly class PackageResolver
         if (!file_exists($composerLockPath)) {
             return $packages;
         }
-        $composerLock = json_decode(file_get_contents($composerLockPath), associative: true);
-        $composerLockPackages = array_merge($composerLock['packages'] ?? [], $composerLock['packages-dev'] ?? []);
+        $composerLockContents = file_get_contents($composerLockPath);
+        if ($composerLockContents === false) {
+            return $packages;
+        }
+        $composerLock = Typed::arrayOrNull(json_decode($composerLockContents, associative: true)) ?? [];
+        $composerLockPackages = array_merge(
+            Typed::arrayOrNull($composerLock['packages'] ?? null) ?? [],
+            Typed::arrayOrNull($composerLock['packages-dev'] ?? null) ?? [],
+        );
         $composerLockMap = [];
         foreach ($composerLockPackages as $package) {
             $composerLockMap[$package['name']] = $package['dist']['type'] ?? null;

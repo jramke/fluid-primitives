@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Command;
 
 use Jramke\FluidPrimitives\Service\RegistryService;
+use Jramke\FluidPrimitives\Utility\Typed;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -37,11 +38,12 @@ class ComponentListCommand extends Command
 
         $io->title('Available Components for installation');
         $tableRows = [];
-        foreach ($components as $component) {
+        foreach (Typed::arrayOrNull($components) ?? [] as $component) {
+            $component = Typed::arrayOrNull($component) ?? [];
             $tableRows[] = [
-                $component['key'],
-                $component['name'],
-                $component['description'] ?? '',
+                Typed::string($component['key'] ?? null),
+                Typed::string($component['name'] ?? null),
+                Typed::string($component['description'] ?? null),
             ];
         }
         $io->table(['Key', 'Name', 'Description'], $tableRows);

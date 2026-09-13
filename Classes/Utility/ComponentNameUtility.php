@@ -70,10 +70,6 @@ class ComponentNameUtility
         }
 
         $componentParts = explode('.', $viewHelperName);
-        if (count($componentParts) === 0) {
-            return false;
-        }
-
         if (count($componentParts) === 1) {
             return true; // Single part components are considered root components
         }

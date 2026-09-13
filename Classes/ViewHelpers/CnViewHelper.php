@@ -120,7 +120,7 @@ class CnViewHelper extends AbstractViewHelper
 
         // Split by whitespace and filter out empty values
         return array_filter(
-            preg_split('/\s+/', trim($classString)),
+            preg_split('/\s+/', trim($classString)) ?: [],
             static fn($class) => !in_array(trim($class), ['', '0'], strict: true),
         );
     }

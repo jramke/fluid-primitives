@@ -8,6 +8,7 @@ use Jramke\FluidPrimitives\Component\ComponentPrimitivesCollection;
 use Jramke\FluidPrimitives\Service\ComponentCollectionService;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use Jramke\FluidPrimitives\Utility\PropsUtility;
+use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3Fluid\Fluid\Core\Compiler\TemplateCompiler;
 use TYPO3Fluid\Fluid\Core\Parser\ParsingState;
@@ -134,11 +135,10 @@ class UsePropsViewHelper extends AbstractViewHelper implements ViewHelperNodeIni
                 ...$externalArgumentDefinitions,
             ]);
 
-            if (
-                ($arguments['props'] ?? null) !== null && ($evaluatedSelectedProps = $arguments['props']->evaluate(
-                    new RenderingContext(),
-                ))
-            ) {
+            $evaluatedSelectedProps = Typed::arrayOrNull(($arguments['props'] ?? null)?->evaluate(
+                new RenderingContext(),
+            ));
+            if ($evaluatedSelectedProps !== null && $evaluatedSelectedProps !== []) {
                 $externalArgumentDefinitionsWithoutReservedUpdated = [];
                 foreach ($evaluatedSelectedProps as $argumentName) {
                     if (($externalArgumentDefinitionsWithoutReserved[$argumentName] ?? null) === null) {
@@ -153,11 +153,10 @@ class UsePropsViewHelper extends AbstractViewHelper implements ViewHelperNodeIni
                 $externalArgumentDefinitionsWithoutReserved = $externalArgumentDefinitionsWithoutReservedUpdated;
             }
 
-            if (
-                ($arguments['defaults'] ?? null) !== null && ($evaluatedDefaults = $arguments['defaults']->evaluate(
-                    new RenderingContext(),
-                ))
-            ) {
+            $evaluatedDefaults = Typed::arrayOrNull(($arguments['defaults'] ?? null)?->evaluate(
+                new RenderingContext(),
+            ));
+            if ($evaluatedDefaults !== null && $evaluatedDefaults !== []) {
                 foreach ($evaluatedDefaults as $defaultPropName => $defaultPropValue) {
                     if (($externalArgumentDefinitionsWithoutReserved[$defaultPropName] ?? null) === null) {
                         continue;
