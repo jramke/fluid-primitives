@@ -7,6 +7,8 @@ namespace Jramke\FluidPrimitives\ViewHelpers;
 use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
 use Jramke\FluidPrimitives\Domain\Model\TagAttributes;
 use Jramke\FluidPrimitives\Service\ContextService;
+use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
+use Jramke\FluidPrimitives\Utility\ComponentPartIdUtility;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
@@ -123,9 +125,9 @@ class TemplateViewHelper extends AbstractViewHelper
         try {
             $part = (string)$this->arguments['name'];
             $refAttributes = new TagAttributes([
-                'id' => ComponentUtility::generatePartId($componentName, (string)$context->get('rootId'), $part),
+                'id' => ComponentPartIdUtility::generatePartId($componentName, (string)$context->get('rootId'), $part),
                 'data-scope' => $componentName,
-                'data-part' => ComponentUtility::camelCaseToLowerCaseDashed($part),
+                'data-part' => ComponentNameUtility::camelCaseToLowerCaseDashed($part),
             ]);
 
             return '<template ' . $refAttributes . '>' . $this->renderChildren() . '</template>';
@@ -169,7 +171,7 @@ class TemplateViewHelper extends AbstractViewHelper
             ComponentUtility::isComponent($this->renderingContext) &&
             $ambientContext instanceof ComponentContextInterface
         ) {
-            return [ComponentUtility::getComponentBaseNameFromContext($this->renderingContext), $ambientContext];
+            return [ComponentNameUtility::getComponentBaseNameFromContext($this->renderingContext), $ambientContext];
         }
 
         throw new \RuntimeException(

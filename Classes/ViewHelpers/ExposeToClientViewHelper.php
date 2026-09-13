@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\ViewHelpers;
 
 use Jramke\FluidPrimitives\Constants;
+use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
@@ -34,7 +35,7 @@ class ExposeToClientViewHelper extends AbstractViewHelper
             );
         }
 
-        if (!ComponentUtility::isRootComponent($this->renderingContext)) {
+        if (!ComponentNameUtility::isRootComponent($this->renderingContext)) {
             throw new \RuntimeException(
                 'The exposeToClient ViewHelper can only be used in a root component.',
                 1754253447,

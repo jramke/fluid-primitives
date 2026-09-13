@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Component;
 
 use Jramke\FluidPrimitives\Constants;
-use Jramke\FluidPrimitives\Utility\ComponentUtility;
+use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
 use Jramke\FluidPrimitives\Utility\PropsUtility;
 use TYPO3Fluid\Fluid\Core\Component\ComponentAdapter;
 use TYPO3Fluid\Fluid\Core\Component\ComponentDefinition;
@@ -106,7 +106,7 @@ abstract class AbstractComponentCollection implements ComponentCollectionInterfa
                 $this->getTemplatePaths()->getTemplateIdentifier('Default', $templateName),
             );
 
-            $isRootComponent = ComponentUtility::isRootComponent($viewHelperName);
+            $isRootComponent = ComponentNameUtility::isRootComponent($viewHelperName);
             $argumentDefinitions = $parsedTemplate->getArgumentDefinitions();
 
             foreach ($argumentDefinitions as $name => $definition) {

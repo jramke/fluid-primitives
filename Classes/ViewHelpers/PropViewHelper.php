@@ -7,6 +7,7 @@ namespace Jramke\FluidPrimitives\ViewHelpers;
 use Jramke\FluidPrimitives\Annotations\ClientArgumentAnnotation;
 use Jramke\FluidPrimitives\Annotations\ContextArgumentAnnotation;
 use Jramke\FluidPrimitives\Annotations\RequiredAtRuntimeArgumentAnnotation;
+use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use Jramke\FluidPrimitives\Utility\PropsUtility;
 use TYPO3Fluid\Fluid\Core\Parser\Exception;
@@ -72,7 +73,7 @@ class PropViewHelper extends AbstractViewHelper implements ViewHelperNodeInitial
             throw new \RuntimeException('The prop ViewHelper can only be used inside a component context.', 1698255600);
         }
 
-        $isRootComponent = ComponentUtility::isRootComponent($this->renderingContext);
+        $isRootComponent = ComponentNameUtility::isRootComponent($this->renderingContext);
 
         if ($this->arguments['context'] && $isRootComponent) {
             throw new \RuntimeException(
@@ -100,7 +101,7 @@ class PropViewHelper extends AbstractViewHelper implements ViewHelperNodeInitial
                 'The prop "' .
                 $this->arguments['name'] .
                 '" is required for component "' .
-                ComponentUtility::getComponentFullNameFromContext($this->renderingContext) .
+                ComponentNameUtility::getComponentFullNameFromContext($this->renderingContext) .
                 '" but was not provided.',
                 1776714998,
             );

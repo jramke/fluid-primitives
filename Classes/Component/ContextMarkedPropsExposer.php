@@ -6,7 +6,7 @@ namespace Jramke\FluidPrimitives\Component;
 
 use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
 use Jramke\FluidPrimitives\Service\ContextService;
-use Jramke\FluidPrimitives\Utility\ComponentUtility;
+use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 
 /**
@@ -27,7 +27,7 @@ final readonly class ContextMarkedPropsExposer
         RenderingContextInterface $parentRenderingContext,
         string $viewHelperName,
     ): void {
-        $baseName = ComponentUtility::getComponentBaseNameFromViewHelperName($viewHelperName);
+        $baseName = ComponentNameUtility::getComponentBaseNameFromViewHelperName($viewHelperName);
 
         $propsMarkedForContextValues = [];
         foreach (array_keys($propsMarkedForContext) as $name) {
@@ -41,7 +41,7 @@ final readonly class ContextMarkedPropsExposer
         $context = ContextService::getFromRenderingContext($parentRenderingContext, $baseName);
         if ($context instanceof ComponentContextInterface) {
             $context->set(
-                ComponentUtility::getSubcomponentNameFromViewHelperName($viewHelperName),
+                ComponentNameUtility::getSubcomponentNameFromViewHelperName($viewHelperName),
                 $propsMarkedForContextValues,
             );
         }

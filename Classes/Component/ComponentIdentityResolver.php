@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Component;
 
+use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 
@@ -19,12 +20,12 @@ final readonly class ComponentIdentityResolver
      */
     public function resolve(string $viewHelperName, array $arguments, RenderingContextInterface $renderingContext): ComponentIdentity
     {
-        $isRootComponent = ComponentUtility::isRootComponent($viewHelperName);
+        $isRootComponent = ComponentNameUtility::isRootComponent($viewHelperName);
         if (isset($arguments['spreadProps']) && $arguments['spreadProps'] === true) {
             $isRootComponent = false;
         }
 
-        $isComposableComponent = ComponentUtility::isComposableComponent($viewHelperName);
+        $isComposableComponent = ComponentNameUtility::isComposableComponent($viewHelperName);
 
         $rootId = $arguments['rootId'] ?? null;
         if (!isset($rootId)) {
@@ -36,7 +37,7 @@ final readonly class ComponentIdentityResolver
             }
         }
 
-        $baseName = ComponentUtility::getComponentBaseNameFromViewHelperName($viewHelperName);
+        $baseName = ComponentNameUtility::getComponentBaseNameFromViewHelperName($viewHelperName);
 
         return new ComponentIdentity($isRootComponent, $isComposableComponent, $rootId, $baseName);
     }

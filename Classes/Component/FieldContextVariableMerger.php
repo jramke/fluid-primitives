@@ -6,7 +6,7 @@ namespace Jramke\FluidPrimitives\Component;
 
 use Jramke\FluidPrimitives\Contexts\AbstractComponentContext;
 use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
-use Jramke\FluidPrimitives\Utility\ComponentUtility;
+use Jramke\FluidPrimitives\Utility\ComponentPartIdUtility;
 use TYPO3Fluid\Fluid\View\TemplateView;
 
 /**
@@ -58,7 +58,7 @@ final readonly class FieldContextVariableMerger
     /**
      * Merges the Field's generic ("label"/"control") generated ids with whatever ids the component
      * itself was given, then maps the generic keys to the component's own part names - e.g. "control"
-     * becomes "hiddenInput" for a Switch (per `ComponentUtility::FIELD_ID_PARTS`) - so the Field's
+     * becomes "hiddenInput" for a Switch (per `ComponentPartIdUtility::FIELD_ID_PARTS`) - so the Field's
      * `<label for="...">` (built from its own "control" id) actually reaches the component's real
      * native input.
      *
@@ -75,7 +75,7 @@ final readonly class FieldContextVariableMerger
                 continue;
             }
 
-            $overrideFieldIdKey = ComponentUtility::getOverrideFieldIdKey($baseName, $fieldIdKey);
+            $overrideFieldIdKey = ComponentPartIdUtility::getOverrideFieldIdKey($baseName, $fieldIdKey);
             if ($overrideFieldIdKey === null) {
                 $updatedIds[$fieldIdKey] = $fieldIdValue;
                 continue;
@@ -96,7 +96,7 @@ final readonly class FieldContextVariableMerger
      */
     private function excludeInheritedIdsWhenNested(string $baseName, array $ids, array $otherComponentContexts): array
     {
-        $excludeIdInheritanceForParents = ComponentUtility::shouldSkipFieldIdsInheritanceWhenNestedIn($baseName);
+        $excludeIdInheritanceForParents = ComponentPartIdUtility::shouldSkipFieldIdsInheritanceWhenNestedIn($baseName);
         if ($excludeIdInheritanceForParents === []) {
             return $ids;
         }
@@ -106,7 +106,7 @@ final readonly class FieldContextVariableMerger
                 continue;
             }
 
-            foreach (ComponentUtility::getFieldIdOverrideKeys() as $fieldIdKey) {
+            foreach (ComponentPartIdUtility::getFieldIdOverrideKeys() as $fieldIdKey) {
                 unset($ids[$fieldIdKey]);
             }
         }

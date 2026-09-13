@@ -6,6 +6,7 @@ namespace Jramke\FluidPrimitives\Component;
 
 use Jramke\FluidPrimitives\Factory\ComponentContextFactory;
 use Jramke\FluidPrimitives\Service\ContextService;
+use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
@@ -34,7 +35,7 @@ final readonly class ComponentRootContextFactory
         RenderingContextInterface $renderingContext,
         RenderingContextInterface $parentRenderingContext,
     ): void {
-        $baseName = ComponentUtility::getComponentBaseNameFromViewHelperName($viewHelperName);
+        $baseName = ComponentNameUtility::getComponentBaseNameFromViewHelperName($viewHelperName);
 
         $contextVariables = $this->buildContextVariables(
             $argumentDefinitions,

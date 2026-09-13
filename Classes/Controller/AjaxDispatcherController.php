@@ -10,6 +10,7 @@ use Jramke\FluidPrimitives\Domain\Model\AjaxComponentActionDemand;
 use Jramke\FluidPrimitives\Factory\ComponentContextFactory;
 use Jramke\FluidPrimitives\Service\ComponentCollectionService;
 use Jramke\FluidPrimitives\Service\ContextService;
+use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerAwareInterface;
@@ -62,7 +63,7 @@ final class AjaxDispatcherController extends ActionController implements LoggerA
 
             ContextService::addToRenderingContext(
                 $renderingContext,
-                ComponentUtility::getComponentBaseNameFromViewHelperName($demand->getViewHelperName()),
+                ComponentNameUtility::getComponentBaseNameFromViewHelperName($demand->getViewHelperName()),
                 $context,
             );
 

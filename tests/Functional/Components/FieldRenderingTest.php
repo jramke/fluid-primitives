@@ -92,7 +92,7 @@ final class FieldRenderingTest extends FunctionalTestCase
         $this->assertStringContainsString('data-disabled', $html);
 
         // ...and its hiddenInput's id is overridden to the Field's generated "control" id
-        // (per ComponentUtility::FIELD_ID_PARTS['switch']['control'] = 'hiddenInput'), rather than
+        // (per ComponentPartIdUtility::FIELD_ID_PARTS['switch']['control'] = 'hiddenInput'), rather than
         // generating its own "switch:..." id - this is what lets a <label for="..."> pointing at the
         // Field's control id reach the actual native input.
         $hiddenInputTag = $this->extractTag($html, 'hidden-input');

@@ -6,6 +6,8 @@ namespace Jramke\FluidPrimitives\ViewHelpers;
 
 use Jramke\FluidPrimitives\Domain\Model\TagAttributes;
 use Jramke\FluidPrimitives\Service\ContextService;
+use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
+use Jramke\FluidPrimitives\Utility\ComponentPartIdUtility;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use Jramke\FluidPrimitives\Utility\EnumUtility;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
@@ -127,7 +129,7 @@ class RefViewHelper extends AbstractViewHelper
 
         $baseAttributes = [
             'data-scope' => $componentName,
-            'data-part' => ComponentUtility::camelCaseToLowerCaseDashed($part),
+            'data-part' => ComponentNameUtility::camelCaseToLowerCaseDashed($part),
         ];
 
         if ($value !== null) {
@@ -135,7 +137,7 @@ class RefViewHelper extends AbstractViewHelper
         }
 
         if ($this->arguments['withId']) {
-            $id = ComponentUtility::generatePartId($componentName, $rootId, $part, $value, $idsArray);
+            $id = ComponentPartIdUtility::generatePartId($componentName, $rootId, $part, $value, $idsArray);
             $baseAttributes = array_merge(['id' => $id], $baseAttributes);
         }
 
@@ -186,7 +188,7 @@ class RefViewHelper extends AbstractViewHelper
         }
 
         return [
-            ComponentUtility::getComponentBaseNameFromContext($this->renderingContext),
+            ComponentNameUtility::getComponentBaseNameFromContext($this->renderingContext),
             ComponentUtility::getRootIdFromContext($this->renderingContext),
             $this->renderingContext->getVariableProvider()->getByPath('context.ids') ?? [],
         ];

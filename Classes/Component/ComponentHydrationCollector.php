@@ -9,6 +9,7 @@ use Jramke\FluidPrimitives\Contexts\AbstractComponentContext;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Registry\PortalRegistry;
 use Jramke\FluidPrimitives\Utility\ClientPropsContextExtractor;
+use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 
 /**
@@ -33,7 +34,7 @@ final readonly class ComponentHydrationCollector
 
         // only register the components props for hydration if the user used the ui:ref viewhelper
         // ui:ref always emits data-scope="{componentName}", so that's our detection signal
-        $componentBaseName = ComponentUtility::getComponentBaseNameFromContext($candidate->renderingContext);
+        $componentBaseName = ComponentNameUtility::getComponentBaseNameFromContext($candidate->renderingContext);
         $newlyPortaledHtml = $this->extractNewlyPortaledHtml(
             $candidate->portalRegistrySnapshotBeforeRender,
             PortalRegistry::getAll(),

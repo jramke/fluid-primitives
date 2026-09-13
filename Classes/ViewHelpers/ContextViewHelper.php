@@ -6,6 +6,7 @@ namespace Jramke\FluidPrimitives\ViewHelpers;
 
 use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
 use Jramke\FluidPrimitives\Service\ContextService;
+use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
@@ -40,7 +41,7 @@ class ContextViewHelper extends AbstractViewHelper
             throw new \RuntimeException('The "name" argument is required for the context ViewHelper.', 1754253444);
         }
 
-        $componentName = ComponentUtility::getComponentBaseNameFromContext($this->renderingContext);
+        $componentName = ComponentNameUtility::getComponentBaseNameFromContext($this->renderingContext);
         if ($componentName === (string)$this->arguments['name']) {
             throw new \RuntimeException(
                 'You cannot access the context of the current component using the context ViewHelper. Use the exposed "context" variable instead.',

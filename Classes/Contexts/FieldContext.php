@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Contexts;
 
 use Jramke\FluidPrimitives\Service\ContextService;
-use Jramke\FluidPrimitives\Utility\ComponentUtility;
+use Jramke\FluidPrimitives\Utility\ComponentPartIdUtility;
 use TYPO3\CMS\Extbase\Reflection\ObjectAccess;
 
 class FieldContext extends AbstractComponentContext
@@ -41,8 +41,8 @@ class FieldContext extends AbstractComponentContext
 
         $givenIds = (array)($this->get('ids') ?? []);
         $ids = array_merge($givenIds, [
-            'control' => ComponentUtility::generatePartId('field', (string)$rootId, 'control'),
-            'label' => ComponentUtility::generatePartId('field', (string)$rootId, 'label'),
+            'control' => ComponentPartIdUtility::generatePartId('field', (string)$rootId, 'control'),
+            'label' => ComponentPartIdUtility::generatePartId('field', (string)$rootId, 'label'),
         ]);
 
         return [

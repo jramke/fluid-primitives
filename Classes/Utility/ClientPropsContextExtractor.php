@@ -55,8 +55,8 @@ class ClientPropsContextExtractor
             $context->getComponentResolver()->getNamespace(),
         );
 
-        $componentName = ComponentUtility::lowerCaseDashedToCamelCase(
-            ComponentUtility::getComponentBaseNameFromContext($context->getRenderingContext()),
+        $componentName = ComponentNameUtility::lowerCaseDashedToCamelCase(
+            ComponentNameUtility::getComponentBaseNameFromContext($context->getRenderingContext()),
         );
 
         $params = [
