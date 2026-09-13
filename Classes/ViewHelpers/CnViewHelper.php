@@ -73,7 +73,11 @@ class CnViewHelper extends AbstractViewHelper
 
         $as = $this->arguments['as'];
         if ($as !== '') {
-            $this->renderingContext->getVariableProvider()->add($as, implode(' ', $classes));
+            $renderingContext = $this->renderingContext ?? throw new \RuntimeException(
+                'Cn ViewHelper is missing its rendering context.',
+                1_788_100_011,
+            );
+            $renderingContext->getVariableProvider()->add($as, implode(' ', $classes));
             return '';
         }
 

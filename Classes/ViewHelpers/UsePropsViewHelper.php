@@ -77,7 +77,12 @@ class UsePropsViewHelper extends AbstractViewHelper implements ViewHelperNodeIni
 
     public function render(): string
     {
-        if (!ComponentUtility::isComponent($this->renderingContext)) {
+        if (!ComponentUtility::isComponent(
+            $this->renderingContext ?? throw new \RuntimeException(
+                'UseProps ViewHelper is missing its rendering context.',
+                1_788_100_012,
+            ),
+        )) {
             throw new \RuntimeException(
                 'The useProps viewhelper can only be used inside a component context.',
                 1698255600,

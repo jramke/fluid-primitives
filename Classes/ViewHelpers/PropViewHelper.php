@@ -69,11 +69,16 @@ class PropViewHelper extends AbstractViewHelper implements ViewHelperNodeInitial
 
     public function render(): string
     {
-        if (!ComponentUtility::isComponent($this->renderingContext)) {
+        $renderingContext = $this->renderingContext ?? throw new \RuntimeException(
+            'Prop ViewHelper is missing its rendering context.',
+            1_788_100_003,
+        );
+
+        if (!ComponentUtility::isComponent($renderingContext)) {
             throw new \RuntimeException('The prop ViewHelper can only be used inside a component context.', 1698255600);
         }
 
-        $isRootComponent = ComponentNameUtility::isRootComponent($this->renderingContext);
+        $isRootComponent = ComponentNameUtility::isRootComponent($renderingContext);
 
         if ($this->arguments['context'] && $isRootComponent) {
             throw new \RuntimeException(
@@ -95,13 +100,13 @@ class PropViewHelper extends AbstractViewHelper implements ViewHelperNodeInitial
 
         if (
             $this->arguments['requiredAtRuntime'] &&
-            !$this->renderingContext->getVariableProvider()->exists($this->arguments['name'])
+            !$renderingContext->getVariableProvider()->exists($this->arguments['name'])
         ) {
             throw new \RuntimeException(
                 'The prop "' .
                 $this->arguments['name'] .
                 '" is required for component "' .
-                ComponentNameUtility::getComponentFullNameFromContext($this->renderingContext) .
+                ComponentNameUtility::getComponentFullNameFromContext($renderingContext) .
                 '" but was not provided.',
                 1776714998,
             );

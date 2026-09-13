@@ -32,7 +32,11 @@ class SlotFilledViewHelper extends AbstractViewHelper
 
     public function render(): false|string
     {
-        $variableContainer = $this->renderingContext->getViewHelperVariableContainer();
+        $renderingContext = $this->renderingContext ?? throw new \RuntimeException(
+            'SlotFilled ViewHelper is missing its rendering context.',
+            1_788_100_001,
+        );
+        $variableContainer = $renderingContext->getViewHelperVariableContainer();
         $slot = $variableContainer->get(SlotViewHelper::class, $this->arguments['name']);
         $content = trim(is_callable($slot) ? (string)$slot() : '');
 

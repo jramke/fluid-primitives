@@ -173,7 +173,11 @@ class RefViewHelper extends AbstractViewHelper
      */
     private function resolveExplicitContext(string $explicitContextName): array
     {
-        $context = ContextService::requireFromRenderingContext($this->renderingContext, $explicitContextName, 'ui:ref');
+        $renderingContext = $this->renderingContext ?? throw new \RuntimeException(
+            'Ref ViewHelper is missing its rendering context.',
+            1_788_100_008,
+        );
+        $context = ContextService::requireFromRenderingContext($renderingContext, $explicitContextName, 'ui:ref');
 
         return [$explicitContextName, (string)($context->get('rootId') ?? ''), $context->get('ids') ?? []];
     }
@@ -183,14 +187,19 @@ class RefViewHelper extends AbstractViewHelper
      */
     private function resolveAmbientContext(): array
     {
-        if (!ComponentUtility::isComponent($this->renderingContext)) {
+        $renderingContext = $this->renderingContext ?? throw new \RuntimeException(
+            'Ref ViewHelper is missing its rendering context.',
+            1_788_100_009,
+        );
+
+        if (!ComponentUtility::isComponent($renderingContext)) {
             throw new \RuntimeException('The ref ViewHelper can only be used inside a component context.', 1698255600);
         }
 
         return [
-            ComponentNameUtility::getComponentBaseNameFromContext($this->renderingContext),
-            ComponentUtility::getRootIdFromContext($this->renderingContext),
-            $this->renderingContext->getVariableProvider()->getByPath('context.ids') ?? [],
+            ComponentNameUtility::getComponentBaseNameFromContext($renderingContext),
+            ComponentUtility::getRootIdFromContext($renderingContext),
+            $renderingContext->getVariableProvider()->getByPath('context.ids') ?? [],
         ];
     }
 }

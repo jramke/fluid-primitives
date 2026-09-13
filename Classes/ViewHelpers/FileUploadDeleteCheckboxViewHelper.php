@@ -72,7 +72,12 @@ class FileUploadDeleteCheckboxViewHelper extends AbstractViewHelper
 
     public function render(): string
     {
-        $formContext = ContextService::getFromRenderingContext($this->renderingContext, 'form');
+        $renderingContext = $this->renderingContext ?? throw new \RuntimeException(
+            'FileUploadDeleteCheckbox ViewHelper is missing its rendering context.',
+            1_788_100_006,
+        );
+
+        $formContext = ContextService::getFromRenderingContext($renderingContext, 'form');
         if (!$formContext instanceof FormContext) {
             throw new \RuntimeException(
                 'ui:fileUploadDeleteCheckbox can only be used inside a <ui:form.root>.',
@@ -88,7 +93,7 @@ class FileUploadDeleteCheckboxViewHelper extends AbstractViewHelper
             );
         }
 
-        $fieldContext = ContextService::getFromRenderingContext($this->renderingContext, 'field');
+        $fieldContext = ContextService::getFromRenderingContext($renderingContext, 'field');
         $property = $this->arguments['property'] ?? $fieldContext?->get('name');
         if (!is_string($property) || $property === '') {
             throw new \RuntimeException(

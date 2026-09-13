@@ -59,7 +59,12 @@ class AttributesViewHelper extends AbstractViewHelper
 
     public function render(): mixed
     {
-        if (!ComponentUtility::isComponent($this->renderingContext)) {
+        $renderingContext = $this->renderingContext ?? throw new \RuntimeException(
+            'Attributes ViewHelper is missing its rendering context.',
+            1_788_100_002,
+        );
+
+        if (!ComponentUtility::isComponent($renderingContext)) {
             throw new \RuntimeException(
                 'The attributes ViewHelper can only be used inside a component context.',
                 1698255600,
@@ -68,7 +73,7 @@ class AttributesViewHelper extends AbstractViewHelper
 
         $asArray = $this->arguments['asArray'] ?? false;
 
-        $tagAttributes = $this->renderingContext->getViewHelperVariableContainer()->get(self::class, 'attributes');
+        $tagAttributes = $renderingContext->getViewHelperVariableContainer()->get(self::class, 'attributes');
         if ($tagAttributes === null || $tagAttributes === []) {
             return $asArray ? [] : '';
         }

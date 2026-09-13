@@ -92,7 +92,11 @@ class TemplateViewHelper extends AbstractViewHelper
     {
         [$componentName, $context] = $this->resolveContext();
 
-        $variableProvider = $this->renderingContext->getVariableProvider();
+        $renderingContext = $this->renderingContext ?? throw new \RuntimeException(
+            'Template ViewHelper is missing its rendering context.',
+            1_788_100_004,
+        );
+        $variableProvider = $renderingContext->getVariableProvider();
 
         $hadComponent = $variableProvider->exists('component');
         $previousComponent = $hadComponent ? $variableProvider->get('component') : null;
@@ -151,27 +155,24 @@ class TemplateViewHelper extends AbstractViewHelper
      */
     private function resolveContext(): array
     {
+        $renderingContext = $this->renderingContext ?? throw new \RuntimeException(
+            'Template ViewHelper is missing its rendering context.',
+            1_788_100_005,
+        );
         $explicitContextName = (string)($this->arguments['context'] ?? '');
 
         if ($explicitContextName !== '') {
             return [
                 $explicitContextName,
-                ContextService::requireFromRenderingContext(
-                    $this->renderingContext,
-                    $explicitContextName,
-                    'ui:template',
-                ),
+                ContextService::requireFromRenderingContext($renderingContext, $explicitContextName, 'ui:template'),
             ];
         }
 
-        $variableProvider = $this->renderingContext->getVariableProvider();
+        $variableProvider = $renderingContext->getVariableProvider();
         $ambientContext = $variableProvider->exists('context') ? $variableProvider->get('context') : null;
 
-        if (
-            ComponentUtility::isComponent($this->renderingContext) &&
-            $ambientContext instanceof ComponentContextInterface
-        ) {
-            return [ComponentNameUtility::getComponentBaseNameFromContext($this->renderingContext), $ambientContext];
+        if (ComponentUtility::isComponent($renderingContext) && $ambientContext instanceof ComponentContextInterface) {
+            return [ComponentNameUtility::getComponentBaseNameFromContext($renderingContext), $ambientContext];
         }
 
         throw new \RuntimeException(
