@@ -4,36 +4,33 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Component;
 
-use Jramke\FluidPrimitives\Annotations\ClientArgumentAnnotation;
-use Jramke\FluidPrimitives\Annotations\ContextArgumentAnnotation;
 use Jramke\FluidPrimitives\Constants;
 use Jramke\FluidPrimitives\Contexts\AbstractComponentContext;
 use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
-use Jramke\FluidPrimitives\Domain\Model\TagAttributes;
-use Jramke\FluidPrimitives\Factory\ComponentContextFactory;
-use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Registry\PortalRegistry;
 use Jramke\FluidPrimitives\Service\ContextService;
-use Jramke\FluidPrimitives\Utility\ClientPropsContextExtractor;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
-use Jramke\FluidPrimitives\ViewHelpers\AttributesViewHelper;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3Fluid\Fluid\Core\Component\ComponentRendererInterface;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
-use TYPO3Fluid\Fluid\Core\Variables\VariableProviderInterface;
-use TYPO3Fluid\Fluid\Core\ViewHelper\ArgumentProcessorInterface;
-use TYPO3Fluid\Fluid\Core\ViewHelper\StrictArgumentProcessor;
 use TYPO3Fluid\Fluid\Core\ViewHelper\ViewHelperVariableContainer;
 use TYPO3Fluid\Fluid\View\TemplateView;
 use TYPO3Fluid\Fluid\ViewHelpers\SlotViewHelper;
 
-// TODO: refactor into smaller parts
-// @mago-expect lint:cyclomatic-complexity,halstead,kan-defect
 final readonly class ComponentRenderer implements ComponentRendererInterface
 {
+    private ComponentArgumentResolver $argumentResolver;
+
+    private ComponentContextPropagator $contextPropagator;
+
+    private ComponentHydrationCollector $hydrationCollector;
+
     public function __construct(
         private ComponentCollectionInterface $componentResolver,
-    ) {}
+    ) {
+        $this->argumentResolver = new ComponentArgumentResolver();
+        $this->contextPropagator = new ComponentContextPropagator($componentResolver);
+        $this->hydrationCollector = new ComponentHydrationCollector();
+    }
 
     /**
      * Renders a Fluid template to be used as a component. The necessary view configuration (template paths,
@@ -64,7 +61,6 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         $isComposableComponent = ComponentUtility::isComposableComponent($viewHelperName);
 
         $rootId = $arguments['rootId'] ?? null;
-
         if (!isset($rootId)) {
             if ($isRootComponent) {
                 $rootId = ComponentUtility::id();
@@ -78,60 +74,15 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
             ->getComponentDefinition($viewHelperName)
             ->getArgumentDefinitions();
 
-        // Extract props marked for client and context
-        $propsMarkedForClient = [];
-        $propsMarkedForContext = [];
-
-        foreach ($argumentDefinitions as $argDef) {
-            $annotations = $argDef->getAnnotations();
-
-            foreach ($annotations as $annotation) {
-                if ($annotation instanceof ClientArgumentAnnotation) {
-                    $propsMarkedForClient[$argDef->getName()] = true;
-                    continue;
-                }
-
-                if ($annotation instanceof ContextArgumentAnnotation) {
-                    $propsMarkedForContext[$argDef->getName()] = true;
-                    continue;
-                }
-            }
-        }
-
-        $definedArgumentKeys = array_keys($argumentDefinitions);
-        $additionalArguments = array_diff_key($arguments, array_flip($definedArgumentKeys));
-
-        // We remove the additional arguments here
-        // They are added later again coupled to an internal variable so they can be used by the ui:attributes view helper
-        foreach (array_keys($additionalArguments) as $key) {
-            unset($arguments[$key]);
-        }
-
-        // Add spreaded props as arguments
-        if (isset($arguments['spreadProps']) && $arguments['spreadProps']) {
-            $propsToUse = $parentRenderingContext->getVariableProvider()->get('spreadProps') ?? [];
-            if (is_array($propsToUse) && $propsToUse !== []) {
-                foreach ($propsToUse as $propToUse) {
-                    if ($propToUse === 'attributes') {
-                        // here we can simply grab the TagAttributes object as it already has resolved the additional attributes and the ones from the attributes argument
-                        $spreadTagAttributes =
-                            $parentRenderingContext->getViewHelperVariableContainer()->get(
-                                AttributesViewHelper::class,
-                                'attributes',
-                            ) ?? null;
-                        $propValue = $spreadTagAttributes instanceof TagAttributes
-                            ? $spreadTagAttributes->renderAsArray()
-                            : [];
-                    } else {
-                        $propValue =
-                            $arguments[$propToUse] ?? $parentRenderingContext->getVariableProvider()->get(
-                                $propToUse,
-                            ) ?? $renderingContext->getVariableProvider()->get($propToUse) ?? null;
-                    }
-                    $arguments[$propToUse] = $propValue;
-                }
-            }
-        }
+        $resolvedArguments = $this->argumentResolver->resolve(
+            $arguments,
+            $argumentDefinitions,
+            $renderingContext,
+            $parentRenderingContext,
+        );
+        $arguments = $resolvedArguments->arguments;
+        $propsMarkedForClient = $resolvedArguments->propsMarkedForClient;
+        $propsMarkedForContext = $resolvedArguments->propsMarkedForContext;
 
         // Set all components arguments
         $renderingContext->setVariableProvider($renderingContext->getVariableProvider()->getScopeCopy($arguments));
@@ -158,76 +109,25 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         ];
         $view->assign('component', $componentData);
 
-        // Expose additional arguments as as tag attributes so they can be used by the ui:attributes view helper
-        $hasAdditionalAttributes = false;
-        $attributesArgument = $arguments['attributes'] ?? null;
-        if (count($additionalArguments) > 0) {
-            $hasAdditionalAttributes = true;
-        }
-        if (isset($arguments['attributes'])) {
-            if (is_string($arguments['attributes']) && trim($arguments['attributes']) !== '') {
-                $hasAdditionalAttributes = true;
-            } elseif (is_array($arguments['attributes']) && count($arguments['attributes']) > 0) {
-                $hasAdditionalAttributes = true;
-            }
-        }
-        if ($hasAdditionalAttributes) {
-            $attributes = is_array($attributesArgument)
-                ? $attributesArgument
-                : TagAttributes::stringToArray($attributesArgument ?? '');
-            $mergedAttributes = array_merge($additionalArguments, $attributes);
-            $renderingContext->getViewHelperVariableContainer()->add(
-                AttributesViewHelper::class,
-                'attributes',
-                new TagAttributes($mergedAttributes),
-            );
-        }
+        // Expose additional arguments as tag attributes so they can be used by the ui:attributes view helper
+        $this->argumentResolver->exposeAdditionalAttributes($renderingContext, $arguments, $resolvedArguments->additionalArguments);
 
         // render() call includes validation of provided arguments
         $view->assignMultiple($this->componentResolver->getAdditionalVariables($viewHelperName));
 
         // Expose variables as context so it can be picked up in other components rendered inside this component.
         if ($isRootComponent) {
-            $contextVariables = $this->buildContextVariables(
-                $argumentDefinitions,
-                $view->getRenderingContext()->getVariableProvider(),
-                new StrictArgumentProcessor(),
-            );
-            $contextClassName = ComponentUtility::getContextClassNameFromViewHelperName(
-                $viewHelperName,
-                $this->componentResolver->getContextNamespaces(),
-            );
-            $contextFactory = GeneralUtility::makeInstance(ComponentContextFactory::class);
-            $context = $contextFactory->create(
-                $contextClassName,
-                $renderingContext,
-                $parentRenderingContext,
-                $this->componentResolver,
-                $contextVariables,
-            );
-
-            ContextService::addToRenderingContext($parentRenderingContext, $baseName, $context);
+            $this->contextPropagator->createRootContext($argumentDefinitions, $view, $viewHelperName, $renderingContext, $parentRenderingContext);
         }
 
-        // Expose props marked for context from non root components to the context of this component
-        // All props from the root component are automatically available in the context
         if ($propsMarkedForContext !== [] && !$isRootComponent) {
-            $propsMarkedForContextValues = [];
-            foreach (array_keys($propsMarkedForContext) as $name) {
-                if (!isset($arguments[$name]) && !isset($argumentDefinitions[$name])) {
-                    continue;
-                }
-
-                $propsMarkedForContextValues[$name] =
-                    $arguments[$name] ?? $argumentDefinitions[$name]->getDefaultValue() ?? null;
-            }
-            $context = ContextService::getFromRenderingContext($parentRenderingContext, $baseName);
-            if ($context instanceof ComponentContextInterface) {
-                $context->set(
-                    ComponentUtility::getSubcomponentNameFromViewHelperName($viewHelperName),
-                    $propsMarkedForContextValues,
-                );
-            }
+            $this->contextPropagator->exposePropsMarkedForContext(
+                $propsMarkedForContext,
+                $arguments,
+                $argumentDefinitions,
+                $parentRenderingContext,
+                $viewHelperName,
+            );
         }
 
         // Expose other component contexts to allow deep nesting of composable components
@@ -237,83 +137,13 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         $ctx = $this->getRootComponentContext($parentRenderingContext, $baseName);
 
         $fieldRootId = null;
-
-        // If the component supports field and there is a field context available, we merge the field context variables into the current context
         if ($isRootComponent && $this->componentSupportsField($baseName)) {
-            $fieldContext = $otherComponentContexts['field'] ?? null;
-            if ($fieldContext) {
-                $fieldRootId = $fieldContext->get('rootId') ?? null;
-                $fieldVariables = $fieldContext->getChildVariables();
-                foreach ($fieldVariables as $varName => $varValue) {
-                    if ($varValue === null) {
-                        continue;
-                    }
-
-                    if ($varName === 'ids' && is_array($varValue)) {
-                        $userIds = (array)($arguments['ids'] ?? []);
-                        $ids = array_merge($userIds, $varValue);
-
-                        // Remove field id parts if the current component is nested in a parent component that should exclude the field id inheritance
-                        $excludeIdInheritanceForParents =
-                            ComponentUtility::shouldSkipFieldIdsInheritanceWhenNestedIn($baseName);
-                        if ($excludeIdInheritanceForParents !== []) {
-                            foreach ($excludeIdInheritanceForParents as $parentBaseName) {
-                                if (!!($otherComponentContexts[$parentBaseName] ?? false)) {
-                                    foreach (ComponentUtility::getFieldIdOverrideKeys() as $fieldIdKey) {
-                                        unset($ids[$fieldIdKey]);
-                                    }
-                                }
-                            }
-                        }
-
-                        // Override the inherited field ids keys to map the corresponding component part, eg. control -> hidden-select
-                        $updatedIds = $ids;
-                        foreach ($ids as $fieldIdKey => $fieldIdValue) {
-                            if (!is_string($fieldIdKey) || !is_string($fieldIdValue)) {
-                                continue;
-                            }
-
-                            $overrideFieldIdKey = ComponentUtility::getOverrideFieldIdKey($baseName, $fieldIdKey);
-                            if ($overrideFieldIdKey === null) {
-                                $updatedIds[$fieldIdKey] = $fieldIdValue;
-                                continue;
-                            }
-
-                            unset($updatedIds[$fieldIdKey]);
-                            $updatedIds[$overrideFieldIdKey] = $fieldIdValue;
-                        }
-
-                        $varValue = $updatedIds;
-                    }
-
-                    $view->getRenderingContext()->getVariableProvider()->add($varName, $varValue);
-                    $arguments[$varName] = $varValue;
-                    if ($ctx instanceof AbstractComponentContext) {
-                        $ctx->set($varName, $varValue);
-                    }
-                }
-            }
+            $fieldRootId = $this->contextPropagator->applyFieldContextVariables($otherComponentContexts, $baseName, $view, $arguments, $ctx);
         }
 
-        // If the component supports checkbox-group and there is a checkbox-group context available, we merge the checkbox-group context variables into the current context
         $checkboxGroupRootId = null;
         if ($isRootComponent && $baseName === 'checkbox') {
-            $checkboxGroupContext = $otherComponentContexts['checkbox-group'] ?? null;
-            if ($checkboxGroupContext) {
-                $checkboxGroupRootId = $checkboxGroupContext->get('rootId') ?? null;
-                $checkboxGroupVariables = $checkboxGroupContext->getChildVariables($arguments);
-                foreach ($checkboxGroupVariables as $varName => $varValue) {
-                    if ($varValue === null) {
-                        continue;
-                    }
-                    $view->getRenderingContext()->getVariableProvider()->remove($varName);
-                    $view->getRenderingContext()->getVariableProvider()->add($varName, $varValue);
-                    $arguments[$varName] = $varValue;
-                    if ($ctx instanceof AbstractComponentContext) {
-                        $ctx->set($varName, $varValue);
-                    }
-                }
-            }
+            $checkboxGroupRootId = $this->contextPropagator->applyCheckboxGroupContextVariables($otherComponentContexts, $view, $arguments, $ctx);
         }
 
         // Assign context if available
@@ -329,9 +159,9 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         // ui:portal renders empty at its own position and buffers its real markup in PortalRegistry
         // for ui:portalContainer to flush elsewhere, so a root component whose every ref'd part sits
         // behind a portal (e.g. a triggerless Dialog/Popover - everything portaled, nothing rendered
-        // inline) would otherwise never contain the data-scope="..." string the check below looks
-        // for. Snapshotting the registry lets us also search whatever this render pass portaled away.
-        $portalRegistrySnapshotBeforeRender = $isRootComponent ? PortalRegistry::getAll() : null;
+        // inline) would otherwise never contain the data-scope="..." string ComponentHydrationCollector
+        // looks for. Snapshotting the registry lets it also search whatever this render pass portaled away.
+        $portalRegistrySnapshotBeforeRender = $isRootComponent ? PortalRegistry::getAll() : [];
 
         if ($arguments['asChild'] ?? false) {
             $renderedChild = isset($slots['default']) && is_callable($slots['default'])
@@ -352,117 +182,22 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
                 $ctx->afterRendering($rendered);
             }
 
-            $rootId = ComponentUtility::getRootIdFromContext($renderingContext);
-            if ($rootId === '' || $rootId === '0') {
-                throw new \RuntimeException('No rootId found for root component ' . $viewHelperName . '.', 1756025241);
-            }
-
-            // only register the components props for hydration if the user used the ui:ref viewhelper
-            // ui:ref always emits data-scope="{componentName}", so that's our detection signal
-            $componentBaseName = ComponentUtility::getComponentBaseNameFromContext($renderingContext);
-            $newlyPortaledHtml = self::extractNewlyPortaledHtml(
-                $portalRegistrySnapshotBeforeRender ?? [],
-                PortalRegistry::getAll(),
-            );
-            $hasRef =
-                str_contains($rendered, 'data-scope="' . $componentBaseName . '"') ||
-                str_contains($newlyPortaledHtml, 'data-scope="' . $componentBaseName . '"');
-
-            $manuallyExposedToClient = str_contains($rendered, Constants::MANUALLY_EXPOSED_TO_CLIENT_MARKER);
-
-            if ($hasRef || $manuallyExposedToClient) {
-                if ($manuallyExposedToClient) {
-                    $rendered = str_replace(Constants::MANUALLY_EXPOSED_TO_CLIENT_MARKER, '', $rendered);
-                }
-
-                $propsMarkedForClientValues = [];
-                foreach (array_keys($propsMarkedForClient) as $name) {
-                    if (!isset($arguments[$name]) && !isset($argumentDefinitions[$name])) {
-                        continue;
-                    }
-
-                    $propsMarkedForClientValues[$name] =
-                        $arguments[$name] ?? $argumentDefinitions[$name]->getDefaultValue() ?? null;
-                }
-
-                // we dont want to send null values to the client, defaults should be defined in the component ts file
-                $propsMarkedForClientValues = array_filter(
-                    $propsMarkedForClientValues,
-                    static fn($value) => !is_null($value),
-                );
-
-                $clientPropsFromContext = [];
-                if ($ctx instanceof AbstractComponentContext) {
-                    $clientPropsFromContext = ClientPropsContextExtractor::extract($ctx);
-                }
-
-                $props = [...$propsMarkedForClientValues, ...$clientPropsFromContext];
-                unset($props['id']); // Remove potential id from client props as it is handled separately
-                unset($props['ids']);
-
-                $data = [
-                    'controlled' => $arguments['controlled'] ?? false,
-                    'props' => [
-                        'id' => $rootId,
-                        'ids' => $arguments['ids'] ?? [],
-                        ...$props,
-                    ],
-                ];
-                if ($fieldRootId) {
-                    $data['field'] = $fieldRootId;
-                }
-                if ($checkboxGroupRootId) {
-                    $data['checkboxGroup'] = $checkboxGroupRootId;
-                }
-
-                $registry = HydrationRegistry::getInstance();
-                $registry->add($baseName, $rootId, $data);
-            }
+            $rendered = $this->hydrationCollector->collectForRootComponent(new ComponentHydrationCandidate(
+                $rendered,
+                $viewHelperName,
+                $renderingContext,
+                $baseName,
+                $arguments,
+                $argumentDefinitions,
+                $propsMarkedForClient,
+                $ctx,
+                $fieldRootId,
+                $checkboxGroupRootId,
+                $portalRegistrySnapshotBeforeRender,
+            ));
         }
 
         return $rendered;
-    }
-
-    // This is somewhat what is already done by the template view when we call the render method but we need the variables earlier so we can expose them to the context.
-    // We also dont throw anything here as the validation is handled by the mentioned render method.
-    protected function buildContextVariables(
-        array $argumentDefinitions,
-        VariableProviderInterface $variableProvider,
-        ArgumentProcessorInterface $argumentProcessor,
-    ): array {
-        $variablesToRemove = [
-            'component',
-            'settings',
-            'context',
-            'class',
-            'asChild',
-        ];
-
-        $contextVariables = $variableProvider->getAll();
-
-        foreach ($argumentDefinitions as $argumentDefinition) {
-            $argumentName = $argumentDefinition->getName();
-            if ($variableProvider->exists($argumentName)) {
-                $processedValue = $argumentProcessor->process(
-                    $variableProvider->get($argumentName),
-                    $argumentDefinition,
-                );
-                if (!$argumentProcessor->isValid($processedValue, $argumentDefinition)) {
-                    continue; // Skip invalid values
-                }
-                $contextVariables[$argumentName] = $processedValue;
-            } elseif ($argumentDefinition->isRequired()) {
-                continue; // Skip required arguments that are not provided
-            } else {
-                $contextVariables[$argumentName] = $argumentDefinition->getDefaultValue();
-            }
-        }
-
-        foreach ($variablesToRemove as $var) {
-            unset($contextVariables[$var]);
-        }
-
-        return $contextVariables;
     }
 
     protected function getOtherComponentContexts(
@@ -490,7 +225,6 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         string $baseName,
     ): ?AbstractComponentContext {
         $variableProvider = $renderingContext->getVariableProvider();
-        $variableContainer = $renderingContext->getViewHelperVariableContainer();
 
         $ctx = ContextService::getFromRenderingContext($renderingContext, $baseName);
 
@@ -557,28 +291,5 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
     protected function componentSupportsField(string $baseName): bool
     {
         return in_array($baseName, Constants::COMPONENTS_THAT_SUPPORT_FIELD, true);
-    }
-
-    /**
-     * Concatenates whatever `PortalRegistry` entries were added between `$before` and `$after` -
-     * i.e. everything `ui:portal` buffered away while rendering this component, across every named
-     * portal bucket. Diffed by per-bucket length rather than array-diffed by value, since two
-     * unrelated portaled fragments could legitimately render identical markup (e.g. two dialogs
-     * with the same content) and would otherwise be indistinguishable/collapsed.
-     *
-     * @param array<string, string[]> $before
-     * @param array<string, string[]> $after
-     */
-    private static function extractNewlyPortaledHtml(array $before, array $after): string
-    {
-        $newlyPortaledHtml = '';
-        foreach ($after as $name => $entries) {
-            $previousCount = count($before[$name] ?? []);
-            foreach (array_slice($entries, $previousCount) as $entry) {
-                $newlyPortaledHtml .= $entry;
-            }
-        }
-
-        return $newlyPortaledHtml;
     }
 }
