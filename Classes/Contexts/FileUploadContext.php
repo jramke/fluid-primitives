@@ -7,6 +7,7 @@ namespace Jramke\FluidPrimitives\Contexts;
 use Jramke\FluidPrimitives\Attributes\ExposeToClient;
 use Jramke\FluidPrimitives\Service\TranslatorService;
 use Jramke\FluidPrimitives\Traits\HasTranslationsTrait;
+use Jramke\FluidPrimitives\Utility\Typed;
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 
 #[Autoconfigure(public: true)]
@@ -76,14 +77,13 @@ class FileUploadContext extends AbstractComponentContext
             }
         }
 
-        $validTokens = array_values(array_filter($tokens, static fn($candidate): bool => self::isValidAcceptToken(
-            (string)$candidate,
-        )));
+        $stringTokens = array_map(Typed::string(...), $tokens);
+        $validTokens = array_values(array_filter($stringTokens, $this->isValidAcceptToken(...)));
 
         return $validTokens === [] ? null : implode(',', $validTokens);
     }
 
-    private static function isValidAcceptToken(string $value): bool
+    private function isValidAcceptToken(string $value): bool
     {
         if (in_array($value, ['audio/*', 'video/*', 'image/*', 'text/*'], strict: true)) {
             return true;

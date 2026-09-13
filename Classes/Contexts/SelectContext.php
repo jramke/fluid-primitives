@@ -9,6 +9,7 @@ use Jramke\FluidPrimitives\Domain\Dto\ListCollectionItem;
 use Jramke\FluidPrimitives\Service\TranslatorService;
 use Jramke\FluidPrimitives\Traits\HasListCollectionTrait;
 use Jramke\FluidPrimitives\Traits\HasTranslationsTrait;
+use Jramke\FluidPrimitives\Utility\Typed;
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 
 #[Autoconfigure(public: true)]
@@ -34,11 +35,11 @@ class SelectContext extends AbstractComponentContext
             return null;
         }
 
-        if (is_string($this->get('defaultValue'))) {
-            return [$this->get('defaultValue')];
+        if (is_string($defaultValue)) {
+            return [$defaultValue];
         }
 
-        return $this->get('defaultValue');
+        return Typed::arrayOrNull($defaultValue);
     }
 
     #[ExposeToClient]
@@ -58,7 +59,7 @@ class SelectContext extends AbstractComponentContext
     public function getItemState(ListCollectionItem|array $item): object
     {
         $defaultValue = $this->getDefaultValue() ?? [];
-        $rootDisabled = $this->get('disabled') ?? false;
+        $rootDisabled = Typed::bool($this->get('disabled'));
 
         // Handle ListCollectionItem objects directly
         if ($item instanceof ListCollectionItem) {

@@ -9,6 +9,7 @@ use Jramke\FluidPrimitives\Service\ExtbaseFormHiddenFieldsRenderer;
 use Jramke\FluidPrimitives\Traits\HasIndicatorStateTrait;
 use Jramke\FluidPrimitives\Utility\ExtbasePersistedObjectResolver;
 use Jramke\FluidPrimitives\Utility\ExtbaseRequestResolver;
+use Jramke\FluidPrimitives\Utility\Typed;
 use Psr\Http\Message\ServerRequestInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use TYPO3\CMS\Core\Type\DocType;
@@ -32,7 +33,7 @@ class FormContext extends AbstractComponentContext
     {
         $fieldContextInformations = $this->getFieldContextInformations();
         $objects = $this->persistedObjectResolver->resolveForForm($this->get('object'), $fieldContextInformations);
-        $objectName = $this->get('objectName');
+        $objectName = Typed::stringOrNull($this->get('objectName'));
         $fieldNamePrefix = $this->getFieldNamePrefix();
         $xhtmlCompliant = $this->shouldUseXHtmlSlash();
 
@@ -59,8 +60,9 @@ class FormContext extends AbstractComponentContext
 
     public function getResolvedAction(): ?string
     {
-        if ((string)$this->get('actionUri') !== '') {
-            return $this->get('actionUri');
+        $actionUri = Typed::stringOrNull($this->get('actionUri'));
+        if ($actionUri !== null && $actionUri !== '') {
+            return $actionUri;
         }
 
         $request = $this->requestResolver->resolveOrThrow($this->getRenderingContext());
@@ -83,11 +85,11 @@ class FormContext extends AbstractComponentContext
         }
 
         return $uriBuilder->uriFor(
-            $this->get('action') ?? null,
-            $this->get('get') ?? [],
-            $this->get('controller') ?? null,
-            $this->get('extensionName') ?? null,
-            $this->get('pluginName') ?? null,
+            Typed::stringOrNull($this->get('action')),
+            Typed::arrayOrNull($this->get('get')) ?? [],
+            Typed::stringOrNull($this->get('controller')),
+            Typed::stringOrNull($this->get('extensionName')),
+            Typed::stringOrNull($this->get('pluginName')),
         );
     }
 
@@ -122,22 +124,31 @@ class FormContext extends AbstractComponentContext
             return '';
         }
 
-        $extensionName = (string)$this->get('extensionName') === ''
-            ? $request->getControllerExtensionName()
-            : $this->get('extensionName');
+        $extensionNameProp = Typed::string($this->get('extensionName'));
+        $extensionName = $extensionNameProp === '' ? $request->getControllerExtensionName() : $extensionNameProp;
 
-        $pluginName = (string)$this->get('pluginName') === '' ? $request->getPluginName() : $this->get('pluginName');
+        $pluginNameProp = Typed::string($this->get('pluginName'));
+        $pluginName = $pluginNameProp === '' ? $request->getPluginName() : $pluginNameProp;
 
-        if ($extensionName !== null && $pluginName !== null) {
-            return $this->extensionService->getPluginNamespace($extensionName, $pluginName);
-        }
-
-        return '';
+        return $this->extensionService->getPluginNamespace($extensionName, $pluginName);
     }
 
+    /**
+     * @return array<string, array{name?: string}>
+     */
     protected function getFieldContextInformations(): array
     {
-        return $this->getParentRenderingContext()->getViewHelperVariableContainer()->getAll(FieldContext::class);
+        // The intermediate variable isn't redundant here despite the immediate return - it's what the
+        // @var below narrows, since ViewHelperVariableContainer::getAll() itself only declares a bare
+        // `array` return and FieldContext is the only thing that ever adds to this bucket.
+        // @mago-expect lint:inline-variable-return
+        /** @var array<string, array{name?: string}> $fieldContextInformations */
+        $fieldContextInformations = $this
+            ->getParentRenderingContext()
+            ->getViewHelperVariableContainer()
+            ->getAll(FieldContext::class);
+
+        return $fieldContextInformations;
     }
 
     protected function shouldUseXHtmlSlash(): bool

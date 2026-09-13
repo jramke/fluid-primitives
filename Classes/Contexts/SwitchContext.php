@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Contexts;
 
 use Jramke\FluidPrimitives\Traits\HasCheckedStateDataAttributesTrait;
+use Jramke\FluidPrimitives\Utility\Typed;
 
 class SwitchContext extends AbstractComponentContext
 {
@@ -17,6 +18,6 @@ class SwitchContext extends AbstractComponentContext
 
     public function isChecked(): bool
     {
-        return (bool)($this->get('defaultChecked') ?? false);
+        return Typed::bool($this->get('defaultChecked'));
     }
 }

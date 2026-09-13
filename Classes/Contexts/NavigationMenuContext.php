@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Contexts;
 
+use Jramke\FluidPrimitives\Utility\Typed;
+
 class NavigationMenuContext extends AbstractComponentContext
 {
     /**
@@ -14,7 +16,7 @@ class NavigationMenuContext extends AbstractComponentContext
         $value = $item['value'];
         $disabled = $item['disabled'] ?? null;
 
-        $defaultValue = $this->get('defaultValue') ?? '';
+        $defaultValue = Typed::string($this->get('defaultValue'));
         $isOpen = $defaultValue !== '' && $defaultValue === $value;
 
         return (object)[
@@ -26,7 +28,7 @@ class NavigationMenuContext extends AbstractComponentContext
 
     public function getGlobalState(): object
     {
-        $defaultValue = $this->get('defaultValue') ?? '';
+        $defaultValue = Typed::string($this->get('defaultValue'));
         $isOpen = $defaultValue !== '';
 
         return (object)[

@@ -12,20 +12,27 @@ class CheckboxContext extends AbstractComponentContext
 
     public function isValueValid(): bool
     {
-        $defaultValue = $this->get('defaultChecked') ?? null;
-        return is_bool($defaultValue) || $defaultValue === 'indeterminate';
+        return $this->getCheckedState() !== null;
     }
 
     public function isChecked(): bool
     {
-        $checked = $this->get('defaultChecked') ?? null;
-        return $this->isIndeterminate() ? false : (bool)$checked;
+        return $this->isIndeterminate() ? false : (bool)$this->getCheckedState();
     }
 
     public function isIndeterminate(): bool
     {
-        $checked = $this->get('defaultChecked') ?? null;
-        return $checked === 'indeterminate';
+        return $this->getCheckedState() === 'indeterminate';
+    }
+
+    /**
+     * `defaultChecked` is declared `mixed` (not `boolean`) because, unlike every other checked-state
+     * prop in this codebase, it also accepts the literal string 'indeterminate' as a third state.
+     */
+    private function getCheckedState(): bool|string|null
+    {
+        $value = $this->get('defaultChecked');
+        return is_bool($value) || $value === 'indeterminate' ? $value : null;
     }
 
     protected function getState(): string

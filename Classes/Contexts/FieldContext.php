@@ -6,6 +6,7 @@ namespace Jramke\FluidPrimitives\Contexts;
 
 use Jramke\FluidPrimitives\Service\ContextService;
 use Jramke\FluidPrimitives\Utility\ComponentPartIdUtility;
+use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3\CMS\Extbase\Reflection\ObjectAccess;
 
 class FieldContext extends AbstractComponentContext
@@ -15,12 +16,12 @@ class FieldContext extends AbstractComponentContext
         $parentRenderingContext = $this->getParentRenderingContext();
 
         $variableContainer = $parentRenderingContext->getViewHelperVariableContainer();
-        $variableContainer->add(self::class, $this->get('rootId'), ['name' => $this->get('name')]);
+        $variableContainer->add(self::class, Typed::string($this->get('rootId')), ['name' => $this->get('name')]);
 
         $formContext = ContextService::getFromRenderingContext($parentRenderingContext, 'form');
         if ($formContext instanceof ComponentContextInterface) {
             $formObject = $formContext->get('object');
-            if ($formObject && $this->has('name')) {
+            if (is_object($formObject) && $this->has('name')) {
                 // A trailing "[]" (e.g. `name="a11yNeeds[]"`, the manual-bracket convention
                 // CheckboxGroup and FileUpload's multi-file `name` prop both rely on) is a
                 // submission-name detail, not part of the property path - ObjectAccess has no
@@ -37,20 +38,20 @@ class FieldContext extends AbstractComponentContext
      */
     public function getChildVariables(): array
     {
-        $rootId = $this->get('rootId');
+        $rootId = Typed::string($this->get('rootId'));
 
         $givenIds = (array)($this->get('ids') ?? []);
         $ids = array_merge($givenIds, [
-            'control' => ComponentPartIdUtility::generatePartId('field', (string)$rootId, 'control'),
-            'label' => ComponentPartIdUtility::generatePartId('field', (string)$rootId, 'label'),
+            'control' => ComponentPartIdUtility::generatePartId('field', $rootId, 'control'),
+            'label' => ComponentPartIdUtility::generatePartId('field', $rootId, 'label'),
         ]);
 
         return [
-            'name' => $this->get('name') ?? null,
-            'disabled' => $this->get('disabled') ?? null,
-            'readOnly' => $this->get('readOnly') ?? null,
-            'required' => $this->get('required') ?? null,
-            'invalid' => $this->get('invalid') ?? null,
+            'name' => Typed::stringOrNull($this->get('name')),
+            'disabled' => Typed::boolOrNull($this->get('disabled')),
+            'readOnly' => Typed::boolOrNull($this->get('readOnly')),
+            'required' => Typed::boolOrNull($this->get('required')),
+            'invalid' => Typed::boolOrNull($this->get('invalid')),
             'defaultValue' => $this->get('defaultValue') ?? null,
             'ids' => $ids,
         ];

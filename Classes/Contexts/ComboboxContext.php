@@ -10,6 +10,7 @@ use Jramke\FluidPrimitives\Domain\Dto\ListCollectionItem;
 use Jramke\FluidPrimitives\Service\TranslatorService;
 use Jramke\FluidPrimitives\Traits\HasListCollectionTrait;
 use Jramke\FluidPrimitives\Traits\HasTranslationsTrait;
+use Jramke\FluidPrimitives\Utility\Typed;
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 
 #[Autoconfigure(public: true)]
@@ -64,7 +65,7 @@ class ComboboxContext extends AbstractComponentContext
             return '';
         }
 
-        $selectionBehavior = $this->get('selectionBehavior') ?: 'replace';
+        $selectionBehavior = Typed::stringOrNull($this->get('selectionBehavior')) ?: 'replace';
         if ($selectionBehavior === 'clear') {
             return '';
         }
@@ -81,8 +82,8 @@ class ComboboxContext extends AbstractComponentContext
     public function getItemState(ListCollectionItem|array $item): object
     {
         $defaultValue = $this->getDefaultValue() ?? [];
-        $rootDisabled = $this->get('disabled') ?? false;
-        $defaultHighlightedValue = $this->get('defaultHighlightedValue');
+        $rootDisabled = Typed::bool($this->get('disabled'));
+        $defaultHighlightedValue = Typed::stringOrNull($this->get('defaultHighlightedValue'));
 
         if ($item instanceof ListCollectionItem) {
             return (object)[
