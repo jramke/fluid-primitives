@@ -17,11 +17,11 @@ use TYPO3\CMS\Core\Package\PackageInterface;
  * the previously-saved default, or an interactive prompt (optionally saving the choice as the new
  * default).
  */
-final class ComponentTargetExtensionResolver
+final readonly class ComponentTargetExtensionResolver
 {
     public function __construct(
-        private readonly PackageResolver $packageResolver,
-        private readonly ExtensionConfiguration $extensionConfiguration,
+        private PackageResolver $packageResolver,
+        private ExtensionConfiguration $extensionConfiguration,
     ) {}
 
     /**

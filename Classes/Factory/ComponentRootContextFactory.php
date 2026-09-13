@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Factory;
 
+use TYPO3Fluid\Fluid\Core\ViewHelper\ArgumentDefinition;
 use Jramke\FluidPrimitives\Component\ComponentCollectionInterface;
 use Jramke\FluidPrimitives\Service\ContextService;
 use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
@@ -25,7 +26,7 @@ final readonly class ComponentRootContextFactory
     ) {}
 
     /**
-     * @param array<string, \TYPO3Fluid\Fluid\Core\ViewHelper\ArgumentDefinition> $argumentDefinitions
+     * @param array<string, ArgumentDefinition> $argumentDefinitions
      */
     public function create(
         array $argumentDefinitions,

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Contexts;
 
+use Jramke\FluidPrimitives\Domain\Dto\ListCollection;
 use Jramke\FluidPrimitives\Attributes\ExposeToClient;
 use Jramke\FluidPrimitives\Domain\Dto\ListCollectionItem;
 use Jramke\FluidPrimitives\Service\TranslatorService;
@@ -54,7 +55,7 @@ class ComboboxContext extends AbstractComponentContext
         }
 
         $collection = $this->getCollection();
-        if (!$collection) {
+        if (!$collection instanceof ListCollection) {
             return '';
         }
 

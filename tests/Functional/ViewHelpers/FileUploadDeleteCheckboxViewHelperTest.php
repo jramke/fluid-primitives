@@ -36,7 +36,7 @@ final class FileUploadDeleteCheckboxViewHelperTest extends FunctionalTestCase
         $hashService = $this->get(HashService::class);
         $payload = $hashService->validateAndStripHmac(html_entity_decode($matches[1]), '@delete');
 
-        return json_decode($payload, true);
+        return json_decode((string)$payload, true);
     }
 
     #[Test]

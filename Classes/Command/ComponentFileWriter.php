@@ -13,11 +13,11 @@ use TYPO3\CMS\Core\Information\Typo3Version;
  * Fetches and writes a component's files to disk for `ui:add`, then reports the outcome and flushes
  * the page cache if anything actually changed.
  */
-final class ComponentFileWriter
+final readonly class ComponentFileWriter
 {
     public function __construct(
-        private readonly RegistryService $registryService,
-        private readonly CacheManager $cacheManager,
+        private RegistryService $registryService,
+        private CacheManager $cacheManager,
     ) {}
 
     /**

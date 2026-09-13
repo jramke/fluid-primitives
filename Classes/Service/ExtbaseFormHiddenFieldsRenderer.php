@@ -85,7 +85,7 @@ final readonly class ExtbaseFormHiddenFieldsRenderer
             );
         }
 
-        if ($objects->boundObject !== null) {
+        if ($objects->boundObject instanceof AbstractDomainObject) {
             $fieldNames[] = $this->fieldNamer->prefixFieldName('__identity', $objectName, $fieldNamePrefix);
         }
 

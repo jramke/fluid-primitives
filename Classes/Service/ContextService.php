@@ -73,7 +73,7 @@ class ContextService
 
         $result = [];
         foreach ($allStacks as $name => $stack) {
-            if (!(is_array($stack) && $stack !== [])) {
+            if (!is_array($stack) || $stack === []) {
                 continue;
             }
 

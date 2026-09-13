@@ -69,7 +69,7 @@ final readonly class ExtbasePersistedObjectResolver
      */
     public function getNestedPersistedObjects(?AbstractDomainObject $rootObject, array $fieldContextInformations): array
     {
-        if ($rootObject === null) {
+        if (!$rootObject instanceof AbstractDomainObject) {
             return [];
         }
 
@@ -86,7 +86,7 @@ final readonly class ExtbasePersistedObjectResolver
             }
 
             $nestedObject = $this->resolve(ObjectAccess::getProperty($rootObject, $propertyPath));
-            if ($nestedObject !== null) {
+            if ($nestedObject instanceof AbstractDomainObject) {
                 $nestedObjects[$propertyPath] = $nestedObject;
             }
         }

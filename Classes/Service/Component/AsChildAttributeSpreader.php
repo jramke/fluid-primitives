@@ -27,9 +27,11 @@ final readonly class AsChildAttributeSpreader
         $componentAttrs = $this->parseAttributes(trim($compMatches[2]));
 
         foreach ($componentAttrs as $name => $value) {
-            if (!isset($childAttrs[$name])) {
-                $childAttrs[$name] = $value;
+            if (isset($childAttrs[$name])) {
+                continue;
             }
+
+            $childAttrs[$name] = $value;
         }
 
         // Rebuild attributes
