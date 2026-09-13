@@ -134,7 +134,7 @@ class TemplateViewHelper extends AbstractViewHelper
                 'data-part' => ComponentNameUtility::camelCaseToLowerCaseDashed($part),
             ]);
 
-            return '<template ' . $refAttributes . '>' . $this->renderChildren() . '</template>';
+            return '<template ' . (string)$refAttributes . '>' . $this->renderChildren() . '</template>';
         } finally {
             $context->set('isRenderStencil', $wasRenderStencil);
 

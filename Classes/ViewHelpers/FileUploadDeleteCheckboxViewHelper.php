@@ -128,6 +128,6 @@ class FileUploadDeleteCheckboxViewHelper extends AbstractViewHelper
             'class' => $this->arguments['class'] ?? null,
         ]);
 
-        return '<input ' . $attributes . ' />';
+        return '<input ' . (string)$attributes . ' />';
     }
 }
