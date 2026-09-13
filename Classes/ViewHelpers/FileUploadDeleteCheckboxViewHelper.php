@@ -105,13 +105,10 @@ class FileUploadDeleteCheckboxViewHelper extends AbstractViewHelper
         /** @var FileReference $fileReference */
         $fileReference = $this->arguments['fileReference'];
 
-        $token = $this->hashService->appendHmac(
-            (string)json_encode([
-                'fileReference' => $fileReference->getUid(),
-                'property' => $property,
-            ], JSON_THROW_ON_ERROR),
-            '@delete',
-        );
+        $token = $this->hashService->appendHmac(json_encode([
+            'fileReference' => $fileReference->getUid(),
+            'property' => $property,
+        ], JSON_THROW_ON_ERROR), '@delete');
 
         $segments = array_filter(
             [$formContext->getFieldNamePrefix(), '@delete', $objectName],

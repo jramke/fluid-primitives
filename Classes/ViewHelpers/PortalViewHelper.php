@@ -44,7 +44,7 @@ class PortalViewHelper extends AbstractViewHelper
 
     public function render(): string
     {
-        $rendered = trim((string)$this->renderChildren() ?? '');
+        $rendered = trim((string)$this->renderChildren());
 
         if ($this->arguments['disabled'] ?? false) {
             return $rendered;

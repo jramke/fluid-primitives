@@ -22,7 +22,7 @@ class ComponentNameUtility
     {
         $fullName = self::getComponentFullNameFromViewHelperName($viewHelperName);
         $fullNameExploded = explode('.', $fullName);
-        $baseName = $fullNameExploded[0] ?? $fullName;
+        $baseName = $fullNameExploded[0];
         if ($baseName === 'primitives') {
             $baseName = $fullNameExploded[1] ?? $baseName;
         }
@@ -52,7 +52,7 @@ class ComponentNameUtility
     {
         $fullName = self::getComponentFullNameFromContext($renderingContext);
         $fullNameExploded = explode('.', $fullName);
-        $baseName = $fullNameExploded[0] ?? $fullName;
+        $baseName = $fullNameExploded[0];
         if ($baseName === 'primitives') {
             $baseName = $fullNameExploded[1] ?? $baseName;
         }

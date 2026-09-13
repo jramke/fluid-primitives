@@ -152,7 +152,7 @@ class ComponentPartIdUtility
 
     public static function getFieldIdOverrideKeys(): array
     {
-        return self::FIELD_ID_OVERRIDE_KEYS ?? [];
+        return self::FIELD_ID_OVERRIDE_KEYS;
     }
 
     private static function getIdNamespace(string $componentName): string
@@ -174,9 +174,9 @@ class ComponentPartIdUtility
             ];
         }
 
-        $segment = (string)($override['segment'] ?? $part);
-        $valueSeparator = (string)($override['valueSeparator'] ?? ':');
-        $rootIdSeparator = (string)($override['rootIdSeparator'] ?? ':');
+        $segment = $override['segment'];
+        $valueSeparator = $override['valueSeparator'] ?? ':';
+        $rootIdSeparator = $override['rootIdSeparator'] ?? ':';
         return ['segment' => $segment, 'valueSeparator' => $valueSeparator, 'rootIdSeparator' => $rootIdSeparator];
     }
 }

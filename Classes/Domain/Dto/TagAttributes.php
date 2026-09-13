@@ -112,8 +112,8 @@ class TagAttributes implements \Countable, \Stringable
     protected function buildSingleAttributeString(string $key, string $value): string
     {
         if ($value === '') {
-            return htmlspecialchars((string)$key);
+            return htmlspecialchars($key);
         }
-        return sprintf('%s="%s"', htmlspecialchars((string)$key), htmlspecialchars((string)$value));
+        return sprintf('%s="%s"', htmlspecialchars($key), htmlspecialchars($value));
     }
 }

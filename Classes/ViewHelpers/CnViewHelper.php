@@ -58,7 +58,7 @@ class CnViewHelper extends AbstractViewHelper
 
         $classesString = trim($this->renderChildren() ?? '');
         if ($classesString !== '') {
-            $classes = array_merge($classes, $this->parseClassString((string)$classesString));
+            $classes = array_merge($classes, $this->parseClassString($classesString));
         }
 
         $whenArray = $this->arguments['when'];

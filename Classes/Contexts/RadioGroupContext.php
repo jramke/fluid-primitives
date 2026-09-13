@@ -28,10 +28,10 @@ class RadioGroupContext extends AbstractComponentContext
     public function getItemState(array $itemProps): array
     {
         return [
-            'value' => $itemProps['value'] ?? null,
+            'value' => $itemProps['value'],
             'disabled' => $itemProps['disabled'] ?? $this->get('disabled') ?? null,
             'invalid' => $itemProps['invalid'] ?? $this->get('invalid') ?? null,
-            'checked' => $this->get('defaultValue') === ($itemProps['value'] ?? null),
+            'checked' => $this->get('defaultValue') === $itemProps['value'],
         ];
     }
 }

@@ -69,7 +69,7 @@ class ComponentUtility
             $fluidPrimitivesSettings = array_merge($contentElementSettings, $fluidPrimitivesSettings);
         }
 
-        self::$cachedSettings = GeneralUtility::removeDotsFromTS($fluidPrimitivesSettings) ?? [];
+        self::$cachedSettings = GeneralUtility::removeDotsFromTS($fluidPrimitivesSettings);
         return self::$cachedSettings;
     }
 
@@ -86,7 +86,7 @@ class ComponentUtility
 
         $namespaces = array_merge($additionalNamespaces, [$baseNamespace]);
 
-        $ucFirstComponentBaseName = ucfirst(explode('.', $viewHelperName)[0] ?? '');
+        $ucFirstComponentBaseName = ucfirst(explode('.', $viewHelperName)[0]);
 
         foreach ($namespaces as $namespace) {
             $contextClass = $namespace . '\\' . $ucFirstComponentBaseName . 'Context';

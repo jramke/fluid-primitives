@@ -11,7 +11,7 @@ class AccordionContext extends AbstractComponentContext
      */
     public function getItemState(array $item): object
     {
-        $value = $item['value'] ?? null;
+        $value = $item['value'];
         $disabled = $item['disabled'] ?? null;
 
         $defaultValue = $this->get('defaultValue') ?? [];

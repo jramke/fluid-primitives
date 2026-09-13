@@ -46,14 +46,9 @@ class NumberInputContext extends AbstractComponentContext
 
     public function getFormattedValue(): string
     {
-        $value = $this->getDefaultValue();
-        if ($value === '') {
-            return '';
-        }
-
         // For server-side rendering, we just return the raw value
         // The client will format it according to formatOptions
-        return (string)$value;
+        return $this->getDefaultValue();
     }
 
     public function getCanDecrement(): bool
