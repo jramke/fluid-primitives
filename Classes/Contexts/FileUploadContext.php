@@ -65,9 +65,8 @@ class FileUploadContext extends AbstractComponentContext
             return null;
         }
 
-        if (array_is_list($accept)) {
-            $tokens = $accept;
-        } else {
+        $tokens = $accept;
+        if (!array_is_list($accept)) {
             $tokens = [];
             foreach ($accept as $mimeType => $extensions) {
                 $tokens[] = $mimeType;
@@ -86,7 +85,7 @@ class FileUploadContext extends AbstractComponentContext
 
     private static function isValidAcceptToken(string $value): bool
     {
-        if (in_array($value, ['audio/*', 'video/*', 'image/*', 'text/*'], true)) {
+        if (in_array($value, ['audio/*', 'video/*', 'image/*', 'text/*'], strict: true)) {
             return true;
         }
 

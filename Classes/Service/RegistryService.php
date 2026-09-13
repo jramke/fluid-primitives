@@ -29,7 +29,7 @@ class RegistryService
 
         try {
             $response = $this->client->get("/registry/components/{$componentKey}");
-            $data = json_decode((string)$response->getBody(), true);
+            $data = json_decode((string)$response->getBody(), associative: true);
         } catch (ClientException $e) {
             $error = [
                 'message' => 'Component not found in registry.',
@@ -76,7 +76,7 @@ class RegistryService
 
         try {
             $response = $this->client->get('/registry/components');
-            $data = json_decode((string)$response->getBody(), true);
+            $data = json_decode((string)$response->getBody(), associative: true);
         } catch (ClientException $e) {
             $error = [
                 'message' => 'Failed to fetch component registry.',

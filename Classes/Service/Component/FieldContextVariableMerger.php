@@ -111,7 +111,7 @@ final readonly class FieldContextVariableMerger
         }
 
         foreach ($excludeIdInheritanceForParents as $parentBaseName) {
-            if (!isset($otherComponentContexts[$parentBaseName])) {
+            if (($otherComponentContexts[$parentBaseName] ?? null) === null) {
                 continue;
             }
 

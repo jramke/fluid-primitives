@@ -31,7 +31,7 @@ final readonly class ContextMarkedPropsExposer
 
         $propsMarkedForContextValues = [];
         foreach (array_keys($propsMarkedForContext) as $name) {
-            if (!isset($arguments[$name]) && !isset($argumentDefinitions[$name])) {
+            if (($arguments[$name] ?? null) === null && ($argumentDefinitions[$name] ?? null) === null) {
                 continue;
             }
 

@@ -46,7 +46,7 @@ class CheckboxGroupContext extends AbstractComponentContext
     public function isValueChecked(string $value): bool
     {
         $defaultValue = $this->get('defaultValue');
-        return is_array($defaultValue) && in_array($value, $defaultValue, true);
+        return is_array($defaultValue) && in_array($value, $defaultValue, strict: true);
     }
 
     /**

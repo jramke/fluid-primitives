@@ -51,7 +51,7 @@ final readonly class ComponentHydrationCollector
         }
 
         if ($manuallyExposedToClient) {
-            $rendered = str_replace(Constants::MANUALLY_EXPOSED_TO_CLIENT_MARKER, '', $rendered);
+            $rendered = str_replace(Constants::MANUALLY_EXPOSED_TO_CLIENT_MARKER, replace: '', subject: $rendered);
         }
 
         $arguments = $candidate->arguments;
@@ -59,7 +59,7 @@ final readonly class ComponentHydrationCollector
 
         $propsMarkedForClientValues = [];
         foreach (array_keys($candidate->propsMarkedForClient) as $name) {
-            if (!isset($arguments[$name]) && !isset($argumentDefinitions[$name])) {
+            if (($arguments[$name] ?? null) === null && ($argumentDefinitions[$name] ?? null) === null) {
                 continue;
             }
 

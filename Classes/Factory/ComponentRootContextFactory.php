@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Factory;
 
-use TYPO3Fluid\Fluid\Core\ViewHelper\ArgumentDefinition;
 use Jramke\FluidPrimitives\Component\ComponentCollectionInterface;
 use Jramke\FluidPrimitives\Service\ContextService;
 use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 use TYPO3Fluid\Fluid\Core\Variables\VariableProviderInterface;
+use TYPO3Fluid\Fluid\Core\ViewHelper\ArgumentDefinition;
 use TYPO3Fluid\Fluid\Core\ViewHelper\StrictArgumentProcessor;
 use TYPO3Fluid\Fluid\View\TemplateView;
 
@@ -76,20 +76,21 @@ final readonly class ComponentRootContextFactory
 
         foreach ($argumentDefinitions as $argumentDefinition) {
             $argumentName = $argumentDefinition->getName();
-            if ($variableProvider->exists($argumentName)) {
-                $processedValue = $argumentProcessor->process(
-                    $variableProvider->get($argumentName),
-                    $argumentDefinition,
-                );
-                if (!$argumentProcessor->isValid($processedValue, $argumentDefinition)) {
-                    continue; // Skip invalid values
+
+            if (!$variableProvider->exists($argumentName)) {
+                if ($argumentDefinition->isRequired()) {
+                    continue; // Skip required arguments that are not provided
                 }
-                $contextVariables[$argumentName] = $processedValue;
-            } elseif ($argumentDefinition->isRequired()) {
-                continue; // Skip required arguments that are not provided
-            } else {
+
                 $contextVariables[$argumentName] = $argumentDefinition->getDefaultValue();
+                continue;
             }
+
+            $processedValue = $argumentProcessor->process($variableProvider->get($argumentName), $argumentDefinition);
+            if (!$argumentProcessor->isValid($processedValue, $argumentDefinition)) {
+                continue; // Skip invalid values
+            }
+            $contextVariables[$argumentName] = $processedValue;
         }
 
         foreach ($variablesToRemove as $var) {

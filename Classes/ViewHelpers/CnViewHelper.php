@@ -68,16 +68,16 @@ class CnViewHelper extends AbstractViewHelper
 
         $classes = array_filter(
             array_unique($classes),
-            static fn($class) => !in_array(trim($class), ['', '0'], true) && is_string($class),
+            static fn($class) => !in_array(trim($class), ['', '0'], strict: true) && is_string($class),
         );
 
         $as = $this->arguments['as'];
         if ($as !== '') {
             $this->renderingContext->getVariableProvider()->add($as, implode(' ', $classes));
             return '';
-        } else {
-            return implode(' ', $classes);
         }
+
+        return implode(' ', $classes);
     }
 
     /**
@@ -95,7 +95,10 @@ class CnViewHelper extends AbstractViewHelper
                 if ($value !== '') {
                     $classes = array_merge($classes, $this->parseClassString($value));
                 }
-            } elseif ($this->isTruthy($value)) {
+                continue;
+            }
+
+            if ($this->isTruthy($value)) {
                 // Associative array: key is class name(s), value is condition
                 // This supports multiple classes per condition like: 'btn-primary btn-large': '{condition}'
                 $classes = array_merge($classes, $this->parseClassString($key));
@@ -107,14 +110,14 @@ class CnViewHelper extends AbstractViewHelper
 
     private function parseClassString(string $classString): array
     {
-        if (in_array(trim($classString), ['', '0'], true)) {
+        if (in_array(trim($classString), ['', '0'], strict: true)) {
             return [];
         }
 
         // Split by whitespace and filter out empty values
         return array_filter(
             preg_split('/\s+/', trim($classString)),
-            static fn($class) => !in_array(trim($class), ['', '0'], true),
+            static fn($class) => !in_array(trim($class), ['', '0'], strict: true),
         );
     }
 
@@ -131,7 +134,7 @@ class CnViewHelper extends AbstractViewHelper
         if (is_string($value)) {
             $lower = strtolower(trim($value));
             // Handle common falsy string representations
-            return !in_array($lower, ['', '0', 'false', 'no', 'null', 'undefined'], true);
+            return !in_array($lower, ['', '0', 'false', 'no', 'null', 'undefined'], strict: true);
         }
 
         if (is_numeric($value)) {

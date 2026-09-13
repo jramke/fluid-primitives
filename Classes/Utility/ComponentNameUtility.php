@@ -34,7 +34,7 @@ class ComponentNameUtility
         $fullName = self::getComponentFullNameFromViewHelperName($viewHelperName);
         $parts = explode('.', $fullName);
         if (count($parts) > 1) {
-            return implode('.', array_slice($parts, 1));
+            return implode('.', array_slice($parts, offset: 1));
         }
         return '';
     }
@@ -42,7 +42,7 @@ class ComponentNameUtility
     public static function getComponentFullNameFromContext(RenderingContextInterface $renderingContext): string
     {
         $component = $renderingContext->getVariableProvider()->get('component');
-        if (is_array($component) && isset($component['fullName'])) {
+        if (is_array($component) && ($component['fullName'] ?? null) !== null) {
             return self::camelCaseToLowerCaseDashed($component['fullName']);
         }
         return '';
@@ -61,11 +61,9 @@ class ComponentNameUtility
 
     public static function isRootComponent(string|RenderingContextInterface $viewHelperNameOrRenderingContext): bool
     {
-        if ($viewHelperNameOrRenderingContext instanceof RenderingContextInterface) {
-            $viewHelperName = self::getComponentFullNameFromContext($viewHelperNameOrRenderingContext);
-        } else {
-            $viewHelperName = $viewHelperNameOrRenderingContext;
-        }
+        $viewHelperName = $viewHelperNameOrRenderingContext instanceof RenderingContextInterface
+            ? self::getComponentFullNameFromContext($viewHelperNameOrRenderingContext)
+            : $viewHelperNameOrRenderingContext;
 
         if ($viewHelperName === '' || $viewHelperName === '0') {
             return false;
@@ -99,12 +97,12 @@ class ComponentNameUtility
     public static function camelCaseToLowerCaseDashed(string $string): string
     {
         $result = GeneralUtility::camelCaseToLowerCaseUnderscored($string);
-        return str_replace('_', '-', $result);
+        return str_replace('_', replace: '-', subject: $result);
     }
 
     public static function lowerCaseDashedToCamelCase(string $string): string
     {
-        $result = str_replace('-', '_', $string);
+        $result = str_replace('-', replace: '_', subject: $string);
         return GeneralUtility::underscoredToUpperCamelCase($result);
     }
 }

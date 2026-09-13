@@ -18,7 +18,7 @@ class AccordionContext extends AbstractComponentContext
         $rootDisabled = $this->get('disabled') ?? false;
 
         return (object)[
-            'expanded' => in_array($value, (array)$defaultValue, true),
+            'expanded' => in_array($value, (array)$defaultValue, strict: true),
             'disabled' => $disabled ?? $rootDisabled, // null if not set so it can be directly uses as `data-disabled` by the TagAttributes class
         ];
     }

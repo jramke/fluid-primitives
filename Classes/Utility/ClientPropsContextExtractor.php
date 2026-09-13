@@ -117,6 +117,6 @@ class ClientPropsContextExtractor
 
     private static function normalizeMethodName(string $method): string
     {
-        return lcfirst((string)preg_replace('/^(get|is|has)/', '', $method));
+        return lcfirst((string)preg_replace('/^(get|is|has)/', replacement: '', subject: $method));
     }
 }

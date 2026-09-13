@@ -136,7 +136,7 @@ class PropViewHelper extends AbstractViewHelper implements ViewHelperNodeInitial
 
         // Make sure that this argument hasn't already been defined in the template
         $argumentDefinitions = $parsingState->getArgumentDefinitions();
-        if (isset($argumentDefinitions[$argumentName])) {
+        if (($argumentDefinitions[$argumentName] ?? null) !== null) {
             throw new Exception(
                 sprintf('Template argument "%s" has been defined multiple times.', $argumentName),
                 1776459352,

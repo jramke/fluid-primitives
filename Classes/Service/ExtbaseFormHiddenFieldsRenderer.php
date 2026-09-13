@@ -74,7 +74,7 @@ final readonly class ExtbaseFormHiddenFieldsRenderer
         $fieldNames = [];
 
         foreach ($fieldContextInformations as $fieldContextData) {
-            if (!isset($fieldContextData['name'])) {
+            if (($fieldContextData['name'] ?? null) === null) {
                 continue;
             }
 

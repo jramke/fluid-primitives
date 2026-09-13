@@ -138,14 +138,16 @@ final readonly class ComponentArgumentResolver
                         AttributesViewHelper::class,
                         'attributes',
                     ) ?? null;
-                $propValue = $spreadTagAttributes instanceof TagAttributes ? $spreadTagAttributes->renderAsArray() : [];
-            } else {
-                $propValue =
-                    $arguments[$propToUse] ?? $parentRenderingContext->getVariableProvider()->get(
-                        $propToUse,
-                    ) ?? $renderingContext->getVariableProvider()->get($propToUse) ?? null;
+                $arguments[$propToUse] = $spreadTagAttributes instanceof TagAttributes
+                    ? $spreadTagAttributes->renderAsArray()
+                    : [];
+                continue;
             }
-            $arguments[$propToUse] = $propValue;
+
+            $arguments[$propToUse] ??=
+                $parentRenderingContext->getVariableProvider()->get(
+                    $propToUse,
+                ) ?? $renderingContext->getVariableProvider()->get($propToUse) ?? null;
         }
 
         return $arguments;

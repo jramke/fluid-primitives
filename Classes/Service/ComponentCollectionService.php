@@ -81,7 +81,7 @@ class ComponentCollectionService
 
         foreach ($registeredNamespaces as $namespaceIdentifier => $delegateClassNames) {
             foreach ($delegateClassNames as $delegateClassName) {
-                if (is_a($delegateClassName, $collectionClassName, true)) {
+                if (is_a($delegateClassName, $collectionClassName, allow_string: true)) {
                     return $namespaceIdentifier;
                 }
             }

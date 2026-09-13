@@ -34,7 +34,7 @@ class HydrationRegistry
 
     public function add(string $componentType, string $id, array $props): void
     {
-        if (!isset($this->registry[$componentType])) {
+        if (($this->registry[$componentType] ?? null) === null) {
             $this->registry[$componentType] = [];
         }
 

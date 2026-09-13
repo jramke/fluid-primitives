@@ -139,9 +139,10 @@ class ContextService
         if ($stack === []) {
             // No more contexts, remove the key entirely
             $variableContainer->remove(self::class, $name);
-        } else {
-            // Update with remaining stack
-            $variableContainer->addOrUpdate(self::class, $name, $stack);
+            return;
         }
+
+        // Update with remaining stack
+        $variableContainer->addOrUpdate(self::class, $name, $stack);
     }
 }

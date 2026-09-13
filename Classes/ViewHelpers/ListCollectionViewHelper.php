@@ -82,8 +82,8 @@ class ListCollectionViewHelper extends AbstractViewHelper
         if ($as !== '') {
             $this->renderingContext->getVariableProvider()->add($as, $collection);
             return '';
-        } else {
-            return $collection;
         }
+
+        return $collection;
     }
 }

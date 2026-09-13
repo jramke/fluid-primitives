@@ -21,10 +21,10 @@ class ComponentUtility
 
         if ($requestSalt === null) {
             // 6 bytes => 48 bits => 8 base64url chars, generated once per request
-            $requestSalt = rtrim(strtr(base64_encode(random_bytes(6)), '+/', '-_'), '=');
+            $requestSalt = rtrim(strtr(base64_encode(random_bytes(6)), to: '-_', from: '+/'), characters: '=');
         }
 
-        return '«' . $prefix . $requestSalt . base_convert((string)++$counter, 10, 36) . '»';
+        return '«' . $prefix . $requestSalt . base_convert((string)++$counter, from_base: 10, to_base: 36) . '»';
     }
 
     public static function isComponent(RenderingContextInterface $renderingContext): bool
@@ -77,7 +77,7 @@ class ComponentUtility
         array $additionalNamespaces,
     ): string {
         $baseClass = BaseContext::class;
-        $baseNamespace = substr($baseClass, 0, strrpos($baseClass, '\\'));
+        $baseNamespace = substr($baseClass, offset: 0, length: strrpos($baseClass, needle: '\\'));
 
         $namespaces = array_merge($additionalNamespaces, [$baseNamespace]);
 

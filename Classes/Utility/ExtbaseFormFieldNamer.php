@@ -19,7 +19,7 @@ final readonly class ExtbaseFormFieldNamer
 
         $fieldPath = $this->parseFieldPath($fieldName);
 
-        if (!in_array($objectName, [null, '', '0'], true)) {
+        if (!in_array($objectName, [null, '', '0'], strict: true)) {
             array_unshift($fieldPath, $objectName);
         }
 

@@ -27,7 +27,7 @@ final readonly class AsChildAttributeSpreader
         $componentAttrs = $this->parseAttributes(trim($compMatches[2]));
 
         foreach ($componentAttrs as $name => $value) {
-            if (isset($childAttrs[$name])) {
+            if (($childAttrs[$name] ?? null) !== null) {
                 continue;
             }
 
@@ -41,7 +41,12 @@ final readonly class AsChildAttributeSpreader
         }
 
         // Replace child opening tag
-        return preg_replace('/^\s*<' . $childTag . '[^>]*>/', '<' . $childTag . $finalAttrs . '>', $childHtml, 1);
+        return preg_replace(
+            '/^\s*<' . $childTag . '[^>]*>/',
+            '<' . $childTag . $finalAttrs . '>',
+            $childHtml,
+            limit: 1,
+        );
     }
 
     /**

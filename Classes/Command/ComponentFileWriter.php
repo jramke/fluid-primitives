@@ -47,7 +47,7 @@ final readonly class ComponentFileWriter
 
             $targetDir = dirname($targetFilePath);
             if (!is_dir($targetDir)) {
-                mkdir($targetDir, 0o777, true);
+                mkdir($targetDir, permissions: 0o777, recursive: true);
             }
 
             if (file_exists($targetFilePath)) {
@@ -93,10 +93,13 @@ final readonly class ComponentFileWriter
             );
         }
 
-        if ($someUpdated) {
-            $io->success('Component "' . $componentKey . '" updated in extension "' . $extension . '".');
-        } elseif ($someCreated) {
-            $io->success('Component "' . $componentKey . '" added to extension "' . $extension . '".');
+        $successMessage = match (true) {
+            $someUpdated => 'Component "' . $componentKey . '" updated in extension "' . $extension . '".',
+            $someCreated => 'Component "' . $componentKey . '" added to extension "' . $extension . '".',
+            default => null,
+        };
+        if ($successMessage !== null) {
+            $io->success($successMessage);
         }
 
         $this->cacheManager->flushCachesInGroup('pages');
@@ -114,8 +117,8 @@ final readonly class ComponentFileWriter
         }
 
         $baseName = str_ends_with($file, '.fluid.html')
-            ? substr($file, 0, -strlen('.fluid.html'))
-            : substr($file, 0, -strlen('.html'));
+            ? substr($file, offset: 0, length: -strlen('.fluid.html'))
+            : substr($file, offset: 0, length: -strlen('.html'));
 
         return $useFluidSuffix ? $baseName . '.fluid.html' : $baseName . '.html';
     }

@@ -19,12 +19,13 @@ final class TagAttributesStringParser
         $attributes = [];
         $parts = explode(' ', trim($attributesString));
         foreach ($parts as $part) {
-            if (str_contains($part, '=')) {
-                [$key, $value] = explode('=', $part, 2);
-                $attributes[trim($key)] = trim($value, '"');
-            } else {
+            if (!str_contains($part, '=')) {
                 $attributes[trim($part)] = true; // boolean attribute
+                continue;
             }
+
+            [$key, $value] = explode('=', $part, limit: 2);
+            $attributes[trim($key)] = trim($value, characters: '"');
         }
         return $attributes;
     }

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Contexts;
 
-use Jramke\FluidPrimitives\Domain\Dto\ListCollection;
 use Jramke\FluidPrimitives\Attributes\ExposeToClient;
+use Jramke\FluidPrimitives\Domain\Dto\ListCollection;
 use Jramke\FluidPrimitives\Domain\Dto\ListCollectionItem;
 use Jramke\FluidPrimitives\Service\TranslatorService;
 use Jramke\FluidPrimitives\Traits\HasListCollectionTrait;
@@ -87,7 +87,7 @@ class ComboboxContext extends AbstractComponentContext
         if ($item instanceof ListCollectionItem) {
             return (object)[
                 'value' => $item->value,
-                'selected' => in_array($item->value, $defaultValue, true),
+                'selected' => in_array($item->value, $defaultValue, strict: true),
                 'disabled' => $item->disabled ?: ($rootDisabled ?: null),
                 'highlighted' => $defaultHighlightedValue === $item->value,
             ];
@@ -99,7 +99,7 @@ class ComboboxContext extends AbstractComponentContext
 
         return (object)[
             'value' => $value,
-            'selected' => in_array($value, $defaultValue, true),
+            'selected' => in_array($value, $defaultValue, strict: true),
             'disabled' => $itemDisabled ?: ($rootDisabled ?: null),
             'highlighted' => $defaultHighlightedValue === $value,
         ];

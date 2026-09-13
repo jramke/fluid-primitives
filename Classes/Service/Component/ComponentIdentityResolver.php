@@ -25,20 +25,18 @@ final readonly class ComponentIdentityResolver
         RenderingContextInterface $renderingContext,
     ): ComponentIdentity {
         $isRootComponent = ComponentNameUtility::isRootComponent($viewHelperName);
-        if (isset($arguments['spreadProps']) && $arguments['spreadProps'] === true) {
+        if (($arguments['spreadProps'] ?? null) === true) {
             $isRootComponent = false;
         }
 
         $isComposableComponent = ComponentNameUtility::isComposableComponent($viewHelperName);
 
         $rootId = $arguments['rootId'] ?? null;
-        if (!isset($rootId)) {
-            if ($isRootComponent) {
-                $rootId = ComponentUtility::id();
-            } else {
-                // We assign the rootId to each rendered component so this line gets the rootId of the parent component when rendering subcomponents.
-                $rootId = $renderingContext->getVariableProvider()->get('rootId') ?? null;
-            }
+        if ($rootId === null) {
+            // For a non-root component we assign the rootId of the parent component when rendering subcomponents.
+            $rootId = $isRootComponent
+                ? ComponentUtility::id()
+                : $renderingContext->getVariableProvider()->get('rootId') ?? null;
         }
 
         $baseName = ComponentNameUtility::getComponentBaseNameFromViewHelperName($viewHelperName);

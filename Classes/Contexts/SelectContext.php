@@ -63,7 +63,7 @@ class SelectContext extends AbstractComponentContext
         // Handle ListCollectionItem objects directly
         if ($item instanceof ListCollectionItem) {
             return (object)[
-                'selected' => in_array($item->value, $defaultValue, true),
+                'selected' => in_array($item->value, $defaultValue, strict: true),
                 'disabled' => $item->disabled ?: ($rootDisabled ?: null),
             ];
         }
@@ -74,7 +74,7 @@ class SelectContext extends AbstractComponentContext
         $itemDisabled = $collection?->getItemDisabled($item) ?? false;
 
         return (object)[
-            'selected' => in_array($value, $defaultValue, true),
+            'selected' => in_array($value, $defaultValue, strict: true),
             'disabled' => $itemDisabled ?: ($rootDisabled ?: null),
         ];
     }

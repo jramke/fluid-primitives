@@ -9,7 +9,7 @@ use JsonSerializable;
 use Traversable;
 
 // TODO: can we refactor this into smaller parts?
-// @mago-expect lint:halstead,kan-defect,too-many-methods,cyclomatic-complexity
+// @mago-expect lint:kan-defect,too-many-methods,cyclomatic-complexity
 class ListCollection implements JsonSerializable, IteratorAggregate
 {
     /** @var ListCollectionItem[]|null Cached normalized items */
@@ -93,11 +93,15 @@ class ListCollection implements JsonSerializable, IteratorAggregate
         foreach ($segments as $segment) {
             if (is_array($current) && array_key_exists($segment, $current)) {
                 $current = $current[$segment];
-            } elseif (is_object($current) && isset($current->{$segment})) {
-                $current = $current->{$segment};
-            } else {
-                return null;
+                continue;
             }
+
+            if (is_object($current) && ($current->{$segment} ?? null) !== null) {
+                $current = $current->{$segment};
+                continue;
+            }
+
+            return null;
         }
 
         if (is_array($current) || is_object($current)) {
@@ -132,11 +136,7 @@ class ListCollection implements JsonSerializable, IteratorAggregate
 
         foreach ($items as $item) {
             // Handle both ListCollectionItem objects and raw items
-            if ($item instanceof ListCollectionItem) {
-                $str = $item->label;
-            } else {
-                $str = $this->stringifyItem($item);
-            }
+            $str = $item instanceof ListCollectionItem ? $item->label : $this->stringifyItem($item);
             if ($str !== null && $str !== '') {
                 $strings[] = $str;
             }
@@ -281,7 +281,7 @@ class ListCollection implements JsonSerializable, IteratorAggregate
         if (is_array($this->groupSort)) {
             $ordered = [];
             foreach ($this->groupSort as $key) {
-                if (!isset($groups[$key])) {
+                if (($groups[$key] ?? null) === null) {
                     continue;
                 }
 
@@ -289,9 +289,13 @@ class ListCollection implements JsonSerializable, IteratorAggregate
                 unset($groups[$key]);
             }
             $groups = array_merge($ordered, $groups);
-        } elseif ($this->groupSort === 'asc') {
+        }
+
+        if ($this->groupSort === 'asc') {
             ksort($groups);
-        } elseif ($this->groupSort === 'desc') {
+        }
+
+        if ($this->groupSort === 'desc') {
             krsort($groups);
         }
 

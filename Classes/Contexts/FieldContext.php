@@ -29,7 +29,7 @@ class FieldContext extends AbstractComponentContext
                 // submission-name detail, not part of the property path - ObjectAccess has no
                 // concept of it and throws when it's left in.
                 $name = (string)$this->get('name');
-                $propertyPath = str_ends_with($name, '[]') ? substr($name, 0, -2) : $name;
+                $propertyPath = str_ends_with($name, '[]') ? substr($name, offset: 0, length: -2) : $name;
                 $this->set('defaultValue', ObjectAccess::getPropertyPath($formObject, $propertyPath));
             }
         }

@@ -37,7 +37,7 @@ final class TranslatorService
         $siteLanguage = $this->getSiteLanguage($request);
         $cacheKey = $siteLanguage?->getLanguageId() ?? 'default';
 
-        if (isset($this->translators[$cacheKey])) {
+        if (($this->translators[$cacheKey] ?? null) !== null) {
             return $this->translators[$cacheKey];
         }
 

@@ -98,7 +98,7 @@ class FormContext extends AbstractComponentContext
 
     public function getContentHidden(): bool
     {
-        return in_array($this->getState(), [FormState::Error->value, FormState::Success->value], true);
+        return in_array($this->getState(), [FormState::Error->value, FormState::Success->value], strict: true);
     }
 
     public function getErrorTextHidden(): bool

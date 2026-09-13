@@ -20,7 +20,7 @@ class PropsUtility
 
     public static function isReservedProp(string $propKey): bool
     {
-        return in_array($propKey, Constants::RESERVED_PROPS, true);
+        return in_array($propKey, Constants::RESERVED_PROPS, strict: true);
     }
 
     public static function createPropsMarkedForClientArgumentDefinition(mixed $defaultValue): ArgumentDefinition

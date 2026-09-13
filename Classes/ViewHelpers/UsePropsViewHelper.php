@@ -103,23 +103,23 @@ class UsePropsViewHelper extends AbstractViewHelper implements ViewHelperNodeIni
         array $arguments,
         ParsingState $parsingState,
     ): void {
-        if (isset($arguments['name'])) {
+        if (($arguments['name'] ?? null) !== null) {
             $name = $arguments['name'] instanceof TextNode ? $arguments['name']->getText() : '';
             if ($name === '' || $name === '0') {
                 throw new \RuntimeException('The name argument must not be empty.', 1755936423);
             }
 
-            if (str_starts_with($name, 'primitives:')) {
+            $isPrimitivesComponent = str_starts_with($name, 'primitives:');
+            if ($isPrimitivesComponent) {
                 $name = substr($name, strlen('primitives:'));
-                $externalArgumentDefinitions = self::getComponentPrimitivesCollection()
-                    ->getComponentDefinition($name)
-                    ->getArgumentDefinitions();
-            } else {
-                $externalArgumentDefinitions = self::getComponentCollectionService()
+            }
+
+            $externalArgumentDefinitions = $isPrimitivesComponent
+                ? self::getComponentPrimitivesCollection()->getComponentDefinition($name)->getArgumentDefinitions()
+                : self::getComponentCollectionService()
                     ->getCollectionByViewHelperName($name)
                     ->getComponentDefinition(explode(':', $name)[1])
                     ->getArgumentDefinitions();
-            }
 
             if ($externalArgumentDefinitions === []) {
                 return;
@@ -130,13 +130,13 @@ class UsePropsViewHelper extends AbstractViewHelper implements ViewHelperNodeIni
             ]);
 
             if (
-                isset($arguments['props']) && ($evaluatedSelectedProps = $arguments['props']->evaluate(
+                ($arguments['props'] ?? null) !== null && ($evaluatedSelectedProps = $arguments['props']->evaluate(
                     new RenderingContext(),
                 ))
             ) {
                 $externalArgumentDefinitionsWithoutReservedUpdated = [];
                 foreach ($evaluatedSelectedProps as $argumentName) {
-                    if (!isset($externalArgumentDefinitionsWithoutReserved[$argumentName])) {
+                    if (($externalArgumentDefinitionsWithoutReserved[$argumentName] ?? null) === null) {
                         throw new \RuntimeException(
                             "The prop {$argumentName} does not exist in the referenced component {$name}.",
                             1772899866,
@@ -149,12 +149,12 @@ class UsePropsViewHelper extends AbstractViewHelper implements ViewHelperNodeIni
             }
 
             if (
-                isset($arguments['defaults']) && ($evaluatedDefaults = $arguments['defaults']->evaluate(
+                ($arguments['defaults'] ?? null) !== null && ($evaluatedDefaults = $arguments['defaults']->evaluate(
                     new RenderingContext(),
                 ))
             ) {
                 foreach ($evaluatedDefaults as $defaultPropName => $defaultPropValue) {
-                    if (!isset($externalArgumentDefinitionsWithoutReserved[$defaultPropName])) {
+                    if (($externalArgumentDefinitionsWithoutReserved[$defaultPropName] ?? null) === null) {
                         continue;
                     }
 

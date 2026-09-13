@@ -43,10 +43,10 @@ final class HydrationScriptBuilder
 
     private function minify(string $js): string
     {
-        $js = str_replace("\n", '', $js);
-        $js = str_replace("\r", '', $js);
-        $js = preg_replace('/\s+/', ' ', $js); // replace multiple whitespaces with one space
-        return preg_replace('/\s*([{}();=])\s*/', '$1', (string)$js); // remove spaces around special characters
+        $js = str_replace("\n", replace: '', subject: $js);
+        $js = str_replace("\r", replace: '', subject: $js);
+        $js = preg_replace('/\s+/', replacement: ' ', subject: $js); // replace multiple whitespaces with one space
+        return preg_replace('/\s*([{}();=])\s*/', replacement: '$1', subject: (string)$js); // remove spaces around special characters
     }
 
     private function toJson(array $data, bool $development): string

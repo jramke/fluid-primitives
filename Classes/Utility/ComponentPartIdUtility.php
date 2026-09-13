@@ -118,7 +118,7 @@ class ComponentPartIdUtility
         ?string $value = null,
         array $idsOverrides = [],
     ): string {
-        if (isset($idsOverrides[$part]) && $idsOverrides[$part] !== '') {
+        if (($idsOverrides[$part] ?? null) !== null && $idsOverrides[$part] !== '') {
             return (string)$idsOverrides[$part];
         }
 

@@ -87,7 +87,7 @@ readonly class PackageResolver
         if (!file_exists($composerLockPath)) {
             return $packages;
         }
-        $composerLock = json_decode(file_get_contents($composerLockPath), true);
+        $composerLock = json_decode(file_get_contents($composerLockPath), associative: true);
         $composerLockPackages = array_merge($composerLock['packages'] ?? [], $composerLock['packages-dev'] ?? []);
         $composerLockMap = [];
         foreach ($composerLockPackages as $package) {

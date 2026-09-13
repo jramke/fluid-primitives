@@ -72,7 +72,7 @@ abstract class AbstractComponentCollection implements ComponentCollectionInterfa
      */
     final public function getComponentDefinition(string $viewHelperName): ComponentDefinition
     {
-        if (!isset($this->componentDefinitionsCache[$viewHelperName])) {
+        if (($this->componentDefinitionsCache[$viewHelperName] ?? null) === null) {
             $templateName = $this->resolveTemplateName($viewHelperName);
             $renderingContext = new RenderingContext();
             // At this stage, the component template needs to be parsed to gather the component's definition,
@@ -112,7 +112,7 @@ abstract class AbstractComponentCollection implements ComponentCollectionInterfa
             $argumentDefinitions = $parsedTemplate->getArgumentDefinitions();
 
             foreach ($argumentDefinitions as $name => $definition) {
-                if (in_array($name, Constants::RESERVED_PROPS, true)) {
+                if (in_array($name, Constants::RESERVED_PROPS, strict: true)) {
                     throw new UnresolvableViewHelperException(
                         sprintf(
                             'The argument "%s" is reserved and cannot be used as an argument inside component "%s". See https://fluid-primitives.com/docs/core-concepts/arguments for more information.',
