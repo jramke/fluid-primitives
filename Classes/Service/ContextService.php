@@ -32,7 +32,8 @@ class ContextService
         }
 
         // Return the topmost context (last element in the stack)
-        return end($stack) ?: null;
+        $context = end($stack);
+        return $context instanceof ComponentContextInterface ? $context : null;
     }
 
     /**
@@ -65,6 +66,8 @@ class ContextService
 
     /**
      * Get all component contexts (returns the topmost context for each component type).
+     *
+     * @return array<string, ComponentContextInterface>
      */
     public static function getAllFromRenderingContext(RenderingContextInterface $renderingContext): array
     {
@@ -73,11 +76,14 @@ class ContextService
 
         $result = [];
         foreach ($allStacks as $name => $stack) {
-            if (!is_array($stack) || $stack === []) {
+            if (!is_string($name) || !is_array($stack) || $stack === []) {
                 continue;
             }
 
-            $result[$name] = end($stack);
+            $context = end($stack);
+            if ($context instanceof ComponentContextInterface) {
+                $result[$name] = $context;
+            }
         }
 
         return $result;

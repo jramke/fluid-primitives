@@ -13,9 +13,6 @@ class FieldContext extends AbstractComponentContext
     public function beforeRendering(): void
     {
         $parentRenderingContext = $this->getParentRenderingContext();
-        if (!$parentRenderingContext) {
-            return;
-        }
 
         $variableContainer = $parentRenderingContext->getViewHelperVariableContainer();
         $variableContainer->add(self::class, $this->get('rootId'), ['name' => $this->get('name')]);
@@ -35,6 +32,9 @@ class FieldContext extends AbstractComponentContext
         }
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function getChildVariables(): array
     {
         $rootId = $this->get('rootId');

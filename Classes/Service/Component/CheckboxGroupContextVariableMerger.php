@@ -7,6 +7,7 @@ namespace Jramke\FluidPrimitives\Service\Component;
 use Jramke\FluidPrimitives\Contexts\AbstractComponentContext;
 use Jramke\FluidPrimitives\Contexts\CheckboxGroupContext;
 use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
+use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3Fluid\Fluid\View\TemplateView;
 
 /**
@@ -31,7 +32,7 @@ final readonly class CheckboxGroupContextVariableMerger
             return null;
         }
 
-        $checkboxGroupRootId = $checkboxGroupContext->get('rootId') ?? null;
+        $checkboxGroupRootId = Typed::stringOrNull($checkboxGroupContext->get('rootId'));
         $checkboxGroupVariables = $checkboxGroupContext->getChildVariables($arguments);
 
         foreach ($checkboxGroupVariables as $varName => $varValue) {

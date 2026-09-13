@@ -40,6 +40,9 @@ class TagAttributes implements \Countable, \Stringable
         return $this->normalizeAttributes($attributes, static fn($key, $value) => htmlspecialchars((string)$value));
     }
 
+    /**
+     * @param string[] $attributeKeys
+     */
     public function renderWithOnly(array $attributeKeys, bool $asArray = false): string|array
     {
         $attributesToRender = $attributeKeys === []
@@ -49,6 +52,9 @@ class TagAttributes implements \Countable, \Stringable
         return $this->renderFiltered($attributesToRender, $asArray);
     }
 
+    /**
+     * @param string[] $attributeKeys
+     */
     public function renderWithSkip(array $attributeKeys, bool $asArray = false): string|array
     {
         $attributesToRender = $attributeKeys === []

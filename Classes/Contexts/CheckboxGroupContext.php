@@ -11,6 +11,7 @@ class CheckboxGroupContext extends AbstractComponentContext
      * Similar to how FieldContext provides variables to child components.
      *
      * @param array $childArguments Arguments from the child Checkbox component
+     * @return array<string, mixed>
      */
     public function getChildVariables(array $childArguments = []): array
     {

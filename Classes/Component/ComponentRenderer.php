@@ -156,7 +156,13 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
                     $argumentDefinitions,
                     $propsMarkedForClient,
                     $ctx,
-                    ['field' => $renderState['fieldRootId'], 'checkboxGroup' => $renderState['checkboxGroupRootId']],
+                    array_filter(
+                        [
+                            'field' => $renderState['fieldRootId'],
+                            'checkboxGroup' => $renderState['checkboxGroupRootId'],
+                        ],
+                        static fn(?string $rootId): bool => $rootId !== null,
+                    ),
                     $renderState['portalSnapshot'],
                 ),
             );
@@ -235,6 +241,9 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         ];
     }
 
+    /**
+     * @return array<string, ComponentContextInterface>
+     */
     protected function getOtherComponentContexts(
         RenderingContextInterface $parentRenderingContext,
         string $baseName,
@@ -267,10 +276,10 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
             !$ctx instanceof ComponentContextInterface &&
             $variableProvider->getByPath('component.baseName') === $baseName
         ) {
-            $ctx = $variableProvider->get('context') ?? null;
+            $ctx = $variableProvider->get('context');
         }
 
-        return $ctx;
+        return $ctx instanceof AbstractComponentContext ? $ctx : null;
     }
 
     protected function componentSupportsField(string $baseName): bool

@@ -8,6 +8,7 @@ use Jramke\FluidPrimitives\Contexts\AbstractComponentContext;
 use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
 use Jramke\FluidPrimitives\Contexts\FieldContext;
 use Jramke\FluidPrimitives\Utility\ComponentPartIdUtility;
+use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3Fluid\Fluid\View\TemplateView;
 
 /**
@@ -34,7 +35,7 @@ final readonly class FieldContextVariableMerger
             return null;
         }
 
-        $fieldRootId = $fieldContext->get('rootId') ?? null;
+        $fieldRootId = Typed::stringOrNull($fieldContext->get('rootId'));
         $fieldVariables = $fieldContext->getChildVariables();
 
         foreach ($fieldVariables as $varName => $varValue) {
