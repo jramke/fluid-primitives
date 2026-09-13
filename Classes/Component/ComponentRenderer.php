@@ -8,6 +8,7 @@ use Jramke\FluidPrimitives\Constants;
 use Jramke\FluidPrimitives\Contexts\AbstractComponentContext;
 use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
 use Jramke\FluidPrimitives\Domain\Dto\ComponentHydrationCandidate;
+use Jramke\FluidPrimitives\Domain\Dto\ComponentIdentity;
 use Jramke\FluidPrimitives\Factory\ComponentRootContextFactory;
 use Jramke\FluidPrimitives\Registry\PortalRegistry;
 use Jramke\FluidPrimitives\Service\Component\AsChildAttributeSpreader;
@@ -49,9 +50,17 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
      * template name and possible additional variables) are expected to be provided by the component template
      * resolver.
      *
+     * This is the single entry point every component render goes through, coordinating the 9 collaborators
+     * above in sequence; {@see createView}, {@see prepareRenderState} and {@see renderComponentOutput} already
+     * carry as much of that sequence as can be extracted without exceeding the 5-parameter guideline on the
+     * extracted methods themselves (the remaining steps interleave too many of viewHelperName/arguments/
+     * argumentDefinitions/renderingContext/parentRenderingContext/identity to split further without just
+     * relocating the same parameter list one level down).
+     *
      * @param array<string, mixed> $arguments
      * @param array<string, \Closure> $slots
      */
+    // @mago-expect lint:halstead
     public function renderComponent(
         string $viewHelperName,
         array $arguments,
@@ -67,8 +76,6 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
 
         $identity = $this->identityResolver->resolve($viewHelperName, $arguments, $renderingContext);
         $isRootComponent = $identity->isRootComponent;
-        $isComposableComponent = $identity->isComposableComponent;
-        $rootId = $identity->rootId;
         $baseName = $identity->baseName;
 
         $argumentDefinitions = $this->componentResolver
@@ -92,21 +99,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         $renderingContext->setViewHelperVariableContainer(new ViewHelperVariableContainer());
         $renderingContext->getViewHelperVariableContainer()->addAll(SlotViewHelper::class, $slots);
 
-        // Create Fluid view for component
-        $view = new TemplateView($renderingContext);
-
-        $view->assign('rootId', $rootId);
-
-        $view->getRenderingContext()->getVariableProvider()->remove('settings');
-        $view->assign('settings', ComponentUtility::getSettings());
-
-        $componentData = [
-            'fullName' => $viewHelperName,
-            'baseName' => $baseName,
-            'isRoot' => $isRootComponent,
-            'isComposable' => $isComposableComponent,
-        ];
-        $view->assign('component', $componentData);
+        $view = $this->createView($renderingContext, $viewHelperName, $identity);
 
         // Expose additional arguments as tag attributes so they can be used by the ui:attributes view helper
         $this->argumentResolver->exposeAdditionalAttributes(
@@ -138,6 +131,57 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
                 $viewHelperName,
             );
         }
+
+        $renderState = $this->prepareRenderState($parentRenderingContext, $view, $identity, $arguments);
+        $ctx = $renderState['ctx'];
+
+        $rendered = $this->renderComponentOutput($view, $viewHelperName, $arguments, $slots);
+
+        if ($isRootComponent) {
+            // cleanup the context variable from the parent rendering context
+            ContextService::removeFromRenderingContext($parentRenderingContext, $baseName);
+
+            // Call afterRendering lifecycle method only for root or closed components
+            if ($ctx && method_exists($ctx, 'afterRendering')) {
+                $ctx->afterRendering($rendered);
+            }
+
+            $rendered = $this->hydrationCollector->collectForRootComponent(
+                new ComponentHydrationCandidate(
+                    $rendered,
+                    $viewHelperName,
+                    $renderingContext,
+                    $baseName,
+                    $arguments,
+                    $argumentDefinitions,
+                    $propsMarkedForClient,
+                    $ctx,
+                    ['field' => $renderState['fieldRootId'], 'checkboxGroup' => $renderState['checkboxGroupRootId']],
+                    $renderState['portalSnapshot'],
+                ),
+            );
+        }
+
+        return $rendered;
+    }
+
+    /**
+     * Merges Field/CheckboxGroup ancestor variables into this component (if applicable), resolves its
+     * active context, exposes it to the view, runs its `beforeRendering` hook, and snapshots the portal
+     * registry - everything the post-render step (afterRendering + hydration collection) needs to know
+     * about this component's ambient rendering state.
+     *
+     * @param array<string, mixed> $arguments
+     * @return array{ctx: ?AbstractComponentContext, fieldRootId: ?string, checkboxGroupRootId: ?string, portalSnapshot: array<string, string[]>}
+     */
+    private function prepareRenderState(
+        RenderingContextInterface $parentRenderingContext,
+        TemplateView $view,
+        ComponentIdentity $identity,
+        array &$arguments,
+    ): array {
+        $baseName = $identity->baseName;
+        $isRootComponent = $identity->isRootComponent;
 
         // Expose other component contexts to allow deep nesting of composable components
         $otherComponentContexts = $this->getOtherComponentContexts($parentRenderingContext, $baseName);
@@ -183,42 +227,12 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         // looks for. Snapshotting the registry lets it also search whatever this render pass portaled away.
         $portalRegistrySnapshotBeforeRender = $isRootComponent ? PortalRegistry::getAll() : [];
 
-        if ($arguments['asChild'] ?? false) {
-            $renderedChild = isset($slots['default']) && is_callable($slots['default'])
-                ? (string)$slots['default']()
-                : '';
-            $renderedComponent = (string)$view->render($this->componentResolver->resolveTemplateName($viewHelperName));
-            $rendered = $this->asChildAttributeSpreader->spread($renderedChild, $renderedComponent);
-        } else {
-            $rendered = (string)$view->render($this->componentResolver->resolveTemplateName($viewHelperName));
-        }
-
-        if ($isRootComponent) {
-            // cleanup the context variable from the parent rendering context
-            ContextService::removeFromRenderingContext($parentRenderingContext, $baseName);
-
-            // Call afterRendering lifecycle method only for root or closed components
-            if ($ctx && method_exists($ctx, 'afterRendering')) {
-                $ctx->afterRendering($rendered);
-            }
-
-            $rendered = $this->hydrationCollector->collectForRootComponent(
-                new ComponentHydrationCandidate(
-                    $rendered,
-                    $viewHelperName,
-                    $renderingContext,
-                    $baseName,
-                    $arguments,
-                    $argumentDefinitions,
-                    $propsMarkedForClient,
-                    $ctx,
-                    ['field' => $fieldRootId, 'checkboxGroup' => $checkboxGroupRootId],
-                    $portalRegistrySnapshotBeforeRender,
-                ),
-            );
-        }
-
-        return $rendered;
+        return [
+            'ctx' => $ctx,
+            'fieldRootId' => $fieldRootId,
+            'checkboxGroupRootId' => $checkboxGroupRootId,
+            'portalSnapshot' => $portalRegistrySnapshotBeforeRender,
+        ];
     }
 
     protected function getOtherComponentContexts(
@@ -261,6 +275,54 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
 
     protected function componentSupportsField(string $baseName): bool
     {
-        return in_array($baseName, Constants::COMPONENTS_THAT_SUPPORT_FIELD, true);
+        return in_array($baseName, Constants::COMPONENTS_THAT_SUPPORT_FIELD, strict: true);
+    }
+
+    private function createView(
+        RenderingContextInterface $renderingContext,
+        string $viewHelperName,
+        ComponentIdentity $identity,
+    ): TemplateView {
+        $view = new TemplateView($renderingContext);
+
+        $view->assign('rootId', $identity->rootId);
+
+        $view->getRenderingContext()->getVariableProvider()->remove('settings');
+        $view->assign('settings', ComponentUtility::getSettings());
+
+        $view->assign('component', [
+            'fullName' => $viewHelperName,
+            'baseName' => $identity->baseName,
+            'isRoot' => $identity->isRootComponent,
+            'isComposable' => $identity->isComposableComponent,
+        ]);
+
+        return $view;
+    }
+
+    /**
+     * Renders the component template, or - for `asChild` - spreads its resolved attributes onto its
+     * rendered child instead (see {@see AsChildAttributeSpreader}).
+     *
+     * @param array<string, mixed> $arguments
+     * @param array<string, \Closure> $slots
+     */
+    private function renderComponentOutput(
+        TemplateView $view,
+        string $viewHelperName,
+        array $arguments,
+        array $slots,
+    ): string {
+        $renderedComponent = (string)$view->render($this->componentResolver->resolveTemplateName($viewHelperName));
+
+        if (!($arguments['asChild'] ?? false)) {
+            return $renderedComponent;
+        }
+
+        $renderedChild = ($slots['default'] ?? null) !== null && is_callable($slots['default'])
+            ? (string)$slots['default']()
+            : '';
+
+        return $this->asChildAttributeSpreader->spread($renderedChild, $renderedComponent);
     }
 }
