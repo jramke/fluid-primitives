@@ -11,6 +11,25 @@ use PHPUnit\Framework\Attributes\Test;
 final class ComboboxRenderingTest extends FunctionalTestCase
 {
     #[Test]
+    public function rendersClosedStateByDefault(): void
+    {
+        // Regression test: `defaultOpen` used to have no explicit default, so `context.defaultOpen`
+        // was `null` rather than `false` when unset. TYPO3 Fluid's inline ternary shorthand
+        // (`{x ? a : b}`) treats a bare `null` as truthy - unlike `f:if`, which correctly treats it
+        // as falsy - so the trigger rendered a contradictory `aria-expanded="false" data-state="open"`
+        // by default.
+        $html = $this->renderTemplate('
+            <primitives:combobox.root>
+                <primitives:combobox.trigger>Toggle</primitives:combobox.trigger>
+            </primitives:combobox.root>
+        ');
+
+        $this->assertStringContainsString('data-state="closed"', $html);
+        $this->assertStringContainsString('aria-expanded="false"', $html);
+        $this->assertStringNotContainsString('data-state="open"', $html);
+    }
+
+    #[Test]
     public function rendersItemFromARealCollectionItem(): void
     {
         $collection = new ListCollection([

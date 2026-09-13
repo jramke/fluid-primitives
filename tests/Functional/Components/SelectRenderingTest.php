@@ -27,6 +27,30 @@ final class SelectRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function rendersClosedStateByDefault(): void
+    {
+        // Regression test: `defaultOpen` used to have no explicit default, so `context.defaultOpen`
+        // was `null` rather than `false` when unset. TYPO3 Fluid's inline ternary shorthand
+        // (`{x ? a : b}`) treats a bare `null` as truthy - unlike `f:if`, which correctly treats it
+        // as falsy - so the content/control/indicator/trigger parts rendered `data-state="open"` by
+        // default.
+        $collection = new ListCollection([
+            ['value' => 'opt-1', 'label' => 'Option 1'],
+        ]);
+
+        $html = $this->renderTemplate('
+            <primitives:select.root collection="{collection}">
+                <primitives:select.control>
+                    <primitives:select.trigger>Select an option</primitives:select.trigger>
+                </primitives:select.control>
+            </primitives:select.root>
+        ', ['collection' => $collection]);
+
+        $this->assertStringContainsString('data-state="closed"', $html);
+        $this->assertStringNotContainsString('data-state="open"', $html);
+    }
+
+    #[Test]
     public function rendersSelectRootWithDataAttributes(): void
     {
         $collection = new ListCollection([

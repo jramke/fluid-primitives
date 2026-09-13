@@ -1,7 +1,7 @@
 <ui:prop name="value" type="string" optional="{true}" />
 
-<f:variable name="state">{context.defaultOpen ? 'open' : 'closed'}</f:variable>
-<f:variable name="expanded">{context.defaultOpen ? '' : null}</f:variable>
+<f:variable name="state">{f:if(condition: context.defaultOpen, then: 'open', else: 'closed')}</f:variable>
+<f:variable name="expanded">{f:if(condition: context.defaultOpen, then: '{true}', else: '{false}')}</f:variable>
 <f:variable name="refData" value="{state: state, expanded: expanded}" />
 
 <button
