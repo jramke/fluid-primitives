@@ -5,8 +5,12 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Traits;
 
 use TYPO3\CMS\Core\Http\PropagateResponseException;
-use TYPO3\CMS\Extensionmanager\Controller\ActionController;
+use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
+use TYPO3\CMS\Extbase\Mvc\Controller\Arguments;
 
+/**
+ * @property-read Arguments $arguments Provided by the using class extending {@see ActionController}.
+ */
 trait AjaxValidationTrait
 {
     protected function throwJsonValidationErrorResponse(): void

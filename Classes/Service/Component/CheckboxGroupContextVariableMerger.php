@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Service\Component;
 
 use Jramke\FluidPrimitives\Contexts\AbstractComponentContext;
+use Jramke\FluidPrimitives\Contexts\CheckboxGroupContext;
 use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
 use TYPO3Fluid\Fluid\View\TemplateView;
 
@@ -26,7 +27,7 @@ final readonly class CheckboxGroupContextVariableMerger
         ?AbstractComponentContext $ctx,
     ): ?string {
         $checkboxGroupContext = $otherComponentContexts['checkbox-group'] ?? null;
-        if (!$checkboxGroupContext) {
+        if (!$checkboxGroupContext instanceof CheckboxGroupContext) {
             return null;
         }
 

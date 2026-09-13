@@ -6,6 +6,7 @@ namespace Jramke\FluidPrimitives\Service\Component;
 
 use Jramke\FluidPrimitives\Contexts\AbstractComponentContext;
 use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
+use Jramke\FluidPrimitives\Contexts\FieldContext;
 use Jramke\FluidPrimitives\Utility\ComponentPartIdUtility;
 use TYPO3Fluid\Fluid\View\TemplateView;
 
@@ -29,7 +30,7 @@ final readonly class FieldContextVariableMerger
         ?AbstractComponentContext $ctx,
     ): ?string {
         $fieldContext = $otherComponentContexts['field'] ?? null;
-        if (!$fieldContext) {
+        if (!$fieldContext instanceof FieldContext) {
             return null;
         }
 
