@@ -6,6 +6,7 @@ namespace Jramke\FluidPrimitives\Service;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
+use Jramke\FluidPrimitives\Utility\Typed;
 
 class RegistryService
 {
@@ -18,6 +19,9 @@ class RegistryService
         ]);
     }
 
+    /**
+     * @return array{0: array{message: string, details: mixed}|null, 1: array<array-key, mixed>}
+     */
     public function fetchComponent(string $componentKey): array
     {
         if ($componentKey === '' || $componentKey === '0') {
@@ -29,7 +33,7 @@ class RegistryService
 
         try {
             $response = $this->client->get("/registry/components/{$componentKey}");
-            $data = json_decode((string)$response->getBody(), associative: true);
+            $data = Typed::arrayOrNull(json_decode((string)$response->getBody(), associative: true)) ?? [];
         } catch (ClientException $e) {
             $error = [
                 'message' => 'Component not found in registry.',
@@ -76,7 +80,7 @@ class RegistryService
 
         try {
             $response = $this->client->get('/registry/components');
-            $data = json_decode((string)$response->getBody(), associative: true);
+            $data = Typed::arrayOrNull(json_decode((string)$response->getBody(), associative: true)) ?? [];
         } catch (ClientException $e) {
             $error = [
                 'message' => 'Failed to fetch component registry.',

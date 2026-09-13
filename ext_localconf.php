@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Jramke\FluidPrimitives\Component\ComponentPrimitivesCollection;
 use Jramke\FluidPrimitives\Constants;
 use Jramke\FluidPrimitives\Controller\AjaxDispatcherController;
+use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Utility\ExtensionUtility;
@@ -22,14 +23,29 @@ defined('TYPO3') || die();
 // Make ui a global namespace
 // @mago-expect lint:no-global,no-isset
 if (!isset($GLOBALS['TYPO3_CONF_VARS']['SYS']['fluid']['namespaces']['ui'])) {
+    // $GLOBALS['TYPO3_CONF_VARS'] is untyped, so every nesting level of this write is flagged
+    // separately - inherent to it being TYPO3's own global configuration array.
     // @mago-expect lint:no-global
+    // @mago-expect analysis:mixed-array-assignment
+    // @mago-expect analysis:mixed-array-assignment
+    // @mago-expect analysis:mixed-array-assignment
+    // @mago-expect analysis:mixed-array-assignment
     $GLOBALS['TYPO3_CONF_VARS']['SYS']['fluid']['namespaces']['ui'] = [];
 }
 // @mago-expect lint:no-global
+// @mago-expect analysis:mixed-array-assignment
+// @mago-expect analysis:mixed-array-assignment
+// @mago-expect analysis:mixed-array-assignment
+// @mago-expect analysis:mixed-array-assignment
+// @mago-expect analysis:mixed-array-assignment
 $GLOBALS['TYPO3_CONF_VARS']['SYS']['fluid']['namespaces']['ui'][] = 'Jramke\\FluidPrimitives\\ViewHelpers';
 
 // Register primitives namespace
 // @mago-expect lint:no-global
+// @mago-expect analysis:mixed-array-assignment
+// @mago-expect analysis:mixed-array-assignment
+// @mago-expect analysis:mixed-array-assignment
+// @mago-expect analysis:mixed-array-assignment
 $GLOBALS['TYPO3_CONF_VARS']['SYS']['fluid']['namespaces']['primitives'] = [
     ComponentPrimitivesCollection::class,
 ];
@@ -37,7 +53,7 @@ $GLOBALS['TYPO3_CONF_VARS']['SYS']['fluid']['namespaces']['primitives'] = [
 // Exclude specific arguments from storybook controls when using EXT:storybook
 if (ExtensionManagementUtility::isLoaded('storybook')) {
     // @mago-expect lint:no-global
-    $existing = $GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS']['storybook']['excludeArguments'] ?? '';
+    $existing = Typed::string($GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS']['storybook']['excludeArguments'] ?? null);
     $existingArr = GeneralUtility::trimExplode(',', $existing, true);
 
     $globalPropsWithoutClass = array_filter(Constants::GLOBAL_PROPS, static fn($value) => $value !== 'class');
@@ -45,6 +61,9 @@ if (ExtensionManagementUtility::isLoaded('storybook')) {
     $merged = array_values(array_unique(array_merge($existingArr, $globalPropsWithoutClass)));
 
     // @mago-expect lint:no-global
+    // @mago-expect analysis:mixed-array-assignment
+    // @mago-expect analysis:mixed-array-assignment
+    // @mago-expect analysis:mixed-array-assignment
     $GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS']['storybook']['excludeArguments'] = implode(',', $merged);
 }
 

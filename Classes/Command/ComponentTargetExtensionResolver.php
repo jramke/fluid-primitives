@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Command;
 
 use Jramke\FluidPrimitives\Service\PackageResolver;
+use Jramke\FluidPrimitives\Utility\Typed;
 use Symfony\Component\Console\Exception\MissingInputException;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Question\ChoiceQuestion;
@@ -29,7 +30,7 @@ final readonly class ComponentTargetExtensionResolver
      */
     public function resolve(InputInterface $input, SymfonyStyle $io, array $availablePackages): string
     {
-        $extension = $input->getOption('extension');
+        $extension = Typed::stringOrNull($input->getOption('extension'));
         if ($extension) {
             if (!array_key_exists($extension, $availablePackages)) {
                 throw new \RuntimeException(
@@ -41,8 +42,9 @@ final readonly class ComponentTargetExtensionResolver
             return $extension;
         }
 
-        $defaultExtension =
-            $this->extensionConfiguration->get('fluid_primitives', 'cli')['add']['defaultExtension'] ?? '';
+        $cliSettings = Typed::arrayOrNull($this->extensionConfiguration->get('fluid_primitives', 'cli')) ?? [];
+        $addSettings = Typed::arrayOrNull($cliSettings['add'] ?? null) ?? [];
+        $defaultExtension = Typed::string($addSettings['defaultExtension'] ?? null);
         if ($defaultExtension !== '' && array_key_exists($defaultExtension, $availablePackages)) {
             return $defaultExtension;
         }
@@ -62,12 +64,12 @@ final readonly class ComponentTargetExtensionResolver
             $availablePackagesForDisplay = $availablePackages;
         }
 
-        $extension = $io->askQuestion(
+        $extension = Typed::stringOrNull($io->askQuestion(
             new ChoiceQuestion(
                 'Choose an extension in which the Component should be stored',
                 $this->getPackageTitles($availablePackagesForDisplay),
             ),
-        );
+        ));
         if ($extension === null) {
             throw new MissingInputException('Aborted.', 1766948173);
         }
@@ -82,16 +84,20 @@ final readonly class ComponentTargetExtensionResolver
 
     private function saveAsDefaultExtension(string $extension): void
     {
-        $settings = $this->extensionConfiguration->get('fluid_primitives');
-        if (!is_array($settings)) {
-            $settings = [];
-        }
-        $settings['cli']['add']['defaultExtension'] = $extension;
+        $settings = Typed::arrayOrNull($this->extensionConfiguration->get('fluid_primitives')) ?? [];
+        $cliSettings = Typed::arrayOrNull($settings['cli'] ?? null) ?? [];
+        $addSettings = Typed::arrayOrNull($cliSettings['add'] ?? null) ?? [];
+
+        $addSettings['defaultExtension'] = $extension;
+        $cliSettings['add'] = $addSettings;
+        $settings['cli'] = $cliSettings;
+
         $this->extensionConfiguration->set('fluid_primitives', $settings);
     }
 
     /**
      * @param array<string, PackageInterface> $availablePackages
+     * @return array<string, string>
      */
     private function getPackageTitles(array $availablePackages): array
     {
@@ -105,6 +111,7 @@ final readonly class ComponentTargetExtensionResolver
 
     /**
      * @param array<string, PackageInterface> $availablePackages
+     * @return array<string, string>
      */
     private function getPackageKeys(array $availablePackages): array
     {

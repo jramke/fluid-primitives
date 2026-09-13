@@ -6,6 +6,7 @@ namespace Jramke\FluidPrimitives\Command;
 
 use Jramke\FluidPrimitives\Service\PackageResolver;
 use Jramke\FluidPrimitives\Service\RegistryService;
+use Jramke\FluidPrimitives\Utility\Typed;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -60,7 +61,7 @@ class ComponentAddCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
-        $componentKey = $input->getArgument('component');
+        $componentKey = Typed::string($input->getArgument('component'));
 
         $availablePackages = $this->packageResolver->getAvailablePackages();
         if ($availablePackages === []) {
@@ -70,25 +71,28 @@ class ComponentAddCommand extends Command
         $extension = $this->extensionResolver->resolve($input, $io, $availablePackages);
 
         [$error, $manifest] = $this->registryService->fetchComponent($componentKey);
-        if ($error) {
+        if ($error !== null) {
             $io->error($error['message']);
             return Command::FAILURE;
         }
 
-        $componentFolderName = $manifest['name'] ?? null;
-        $files = $manifest['files'] ?? [];
+        $componentFolderName = Typed::string($manifest['name'] ?? null);
+        $files = array_map(Typed::string(...), Typed::arrayOrNull($manifest['files'] ?? null) ?? []);
         $useFluidSuffix = $input->getOption('fluid-suffix');
         if (!is_bool($useFluidSuffix)) {
             $useFluidSuffix = $this->fileWriter->shouldUseFluidSuffixByDefault();
         }
 
         $targetFolder =
-            $availablePackages[$extension]->getPackagePath() . $input->getOption('path') . $componentFolderName . '/';
+            $availablePackages[$extension]->getPackagePath() .
+            Typed::string($input->getOption('path')) .
+            $componentFolderName .
+            '/';
 
         $writeResult = $this->fileWriter->write($io, $componentKey, $files, [
             'targetFolder' => $targetFolder,
             'useFluidSuffix' => $useFluidSuffix,
-            'force' => (bool)$input->getOption('force'),
+            'force' => Typed::bool($input->getOption('force')),
         ]);
 
         $this->fileWriter->reportResult($io, $componentKey, $extension, $writeResult);
