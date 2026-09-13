@@ -73,6 +73,9 @@ class RegistryService
         return [$error, $data];
     }
 
+    /**
+     * @return array{0: array{message: string, details: mixed}|null, 1: array<array-key, mixed>}
+     */
     public function fetchComponentList(): array
     {
         $data = [];

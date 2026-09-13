@@ -39,6 +39,7 @@ readonly class PackageResolver
      */
     public function getAvailablePackages(): array
     {
+        /** @var array<string, PackageInterface> $packages */
         $packages = $this->packageManager->getAvailablePackages();
         return $this->removeFrameworkExtensions($packages);
     }
@@ -48,6 +49,7 @@ readonly class PackageResolver
      */
     public function getAvailablePackagesForDisplay(): array
     {
+        /** @var array<string, PackageInterface> $packages */
         $packages = $this->packageManager->getAvailablePackages();
         $packages = $this->removeFrameworkExtensions($packages);
         if (Environment::isComposerMode()) {
@@ -99,11 +101,18 @@ readonly class PackageResolver
         );
         $composerLockMap = [];
         foreach ($composerLockPackages as $package) {
-            $composerLockMap[$package['name']] = $package['dist']['type'] ?? null;
+            if (!is_array($package)) {
+                continue;
+            }
+            $name = Typed::stringOrNull($package['name'] ?? null);
+            if ($name === null) {
+                continue;
+            }
+            $composerLockMap[$name] = Typed::stringOrNull($package['dist']['type'] ?? null);
         }
         $filterPackages = function (PackageInterface $package) use ($composerLockMap): bool {
-            $name = $package->getValueFromComposerManifest('name');
-            if (array_key_exists($name, $composerLockMap)) {
+            $name = Typed::stringOrNull($package->getValueFromComposerManifest('name'));
+            if ($name !== null && array_key_exists($name, $composerLockMap)) {
                 return $composerLockMap[$name] === 'path';
             }
             return $name === $this->getRootPackageName();
