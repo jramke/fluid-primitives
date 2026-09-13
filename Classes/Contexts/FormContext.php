@@ -33,11 +33,7 @@ class FormContext extends AbstractComponentContext
             $identityFields .= $this->renderHiddenIdentityField($nestedObject, $propertyPath);
         }
 
-        $html = str_replace(
-            '</form>',
-            $identityFields . $this->renderTrustedPropertiesField() . '</form>',
-            $html,
-        );
+        $html = str_replace('</form>', $identityFields . $this->renderTrustedPropertiesField() . '</form>', $html);
 
         foreach (array_keys($this->getFieldContextInformations()) as $id) {
             $this->getParentRenderingContext()->getViewHelperVariableContainer()->remove(FieldContext::class, $id);
@@ -178,8 +174,10 @@ class FormContext extends AbstractComponentContext
      * submitting the form would make Extbase create a new sub-object rather than update the existing
      * one, silently orphaning it.
      */
-    protected function renderHiddenIdentityField(?AbstractDomainObject $object = null, ?string $propertyPath = null): string
-    {
+    protected function renderHiddenIdentityField(
+        ?AbstractDomainObject $object = null,
+        ?string $propertyPath = null,
+    ): string {
         $object ??= $this->getBoundPersistedObject();
         if (!$object instanceof AbstractDomainObject) {
             return '';

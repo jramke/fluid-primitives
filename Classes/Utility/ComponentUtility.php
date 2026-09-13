@@ -234,7 +234,11 @@ class ComponentUtility
         }
 
         $idNamespace = self::getIdNamespace($componentName);
-        ['segment' => $partSegment, 'valueSeparator' => $valueSeparator, 'rootIdSeparator' => $rootIdSeparator] = self::getPartConfig($componentName, $part);
+        [
+            'segment' => $partSegment,
+            'valueSeparator' => $valueSeparator,
+            'rootIdSeparator' => $rootIdSeparator,
+        ] = self::getPartConfig($componentName, $part);
 
         if ($part === 'root') {
             return "{$idNamespace}{$rootIdSeparator}{$rootId}";
