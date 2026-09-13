@@ -8,12 +8,14 @@ use Jramke\FluidPrimitives\Utility\EnumUtility;
 
 class TagAttributes implements \Countable, \Stringable
 {
-    protected $attributesString = '';
-    protected $attributes = [];
+    protected string $attributesString = '';
 
-    public function __construct(array $attributes = [])
-    {
-        $this->attributes = $attributes;
+    /**
+     * @param array<string, mixed> $attributes
+     */
+    public function __construct(
+        protected array $attributes = [],
+    ) {
         $this->attributesString = $this->buildAttributesString($this->attributes);
     }
 
@@ -24,9 +26,13 @@ class TagAttributes implements \Countable, \Stringable
 
     public function __toString(): string
     {
-        return (string)$this->attributesString;
+        return $this->attributesString;
     }
 
+    /**
+     * @param array<string, mixed> $attributes
+     * @return array<string, string>
+     */
     public function renderAsArray(array $attributes = []): array
     {
         if ($attributes === []) {
@@ -37,7 +43,7 @@ class TagAttributes implements \Countable, \Stringable
             $attributes = $this->attributes;
         }
 
-        return $this->normalizeAttributes($attributes, static fn($key, $value) => htmlspecialchars((string)$value));
+        return $this->normalizeAttributes($attributes, static fn($key, $value) => htmlspecialchars($value));
     }
 
     /**
@@ -64,6 +70,9 @@ class TagAttributes implements \Countable, \Stringable
         return $this->renderFiltered($attributesToRender, $asArray);
     }
 
+    /**
+     * @param array<string, mixed> $attributesToRender
+     */
     private function renderFiltered(array $attributesToRender, bool $asArray): string|array
     {
         if ($attributesToRender === []) {
@@ -73,6 +82,9 @@ class TagAttributes implements \Countable, \Stringable
         return $asArray ? $this->renderAsArray($attributesToRender) : $this->buildAttributesString($attributesToRender);
     }
 
+    /**
+     * @param array<string, mixed> $attributes
+     */
     protected function buildAttributesString(array $attributes): string
     {
         $parts = $this->normalizeAttributes($attributes, $this->buildSingleAttributeString(...));
@@ -80,6 +92,11 @@ class TagAttributes implements \Countable, \Stringable
         return implode(' ', $parts);
     }
 
+    /**
+     * @param array<string, mixed> $attributes
+     * @param callable(string, string): string $valueFormatter
+     * @return array<string, string>
+     */
     protected function normalizeAttributes(array $attributes, callable $valueFormatter): array
     {
         $result = [];
@@ -92,7 +109,7 @@ class TagAttributes implements \Countable, \Stringable
             $value = EnumUtility::normalize($value);
 
             // convert boolean values to html boolean attributes unless they are aria- attributes
-            if (!str_starts_with((string)$key, 'aria-') && is_bool($value)) {
+            if (!str_starts_with($key, 'aria-') && is_bool($value)) {
                 $value = $value ? '' : null;
                 if ($value === null) {
                     continue;
@@ -103,7 +120,7 @@ class TagAttributes implements \Countable, \Stringable
                 $value = json_encode($value);
             }
 
-            $result[$key] = $valueFormatter((string)$key, (string)$value);
+            $result[$key] = $valueFormatter($key, (string)$value);
         }
 
         return $result;

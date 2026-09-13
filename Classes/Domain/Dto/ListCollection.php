@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Domain\Dto;
 
 use IteratorAggregate;
+use Jramke\FluidPrimitives\Utility\Typed;
 use JsonSerializable;
 use Traversable;
 
@@ -19,6 +20,7 @@ final class ListCollection implements JsonSerializable, IteratorAggregate
     private ?array $normalizedItems = null;
 
     /**
+     * @param array<array-key, array<array-key, mixed>|object> $items
      * @param array<string>|string|null $groupSort Explicit group-key order; alternatively 'asc'/'desc'
      *   to sort group keys, or null for insertion order.
      */
@@ -31,6 +33,9 @@ final class ListCollection implements JsonSerializable, IteratorAggregate
         protected array|string|null $groupSort = null,
     ) {}
 
+    /**
+     * @param array<array-key, array<array-key, mixed>|object>|null $items
+     */
     public function copy(?array $items = null): static
     {
         return new self(
@@ -126,7 +131,7 @@ final class ListCollection implements JsonSerializable, IteratorAggregate
         if ($this->itemToValueKey) {
             return (string)($this->getFromKey($item, $this->itemToValueKey) ?? '');
         }
-        return $item['value'] ?? null;
+        return Typed::stringOrNull($item['value'] ?? null);
     }
 
     public function stringifyItem(array|object $item): ?string
@@ -134,9 +139,12 @@ final class ListCollection implements JsonSerializable, IteratorAggregate
         if ($this->itemToStringKey) {
             return (string)($this->getFromKey($item, $this->itemToStringKey) ?? '');
         }
-        return $item['label'] ?? $item['value'] ?? null;
+        return Typed::stringOrNull($item['label'] ?? $item['value'] ?? null);
     }
 
+    /**
+     * @param array<ListCollectionItem|array<array-key, mixed>|object> $items
+     */
     public function stringifyItems(array $items, string $separator = ', '): string
     {
         $strings = [];
@@ -187,6 +195,7 @@ final class ListCollection implements JsonSerializable, IteratorAggregate
     /**
      * Find multiple normalized ListCollectionItems by values.
      *
+     * @param array<string>|string $values
      * @return ListCollectionItem[]
      */
     public function findMany(array|string $values): array
