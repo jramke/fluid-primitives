@@ -19,22 +19,21 @@ use Jramke\FluidPrimitives\Service\Component\ContextMarkedPropsExposer;
 use Jramke\FluidPrimitives\Service\Component\FieldContextVariableMerger;
 use Jramke\FluidPrimitives\Service\ContextService;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
-use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use TYPO3Fluid\Fluid\Core\Component\ComponentRendererInterface;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 use TYPO3Fluid\Fluid\Core\ViewHelper\ViewHelperVariableContainer;
 use TYPO3Fluid\Fluid\View\TemplateView;
 use TYPO3Fluid\Fluid\ViewHelpers\SlotViewHelper;
 
-// This is deliberately not container-shared: renderComponent() binds a component-collection-specific
-// componentResolver onto the instance after construction (see setComponentResolver()), which a shared
-// instance would leak across unrelated ComponentCollectionInterface implementations.
-#[Autoconfigure(public: true, shared: false)]
+/**
+ * Built exclusively through {@see \Jramke\FluidPrimitives\Factory\ComponentRendererFactory}, which
+ * binds the component-collection-specific componentResolver at construction time - a fresh instance
+ * per caller, never container-managed itself, so nothing here ever needs a post-construction write.
+ */
 final readonly class ComponentRenderer implements ComponentRendererInterface
 {
-    private ComponentCollectionInterface $componentResolver;
-
     public function __construct(
+        private ComponentCollectionInterface $componentResolver,
         private ComponentIdentityResolver $identityResolver,
         private ComponentArgumentResolver $argumentResolver,
         private ComponentRootContextFactory $rootContextFactory,
@@ -44,20 +43,6 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         private ComponentHydrationCollector $hydrationCollector,
         private AsChildAttributeSpreader $asChildAttributeSpreader,
     ) {}
-
-    /**
-     * Binds the component collection this renderer resolves components through. Not constructor-
-     * injected: it's the calling {@see AbstractComponentCollection} instance itself ("$this" from
-     * getComponentRenderer()), not a generically autowireable service.
-     */
-    public function setComponentResolver(ComponentCollectionInterface $componentResolver): void
-    {
-        // getComponentRenderer() is this property's only caller and calls it exactly once, right
-        // after construction, so double-initialization can't happen in practice - mago can't prove
-        // that invariant across the two methods, only that a single call site respects it.
-        // @mago-expect analysis:possibly-invalid-property-write
-        $this->componentResolver = $componentResolver;
-    }
 
     /**
      * Renders a Fluid template to be used as a component. The necessary view configuration (template paths,

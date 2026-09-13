@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Component;
 
 use Jramke\FluidPrimitives\Constants;
+use Jramke\FluidPrimitives\Factory\ComponentRendererFactory;
 use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
 use Jramke\FluidPrimitives\Utility\PropsUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -212,9 +213,7 @@ abstract class AbstractComponentCollection implements ComponentCollectionInterfa
 
     final public function getComponentRenderer(): ComponentRendererInterface
     {
-        $renderer = GeneralUtility::makeInstance(ComponentRenderer::class);
-        $renderer->setComponentResolver($this);
-        return $renderer;
+        return GeneralUtility::makeInstance(ComponentRendererFactory::class)->create($this);
     }
 
     final public function resolveViewHelperClassName(string $viewHelperName): string
