@@ -7,6 +7,7 @@ namespace Jramke\FluidPrimitives\Service\Component;
 use Jramke\FluidPrimitives\Domain\Dto\ComponentIdentity;
 use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
+use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 
 /**
@@ -31,12 +32,12 @@ final readonly class ComponentIdentityResolver
 
         $isComposableComponent = ComponentNameUtility::isComposableComponent($viewHelperName);
 
-        $rootId = $arguments['rootId'] ?? null;
+        $rootId = Typed::stringOrNull($arguments['rootId'] ?? null);
         if ($rootId === null) {
             // For a non-root component we assign the rootId of the parent component when rendering subcomponents.
             $rootId = $isRootComponent
                 ? ComponentUtility::id()
-                : $renderingContext->getVariableProvider()->get('rootId') ?? null;
+                : Typed::stringOrNull($renderingContext->getVariableProvider()->get('rootId'));
         }
 
         $baseName = ComponentNameUtility::getComponentBaseNameFromViewHelperName($viewHelperName);

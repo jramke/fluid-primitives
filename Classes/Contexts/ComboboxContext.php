@@ -28,6 +28,9 @@ class ComboboxContext extends AbstractComponentContext
         return $this->translator;
     }
 
+    /**
+     * @return array<string>|null
+     */
     #[ExposeToClient(excludeIfNull: true)]
     public function getDefaultValue(): ?array
     {
@@ -41,7 +44,7 @@ class ComboboxContext extends AbstractComponentContext
             return [$defaultValue];
         }
 
-        return is_array($defaultValue) ? $defaultValue : null;
+        return is_array($defaultValue) ? array_map(Typed::string(...), $defaultValue) : null;
     }
 
     public function getInitialInputValue(): string

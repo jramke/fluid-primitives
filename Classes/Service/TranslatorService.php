@@ -8,6 +8,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use TYPO3\CMS\Core\Localization\LanguageService;
 use TYPO3\CMS\Core\Localization\LanguageServiceFactory;
+use TYPO3\CMS\Core\Site\Entity\Site;
 use TYPO3\CMS\Core\Site\Entity\SiteLanguage;
 
 #[Autoconfigure(public: true)]
@@ -15,6 +16,7 @@ final class TranslatorService
 {
     private const TRANSLATIONS_FILE = 'EXT:fluid_primitives/Resources/Private/Language/locallang.xlf';
 
+    /** @var array<string, LanguageService> */
     private array $translators = [];
 
     public function __construct(
@@ -53,6 +55,12 @@ final class TranslatorService
 
     private function getSiteLanguage(ServerRequestInterface $request): ?SiteLanguage
     {
-        return $request->getAttribute('language') ?? $request->getAttribute('site')?->getDefaultLanguage();
+        $language = $request->getAttribute('language');
+        if ($language instanceof SiteLanguage) {
+            return $language;
+        }
+
+        $site = $request->getAttribute('site');
+        return $site instanceof Site ? $site->getDefaultLanguage() : null;
     }
 }
