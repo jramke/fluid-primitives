@@ -6,6 +6,7 @@ namespace Jramke\FluidPrimitives\ViewHelpers;
 
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
+use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
 /**
@@ -56,10 +57,10 @@ class HydrationDataViewHelper extends AbstractViewHelper
         $props = $this->normalizeData($this->renderChildren() ?? []);
         unset($props['id']); // Remove potential id from client props as it is handled separately
 
-        $id = $this->arguments['id'] ?? ComponentUtility::id();
+        $id = Typed::stringOrNull($this->arguments['id']) ?? ComponentUtility::id();
 
         $data = [
-            'controlled' => $this->arguments['controlled'],
+            'controlled' => Typed::bool($this->arguments['controlled']),
             'props' => [
                 'id' => $id,
                 ...$props,
@@ -67,7 +68,7 @@ class HydrationDataViewHelper extends AbstractViewHelper
         ];
 
         $registry = HydrationRegistry::getInstance();
-        $registry->add((string)$this->arguments['name'], $id, $data);
+        $registry->add(Typed::string($this->arguments['name']), $id, $data);
     }
 
     private function normalizeData(mixed $data): array
@@ -85,7 +86,7 @@ class HydrationDataViewHelper extends AbstractViewHelper
         }
 
         if (is_object($data) && method_exists($data, 'toArray')) {
-            return $data->toArray();
+            return Typed::arrayOrNull($data->toArray()) ?? [];
         }
 
         throw new \RuntimeException(

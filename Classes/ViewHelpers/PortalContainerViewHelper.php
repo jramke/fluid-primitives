@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\ViewHelpers;
 
 use Jramke\FluidPrimitives\Registry\PortalRegistry;
+use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
 /**
@@ -31,7 +32,8 @@ class PortalContainerViewHelper extends AbstractViewHelper
 
     public function render(): string
     {
-        $portalledHtmlStrings = PortalRegistry::getAllByName($this->arguments['name']);
+        $name = Typed::string($this->arguments['name']);
+        $portalledHtmlStrings = PortalRegistry::getAllByName($name);
 
         if ($portalledHtmlStrings === []) {
             return '';
@@ -39,7 +41,7 @@ class PortalContainerViewHelper extends AbstractViewHelper
 
         $concatenatedHtml = implode("\n", array_map(trim(...), $portalledHtmlStrings));
 
-        PortalRegistry::clearByName($this->arguments['name']);
+        PortalRegistry::clearByName($name);
 
         return $concatenatedHtml;
     }

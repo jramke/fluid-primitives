@@ -8,6 +8,7 @@ use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
 use Jramke\FluidPrimitives\Service\ContextService;
 use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
+use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
 /**
@@ -56,8 +57,9 @@ class ContextViewHelper extends AbstractViewHelper
 
         $context = ContextService::getFromRenderingContext($renderingContext, (string)$this->arguments['name']);
 
-        if ($this->arguments['as']) {
-            $renderingContext->getVariableProvider()->add($this->arguments['as'], $context);
+        $as = Typed::string($this->arguments['as']);
+        if ($as !== '') {
+            $renderingContext->getVariableProvider()->add($as, $context);
             return null;
         }
 

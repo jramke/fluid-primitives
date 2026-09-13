@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\ViewHelpers;
 
+use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
 /**
@@ -38,8 +39,8 @@ class CallViewHelper extends AbstractViewHelper
             throw new \RuntimeException('No object provided to call method on.', 2131365274);
         }
 
-        $method = $this->arguments['method'];
-        $args = $this->arguments['arguments'] ?? [];
+        $method = Typed::string($this->arguments['method']);
+        $args = Typed::arrayOrNull($this->arguments['arguments']) ?? [];
 
         if (!is_object($object)) {
             throw new \RuntimeException('The provided value is not an object.', 2653378988);
@@ -51,7 +52,10 @@ class CallViewHelper extends AbstractViewHelper
             );
         }
 
-        return call_user_func_array([$object, $method], $args);
+        // This ViewHelper's entire purpose is calling an arbitrary, template-supplied method name -
+        // dynamic dispatch is inherent here, not something a rewrite would resolve.
+        // @mago-expect analysis:string-member-selector
+        return $object->{$method}(...$args);
     }
 
     public function getContentArgumentName(): string

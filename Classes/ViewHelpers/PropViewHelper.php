@@ -10,6 +10,7 @@ use Jramke\FluidPrimitives\Annotations\RequiredAtRuntimeArgumentAnnotation;
 use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use Jramke\FluidPrimitives\Utility\PropsUtility;
+use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3Fluid\Fluid\Core\Parser\Exception;
 use TYPO3Fluid\Fluid\Core\Parser\ParsingState;
 use TYPO3Fluid\Fluid\Core\Parser\SyntaxTree\NodeInterface;
@@ -79,32 +80,33 @@ class PropViewHelper extends AbstractViewHelper implements ViewHelperNodeInitial
         }
 
         $isRootComponent = ComponentNameUtility::isRootComponent($renderingContext);
+        $name = Typed::string($this->arguments['name']);
 
-        if ($this->arguments['context'] && $isRootComponent) {
+        if (Typed::bool($this->arguments['context']) && $isRootComponent) {
             throw new \RuntimeException(
                 'The context argument can only be used inside a composable component. All props from the root component are automatically available in the context.',
                 1698255601,
             );
         }
 
-        if ($this->arguments['client'] && !$isRootComponent) {
+        if (Typed::bool($this->arguments['client']) && !$isRootComponent) {
             throw new \RuntimeException('The client argument can only be used inside a root component.', 1698255602);
         }
 
-        if (PropsUtility::isReservedProp($this->arguments['name'])) {
+        if (PropsUtility::isReservedProp($name)) {
             throw new \RuntimeException(
-                'The name "' . $this->arguments['name'] . '" is reserved and cannot be used as prop name.',
+                'The name "' . $name . '" is reserved and cannot be used as prop name.',
                 1758400699,
             );
         }
 
         if (
-            $this->arguments['requiredAtRuntime'] &&
-            !$renderingContext->getVariableProvider()->exists($this->arguments['name'])
+            Typed::bool($this->arguments['requiredAtRuntime']) &&
+            !$renderingContext->getVariableProvider()->exists($name)
         ) {
             throw new \RuntimeException(
                 'The prop "' .
-                $this->arguments['name'] .
+                $name .
                 '" is required for component "' .
                 ComponentNameUtility::getComponentFullNameFromContext($renderingContext) .
                 '" but was not provided.',
@@ -150,7 +152,7 @@ class PropViewHelper extends AbstractViewHelper implements ViewHelperNodeInitial
 
         // Automatically make the argument definition optional if it has a default value
         $hasDefaultValue = array_key_exists('default', $evaluatedArguments);
-        $optional = ($evaluatedArguments['optional'] ?? false) || $hasDefaultValue;
+        $optional = Typed::bool($evaluatedArguments['optional'] ?? null) || $hasDefaultValue;
 
         $annotations = [];
         if ($evaluatedArguments['client'] ?? false) {

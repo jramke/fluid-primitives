@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\ViewHelpers;
 
+use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 use TYPO3Fluid\Fluid\ViewHelpers\SlotViewHelper;
 
@@ -37,7 +38,7 @@ class SlotFilledViewHelper extends AbstractViewHelper
             1_788_100_001,
         );
         $variableContainer = $renderingContext->getViewHelperVariableContainer();
-        $slot = $variableContainer->get(SlotViewHelper::class, $this->arguments['name']);
+        $slot = $variableContainer->get(SlotViewHelper::class, Typed::string($this->arguments['name']));
         $content = trim(is_callable($slot) ? (string)$slot() : '');
 
         if ($content === '' || $content === '0') {

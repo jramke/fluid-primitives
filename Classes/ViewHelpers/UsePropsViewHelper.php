@@ -140,7 +140,8 @@ class UsePropsViewHelper extends AbstractViewHelper implements ViewHelperNodeIni
             ));
             if ($evaluatedSelectedProps !== null && $evaluatedSelectedProps !== []) {
                 $externalArgumentDefinitionsWithoutReservedUpdated = [];
-                foreach ($evaluatedSelectedProps as $argumentName) {
+                foreach ($evaluatedSelectedProps as $rawArgumentName) {
+                    $argumentName = Typed::string($rawArgumentName);
                     if (($externalArgumentDefinitionsWithoutReserved[$argumentName] ?? null) === null) {
                         throw new \RuntimeException(
                             "The prop {$argumentName} does not exist in the referenced component {$name}.",
@@ -157,13 +158,15 @@ class UsePropsViewHelper extends AbstractViewHelper implements ViewHelperNodeIni
                 new RenderingContext(),
             ));
             if ($evaluatedDefaults !== null && $evaluatedDefaults !== []) {
-                foreach ($evaluatedDefaults as $defaultPropName => $defaultPropValue) {
-                    if (($externalArgumentDefinitionsWithoutReserved[$defaultPropName] ?? null) === null) {
+                foreach ($evaluatedDefaults as $rawDefaultPropName => $defaultPropValue) {
+                    $defaultPropName = Typed::string($rawDefaultPropName);
+                    $existingDefinition = $externalArgumentDefinitionsWithoutReserved[$defaultPropName] ?? null;
+                    if ($existingDefinition === null) {
                         continue;
                     }
 
                     $externalArgumentDefinitionsWithoutReserved[$defaultPropName] = PropsUtility::duplicateArgumentDefinitionWithNewDefault(
-                        $externalArgumentDefinitionsWithoutReserved[$defaultPropName],
+                        $existingDefinition,
                         $defaultPropValue,
                     );
                 }

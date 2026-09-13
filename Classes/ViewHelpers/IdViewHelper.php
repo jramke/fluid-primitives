@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\ViewHelpers;
 
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
+use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
 /**
@@ -30,6 +31,6 @@ class IdViewHelper extends AbstractViewHelper
 
     public function render(): string
     {
-        return ComponentUtility::id($this->arguments['prefix']);
+        return ComponentUtility::id(Typed::string($this->arguments['prefix']));
     }
 }

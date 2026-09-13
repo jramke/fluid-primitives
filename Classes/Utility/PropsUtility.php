@@ -9,11 +9,15 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\ArgumentDefinition;
 
 class PropsUtility
 {
+    /**
+     * @param array<string, ArgumentDefinition> $props
+     * @return array<string, ArgumentDefinition>
+     */
     public static function cleanupReservedProps(array $props, bool $useKeys = true): array
     {
         return array_filter(
             $props,
-            static fn($key) => !self::isReservedProp($key),
+            static fn(string $key) => !self::isReservedProp($key),
             $useKeys ? ARRAY_FILTER_USE_KEY : 0,
         );
     }

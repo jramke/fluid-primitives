@@ -6,6 +6,7 @@ namespace Jramke\FluidPrimitives\ViewHelpers;
 
 use Jramke\FluidPrimitives\Domain\Dto\TagAttributes;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
+use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
@@ -71,7 +72,7 @@ class AttributesViewHelper extends AbstractViewHelper
             );
         }
 
-        $asArray = $this->arguments['asArray'] ?? false;
+        $asArray = Typed::bool($this->arguments['asArray']);
 
         $tagAttributes = $renderingContext->getViewHelperVariableContainer()->get(self::class, 'attributes');
         if ($tagAttributes === null || $tagAttributes === []) {
@@ -86,20 +87,23 @@ class AttributesViewHelper extends AbstractViewHelper
             return $asArray ? [] : '';
         }
 
+        $skipProp = Typed::stringOrNull($this->arguments['skip']);
+        $onlyProp = Typed::stringOrNull($this->arguments['only']);
+
         // TODO: maybe we can allow both?
-        if ($this->arguments['skip'] && $this->arguments['only']) {
+        if ($skipProp && $onlyProp) {
             throw new \RuntimeException(
                 'You cannot use both "skip" and "only" arguments at the same time.',
                 1698255600,
             );
         }
 
-        $skip = $this->arguments['skip'] ? GeneralUtility::trimExplode(',', $this->arguments['skip']) : [];
+        $skip = $skipProp ? GeneralUtility::trimExplode(',', $skipProp) : [];
         if ($skip !== []) {
             return $tagAttributes->renderWithSkip($skip, $asArray);
         }
 
-        $only = $this->arguments['only'] ? GeneralUtility::trimExplode(',', $this->arguments['only']) : [];
+        $only = $onlyProp ? GeneralUtility::trimExplode(',', $onlyProp) : [];
         if ($only !== []) {
             return $tagAttributes->renderWithOnly($only, $asArray);
         }

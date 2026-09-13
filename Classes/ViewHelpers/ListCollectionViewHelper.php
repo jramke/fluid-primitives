@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\ViewHelpers;
 
 use Jramke\FluidPrimitives\Domain\Dto\ListCollection;
+use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
 /**
@@ -69,16 +70,18 @@ class ListCollectionViewHelper extends AbstractViewHelper
             throw new \InvalidArgumentException('The "items" argument must be an array or Traversable.', 1_759_769_689);
         }
 
+        $groupSort = $this->arguments['groupSort'];
+
         $collection = new ListCollection(
             is_array($items) ? $items : iterator_to_array($items),
-            $this->arguments['itemToValueKey'] ?? null,
-            $this->arguments['itemToStringKey'] ?? null,
-            $this->arguments['isItemDisabledKey'] ?? null,
-            $this->arguments['groupByKey'] ?? null,
-            $this->arguments['groupSort'] ?? null,
+            Typed::stringOrNull($this->arguments['itemToValueKey']),
+            Typed::stringOrNull($this->arguments['itemToStringKey']),
+            Typed::stringOrNull($this->arguments['isItemDisabledKey']),
+            Typed::stringOrNull($this->arguments['groupByKey']),
+            is_array($groupSort) ? array_map(Typed::string(...), $groupSort) : Typed::stringOrNull($groupSort),
         );
 
-        $as = $this->arguments['as'];
+        $as = Typed::string($this->arguments['as']);
         if ($as !== '') {
             $renderingContext = $this->renderingContext ?? throw new \RuntimeException(
                 'ListCollection ViewHelper is missing its rendering context.',

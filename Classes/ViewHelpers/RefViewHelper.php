@@ -10,6 +10,7 @@ use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
 use Jramke\FluidPrimitives\Utility\ComponentPartIdUtility;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use Jramke\FluidPrimitives\Utility\EnumUtility;
+use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
 /**
@@ -119,11 +120,12 @@ class RefViewHelper extends AbstractViewHelper
         $part = (string)$this->arguments['name'];
         $value = EnumUtility::normalize($this->arguments['value']);
 
-        $additionalData = $this->arguments['data'];
+        $additionalDataRaw = Typed::arrayOrNull($this->arguments['data']) ?? [];
+        $additionalData = $additionalDataRaw;
         if ($additionalData !== []) {
             $additionalData = array_combine(
-                array_map(static fn($key) => "data-{$key}", array_keys($this->arguments['data'])),
-                array_values($this->arguments['data']),
+                array_map(static fn($key) => "data-{$key}", array_keys($additionalDataRaw)),
+                array_values($additionalDataRaw),
             );
         }
 
@@ -136,14 +138,20 @@ class RefViewHelper extends AbstractViewHelper
             $baseAttributes['data-value'] = (string)$value;
         }
 
-        if ($this->arguments['withId']) {
-            $id = ComponentPartIdUtility::generatePartId($componentName, $rootId, $part, $value, $idsArray);
+        if (Typed::bool($this->arguments['withId'])) {
+            $id = ComponentPartIdUtility::generatePartId(
+                $componentName,
+                $rootId,
+                $part,
+                Typed::stringOrNull($value),
+                $idsArray,
+            );
             $baseAttributes = array_merge(['id' => $id], $baseAttributes);
         }
 
         $attributes = new TagAttributes(array_merge($baseAttributes, $additionalData));
 
-        if ($this->arguments['asArray']) {
+        if (Typed::bool($this->arguments['asArray'])) {
             return $attributes->renderAsArray();
         }
 
@@ -165,7 +173,27 @@ class RefViewHelper extends AbstractViewHelper
             throw new \RuntimeException('No rootId found for component ' . $componentName . '.', 1756025267);
         }
 
-        return [$componentName, $rootId, is_array($ids) ? $ids : []];
+        return [$componentName, $rootId, $this->normalizeIdsArray($ids)];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function normalizeIdsArray(mixed $ids): array
+    {
+        if (!is_array($ids)) {
+            return [];
+        }
+
+        $result = [];
+        foreach ($ids as $key => $value) {
+            if (!is_string($key)) {
+                continue;
+            }
+            $result[$key] = Typed::string($value);
+        }
+
+        return $result;
     }
 
     /**

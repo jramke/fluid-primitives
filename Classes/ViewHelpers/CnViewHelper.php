@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\ViewHelpers;
 
+use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
 /**
@@ -56,22 +57,22 @@ class CnViewHelper extends AbstractViewHelper
     {
         $classes = [];
 
-        $classesString = trim($this->renderChildren() ?? '');
+        $classesString = trim(Typed::string($this->renderChildren()));
         if ($classesString !== '') {
             $classes = array_merge($classes, $this->parseClassString($classesString));
         }
 
-        $whenArray = $this->arguments['when'];
+        $whenArray = Typed::arrayOrNull($this->arguments['when']) ?? [];
         if ($whenArray !== []) {
             $classes = array_merge($classes, $this->processWhenArray($whenArray));
         }
 
         $classes = array_filter(
             array_unique($classes),
-            static fn($class) => !in_array(trim($class), ['', '0'], strict: true) && is_string($class),
+            static fn(string $class) => !in_array(trim($class), ['', '0'], strict: true),
         );
 
-        $as = $this->arguments['as'];
+        $as = Typed::string($this->arguments['as']);
         if ($as !== '') {
             $renderingContext = $this->renderingContext ?? throw new \RuntimeException(
                 'Cn ViewHelper is missing its rendering context.',
@@ -87,6 +88,8 @@ class CnViewHelper extends AbstractViewHelper
     /**
      * Process when array - handles conditional classes where key is class(es) and value is condition
      * Supports multiple classes per condition by allowing space-separated class strings as keys
+     *
+     * @return string[]
      */
     private function processWhenArray(array $whenArray): array
     {
@@ -95,7 +98,7 @@ class CnViewHelper extends AbstractViewHelper
         foreach ($whenArray as $key => $value) {
             if (is_int($key)) {
                 // Indexed array: treat value as class name(s)
-                $value = (string)$value;
+                $value = Typed::string($value);
                 if ($value !== '') {
                     $classes = array_merge($classes, $this->parseClassString($value));
                 }
@@ -112,6 +115,9 @@ class CnViewHelper extends AbstractViewHelper
         return $classes;
     }
 
+    /**
+     * @return string[]
+     */
     private function parseClassString(string $classString): array
     {
         if (in_array(trim($classString), ['', '0'], strict: true)) {
@@ -148,11 +154,7 @@ class CnViewHelper extends AbstractViewHelper
         if (is_array($value)) {
             return count($value) > 0;
         }
-
-        if (is_null($value)) {
-            return false;
-        }
-
-        return (bool)$value;
+        // Only null is falsy here; object/resource (the only remaining types) are always truthy in PHP.
+        return !is_null($value);
     }
 }
