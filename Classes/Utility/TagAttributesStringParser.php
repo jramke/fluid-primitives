@@ -10,6 +10,9 @@ namespace Jramke\FluidPrimitives\Utility;
  */
 final class TagAttributesStringParser
 {
+    /**
+     * @return array<string, bool|string>
+     */
     public static function parse(string $attributesString): array
     {
         if ($attributesString === '') {

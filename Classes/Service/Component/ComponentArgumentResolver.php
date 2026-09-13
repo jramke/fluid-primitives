@@ -9,6 +9,7 @@ use Jramke\FluidPrimitives\Annotations\ContextArgumentAnnotation;
 use Jramke\FluidPrimitives\Domain\Dto\ResolvedComponentArguments;
 use Jramke\FluidPrimitives\Domain\Dto\TagAttributes;
 use Jramke\FluidPrimitives\Utility\TagAttributesStringParser;
+use Jramke\FluidPrimitives\Utility\Typed;
 use Jramke\FluidPrimitives\ViewHelpers\AttributesViewHelper;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 use TYPO3Fluid\Fluid\Core\ViewHelper\ArgumentDefinition;
@@ -84,9 +85,10 @@ final readonly class ComponentArgumentResolver
             return;
         }
 
+        /** @var array<string, mixed> $attributes */
         $attributes = is_array($attributesArgument)
             ? $attributesArgument
-            : TagAttributesStringParser::parse($attributesArgument ?? '');
+            : TagAttributesStringParser::parse(Typed::string($attributesArgument));
         $mergedAttributes = array_merge($additionalArguments, $attributes);
 
         $renderingContext->getViewHelperVariableContainer()->add(
@@ -130,7 +132,8 @@ final readonly class ComponentArgumentResolver
             return $arguments;
         }
 
-        foreach ($propsToUse as $propToUse) {
+        foreach ($propsToUse as $rawPropToUse) {
+            $propToUse = Typed::string($rawPropToUse);
             if ($propToUse === 'attributes') {
                 // here we can simply grab the TagAttributes object as it already has resolved the additional attributes and the ones from the attributes argument
                 $spreadTagAttributes =
