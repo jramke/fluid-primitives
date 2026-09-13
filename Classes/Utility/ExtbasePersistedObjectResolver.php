@@ -79,12 +79,13 @@ final readonly class ExtbasePersistedObjectResolver
 
         $nestedObjects = [];
         foreach ($fieldContextInformations as $fieldContextData) {
-            $name = (string)($fieldContextData['name'] ?? '');
-            if (!str_contains($name, '.')) {
+            $name = $fieldContextData['name'] ?? '';
+            $dotPosition = strpos($name, needle: '.');
+            if ($dotPosition === false) {
                 continue;
             }
 
-            $propertyPath = substr($name, offset: 0, length: strpos($name, needle: '.'));
+            $propertyPath = substr($name, offset: 0, length: $dotPosition);
             if (($nestedObjects[$propertyPath] ?? null) instanceof AbstractDomainObject) {
                 continue;
             }

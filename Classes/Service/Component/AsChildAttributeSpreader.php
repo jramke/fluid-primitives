@@ -14,6 +14,7 @@ final readonly class AsChildAttributeSpreader
     public function spread(string $childHtml, string $componentHtml): string
     {
         // Extract child tag + attributes
+        $childMatches = null;
         if (!preg_match('/^\s*<([a-zA-Z0-9]+)([^>]*)>/', $childHtml, $childMatches)) {
             return $childHtml; // fallback
         }
@@ -21,6 +22,7 @@ final readonly class AsChildAttributeSpreader
         $childAttrs = $this->parseAttributes(trim($childMatches[2]));
 
         // Extract parent/component attributes
+        $compMatches = null;
         if (!preg_match('/^\s*<([a-zA-Z0-9]+)([^>]*)>/', $componentHtml, $compMatches)) {
             return $childHtml;
         }
@@ -41,7 +43,7 @@ final readonly class AsChildAttributeSpreader
         }
 
         // Replace child opening tag
-        return preg_replace(
+        return (string)preg_replace(
             '/^\s*<' . $childTag . '[^>]*>/',
             '<' . $childTag . $finalAttrs . '>',
             $childHtml,
@@ -54,6 +56,7 @@ final readonly class AsChildAttributeSpreader
      */
     private function parseAttributes(string $attrString): array
     {
+        $matches = null;
         preg_match_all('/([a-zA-Z_:][-a-zA-Z0-9_:.]*)(?:="([^"]*)")?/', $attrString, $matches, PREG_SET_ORDER);
 
         $attrs = [];

@@ -6,6 +6,7 @@ namespace Jramke\FluidPrimitives\Utility;
 
 use Jramke\FluidPrimitives\Contexts\AbstractComponentContext;
 use Jramke\FluidPrimitives\Contexts\BaseContext;
+use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Configuration\ConfigurationManagerInterface;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
@@ -72,12 +73,16 @@ class ComponentUtility
         return self::$cachedSettings;
     }
 
+    /**
+     * @return class-string<ComponentContextInterface>
+     */
     public static function getContextClassNameFromViewHelperName(
         string $viewHelperName,
         array $additionalNamespaces,
     ): string {
         $baseClass = BaseContext::class;
-        $baseNamespace = substr($baseClass, offset: 0, length: strrpos($baseClass, needle: '\\'));
+        $backslashPosition = strrpos($baseClass, needle: '\\');
+        $baseNamespace = $backslashPosition === false ? '' : substr($baseClass, offset: 0, length: $backslashPosition);
 
         $namespaces = array_merge($additionalNamespaces, [$baseNamespace]);
 

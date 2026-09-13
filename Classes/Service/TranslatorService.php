@@ -23,7 +23,8 @@ final class TranslatorService
 
     public function translate(string $key, ServerRequestInterface $request, array $arguments = []): ?string
     {
-        return $this->getTranslator($request)->translate($key, self::TRANSLATIONS_FILE, $arguments);
+        $translated = $this->getTranslator($request)->translate($key, self::TRANSLATIONS_FILE, $arguments);
+        return $translated === null ? null : (string)$translated;
     }
 
     public function getLocale(ServerRequestInterface $request): ?string
@@ -41,7 +42,11 @@ final class TranslatorService
             return $this->translators[$cacheKey];
         }
 
-        $this->translators[$cacheKey] = $this->languageServiceFactory->createFromSiteLanguage($siteLanguage);
+        $this->translators[$cacheKey] = $siteLanguage instanceof SiteLanguage
+            ? $this->languageServiceFactory->createFromSiteLanguage($siteLanguage)
+            // No site/language attribute on the request (e.g. outside a normal frontend request) -
+            // fall back to the same default TYPO3 itself uses when no user preference is known.
+            : $this->languageServiceFactory->createFromUserPreferences(null);
 
         return $this->translators[$cacheKey];
     }

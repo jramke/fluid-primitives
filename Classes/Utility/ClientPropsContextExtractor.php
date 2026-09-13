@@ -54,6 +54,15 @@ class ClientPropsContextExtractor
         $namespaceIdentifier = $componentCollectionService->getViewHelperNamespaceIdentifierByCollectionClassName(
             $context->getComponentResolver()->getNamespace(),
         );
+        if ($namespaceIdentifier === null) {
+            throw new \RuntimeException(
+                sprintf(
+                    'Could not resolve the Fluid namespace identifier for component resolver "%s".',
+                    $context->getComponentResolver()->getNamespace(),
+                ),
+                1_788_100_015,
+            );
+        }
 
         $componentName = ComponentNameUtility::lowerCaseDashedToCamelCase(
             ComponentNameUtility::getComponentBaseNameFromContext($context->getRenderingContext()),

@@ -46,14 +46,17 @@ final class HydrationScriptBuilder
         $js = str_replace("\n", replace: '', subject: $js);
         $js = str_replace("\r", replace: '', subject: $js);
         $js = preg_replace('/\s+/', replacement: ' ', subject: $js); // replace multiple whitespaces with one space
-        return preg_replace('/\s*([{}();=])\s*/', replacement: '$1', subject: (string)$js); // remove spaces around special characters
+        return (string)preg_replace('/\s*([{}();=])\s*/', replacement: '$1', subject: (string)$js); // remove spaces around special characters
     }
 
     private function toJson(array $data, bool $development): string
     {
         if ($development) {
-            return json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+            return json_encode(
+                $data,
+                JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT,
+            );
         }
-        return json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        return json_encode($data, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     }
 }

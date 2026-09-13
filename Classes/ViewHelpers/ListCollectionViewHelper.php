@@ -70,7 +70,7 @@ class ListCollectionViewHelper extends AbstractViewHelper
         }
 
         $collection = new ListCollection(
-            $items,
+            is_array($items) ? $items : iterator_to_array($items),
             $this->arguments['itemToValueKey'] ?? null,
             $this->arguments['itemToStringKey'] ?? null,
             $this->arguments['isItemDisabledKey'] ?? null,
@@ -80,7 +80,11 @@ class ListCollectionViewHelper extends AbstractViewHelper
 
         $as = $this->arguments['as'];
         if ($as !== '') {
-            $this->renderingContext->getVariableProvider()->add($as, $collection);
+            $renderingContext = $this->renderingContext ?? throw new \RuntimeException(
+                'ListCollection ViewHelper is missing its rendering context.',
+                1_788_100_013,
+            );
+            $renderingContext->getVariableProvider()->add($as, $collection);
             return '';
         }
 

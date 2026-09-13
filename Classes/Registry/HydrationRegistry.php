@@ -27,7 +27,9 @@ class HydrationRegistry
     {
         if (!self::$instance instanceof \Jramke\FluidPrimitives\Registry\HydrationRegistry) {
             $container = GeneralUtility::getContainer();
-            self::$instance = $container->get(self::class);
+            /** @var self $instance */
+            $instance = $container->get(self::class);
+            self::$instance = $instance;
         }
         return self::$instance;
     }

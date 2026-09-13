@@ -73,6 +73,17 @@ final readonly class ComponentRootContextFactory
         ];
 
         $contextVariables = $variableProvider->getAll();
+        if (!is_array($contextVariables)) {
+            // VariableProviderInterface::getAll() is contractually allowed to return an ArrayAccess
+            // instance instead of a plain array, but every context variable downstream of this method
+            // (and the rest of this class's own array<string, mixed> plumbing) assumes a real array -
+            // fail clearly here rather than silently misbehaving if a custom VariableProvider is ever
+            // introduced that actually exercises that part of the contract.
+            throw new \RuntimeException(
+                'Expected VariableProviderInterface::getAll() to return an array, got an ArrayAccess instance.',
+                1_788_100_014,
+            );
+        }
 
         foreach ($argumentDefinitions as $argumentDefinition) {
             $argumentName = $argumentDefinition->getName();

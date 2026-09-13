@@ -95,9 +95,12 @@ final readonly class ComponentTargetExtensionResolver
      */
     private function getPackageTitles(array $availablePackages): array
     {
-        return array_map(static fn(PackageInterface $package): string => $package
-            ->getPackageMetaData()
-            ->getTitle(), $availablePackages);
+        return array_map(
+            static fn(PackageInterface $package): string => $package
+                ->getPackageMetaData()
+                ->getTitle() ?? $package->getPackageKey(),
+            $availablePackages,
+        );
     }
 
     /**
