@@ -219,10 +219,14 @@ class ComponentAddCommand extends Command
 
     private function resolveTargetFileName(string $file, bool $useFluidSuffix): string
     {
-        if (!$useFluidSuffix || !str_ends_with($file, '.html')) {
+        if (!str_ends_with($file, '.html')) {
             return $file;
         }
 
-        return substr($file, 0, -5) . '.fluid.html';
+        $baseName = str_ends_with($file, '.fluid.html')
+            ? substr($file, 0, -strlen('.fluid.html'))
+            : substr($file, 0, -strlen('.html'));
+
+        return $useFluidSuffix ? $baseName . '.fluid.html' : $baseName . '.html';
     }
 }
