@@ -80,7 +80,9 @@ class AttributesViewHelper extends AbstractViewHelper
         }
 
         if (!$tagAttributes instanceof TagAttributes) {
-            $tagAttributes = new TagAttributes((array)$tagAttributes);
+            /** @var array<string, mixed> $rawAttributes */
+            $rawAttributes = (array)$tagAttributes;
+            $tagAttributes = new TagAttributes($rawAttributes);
         }
 
         if (count($tagAttributes) === 0) {

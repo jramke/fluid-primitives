@@ -9,6 +9,7 @@ use Jramke\FluidPrimitives\Attributes\ExposeToClient;
 use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
 use Jramke\FluidPrimitives\Service\ComponentCollectionService;
 use ReflectionClass;
+use TYPO3\CMS\Core\Routing\PageArguments;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Frontend\Page\CacheHashCalculator;
 
@@ -68,8 +69,10 @@ class ClientPropsContextExtractor
             ComponentNameUtility::getComponentBaseNameFromContext($context->getRenderingContext()),
         );
 
+        $routing = $context->getRequest()->getAttribute('routing');
+
         $params = [
-            'id' => $context->getRequest()->getAttribute('routing')?->getPageId() ?? 1,
+            'id' => $routing instanceof PageArguments ? $routing->getPageId() : 1,
             'type' => 1783366837,
             'tx_fluidprimitives_ajaxdispatcher' => [
                 'action' => 'dispatch',
