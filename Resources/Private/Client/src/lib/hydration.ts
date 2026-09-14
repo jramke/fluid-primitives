@@ -164,25 +164,6 @@ export function mountAll(
 }
 
 /**
- * Folds a fragment's own hydration payload (as returned by a component
- * fragment endpoint, see `Jramke\FluidPrimitives\Service\ComponentFragmentRenderer`
- * on the PHP side) into the page-wide `window.FluidPrimitives.hydrationData`,
- * so a subsequent {@see mountAll} call picks up the newly inserted instances.
- */
-export function mergeHydrationData(
-    data: Record<string, Record<string, ComponentHydrationData>> | null | undefined
-) {
-    if (!data || !window.FluidPrimitives) return;
-
-    for (const [componentName, instances] of Object.entries(data)) {
-        if (!window.FluidPrimitives.hydrationData[componentName]) {
-            window.FluidPrimitives.hydrationData[componentName] = {};
-        }
-        Object.assign(window.FluidPrimitives.hydrationData[componentName], instances);
-    }
-}
-
-/**
  * Destroys every mounted, uncontrolled component instance whose root element
  * is `root` itself or a descendant of it, and drops them from the tracked
  * instance registry. Intended for cleaning up before removing a subtree from

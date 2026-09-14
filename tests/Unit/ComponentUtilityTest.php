@@ -28,13 +28,13 @@ final class ComponentUtilityTest extends TestCase
     {
         // Regression test: ComponentUtility::id() used to be a plain
         // per-process counter starting at 0 on every call. That is fine for
-        // a single, full page render, but Jramke\FluidPrimitives\Service\ComponentFragmentRenderer
-        // renders components in isolation from separate requests (e.g. a
-        // lazily-fetched recurring-field row) - each of which is its own PHP
-        // process/request lifecycle. Without a per-process random salt, two
-        // separate fragment renders producing the exact same component
-        // structure would always generate identical ids, silently colliding
-        // in the client-side hydration data once merged onto the same page.
+        // a single, full page render, but isolated, out-of-band component
+        // renders from separate requests (e.g. a lazily-fetched recurring-field
+        // row) each run in their own PHP process/request lifecycle. Without a
+        // per-process random salt, two separate isolated renders producing the
+        // exact same component structure would always generate identical ids,
+        // silently colliding in the client-side hydration data once merged
+        // onto the same page.
         // The autoloader lives in packages/fluid-primitives/vendor when this
         // package runs standalone (e.g. after being released), or in the
         // monorepo root's vendor when run as part of this repo.

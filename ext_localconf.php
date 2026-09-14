@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 use Jramke\FluidPrimitives\Component\ComponentPrimitivesCollection;
 use Jramke\FluidPrimitives\Constants;
-use Jramke\FluidPrimitives\Controller\AjaxDispatcherController;
 use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Extbase\Utility\ExtensionUtility;
 
 // The standard TYPO3 extension bootstrap guard: aborts if this file is somehow included outside a
 // TYPO3 request. Its value is intentionally discarded - die() never returns, so there's nothing to do
@@ -66,10 +64,3 @@ if (ExtensionManagementUtility::isLoaded('storybook')) {
     // @mago-expect analysis:mixed-array-assignment
     $GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS']['storybook']['excludeArguments'] = implode(',', $merged);
 }
-
-ExtensionUtility::configurePlugin(
-    'FluidPrimitives',
-    'AjaxDispatcher',
-    [AjaxDispatcherController::class => 'dispatch'],
-    [AjaxDispatcherController::class => 'dispatch'],
-);

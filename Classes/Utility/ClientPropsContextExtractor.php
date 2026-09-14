@@ -4,14 +4,9 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Utility;
 
-use Jramke\FluidPrimitives\Attributes\Ajax;
 use Jramke\FluidPrimitives\Attributes\ExposeToClient;
 use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
-use Jramke\FluidPrimitives\Service\ComponentCollectionService;
 use ReflectionClass;
-use TYPO3\CMS\Core\Routing\PageArguments;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Frontend\Page\CacheHashCalculator;
 
 class ClientPropsContextExtractor
 {
@@ -25,73 +20,9 @@ class ClientPropsContextExtractor
             if ($clientProp !== false) {
                 $props[$clientProp[0]] = $clientProp[1];
             }
-
-            $ajaxProp = self::buildAjaxProp($method, $context);
-            if ($ajaxProp !== false) {
-                $props[$ajaxProp[0]] = $ajaxProp[1];
-            }
         }
 
         return $props;
-    }
-
-    private static function buildAjaxProp(\ReflectionMethod $method, ComponentContextInterface $context): array|false
-    {
-        $attributes = $method->getAttributes(Ajax::class);
-
-        if ($attributes === []) {
-            return false;
-        }
-
-        if (!$method->isPublic()) {
-            return false;
-        }
-
-        $normalizedMethodName = self::normalizeMethodName($method->getName());
-        $propName = $normalizedMethodName . 'Url';
-
-        $componentCollectionService = GeneralUtility::makeInstance(ComponentCollectionService::class);
-
-        $namespaceIdentifier = $componentCollectionService->getViewHelperNamespaceIdentifierByCollectionClassName(
-            $context->getComponentResolver()->getNamespace(),
-        );
-        if ($namespaceIdentifier === null) {
-            throw new \RuntimeException(
-                sprintf(
-                    'Could not resolve the Fluid namespace identifier for component resolver "%s".',
-                    $context->getComponentResolver()->getNamespace(),
-                ),
-                1_788_100_015,
-            );
-        }
-
-        $componentName = ComponentNameUtility::lowerCaseDashedToCamelCase(
-            ComponentNameUtility::getComponentBaseNameFromContext($context->getRenderingContext()),
-        );
-
-        // Narrowed immediately below via instanceof - a generic PSR-7 request attribute has no
-        // narrower static type.
-        // @mago-expect analysis:mixed-assignment
-        $routing = $context->getRequest()->getAttribute('routing');
-
-        $params = [
-            'id' => $routing instanceof PageArguments ? $routing->getPageId() : 1,
-            'type' => 1783366837,
-            'tx_fluidprimitives_ajaxdispatcher' => [
-                'action' => 'dispatch',
-                'component' => $namespaceIdentifier . ':' . $componentName,
-                'method' => $method->getName(),
-            ],
-        ];
-
-        $cacheHashCalculator = GeneralUtility::makeInstance(CacheHashCalculator::class);
-        $cHashParams = $cacheHashCalculator->getRelevantParameters(http_build_query($params));
-        $cHash = $cacheHashCalculator->calculateCacheHash($cHashParams);
-
-        $queryString = http_build_query($params) . '&cHash=' . $cHash;
-        $url = '/?' . $queryString;
-
-        return [$propName, $url];
     }
 
     private static function buildClientProp(\ReflectionMethod $method, ComponentContextInterface $context): array|false
@@ -104,17 +35,6 @@ class ClientPropsContextExtractor
 
         if (!$method->isPublic() || $method->getNumberOfRequiredParameters() > 0) {
             return false;
-        }
-
-        if ($method->getAttributes(Ajax::class) !== []) {
-            throw new \RuntimeException(
-                sprintf(
-                    'Method %s::%s cannot be annotated with both ExposeToClient and Ajax attributes.',
-                    $method->getDeclaringClass()->getName(),
-                    $method->getName(),
-                ),
-                1783368546,
-            );
         }
 
         $attribute = $attributes[0]->newInstance();
