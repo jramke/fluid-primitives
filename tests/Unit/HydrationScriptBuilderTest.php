@@ -37,4 +37,28 @@ final class HydrationScriptBuilderTest extends TestCase
         $this->assertStringContainsString('window.FluidPrimitives', $js);
         $this->assertStringContainsString('"locale":"en_US"', $js);
     }
+
+    #[Test]
+    public function escapesScriptTagBreakoutInDevelopment(): void
+    {
+        $js = (new HydrationScriptBuilder())->build(
+            ['accordion' => ['«f1»' => ['label' => '</script><script>alert(1)</script>']]],
+            ['locale' => 'en_US'],
+            development: true,
+        );
+
+        $this->assertStringNotContainsString('</script>', $js);
+    }
+
+    #[Test]
+    public function escapesScriptTagBreakoutOutsideOfDevelopment(): void
+    {
+        $js = (new HydrationScriptBuilder())->build(
+            ['accordion' => ['«f1»' => ['label' => '</script><script>alert(1)</script>']]],
+            ['locale' => 'en_US'],
+            development: false,
+        );
+
+        $this->assertStringNotContainsString('</script>', $js);
+    }
 }
