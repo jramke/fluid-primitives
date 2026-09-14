@@ -52,6 +52,9 @@ class FileUploadContext extends AbstractComponentContext
      */
     public function getAcceptAttr(): ?string
     {
+        // `accept` is declared type="mixed" and genuinely accepts either shape below - stays mixed
+        // until is_string()/is_array() decide which branch narrows it.
+        // @mago-expect analysis:mixed-assignment
         $accept = $this->get('accept');
 
         if ($accept === null || $accept === '') {
@@ -69,9 +72,13 @@ class FileUploadContext extends AbstractComponentContext
         $tokens = $accept;
         if (!array_is_list($accept)) {
             $tokens = [];
+            // $extensions is deliberately left as-is (mixed) here - it's either a single extension
+            // string or a list of them, and the (array) cast below needs the original shape;
+            // narrowing happens per-extension in the inner loop instead.
+            // @mago-expect analysis:mixed-assignment
             foreach ($accept as $mimeType => $extensions) {
                 $tokens[] = $mimeType;
-                foreach ((array)$extensions as $extension) {
+                foreach (array_map(Typed::string(...), (array)$extensions) as $extension) {
                     $tokens[] = $extension;
                 }
             }

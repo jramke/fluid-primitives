@@ -118,6 +118,11 @@ class RefViewHelper extends AbstractViewHelper
         [$componentName, $rootId, $idsArray] = $this->resolveComponentIdentity();
 
         $part = (string)$this->arguments['name'];
+        // Deliberately left as the full declared union (string|BackedEnum|UnitEnum|null|array) rather
+        // than narrowed here - the array case is still meaningful for the (string) cast below, and
+        // Typed::stringOrNull() would silently discard it. Narrowed only at the one call site
+        // (generatePartId() below) that actually requires ?string.
+        // @mago-expect analysis:mixed-assignment
         $value = EnumUtility::normalize($this->arguments['value']);
 
         $additionalDataRaw = Typed::arrayOrNull($this->arguments['data']) ?? [];
@@ -165,6 +170,9 @@ class RefViewHelper extends AbstractViewHelper
     {
         $explicitContextName = (string)($this->arguments['context'] ?? '');
 
+        // $ids stays mixed here by design - normalizeIdsArray() below is the one place that
+        // validates/narrows it, and pre-narrowing it here would just duplicate that check.
+        // @mago-expect analysis:mixed-assignment
         [$componentName, $rootId, $ids] = $explicitContextName !== ''
             ? $this->resolveExplicitContext($explicitContextName)
             : $this->resolveAmbientContext();
@@ -186,11 +194,11 @@ class RefViewHelper extends AbstractViewHelper
         }
 
         $result = [];
-        foreach ($ids as $key => $value) {
+        foreach (array_map(Typed::string(...), $ids) as $key => $value) {
             if (!is_string($key)) {
                 continue;
             }
-            $result[$key] = Typed::string($value);
+            $result[$key] = $value;
         }
 
         return $result;
