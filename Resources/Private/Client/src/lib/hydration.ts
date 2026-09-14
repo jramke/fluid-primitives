@@ -308,18 +308,9 @@ export class ComponentHydrator {
         );
     }
 
-    getElements<T extends Element>(part: string, parent: Element | Document = this.doc): T[] {
-        const isDoc = parent === this.doc;
-        const searchScope: Element | Document = isDoc
-            ? this.getElement('root') || this.doc
-            : parent;
-
-        if (!searchScope) {
-            console.warn(
-                `Search scope not found for component ${this.componentName} with root ID ${this.rootId}. Cannot query for part "${part}".`
-            );
-            return [];
-        }
+    getElements<T extends Element>(part: string, parent?: Element | Document): T[] {
+        const searchScope: Element | Document =
+            parent !== undefined ? parent : this.getElement('root') || this.doc;
 
         const dataPart = toKebabCase(part);
         const escapedPartId = CSS.escape(this.computePartId(part));
