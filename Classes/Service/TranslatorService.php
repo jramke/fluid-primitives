@@ -14,7 +14,7 @@ use TYPO3\CMS\Core\Site\Entity\SiteLanguage;
 #[Autoconfigure(public: true)]
 final class TranslatorService
 {
-    private const TRANSLATIONS_FILE = 'EXT:fluid_primitives/Resources/Private/Language/locallang.xlf';
+    private const string TRANSLATIONS_FILE = 'EXT:fluid_primitives/Resources/Private/Language/locallang.xlf';
 
     /** @var array<string, LanguageService> */
     private array $translators = [];

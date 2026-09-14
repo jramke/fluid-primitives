@@ -16,9 +16,6 @@ jobs:
       matrix:
         include:
           # TYPO3 14.x combinations
-          - php: '8.2'
-            typo3: '14.3'
-            fluid: '5'
           - php: '8.3'
             typo3: '14.3'
             fluid: '5'

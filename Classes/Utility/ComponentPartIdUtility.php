@@ -11,7 +11,7 @@ namespace Jramke\FluidPrimitives\Utility;
 class ComponentPartIdUtility
 {
     // Keep in sync with: Resources/Private/Client/src/lib/hydration.ts
-    private const ID_NAMESPACE_OVERRIDES = [
+    private const array ID_NAMESPACE_OVERRIDES = [
         'navigation-menu' => 'nav-menu',
         'clipboard' => 'clip',
         'file-upload' => 'file',
@@ -20,7 +20,7 @@ class ComponentPartIdUtility
     // Maps a component's `ui:ref` part name to the enclosing Field's `fieldIds` key ('label' or
     // 'control') it represents. Keep in sync with each field-aware Primitive's `propsWithField()`
     // override in its .ts file (client-side counterpart, via field.dom.ts's getLabelId/getControlId).
-    private const FIELD_ID_PARTS = [
+    private const array FIELD_ID_PARTS = [
         'select' => ['label' => 'label', 'control' => 'hiddenSelect'],
         'combobox' => ['label' => 'label', 'control' => 'input'],
         'number-input' => ['label' => 'label', 'control' => 'input'],
@@ -30,19 +30,19 @@ class ComponentPartIdUtility
         'checkbox-group' => ['label' => 'label'],
     ];
 
-    private const FIELD_ID_OVERRIDE_KEYS = ['label', 'control'];
+    private const array FIELD_ID_OVERRIDE_KEYS = ['label', 'control'];
 
     // A component's FIELD_ID_PARTS override is suppressed while an ancestor context of this name
     // is on the ContextService stack. Mirrors Checkbox.ts's client-side getClosestCheckboxGroup()
     // check: a checkbox nested in a CheckboxGroup must not claim the enclosing Field's label/control
     // id for itself - each checkbox in the group has its own, separate hidden input, so all of them
     // doing so would produce duplicate ids. The group itself (not the individual checkbox) owns it.
-    private const FIELD_ID_EXCLUDED_WHEN_NESTED_IN = [
+    private const array FIELD_ID_EXCLUDED_WHEN_NESTED_IN = [
         'checkbox' => ['checkbox-group'],
     ];
 
     // Keep in sync with: Resources/Private/Client/src/lib/hydration.ts
-    private const PART_SEGMENT_OVERRIDES = [
+    private const array PART_SEGMENT_OVERRIDES = [
         // TODO: Revisit this override map after upgrading to zag-js v2.
         'radio-group' => [
             'item' => 'radio',
