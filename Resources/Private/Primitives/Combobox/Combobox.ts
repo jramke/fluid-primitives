@@ -283,7 +283,7 @@ export class Combobox extends FieldAwareComponent<ComboboxPrimitiveProps, combob
         const listEl = this.getElement('list');
         if (listEl) this.spreadProps(listEl, this.api.getListProps());
 
-        const itemGroupEls = this.getElements('itemGroup');
+        const itemGroupEls = this.getElements('itemGroup', this.doc);
         itemGroupEls.forEach(itemGroupEl => {
             this.spreadProps(
                 itemGroupEl,
@@ -307,27 +307,39 @@ export class Combobox extends FieldAwareComponent<ComboboxPrimitiveProps, combob
             return { sourceItem, item: sourceItem ?? this.api.collection.find(value) };
         };
 
-        this.spreadPropsByValue('item', ({ el, value }) => {
-            const { sourceItem, item } = resolveItem(value);
-            if (!item) return null;
-            // Static/server-rendered items keep the existing sync-filter hide/show behavior.
-            // Dynamically-inserted (async) items are only ever in the DOM because they're a
-            // current result - never auto-hidden here.
-            el.hidden = sourceItem ? !this.api.collection.has(item.value) : false;
-            return this.api.getItemProps({ item });
-        });
+        this.spreadPropsByValue(
+            'item',
+            ({ el, value }) => {
+                const { sourceItem, item } = resolveItem(value);
+                if (!item) return null;
+                // Static/server-rendered items keep the existing sync-filter hide/show behavior.
+                // Dynamically-inserted (async) items are only ever in the DOM because they're a
+                // current result - never auto-hidden here.
+                el.hidden = sourceItem ? !this.api.collection.has(item.value) : false;
+                return this.api.getItemProps({ item });
+            },
+            { parent: this.doc }
+        );
 
-        this.spreadPropsByValue('itemText', ({ value }) => {
-            const { item } = resolveItem(value);
-            return item ? this.api.getItemTextProps({ item }) : null;
-        });
+        this.spreadPropsByValue(
+            'itemText',
+            ({ value }) => {
+                const { item } = resolveItem(value);
+                return item ? this.api.getItemTextProps({ item }) : null;
+            },
+            { parent: this.doc }
+        );
 
-        this.spreadPropsByValue('itemIndicator', ({ value }) => {
-            const { item } = resolveItem(value);
-            return item ? this.api.getItemIndicatorProps({ item }) : null;
-        });
+        this.spreadPropsByValue(
+            'itemIndicator',
+            ({ value }) => {
+                const { item } = resolveItem(value);
+                return item ? this.api.getItemIndicatorProps({ item }) : null;
+            },
+            { parent: this.doc }
+        );
 
-        const itemEls = this.getElements('item');
+        const itemEls = this.getElements('item', this.doc);
 
         itemGroupEls.forEach(itemGroupEl => {
             const hasVisibleItems = this.getElements('item', itemGroupEl).some(

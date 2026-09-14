@@ -6,6 +6,7 @@ namespace Jramke\FluidPrimitives\Tests\Functional\Components;
 
 use Jramke\FluidPrimitives\Domain\Dto\ListCollection;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
+use Jramke\FluidPrimitives\Registry\PortalRegistry;
 use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -154,5 +155,44 @@ final class SelectRenderingTest extends FunctionalTestCase
         $selectData = array_values($hydrationData['select'])[0];
 
         $this->assertArrayNotHasKey('defaultValue', $selectData['props']);
+    }
+
+    /**
+     * Select's Root, unlike Popover/Dialog/Tooltip's, renders a real wrapping `<div>` (needed to
+     * group Label/Control/Content and carry invalid/readonly state) - so it's still detected for
+     * hydration purely from that inline root ref, with Content itself portaled away entirely.
+     */
+    #[Test]
+    public function rendersContentInsidePortalAndStillRegistersForHydration(): void
+    {
+        HydrationRegistry::getInstance()->clear();
+        PortalRegistry::clearAll();
+
+        $collection = new ListCollection([
+            ['value' => 'opt-1', 'label' => 'Option 1'],
+        ]);
+
+        $html = $this->renderTemplate('
+            <primitives:select.root collection="{collection}" rootId="portaled-select">
+                <primitives:select.control>
+                    <primitives:select.trigger>Select</primitives:select.trigger>
+                </primitives:select.control>
+                <ui:portal>
+                    <primitives:select.content>
+                        <f:for each="{collection.items}" as="item">
+                            <primitives:select.item item="{item}">{item.label}</primitives:select.item>
+                        </f:for>
+                    </primitives:select.content>
+                </ui:portal>
+            </primitives:select.root>
+        ', ['collection' => $collection]);
+
+        $this->assertStringNotContainsString('data-part="content"', $html);
+
+        $portaled = implode('', PortalRegistry::getAllByName('default'));
+        $this->assertStringContainsString('data-part="content"', $portaled);
+
+        $hydrationData = HydrationRegistry::getInstance()->getAll();
+        $this->assertArrayHasKey('portaled-select', $hydrationData['select'] ?? []);
     }
 }

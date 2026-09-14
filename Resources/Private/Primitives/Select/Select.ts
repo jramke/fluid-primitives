@@ -98,7 +98,7 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
             }
         }
 
-        const itemGroupEls = this.getElements('itemGroup');
+        const itemGroupEls = this.getElements('itemGroup', this.doc);
         itemGroupEls.forEach(itemGroupEl => {
             this.spreadProps(
                 itemGroupEl,
@@ -113,20 +113,32 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
             }
         });
 
-        this.spreadPropsByValue('item', ({ value }) => {
-            const item = this.api.collection.find(value);
-            return item ? this.api.getItemProps({ item }) : null;
-        });
+        this.spreadPropsByValue(
+            'item',
+            ({ value }) => {
+                const item = this.api.collection.find(value);
+                return item ? this.api.getItemProps({ item }) : null;
+            },
+            { parent: this.doc }
+        );
 
-        this.spreadPropsByValue('itemText', ({ value }) => {
-            const item = this.api.collection.find(value);
-            return item ? this.api.getItemTextProps({ item }) : null;
-        });
+        this.spreadPropsByValue(
+            'itemText',
+            ({ value }) => {
+                const item = this.api.collection.find(value);
+                return item ? this.api.getItemTextProps({ item }) : null;
+            },
+            { parent: this.doc }
+        );
 
-        this.spreadPropsByValue('itemIndicator', ({ value }) => {
-            const item = this.api.collection.find(value);
-            return item ? this.api.getItemIndicatorProps({ item }) : null;
-        });
+        this.spreadPropsByValue(
+            'itemIndicator',
+            ({ value }) => {
+                const item = this.api.collection.find(value);
+                return item ? this.api.getItemIndicatorProps({ item }) : null;
+            },
+            { parent: this.doc }
+        );
 
         const clearTriggerEl = this.getElement('clearTrigger');
         if (clearTriggerEl) {

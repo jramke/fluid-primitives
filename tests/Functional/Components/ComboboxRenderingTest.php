@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Tests\Functional\Components;
 
 use Jramke\FluidPrimitives\Domain\Dto\ListCollection;
+use Jramke\FluidPrimitives\Registry\HydrationRegistry;
+use Jramke\FluidPrimitives\Registry\PortalRegistry;
 use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -309,5 +311,44 @@ final class ComboboxRenderingTest extends FunctionalTestCase
         $this->assertStringContainsString('data-part="item-text"', $html);
         $this->assertStringContainsString('data-part="item-indicator"', $html);
         $this->assertStringNotContainsString('renderedOnClient', $html);
+    }
+
+    /**
+     * Combobox's Root, like Select's, renders a real wrapping `<div>` - so it's still detected for
+     * hydration purely from that inline root ref, with Content itself portaled away entirely.
+     */
+    #[Test]
+    public function rendersContentInsidePortalAndStillRegistersForHydration(): void
+    {
+        HydrationRegistry::getInstance()->clear();
+        PortalRegistry::clearAll();
+
+        $collection = new ListCollection([
+            ['value' => 'berlin', 'label' => 'Berlin'],
+        ]);
+
+        $html = $this->renderTemplate('
+            <primitives:combobox.root collection="{collection}" rootId="portaled-combobox">
+                <primitives:combobox.trigger>Toggle</primitives:combobox.trigger>
+                <ui:portal>
+                    <primitives:combobox.content>
+                        <f:for each="{collection.items}" as="item">
+                            <primitives:combobox.item item="{item}">
+                                <primitives:combobox.itemText>{item.label}</primitives:combobox.itemText>
+                            </primitives:combobox.item>
+                        </f:for>
+                    </primitives:combobox.content>
+                </ui:portal>
+            </primitives:combobox.root>
+        ', ['collection' => $collection]);
+
+        $this->assertStringNotContainsString('data-part="content"', $html);
+
+        $portaled = implode('', PortalRegistry::getAllByName('default'));
+        $this->assertStringContainsString('data-part="content"', $portaled);
+        $this->assertStringContainsString('Berlin', $portaled);
+
+        $hydrationData = HydrationRegistry::getInstance()->getAll();
+        $this->assertArrayHasKey('portaled-combobox', $hydrationData['combobox'] ?? []);
     }
 }
