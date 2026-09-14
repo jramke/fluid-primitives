@@ -98,9 +98,14 @@ class TemplateViewHelper extends AbstractViewHelper
         );
         $variableProvider = $renderingContext->getVariableProvider();
 
+        // component/context are round-tripped Fluid template variables (saved here, restored in the
+        // finally block below) - their real type is whatever a previous render put there, unknowable
+        // here, and must stay opaque to be restored faithfully.
         $hadComponent = $variableProvider->exists('component');
+        // @mago-expect analysis:mixed-assignment
         $previousComponent = $hadComponent ? $variableProvider->get('component') : null;
         $hadContext = $variableProvider->exists('context');
+        // @mago-expect analysis:mixed-assignment
         $previousContext = $hadContext ? $variableProvider->get('context') : null;
 
         if ($hadComponent) {
@@ -122,7 +127,8 @@ class TemplateViewHelper extends AbstractViewHelper
         // our children, so a nested component (e.g. combobox.item/.itemText/.itemIndicator) can
         // detect this automatically via `context.isRenderStencil`, instead of requiring an
         // explicit prop from the template author. Saved/restored like component/context above,
-        // for correct behavior if ui:template is ever nested.
+        // for correct behavior if ui:template is ever nested; same opaque-mixed reasoning applies.
+        // @mago-expect analysis:mixed-assignment
         $wasRenderStencil = $context->get('isRenderStencil');
         $context->set('isRenderStencil', true);
 
@@ -169,6 +175,8 @@ class TemplateViewHelper extends AbstractViewHelper
         }
 
         $variableProvider = $renderingContext->getVariableProvider();
+        // Narrowed immediately below via instanceof - there's no Typed:: equivalent for objects.
+        // @mago-expect analysis:mixed-assignment
         $ambientContext = $variableProvider->exists('context') ? $variableProvider->get('context') : null;
 
         if (ComponentUtility::isComponent($renderingContext) && $ambientContext instanceof ComponentContextInterface) {

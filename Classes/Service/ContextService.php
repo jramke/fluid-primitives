@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Service;
 
 use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
+use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 
 /**
@@ -25,13 +26,15 @@ class ContextService
         string $name,
     ): ?ComponentContextInterface {
         $variableContainer = $renderingContext->getViewHelperVariableContainer();
-        $stack = $variableContainer->get(self::class, $name);
+        $stack = Typed::arrayOrNull($variableContainer->get(self::class, $name));
 
-        if (!is_array($stack) || $stack === []) {
+        if ($stack === null || $stack === []) {
             return null;
         }
 
-        // Return the topmost context (last element in the stack)
+        // Return the topmost context (last element in the stack); genuinely mixed since the stack's
+        // element type isn't enforced anywhere else in this untyped Fluid variable container.
+        // @mago-expect analysis:mixed-assignment
         $context = end($stack);
         return $context instanceof ComponentContextInterface ? $context : null;
     }
@@ -75,11 +78,12 @@ class ContextService
         $allStacks = $variableContainer->getAll(self::class);
 
         $result = [];
-        foreach ($allStacks as $name => $stack) {
-            if (!is_string($name) || !is_array($stack) || $stack === []) {
+        foreach (array_map(Typed::arrayOrNull(...), $allStacks) as $name => $stack) {
+            if (!is_string($name) || $stack === null || $stack === []) {
                 continue;
             }
 
+            // @mago-expect analysis:mixed-assignment
             $context = end($stack);
             if ($context instanceof ComponentContextInterface) {
                 $result[$name] = $context;
@@ -98,11 +102,7 @@ class ContextService
         ComponentContextInterface $context,
     ): void {
         $variableContainer = $renderingContext->getViewHelperVariableContainer();
-        $stack = $variableContainer->get(self::class, $name);
-
-        if (!is_array($stack)) {
-            $stack = [];
-        }
+        $stack = Typed::arrayOrNull($variableContainer->get(self::class, $name)) ?? [];
 
         // Push the new context onto the stack
         $stack[] = $context;
@@ -132,9 +132,9 @@ class ContextService
             return;
         }
 
-        $stack = $variableContainer->get(self::class, $name);
+        $stack = Typed::arrayOrNull($variableContainer->get(self::class, $name));
 
-        if (!is_array($stack) || $stack === []) {
+        if ($stack === null || $stack === []) {
             $variableContainer->remove(self::class, $name);
             return;
         }

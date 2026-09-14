@@ -80,6 +80,8 @@ final readonly class ComponentArgumentResolver
         array $arguments,
         array $additionalArguments,
     ): void {
+        // Genuinely mixed - hasAdditionalAttributes() itself accepts either a string or an array.
+        // @mago-expect analysis:mixed-assignment
         $attributesArgument = $arguments['attributes'] ?? null;
         if (!$this->hasAdditionalAttributes($additionalArguments, $attributesArgument)) {
             return;
@@ -127,15 +129,15 @@ final readonly class ComponentArgumentResolver
             return $arguments;
         }
 
-        $propsToUse = $parentRenderingContext->getVariableProvider()->get('spreadProps') ?? [];
-        if (!is_array($propsToUse) || $propsToUse === []) {
+        $propsToUse = Typed::arrayOrNull($parentRenderingContext->getVariableProvider()->get('spreadProps')) ?? [];
+        if ($propsToUse === []) {
             return $arguments;
         }
 
-        foreach ($propsToUse as $rawPropToUse) {
-            $propToUse = Typed::string($rawPropToUse);
+        foreach (array_map(Typed::string(...), $propsToUse) as $propToUse) {
             if ($propToUse === 'attributes') {
                 // here we can simply grab the TagAttributes object as it already has resolved the additional attributes and the ones from the attributes argument
+                // @mago-expect analysis:mixed-assignment
                 $spreadTagAttributes =
                     $parentRenderingContext->getViewHelperVariableContainer()->get(
                         AttributesViewHelper::class,

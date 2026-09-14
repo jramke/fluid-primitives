@@ -103,7 +103,10 @@ final class ListCollection implements JsonSerializable, IteratorAggregate
         $current = $item;
 
         foreach ($segments as $segment) {
+            // Resolving an arbitrary dot-notation path means each intermediate value is genuinely
+            // mixed - narrower typing would defeat the point of a generic nested-path lookup.
             if (is_array($current) && array_key_exists($segment, $current)) {
+                // @mago-expect analysis:mixed-assignment
                 $current = $current[$segment];
                 continue;
             }
@@ -112,6 +115,7 @@ final class ListCollection implements JsonSerializable, IteratorAggregate
             // supporting arbitrary nested object paths here, not something a rewrite would resolve.
             // @mago-expect analysis:string-member-selector
             if (is_object($current) && ($current->{$segment} ?? null) !== null) {
+                // @mago-expect analysis:mixed-assignment
                 $current = $current->{$segment};
                 continue;
             }
@@ -169,9 +173,15 @@ final class ListCollection implements JsonSerializable, IteratorAggregate
         if ($item instanceof ListCollectionItem) {
             return $item->disabled;
         }
+        // Plain (bool) casts rather than Typed::bool() are deliberate here: Typed::bool() only
+        // recognizes explicit boolean-keyword strings, whereas a raw item's "disabled" value should
+        // be read with PHP's normal truthiness (matching how the ListCollectionItem branch above
+        // reads its own already-real bool $item->disabled).
         if ($this->isItemDisabledKey) {
+            // @mago-expect analysis:mixed-operand
             return (bool)$this->getFromKey($item, $this->isItemDisabledKey);
         }
+        // @mago-expect analysis:mixed-operand
         return (bool)($item['disabled'] ?? false);
     }
 
