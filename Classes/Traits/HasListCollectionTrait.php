@@ -15,6 +15,8 @@ trait HasListCollectionTrait
 
     public function getCollection(): ?ListCollection
     {
+        // Narrowed immediately below via instanceof - no Typed:: equivalent for objects.
+        // @mago-expect analysis:mixed-assignment
         $collection = $this->get('collection');
         return $collection instanceof ListCollection ? $collection : null;
     }

@@ -31,6 +31,9 @@ class CheckboxContext extends AbstractComponentContext
      */
     private function getCheckedState(): bool|string|null
     {
+        // Tri-state (bool|'indeterminate') checked below - Typed::bool() can't express this, since it
+        // only recognizes boolean-keyword strings, not the literal 'indeterminate' value.
+        // @mago-expect analysis:mixed-assignment
         $value = $this->get('defaultChecked');
         return is_bool($value) || $value === 'indeterminate' ? $value : null;
     }

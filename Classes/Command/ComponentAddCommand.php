@@ -78,6 +78,10 @@ class ComponentAddCommand extends Command
 
         $componentFolderName = Typed::string($manifest['name'] ?? null);
         $files = array_map(Typed::string(...), Typed::arrayOrNull($manifest['files'] ?? null) ?? []);
+        // Checked with is_bool() rather than Typed::bool() below - this is a VALUE_NONE flag, so a
+        // real value here is always already a genuine bool; Typed::bool() would also (incorrectly for
+        // this option) accept boolean-keyword strings.
+        // @mago-expect analysis:mixed-assignment
         $useFluidSuffix = $input->getOption('fluid-suffix');
         if (!is_bool($useFluidSuffix)) {
             $useFluidSuffix = $this->fileWriter->shouldUseFluidSuffixByDefault();

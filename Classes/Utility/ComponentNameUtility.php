@@ -41,8 +41,8 @@ class ComponentNameUtility
 
     public static function getComponentFullNameFromContext(RenderingContextInterface $renderingContext): string
     {
-        $component = $renderingContext->getVariableProvider()->get('component');
-        $fullName = is_array($component) ? Typed::stringOrNull($component['fullName'] ?? null) : null;
+        $component = Typed::arrayOrNull($renderingContext->getVariableProvider()->get('component'));
+        $fullName = $component !== null ? Typed::stringOrNull($component['fullName'] ?? null) : null;
         if ($fullName !== null) {
             return self::camelCaseToLowerCaseDashed($fullName);
         }

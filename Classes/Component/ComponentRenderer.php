@@ -276,6 +276,8 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
             !$ctx instanceof ComponentContextInterface &&
             $variableProvider->getByPath('component.baseName') === $baseName
         ) {
+            // Narrowed immediately below via instanceof - no Typed:: equivalent for objects.
+            // @mago-expect analysis:mixed-assignment
             $ctx = $variableProvider->get('context');
         }
 

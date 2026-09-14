@@ -38,6 +38,8 @@ class SlotFilledViewHelper extends AbstractViewHelper
             1_788_100_001,
         );
         $variableContainer = $renderingContext->getViewHelperVariableContainer();
+        // Narrowed immediately below via is_callable() - no Typed:: equivalent for callables.
+        // @mago-expect analysis:mixed-assignment
         $slot = $variableContainer->get(SlotViewHelper::class, Typed::string($this->arguments['name']));
         $content = trim(is_callable($slot) ? (string)$slot() : '');
 

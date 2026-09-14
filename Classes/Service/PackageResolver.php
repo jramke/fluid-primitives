@@ -100,8 +100,8 @@ readonly class PackageResolver
             Typed::arrayOrNull($composerLock['packages-dev'] ?? null) ?? [],
         );
         $composerLockMap = [];
-        foreach ($composerLockPackages as $package) {
-            if (!is_array($package)) {
+        foreach (array_map(Typed::arrayOrNull(...), $composerLockPackages) as $package) {
+            if ($package === null) {
                 continue;
             }
             $name = Typed::stringOrNull($package['name'] ?? null);

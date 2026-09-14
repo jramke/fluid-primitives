@@ -95,6 +95,9 @@ class CnViewHelper extends AbstractViewHelper
     {
         $classes = [];
 
+        // $value is genuinely mixed by design - isTruthy() below is a generic condition-value check,
+        // and the indexed-array branch narrows it explicitly with Typed::string() itself.
+        // @mago-expect analysis:mixed-assignment
         foreach ($whenArray as $key => $value) {
             if (is_int($key)) {
                 // Indexed array: treat value as class name(s)

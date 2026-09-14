@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Traits;
 
 use Jramke\FluidPrimitives\Service\TranslatorService;
+use Jramke\FluidPrimitives\Utility\Typed;
 use Psr\Http\Message\ServerRequestInterface;
 
 /**
@@ -30,8 +31,7 @@ trait HasTranslationsTrait
      */
     protected function translationsWithDefaults(array $translationKeysByPropertyName): array
     {
-        $rawOverrides = $this->get('translations');
-        $overrides = is_array($rawOverrides) ? $rawOverrides : [];
+        $overrides = Typed::arrayOrNull($this->get('translations')) ?? [];
 
         $defaults = [];
         foreach ($translationKeysByPropertyName as $propertyName => $translationKey) {

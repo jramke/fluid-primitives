@@ -35,6 +35,10 @@ final readonly class CheckboxGroupContextVariableMerger
         $checkboxGroupRootId = Typed::stringOrNull($checkboxGroupContext->get('rootId'));
         $checkboxGroupVariables = $checkboxGroupContext->getChildVariables($arguments);
 
+        // Each key holds a different, genuinely heterogeneous type - stays mixed all the way through,
+        // matching getVariableProvider()->add()/AbstractComponentContext::set()'s own mixed
+        // acceptance below.
+        // @mago-expect analysis:mixed-assignment
         foreach ($checkboxGroupVariables as $varName => $varValue) {
             if ($varValue === null) {
                 continue;

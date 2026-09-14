@@ -38,8 +38,11 @@ class ComponentListCommand extends Command
 
         $io->title('Available Components for installation');
         $tableRows = [];
-        foreach (Typed::arrayOrNull($components) ?? [] as $component) {
-            $component = Typed::arrayOrNull($component) ?? [];
+        $normalizedComponents = array_map(
+            static fn(mixed $component): array => Typed::arrayOrNull($component) ?? [],
+            Typed::arrayOrNull($components) ?? [],
+        );
+        foreach ($normalizedComponents as $component) {
             $tableRows[] = [
                 Typed::string($component['key'] ?? null),
                 Typed::string($component['name'] ?? null),

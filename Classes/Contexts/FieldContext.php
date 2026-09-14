@@ -20,6 +20,8 @@ class FieldContext extends AbstractComponentContext
 
         $formContext = ContextService::getFromRenderingContext($parentRenderingContext, 'form');
         if ($formContext instanceof ComponentContextInterface) {
+            // Narrowed immediately below via is_object() - no Typed:: equivalent for objects.
+            // @mago-expect analysis:mixed-assignment
             $formObject = $formContext->get('object');
             if (is_object($formObject) && $this->has('name')) {
                 // A trailing "[]" (e.g. `name="a11yNeeds[]"`, the manual-bracket convention

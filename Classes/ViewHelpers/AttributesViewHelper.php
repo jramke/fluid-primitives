@@ -74,6 +74,9 @@ class AttributesViewHelper extends AbstractViewHelper
 
         $asArray = Typed::bool($this->arguments['asArray']);
 
+        // Narrowed immediately below via null/empty-array/instanceof checks - no single Typed:: call
+        // covers that combination.
+        // @mago-expect analysis:mixed-assignment
         $tagAttributes = $renderingContext->getViewHelperVariableContainer()->get(self::class, 'attributes');
         if ($tagAttributes === null || $tagAttributes === []) {
             return $asArray ? [] : '';

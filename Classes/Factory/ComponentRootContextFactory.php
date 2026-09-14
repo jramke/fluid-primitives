@@ -100,6 +100,9 @@ final readonly class ComponentRootContextFactory
                 continue;
             }
 
+            // StrictArgumentProcessor::process() is Fluid core's own generic argument coercion - its
+            // result is inherently mixed, matching isValid()'s own mixed acceptance right below.
+            // @mago-expect analysis:mixed-assignment
             $processedValue = $argumentProcessor->process($variableProvider->get($argumentName), $argumentDefinition);
             if (!$argumentProcessor->isValid($processedValue, $argumentDefinition)) {
                 continue; // Skip invalid values

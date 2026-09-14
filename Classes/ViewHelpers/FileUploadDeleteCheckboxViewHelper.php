@@ -94,6 +94,9 @@ class FileUploadDeleteCheckboxViewHelper extends AbstractViewHelper
         }
 
         $fieldContext = ContextService::getFromRenderingContext($renderingContext, 'field');
+        // Checked with is_string() rather than Typed::stringOrNull() below - the latter would also
+        // accept and coerce numeric scalars, which isn't a valid property name here.
+        // @mago-expect analysis:mixed-assignment
         $property = $this->arguments['property'] ?? $fieldContext?->get('name');
         if (!is_string($property) || $property === '') {
             throw new \RuntimeException(

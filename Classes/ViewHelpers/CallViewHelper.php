@@ -34,6 +34,9 @@ class CallViewHelper extends AbstractViewHelper
 
     public function render(): mixed
     {
+        // renderChildren() is inherently mixed - this ViewHelper's whole purpose is calling a method
+        // on whatever the rendered children produced, checked via is_object() below.
+        // @mago-expect analysis:mixed-assignment
         $object = $this->renderChildren();
         if (!$object) {
             throw new \RuntimeException('No object provided to call method on.', 2131365274);
