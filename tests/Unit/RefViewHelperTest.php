@@ -40,7 +40,6 @@ final class RefViewHelperTest extends TestCase
             'asArray' => false,
             'data' => [],
             'value' => null,
-            'withId' => true,
         ]);
 
         $result = $this->viewHelper->render();
@@ -63,7 +62,6 @@ final class RefViewHelperTest extends TestCase
             'asArray' => false,
             'data' => [],
             'value' => null,
-            'withId' => true,
         ]);
 
         $result = $this->viewHelper->render();
@@ -84,35 +82,12 @@ final class RefViewHelperTest extends TestCase
             'asArray' => false,
             'data' => [],
             'value' => 'my-item',
-            'withId' => true,
         ]);
 
         $result = $this->viewHelper->render();
 
         $this->assertStringContainsString('id="accordion:«f2»:item:my-item"', $result);
         $this->assertStringContainsString('data-part="item"', $result);
-    }
-
-    #[Test]
-    public function suppressesIdWhenWithIdIsFalse(): void
-    {
-        $this->variableProvider->add('component', ['fullName' => 'Select.Root']);
-        $this->variableProvider->add('rootId', '«f1»');
-        $this->variableProvider->add('context', ['ids' => []]);
-
-        $this->viewHelper->setArguments([
-            'name' => 'itemGroupLabel',
-            'asArray' => false,
-            'data' => [],
-            'value' => null,
-            'withId' => false,
-        ]);
-
-        $result = $this->viewHelper->render();
-
-        $this->assertStringNotContainsString('id=', $result);
-        $this->assertStringContainsString('data-scope="select"', $result);
-        $this->assertStringContainsString('data-part="item-group-label"', $result);
     }
 
     #[Test]
@@ -127,7 +102,6 @@ final class RefViewHelperTest extends TestCase
             'asArray' => false,
             'data' => [],
             'value' => null,
-            'withId' => true,
         ]);
 
         $result = $this->viewHelper->render();
@@ -150,7 +124,6 @@ final class RefViewHelperTest extends TestCase
                 'state' => 'collapsed',
             ],
             'value' => null,
-            'withId' => true,
         ]);
 
         $result = $this->viewHelper->render();
@@ -171,7 +144,6 @@ final class RefViewHelperTest extends TestCase
             'asArray' => true,
             'data' => [],
             'value' => null,
-            'withId' => true,
         ]);
 
         $result = $this->viewHelper->render();
@@ -197,7 +169,6 @@ final class RefViewHelperTest extends TestCase
             'asArray' => false,
             'data' => [],
             'value' => null,
-            'withId' => true,
         ]);
 
         $result = $this->viewHelper->render();
@@ -216,7 +187,6 @@ final class RefViewHelperTest extends TestCase
             'asArray' => false,
             'data' => [],
             'value' => null,
-            'withId' => true,
         ]);
 
         $result = $this->viewHelper->render();
@@ -232,7 +202,6 @@ final class RefViewHelperTest extends TestCase
             'asArray' => false,
             'data' => [],
             'value' => null,
-            'withId' => true,
         ]);
 
         $this->expectException(RuntimeException::class);
@@ -251,7 +220,6 @@ final class RefViewHelperTest extends TestCase
             'asArray' => false,
             'data' => [],
             'value' => null,
-            'withId' => true,
         ]);
 
         $this->expectException(RuntimeException::class);

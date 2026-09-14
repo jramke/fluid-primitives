@@ -215,7 +215,7 @@ final class ComboboxRenderingTest extends FunctionalTestCase
                     <ui:template name="itemTemplate" context="combobox">
                         <primitives:combobox.item>
                             <primitives:combobox.itemText>
-                                <span {ui:ref(name: \'title\', withId: false)}></span>
+                                <span {ui:ref(name: \'title\')}></span>
                             </primitives:combobox.itemText>
                         </primitives:combobox.item>
                     </ui:template>
@@ -224,7 +224,10 @@ final class ComboboxRenderingTest extends FunctionalTestCase
         ', ['collection' => $collection]);
 
         $this->assertMatchesRegularExpression('/<template id="combobox:[^"]*:itemTemplate"/', $html);
-        $this->assertStringContainsString('<span data-scope="combobox" data-part="title">', $html);
+        $this->assertMatchesRegularExpression(
+            '/<span id="combobox:[^"]*:title" data-scope="combobox" data-part="title">/',
+            $html,
+        );
     }
 
     #[Test]
@@ -297,7 +300,7 @@ final class ComboboxRenderingTest extends FunctionalTestCase
                     <ui:template name="itemTemplate" context="combobox">
                         <primitives:combobox.item>
                             <primitives:combobox.itemText>
-                                <span {ui:ref(name: \'title\', withId: false)}></span>
+                                <span {ui:ref(name: \'title\')}></span>
                             </primitives:combobox.itemText>
                             <primitives:combobox.itemIndicator />
                         </primitives:combobox.item>

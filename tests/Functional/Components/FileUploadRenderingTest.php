@@ -290,7 +290,7 @@ final class FileUploadRenderingTest extends FunctionalTestCase
                 <primitives:fileUpload.itemTemplate>
                     <primitives:fileUpload.item>
                         <primitives:fileUpload.itemName />
-                        <div {ui:ref(name: \'diagField\', withId: false)}>diag</div>
+                        <div {ui:ref(name: \'diagField\')}>diag</div>
                     </primitives:fileUpload.item>
                 </primitives:fileUpload.itemTemplate>
             </primitives:fileUpload.root>
@@ -307,7 +307,7 @@ final class FileUploadRenderingTest extends FunctionalTestCase
                         <primitives:fileUpload.itemPreview match=".*">
                             <primitives:fileUpload.itemPreviewFallback />
                         </primitives:fileUpload.itemPreview>
-                        <div {ui:ref(name: \'diagField\', withId: false, context: \'file-upload\')}>diag</div>
+                        <div {ui:ref(name: \'diagField\', context: \'file-upload\')}>diag</div>
                     </primitives:fileUpload.item>
                 </primitives:fileUpload.itemTemplate>
             </primitives:fileUpload.root>

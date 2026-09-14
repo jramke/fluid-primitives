@@ -40,12 +40,15 @@ final class TemplateViewHelperTest extends FunctionalTestCase
         $html = $this->renderTemplate('
             <primitives:combobox.root collection="{collection}">
                 <ui:template name="itemTemplate" context="combobox">
-                    <span {ui:ref(name: \'title\', withId: false)}></span>
+                    <span {ui:ref(name: \'title\')}></span>
                 </ui:template>
             </primitives:combobox.root>
         ', ['collection' => $collection]);
 
-        $this->assertStringContainsString('<span data-scope="combobox" data-part="title">', $html);
+        $this->assertMatchesRegularExpression(
+            '/<span id="combobox:[^"]*:title" data-scope="combobox" data-part="title">/',
+            $html,
+        );
     }
 
     #[Test]
@@ -56,7 +59,7 @@ final class TemplateViewHelperTest extends FunctionalTestCase
         $html = $this->renderTemplate('
             <primitives:combobox.root collection="{collection}">
                 <ui:template name="itemTemplate" context="combobox">
-                    <span {ui:ref(name: \'title\', withId: false)}></span>
+                    <span {ui:ref(name: \'title\')}></span>
                 </ui:template>
                 <primitives:combobox.input />
             </primitives:combobox.root>
@@ -83,14 +86,17 @@ final class TemplateViewHelperTest extends FunctionalTestCase
             <primitives:combobox.root collection="{collection}">
                 <ui:template name="outerTemplate" context="combobox">
                     <ui:template name="innerTemplate">
-                        <span {ui:ref(name: \'title\', withId: false)}></span>
+                        <span {ui:ref(name: \'title\')}></span>
                     </ui:template>
                 </ui:template>
             </primitives:combobox.root>
         ', ['collection' => $collection]);
 
         $this->assertStringContainsString('data-part="inner-template"', $html);
-        $this->assertStringContainsString('<span data-scope="combobox" data-part="title">', $html);
+        $this->assertMatchesRegularExpression(
+            '/<span id="combobox:[^"]*:title" data-scope="combobox" data-part="title">/',
+            $html,
+        );
     }
 
     #[Test]

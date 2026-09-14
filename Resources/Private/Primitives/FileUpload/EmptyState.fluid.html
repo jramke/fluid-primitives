@@ -1,6 +1,8 @@
+<ui:prop name="type" type="Jramke\FluidPrimitives\Enum\FileUploadItemType" optional="{true}" default="{f:constant(name: 'Jramke\FluidPrimitives\Enum\FileUploadItemType::Accepted')}" description="Which file list this empty state belongs to - must match the enclosing item group's own `type`, to keep ids unique when both groups render in the same root." />
+
 <div
     {f:if(condition: class, then: 'class="{class}"' )}
-    {ui:ref(name: 'emptyState' , withId: false )}
+    {ui:ref(name: 'emptyState', value: type)}
     {ui:attributes()}>
     <f:slot />
 </div>

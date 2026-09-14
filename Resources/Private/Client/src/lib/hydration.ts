@@ -347,12 +347,9 @@ export class ComponentHydrator {
     }
 
     /**
-     * Re-stamps every ref'd element within `root` (root included) that was originally rendered
-     * with a `value:` discriminator, for a new, real `value` - identified by the same signal
-     * `ui:ref` itself uses to decide whether a part needs a unique identity at all: it has an
-     * `id`. `withId: false` parts (shared/static, e.g. a plain `title`/`description` span) never
-     * get one and are left untouched. Scoped to this component (`data-scope`) so a nested,
-     * unrelated component's own value-scoped parts aren't touched.
+     * Re-stamps every ref'd element within `root` (root included) for a new, real `value`.
+     * Scoped to this component (`data-scope`) so a nested, unrelated component's own
+     * value-scoped parts aren't touched.
      *
      * Use after cloning a `<template>` (see `Template`) to make the clone represent one real
      * item/row in a single call, instead of manually recomputing
