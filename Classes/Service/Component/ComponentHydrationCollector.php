@@ -46,7 +46,9 @@ final readonly class ComponentHydrationCollector
 
         $manuallyExposedToClient = str_contains($rendered, Constants::MANUALLY_EXPOSED_TO_CLIENT_MARKER);
 
-        if (!$hasRef && !$manuallyExposedToClient) {
+        $hasPropsMarkedForClient = count($candidate->propsMarkedForClient) > 0;
+
+        if (!$hasRef && !$manuallyExposedToClient && !$hasPropsMarkedForClient) {
             return $rendered;
         }
 
