@@ -124,13 +124,20 @@ abstract class AbstractComponentCollection implements ComponentCollectionInterfa
                 }
             }
 
-            $argumentDefinitions['asChild'] = new ArgumentDefinition(
-                'asChild',
-                'boolean',
-                'If true the component uses its child only without the component template. Like Radix UI asChild or Base UI render props.',
-                false,
-                null,
-            );
+            $templateString = $this->getTemplatePaths()->getTemplateSource('Default', $templateName);
+
+            // only add the asChild argument if the template registers itself as a hydratable
+            // element (via ui:ref); parts that render only their slot content have no tag to
+            // merge asChild's attributes onto, so asChild would be a silent no-op there.
+            if (str_contains($templateString, 'ui:ref(')) {
+                $argumentDefinitions['asChild'] = new ArgumentDefinition(
+                    'asChild',
+                    'boolean',
+                    'If true the component uses its child only without the component template. Like Radix UI asChild or Base UI render props.',
+                    false,
+                    null,
+                );
+            }
 
             if ($isRootComponent) {
                 $argumentDefinitions['rootId'] = new ArgumentDefinition(
@@ -157,8 +164,6 @@ abstract class AbstractComponentCollection implements ComponentCollectionInterfa
                     false,
                 );
             }
-
-            $templateString = $this->getTemplatePaths()->getTemplateSource('Default', $templateName);
 
             // only add the class argument if the template string uses it.
             if (preg_match('/(?<!\{)\{class\}(?!\})|(?<![A-Za-z0-9_-])class(?!\s*=|\s*\})/i', $templateString)) {
