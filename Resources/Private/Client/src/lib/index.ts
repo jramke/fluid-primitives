@@ -8,7 +8,6 @@ export {
     ComponentHydrator,
     destroyComponentsWithin,
     getHydrationData,
-    mergeHydrationData,
     mount,
     mountControlled,
 } from './hydration';

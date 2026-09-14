@@ -22,7 +22,6 @@ export default defineConfig({
         switch: './Resources/Private/Primitives/Switch/Switch.ts',
         tabs: './Resources/Private/Primitives/Tabs/Tabs.ts',
         tooltip: './Resources/Private/Primitives/Tooltip/Tooltip.ts',
-        morph: './Resources/Private/Client/morph.ts',
     },
     platform: 'browser',
     dts: true,
@@ -31,6 +30,6 @@ export default defineConfig({
     minify: false,
     ignoreWatch: ['public', 'node_modules', 'dist', 'vendor'],
     deps: {
-        neverBundle: ['zod', 'idiomorph'],
+        neverBundle: ['zod'],
     },
 });

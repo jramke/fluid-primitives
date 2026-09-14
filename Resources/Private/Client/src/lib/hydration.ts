@@ -131,9 +131,8 @@ export function getGlobal<T = unknown>(key: string): T | undefined {
 
 /**
  * Mounts every not-yet-mounted, uncontrolled hydration instance of
- * `componentName`. Safe to call more than once (e.g. after
- * {@see mergeHydrationData} adds instances for lazily-inserted DOM) - already
- * mounted instances are skipped rather than re-instantiated.
+ * `componentName`. Safe to call more than once - already mounted instances
+ * are skipped rather than re-instantiated.
  */
 export function mount(
     componentName: string,
@@ -162,25 +161,6 @@ export function mount(
 
         mountedInstances[id] = instance;
     });
-}
-
-/**
- * Folds a fragment's own hydration payload (as returned by a component
- * fragment endpoint, see `Jramke\FluidPrimitives\Service\ComponentFragmentRenderer`
- * on the PHP side) into the page-wide `window.FluidPrimitives.hydrationData`,
- * so a subsequent {@see mount} call picks up the newly inserted instances.
- */
-export function mergeHydrationData(
-    data: Record<string, Record<string, ComponentHydrationData>> | null | undefined
-) {
-    if (!data || !window.FluidPrimitives) return;
-
-    for (const [componentName, instances] of Object.entries(data)) {
-        if (!window.FluidPrimitives.hydrationData[componentName]) {
-            window.FluidPrimitives.hydrationData[componentName] = {};
-        }
-        Object.assign(window.FluidPrimitives.hydrationData[componentName], instances);
-    }
 }
 
 /**
