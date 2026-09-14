@@ -94,7 +94,7 @@ final class ListCollection implements JsonSerializable, IteratorAggregate
         return count($this->items);
     }
 
-    protected function getFromKey(array|object $item, ?string $key): mixed
+    protected function getFromKey(array|object $item, ?string $key): string|int|float|bool|null
     {
         if (!$key) {
             return null;
@@ -127,6 +127,7 @@ final class ListCollection implements JsonSerializable, IteratorAggregate
             return null;
         }
 
+        /** @var string|int|float|bool|null $current */
         return $current;
     }
 
@@ -178,7 +179,6 @@ final class ListCollection implements JsonSerializable, IteratorAggregate
         // be read with PHP's normal truthiness (matching how the ListCollectionItem branch above
         // reads its own already-real bool $item->disabled).
         if ($this->isItemDisabledKey) {
-            // @mago-expect analysis:mixed-operand
             return (bool)$this->getFromKey($item, $this->isItemDisabledKey);
         }
         // @mago-expect analysis:mixed-operand
@@ -352,7 +352,7 @@ final class ListCollection implements JsonSerializable, IteratorAggregate
         return implode(',', $parts);
     }
 
-    public function jsonSerialize(): mixed
+    public function jsonSerialize(): array
     {
         return [
             'items' => $this->items,

@@ -36,13 +36,14 @@ class FieldContext extends AbstractComponentContext
     }
 
     /**
-     * @return array<string, mixed>
+     * @return array{name: ?string, disabled: ?bool, readOnly: ?bool, required: ?bool, invalid: ?bool, defaultValue: mixed, ids: array<string, string>}
      */
     public function getChildVariables(): array
     {
         $rootId = Typed::string($this->get('rootId'));
 
         $givenIds = (array)($this->get('ids') ?? []);
+        /** @var array<string, string> $ids */
         $ids = array_merge($givenIds, [
             'control' => ComponentPartIdUtility::generatePartId('field', $rootId, 'control'),
             'label' => ComponentPartIdUtility::generatePartId('field', $rootId, 'label'),

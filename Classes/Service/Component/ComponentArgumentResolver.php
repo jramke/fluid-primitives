@@ -80,8 +80,7 @@ final readonly class ComponentArgumentResolver
         array $arguments,
         array $additionalArguments,
     ): void {
-        // Genuinely mixed - hasAdditionalAttributes() itself accepts either a string or an array.
-        // @mago-expect analysis:mixed-assignment
+        /** @var array|string|null $attributesArgument */
         $attributesArgument = $arguments['attributes'] ?? null;
         if (!$this->hasAdditionalAttributes($additionalArguments, $attributesArgument)) {
             return;
@@ -103,7 +102,7 @@ final readonly class ComponentArgumentResolver
     /**
      * @param array<string, mixed> $additionalArguments
      */
-    private function hasAdditionalAttributes(array $additionalArguments, mixed $attributesArgument): bool
+    private function hasAdditionalAttributes(array $additionalArguments, array|string|null $attributesArgument): bool
     {
         if ($additionalArguments !== []) {
             return true;

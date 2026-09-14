@@ -63,7 +63,7 @@ class ListCollectionViewHelper extends AbstractViewHelper
         $this->registerArgument('groupSort', 'array|string', 'Sorting for groups.', false);
     }
 
-    public function render(): mixed
+    public function render(): string|ListCollection
     {
         // Narrowed immediately below via is_array()/instanceof Traversable - no single Typed:: call
         // covers that union.

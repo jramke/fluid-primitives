@@ -58,7 +58,7 @@ class AttributesViewHelper extends AbstractViewHelper
         );
     }
 
-    public function render(): mixed
+    public function render(): string|array
     {
         $renderingContext = $this->renderingContext ?? throw new \RuntimeException(
             'Attributes ViewHelper is missing its rendering context.',
