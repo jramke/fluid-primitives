@@ -9,7 +9,7 @@ import type { FieldMachine } from '../Field/src/field.registry';
 
 type ComboboxPrimitiveProps = combobox.Props & {
     /**
-     * Set from a `mountControlled` callback's `controlled` flag. When `true` and no
+     * Set from a `mount` callback's `controlled` flag. When `true` and no
      * `filterResolver` is set via `setFilter()`, the built-in default filter is skipped entirely,
      * leaving the collection exactly as the consumer's own code last set it (e.g. driven by an
      * async search).

@@ -130,12 +130,11 @@ export function getGlobal<T = unknown>(key: string): T | undefined {
 }
 
 /**
- * Mounts every not-yet-mounted, uncontrolled hydration instance of
- * `componentName`. Safe to call more than once (e.g. after
- * {@see mergeHydrationData} adds instances for lazily-inserted DOM) - already
- * mounted instances are skipped rather than re-instantiated.
+ * Mounts every not-yet-mounted, uncontrolled hydration instance of `componentName`. Safe to call
+ * more than once (e.g. after lazily-inserted DOM adds new instances) - already mounted instances
+ * are skipped rather than re-instantiated.
  */
-export function mount(
+export function mountAll(
     componentName: string,
     callback: (
         data: ComponentHydrationData & { createHydrator: () => ComponentHydrator }
@@ -168,7 +167,7 @@ export function mount(
  * Folds a fragment's own hydration payload (as returned by a component
  * fragment endpoint, see `Jramke\FluidPrimitives\Service\ComponentFragmentRenderer`
  * on the PHP side) into the page-wide `window.FluidPrimitives.hydrationData`,
- * so a subsequent {@see mount} call picks up the newly inserted instances.
+ * so a subsequent {@see mountAll} call picks up the newly inserted instances.
  */
 export function mergeHydrationData(
     data: Record<string, Record<string, ComponentHydrationData>> | null | undefined
@@ -208,7 +207,14 @@ export function destroyComponentsWithin(root: Element | Document) {
     }
 }
 
-export function mountControlled<T>(
+/**
+ * Gets one specific hydration instance of `componentName` by its `rootId` and hands it to
+ * `callback`, regardless of whether it was rendered with `controlled="{true}"`. Unlike
+ * {@see mountAll}, this does not track mounted state - calling it twice for the same `rootId`
+ * runs the callback twice, and instances created this way are invisible to
+ * {@see destroyComponentsWithin}.
+ */
+export function mount<T>(
     componentName: string,
     rootId: string,
     callback: (data: ComponentHydrationData & { createHydrator: () => ComponentHydrator }) => T

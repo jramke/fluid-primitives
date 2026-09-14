@@ -10,7 +10,7 @@ export {
     getHydrationData,
     mergeHydrationData,
     mount,
-    mountControlled,
+    mountAll,
 } from './hydration';
 export { Machine } from './machine';
 export { mergeProps } from './merge-props';
