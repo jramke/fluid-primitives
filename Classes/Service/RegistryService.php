@@ -20,7 +20,7 @@ class RegistryService
     }
 
     /**
-     * @return array{0: array{message: string, details: mixed}|null, 1: array<array-key, mixed>}
+     * @return array{0: array{message: string, details: \Throwable|null}|null, 1: array<array-key, mixed>}
      */
     public function fetchComponent(string $componentKey): array
     {
@@ -52,7 +52,7 @@ class RegistryService
     }
 
     /**
-     * @return array{0: array{message: string, details: mixed}|null, 1: string|null}
+     * @return array{0: array{message: string, details: \Throwable|null}|null, 1: string|null}
      */
     public function fetchComponentFile(string $componentKey, string $filePath): array
     {
@@ -77,7 +77,7 @@ class RegistryService
     }
 
     /**
-     * @return array{0: array{message: string, details: mixed}|null, 1: array<array-key, mixed>}
+     * @return array{0: array{message: string, details: \Throwable|null}|null, 1: array<array-key, mixed>}
      */
     public function fetchComponentList(): array
     {

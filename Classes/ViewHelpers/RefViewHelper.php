@@ -113,7 +113,7 @@ class RefViewHelper extends AbstractViewHelper
         );
     }
 
-    public function render(): mixed
+    public function render(): string|array
     {
         [$componentName, $rootId, $idsArray] = $this->resolveComponentIdentity();
 

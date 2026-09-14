@@ -29,7 +29,7 @@ class ListCollectionItem implements ArrayAccess, JsonSerializable
         return in_array($offset, ['value', 'label', 'disabled', 'original'], strict: true);
     }
 
-    public function offsetGet(mixed $offset): mixed
+    public function offsetGet(mixed $offset): string|bool|array|object|null
     {
         return match ($offset) {
             'value' => $this->value,
@@ -50,7 +50,7 @@ class ListCollectionItem implements ArrayAccess, JsonSerializable
         // Immutable - do nothing
     }
 
-    public function jsonSerialize(): mixed
+    public function jsonSerialize(): array
     {
         return [
             'value' => $this->value,
