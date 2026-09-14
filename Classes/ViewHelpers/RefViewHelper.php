@@ -43,12 +43,6 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
  * <div id="..." data-scope="my-component" data-part="button" data-action="submit">Click me</div>
  * ```
  *
- * Use `withId: false` to suppress the `id` attribute (e.g. for parts that have no unique
- * discriminator and would produce duplicate IDs):
- * ```html
- * <div {ui:ref(name: 'item-group-label', withId: false)}>...</div>
- * ```
- *
  * A component's slot content (the markup a consumer writes between its opening/closing tags) is
  * always evaluated against the *calling* rendering context, not the component's own internal one -
  * so a bare `ui:ref` written directly inside such slot content doesn't, by default, know which
@@ -98,13 +92,6 @@ class RefViewHelper extends AbstractViewHelper
             null,
         );
         $this->registerArgument(
-            'withId',
-            'boolean',
-            'Whether to emit the id attribute. Set to false for parts that have no unique discriminator and would produce duplicate IDs.',
-            false,
-            true,
-        );
-        $this->registerArgument(
             'context',
             'string',
             'Base name of an ancestor component to attach this ref to explicitly (e.g. "combobox"), for hand-authored elements living in another component\'s slot content rather than a component\'s own template body. When omitted, uses whichever component is already ambiently active (the normal case for a component\'s own template).',
@@ -143,16 +130,14 @@ class RefViewHelper extends AbstractViewHelper
             $baseAttributes['data-value'] = (string)$value;
         }
 
-        if (Typed::bool($this->arguments['withId'])) {
-            $id = ComponentPartIdUtility::generatePartId(
-                $componentName,
-                $rootId,
-                $part,
-                Typed::stringOrNull($value),
-                $idsArray,
-            );
-            $baseAttributes = array_merge(['id' => $id], $baseAttributes);
-        }
+        $id = ComponentPartIdUtility::generatePartId(
+            $componentName,
+            $rootId,
+            $part,
+            Typed::stringOrNull($value),
+            $idsArray,
+        );
+        $baseAttributes = array_merge(['id' => $id], $baseAttributes);
 
         $attributes = new TagAttributes(array_merge($baseAttributes, $additionalData));
 

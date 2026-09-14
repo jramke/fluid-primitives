@@ -1,7 +1,9 @@
+<ui:prop name="value" type="string" optional="{true}" description="Optional discriminator matching the enclosing item group, to keep ids unique when a Select has more than one group." />
+
 <div
     role="presentation"
     {f:if(condition: class, then: 'class="{class}"' )}
-    {ui:ref(name: 'itemGroupLabel' , withId: false )}
+    {ui:ref(name: 'itemGroupLabel', value: value)}
     {ui:attributes()}>
     <f:slot />
 </div>
