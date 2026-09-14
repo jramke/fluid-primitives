@@ -131,7 +131,7 @@ class UsePropsViewHelper extends AbstractViewHelper implements ViewHelperNodeIni
                 return;
             }
 
-            $externalArgumentDefinitionsWithoutReserved = PropsUtility::cleanupReservedProps([
+            $forwardableArgumentDefinitions = PropsUtility::cleanupNonForwardableProps([
                 ...$externalArgumentDefinitions,
             ]);
 
@@ -139,18 +139,18 @@ class UsePropsViewHelper extends AbstractViewHelper implements ViewHelperNodeIni
                 new RenderingContext(),
             ));
             if ($evaluatedSelectedProps !== null && $evaluatedSelectedProps !== []) {
-                $externalArgumentDefinitionsWithoutReservedUpdated = [];
+                $forwardableArgumentDefinitionsUpdated = [];
                 foreach (array_map(Typed::string(...), $evaluatedSelectedProps) as $argumentName) {
-                    if (($externalArgumentDefinitionsWithoutReserved[$argumentName] ?? null) === null) {
+                    if (($forwardableArgumentDefinitions[$argumentName] ?? null) === null) {
                         throw new \RuntimeException(
                             "The prop {$argumentName} does not exist in the referenced component {$name}.",
                             1772899866,
                         );
                     }
-                    $externalArgumentDefinitionsWithoutReservedUpdated[$argumentName] =
-                        $externalArgumentDefinitionsWithoutReserved[$argumentName];
+                    $forwardableArgumentDefinitionsUpdated[$argumentName] =
+                        $forwardableArgumentDefinitions[$argumentName];
                 }
-                $externalArgumentDefinitionsWithoutReserved = $externalArgumentDefinitionsWithoutReservedUpdated;
+                $forwardableArgumentDefinitions = $forwardableArgumentDefinitionsUpdated;
             }
 
             $evaluatedDefaults = Typed::arrayOrNull(($arguments['defaults'] ?? null)?->evaluate(
@@ -163,12 +163,12 @@ class UsePropsViewHelper extends AbstractViewHelper implements ViewHelperNodeIni
                 // @mago-expect analysis:mixed-assignment
                 foreach ($evaluatedDefaults as $rawDefaultPropName => $defaultPropValue) {
                     $defaultPropName = Typed::string($rawDefaultPropName);
-                    $existingDefinition = $externalArgumentDefinitionsWithoutReserved[$defaultPropName] ?? null;
+                    $existingDefinition = $forwardableArgumentDefinitions[$defaultPropName] ?? null;
                     if ($existingDefinition === null) {
                         continue;
                     }
 
-                    $externalArgumentDefinitionsWithoutReserved[$defaultPropName] = PropsUtility::duplicateArgumentDefinitionWithNewDefault(
+                    $forwardableArgumentDefinitions[$defaultPropName] = PropsUtility::duplicateArgumentDefinitionWithNewDefault(
                         $existingDefinition,
                         $defaultPropValue,
                     );
@@ -177,7 +177,7 @@ class UsePropsViewHelper extends AbstractViewHelper implements ViewHelperNodeIni
 
             $argumentDefinitions = $parsingState->getArgumentDefinitions();
 
-            $mergedArgumentDefinitions = array_merge($externalArgumentDefinitionsWithoutReserved, $argumentDefinitions);
+            $mergedArgumentDefinitions = array_merge($forwardableArgumentDefinitions, $argumentDefinitions);
 
             $mergedArgumentDefinitions['spreadProps'] = PropsUtility::createSpreadPropsArgumentDefinition(array_keys(
                 $externalArgumentDefinitions,

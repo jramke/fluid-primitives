@@ -150,6 +150,18 @@ class PropViewHelper extends AbstractViewHelper implements ViewHelperNodeInitial
             );
         }
 
+        // Catches this specifically at the one place a reserved name could be freshly authored, so
+        // ui:useProps is free to forward asChild/class from an imported component without every
+        // importer re-triggering this check on inherited (not self-declared) definitions - see
+        // AbstractComponentCollection::getComponentDefinition(), which used to run this same check
+        // too late (after such imports were already merged in).
+        if (PropsUtility::isReservedProp($argumentName)) {
+            throw new Exception(
+                sprintf('The name "%s" is reserved and cannot be used as a prop name.', $argumentName),
+                1776459353,
+            );
+        }
+
         // Automatically make the argument definition optional if it has a default value
         $hasDefaultValue = array_key_exists('default', $evaluatedArguments);
         $optional = Typed::bool($evaluatedArguments['optional'] ?? null) || $hasDefaultValue;

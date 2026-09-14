@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Component;
 
-use Jramke\FluidPrimitives\Constants;
 use Jramke\FluidPrimitives\Factory\ComponentRendererFactory;
 use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
 use Jramke\FluidPrimitives\Utility\PropsUtility;
@@ -111,24 +110,20 @@ abstract class AbstractComponentCollection implements ComponentCollectionInterfa
             $isRootComponent = ComponentNameUtility::isRootComponent($viewHelperName);
             $argumentDefinitions = $parsedTemplate->getArgumentDefinitions();
 
-            foreach ($argumentDefinitions as $name => $definition) {
-                if (in_array($name, Constants::RESERVED_PROPS, strict: true)) {
-                    throw new UnresolvableViewHelperException(
-                        sprintf(
-                            'The argument "%s" is reserved and cannot be used as an argument inside component "%s". See https://fluid-primitives.com/docs/core-concepts/arguments for more information.',
-                            $name,
-                            $viewHelperName,
-                        ),
-                        1748511298,
-                    );
-                }
-            }
+            // No reserved-prop collision check here: a template can only ever end up with a reserved
+            // name in $argumentDefinitions by explicitly authoring `<ui:prop name="asChild">` (or
+            // similar) itself, and PropViewHelper::nodeInitializedEvent() already rejects that at the
+            // one place it could happen - checking again here, on the definitions ui:useProps may have
+            // already merged in, used to incorrectly also reject asChild/class/rootId legitimately
+            // *inherited* from an imported component.
 
             $templateString = $this->getTemplatePaths()->getTemplateSource('Default', $templateName);
 
             // only add the asChild argument if the template registers itself as a hydratable
             // element (via ui:ref); parts that render only their slot content have no tag to
-            // merge asChild's attributes onto, so asChild would be a silent no-op there.
+            // merge asChild's attributes onto, so asChild would be a silent no-op there. A template
+            // that only delegates via `ui:useProps` already has asChild merged in above when the
+            // component it imports from supports it - see UsePropsViewHelper.
             if (str_contains($templateString, 'ui:ref(')) {
                 $argumentDefinitions['asChild'] = new ArgumentDefinition(
                     'asChild',
@@ -165,7 +160,9 @@ abstract class AbstractComponentCollection implements ComponentCollectionInterfa
                 );
             }
 
-            // only add the class argument if the template string uses it.
+            // only add the class argument if the template string uses it. A template that only
+            // delegates via `ui:useProps` already has class merged in above when the component it
+            // imports from supports it.
             if (preg_match('/(?<!\{)\{class\}(?!\})|(?<![A-Za-z0-9_-])class(?!\s*=|\s*\})/i', $templateString)) {
                 $argumentDefinitions['class'] = new ArgumentDefinition(
                     'class',

@@ -13,11 +13,11 @@ class PropsUtility
      * @param array<string, ArgumentDefinition> $props
      * @return array<string, ArgumentDefinition>
      */
-    public static function cleanupReservedProps(array $props, bool $useKeys = true): array
+    public static function cleanupNonForwardableProps(array $props, bool $useKeys = true): array
     {
         return array_filter(
             $props,
-            static fn(string $key) => !self::isReservedProp($key),
+            static fn(string $key) => !in_array($key, Constants::NON_FORWARDABLE_PROPS, strict: true),
             $useKeys ? ARRAY_FILTER_USE_KEY : 0,
         );
     }

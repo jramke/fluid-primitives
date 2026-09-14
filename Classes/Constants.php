@@ -22,6 +22,15 @@ class Constants
         'asChild',
     ];
 
+    /**
+     * Subset of RESERVED_PROPS that `ui:useProps` must strip when importing another component's
+     * argument definitions, because they're tied to that specific render rather than being generic,
+     * reusable configuration. `class`/`asChild` are deliberately NOT here - a wrapper built with
+     * `ui:useProps` + `spreadProps` should keep inheriting them, including through any number of
+     * further `ui:useProps` layers a userland component might stack on top.
+     */
+    public const NON_FORWARDABLE_PROPS = [self::PROP_ROOT_ID, 'context', 'component', 'settings'];
+
     public const COMPONENTS_THAT_SUPPORT_FIELD = [
         'checkbox',
         'checkbox-group',
