@@ -51,12 +51,20 @@ final class HydrationScriptBuilder
 
     private function toJson(array $data, bool $development): string
     {
+        // HEX flags prevent a string containing "</script>" from breaking out of the inline
+        // <script> tag this gets embedded into (see HydrationRegistry::updateAssetCollector()).
+        $flags =
+            JSON_THROW_ON_ERROR |
+            JSON_UNESCAPED_SLASHES |
+            JSON_UNESCAPED_UNICODE |
+            JSON_HEX_TAG |
+            JSON_HEX_AMP |
+            JSON_HEX_APOS |
+            JSON_HEX_QUOT;
+
         if ($development) {
-            return json_encode(
-                $data,
-                JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT,
-            );
+            return json_encode($data, $flags | JSON_PRETTY_PRINT);
         }
-        return json_encode($data, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        return json_encode($data, $flags);
     }
 }
