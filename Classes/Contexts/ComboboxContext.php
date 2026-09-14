@@ -5,21 +5,37 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Contexts;
 
 use Jramke\FluidPrimitives\Attributes\ExposeToClient;
-use Jramke\FluidPrimitives\Domain\Model\ListCollection;
-use Jramke\FluidPrimitives\Domain\Model\ListCollectionItem;
+use Jramke\FluidPrimitives\Domain\Dto\ListCollection;
+use Jramke\FluidPrimitives\Domain\Dto\ListCollectionItem;
 use Jramke\FluidPrimitives\Service\TranslatorService;
+use Jramke\FluidPrimitives\Traits\HasListCollectionTrait;
+use Jramke\FluidPrimitives\Traits\HasTranslationsTrait;
+use Jramke\FluidPrimitives\Utility\Typed;
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 
 #[Autoconfigure(public: true)]
 class ComboboxContext extends AbstractComponentContext
 {
+    use HasListCollectionTrait;
+    use HasTranslationsTrait;
+
     public function __construct(
         private readonly TranslatorService $translator,
     ) {}
 
+    protected function getTranslator(): TranslatorService
+    {
+        return $this->translator;
+    }
+
+    /**
+     * @return array<string>|null
+     */
     #[ExposeToClient(excludeIfNull: true)]
     public function getDefaultValue(): ?array
     {
+        // `defaultValue` is declared type="mixed" and genuinely accepts either shape checked below.
+        // @mago-expect analysis:mixed-assignment
         $defaultValue = $this->get('defaultValue');
 
         if ($defaultValue === null || $defaultValue === '') {
@@ -30,11 +46,13 @@ class ComboboxContext extends AbstractComponentContext
             return [$defaultValue];
         }
 
-        return is_array($defaultValue) ? $defaultValue : null;
+        return is_array($defaultValue) ? array_map(Typed::string(...), $defaultValue) : null;
     }
 
     public function getInitialInputValue(): string
     {
+        // `defaultInputValue` is declared type="mixed"; is_string() below rejects anything else.
+        // @mago-expect analysis:mixed-assignment
         $defaultInputValue = $this->get('defaultInputValue');
         if (is_string($defaultInputValue) && $defaultInputValue !== '') {
             return $defaultInputValue;
@@ -45,7 +63,7 @@ class ComboboxContext extends AbstractComponentContext
         }
 
         $collection = $this->getCollection();
-        if (!$collection) {
+        if (!$collection instanceof ListCollection) {
             return '';
         }
 
@@ -54,7 +72,7 @@ class ComboboxContext extends AbstractComponentContext
             return '';
         }
 
-        $selectionBehavior = $this->get('selectionBehavior') ?: 'replace';
+        $selectionBehavior = Typed::stringOrNull($this->get('selectionBehavior')) ?: 'replace';
         if ($selectionBehavior === 'clear') {
             return '';
         }
@@ -71,13 +89,13 @@ class ComboboxContext extends AbstractComponentContext
     public function getItemState(ListCollectionItem|array $item): object
     {
         $defaultValue = $this->getDefaultValue() ?? [];
-        $rootDisabled = $this->get('disabled') ?? false;
-        $defaultHighlightedValue = $this->get('defaultHighlightedValue');
+        $rootDisabled = Typed::bool($this->get('disabled'));
+        $defaultHighlightedValue = Typed::stringOrNull($this->get('defaultHighlightedValue'));
 
         if ($item instanceof ListCollectionItem) {
             return (object)[
                 'value' => $item->value,
-                'selected' => in_array($item->value, $defaultValue, true),
+                'selected' => in_array($item->value, $defaultValue, strict: true),
                 'disabled' => $item->disabled ?: ($rootDisabled ?: null),
                 'highlighted' => $defaultHighlightedValue === $item->value,
             ];
@@ -89,7 +107,7 @@ class ComboboxContext extends AbstractComponentContext
 
         return (object)[
             'value' => $value,
-            'selected' => in_array($value, $defaultValue, true),
+            'selected' => in_array($value, $defaultValue, strict: true),
             'disabled' => $itemDisabled ?: ($rootDisabled ?: null),
             'highlighted' => $defaultHighlightedValue === $value,
         ];
@@ -98,19 +116,9 @@ class ComboboxContext extends AbstractComponentContext
     #[ExposeToClient]
     public function getTranslations(): array
     {
-        $overrides = $this->get('translations') ?? [];
-
-        $defaults = [
-            'triggerLabel' => $this->translator->translate('combobox.triggerLabel', $this->getRequest()),
-            'clearTriggerLabel' => $this->translator->translate('combobox.clearTriggerLabel', $this->getRequest()),
-        ];
-
-        return array_merge($defaults, $overrides);
-    }
-
-    public function getCollection(): ?ListCollection
-    {
-        $collection = $this->get('collection');
-        return $collection instanceof ListCollection ? $collection : null;
+        return $this->translationsWithDefaults([
+            'triggerLabel' => 'combobox.triggerLabel',
+            'clearTriggerLabel' => 'combobox.clearTriggerLabel',
+        ]);
     }
 }

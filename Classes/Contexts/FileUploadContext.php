@@ -6,14 +6,23 @@ namespace Jramke\FluidPrimitives\Contexts;
 
 use Jramke\FluidPrimitives\Attributes\ExposeToClient;
 use Jramke\FluidPrimitives\Service\TranslatorService;
+use Jramke\FluidPrimitives\Traits\HasTranslationsTrait;
+use Jramke\FluidPrimitives\Utility\Typed;
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 
 #[Autoconfigure(public: true)]
 class FileUploadContext extends AbstractComponentContext
 {
+    use HasTranslationsTrait;
+
     public function __construct(
         protected readonly TranslatorService $translator,
     ) {}
+
+    protected function getTranslator(): TranslatorService
+    {
+        return $this->translator;
+    }
 
     /**
      * `itemPreview`/`deleteFile` are functions in zag-js (`(file: File) => string`), since they're
@@ -29,15 +38,11 @@ class FileUploadContext extends AbstractComponentContext
     #[ExposeToClient]
     public function getTranslations(): array
     {
-        $overrides = $this->get('translations') ?? [];
-
-        $defaults = [
-            'dropzone' => $this->translator->translate('fileUpload.dropzoneLabel', $this->getRequest()),
-            'itemPreview' => $this->translator->translate('fileUpload.itemPreviewLabel', $this->getRequest()),
-            'deleteFile' => $this->translator->translate('fileUpload.deleteFileLabel', $this->getRequest()),
-        ];
-
-        return array_merge($defaults, $overrides);
+        return $this->translationsWithDefaults([
+            'dropzone' => 'fileUpload.dropzoneLabel',
+            'itemPreview' => 'fileUpload.itemPreviewLabel',
+            'deleteFile' => 'fileUpload.deleteFileLabel',
+        ]);
     }
 
     /**
@@ -47,6 +52,9 @@ class FileUploadContext extends AbstractComponentContext
      */
     public function getAcceptAttr(): ?string
     {
+        // `accept` is declared type="mixed" and genuinely accepts either shape below - stays mixed
+        // until is_string()/is_array() decide which branch narrows it.
+        // @mago-expect analysis:mixed-assignment
         $accept = $this->get('accept');
 
         if ($accept === null || $accept === '') {
@@ -61,28 +69,30 @@ class FileUploadContext extends AbstractComponentContext
             return null;
         }
 
-        if (array_is_list($accept)) {
-            $tokens = $accept;
-        } else {
+        $tokens = $accept;
+        if (!array_is_list($accept)) {
             $tokens = [];
+            // $extensions is deliberately left as-is (mixed) here - it's either a single extension
+            // string or a list of them, and the (array) cast below needs the original shape;
+            // narrowing happens per-extension in the inner loop instead.
+            // @mago-expect analysis:mixed-assignment
             foreach ($accept as $mimeType => $extensions) {
                 $tokens[] = $mimeType;
-                foreach ((array)$extensions as $extension) {
+                foreach (array_map(Typed::string(...), (array)$extensions) as $extension) {
                     $tokens[] = $extension;
                 }
             }
         }
 
-        $validTokens = array_values(array_filter($tokens, static fn($candidate): bool => self::isValidAcceptToken(
-            (string)$candidate,
-        )));
+        $stringTokens = array_map(Typed::string(...), $tokens);
+        $validTokens = array_values(array_filter($stringTokens, $this->isValidAcceptToken(...)));
 
         return $validTokens === [] ? null : implode(',', $validTokens);
     }
 
-    private static function isValidAcceptToken(string $value): bool
+    private function isValidAcceptToken(string $value): bool
     {
-        if (in_array($value, ['audio/*', 'video/*', 'image/*', 'text/*'], true)) {
+        if (in_array($value, ['audio/*', 'video/*', 'image/*', 'text/*'], strict: true)) {
             return true;
         }
 

@@ -6,14 +6,14 @@ namespace Jramke\FluidPrimitives\Registry;
 
 use Jramke\FluidPrimitives\Utility\EnumUtility;
 use Psr\Http\Message\ServerRequestInterface;
-use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Page\AssetCollector;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 class HydrationRegistry
 {
-    private const SCRIPT_ID = 'fluid-primitives-hydration-data';
+    private const string SCRIPT_ID = 'fluid-primitives-hydration-data';
 
+    /** @var array<string, array<string, mixed>> */
     private array $registry = [];
     private static ?self $instance = null;
     private array $globals = [];
@@ -21,24 +21,29 @@ class HydrationRegistry
 
     public function __construct(
         private readonly AssetCollector $assetCollector,
+        private readonly HydrationScriptBuilder $scriptBuilder = new HydrationScriptBuilder(),
     ) {}
 
     public static function getInstance(): self
     {
         if (!self::$instance instanceof \Jramke\FluidPrimitives\Registry\HydrationRegistry) {
             $container = GeneralUtility::getContainer();
-            self::$instance = $container->get(self::class);
+            /** @var self $instance */
+            $instance = $container->get(self::class);
+            self::$instance = $instance;
         }
         return self::$instance;
     }
 
     public function add(string $componentType, string $id, array $props): void
     {
-        if (!isset($this->registry[$componentType])) {
+        if (($this->registry[$componentType] ?? null) === null) {
             $this->registry[$componentType] = [];
         }
 
-        $this->registry[$componentType][$id] = EnumUtility::normalize($props);
+        /** @var array<string, mixed> $normalizedProps */
+        $normalizedProps = EnumUtility::normalize($props);
+        $this->registry[$componentType][$id] = $normalizedProps;
 
         // Update the asset collector whenever data changes
         $this->updateAssetCollector();
@@ -46,9 +51,17 @@ class HydrationRegistry
 
     public function get(string $componentType, string $id): ?array
     {
-        return $this->registry[$componentType][$id] ?? null;
+        // Not actually redundant - the assignment is what the @var narrows; inlining it into the
+        // return statement would lose that annotation and bring back the mixed-return-statement error.
+        // @mago-expect lint:inline-variable-return
+        /** @var array<string, mixed>|null $props */
+        $props = $this->registry[$componentType][$id] ?? null;
+        return $props;
     }
 
+    /**
+     * @return array<string, array<string, mixed>>
+     */
     public function getAll(): array
     {
         return $this->registry;
@@ -73,29 +86,10 @@ class HydrationRegistry
             return;
         }
 
-        $globals = $this->getGlobals();
+        $development = $this->scriptBuilder->isDevelopment();
+        $js = $this->scriptBuilder->build($this->registry, $this->getGlobals(), $development);
 
-        $js = <<<JS
-        (function() {
-        window.FluidPrimitives = {
-            uncontrolledInstances: {},
-            globals: {$this->toJson($globals)},
-            hydrationData: {$this->toJson($this->registry)}
-        };
-        })();
-        JS;
-
-        $scriptAttributes = [
-            'id' => self::SCRIPT_ID,
-        ];
-
-        if (!$this->isDevelopment()) {
-            $js = str_replace("\n", '', $js);
-            $js = str_replace("\r", '', $js);
-            $js = preg_replace('/\s+/', ' ', $js); // replace multiple whitespaces with one space
-            $js = preg_replace('/\s*([{}();=])\s*/', '$1', (string)$js); // remove spaces around special characters
-            unset($scriptAttributes['id']);
-        }
+        $scriptAttributes = $development ? ['id' => self::SCRIPT_ID] : [];
 
         // Add or update the script in AssetCollector
         $this->assetCollector->addInlineJavaScript(self::SCRIPT_ID, $js, $scriptAttributes, [
@@ -116,6 +110,9 @@ class HydrationRegistry
             return;
         }
 
+        // Narrowed immediately below via is_object()/method_exists() - a generic PSR-7 request
+        // attribute has no narrower static type, and there's no Typed:: equivalent for objects.
+        // @mago-expect analysis:mixed-assignment
         $language = $request->getAttribute('language');
         $locale = is_object($language) && method_exists($language, 'getLocale') ? (string)$language->getLocale() : '';
 
@@ -126,26 +123,14 @@ class HydrationRegistry
 
     private function getRequest(): ?ServerRequestInterface
     {
+        // This registry is a hard singleton with no request-scoped construction path (see
+        // getInstance()), so it has no other way to reach the current request than TYPO3's own
+        // global - there is no DI-injectable alternative available here. Narrowed immediately below
+        // via instanceof.
+        // @mago-expect lint:no-global
+        // @mago-expect analysis:mixed-assignment
         $request = $GLOBALS['TYPO3_REQUEST'] ?? null;
 
         return $request instanceof ServerRequestInterface ? $request : null;
-    }
-
-    private function isDevelopment(): bool
-    {
-        try {
-            return Environment::getContext()->isDevelopment();
-        } catch (\Throwable) {
-            // If Environment is not initialized (e.g., in unit tests), assume production
-            return false;
-        }
-    }
-
-    private function toJson(array $data): string
-    {
-        if ($this->isDevelopment()) {
-            return json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
-        }
-        return json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     }
 }

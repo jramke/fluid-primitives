@@ -23,5 +23,8 @@ interface ComponentCollectionInterface extends
      */
     public function getComponentDefinition(string $viewHelperName): ComponentDefinition;
 
+    /**
+     * @return array<string>
+     */
     public function getContextNamespaces(): array;
 }

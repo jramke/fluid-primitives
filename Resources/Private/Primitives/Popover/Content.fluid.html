@@ -1,6 +1,6 @@
 <f:variable name="hidden">{f:if(condition: context.defaultOpen, then: '{false}', else: '{true}')}</f:variable>
 
-<f:variable name="expanded">{context.defaultOpen ? '' : null}</f:variable>
+<f:variable name="expanded">{f:if(condition: context.defaultOpen, then: '{true}', else: '{false}')}</f:variable>
 <f:variable name="refData" value="{state: context.state, expanded: expanded}" />
 
 <div

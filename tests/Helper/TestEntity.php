@@ -9,6 +9,7 @@ use TYPO3\CMS\Extbase\DomainObject\AbstractEntity;
 final class TestEntity extends AbstractEntity
 {
     private ?TestEntity $nested = null;
+    private ?string $title = null;
 
     public function setTestUid(?int $uid): void
     {
@@ -23,5 +24,15 @@ final class TestEntity extends AbstractEntity
     public function getNested(): ?TestEntity
     {
         return $this->nested;
+    }
+
+    public function setTitle(?string $title): void
+    {
+        $this->title = $title;
+    }
+
+    public function getTitle(): ?string
+    {
+        return $this->title;
     }
 }

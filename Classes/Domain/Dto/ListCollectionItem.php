@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Jramke\FluidPrimitives\Domain\Model;
+namespace Jramke\FluidPrimitives\Domain\Dto;
 
 use ArrayAccess;
 use JsonSerializable;
@@ -26,7 +26,7 @@ class ListCollectionItem implements ArrayAccess, JsonSerializable
 
     public function offsetExists(mixed $offset): bool
     {
-        return in_array($offset, ['value', 'label', 'disabled', 'original'], true);
+        return in_array($offset, ['value', 'label', 'disabled', 'original'], strict: true);
     }
 
     public function offsetGet(mixed $offset): mixed

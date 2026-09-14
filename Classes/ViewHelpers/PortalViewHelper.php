@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\ViewHelpers;
 
 use Jramke\FluidPrimitives\Registry\PortalRegistry;
+use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
 /**
@@ -44,9 +45,9 @@ class PortalViewHelper extends AbstractViewHelper
 
     public function render(): string
     {
-        $rendered = trim((string)$this->renderChildren() ?? '');
+        $rendered = trim((string)$this->renderChildren());
 
-        if ($this->arguments['disabled'] ?? false) {
+        if (Typed::bool($this->arguments['disabled'])) {
             return $rendered;
         }
 
@@ -54,7 +55,7 @@ class PortalViewHelper extends AbstractViewHelper
             return '';
         }
 
-        PortalRegistry::add($this->arguments['name'], $rendered);
+        PortalRegistry::add(Typed::string($this->arguments['name']), $rendered);
         return '';
     }
 }

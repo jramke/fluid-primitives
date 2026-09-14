@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\ViewHelpers;
 
 use Jramke\FluidPrimitives\Contexts\FormContext;
-use Jramke\FluidPrimitives\Domain\Model\TagAttributes;
+use Jramke\FluidPrimitives\Domain\Dto\TagAttributes;
 use Jramke\FluidPrimitives\Service\ContextService;
 use TYPO3\CMS\Core\Crypto\HashService;
 use TYPO3\CMS\Extbase\Domain\Model\FileReference;
@@ -72,7 +72,12 @@ class FileUploadDeleteCheckboxViewHelper extends AbstractViewHelper
 
     public function render(): string
     {
-        $formContext = ContextService::getFromRenderingContext($this->renderingContext, 'form');
+        $renderingContext = $this->renderingContext ?? throw new \RuntimeException(
+            'FileUploadDeleteCheckbox ViewHelper is missing its rendering context.',
+            1_788_100_006,
+        );
+
+        $formContext = ContextService::getFromRenderingContext($renderingContext, 'form');
         if (!$formContext instanceof FormContext) {
             throw new \RuntimeException(
                 'ui:fileUploadDeleteCheckbox can only be used inside a <ui:form.root>.',
@@ -88,7 +93,10 @@ class FileUploadDeleteCheckboxViewHelper extends AbstractViewHelper
             );
         }
 
-        $fieldContext = ContextService::getFromRenderingContext($this->renderingContext, 'field');
+        $fieldContext = ContextService::getFromRenderingContext($renderingContext, 'field');
+        // Checked with is_string() rather than Typed::stringOrNull() below - the latter would also
+        // accept and coerce numeric scalars, which isn't a valid property name here.
+        // @mago-expect analysis:mixed-assignment
         $property = $this->arguments['property'] ?? $fieldContext?->get('name');
         if (!is_string($property) || $property === '') {
             throw new \RuntimeException(
@@ -100,13 +108,10 @@ class FileUploadDeleteCheckboxViewHelper extends AbstractViewHelper
         /** @var FileReference $fileReference */
         $fileReference = $this->arguments['fileReference'];
 
-        $token = $this->hashService->appendHmac(
-            (string)json_encode([
-                'fileReference' => $fileReference->getUid(),
-                'property' => $property,
-            ], JSON_THROW_ON_ERROR),
-            '@delete',
-        );
+        $token = $this->hashService->appendHmac(json_encode([
+            'fileReference' => $fileReference->getUid(),
+            'property' => $property,
+        ], JSON_THROW_ON_ERROR), '@delete');
 
         $segments = array_filter(
             [$formContext->getFieldNamePrefix(), '@delete', $objectName],
@@ -126,6 +131,6 @@ class FileUploadDeleteCheckboxViewHelper extends AbstractViewHelper
             'class' => $this->arguments['class'] ?? null,
         ]);
 
-        return '<input ' . $attributes . ' />';
+        return '<input ' . (string)$attributes . ' />';
     }
 }

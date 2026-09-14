@@ -7,8 +7,10 @@ namespace Jramke\FluidPrimitives\ViewHelpers;
 use Jramke\FluidPrimitives\Annotations\ClientArgumentAnnotation;
 use Jramke\FluidPrimitives\Annotations\ContextArgumentAnnotation;
 use Jramke\FluidPrimitives\Annotations\RequiredAtRuntimeArgumentAnnotation;
+use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use Jramke\FluidPrimitives\Utility\PropsUtility;
+use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3Fluid\Fluid\Core\Parser\Exception;
 use TYPO3Fluid\Fluid\Core\Parser\ParsingState;
 use TYPO3Fluid\Fluid\Core\Parser\SyntaxTree\NodeInterface;
@@ -68,39 +70,45 @@ class PropViewHelper extends AbstractViewHelper implements ViewHelperNodeInitial
 
     public function render(): string
     {
-        if (!ComponentUtility::isComponent($this->renderingContext)) {
+        $renderingContext = $this->renderingContext ?? throw new \RuntimeException(
+            'Prop ViewHelper is missing its rendering context.',
+            1_788_100_003,
+        );
+
+        if (!ComponentUtility::isComponent($renderingContext)) {
             throw new \RuntimeException('The prop ViewHelper can only be used inside a component context.', 1698255600);
         }
 
-        $isRootComponent = ComponentUtility::isRootComponent($this->renderingContext);
+        $isRootComponent = ComponentNameUtility::isRootComponent($renderingContext);
+        $name = Typed::string($this->arguments['name']);
 
-        if ($this->arguments['context'] && $isRootComponent) {
+        if (Typed::bool($this->arguments['context']) && $isRootComponent) {
             throw new \RuntimeException(
                 'The context argument can only be used inside a composable component. All props from the root component are automatically available in the context.',
                 1698255601,
             );
         }
 
-        if ($this->arguments['client'] && !$isRootComponent) {
+        if (Typed::bool($this->arguments['client']) && !$isRootComponent) {
             throw new \RuntimeException('The client argument can only be used inside a root component.', 1698255602);
         }
 
-        if (PropsUtility::isReservedProp($this->arguments['name'])) {
+        if (PropsUtility::isReservedProp($name)) {
             throw new \RuntimeException(
-                'The name "' . $this->arguments['name'] . '" is reserved and cannot be used as prop name.',
+                'The name "' . $name . '" is reserved and cannot be used as prop name.',
                 1758400699,
             );
         }
 
         if (
-            $this->arguments['requiredAtRuntime'] &&
-            !$this->renderingContext->getVariableProvider()->exists($this->arguments['name'])
+            Typed::bool($this->arguments['requiredAtRuntime']) &&
+            !$renderingContext->getVariableProvider()->exists($name)
         ) {
             throw new \RuntimeException(
                 'The prop "' .
-                $this->arguments['name'] .
+                $name .
                 '" is required for component "' .
-                ComponentUtility::getComponentFullNameFromContext($this->renderingContext) .
+                ComponentNameUtility::getComponentFullNameFromContext($renderingContext) .
                 '" but was not provided.',
                 1776714998,
             );
@@ -135,7 +143,7 @@ class PropViewHelper extends AbstractViewHelper implements ViewHelperNodeInitial
 
         // Make sure that this argument hasn't already been defined in the template
         $argumentDefinitions = $parsingState->getArgumentDefinitions();
-        if (isset($argumentDefinitions[$argumentName])) {
+        if (($argumentDefinitions[$argumentName] ?? null) !== null) {
             throw new Exception(
                 sprintf('Template argument "%s" has been defined multiple times.', $argumentName),
                 1776459352,
@@ -144,7 +152,7 @@ class PropViewHelper extends AbstractViewHelper implements ViewHelperNodeInitial
 
         // Automatically make the argument definition optional if it has a default value
         $hasDefaultValue = array_key_exists('default', $evaluatedArguments);
-        $optional = ($evaluatedArguments['optional'] ?? false) || $hasDefaultValue;
+        $optional = Typed::bool($evaluatedArguments['optional'] ?? null) || $hasDefaultValue;
 
         $annotations = [];
         if ($evaluatedArguments['client'] ?? false) {

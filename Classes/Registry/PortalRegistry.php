@@ -6,6 +6,7 @@ namespace Jramke\FluidPrimitives\Registry;
 
 class PortalRegistry
 {
+    /** @var array<string, string[]> */
     private static array $registry = [];
 
     public static function add(string $name, string $html): void
@@ -13,11 +14,17 @@ class PortalRegistry
         self::$registry[$name][] = $html;
     }
 
+    /**
+     * @return array<string, string[]>
+     */
     public static function getAll(): array
     {
         return self::$registry;
     }
 
+    /**
+     * @return string[]
+     */
     public static function getAllByName(string $name): array
     {
         return self::$registry[$name] ?? [];

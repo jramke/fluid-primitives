@@ -4,9 +4,14 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Traits;
 
+use Psr\Http\Message\ResponseInterface;
 use TYPO3\CMS\Core\Http\PropagateResponseException;
-use TYPO3\CMS\Extensionmanager\Controller\ActionController;
+use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
+use TYPO3\CMS\Extbase\Mvc\Controller\Arguments;
 
+/**
+ * @property-read Arguments $arguments Provided by the using class extending {@see ActionController}.
+ */
 trait AjaxValidationTrait
 {
     protected function throwJsonValidationErrorResponse(): void
@@ -37,7 +42,16 @@ trait AjaxValidationTrait
 
         // TODO: maybe we should alternatively provide a method that returns a valid psr7 response
         // would this work?
-        $response = $this->jsonResponse(json_encode($messages))->withStatus(422);
+        // jsonResponse() is only known to exist via the runtime method_exists() check above (a trait
+        // can't declare a real host-class method contract the way an abstract class can while still
+        // supporting hosts that don't extend ActionController) - narrowed immediately below instead.
+        // @mago-expect analysis:mixed-assignment
+        $rawResponse = $this->jsonResponse(json_encode($messages) ?: null);
+        if (!$rawResponse instanceof ResponseInterface) {
+            throw new \RuntimeException('Method jsonResponse did not return a ResponseInterface instance.', 1768514276);
+        }
+
+        $response = $rawResponse->withStatus(422);
         throw new PropagateResponseException($response, 422);
     }
 }

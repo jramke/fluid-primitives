@@ -1,4 +1,4 @@
-<ui:prop name="collection" type="Jramke\FluidPrimitives\Domain\Model\ListCollection" optional="{true}" client="{true}" requiredAtRuntime="{true}" description="The item collection." />
+<ui:prop name="collection" type="Jramke\FluidPrimitives\Domain\Dto\ListCollection" optional="{true}" client="{true}" requiredAtRuntime="{true}" description="The item collection." />
 <ui:prop name="name" type="string" optional="{true}" client="{true}" description="The `name` attribute of the underlying select. Inherited from a surrounding field when available." />
 <ui:prop name="form" type="string" optional="{true}" client="{true}" description="The associate form of the underlying select." />
 <ui:prop name="disabled" type="boolean" optional="{true}" client="{true}" description="Whether the select is disabled. Inherited from a surrounding field when available." />
@@ -11,7 +11,7 @@
 <ui:prop name="defaultHighlightedValue" type="string" optional="{true}" client="{true}" description="The initial value of the highlighted item when opened. Use when you don't need to control the highlighted value of the select." />
 <ui:prop name="loopFocus" type="boolean" optional="{true}" client="{true}" default="{false}" description="Whether to loop the keyboard navigation through the options." />
 <ui:prop name="multiple" type="boolean" optional="{true}" client="{true}" description="Whether to allow multiple selection." />
-<ui:prop name="defaultOpen" type="boolean" optional="{true}" client="{true}" description="Whether the select's open state is controlled by the user." />
+<ui:prop name="defaultOpen" type="boolean" optional="{true}" client="{true}" default="{false}" description="Whether the select's open state is controlled by the user." />
 <ui:prop name="composite" type="boolean" optional="{true}" client="{true}" default="{true}" description="Whether the select is composed with other composite widgets like tabs or combobox." />
 <ui:prop name="deselectable" type="boolean" optional="{true}" client="{true}" description="Whether the value can be cleared by clicking the selected item." />
 <ui:prop name="translations" type="array" optional="{true}" client="{true}" description="Localized select labels. Set entries to `{false}` to omit the corresponding `aria-label`. Use `f:translate` for per-template localization overrides when needed." />

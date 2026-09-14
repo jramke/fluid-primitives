@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\ViewHelpers;
 
+use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 use TYPO3Fluid\Fluid\ViewHelpers\SlotViewHelper;
 
@@ -32,8 +33,14 @@ class SlotFilledViewHelper extends AbstractViewHelper
 
     public function render(): false|string
     {
-        $variableContainer = $this->renderingContext->getViewHelperVariableContainer();
-        $slot = $variableContainer->get(SlotViewHelper::class, $this->arguments['name']);
+        $renderingContext = $this->renderingContext ?? throw new \RuntimeException(
+            'SlotFilled ViewHelper is missing its rendering context.',
+            1_788_100_001,
+        );
+        $variableContainer = $renderingContext->getViewHelperVariableContainer();
+        // Narrowed immediately below via is_callable() - no Typed:: equivalent for callables.
+        // @mago-expect analysis:mixed-assignment
+        $slot = $variableContainer->get(SlotViewHelper::class, Typed::string($this->arguments['name']));
         $content = trim(is_callable($slot) ? (string)$slot() : '');
 
         if ($content === '' || $content === '0') {

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\ViewHelpers;
 
 use Jramke\FluidPrimitives\Constants;
+use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
@@ -27,14 +28,19 @@ class ExposeToClientViewHelper extends AbstractViewHelper
 
     public function render(): string
     {
-        if (!ComponentUtility::isComponent($this->renderingContext)) {
+        $renderingContext = $this->renderingContext ?? throw new \RuntimeException(
+            'ExposeToClient ViewHelper is missing its rendering context.',
+            1_788_100_007,
+        );
+
+        if (!ComponentUtility::isComponent($renderingContext)) {
             throw new \RuntimeException(
                 'The exposeToClient ViewHelper can only be used inside a component.',
                 1754253446,
             );
         }
 
-        if (!ComponentUtility::isRootComponent($this->renderingContext)) {
+        if (!ComponentNameUtility::isRootComponent($renderingContext)) {
             throw new \RuntimeException(
                 'The exposeToClient ViewHelper can only be used in a root component.',
                 1754253447,

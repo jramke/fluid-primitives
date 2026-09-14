@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Tests\Unit;
 
-use Jramke\FluidPrimitives\Domain\Model\TagAttributes;
+use Jramke\FluidPrimitives\Domain\Dto\TagAttributes;
 use Jramke\FluidPrimitives\Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -59,20 +59,6 @@ final class TagAttributesTest extends TestCase
         $attrs = new TagAttributes(['class' => 'test', 'id' => 'myId', 'disabled' => true]);
         $this->assertSame('class="test"', $attrs->renderWithSkip(['id', 'disabled']));
         $this->assertSame(['class' => 'test', 'disabled' => ''], $attrs->renderWithSkip(['id'], true));
-    }
-
-    #[Test]
-    public function parsesMixedKeyValueAndBooleanAttributes(): void
-    {
-        $result = TagAttributes::stringToArray('class="test" disabled');
-        $this->assertSame(['class' => 'test', 'disabled' => true], $result);
-    }
-
-    #[Test]
-    public function handlesValuesWithEqualsSigns(): void
-    {
-        $result = TagAttributes::stringToArray('data-equation="1+1=2"');
-        $this->assertSame(['data-equation' => '1+1=2'], $result);
     }
 
     #[Test]

@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+// @mago-expect analysis:mixed-array-assignment
+// @mago-expect analysis:undefined-variable(2)
+/** @disregard */
 $EM_CONF[$_EXTKEY] = [
     'title' => 'Fluid Primitives',
     'description' => 'The headless component library for TYPO3 Fluid',

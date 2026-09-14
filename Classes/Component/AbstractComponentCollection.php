@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Component;
 
 use Jramke\FluidPrimitives\Constants;
-use Jramke\FluidPrimitives\Utility\ComponentUtility;
+use Jramke\FluidPrimitives\Factory\ComponentRendererFactory;
+use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
 use Jramke\FluidPrimitives\Utility\PropsUtility;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3Fluid\Fluid\Core\Component\ComponentAdapter;
 use TYPO3Fluid\Fluid\Core\Component\ComponentDefinition;
 use TYPO3Fluid\Fluid\Core\Component\ComponentRendererInterface;
@@ -70,7 +72,7 @@ abstract class AbstractComponentCollection implements ComponentCollectionInterfa
      */
     final public function getComponentDefinition(string $viewHelperName): ComponentDefinition
     {
-        if (!isset($this->componentDefinitionsCache[$viewHelperName])) {
+        if (($this->componentDefinitionsCache[$viewHelperName] ?? null) === null) {
             $templateName = $this->resolveTemplateName($viewHelperName);
             $renderingContext = new RenderingContext();
             // At this stage, the component template needs to be parsed to gather the component's definition,
@@ -106,11 +108,11 @@ abstract class AbstractComponentCollection implements ComponentCollectionInterfa
                 $this->getTemplatePaths()->getTemplateIdentifier('Default', $templateName),
             );
 
-            $isRootComponent = ComponentUtility::isRootComponent($viewHelperName);
+            $isRootComponent = ComponentNameUtility::isRootComponent($viewHelperName);
             $argumentDefinitions = $parsedTemplate->getArgumentDefinitions();
 
             foreach ($argumentDefinitions as $name => $definition) {
-                if (in_array($name, Constants::RESERVED_PROPS, true)) {
+                if (in_array($name, Constants::RESERVED_PROPS, strict: true)) {
                     throw new UnresolvableViewHelperException(
                         sprintf(
                             'The argument "%s" is reserved and cannot be used as an argument inside component "%s". See https://fluid-primitives.com/docs/core-concepts/arguments for more information.',
@@ -211,9 +213,14 @@ abstract class AbstractComponentCollection implements ComponentCollectionInterfa
 
     final public function getComponentRenderer(): ComponentRendererInterface
     {
-        return new ComponentRenderer($this);
+        return GeneralUtility::makeInstance(ComponentRendererFactory::class)->create($this);
     }
 
+    // $viewHelperName matches every other method on this class (resolveTemplateName,
+    // getComponentDefinition, getAdditionalVariables, ...) rather than the parent
+    // ViewHelperResolverDelegateInterface's generic $name - nothing calls this with named arguments
+    // expecting Fluid's own parameter name.
+    // @mago-expect analysis:incompatible-parameter-name
     final public function resolveViewHelperClassName(string $viewHelperName): string
     {
         $expectedTemplateName = $this->resolveTemplateName($viewHelperName);
@@ -234,6 +241,9 @@ abstract class AbstractComponentCollection implements ComponentCollectionInterfa
         return ComponentAdapter::class;
     }
 
+    /**
+     * @return class-string
+     */
     final public function getNamespace(): string
     {
         return static::class;

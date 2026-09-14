@@ -1,4 +1,4 @@
-<ui:prop name="collection" type="Jramke\FluidPrimitives\Domain\Model\ListCollection" optional="{true}" client="{true}" requiredAtRuntime="{true}" description="The item collection." />
+<ui:prop name="collection" type="Jramke\FluidPrimitives\Domain\Dto\ListCollection" optional="{true}" client="{true}" requiredAtRuntime="{true}" description="The item collection." />
 <ui:prop name="name" type="string" optional="{true}" client="{true}" description="The `name` attribute of the underlying select. Inherited from a surrounding field when available." />
 <ui:prop name="form" type="string" optional="{true}" client="{true}" description="The associate form of the underlying select." />
 <ui:prop name="disabled" type="boolean" optional="{true}" client="{true}" description="Whether the select is disabled. Inherited from a surrounding field when available." />
@@ -6,7 +6,7 @@
 <ui:prop name="readOnly" type="boolean" optional="{true}" client="{true}" description="Whether the select is read-only. Inherited from a surrounding field when available." />
 <ui:prop name="required" type="boolean" optional="{true}" client="{true}" description="Whether the select is required. Inherited from a surrounding field when available." />
 <ui:prop name="placeholder" type="string" optional="{true}" client="{true}" description="The placeholder text of the combobox's input." />
-<ui:prop name="defaultOpen" type="boolean" optional="{true}" client="{true}" description="The initial open state of the combobox when rendered. Use when you don't need to control the open state of the combobox." />
+<ui:prop name="defaultOpen" type="boolean" optional="{true}" client="{true}" default="{false}" description="The initial open state of the combobox when rendered. Use when you don't need to control the open state of the combobox." />
 <ui:prop name="defaultValue" type="mixed" optional="{true}" client="{true}" description="The initial value of the combobox's selected items when rendered. Use when you don't need to control the value of the combobox's selected items." />
 <ui:prop name="defaultInputValue" type="string" optional="{true}" client="{true}" description="The initial value of the combobox's input when rendered. Use when you don't need to control the value of the combobox's input." />
 <ui:prop name="defaultHighlightedValue" type="string" optional="{true}" client="{true}" description="The initial highlighted value of the combobox when rendered. Use when you don't need to control the highlighted value of the combobox." />

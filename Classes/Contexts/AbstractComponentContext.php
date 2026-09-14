@@ -10,6 +10,12 @@ use Jramke\FluidPrimitives\Utility\EnumUtility;
 use Psr\Http\Message\ServerRequestInterface;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 
+// Method count is dictated by ComponentContextInterface (11 methods) plus the 4 ArrayAccess methods
+// PHP requires on the implementing class itself - not internal complexity to delegate elsewhere.
+// @mago-expect lint:too-many-methods
+/**
+ * @implements \ArrayAccess<string, mixed>
+ */
 abstract class AbstractComponentContext implements ComponentContextInterface, \ArrayAccess
 {
     private RenderingContextInterface $renderingContext;
@@ -84,10 +90,13 @@ abstract class AbstractComponentContext implements ComponentContextInterface, \A
         $segments = explode('.', $key);
         $value = $this->contextVariables;
 
+        // Resolving an arbitrary dot-notation path means each intermediate value is genuinely mixed -
+        // narrower typing would defeat the point of this generic nested-path lookup.
         foreach ($segments as $segment) {
             if (!is_array($value) || !array_key_exists($segment, $value)) {
                 return null;
             }
+            // @mago-expect analysis:mixed-assignment
             $value = $value[$segment];
         }
 
@@ -104,18 +113,25 @@ abstract class AbstractComponentContext implements ComponentContextInterface, \A
      */
     public function has(string $key): bool
     {
+        // get() itself returns mixed by design (an arbitrary context value); only its nullness
+        // matters here.
+        // @mago-expect analysis:mixed-assignment
         $value = $this->get($key);
         return $value !== null;
     }
 
     // The following ArrayAccess methods are used by Fluid for the variable access.
     // They can be overridden by defining `getX`, `setX`, `hasX`, `unsetX` methods for specific keys to allow for computed properties or custom logic.
+    // Each dynamically dispatches to that convention-named method (guarded by method_exists()
+    // immediately above it), so the member name genuinely can't be a literal - inherent to
+    // supporting computed properties, not something a rewrite would resolve.
 
     public function offsetExists($offset): bool
     {
         // We use the same logic as `has` to check for existence, which also supports computed properties via `getX` methods.
-        if (method_exists($this, 'get' . ucfirst((string)$offset))) {
-            return $this->{'get' . ucfirst((string)$offset)}() !== null;
+        if (method_exists($this, 'get' . ucfirst($offset))) {
+            // @mago-expect analysis:string-member-selector
+            return $this->{'get' . ucfirst($offset)}() !== null;
         }
 
         return $this->has($offset);
@@ -123,8 +139,9 @@ abstract class AbstractComponentContext implements ComponentContextInterface, \A
 
     public function offsetGet($offset): mixed
     {
-        if (method_exists($this, 'get' . ucfirst((string)$offset))) {
-            return $this->{'get' . ucfirst((string)$offset)}();
+        if (method_exists($this, 'get' . ucfirst($offset))) {
+            // @mago-expect analysis:string-member-selector
+            return $this->{'get' . ucfirst($offset)}();
         }
 
         return $this->get($offset);
@@ -132,7 +149,14 @@ abstract class AbstractComponentContext implements ComponentContextInterface, \A
 
     public function offsetSet($offset, $value): void
     {
+        // rector's NullToStrictStringFuncCallArgRector added these (string) casts since $offset is
+        // untyped per ArrayAccess's own contract - mago considers them redundant from this codebase's
+        // narrower, empirically-string-only usage, but removing them would make mago and rector fight
+        // over this line indefinitely (rector re-adds it on every run). Keeping rector's fix.
+        // @mago-expect analysis:redundant-cast
         if (method_exists($this, 'set' . ucfirst((string)$offset))) {
+            // @mago-expect analysis:string-member-selector
+            // @mago-expect analysis:redundant-cast
             $this->{'set' . ucfirst((string)$offset)}($value);
             return;
         }
@@ -142,8 +166,9 @@ abstract class AbstractComponentContext implements ComponentContextInterface, \A
 
     public function offsetUnset($offset): void
     {
-        if (method_exists($this, 'unset' . ucfirst((string)$offset))) {
-            $this->{'unset' . ucfirst((string)$offset)}();
+        if (method_exists($this, 'unset' . ucfirst($offset))) {
+            // @mago-expect analysis:string-member-selector
+            $this->{'unset' . ucfirst($offset)}();
             return;
         }
 
@@ -152,5 +177,5 @@ abstract class AbstractComponentContext implements ComponentContextInterface, \A
 
     public function beforeRendering(): void {}
 
-    public function afterRendering(string &$rendered): void {}
+    public function afterRendering(string &$html): void {}
 }

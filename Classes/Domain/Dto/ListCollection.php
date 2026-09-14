@@ -2,20 +2,28 @@
 
 declare(strict_types=1);
 
-namespace Jramke\FluidPrimitives\Domain\Model;
+namespace Jramke\FluidPrimitives\Domain\Dto;
 
 use IteratorAggregate;
+use Jramke\FluidPrimitives\Utility\Typed;
 use JsonSerializable;
 use Traversable;
 
 // TODO: can we refactor this into smaller parts?
-// @mago-expect lint:halstead,kan-defect,too-many-methods,cyclomatic-complexity
-class ListCollection implements JsonSerializable, IteratorAggregate
+// @mago-expect lint:kan-defect,too-many-methods,cyclomatic-complexity
+/**
+ * @implements IteratorAggregate<array-key, ListCollectionItem>
+ */
+final class ListCollection implements JsonSerializable, IteratorAggregate
 {
     /** @var ListCollectionItem[]|null Cached normalized items */
     private ?array $normalizedItems = null;
 
-    // @mago-expect lint:excessive-parameter-list
+    /**
+     * @param array<array-key, array<array-key, mixed>|object> $items
+     * @param array<string>|string|null $groupSort Explicit group-key order; alternatively 'asc'/'desc'
+     *   to sort group keys, or null for insertion order.
+     */
     public function __construct(
         protected array $items = [],
         protected ?string $itemToValueKey = null,
@@ -25,9 +33,12 @@ class ListCollection implements JsonSerializable, IteratorAggregate
         protected array|string|null $groupSort = null,
     ) {}
 
+    /**
+     * @param array<array-key, array<array-key, mixed>|object>|null $items
+     */
     public function copy(?array $items = null): static
     {
-        return new static(
+        return new self(
             $items ?? $this->items,
             $this->itemToValueKey,
             $this->itemToStringKey,
@@ -92,13 +103,24 @@ class ListCollection implements JsonSerializable, IteratorAggregate
         $current = $item;
 
         foreach ($segments as $segment) {
+            // Resolving an arbitrary dot-notation path means each intermediate value is genuinely
+            // mixed - narrower typing would defeat the point of a generic nested-path lookup.
             if (is_array($current) && array_key_exists($segment, $current)) {
+                // @mago-expect analysis:mixed-assignment
                 $current = $current[$segment];
-            } elseif (is_object($current) && isset($current->{$segment})) {
-                $current = $current->{$segment};
-            } else {
-                return null;
+                continue;
             }
+
+            // $segment is a dot-notation path fragment - dynamic property access is inherent to
+            // supporting arbitrary nested object paths here, not something a rewrite would resolve.
+            // @mago-expect analysis:string-member-selector
+            if (is_object($current) && ($current->{$segment} ?? null) !== null) {
+                // @mago-expect analysis:mixed-assignment
+                $current = $current->{$segment};
+                continue;
+            }
+
+            return null;
         }
 
         if (is_array($current) || is_object($current)) {
@@ -113,31 +135,27 @@ class ListCollection implements JsonSerializable, IteratorAggregate
         if ($this->itemToValueKey) {
             return (string)($this->getFromKey($item, $this->itemToValueKey) ?? '');
         }
-        return $item['value'] ?? null;
+        return Typed::stringOrNull($item['value'] ?? null);
     }
 
     public function stringifyItem(array|object $item): ?string
     {
-        if ($item === null) {
-            return null;
-        }
         if ($this->itemToStringKey) {
             return (string)($this->getFromKey($item, $this->itemToStringKey) ?? '');
         }
-        return $item['label'] ?? $item['value'] ?? null;
+        return Typed::stringOrNull($item['label'] ?? $item['value'] ?? null);
     }
 
+    /**
+     * @param array<ListCollectionItem|array<array-key, mixed>|object> $items
+     */
     public function stringifyItems(array $items, string $separator = ', '): string
     {
         $strings = [];
 
         foreach ($items as $item) {
             // Handle both ListCollectionItem objects and raw items
-            if ($item instanceof ListCollectionItem) {
-                $str = $item->label;
-            } else {
-                $str = $this->stringifyItem($item);
-            }
+            $str = $item instanceof ListCollectionItem ? $item->label : $this->stringifyItem($item);
             if ($str !== null && $str !== '') {
                 $strings[] = $str;
             }
@@ -155,9 +173,15 @@ class ListCollection implements JsonSerializable, IteratorAggregate
         if ($item instanceof ListCollectionItem) {
             return $item->disabled;
         }
+        // Plain (bool) casts rather than Typed::bool() are deliberate here: Typed::bool() only
+        // recognizes explicit boolean-keyword strings, whereas a raw item's "disabled" value should
+        // be read with PHP's normal truthiness (matching how the ListCollectionItem branch above
+        // reads its own already-real bool $item->disabled).
         if ($this->isItemDisabledKey) {
+            // @mago-expect analysis:mixed-operand
             return (bool)$this->getFromKey($item, $this->isItemDisabledKey);
         }
+        // @mago-expect analysis:mixed-operand
         return (bool)($item['disabled'] ?? false);
     }
 
@@ -181,6 +205,7 @@ class ListCollection implements JsonSerializable, IteratorAggregate
     /**
      * Find multiple normalized ListCollectionItems by values.
      *
+     * @param array<string>|string $values
      * @return ListCollectionItem[]
      */
     public function findMany(array|string $values): array
@@ -205,10 +230,15 @@ class ListCollection implements JsonSerializable, IteratorAggregate
             return -1;
         }
 
-        foreach ($this->getItems() as $index => $item) {
+        // A manual counter rather than the foreach key, since getItems() preserves whatever keys the
+        // raw $items array happened to use (not necessarily a sequential list) - "index" here means
+        // position in iteration order, matching how at()/getFirstValue()/getLastValue() use it.
+        $index = 0;
+        foreach ($this->getItems() as $item) {
             if ($item->value === $value) {
                 return $index;
             }
+            $index++;
         }
         return -1;
     }
@@ -282,7 +312,7 @@ class ListCollection implements JsonSerializable, IteratorAggregate
         if (is_array($this->groupSort)) {
             $ordered = [];
             foreach ($this->groupSort as $key) {
-                if (!isset($groups[$key])) {
+                if (($groups[$key] ?? null) === null) {
                     continue;
                 }
 
@@ -290,9 +320,13 @@ class ListCollection implements JsonSerializable, IteratorAggregate
                 unset($groups[$key]);
             }
             $groups = array_merge($ordered, $groups);
-        } elseif ($this->groupSort === 'asc') {
+        }
+
+        if ($this->groupSort === 'asc') {
             ksort($groups);
-        } elseif ($this->groupSort === 'desc') {
+        }
+
+        if ($this->groupSort === 'desc') {
             krsort($groups);
         }
 

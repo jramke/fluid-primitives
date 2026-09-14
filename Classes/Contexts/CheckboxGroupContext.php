@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Contexts;
 
+use Jramke\FluidPrimitives\Utility\Typed;
+
 class CheckboxGroupContext extends AbstractComponentContext
 {
     /**
@@ -11,30 +13,31 @@ class CheckboxGroupContext extends AbstractComponentContext
      * Similar to how FieldContext provides variables to child components.
      *
      * @param array $childArguments Arguments from the child Checkbox component
+     * @return array<string, mixed>
      */
     public function getChildVariables(array $childArguments = []): array
     {
-        $value = $childArguments['value'] ?? null;
-        $itemDisabled = $childArguments['disabled'] ?? null;
-        $itemInvalid = $childArguments['invalid'] ?? null;
+        $value = Typed::stringOrNull($childArguments['value'] ?? null);
+        $itemDisabled = Typed::boolOrNull($childArguments['disabled'] ?? null);
+        $itemInvalid = Typed::boolOrNull($childArguments['invalid'] ?? null);
 
         // Calculate defaultChecked based on whether the value is in defaultValue array
         $defaultChecked = null;
         if ($value !== null) {
-            $defaultChecked = $this->isValueChecked((string)$value);
+            $defaultChecked = $this->isValueChecked($value);
         }
 
         // Calculate disabled state considering max selection
         $disabled = $itemDisabled;
-        if ($disabled === null && $value !== null && $this->isValueDisabledByMax((string)$value)) {
+        if ($disabled === null && $value !== null && $this->isValueDisabledByMax($value)) {
             $disabled = true;
         }
 
         return [
-            'name' => $this->get('name') ?? null,
-            'disabled' => $disabled ?? $this->get('disabled') ?? null,
-            'readOnly' => $this->get('readOnly') ?? null,
-            'invalid' => $itemInvalid ?? $this->get('invalid') ?? null,
+            'name' => Typed::stringOrNull($this->get('name')),
+            'disabled' => $disabled ?? Typed::boolOrNull($this->get('disabled')),
+            'readOnly' => Typed::boolOrNull($this->get('readOnly')),
+            'invalid' => $itemInvalid ?? Typed::boolOrNull($this->get('invalid')),
             'defaultChecked' => $defaultChecked,
         ];
     }
@@ -45,8 +48,8 @@ class CheckboxGroupContext extends AbstractComponentContext
      */
     public function isValueChecked(string $value): bool
     {
-        $defaultValue = $this->get('defaultValue');
-        return is_array($defaultValue) && in_array($value, $defaultValue, true);
+        $defaultValue = Typed::arrayOrNull($this->get('defaultValue')) ?? [];
+        return in_array($value, $defaultValue, strict: true);
     }
 
     /**
@@ -66,15 +69,14 @@ class CheckboxGroupContext extends AbstractComponentContext
      */
     public function isAtMax(): bool
     {
-        $maxSelectedValues = $this->get('maxSelectedValues');
+        $maxSelectedValues = Typed::intOrNull($this->get('maxSelectedValues'));
         if ($maxSelectedValues === null) {
             return false;
         }
 
-        $defaultValue = $this->get('defaultValue');
-        $currentCount = is_array($defaultValue) ? count($defaultValue) : 0;
+        $currentCount = count(Typed::arrayOrNull($this->get('defaultValue')) ?? []);
 
-        return $currentCount >= (int)$maxSelectedValues;
+        return $currentCount >= $maxSelectedValues;
     }
 
     /**
@@ -88,16 +90,16 @@ class CheckboxGroupContext extends AbstractComponentContext
     public function getCheckboxState(string $value, ?bool $itemDisabled = null, ?bool $itemInvalid = null): array
     {
         $checked = $this->isValueChecked($value);
-        $groupDisabled = $this->get('disabled') ?? false;
-        $groupInvalid = $this->get('invalid') ?? false;
+        $groupDisabled = Typed::bool($this->get('disabled'));
+        $groupInvalid = Typed::bool($this->get('invalid'));
         $disabledByMax = $this->isValueDisabledByMax($value);
 
         return [
             'defaultChecked' => $checked,
             'disabled' => $itemDisabled ?? $groupDisabled || $disabledByMax,
             'invalid' => $itemInvalid ?? $groupInvalid,
-            'readOnly' => $this->get('readOnly') ?? false,
-            'name' => $this->get('name') ?? null,
+            'readOnly' => Typed::bool($this->get('readOnly')),
+            'name' => Typed::stringOrNull($this->get('name')),
         ];
     }
 }

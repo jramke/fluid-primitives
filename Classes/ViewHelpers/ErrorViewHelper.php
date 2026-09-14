@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\ViewHelpers;
 
+use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
 /**
@@ -29,8 +30,11 @@ class ErrorViewHelper extends AbstractViewHelper
 
     public function render(): void
     {
-        if ((bool)$this->arguments['when']) {
-            throw new \RuntimeException($this->arguments['message'], (int)$this->arguments['code']);
+        if (Typed::bool($this->arguments['when'])) {
+            throw new \RuntimeException(
+                Typed::string($this->arguments['message']),
+                Typed::int($this->arguments['code']),
+            );
         }
     }
 }

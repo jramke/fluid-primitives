@@ -8,13 +8,15 @@ use Psr\Http\Message\ServerRequestInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use TYPO3\CMS\Core\Localization\LanguageService;
 use TYPO3\CMS\Core\Localization\LanguageServiceFactory;
+use TYPO3\CMS\Core\Site\Entity\Site;
 use TYPO3\CMS\Core\Site\Entity\SiteLanguage;
 
 #[Autoconfigure(public: true)]
 final class TranslatorService
 {
-    private const TRANSLATIONS_FILE = 'EXT:fluid_primitives/Resources/Private/Language/locallang.xlf';
+    private const string TRANSLATIONS_FILE = 'EXT:fluid_primitives/Resources/Private/Language/locallang.xlf';
 
+    /** @var array<string, LanguageService> */
     private array $translators = [];
 
     public function __construct(
@@ -23,7 +25,8 @@ final class TranslatorService
 
     public function translate(string $key, ServerRequestInterface $request, array $arguments = []): ?string
     {
-        return $this->getTranslator($request)->translate($key, self::TRANSLATIONS_FILE, $arguments);
+        $translated = $this->getTranslator($request)->translate($key, self::TRANSLATIONS_FILE, $arguments);
+        return $translated === null ? null : (string)$translated;
     }
 
     public function getLocale(ServerRequestInterface $request): ?string
@@ -37,17 +40,31 @@ final class TranslatorService
         $siteLanguage = $this->getSiteLanguage($request);
         $cacheKey = $siteLanguage?->getLanguageId() ?? 'default';
 
-        if (isset($this->translators[$cacheKey])) {
+        if (($this->translators[$cacheKey] ?? null) !== null) {
             return $this->translators[$cacheKey];
         }
 
-        $this->translators[$cacheKey] = $this->languageServiceFactory->createFromSiteLanguage($siteLanguage);
+        $this->translators[$cacheKey] = $siteLanguage instanceof SiteLanguage
+            ? $this->languageServiceFactory->createFromSiteLanguage($siteLanguage)
+            // No site/language attribute on the request (e.g. outside a normal frontend request) -
+            // fall back to the same default TYPO3 itself uses when no user preference is known.
+            : $this->languageServiceFactory->createFromUserPreferences(null);
 
         return $this->translators[$cacheKey];
     }
 
     private function getSiteLanguage(ServerRequestInterface $request): ?SiteLanguage
     {
-        return $request->getAttribute('language') ?? $request->getAttribute('site')?->getDefaultLanguage();
+        // Both narrowed immediately below via instanceof - a generic PSR-7 request attribute has no
+        // narrower static type.
+        // @mago-expect analysis:mixed-assignment
+        $language = $request->getAttribute('language');
+        if ($language instanceof SiteLanguage) {
+            return $language;
+        }
+
+        // @mago-expect analysis:mixed-assignment
+        $site = $request->getAttribute('site');
+        return $site instanceof Site ? $site->getDefaultLanguage() : null;
     }
 }

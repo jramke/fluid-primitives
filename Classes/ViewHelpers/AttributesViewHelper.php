@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\ViewHelpers;
 
-use Jramke\FluidPrimitives\Domain\Model\TagAttributes;
+use Jramke\FluidPrimitives\Domain\Dto\TagAttributes;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
+use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
@@ -59,42 +60,55 @@ class AttributesViewHelper extends AbstractViewHelper
 
     public function render(): mixed
     {
-        if (!ComponentUtility::isComponent($this->renderingContext)) {
+        $renderingContext = $this->renderingContext ?? throw new \RuntimeException(
+            'Attributes ViewHelper is missing its rendering context.',
+            1_788_100_002,
+        );
+
+        if (!ComponentUtility::isComponent($renderingContext)) {
             throw new \RuntimeException(
                 'The attributes ViewHelper can only be used inside a component context.',
                 1698255600,
             );
         }
 
-        $asArray = $this->arguments['asArray'] ?? false;
+        $asArray = Typed::bool($this->arguments['asArray']);
 
-        $tagAttributes = $this->renderingContext->getViewHelperVariableContainer()->get(self::class, 'attributes');
+        // Narrowed immediately below via null/empty-array/instanceof checks - no single Typed:: call
+        // covers that combination.
+        // @mago-expect analysis:mixed-assignment
+        $tagAttributes = $renderingContext->getViewHelperVariableContainer()->get(self::class, 'attributes');
         if ($tagAttributes === null || $tagAttributes === []) {
             return $asArray ? [] : '';
         }
 
         if (!$tagAttributes instanceof TagAttributes) {
-            $tagAttributes = new TagAttributes((array)$tagAttributes);
+            /** @var array<string, mixed> $rawAttributes */
+            $rawAttributes = (array)$tagAttributes;
+            $tagAttributes = new TagAttributes($rawAttributes);
         }
 
         if (count($tagAttributes) === 0) {
             return $asArray ? [] : '';
         }
 
+        $skipProp = Typed::stringOrNull($this->arguments['skip']);
+        $onlyProp = Typed::stringOrNull($this->arguments['only']);
+
         // TODO: maybe we can allow both?
-        if ($this->arguments['skip'] && $this->arguments['only']) {
+        if ($skipProp && $onlyProp) {
             throw new \RuntimeException(
                 'You cannot use both "skip" and "only" arguments at the same time.',
                 1698255600,
             );
         }
 
-        $skip = $this->arguments['skip'] ? GeneralUtility::trimExplode(',', $this->arguments['skip']) : [];
+        $skip = $skipProp ? GeneralUtility::trimExplode(',', $skipProp) : [];
         if ($skip !== []) {
             return $tagAttributes->renderWithSkip($skip, $asArray);
         }
 
-        $only = $this->arguments['only'] ? GeneralUtility::trimExplode(',', $this->arguments['only']) : [];
+        $only = $onlyProp ? GeneralUtility::trimExplode(',', $onlyProp) : [];
         if ($only !== []) {
             return $tagAttributes->renderWithOnly($only, $asArray);
         }

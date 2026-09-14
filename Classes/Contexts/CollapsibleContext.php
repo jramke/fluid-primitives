@@ -4,23 +4,24 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Contexts;
 
-use Jramke\FluidPrimitives\Enum\CollapsibleIndicatorState;
+use Jramke\FluidPrimitives\Traits\HasIndicatorStateTrait;
+use Jramke\FluidPrimitives\Utility\Typed;
 
 class CollapsibleContext extends AbstractComponentContext
 {
-    public function isIndicatorHidden(CollapsibleIndicatorState $state): bool
-    {
-        return $this->getState() !== $state->value;
-    }
+    use HasIndicatorStateTrait;
 
     public function getState(): string
     {
-        return $this->get('defaultOpen') ? 'open' : 'closed';
+        return Typed::bool($this->get('defaultOpen')) ? 'open' : 'closed';
     }
 
     public function getHasCollapsedSize(): bool
     {
-        return $this->get('collapsedHeight') || $this->get('collapsedWidth');
+        return (
+            (bool)Typed::stringOrNull($this->get('collapsedHeight')) ||
+            (bool)Typed::stringOrNull($this->get('collapsedWidth'))
+        );
     }
 
     // we can only apply the styles related to the collapsed size,
@@ -29,18 +30,21 @@ class CollapsibleContext extends AbstractComponentContext
     {
         $styles = [];
 
-        if ($this->get('defaultOpen') === false) {
-            if ($this->get('collapsedHeight')) {
-                $styles[] = "--collapsed-height: {$this->get('collapsedHeight')};";
+        if (Typed::boolOrNull($this->get('defaultOpen')) === false) {
+            $collapsedHeight = Typed::stringOrNull($this->get('collapsedHeight'));
+            if ($collapsedHeight) {
+                $styles[] = "--collapsed-height: {$collapsedHeight};";
                 $styles[] = 'overflow: hidden;';
-                $styles[] = "min-height: {$this->get('collapsedHeight')};";
-                $styles[] = "max-height: {$this->get('collapsedHeight')};";
+                $styles[] = "min-height: {$collapsedHeight};";
+                $styles[] = "max-height: {$collapsedHeight};";
             }
-            if ($this->get('collapsedWidth')) {
-                $styles[] = "--collapsed-width: {$this->get('collapsedWidth')};";
+
+            $collapsedWidth = Typed::stringOrNull($this->get('collapsedWidth'));
+            if ($collapsedWidth) {
+                $styles[] = "--collapsed-width: {$collapsedWidth};";
                 $styles[] = 'overflow: hidden;';
-                $styles[] = "min-width: {$this->get('collapsedWidth')};";
-                $styles[] = "max-width: {$this->get('collapsedWidth')};";
+                $styles[] = "min-width: {$collapsedWidth};";
+                $styles[] = "max-width: {$collapsedWidth};";
             }
         }
 

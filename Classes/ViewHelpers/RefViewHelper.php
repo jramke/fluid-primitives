@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\ViewHelpers;
 
-use Jramke\FluidPrimitives\Domain\Model\TagAttributes;
+use Jramke\FluidPrimitives\Domain\Dto\TagAttributes;
 use Jramke\FluidPrimitives\Service\ContextService;
+use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
+use Jramke\FluidPrimitives\Utility\ComponentPartIdUtility;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use Jramke\FluidPrimitives\Utility\EnumUtility;
+use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
 /**
@@ -115,33 +118,45 @@ class RefViewHelper extends AbstractViewHelper
         [$componentName, $rootId, $idsArray] = $this->resolveComponentIdentity();
 
         $part = (string)$this->arguments['name'];
+        // Deliberately left as the full declared union (string|BackedEnum|UnitEnum|null|array) rather
+        // than narrowed here - the array case is still meaningful for the (string) cast below, and
+        // Typed::stringOrNull() would silently discard it. Narrowed only at the one call site
+        // (generatePartId() below) that actually requires ?string.
+        // @mago-expect analysis:mixed-assignment
         $value = EnumUtility::normalize($this->arguments['value']);
 
-        $additionalData = $this->arguments['data'];
+        $additionalDataRaw = Typed::arrayOrNull($this->arguments['data']) ?? [];
+        $additionalData = $additionalDataRaw;
         if ($additionalData !== []) {
             $additionalData = array_combine(
-                array_map(static fn($key) => "data-{$key}", array_keys($this->arguments['data'])),
-                array_values($this->arguments['data']),
+                array_map(static fn($key) => "data-{$key}", array_keys($additionalDataRaw)),
+                array_values($additionalDataRaw),
             );
         }
 
         $baseAttributes = [
             'data-scope' => $componentName,
-            'data-part' => ComponentUtility::camelCaseToLowerCaseDashed($part),
+            'data-part' => ComponentNameUtility::camelCaseToLowerCaseDashed($part),
         ];
 
         if ($value !== null) {
             $baseAttributes['data-value'] = (string)$value;
         }
 
-        if ($this->arguments['withId']) {
-            $id = ComponentUtility::generatePartId($componentName, $rootId, $part, $value, $idsArray);
+        if (Typed::bool($this->arguments['withId'])) {
+            $id = ComponentPartIdUtility::generatePartId(
+                $componentName,
+                $rootId,
+                $part,
+                Typed::stringOrNull($value),
+                $idsArray,
+            );
             $baseAttributes = array_merge(['id' => $id], $baseAttributes);
         }
 
         $attributes = new TagAttributes(array_merge($baseAttributes, $additionalData));
 
-        if ($this->arguments['asArray']) {
+        if (Typed::bool($this->arguments['asArray'])) {
             return $attributes->renderAsArray();
         }
 
@@ -155,6 +170,9 @@ class RefViewHelper extends AbstractViewHelper
     {
         $explicitContextName = (string)($this->arguments['context'] ?? '');
 
+        // $ids stays mixed here by design - normalizeIdsArray() below is the one place that
+        // validates/narrows it, and pre-narrowing it here would just duplicate that check.
+        // @mago-expect analysis:mixed-assignment
         [$componentName, $rootId, $ids] = $explicitContextName !== ''
             ? $this->resolveExplicitContext($explicitContextName)
             : $this->resolveAmbientContext();
@@ -163,7 +181,27 @@ class RefViewHelper extends AbstractViewHelper
             throw new \RuntimeException('No rootId found for component ' . $componentName . '.', 1756025267);
         }
 
-        return [$componentName, $rootId, is_array($ids) ? $ids : []];
+        return [$componentName, $rootId, $this->normalizeIdsArray($ids)];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function normalizeIdsArray(mixed $ids): array
+    {
+        if (!is_array($ids)) {
+            return [];
+        }
+
+        $result = [];
+        foreach (array_map(Typed::string(...), $ids) as $key => $value) {
+            if (!is_string($key)) {
+                continue;
+            }
+            $result[$key] = $value;
+        }
+
+        return $result;
     }
 
     /**
@@ -171,7 +209,11 @@ class RefViewHelper extends AbstractViewHelper
      */
     private function resolveExplicitContext(string $explicitContextName): array
     {
-        $context = ContextService::requireFromRenderingContext($this->renderingContext, $explicitContextName, 'ui:ref');
+        $renderingContext = $this->renderingContext ?? throw new \RuntimeException(
+            'Ref ViewHelper is missing its rendering context.',
+            1_788_100_008,
+        );
+        $context = ContextService::requireFromRenderingContext($renderingContext, $explicitContextName, 'ui:ref');
 
         return [$explicitContextName, (string)($context->get('rootId') ?? ''), $context->get('ids') ?? []];
     }
@@ -181,14 +223,19 @@ class RefViewHelper extends AbstractViewHelper
      */
     private function resolveAmbientContext(): array
     {
-        if (!ComponentUtility::isComponent($this->renderingContext)) {
+        $renderingContext = $this->renderingContext ?? throw new \RuntimeException(
+            'Ref ViewHelper is missing its rendering context.',
+            1_788_100_009,
+        );
+
+        if (!ComponentUtility::isComponent($renderingContext)) {
             throw new \RuntimeException('The ref ViewHelper can only be used inside a component context.', 1698255600);
         }
 
         return [
-            ComponentUtility::getComponentBaseNameFromContext($this->renderingContext),
-            ComponentUtility::getRootIdFromContext($this->renderingContext),
-            $this->renderingContext->getVariableProvider()->getByPath('context.ids') ?? [],
+            ComponentNameUtility::getComponentBaseNameFromContext($renderingContext),
+            ComponentUtility::getRootIdFromContext($renderingContext),
+            $renderingContext->getVariableProvider()->getByPath('context.ids') ?? [],
         ];
     }
 }

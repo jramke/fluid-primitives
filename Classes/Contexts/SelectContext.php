@@ -5,43 +5,51 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Contexts;
 
 use Jramke\FluidPrimitives\Attributes\ExposeToClient;
-use Jramke\FluidPrimitives\Domain\Model\ListCollection;
-use Jramke\FluidPrimitives\Domain\Model\ListCollectionItem;
+use Jramke\FluidPrimitives\Domain\Dto\ListCollectionItem;
 use Jramke\FluidPrimitives\Service\TranslatorService;
+use Jramke\FluidPrimitives\Traits\HasListCollectionTrait;
+use Jramke\FluidPrimitives\Traits\HasTranslationsTrait;
+use Jramke\FluidPrimitives\Utility\Typed;
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 
 #[Autoconfigure(public: true)]
 class SelectContext extends AbstractComponentContext
 {
+    use HasListCollectionTrait;
+    use HasTranslationsTrait;
+
     public function __construct(
         private readonly TranslatorService $translator,
     ) {}
 
+    protected function getTranslator(): TranslatorService
+    {
+        return $this->translator;
+    }
+
     #[ExposeToClient(excludeIfNull: true)]
     public function getDefaultValue(): ?array
     {
+        // `defaultValue` is declared type="mixed" and genuinely accepts either shape checked below.
+        // @mago-expect analysis:mixed-assignment
         $defaultValue = $this->get('defaultValue');
         if ($defaultValue === null || $defaultValue === []) {
             return null;
         }
 
-        if (is_string($this->get('defaultValue'))) {
-            return [$this->get('defaultValue')];
+        if (is_string($defaultValue)) {
+            return [$defaultValue];
         }
 
-        return $this->get('defaultValue');
+        return Typed::arrayOrNull($defaultValue);
     }
 
     #[ExposeToClient]
     public function getTranslations(): array
     {
-        $overrides = $this->get('translations') ?? [];
-
-        $defaults = [
-            'clearTriggerLabel' => $this->translator->translate('select.clearTriggerLabel', $this->getRequest()),
-        ];
-
-        return array_merge($defaults, $overrides);
+        return $this->translationsWithDefaults([
+            'clearTriggerLabel' => 'select.clearTriggerLabel',
+        ]);
     }
 
     /**
@@ -53,12 +61,12 @@ class SelectContext extends AbstractComponentContext
     public function getItemState(ListCollectionItem|array $item): object
     {
         $defaultValue = $this->getDefaultValue() ?? [];
-        $rootDisabled = $this->get('disabled') ?? false;
+        $rootDisabled = Typed::bool($this->get('disabled'));
 
         // Handle ListCollectionItem objects directly
         if ($item instanceof ListCollectionItem) {
             return (object)[
-                'selected' => in_array($item->value, $defaultValue, true),
+                'selected' => in_array($item->value, $defaultValue, strict: true),
                 'disabled' => $item->disabled ?: ($rootDisabled ?: null),
             ];
         }
@@ -69,17 +77,8 @@ class SelectContext extends AbstractComponentContext
         $itemDisabled = $collection?->getItemDisabled($item) ?? false;
 
         return (object)[
-            'selected' => in_array($value, $defaultValue, true),
+            'selected' => in_array($value, $defaultValue, strict: true),
             'disabled' => $itemDisabled ?: ($rootDisabled ?: null),
         ];
-    }
-
-    /**
-     * Get the collection from context.
-     */
-    public function getCollection(): ?ListCollection
-    {
-        $collection = $this->get('collection');
-        return $collection instanceof ListCollection ? $collection : null;
     }
 }

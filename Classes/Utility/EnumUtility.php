@@ -20,6 +20,9 @@ final class EnumUtility
             return $value;
         }
 
+        // Recursively unwrapping enums from an arbitrary array means each element is genuinely
+        // mixed - narrower typing would defeat the point of this generic normalizer.
+        // @mago-expect analysis:mixed-assignment
         foreach ($value as $key => $item) {
             $value[$key] = self::normalize($item);
         }

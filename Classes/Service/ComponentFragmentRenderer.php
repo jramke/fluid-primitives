@@ -79,7 +79,7 @@ class ComponentFragmentRenderer
             );
         }
 
-        [, $name] = explode(':', $viewHelperName, 2);
+        [, $name] = explode(':', $viewHelperName, limit: 2);
 
         return $name;
     }

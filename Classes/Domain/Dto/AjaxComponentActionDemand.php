@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Jramke\FluidPrimitives\Domain\Model;
+namespace Jramke\FluidPrimitives\Domain\Dto;
 
 use TYPO3\CMS\Extbase\Mvc\RequestInterface;
 
@@ -56,7 +56,7 @@ class AjaxComponentActionDemand
 
     public static function fromRequest(RequestInterface $request): self
     {
-        $body = json_decode((string)$request->getBody(), true);
+        $body = json_decode((string)$request->getBody(), associative: true);
         if (!is_array($body)) {
             throw new \RuntimeException('Invalid request body. Expected an array.', 1783367365);
         }

@@ -6,28 +6,23 @@ namespace Jramke\FluidPrimitives\Command;
 
 use Jramke\FluidPrimitives\Service\PackageResolver;
 use Jramke\FluidPrimitives\Service\RegistryService;
+use Jramke\FluidPrimitives\Utility\Typed;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Exception\MissingInputException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Question\ChoiceQuestion;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use TYPO3\CMS\Core\Cache\CacheManager;
-use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
-use TYPO3\CMS\Core\Information\Typo3Version;
-use TYPO3\CMS\Core\Package\PackageInterface;
 
 #[AsCommand(name: 'ui:add', description: 'Add a new component from Fluid Primitives')]
 class ComponentAddCommand extends Command
 {
     public function __construct(
         protected readonly PackageResolver $packageResolver,
-        protected readonly CacheManager $cacheManager,
-        protected readonly ExtensionConfiguration $extensionConfiguration,
         protected readonly RegistryService $registryService,
+        private readonly ComponentTargetExtensionResolver $extensionResolver,
+        private readonly ComponentFileWriter $fileWriter,
     ) {
         parent::__construct();
     }
@@ -62,171 +57,50 @@ class ComponentAddCommand extends Command
         $this->addOption('force', 'f', InputOption::VALUE_NONE, 'Force overwriting existing component.');
     }
 
-    // @mago-expect lint:halstead
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
 
-        $componentKey = $input->getArgument('component');
+        $componentKey = Typed::string($input->getArgument('component'));
 
         $availablePackages = $this->packageResolver->getAvailablePackages();
         if ($availablePackages === []) {
             throw new \RuntimeException('No packages were found in which to store the Component.', 1766947893);
         }
 
-        if ($input->getOption('extension')) {
-            $extension = $input->getOption('extension');
-            if (!array_key_exists($extension, $availablePackages)) {
-                throw new \RuntimeException(
-                    'The extension "' . $extension . '" could not be found. Please choose one of these extensions: '
-                        . implode(', ', $this->getPackageKeys($availablePackages)),
-                    1678781015,
-                );
-            }
-        } else {
-            $defaultExtension =
-                $this->extensionConfiguration->get('fluid_primitives', 'cli')['add']['defaultExtension'] ?? '';
-
-            if ($defaultExtension !== '' && array_key_exists($defaultExtension, $availablePackages)) {
-                $extension = $defaultExtension;
-            } else {
-                $availablePackagesForDisplay = $this->packageResolver->getAvailablePackagesForDisplay();
-                if ($availablePackagesForDisplay === []) {
-                    $io->writeln(
-                        '<comment>No local extensions found. Displaying all installed extensions instead.</comment>',
-                    );
-                    $io->writeln('<comment>Maybe you forgot to install a site package?</comment>');
-                    $availablePackagesForDisplay = $availablePackages;
-                }
-                $availablePackageTitles = $this->getPackageTitles($availablePackagesForDisplay);
-                $extension = $io->askQuestion(new ChoiceQuestion(
-                    'Choose an extension in which the Component should be stored',
-                    $availablePackageTitles,
-                ));
-                if ($extension === null) {
-                    throw new MissingInputException('Aborted.', 1766948173);
-                }
-
-                if ($io->confirm(
-                    'Do you want to set "' . $extension . '" as the default extension for new components?',
-                )) {
-                    $settings = $this->extensionConfiguration->get('fluid_primitives');
-                    if (!is_array($settings)) {
-                        $settings = [];
-                    }
-                    $settings['cli']['add']['defaultExtension'] = $extension;
-                    $this->extensionConfiguration->set('fluid_primitives', $settings);
-
-                    $io->success(sprintf('Default extension "%s" saved.', $extension));
-                }
-            }
-        }
+        $extension = $this->extensionResolver->resolve($input, $io, $availablePackages);
 
         [$error, $manifest] = $this->registryService->fetchComponent($componentKey);
-        if ($error) {
+        if ($error !== null) {
             $io->error($error['message']);
             return Command::FAILURE;
         }
 
-        $componentFolderName = $manifest['name'] ?? null;
-        $files = $manifest['files'] ?? [];
+        $componentFolderName = Typed::string($manifest['name'] ?? null);
+        $files = array_map(Typed::string(...), Typed::arrayOrNull($manifest['files'] ?? null) ?? []);
+        // Checked with is_bool() rather than Typed::bool() below - this is a VALUE_NONE flag, so a
+        // real value here is always already a genuine bool; Typed::bool() would also (incorrectly for
+        // this option) accept boolean-keyword strings.
+        // @mago-expect analysis:mixed-assignment
         $useFluidSuffix = $input->getOption('fluid-suffix');
         if (!is_bool($useFluidSuffix)) {
-            $useFluidSuffix = $this->shouldUseFluidSuffixByDefault();
+            $useFluidSuffix = $this->fileWriter->shouldUseFluidSuffixByDefault();
         }
 
         $targetFolder =
-            $availablePackages[$extension]->getPackagePath() . $input->getOption('path') . $componentFolderName . '/';
+            $availablePackages[$extension]->getPackagePath() .
+            Typed::string($input->getOption('path')) .
+            $componentFolderName .
+            '/';
 
-        $someSkipped = false;
-        $someUpdated = false;
-        $someCreated = false;
+        $writeResult = $this->fileWriter->write($io, $componentKey, $files, [
+            'targetFolder' => $targetFolder,
+            'useFluidSuffix' => $useFluidSuffix,
+            'force' => Typed::bool($input->getOption('force')),
+        ]);
 
-        foreach ($files as $file) {
-            [$error, $content] = $this->registryService->fetchComponentFile($componentKey, $file);
-            if ($error) {
-                $io->warning($error['message']);
-                continue;
-            }
-
-            $targetFileName = $this->resolveTargetFileName($file, $useFluidSuffix);
-            $targetFilePath = $targetFolder . $targetFileName;
-
-            $targetDir = dirname($targetFilePath);
-            if (!is_dir($targetDir)) {
-                mkdir($targetDir, 0o777, true);
-            }
-
-            if (file_exists($targetFilePath)) {
-                if (!$input->getOption('force')) {
-                    $io->writeln('Skipped: ' . $targetFileName);
-                    $someSkipped = true;
-                    continue;
-                }
-
-                file_put_contents($targetFilePath, $content);
-                $io->writeln('Updated: ' . $targetFileName);
-                $someUpdated = true;
-                continue;
-            }
-
-            file_put_contents($targetFilePath, $content);
-            $io->writeln('Created: ' . $targetFileName);
-            $someCreated = true;
-        }
-
-        if ($someSkipped && !$someCreated && !$someUpdated) {
-            $io->warning([
-                'Component "' . $componentKey . '" already exists in extension "' . $extension . '".',
-                'No files were changed.',
-                'Use the --force option to overwrite existing files.',
-            ]);
-        } else {
-            if ($someSkipped) {
-                $io->writeln(
-                    '<comment>Some files were skipped. Use the --force option to overwrite existing files.</comment>',
-                );
-            }
-
-            if ($someUpdated) {
-                $io->success('Component "' . $componentKey . '" updated in extension "' . $extension . '".');
-            } elseif ($someCreated) {
-                $io->success('Component "' . $componentKey . '" added to extension "' . $extension . '".');
-            }
-
-            $this->cacheManager->flushCachesInGroup('pages');
-        }
+        $this->fileWriter->reportResult($io, $componentKey, $extension, $writeResult);
 
         return Command::SUCCESS;
-    }
-
-    private function getPackageTitles(array $availablePackages): array
-    {
-        return array_map(static fn(PackageInterface $package): string => $package
-            ->getPackageMetaData()
-            ->getTitle(), $availablePackages);
-    }
-
-    protected function getPackageKeys(array $availablePackages): array
-    {
-        return array_map(static fn(PackageInterface $package): string => $package->getPackageKey(), $availablePackages);
-    }
-
-    private function shouldUseFluidSuffixByDefault(): bool
-    {
-        return (new Typo3Version())->getMajorVersion() >= 14;
-    }
-
-    private function resolveTargetFileName(string $file, bool $useFluidSuffix): string
-    {
-        if (!str_ends_with($file, '.html')) {
-            return $file;
-        }
-
-        $baseName = str_ends_with($file, '.fluid.html')
-            ? substr($file, 0, -strlen('.fluid.html'))
-            : substr($file, 0, -strlen('.html'));
-
-        return $useFluidSuffix ? $baseName . '.fluid.html' : $baseName . '.html';
     }
 }

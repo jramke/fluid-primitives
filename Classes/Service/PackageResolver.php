@@ -18,6 +18,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Service;
 
 use Composer\InstalledVersions;
+use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Package\PackageInterface;
 use TYPO3\CMS\Core\Package\PackageManager;
@@ -38,6 +39,7 @@ readonly class PackageResolver
      */
     public function getAvailablePackages(): array
     {
+        /** @var array<string, PackageInterface> $packages */
         $packages = $this->packageManager->getAvailablePackages();
         return $this->removeFrameworkExtensions($packages);
     }
@@ -47,6 +49,7 @@ readonly class PackageResolver
      */
     public function getAvailablePackagesForDisplay(): array
     {
+        /** @var array<string, PackageInterface> $packages */
         $packages = $this->packageManager->getAvailablePackages();
         $packages = $this->removeFrameworkExtensions($packages);
         if (Environment::isComposerMode()) {
@@ -87,15 +90,29 @@ readonly class PackageResolver
         if (!file_exists($composerLockPath)) {
             return $packages;
         }
-        $composerLock = json_decode(file_get_contents($composerLockPath), true);
-        $composerLockPackages = array_merge($composerLock['packages'] ?? [], $composerLock['packages-dev'] ?? []);
+        $composerLockContents = file_get_contents($composerLockPath);
+        if ($composerLockContents === false) {
+            return $packages;
+        }
+        $composerLock = Typed::arrayOrNull(json_decode($composerLockContents, associative: true)) ?? [];
+        $composerLockPackages = array_merge(
+            Typed::arrayOrNull($composerLock['packages'] ?? null) ?? [],
+            Typed::arrayOrNull($composerLock['packages-dev'] ?? null) ?? [],
+        );
         $composerLockMap = [];
-        foreach ($composerLockPackages as $package) {
-            $composerLockMap[$package['name']] = $package['dist']['type'] ?? null;
+        foreach (array_map(Typed::arrayOrNull(...), $composerLockPackages) as $package) {
+            if ($package === null) {
+                continue;
+            }
+            $name = Typed::stringOrNull($package['name'] ?? null);
+            if ($name === null) {
+                continue;
+            }
+            $composerLockMap[$name] = Typed::stringOrNull($package['dist']['type'] ?? null);
         }
         $filterPackages = function (PackageInterface $package) use ($composerLockMap): bool {
-            $name = $package->getValueFromComposerManifest('name');
-            if (array_key_exists($name, $composerLockMap)) {
+            $name = Typed::stringOrNull($package->getValueFromComposerManifest('name'));
+            if ($name !== null && array_key_exists($name, $composerLockMap)) {
                 return $composerLockMap[$name] === 'path';
             }
             return $name === $this->getRootPackageName();

@@ -9,6 +9,7 @@ use Jramke\FluidPrimitives\Attributes\ExposeToClient;
 use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
 use Jramke\FluidPrimitives\Service\ComponentCollectionService;
 use ReflectionClass;
+use TYPO3\CMS\Core\Routing\PageArguments;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Frontend\Page\CacheHashCalculator;
 
@@ -54,13 +55,27 @@ class ClientPropsContextExtractor
         $namespaceIdentifier = $componentCollectionService->getViewHelperNamespaceIdentifierByCollectionClassName(
             $context->getComponentResolver()->getNamespace(),
         );
+        if ($namespaceIdentifier === null) {
+            throw new \RuntimeException(
+                sprintf(
+                    'Could not resolve the Fluid namespace identifier for component resolver "%s".',
+                    $context->getComponentResolver()->getNamespace(),
+                ),
+                1_788_100_015,
+            );
+        }
 
-        $componentName = ComponentUtility::lowerCaseDashedToCamelCase(
-            ComponentUtility::getComponentBaseNameFromContext($context->getRenderingContext()),
+        $componentName = ComponentNameUtility::lowerCaseDashedToCamelCase(
+            ComponentNameUtility::getComponentBaseNameFromContext($context->getRenderingContext()),
         );
 
+        // Narrowed immediately below via instanceof - a generic PSR-7 request attribute has no
+        // narrower static type.
+        // @mago-expect analysis:mixed-assignment
+        $routing = $context->getRequest()->getAttribute('routing');
+
         $params = [
-            'id' => $context->getRequest()->getAttribute('routing')?->getPageId() ?? 1,
+            'id' => $routing instanceof PageArguments ? $routing->getPageId() : 1,
             'type' => 1783366837,
             'tx_fluidprimitives_ajaxdispatcher' => [
                 'action' => 'dispatch',
@@ -104,6 +119,9 @@ class ClientPropsContextExtractor
 
         $attribute = $attributes[0]->newInstance();
 
+        // Reflection-invoking an arbitrary #[ExposeToClient] getter is inherently mixed - that's the
+        // whole point of this extractor.
+        // @mago-expect analysis:mixed-assignment
         $value = $method->invoke($context);
 
         if ($attribute->excludeIfNull && $value === null) {
@@ -117,6 +135,6 @@ class ClientPropsContextExtractor
 
     private static function normalizeMethodName(string $method): string
     {
-        return lcfirst((string)preg_replace('/^(get|is|has)/', '', $method));
+        return lcfirst((string)preg_replace('/^(get|is|has)/', replacement: '', subject: $method));
     }
 }

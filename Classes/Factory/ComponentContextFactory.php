@@ -28,7 +28,6 @@ final class ComponentContextFactory
         ComponentCollectionInterface $componentResolver,
         array $contextVariables = [],
     ): ComponentContextInterface {
-        /** @var ComponentContextInterface $context */
         $context = GeneralUtility::makeInstance($contextClassName);
 
         // Initialize with state

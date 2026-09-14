@@ -8,6 +8,7 @@ use Jramke\FluidPrimitives\Component\ComponentPrimitivesCollection;
 use Jramke\FluidPrimitives\Service\ComponentCollectionService;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use Jramke\FluidPrimitives\Utility\PropsUtility;
+use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3Fluid\Fluid\Core\Compiler\TemplateCompiler;
 use TYPO3Fluid\Fluid\Core\Parser\ParsingState;
@@ -77,7 +78,12 @@ class UsePropsViewHelper extends AbstractViewHelper implements ViewHelperNodeIni
 
     public function render(): string
     {
-        if (!ComponentUtility::isComponent($this->renderingContext)) {
+        if (!ComponentUtility::isComponent(
+            $this->renderingContext ?? throw new \RuntimeException(
+                'UseProps ViewHelper is missing its rendering context.',
+                1_788_100_012,
+            ),
+        )) {
             throw new \RuntimeException(
                 'The useProps viewhelper can only be used inside a component context.',
                 1698255600,
@@ -103,23 +109,23 @@ class UsePropsViewHelper extends AbstractViewHelper implements ViewHelperNodeIni
         array $arguments,
         ParsingState $parsingState,
     ): void {
-        if (isset($arguments['name'])) {
+        if (($arguments['name'] ?? null) !== null) {
             $name = $arguments['name'] instanceof TextNode ? $arguments['name']->getText() : '';
             if ($name === '' || $name === '0') {
                 throw new \RuntimeException('The name argument must not be empty.', 1755936423);
             }
 
-            if (str_starts_with($name, 'primitives:')) {
+            $isPrimitivesComponent = str_starts_with($name, 'primitives:');
+            if ($isPrimitivesComponent) {
                 $name = substr($name, strlen('primitives:'));
-                $externalArgumentDefinitions = self::getComponentPrimitivesCollection()
-                    ->getComponentDefinition($name)
-                    ->getArgumentDefinitions();
-            } else {
-                $externalArgumentDefinitions = self::getComponentCollectionService()
+            }
+
+            $externalArgumentDefinitions = $isPrimitivesComponent
+                ? self::getComponentPrimitivesCollection()->getComponentDefinition($name)->getArgumentDefinitions()
+                : self::getComponentCollectionService()
                     ->getCollectionByViewHelperName($name)
                     ->getComponentDefinition(explode(':', $name)[1])
                     ->getArgumentDefinitions();
-            }
 
             if ($externalArgumentDefinitions === []) {
                 return;
@@ -129,14 +135,13 @@ class UsePropsViewHelper extends AbstractViewHelper implements ViewHelperNodeIni
                 ...$externalArgumentDefinitions,
             ]);
 
-            if (
-                isset($arguments['props']) && ($evaluatedSelectedProps = $arguments['props']->evaluate(
-                    new RenderingContext(),
-                ))
-            ) {
+            $evaluatedSelectedProps = Typed::arrayOrNull(($arguments['props'] ?? null)?->evaluate(
+                new RenderingContext(),
+            ));
+            if ($evaluatedSelectedProps !== null && $evaluatedSelectedProps !== []) {
                 $externalArgumentDefinitionsWithoutReservedUpdated = [];
-                foreach ($evaluatedSelectedProps as $argumentName) {
-                    if (!isset($externalArgumentDefinitionsWithoutReserved[$argumentName])) {
+                foreach (array_map(Typed::string(...), $evaluatedSelectedProps) as $argumentName) {
+                    if (($externalArgumentDefinitionsWithoutReserved[$argumentName] ?? null) === null) {
                         throw new \RuntimeException(
                             "The prop {$argumentName} does not exist in the referenced component {$name}.",
                             1772899866,
@@ -148,18 +153,23 @@ class UsePropsViewHelper extends AbstractViewHelper implements ViewHelperNodeIni
                 $externalArgumentDefinitionsWithoutReserved = $externalArgumentDefinitionsWithoutReservedUpdated;
             }
 
-            if (
-                isset($arguments['defaults']) && ($evaluatedDefaults = $arguments['defaults']->evaluate(
-                    new RenderingContext(),
-                ))
-            ) {
-                foreach ($evaluatedDefaults as $defaultPropName => $defaultPropValue) {
-                    if (!isset($externalArgumentDefinitionsWithoutReserved[$defaultPropName])) {
+            $evaluatedDefaults = Typed::arrayOrNull(($arguments['defaults'] ?? null)?->evaluate(
+                new RenderingContext(),
+            ));
+            if ($evaluatedDefaults !== null && $evaluatedDefaults !== []) {
+                // $defaultPropValue is deliberately left as-is (mixed) - it's forwarded to
+                // duplicateArgumentDefinitionWithNewDefault(mixed $newDefaultValue), since a prop's
+                // default can genuinely be any type.
+                // @mago-expect analysis:mixed-assignment
+                foreach ($evaluatedDefaults as $rawDefaultPropName => $defaultPropValue) {
+                    $defaultPropName = Typed::string($rawDefaultPropName);
+                    $existingDefinition = $externalArgumentDefinitionsWithoutReserved[$defaultPropName] ?? null;
+                    if ($existingDefinition === null) {
                         continue;
                     }
 
                     $externalArgumentDefinitionsWithoutReserved[$defaultPropName] = PropsUtility::duplicateArgumentDefinitionWithNewDefault(
-                        $externalArgumentDefinitionsWithoutReserved[$defaultPropName],
+                        $existingDefinition,
                         $defaultPropValue,
                     );
                 }

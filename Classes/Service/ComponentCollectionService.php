@@ -75,13 +75,25 @@ class ComponentCollectionService
         $viewHelperResolver = $this->viewHelperResolverFactory->create();
         $registeredNamespaces = $viewHelperResolver->getNamespaces();
 
-        if ($registeredNamespaces === null || $registeredNamespaces === []) {
+        if ($registeredNamespaces === []) {
             return null;
         }
 
         foreach ($registeredNamespaces as $namespaceIdentifier => $delegateClassNames) {
+            if (!is_array($delegateClassNames)) {
+                continue;
+            }
+
             foreach ($delegateClassNames as $delegateClassName) {
-                if (is_a($delegateClassName, $collectionClassName, true)) {
+                // $collectionClassName is always a real class-string in practice (every caller passes
+                // AbstractComponentCollection::getNamespace()'s static::class), but it only reaches
+                // here as plain `string` because it flows through Fluid's own
+                // ViewHelperResolverDelegateInterface::getNamespace(): string, which we can't tighten.
+                // is_a() with allow_string degrades safely to `false` if it's ever not one.
+                // @mago-expect analysis:possibly-invalid-argument
+                if (
+                    is_string($delegateClassName) && is_a($delegateClassName, $collectionClassName, allow_string: true)
+                ) {
                     return $namespaceIdentifier;
                 }
             }

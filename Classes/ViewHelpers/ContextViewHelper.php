@@ -6,7 +6,9 @@ namespace Jramke\FluidPrimitives\ViewHelpers;
 
 use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
 use Jramke\FluidPrimitives\Service\ContextService;
+use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
+use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
 /**
@@ -32,7 +34,12 @@ class ContextViewHelper extends AbstractViewHelper
 
     public function render(): ?ComponentContextInterface
     {
-        if (!ComponentUtility::isComponent($this->renderingContext)) {
+        $renderingContext = $this->renderingContext ?? throw new \RuntimeException(
+            'Context ViewHelper is missing its rendering context.',
+            1_788_100_010,
+        );
+
+        if (!ComponentUtility::isComponent($renderingContext)) {
             throw new \RuntimeException('The context ViewHelper can only be used inside a component.', 1754253443);
         }
 
@@ -40,7 +47,7 @@ class ContextViewHelper extends AbstractViewHelper
             throw new \RuntimeException('The "name" argument is required for the context ViewHelper.', 1754253444);
         }
 
-        $componentName = ComponentUtility::getComponentBaseNameFromContext($this->renderingContext);
+        $componentName = ComponentNameUtility::getComponentBaseNameFromContext($renderingContext);
         if ($componentName === (string)$this->arguments['name']) {
             throw new \RuntimeException(
                 'You cannot access the context of the current component using the context ViewHelper. Use the exposed "context" variable instead.',
@@ -48,10 +55,11 @@ class ContextViewHelper extends AbstractViewHelper
             );
         }
 
-        $context = ContextService::getFromRenderingContext($this->renderingContext, (string)$this->arguments['name']);
+        $context = ContextService::getFromRenderingContext($renderingContext, (string)$this->arguments['name']);
 
-        if ($this->arguments['as']) {
-            $this->renderingContext->getVariableProvider()->add($this->arguments['as'], $context);
+        $as = Typed::string($this->arguments['as']);
+        if ($as !== '') {
+            $renderingContext->getVariableProvider()->add($as, $context);
             return null;
         }
 

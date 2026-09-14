@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\ViewHelpers;
 
 use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
-use Jramke\FluidPrimitives\Domain\Model\TagAttributes;
+use Jramke\FluidPrimitives\Domain\Dto\TagAttributes;
 use Jramke\FluidPrimitives\Service\ContextService;
+use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
+use Jramke\FluidPrimitives\Utility\ComponentPartIdUtility;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
@@ -90,11 +92,20 @@ class TemplateViewHelper extends AbstractViewHelper
     {
         [$componentName, $context] = $this->resolveContext();
 
-        $variableProvider = $this->renderingContext->getVariableProvider();
+        $renderingContext = $this->renderingContext ?? throw new \RuntimeException(
+            'Template ViewHelper is missing its rendering context.',
+            1_788_100_004,
+        );
+        $variableProvider = $renderingContext->getVariableProvider();
 
+        // component/context are round-tripped Fluid template variables (saved here, restored in the
+        // finally block below) - their real type is whatever a previous render put there, unknowable
+        // here, and must stay opaque to be restored faithfully.
         $hadComponent = $variableProvider->exists('component');
+        // @mago-expect analysis:mixed-assignment
         $previousComponent = $hadComponent ? $variableProvider->get('component') : null;
         $hadContext = $variableProvider->exists('context');
+        // @mago-expect analysis:mixed-assignment
         $previousContext = $hadContext ? $variableProvider->get('context') : null;
 
         if ($hadComponent) {
@@ -116,19 +127,20 @@ class TemplateViewHelper extends AbstractViewHelper
         // our children, so a nested component (e.g. combobox.item/.itemText/.itemIndicator) can
         // detect this automatically via `context.isRenderStencil`, instead of requiring an
         // explicit prop from the template author. Saved/restored like component/context above,
-        // for correct behavior if ui:template is ever nested.
+        // for correct behavior if ui:template is ever nested; same opaque-mixed reasoning applies.
+        // @mago-expect analysis:mixed-assignment
         $wasRenderStencil = $context->get('isRenderStencil');
         $context->set('isRenderStencil', true);
 
         try {
             $part = (string)$this->arguments['name'];
             $refAttributes = new TagAttributes([
-                'id' => ComponentUtility::generatePartId($componentName, (string)$context->get('rootId'), $part),
+                'id' => ComponentPartIdUtility::generatePartId($componentName, (string)$context->get('rootId'), $part),
                 'data-scope' => $componentName,
-                'data-part' => ComponentUtility::camelCaseToLowerCaseDashed($part),
+                'data-part' => ComponentNameUtility::camelCaseToLowerCaseDashed($part),
             ]);
 
-            return '<template ' . $refAttributes . '>' . $this->renderChildren() . '</template>';
+            return '<template ' . (string)$refAttributes . '>' . (string)$this->renderChildren() . '</template>';
         } finally {
             $context->set('isRenderStencil', $wasRenderStencil);
 
@@ -149,27 +161,26 @@ class TemplateViewHelper extends AbstractViewHelper
      */
     private function resolveContext(): array
     {
+        $renderingContext = $this->renderingContext ?? throw new \RuntimeException(
+            'Template ViewHelper is missing its rendering context.',
+            1_788_100_005,
+        );
         $explicitContextName = (string)($this->arguments['context'] ?? '');
 
         if ($explicitContextName !== '') {
             return [
                 $explicitContextName,
-                ContextService::requireFromRenderingContext(
-                    $this->renderingContext,
-                    $explicitContextName,
-                    'ui:template',
-                ),
+                ContextService::requireFromRenderingContext($renderingContext, $explicitContextName, 'ui:template'),
             ];
         }
 
-        $variableProvider = $this->renderingContext->getVariableProvider();
+        $variableProvider = $renderingContext->getVariableProvider();
+        // Narrowed immediately below via instanceof - there's no Typed:: equivalent for objects.
+        // @mago-expect analysis:mixed-assignment
         $ambientContext = $variableProvider->exists('context') ? $variableProvider->get('context') : null;
 
-        if (
-            ComponentUtility::isComponent($this->renderingContext) &&
-            $ambientContext instanceof ComponentContextInterface
-        ) {
-            return [ComponentUtility::getComponentBaseNameFromContext($this->renderingContext), $ambientContext];
+        if (ComponentUtility::isComponent($renderingContext) && $ambientContext instanceof ComponentContextInterface) {
+            return [ComponentNameUtility::getComponentBaseNameFromContext($renderingContext), $ambientContext];
         }
 
         throw new \RuntimeException(
