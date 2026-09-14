@@ -34,6 +34,8 @@ class ComboboxContext extends AbstractComponentContext
     #[ExposeToClient(excludeIfNull: true)]
     public function getDefaultValue(): ?array
     {
+        // `defaultValue` is declared type="mixed" and genuinely accepts either shape checked below.
+        // @mago-expect analysis:mixed-assignment
         $defaultValue = $this->get('defaultValue');
 
         if ($defaultValue === null || $defaultValue === '') {
@@ -49,6 +51,8 @@ class ComboboxContext extends AbstractComponentContext
 
     public function getInitialInputValue(): string
     {
+        // `defaultInputValue` is declared type="mixed"; is_string() below rejects anything else.
+        // @mago-expect analysis:mixed-assignment
         $defaultInputValue = $this->get('defaultInputValue');
         if (is_string($defaultInputValue) && $defaultInputValue !== '') {
             return $defaultInputValue;

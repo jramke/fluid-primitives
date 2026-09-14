@@ -38,6 +38,10 @@ final readonly class FieldContextVariableMerger
         $fieldRootId = Typed::stringOrNull($fieldContext->get('rootId'));
         $fieldVariables = $fieldContext->getChildVariables();
 
+        // Each key holds a different, genuinely heterogeneous type (name: ?string, disabled: ?bool,
+        // ids: array, ...) - stays mixed all the way through, matching getVariableProvider()->add()/
+        // AbstractComponentContext::set()'s own mixed acceptance below.
+        // @mago-expect analysis:mixed-assignment
         foreach ($fieldVariables as $varName => $varValue) {
             if ($varValue === null) {
                 continue;
@@ -81,6 +85,9 @@ final readonly class FieldContextVariableMerger
         $ids = $this->excludeInheritedIdsWhenNested($baseName, $ids, $otherComponentContexts);
 
         $updatedIds = $ids;
+        // Checked with is_string() rather than Typed::string() below - the latter would also accept
+        // and coerce numeric scalars, which isn't a valid id value here.
+        // @mago-expect analysis:mixed-assignment
         foreach ($ids as $fieldIdKey => $fieldIdValue) {
             if (!is_string($fieldIdKey) || !is_string($fieldIdValue)) {
                 continue;

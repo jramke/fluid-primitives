@@ -30,9 +30,9 @@ class ComponentUtility
 
     public static function isComponent(RenderingContextInterface $renderingContext): bool
     {
-        $componentProp = $renderingContext->getVariableProvider()->get('component');
+        $componentProp = Typed::arrayOrNull($renderingContext->getVariableProvider()->get('component'));
         return (
-            is_array($componentProp) &&
+            $componentProp !== null &&
             is_string($componentProp['fullName'] ?? null) &&
             $componentProp['fullName'] !== ''
         );
@@ -41,10 +41,11 @@ class ComponentUtility
     public static function getRootIdFromContext(RenderingContextInterface $renderingContext): string
     {
         $isRootComponent = ComponentNameUtility::isRootComponent($renderingContext);
-        $rootId = $isRootComponent
-            ? $renderingContext->getVariableProvider()->getByPath('rootId')
-            : $renderingContext->getVariableProvider()->getByPath('context.rootId');
-        return Typed::string($rootId);
+        return Typed::string(
+            $isRootComponent
+                ? $renderingContext->getVariableProvider()->getByPath('rootId')
+                : $renderingContext->getVariableProvider()->getByPath('context.rootId'),
+        );
     }
 
     public static function getSettings(): array

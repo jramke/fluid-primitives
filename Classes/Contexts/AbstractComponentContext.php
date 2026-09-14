@@ -90,10 +90,13 @@ abstract class AbstractComponentContext implements ComponentContextInterface, \A
         $segments = explode('.', $key);
         $value = $this->contextVariables;
 
+        // Resolving an arbitrary dot-notation path means each intermediate value is genuinely mixed -
+        // narrower typing would defeat the point of this generic nested-path lookup.
         foreach ($segments as $segment) {
             if (!is_array($value) || !array_key_exists($segment, $value)) {
                 return null;
             }
+            // @mago-expect analysis:mixed-assignment
             $value = $value[$segment];
         }
 
@@ -110,6 +113,9 @@ abstract class AbstractComponentContext implements ComponentContextInterface, \A
      */
     public function has(string $key): bool
     {
+        // get() itself returns mixed by design (an arbitrary context value); only its nullness
+        // matters here.
+        // @mago-expect analysis:mixed-assignment
         $value = $this->get($key);
         return $value !== null;
     }

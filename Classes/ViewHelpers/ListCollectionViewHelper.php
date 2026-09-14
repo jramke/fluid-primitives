@@ -65,11 +65,17 @@ class ListCollectionViewHelper extends AbstractViewHelper
 
     public function render(): mixed
     {
+        // Narrowed immediately below via is_array()/instanceof Traversable - no single Typed:: call
+        // covers that union.
+        // @mago-expect analysis:mixed-assignment
         $items = $this->arguments['items'] ?? null;
         if (!is_array($items) && !$items instanceof \Traversable) {
             throw new \InvalidArgumentException('The "items" argument must be an array or Traversable.', 1_759_769_689);
         }
 
+        // Fluid's own registered type is 'array|string' - stays mixed here since it's consumed via
+        // an is_array()/Typed::stringOrNull() branch below, not narrowed to one or the other upfront.
+        // @mago-expect analysis:mixed-assignment
         $groupSort = $this->arguments['groupSort'];
 
         $normalizedItems = array_map(

@@ -69,6 +69,9 @@ class ClientPropsContextExtractor
             ComponentNameUtility::getComponentBaseNameFromContext($context->getRenderingContext()),
         );
 
+        // Narrowed immediately below via instanceof - a generic PSR-7 request attribute has no
+        // narrower static type.
+        // @mago-expect analysis:mixed-assignment
         $routing = $context->getRequest()->getAttribute('routing');
 
         $params = [
@@ -116,6 +119,9 @@ class ClientPropsContextExtractor
 
         $attribute = $attributes[0]->newInstance();
 
+        // Reflection-invoking an arbitrary #[ExposeToClient] getter is inherently mixed - that's the
+        // whole point of this extractor.
+        // @mago-expect analysis:mixed-assignment
         $value = $method->invoke($context);
 
         if ($attribute->excludeIfNull && $value === null) {

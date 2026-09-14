@@ -55,11 +55,15 @@ final class TranslatorService
 
     private function getSiteLanguage(ServerRequestInterface $request): ?SiteLanguage
     {
+        // Both narrowed immediately below via instanceof - a generic PSR-7 request attribute has no
+        // narrower static type.
+        // @mago-expect analysis:mixed-assignment
         $language = $request->getAttribute('language');
         if ($language instanceof SiteLanguage) {
             return $language;
         }
 
+        // @mago-expect analysis:mixed-assignment
         $site = $request->getAttribute('site');
         return $site instanceof Site ? $site->getDefaultLanguage() : null;
     }

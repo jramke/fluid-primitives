@@ -140,8 +140,7 @@ class UsePropsViewHelper extends AbstractViewHelper implements ViewHelperNodeIni
             ));
             if ($evaluatedSelectedProps !== null && $evaluatedSelectedProps !== []) {
                 $externalArgumentDefinitionsWithoutReservedUpdated = [];
-                foreach ($evaluatedSelectedProps as $rawArgumentName) {
-                    $argumentName = Typed::string($rawArgumentName);
+                foreach (array_map(Typed::string(...), $evaluatedSelectedProps) as $argumentName) {
                     if (($externalArgumentDefinitionsWithoutReserved[$argumentName] ?? null) === null) {
                         throw new \RuntimeException(
                             "The prop {$argumentName} does not exist in the referenced component {$name}.",
@@ -158,6 +157,10 @@ class UsePropsViewHelper extends AbstractViewHelper implements ViewHelperNodeIni
                 new RenderingContext(),
             ));
             if ($evaluatedDefaults !== null && $evaluatedDefaults !== []) {
+                // $defaultPropValue is deliberately left as-is (mixed) - it's forwarded to
+                // duplicateArgumentDefinitionWithNewDefault(mixed $newDefaultValue), since a prop's
+                // default can genuinely be any type.
+                // @mago-expect analysis:mixed-assignment
                 foreach ($evaluatedDefaults as $rawDefaultPropName => $defaultPropValue) {
                     $defaultPropName = Typed::string($rawDefaultPropName);
                     $existingDefinition = $externalArgumentDefinitionsWithoutReserved[$defaultPropName] ?? null;

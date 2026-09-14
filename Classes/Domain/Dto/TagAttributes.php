@@ -101,11 +101,15 @@ class TagAttributes implements \Countable, \Stringable
     {
         $result = [];
 
+        // Attribute values are genuinely heterogeneous (string, bool, array, enum, ...) - that's what
+        // this whole method normalizes; is_bool()/is_array()/is_object() below handle each case.
+        // @mago-expect analysis:mixed-assignment
         foreach ($attributes as $key => $value) {
             if ($key === '' || $value === null) {
                 continue;
             }
 
+            // @mago-expect analysis:mixed-assignment
             $value = EnumUtility::normalize($value);
 
             // convert boolean values to html boolean attributes unless they are aria- attributes

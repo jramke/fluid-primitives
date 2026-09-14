@@ -110,6 +110,9 @@ class HydrationRegistry
             return;
         }
 
+        // Narrowed immediately below via is_object()/method_exists() - a generic PSR-7 request
+        // attribute has no narrower static type, and there's no Typed:: equivalent for objects.
+        // @mago-expect analysis:mixed-assignment
         $language = $request->getAttribute('language');
         $locale = is_object($language) && method_exists($language, 'getLocale') ? (string)$language->getLocale() : '';
 
@@ -122,8 +125,10 @@ class HydrationRegistry
     {
         // This registry is a hard singleton with no request-scoped construction path (see
         // getInstance()), so it has no other way to reach the current request than TYPO3's own
-        // global - there is no DI-injectable alternative available here.
+        // global - there is no DI-injectable alternative available here. Narrowed immediately below
+        // via instanceof.
         // @mago-expect lint:no-global
+        // @mago-expect analysis:mixed-assignment
         $request = $GLOBALS['TYPO3_REQUEST'] ?? null;
 
         return $request instanceof ServerRequestInterface ? $request : null;
