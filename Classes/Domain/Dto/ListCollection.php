@@ -31,7 +31,14 @@ final class ListCollection implements JsonSerializable, IteratorAggregate
         protected ?string $isItemDisabledKey = null,
         protected ?string $groupByKey = null,
         protected array|string|null $groupSort = null,
-    ) {}
+    ) {
+        if (is_string($groupSort) && $groupSort !== 'asc' && $groupSort !== 'desc') {
+            throw new \InvalidArgumentException(
+                'The "groupSort" argument must be either "asc", "desc", or an array of strings.',
+                1_788_200_002,
+            );
+        }
+    }
 
     /**
      * @param array<array-key, array<array-key, mixed>|object>|null $items

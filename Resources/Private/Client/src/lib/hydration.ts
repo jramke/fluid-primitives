@@ -371,6 +371,7 @@ export function getListCollectionFromHydrationData<T extends CollectionItem>(hyd
     itemToStringKey?: string;
     isItemDisabledKey?: string;
     groupByKey?: string;
+    groupSort?: 'asc' | 'desc' | Array<string>;
 }): ListCollection<T> {
     if (hydrationCollection instanceof ListCollection) {
         return hydrationCollection;
@@ -399,6 +400,7 @@ export function getListCollectionFromHydrationData<T extends CollectionItem>(hyd
                   return item?.[key];
               }
             : undefined,
+        groupSort: hydrationCollection.groupSort,
     });
     return collection;
 }
