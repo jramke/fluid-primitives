@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Tests\Functional\Components;
 
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
+use Jramke\FluidPrimitives\Tests\Fixtures\PlainComponentCollection;
 use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -270,6 +271,30 @@ final class AsChildRenderingTest extends FunctionalTestCase
         $this->assertStringContainsString('type="button"', $html);
         $this->assertStringContainsString('value="Open"', $html);
         $this->assertStringContainsString('data-part="trigger"', $html);
+    }
+
+    #[Test]
+    public function supportsAsChildOnAComponentWithNoClientHydrationAtAll(): void
+    {
+        // Regression test: asChild's argument used to only be registered for templates calling
+        // ui:ref, so a plain, purely server-rendered component (no hydration part at all, like a
+        // userland Card) couldn't declare asChild="{true}" even though it has a perfectly good root
+        // <div> for AsChildAttributeSpreader to merge onto - it would throw an unknown-argument
+        // error instead of spreading.
+        $view = $this->getView();
+        $view->getRenderingContext()->getViewHelperResolver()->addNamespace('plain', new PlainComponentCollection());
+
+        $html = $this->renderTemplate('
+            <plain:card asChild="{true}" class="card-class">
+                <a href="/some-link" data-custom="value">Card as link</a>
+            </plain:card>
+        ');
+
+        $this->assertStringContainsString('<a', $html);
+        $this->assertStringContainsString('href="/some-link"', $html);
+        $this->assertStringContainsString('class="card-class"', $html);
+        $this->assertStringContainsString('data-custom="value"', $html);
+        $this->assertDoesNotMatchRegularExpression('/<div[^>]*class="card-class"/', $html);
     }
 
     #[Test]

@@ -119,12 +119,19 @@ abstract class AbstractComponentCollection implements ComponentCollectionInterfa
 
             $templateString = $this->getTemplatePaths()->getTemplateSource('Default', $templateName);
 
-            // only add the asChild argument if the template registers itself as a hydratable
-            // element (via ui:ref); parts that render only their slot content have no tag to
-            // merge asChild's attributes onto, so asChild would be a silent no-op there. A template
-            // that only delegates via `ui:useProps` already has asChild merged in above when the
-            // component it imports from supports it - see UsePropsViewHelper.
-            if (str_contains($templateString, 'ui:ref(')) {
+            // only add the asChild argument if the template has some bare HTML tag to merge
+            // asChild's attributes onto - not only a hydratable element declared via ui:ref, but
+            // any plain HTML element too (e.g. a userland `<div>`/`<a>` wrapper with no client
+            // hydration at all, like a plain Card component). AsChildAttributeSpreader works
+            // purely off the rendered HTML's own root tag, so it never needed ui:ref specifically -
+            // only *some* opening tag to spread onto. A template that renders only its slot content
+            // (`<f:slot />` alone) has no tag at all, so asChild would be a silent no-op there.
+            // `<[a-zA-Z][a-zA-Z0-9-]*(?=[\s\/>])` matches a bare tag name immediately followed by
+            // whitespace/`/`/`>`; a Fluid ViewHelper tag (`ui:ref`, `f:if`, `primitives:combobox.root`, ...)
+            // always has `:` or `.` there instead, so this doesn't false-positive on those. A
+            // template that only delegates via `ui:useProps` already has asChild merged in above
+            // when the component it imports from supports it - see UsePropsViewHelper.
+            if (preg_match('/<[a-zA-Z][a-zA-Z0-9-]*(?=[\s\/>])/', $templateString) === 1) {
                 $argumentDefinitions['asChild'] = new ArgumentDefinition(
                     'asChild',
                     'boolean',
