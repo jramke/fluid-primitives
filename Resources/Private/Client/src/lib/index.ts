@@ -7,6 +7,8 @@ export { FieldAwareComponent } from './field-aware-component';
 export {
     ComponentHydrator,
     destroyComponentsWithin,
+    getGlobal,
+    getGlobals,
     getHydrationData,
     mount,
     mountAll,

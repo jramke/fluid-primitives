@@ -1,37 +1,16 @@
 import type { CollectionItem, ListCollection } from '@zag-js/collection';
 import * as combobox from '@zag-js/combobox';
 import { visuallyHiddenStyle } from '@zag-js/dom-query';
-import { createFilter } from '@zag-js/i18n-utils';
 import { FieldAwareComponent, Machine, mergeProps, normalizeProps } from '../../Client';
-import { getGlobal, getListCollectionFromHydrationData } from '../../Client/src/lib/hydration';
-import type { ComboboxFilterHookResult, ComboboxFilterResolver } from '../../Client/src/types';
+import { getListCollectionFromHydrationData } from '../../Client/src/lib/hydration';
 import type { FieldMachine } from '../Field/src/field.registry';
 
-type ComboboxPrimitiveProps = combobox.Props & {
-    /**
-     * Set from a `mount` callback's `controlled` flag. When `true` and no
-     * `filterResolver` is set via `setFilter()`, the built-in default filter is skipped entirely,
-     * leaving the collection exactly as the consumer's own code last set it (e.g. driven by an
-     * async search).
-     */
-    controlled?: boolean;
-};
-
-export class Combobox extends FieldAwareComponent<ComboboxPrimitiveProps, combobox.Api> {
+export class Combobox extends FieldAwareComponent<combobox.Props, combobox.Api> {
     static componentName = 'combobox';
 
-    private static defaultFilter = createFilter({
-        sensitivity: 'base',
-        locale: getGlobal('locale'),
-    });
+    private sourceCollection?: ListCollection<any>;
 
-    private sourceCollection?: ListCollection;
-    private filterResolver: ComboboxFilterResolver | null = null;
-
-    propsWithField(
-        props: ComboboxPrimitiveProps,
-        fieldMachine: FieldMachine
-    ): ComboboxPrimitiveProps {
+    propsWithField(props: combobox.Props, fieldMachine: FieldMachine): combobox.Props {
         return {
             ...props,
             disabled: props.disabled ?? fieldMachine.context.get('disabled'),
@@ -42,7 +21,7 @@ export class Combobox extends FieldAwareComponent<ComboboxPrimitiveProps, combob
         };
     }
 
-    transformProps(props: ComboboxPrimitiveProps) {
+    transformProps(props: combobox.Props) {
         // `collection` is omitted from hydration data entirely when not passed (e.g. a
         // searchUrl-only, purely async combobox) - default to an empty one rather than crashing.
         const collection = getListCollectionFromHydrationData(props.collection ?? { items: [] });
@@ -62,7 +41,13 @@ export class Combobox extends FieldAwareComponent<ComboboxPrimitiveProps, combob
         };
     }
 
-    private getSourceCollection() {
+    /**
+     * The full, unfiltered collection as it was first passed in - `render()` needs it to tell a
+     * static/server-rendered item apart from a dynamically-inserted (async) one (see the item
+     * callback below), and a consumer's own `onInputValueChange` needs it as the base to filter
+     * from or reset to.
+     */
+    getSourceCollection<T extends CollectionItem = CollectionItem>(): ListCollection<T> {
         if (this.sourceCollection) {
             return this.sourceCollection;
         }
@@ -74,79 +59,6 @@ export class Combobox extends FieldAwareComponent<ComboboxPrimitiveProps, combob
 
         this.sourceCollection = initialCollection;
         return this.sourceCollection;
-    }
-
-    private setCollection(collection: ListCollection) {
-        this.updateProps({ collection });
-    }
-
-    /**
-     * Whether built-in filtering (default substring match or a registered `filterResolver`)
-     * should be skipped entirely, deferring all collection updates to the consumer (e.g. an async
-     * search wired up in userland).
-     */
-    private hasManualFiltering(): boolean {
-        return !!this.userProps?.controlled && !this.filterResolver;
-    }
-
-    private resetCollection() {
-        if (this.hasManualFiltering()) return;
-        this.setCollection(this.getSourceCollection());
-    }
-
-    private filterCollection(inputValue: string) {
-        if (this.hasManualFiltering()) return;
-
-        const sourceCollection = this.getSourceCollection();
-        const query = inputValue.trim();
-
-        if (!query) {
-            this.resetCollection();
-            return;
-        }
-
-        if (this.filterResolver) {
-            const result = this.filterResolver({
-                inputValue,
-                collection: sourceCollection,
-                component: this,
-            });
-            this.setCollection(this.normalizeFilterResult(result, sourceCollection));
-            return;
-        }
-
-        this.setCollection(
-            sourceCollection.filter(itemString =>
-                Combobox.defaultFilter.contains(itemString, query)
-            )
-        );
-    }
-
-    public setFilter(filter: ComboboxFilterResolver | null) {
-        this.filterResolver = filter;
-
-        const inputValue = this.machine?.context.get('inputValue') || '';
-        if (!inputValue.trim()) {
-            this.resetCollection();
-            return;
-        }
-
-        this.filterCollection(inputValue);
-    }
-
-    private normalizeFilterResult(
-        result: ComboboxFilterHookResult,
-        sourceCollection: ListCollection<CollectionItem>
-    ): ListCollection<CollectionItem> {
-        if (!result) {
-            return sourceCollection;
-        }
-
-        if (Array.isArray(result)) {
-            return sourceCollection.copy(result);
-        }
-
-        return result;
     }
 
     private getHiddenInputProps(
@@ -200,37 +112,11 @@ export class Combobox extends FieldAwareComponent<ComboboxPrimitiveProps, combob
         });
     }
 
-    initMachine(props: ComboboxPrimitiveProps): Machine<any> {
+    initMachine(props: combobox.Props): Machine<any> {
         props = this.withFieldProps(props);
-        const { controlled, ...transformedProps } = this.transformProps(props);
+        const transformedProps = this.transformProps(props);
 
-        return new Machine(combobox.machine, {
-            ...transformedProps,
-            onInputValueChange: details => {
-                if (details.reason === 'input-change') {
-                    this.filterCollection(details.inputValue);
-                } else if (!details.inputValue.trim()) {
-                    this.resetCollection();
-                }
-
-                transformedProps.onInputValueChange?.(details);
-            },
-            onOpenChange: details => {
-                const inputValue = (this.machine.context.get('inputValue') || '').trim();
-
-                if (details.open) {
-                    if (inputValue === '') {
-                        this.resetCollection();
-                    } else {
-                        this.filterCollection(inputValue);
-                    }
-                } else {
-                    this.resetCollection();
-                }
-
-                transformedProps.onOpenChange?.(details);
-            },
-        });
+        return new Machine(combobox.machine, transformedProps);
     }
 
     initApi() {
