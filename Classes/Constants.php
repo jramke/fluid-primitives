@@ -20,6 +20,7 @@ class Constants
         'settings', // reserved for the component settings
         'class', // reserved for the component class and added automatically for every component
         'asChild',
+        'isRenderStencil', // reserved for ui:template's own stencil-detection flag on the context
     ];
 
     /**
