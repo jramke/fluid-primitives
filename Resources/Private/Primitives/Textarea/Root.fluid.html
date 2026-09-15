@@ -1,0 +1,19 @@
+<ui:prop name="name" type="string" optional="{true}" client="{true}" description="The name attribute of the textarea. Useful for form submission. Inherited from a surrounding field when available." />
+<ui:prop name="disabled" type="boolean" optional="{true}" client="{true}" description="Whether the textarea is disabled. Inherited from a surrounding field when available." />
+<ui:prop name="invalid" type="boolean" optional="{true}" client="{true}" description="Whether the textarea value is invalid. Inherited from a surrounding field when available." />
+<ui:prop name="required" type="boolean" optional="{true}" client="{true}" description="Whether the textarea is required. Inherited from a surrounding field when available." />
+<ui:prop name="readOnly" type="boolean" optional="{true}" client="{true}" description="Whether the textarea is readonly. Inherited from a surrounding field when available." />
+<ui:prop name="defaultValue" type="string" optional="{true}" client="{true}" default="" description="The initial value of the textarea when rendered. Use when you don't need to control the value of the textarea. Inherited from a surrounding field when available." />
+<ui:prop name="maxLength" type="integer" optional="{true}" client="{true}" description="The maximum number of characters allowed. Also drives the wordCount part, e.g. '42 / 250 characters'." />
+<ui:prop name="rows" type="integer" optional="{true}" description="The number of visible text lines." />
+<ui:prop name="submitOn" type="string" optional="{true}" client="{true}" description="Submits the nearest form on a keypress instead of inserting a newline: 'enter' submits on plain Enter (Shift+Enter still inserts a newline), 'mod+enter' submits on Cmd/Ctrl+Enter (plain Enter always inserts a newline). Unset (the default) never intercepts Enter." />
+<ui:prop name="translations" type="array" optional="{true}" client="{true}" description="Specifies the localized word count string. Set the wordCount entry to false to disable the wordCount part and live-region announcements entirely. Use `f:translate` for per-template localization overrides when needed." />
+
+<f:variable name="refData" value="{disabled: context.disabled, invalid: context.invalid}" />
+
+<div
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'root' , data: refData )}
+    {ui:attributes()}>
+    <f:slot />
+</div>

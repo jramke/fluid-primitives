@@ -24,6 +24,7 @@ class ComponentPartIdUtility
         'select' => ['label' => 'label', 'control' => 'hiddenSelect'],
         'combobox' => ['label' => 'label', 'control' => 'input'],
         'number-input' => ['label' => 'label', 'control' => 'input'],
+        'textarea' => ['label' => 'label', 'control' => 'textarea'],
         'switch' => ['label' => 'label', 'control' => 'hiddenInput'],
         'checkbox' => ['label' => 'label', 'control' => 'hiddenInput'],
         'file-upload' => ['label' => 'label', 'control' => 'hiddenInput'],
