@@ -86,8 +86,18 @@ class ComboboxContext extends AbstractComponentContext
         return $collection->stringifyItems($selectedItems);
     }
 
-    public function getItemState(ListCollectionItem|array $item): object
+    /**
+     * Returns the given item's rendered state - or, with no item at all, the same placeholder
+     * shape (nothing selected/disabled/highlighted, empty value) a template inside a `ui:template`
+     * stencil would otherwise have to hardcode itself, since there's no real item to compute state
+     * from there yet.
+     */
+    public function getItemState(ListCollectionItem|array|null $item): object
     {
+        if ($item === null) {
+            return (object)['value' => '', 'selected' => false, 'disabled' => false, 'highlighted' => false];
+        }
+
         $defaultValue = $this->getDefaultValue() ?? [];
         $rootDisabled = Typed::bool($this->get('disabled'));
         $defaultHighlightedValue = Typed::stringOrNull($this->get('defaultHighlightedValue'));

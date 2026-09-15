@@ -53,13 +53,20 @@ class SelectContext extends AbstractComponentContext
     }
 
     /**
-     * Get the state of a select item (selected, disabled).
+     * Get the state of a select item (selected, disabled) - or, with no item at all, the same
+     * placeholder shape (nothing selected/disabled) a stencil-mode caller would otherwise have to
+     * hardcode itself. Select has no `ui:template` usage of its own today, but this mirrors
+     * ComboboxContext::getItemState() for consistency and in case that changes.
      *
-     * @param ListCollectionItem|array $item The item to get state for
+     * @param ListCollectionItem|array|null $item The item to get state for
      * @return object Object with 'selected' and 'disabled' properties
      */
-    public function getItemState(ListCollectionItem|array $item): object
+    public function getItemState(ListCollectionItem|array|null $item): object
     {
+        if ($item === null) {
+            return (object)['selected' => false, 'disabled' => false];
+        }
+
         $defaultValue = $this->getDefaultValue() ?? [];
         $rootDisabled = Typed::bool($this->get('disabled'));
 
