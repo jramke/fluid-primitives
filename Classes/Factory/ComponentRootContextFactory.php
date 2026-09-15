@@ -35,9 +35,7 @@ final readonly class ComponentRootContextFactory
         RenderingContextInterface $parentRenderingContext,
         ComponentCollectionInterface $componentResolver,
     ): void {
-        $contextKey = ComponentNameUtility::lowerCaseDashedToCamelCase(ComponentNameUtility::getComponentBaseNameFromViewHelperName(
-            $viewHelperName,
-        ));
+        $baseName = ComponentNameUtility::getComponentBaseNameFromViewHelperName($viewHelperName);
 
         $contextVariables = $this->buildContextVariables(
             $argumentDefinitions,
@@ -55,7 +53,7 @@ final readonly class ComponentRootContextFactory
             $contextVariables,
         );
 
-        ContextService::addToRenderingContext($parentRenderingContext, $contextKey, $context);
+        ContextService::addToRenderingContext($parentRenderingContext, $baseName, $context);
     }
 
     // This is somewhat what is already done by the template view when we call the render method but we need the variables earlier so we can expose them to the context.

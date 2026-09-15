@@ -28,7 +28,12 @@ class ContextViewHelper extends AbstractViewHelper
 
     public function initializeArguments(): void
     {
-        $this->registerArgument('name', 'string', 'The name of the component of which we want the context', true);
+        $this->registerArgument(
+            'name',
+            'string',
+            'The camelCase base name of the component of which we want the context (e.g. "fileUpload")',
+            true,
+        );
         $this->registerArgument('as', 'string', 'Variable name to assign the result to', false, '');
     }
 
@@ -43,26 +48,19 @@ class ContextViewHelper extends AbstractViewHelper
             throw new \RuntimeException('The context ViewHelper can only be used inside a component.', 1754253443);
         }
 
-        if ((string)$this->arguments['name'] === '') {
+        $requestedBaseName = (string)$this->arguments['name'];
+        if ($requestedBaseName === '') {
             throw new \RuntimeException('The "name" argument is required for the context ViewHelper.', 1754253444);
         }
 
-        // Accept either casing from the template author (both conversions are idempotent on their
-        // own target format) - ContextService itself is keyed by the camelCase form, so no
-        // per-lookup kebab-casing happens on the common (camelCase) path.
-        $requestedContextKey = ComponentNameUtility::lowerCaseDashedToCamelCase((string)$this->arguments['name']);
-
-        $componentContextKey = ComponentNameUtility::lowerCaseDashedToCamelCase(ComponentNameUtility::getComponentBaseNameFromContext(
-            $renderingContext,
-        ));
-        if ($componentContextKey === $requestedContextKey) {
+        if ($requestedBaseName === ComponentNameUtility::getComponentBaseNameFromContext($renderingContext)) {
             throw new \RuntimeException(
                 'You cannot access the context of the current component using the context ViewHelper. Use the exposed "context" variable instead.',
                 1754253445,
             );
         }
 
-        $context = ContextService::getFromRenderingContext($renderingContext, $requestedContextKey);
+        $context = ContextService::getFromRenderingContext($renderingContext, $requestedBaseName);
 
         $as = Typed::string($this->arguments['as']);
         if ($as !== '') {

@@ -82,7 +82,6 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
 
         $identity = $this->identityResolver->resolve($viewHelperName, $arguments, $renderingContext);
         $isRootComponent = $identity->isRootComponent;
-        $baseName = $identity->baseName;
 
         $argumentDefinitions = $this->componentResolver
             ->getComponentDefinition($viewHelperName)
@@ -152,7 +151,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
 
         if ($isRootComponent) {
             // cleanup the context variable from the parent rendering context
-            ContextService::removeFromRenderingContext($parentRenderingContext, $identity->contextKey);
+            ContextService::removeFromRenderingContext($parentRenderingContext, $identity->baseName);
 
             // Call afterRendering lifecycle method only for root or closed components
             if ($ctx && method_exists($ctx, 'afterRendering')) {
@@ -164,7 +163,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
                     $rendered,
                     $viewHelperName,
                     $renderingContext,
-                    $baseName,
+                    $identity->clientBaseName,
                     $arguments,
                     $argumentDefinitions,
                     $propsMarkedForClient,
@@ -203,16 +202,16 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         $isRootComponent = $identity->isRootComponent;
 
         // Expose other component contexts to allow deep nesting of composable components
-        $otherComponentContexts = $this->getOtherComponentContexts($parentRenderingContext, $identity->contextKey);
+        $otherComponentContexts = $this->getOtherComponentContexts($parentRenderingContext, $baseName);
 
         // Pick up potential context from current component (parent or itself if root)
-        $ctx = $this->getRootComponentContext($parentRenderingContext, $baseName, $identity->contextKey);
+        $ctx = $this->getRootComponentContext($parentRenderingContext, $baseName);
 
         $fieldRootId = null;
-        if ($isRootComponent && $this->componentSupportsField($baseName)) {
+        if ($isRootComponent && $this->componentSupportsField($identity->clientBaseName)) {
             $fieldRootId = $this->fieldContextVariableMerger->apply(
                 $otherComponentContexts,
-                $baseName,
+                $identity->clientBaseName,
                 $view,
                 $arguments,
                 $ctx,
@@ -259,16 +258,16 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
      */
     protected function getOtherComponentContexts(
         RenderingContextInterface $parentRenderingContext,
-        string $contextKey,
+        string $baseName,
     ): array {
         $contexts = [];
 
         $allContexts = ContextService::getAllFromRenderingContext($parentRenderingContext);
-        foreach ($allContexts as $ctxContextKey => $ctx) {
-            if ($ctxContextKey === $contextKey) {
+        foreach ($allContexts as $ctxBaseName => $ctx) {
+            if ($ctxBaseName === $baseName) {
                 continue;
             }
-            $contexts[$ctxContextKey] = $ctx;
+            $contexts[$ctxBaseName] = $ctx;
         }
 
         return $contexts;
@@ -280,11 +279,10 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
     protected function getRootComponentContext(
         RenderingContextInterface $renderingContext,
         string $baseName,
-        string $contextKey,
     ): ?AbstractComponentContext {
         $variableProvider = $renderingContext->getVariableProvider();
 
-        $ctx = ContextService::getFromRenderingContext($renderingContext, $contextKey);
+        $ctx = ContextService::getFromRenderingContext($renderingContext, $baseName);
 
         if (
             !$ctx instanceof ComponentContextInterface &&

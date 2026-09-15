@@ -205,7 +205,7 @@ final class FileUploadRenderingTest extends FunctionalTestCase
     {
         $html = $this->renderTemplate('
             <primitives:fileUpload.root>
-                <ui:template name="itemTemplate" context="file-upload">
+                <ui:template name="itemTemplate" context="fileUpload">
                     <primitives:fileUpload.item>
                         <primitives:fileUpload.itemError>Something went wrong</primitives:fileUpload.itemError>
                     </primitives:fileUpload.item>
@@ -221,29 +221,11 @@ final class FileUploadRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
-    public function templateContextAcceptsCamelCaseAsWellAsKebabCase(): void
-    {
-        // Same guarantee as RefViewHelper's own context argument - ui:template resolves its own
-        // camelCase<->kebab-case conversion independently, so both need covering.
-        $html = $this->renderTemplate('
-            <primitives:fileUpload.root>
-                <ui:template name="itemTemplate" context="fileUpload">
-                    <primitives:fileUpload.item>
-                        <primitives:fileUpload.itemError>Something went wrong</primitives:fileUpload.itemError>
-                    </primitives:fileUpload.item>
-                </ui:template>
-            </primitives:fileUpload.root>
-        ');
-
-        $this->assertStringContainsString('data-part="item-error"', $html);
-    }
-
-    #[Test]
     public function rendersItemPreviewFallbackWithRefAttributes(): void
     {
         $html = $this->renderTemplate('
             <primitives:fileUpload.root>
-                <ui:template name="itemTemplate" context="file-upload">
+                <ui:template name="itemTemplate" context="fileUpload">
                     <primitives:fileUpload.item>
                         <primitives:fileUpload.itemPreview match=".*">
                             <primitives:fileUpload.itemPreviewFallback />
@@ -294,7 +276,7 @@ final class FileUploadRenderingTest extends FunctionalTestCase
      * next, even though the enclosing component's context is still correctly on `ContextService`'s
      * stack (which is what `ui:ref`'s own explicit `context` argument reads instead - see the next
      * test). Consumer-authored elements that share an item template with any other primitive part
-     * (the common case) therefore need `context: 'file-upload'` explicitly - ambient resolution is
+     * (the common case) therefore need `context: 'fileUpload'` explicitly - ambient resolution is
      * only dependable for content with no such sibling, or for a primitive's own `.html` body.
      */
     #[Test]
@@ -320,28 +302,6 @@ final class FileUploadRenderingTest extends FunctionalTestCase
     {
         $html = $this->renderTemplate('
             <primitives:fileUpload.root rootId="diag-root-2">
-                <primitives:fileUpload.itemTemplate>
-                    <primitives:fileUpload.item>
-                        <primitives:fileUpload.itemPreview match=".*">
-                            <primitives:fileUpload.itemPreviewFallback />
-                        </primitives:fileUpload.itemPreview>
-                        <div {ui:ref(name: \'diagField\', context: \'file-upload\')}>diag</div>
-                    </primitives:fileUpload.item>
-                </primitives:fileUpload.itemTemplate>
-            </primitives:fileUpload.root>
-        ');
-
-        $this->assertStringContainsString('data-part="diag-field"', $html);
-    }
-
-    #[Test]
-    public function explicitContextRefAcceptsCamelCaseAsWellAsKebabCase(): void
-    {
-        // Component base names are stored/looked-up in kebab-case everywhere else (data-scope,
-        // hydration keys) - `context: 'fileUpload'` here must resolve identically to the kebab
-        // `context: 'file-upload'` used above, not silently fail to find the component.
-        $html = $this->renderTemplate('
-            <primitives:fileUpload.root rootId="diag-root-3">
                 <primitives:fileUpload.itemTemplate>
                     <primitives:fileUpload.item>
                         <primitives:fileUpload.itemPreview match=".*">

@@ -82,7 +82,7 @@ class TemplateViewHelper extends AbstractViewHelper
         $this->registerArgument(
             'context',
             'string',
-            'Base name of the enclosing component this template belongs to, e.g. "combobox". Only needed when this ui:template is slot content passed into another component - omit it when writing ui:template directly inside a component\'s own template body, where it defaults to whichever component is already ambiently active (the same fallback a bare `ui:ref` uses).',
+            'camelCase base name of the enclosing component this template belongs to, e.g. "fileUpload". Only needed when this ui:template is slot content passed into another component - omit it when writing ui:template directly inside a component\'s own template body, where it defaults to whichever component is already ambiently active (the same fallback a bare `ui:ref` uses).',
             false,
             '',
         );
@@ -90,7 +90,7 @@ class TemplateViewHelper extends AbstractViewHelper
 
     public function render(): string
     {
-        [$componentName, $context] = $this->resolveContext();
+        [$baseName, $clientBaseName, $context] = $this->resolveContext();
 
         $renderingContext = $this->renderingContext ?? throw new \RuntimeException(
             'Template ViewHelper is missing its rendering context.',
@@ -112,8 +112,8 @@ class TemplateViewHelper extends AbstractViewHelper
             $variableProvider->remove('component');
         }
         $variableProvider->add('component', [
-            'fullName' => $componentName . '.template',
-            'baseName' => $componentName,
+            'fullName' => $baseName . '.template',
+            'baseName' => $baseName,
             'isRoot' => false,
             'isComposable' => true,
         ]);
@@ -135,8 +135,8 @@ class TemplateViewHelper extends AbstractViewHelper
         try {
             $part = (string)$this->arguments['name'];
             $refAttributes = new TagAttributes([
-                'id' => ComponentPartIdUtility::generatePartId($componentName, (string)$context->get('rootId'), $part),
-                'data-scope' => $componentName,
+                'id' => ComponentPartIdUtility::generatePartId($clientBaseName, (string)$context->get('rootId'), $part),
+                'data-scope' => $clientBaseName,
                 'data-part' => ComponentNameUtility::camelCaseToLowerCaseDashed($part),
             ]);
 
@@ -157,7 +157,7 @@ class TemplateViewHelper extends AbstractViewHelper
     }
 
     /**
-     * @return array{0: string, 1: ComponentContextInterface}
+     * @return array{0: string, 1: string, 2: ComponentContextInterface} [baseName, clientBaseName, context]
      */
     private function resolveContext(): array
     {
@@ -168,16 +168,12 @@ class TemplateViewHelper extends AbstractViewHelper
         $explicitContextName = (string)($this->arguments['context'] ?? '');
 
         if ($explicitContextName !== '') {
-            // Accept either casing from the template author (both conversions are idempotent on
-            // their own target format). $componentName stays kebab - it's also returned for
-            // data-scope/generatePartId below, which must match everywhere else. ContextService
-            // itself is keyed by the camelCase form, so no per-lookup kebab-casing happens on the
-            // common (camelCase) path.
-            $componentName = ComponentNameUtility::camelCaseToLowerCaseDashed($explicitContextName);
-            $contextKey = ComponentNameUtility::lowerCaseDashedToCamelCase($explicitContextName);
+            // ContextService is keyed by the component's canonical camelCase base name, so no
+            // conversion happens on the lookup itself.
             return [
-                $componentName,
-                ContextService::requireFromRenderingContext($renderingContext, $contextKey, 'ui:template'),
+                $explicitContextName,
+                ComponentNameUtility::camelCaseToLowerCaseDashed($explicitContextName),
+                ContextService::requireFromRenderingContext($renderingContext, $explicitContextName, 'ui:template'),
             ];
         }
 
@@ -187,7 +183,11 @@ class TemplateViewHelper extends AbstractViewHelper
         $ambientContext = $variableProvider->exists('context') ? $variableProvider->get('context') : null;
 
         if (ComponentUtility::isComponent($renderingContext) && $ambientContext instanceof ComponentContextInterface) {
-            return [ComponentNameUtility::getComponentBaseNameFromContext($renderingContext), $ambientContext];
+            return [
+                ComponentNameUtility::getComponentBaseNameFromContext($renderingContext),
+                ComponentNameUtility::getClientBaseNameFromContext($renderingContext),
+                $ambientContext,
+            ];
         }
 
         throw new \RuntimeException(

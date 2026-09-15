@@ -94,7 +94,7 @@ class RefViewHelper extends AbstractViewHelper
         $this->registerArgument(
             'context',
             'string',
-            'Base name of an ancestor component to attach this ref to explicitly (e.g. "combobox"), for hand-authored elements living in another component\'s slot content rather than a component\'s own template body. When omitted, uses whichever component is already ambiently active (the normal case for a component\'s own template).',
+            'camelCase base name of an ancestor component to attach this ref to explicitly (e.g. "fileUpload"), for hand-authored elements living in another component\'s slot content rather than a component\'s own template body. When omitted, uses whichever component is already ambiently active (the normal case for a component\'s own template).',
             false,
             '',
         );
@@ -198,13 +198,11 @@ class RefViewHelper extends AbstractViewHelper
             'Ref ViewHelper is missing its rendering context.',
             1_788_100_008,
         );
-        // Accept either casing from the template author (both conversions are idempotent on their
-        // own target format). $componentName stays kebab - it's also used below for data-scope/
-        // generatePartId, which must match everywhere else. ContextService itself is keyed by the
-        // camelCase form, so no per-lookup kebab-casing happens on the common (camelCase) path.
+        // ContextService is keyed by the component's canonical camelCase base name, so no
+        // conversion happens on the lookup itself. $componentName stays kebab here - it's used
+        // below for data-scope/generatePartId, which must match everywhere else.
         $componentName = ComponentNameUtility::camelCaseToLowerCaseDashed($explicitContextName);
-        $contextKey = ComponentNameUtility::lowerCaseDashedToCamelCase($explicitContextName);
-        $context = ContextService::requireFromRenderingContext($renderingContext, $contextKey, 'ui:ref');
+        $context = ContextService::requireFromRenderingContext($renderingContext, $explicitContextName, 'ui:ref');
 
         return [$componentName, (string)($context->get('rootId') ?? ''), $context->get('ids') ?? []];
     }
@@ -224,7 +222,7 @@ class RefViewHelper extends AbstractViewHelper
         }
 
         return [
-            ComponentNameUtility::getComponentBaseNameFromContext($renderingContext),
+            ComponentNameUtility::getClientBaseNameFromContext($renderingContext),
             ComponentUtility::getRootIdFromContext($renderingContext),
             $renderingContext->getVariableProvider()->getByPath('context.ids') ?? [],
         ];

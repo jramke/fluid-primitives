@@ -34,15 +34,15 @@ final readonly class ComponentHydrationCollector
         }
 
         // only register the components props for hydration if the user used the ui:ref viewhelper
-        // ui:ref always emits data-scope="{componentName}", so that's our detection signal
-        $componentBaseName = ComponentNameUtility::getComponentBaseNameFromContext($candidate->renderingContext);
+        // ui:ref always emits data-scope="{clientBaseName}", so that's our detection signal
+        $clientBaseName = ComponentNameUtility::getClientBaseNameFromContext($candidate->renderingContext);
         $newlyPortaledHtml = $this->extractNewlyPortaledHtml(
             $candidate->portalRegistrySnapshotBeforeRender,
             PortalRegistry::getAll(),
         );
         $hasRef =
-            str_contains($rendered, 'data-scope="' . $componentBaseName . '"') ||
-            str_contains($newlyPortaledHtml, 'data-scope="' . $componentBaseName . '"');
+            str_contains($rendered, 'data-scope="' . $clientBaseName . '"') ||
+            str_contains($newlyPortaledHtml, 'data-scope="' . $clientBaseName . '"');
 
         $manuallyExposedToClient = str_contains($rendered, Constants::MANUALLY_EXPOSED_TO_CLIENT_MARKER);
 
@@ -90,7 +90,7 @@ final readonly class ComponentHydrationCollector
             ...array_filter($candidate->relatedContextRootIds),
         ];
 
-        HydrationRegistry::getInstance()->add($candidate->baseName, $rootId, $data);
+        HydrationRegistry::getInstance()->add($candidate->clientBaseName, $rootId, $data);
 
         return $rendered;
     }

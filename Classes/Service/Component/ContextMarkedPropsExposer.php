@@ -39,11 +39,9 @@ final readonly class ContextMarkedPropsExposer
         RenderingContextInterface $parentRenderingContext,
         string $viewHelperName,
     ): ?\Closure {
-        $contextKey = ComponentNameUtility::lowerCaseDashedToCamelCase(ComponentNameUtility::getComponentBaseNameFromViewHelperName(
-            $viewHelperName,
-        ));
+        $baseName = ComponentNameUtility::getComponentBaseNameFromViewHelperName($viewHelperName);
 
-        $context = ContextService::getFromRenderingContext($parentRenderingContext, $contextKey);
+        $context = ContextService::getFromRenderingContext($parentRenderingContext, $baseName);
         if (!$context instanceof ComponentContextInterface) {
             return null;
         }

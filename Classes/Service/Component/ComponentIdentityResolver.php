@@ -41,8 +41,8 @@ final readonly class ComponentIdentityResolver
         }
 
         $baseName = ComponentNameUtility::getComponentBaseNameFromViewHelperName($viewHelperName);
-        $contextKey = ComponentNameUtility::lowerCaseDashedToCamelCase($baseName);
+        $clientBaseName = ComponentNameUtility::camelCaseToLowerCaseDashed($baseName);
 
-        return new ComponentIdentity($isRootComponent, $isComposableComponent, $rootId, $baseName, $contextKey);
+        return new ComponentIdentity($isRootComponent, $isComposableComponent, $rootId, $baseName, $clientBaseName);
     }
 }

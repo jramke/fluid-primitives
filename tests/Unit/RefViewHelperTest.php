@@ -31,7 +31,7 @@ final class RefViewHelperTest extends TestCase
     #[Test]
     public function rendersDataAttributesForARef(): void
     {
-        $this->variableProvider->add('component', ['fullName' => 'Collapsible.Root']);
+        $this->variableProvider->add('component', ['fullName' => 'Collapsible.Root', 'baseName' => 'collapsible']);
         $this->variableProvider->add('rootId', '«f1»');
         $this->variableProvider->add('context', ['ids' => []]);
 
@@ -53,7 +53,7 @@ final class RefViewHelperTest extends TestCase
     #[Test]
     public function rendersRootRefCorrectly(): void
     {
-        $this->variableProvider->add('component', ['fullName' => 'Collapsible.Root']);
+        $this->variableProvider->add('component', ['fullName' => 'Collapsible.Root', 'baseName' => 'collapsible']);
         $this->variableProvider->add('rootId', '«f1»');
         $this->variableProvider->add('context', ['ids' => []]);
 
@@ -74,7 +74,7 @@ final class RefViewHelperTest extends TestCase
     #[Test]
     public function generatesIdWithValueForMultiInstancePart(): void
     {
-        $this->variableProvider->add('component', ['fullName' => 'Accordion.Item']);
+        $this->variableProvider->add('component', ['fullName' => 'Accordion.Item', 'baseName' => 'accordion']);
         $this->variableProvider->add('context', ['rootId' => '«f2»', 'ids' => []]);
 
         $this->viewHelper->setArguments([
@@ -93,7 +93,7 @@ final class RefViewHelperTest extends TestCase
     #[Test]
     public function usesExplicitIdFromIdsConfiguration(): void
     {
-        $this->variableProvider->add('component', ['fullName' => 'Collapsible.Root']);
+        $this->variableProvider->add('component', ['fullName' => 'Collapsible.Root', 'baseName' => 'collapsible']);
         $this->variableProvider->add('rootId', '«f1»');
         $this->variableProvider->add('context', ['ids' => ['trigger' => 'my-custom-trigger-id']]);
 
@@ -112,7 +112,7 @@ final class RefViewHelperTest extends TestCase
     #[Test]
     public function includesAdditionalDataAttributes(): void
     {
-        $this->variableProvider->add('component', ['fullName' => 'Collapsible.Root']);
+        $this->variableProvider->add('component', ['fullName' => 'Collapsible.Root', 'baseName' => 'collapsible']);
         $this->variableProvider->add('rootId', '«f1»');
         $this->variableProvider->add('context', ['ids' => []]);
 
@@ -135,7 +135,7 @@ final class RefViewHelperTest extends TestCase
     #[Test]
     public function returnsArrayWhenAsArrayIsTrue(): void
     {
-        $this->variableProvider->add('component', ['fullName' => 'Collapsible.Root']);
+        $this->variableProvider->add('component', ['fullName' => 'Collapsible.Root', 'baseName' => 'collapsible']);
         $this->variableProvider->add('rootId', '«f1»');
         $this->variableProvider->add('context', ['ids' => []]);
 
@@ -161,7 +161,7 @@ final class RefViewHelperTest extends TestCase
     #[Test]
     public function handlesAccordionComponentNameCorrectly(): void
     {
-        $this->variableProvider->add('component', ['fullName' => 'Accordion.Item']);
+        $this->variableProvider->add('component', ['fullName' => 'Accordion.Item', 'baseName' => 'accordion']);
         $this->variableProvider->add('context', ['rootId' => '«f1»', 'ids' => []]);
 
         $this->viewHelper->setArguments([
@@ -179,7 +179,7 @@ final class RefViewHelperTest extends TestCase
     #[Test]
     public function handlesPrimitivesNamespaceCorrectly(): void
     {
-        $this->variableProvider->add('component', ['fullName' => 'Primitives.Dialog.Root']);
+        $this->variableProvider->add('component', ['fullName' => 'Primitives.Dialog.Root', 'baseName' => 'dialog']);
         $this->variableProvider->add('context', ['rootId' => '«f1»', 'ids' => []]);
 
         $this->viewHelper->setArguments([
@@ -213,7 +213,7 @@ final class RefViewHelperTest extends TestCase
     #[Test]
     public function throwsExceptionWhenRootIdIsMissing(): void
     {
-        $this->variableProvider->add('component', ['fullName' => 'Collapsible.Root']);
+        $this->variableProvider->add('component', ['fullName' => 'Collapsible.Root', 'baseName' => 'collapsible']);
 
         $this->viewHelper->setArguments([
             'name' => 'trigger',

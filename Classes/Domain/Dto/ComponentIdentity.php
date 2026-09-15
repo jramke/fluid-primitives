@@ -13,13 +13,17 @@ final readonly class ComponentIdentity
         public bool $isRootComponent,
         public bool $isComposableComponent,
         public ?string $rootId,
+        /**
+         * The canonical, as-authored component name (e.g. "fileUpload") - used for context
+         * storage/lookup, the `component.baseName` Fluid variable, and any same-component-type
+         * comparison. Not kebab-case; see `$clientBaseName` for that.
+         */
         public string $baseName,
         /**
-         * `$baseName`, camelCased (e.g. "fileUpload" for "file-upload") - the key
-         * {@see \Jramke\FluidPrimitives\Service\ContextService}'s stack is stored under, distinct
-         * from `$baseName` itself because that one's kebab-case form is also relied on for
-         * `data-scope`/hydration/`ComponentPartIdUtility`'s override maps and must stay as-is.
+         * `$baseName`, kebab-cased (e.g. "file-upload") - for the few things that genuinely need
+         * it: `data-scope`/hydration keys and {@see \Jramke\FluidPrimitives\Utility\ComponentPartIdUtility}'s
+         * override maps.
          */
-        public string $contextKey,
+        public string $clientBaseName,
     ) {}
 }

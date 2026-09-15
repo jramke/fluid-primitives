@@ -28,7 +28,7 @@ final readonly class ComponentHydrationCandidate
         public string $rendered,
         public string $viewHelperName,
         public RenderingContextInterface $renderingContext,
-        public string $baseName,
+        public string $clientBaseName,
         public array $arguments,
         public array $argumentDefinitions,
         public array $propsMarkedForClient,

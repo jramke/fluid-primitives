@@ -18,15 +18,26 @@ class ComponentNameUtility
         return self::camelCaseToLowerCaseDashed($viewHelperName);
     }
 
+    /**
+     * Returns the component's canonical camelCase base name (e.g. "fileUpload" for both
+     * "FileUpload.Root" and "FileUpload.Item") - this is the form used for context storage/lookup
+     * and the `component.baseName` Fluid variable. `$viewHelperName` itself is Fluid's own resolved
+     * dot-path, PascalCased per segment to match the ViewHelper's PHP class name (e.g.
+     * "FileUpload.Root", not the lowercase-first "fileUpload.root" a template author types) -
+     * `lcfirst()` undoes just that leading capital, the one part of the resolved name that isn't
+     * already what a template author would write. Deliberately does *not* go through
+     * `getComponentFullNameFromViewHelperName()`'s kebab-casing - use {@see camelCaseToLowerCaseDashed}
+     * on the result for the few things that genuinely need kebab-case (data-scope, hydration keys,
+     * `ComponentPartIdUtility`'s override maps).
+     */
     public static function getComponentBaseNameFromViewHelperName(string $viewHelperName): string
     {
-        $fullName = self::getComponentFullNameFromViewHelperName($viewHelperName);
-        $fullNameExploded = explode('.', $fullName);
-        $baseName = $fullNameExploded[0];
-        if ($baseName === 'primitives') {
-            $baseName = $fullNameExploded[1] ?? $baseName;
+        $parts = explode('.', $viewHelperName);
+        $baseName = $parts[0];
+        if (strtolower($baseName) === 'primitives') {
+            $baseName = $parts[1] ?? $baseName;
         }
-        return $baseName;
+        return lcfirst($baseName);
     }
 
     public static function getSubcomponentNameFromViewHelperName(string $viewHelperName): string
@@ -49,15 +60,25 @@ class ComponentNameUtility
         return '';
     }
 
+    /**
+     * Reads the ambient `component.baseName` Fluid variable directly - already exactly
+     * {@see \Jramke\FluidPrimitives\Domain\Dto\ComponentIdentity::$baseName} as computed once for
+     * this component's own render (see `ComponentRenderer::createView()`), so there's nothing to
+     * re-derive or re-parse here.
+     */
     public static function getComponentBaseNameFromContext(RenderingContextInterface $renderingContext): string
     {
-        $fullName = self::getComponentFullNameFromContext($renderingContext);
-        $fullNameExploded = explode('.', $fullName);
-        $baseName = $fullNameExploded[0];
-        if ($baseName === 'primitives') {
-            $baseName = $fullNameExploded[1] ?? $baseName;
-        }
-        return $baseName;
+        $component = Typed::arrayOrNull($renderingContext->getVariableProvider()->get('component'));
+        return $component !== null ? Typed::stringOrNull($component['baseName'] ?? null) ?? '' : '';
+    }
+
+    /**
+     * The kebab-case form of {@see getComponentBaseNameFromContext} - for the few things that
+     * genuinely need it (data-scope, hydration keys, `ComponentPartIdUtility`'s override maps).
+     */
+    public static function getClientBaseNameFromContext(RenderingContextInterface $renderingContext): string
+    {
+        return self::camelCaseToLowerCaseDashed(self::getComponentBaseNameFromContext($renderingContext));
     }
 
     public static function isRootComponent(string|RenderingContextInterface $viewHelperNameOrRenderingContext): bool
