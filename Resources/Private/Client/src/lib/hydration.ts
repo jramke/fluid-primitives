@@ -11,8 +11,7 @@ const ID_NAMESPACE_OVERRIDES: Record<string, string> = {
 
 // Keep in sync with: Classes/Utility/ComponentUtility.php
 type PartSegmentOverride =
-    | string
-    | { segment: string; valueSeparator?: string; rootIdSeparator?: string };
+    string | { segment: string; valueSeparator?: string; rootIdSeparator?: string };
 
 const PART_SEGMENT_OVERRIDES: Record<string, Record<string, PartSegmentOverride>> = {
     // TODO: Revisit this override map after upgrading to zag-js v2.
@@ -343,7 +342,11 @@ export class ComponentHydrator {
      * A boolean value toggles a bare `data-x` attribute (e.g. `{ disabled: true }` -> `data-disabled`,
      * present only when true); a string value sets `data-x="value"` directly.
      */
-    restampValue(root: Element, value: string, attributes?: Record<string, boolean | string>): void {
+    restampValue(
+        root: Element,
+        value: string,
+        attributes?: Record<string, boolean | string>
+    ): void {
         const restamp = (el: Element) => {
             const rawPart = el.getAttribute('data-part');
             if (!rawPart) return;

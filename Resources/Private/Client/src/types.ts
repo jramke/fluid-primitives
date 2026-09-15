@@ -10,10 +10,7 @@ export interface ComboboxFilterHookDetails {
 }
 
 export type ComboboxFilterHookResult =
-    | ListCollection<CollectionItem>
-    | CollectionItem[]
-    | null
-    | undefined;
+    ListCollection<CollectionItem> | CollectionItem[] | null | undefined;
 
 export type ComboboxFilterResolver = (
     details: ComboboxFilterHookDetails

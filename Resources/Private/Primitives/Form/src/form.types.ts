@@ -47,8 +47,7 @@ export interface StandardSchemaFailureResult {
 }
 
 export type StandardSchemaResult<Output = unknown> =
-    | StandardSchemaSuccessResult<Output>
-    | StandardSchemaFailureResult;
+    StandardSchemaSuccessResult<Output> | StandardSchemaFailureResult;
 
 export interface StandardSchemaV1<Output = unknown> {
     readonly '~standard': {
@@ -67,16 +66,12 @@ export interface FormValidationContext {
 export type FormState = 'invalid' | 'ready' | 'submitting' | 'success' | 'error';
 
 export type FormValidation =
-    | StandardSchemaV1
-    | ((context: FormValidationContext) => FormErrors | null | void);
+    StandardSchemaV1 | ((context: FormValidationContext) => FormErrors | null | void);
 
 export type FormSubmitResult = true | false | FormErrors;
 
 export type AnyFormControlElement =
-    | HTMLInputElement
-    | HTMLTextAreaElement
-    | HTMLSelectElement
-    | HTMLButtonElement;
+    HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | HTMLButtonElement;
 
 /**
  * Error thrown by post() when server returns 422 validation errors.

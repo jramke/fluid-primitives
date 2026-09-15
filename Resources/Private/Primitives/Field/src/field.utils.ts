@@ -3,10 +3,7 @@ import * as dom from './field.dom';
 import type { FieldValue } from './field.types';
 
 type AnyFormControlElement =
-    | HTMLInputElement
-    | HTMLTextAreaElement
-    | HTMLSelectElement
-    | HTMLButtonElement;
+    HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | HTMLButtonElement;
 
 export function isFieldValueEqual(a: FieldValue, b: FieldValue) {
     return serializeFieldValue(a) === serializeFieldValue(b);

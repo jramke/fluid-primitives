@@ -19,7 +19,9 @@ export class Popover extends Component<popover.Props, popover.Api> {
     }
 
     render() {
-        this.spreadPropsByOptionalValue('trigger', ({ value }) => this.api.getTriggerProps({ value }));
+        this.spreadPropsByOptionalValue('trigger', ({ value }) =>
+            this.api.getTriggerProps({ value })
+        );
 
         const positionerEl = this.getElement('positioner');
         if (positionerEl) this.spreadProps(positionerEl, this.api.getPositionerProps());
