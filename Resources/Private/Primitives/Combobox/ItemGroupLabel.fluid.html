@@ -1,7 +1,12 @@
+<f:variable name="value" value="" />
+<f:if condition="!{context.isRenderStencil}">
+    <f:variable name="value" value="{context.item-group.value}" />
+</f:if>
+
 <div
     role="presentation"
     {f:if(condition: class, then: 'class="{class}"' )}
-    {ui:ref(name: 'itemGroupLabel' )}
+    {ui:ref(name: 'itemGroupLabel' , value: value)}
     {ui:attributes()}>
     <f:slot />
 </div>

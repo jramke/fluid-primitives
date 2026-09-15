@@ -348,7 +348,6 @@ export class ComponentHydrator {
             if (!rawPart) return;
             const part = toCamelCase(rawPart);
             this.setRefAttributes(el, part, value);
-            el.setAttribute('data-value', value);
             for (const [name, flagValue] of Object.entries(flags ?? {})) {
                 el.toggleAttribute(`data-${name}`, flagValue);
             }

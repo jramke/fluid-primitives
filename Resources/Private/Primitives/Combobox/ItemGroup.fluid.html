@@ -1,12 +1,18 @@
-<f:variable name="id">{ui:id()}</f:variable>
+<ui:prop name="value" type="string" context="{true}" optional="{true}" description="The value identifier of the item group." />
+
+<ui:error when="!{value} && !{context.isRenderStencil}" message="The {component.fullName} requires a 'value' prop, unless used inside a ui:template block." />
+
+<f:if condition="{context.isRenderStencil}">
+    <f:variable name="value" value="" />
+</f:if>
+
 <f:variable name="isEmpty">{f:if(condition: context.collection.size, then: '{false}', else: '{true}')}</f:variable>
 <f:variable name="refData" value="{disabled: context.disabled, id: id, empty: isEmpty}" />
 
 <div
     role="group"
-    {f:if(condition: isEmpty, then: 'data-empty="true"' )}
     {f:if(condition: class, then: 'class="{class}"' )}
-    {ui:ref(name: 'itemGroup' , data: refData )}
+    {ui:ref(name: 'itemGroup' , value: value, data: refData )}
     {ui:attributes()}>
     <f:slot />
 </div>

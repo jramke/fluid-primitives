@@ -283,20 +283,21 @@ export class Combobox extends FieldAwareComponent<ComboboxPrimitiveProps, combob
         const listEl = this.getElement('list');
         if (listEl) this.spreadProps(listEl, this.api.getListProps());
 
-        const itemGroupEls = this.getElements('itemGroup', this.doc);
-        itemGroupEls.forEach(itemGroupEl => {
-            this.spreadProps(
-                itemGroupEl,
-                this.api.getItemGroupProps({ id: itemGroupEl.dataset.id! })
-            );
-            const itemGroupLabelEl = this.getElement('itemGroupLabel', itemGroupEl);
-            if (itemGroupLabelEl) {
-                this.spreadProps(
-                    itemGroupLabelEl,
-                    this.api.getItemGroupLabelProps({ htmlFor: itemGroupEl.dataset.id! })
-                );
-            }
-        });
+        this.spreadPropsByValue(
+            'itemGroup',
+            ({ value }) => {
+                return this.api.getItemGroupProps({ id: value });
+            },
+            { parent: this.doc }
+        );
+
+        this.spreadPropsByValue(
+            'itemGroupLabel',
+            ({ value }) => {
+                return this.api.getItemGroupLabelProps({ htmlFor: value });
+            },
+            { parent: this.doc }
+        );
 
         const sourceCollection = this.getSourceCollection();
         // Returns both the resolved item and whether it came from sourceCollection specifically -
@@ -339,8 +340,7 @@ export class Combobox extends FieldAwareComponent<ComboboxPrimitiveProps, combob
             { parent: this.doc }
         );
 
-        const itemEls = this.getElements('item', this.doc);
-
+        const itemGroupEls = this.getElements('itemGroup', this.doc);
         itemGroupEls.forEach(itemGroupEl => {
             const hasVisibleItems = this.getElements('item', itemGroupEl).some(
                 itemEl => !itemEl.hidden
@@ -348,6 +348,7 @@ export class Combobox extends FieldAwareComponent<ComboboxPrimitiveProps, combob
             itemGroupEl.hidden = !hasVisibleItems;
         });
 
+        const itemEls = this.getElements('item', this.doc);
         const hasVisibleItems = itemEls.some(itemEl => !itemEl.hidden);
 
         if (contentEl) {

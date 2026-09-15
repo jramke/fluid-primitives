@@ -98,20 +98,21 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
             }
         }
 
-        const itemGroupEls = this.getElements('itemGroup', this.doc);
-        itemGroupEls.forEach(itemGroupEl => {
-            this.spreadProps(
-                itemGroupEl,
-                this.api.getItemGroupProps({ id: itemGroupEl.dataset.id! })
-            );
-            const itemGroupLabelEl = this.getElement('itemGroupLabel', itemGroupEl);
-            if (itemGroupLabelEl) {
-                this.spreadProps(
-                    itemGroupLabelEl,
-                    this.api.getItemGroupLabelProps({ htmlFor: itemGroupEl.dataset.id! })
-                );
-            }
-        });
+        this.spreadPropsByValue(
+            'itemGroup',
+            ({ value }) => {
+                return this.api.getItemGroupProps({ id: value });
+            },
+            { parent: this.doc }
+        );
+
+        this.spreadPropsByValue(
+            'itemGroupLabel',
+            ({ value }) => {
+                return this.api.getItemGroupLabelProps({ htmlFor: value });
+            },
+            { parent: this.doc }
+        );
 
         this.spreadPropsByValue(
             'item',
