@@ -12,7 +12,8 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
  * This ViewHelper allows you to render content in a different part of the DOM tree than where it is defined.
  * This is particularly useful for modals, tooltips, or any component that needs to break out of its parent container for styling or positioning reasons.
  *
- * You need to use this ViewHelper in conjunction with the [ui:portalContainer](./portalContainer) ViewHelper, which acts as the target container for all portalled content.
+ * With the default `name`, portalled content is rendered automatically at the end of `<body>` - no further setup needed.
+ * Pass a custom `name` together with a matching [ui:portalContainer](./portalContainer) ViewHelper if you want portalled content to end up somewhere else instead.
  *
  * ## Example
  * Common use case inside `Tooltip/Content.html`:
@@ -55,7 +56,7 @@ class PortalViewHelper extends AbstractViewHelper
             return '';
         }
 
-        PortalRegistry::add(Typed::string($this->arguments['name']), $rendered);
+        PortalRegistry::getInstance()->add(Typed::string($this->arguments['name']), $rendered);
         return '';
     }
 }

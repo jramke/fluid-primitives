@@ -38,7 +38,7 @@ final readonly class ComponentHydrationCollector
         $clientBaseName = ComponentNameUtility::getClientBaseNameFromContext($candidate->renderingContext);
         $newlyPortaledHtml = $this->extractNewlyPortaledHtml(
             $candidate->portalRegistrySnapshotBeforeRender,
-            PortalRegistry::getAll(),
+            PortalRegistry::getInstance()->getAll(),
         );
         $hasRef =
             str_contains($rendered, 'data-scope="' . $clientBaseName . '"') ||

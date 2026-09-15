@@ -324,7 +324,7 @@ final class ComboboxRenderingTest extends FunctionalTestCase
     public function rendersContentInsidePortalAndStillRegistersForHydration(): void
     {
         HydrationRegistry::getInstance()->clear();
-        PortalRegistry::clearAll();
+        PortalRegistry::getInstance()->clearAll();
 
         $collection = new ListCollection([
             ['value' => 'berlin', 'label' => 'Berlin'],
@@ -347,7 +347,7 @@ final class ComboboxRenderingTest extends FunctionalTestCase
 
         $this->assertStringNotContainsString('data-part="content"', $html);
 
-        $portaled = implode('', PortalRegistry::getAllByName('default'));
+        $portaled = implode('', PortalRegistry::getInstance()->getAllByName('default'));
         $this->assertStringContainsString('data-part="content"', $portaled);
         $this->assertStringContainsString('Berlin', $portaled);
 
