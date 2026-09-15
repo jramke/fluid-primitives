@@ -35,6 +35,9 @@
             <trans-unit id="fileUpload.deleteFileLabel" approved="yes">
                 <source>Delete file %fileName%</source>
             </trans-unit>
+            <trans-unit id="input.wordCount" approved="yes">
+                <source>%count% / %max% characters</source>
+            </trans-unit>
         </body>
     </file>
 </xliff>

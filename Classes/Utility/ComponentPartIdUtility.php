@@ -23,6 +23,7 @@ class ComponentPartIdUtility
     private const array FIELD_ID_PARTS = [
         'select' => ['label' => 'label', 'control' => 'hiddenSelect'],
         'combobox' => ['label' => 'label', 'control' => 'input'],
+        'input' => ['label' => 'label', 'control' => 'input'],
         'number-input' => ['label' => 'label', 'control' => 'input'],
         'switch' => ['label' => 'label', 'control' => 'hiddenInput'],
         'checkbox' => ['label' => 'label', 'control' => 'hiddenInput'],

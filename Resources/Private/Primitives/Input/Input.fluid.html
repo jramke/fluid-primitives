@@ -1,0 +1,12 @@
+<input
+    type="{context.type}"
+    value="{context.defaultValue}"
+    {f:if(condition: context.maxLength, then: 'maxlength="{context.maxLength}"' )}
+    {f:if(condition: context.name, then: 'name="{context.name}"' )}
+    {f:if(condition: context.disabled, then: 'disabled="disabled"' )}
+    {f:if(condition: context.required, then: 'required="required"' )}
+    {f:if(condition: context.readOnly, then: 'readonly="readonly"' )}
+    {f:if(condition: context.invalid, then: 'aria-invalid="true"' )}
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'input' )}
+    {ui:attributes()} />
