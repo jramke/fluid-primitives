@@ -337,19 +337,24 @@ export class ComponentHydrator {
      * (file-upload item previews, recurring/array form-field rows, or another primitive's own
      * async items).
      *
-     * `flags`, if given, are additionally set as boolean data attributes (e.g. `{ disabled: true }`
-     * -> a bare `data-disabled` attribute) on the same elements `value` is applied to - for
-     * primitives whose `render()` reads plain per-element flags rather than resolving a collection
-     * item (e.g. RadioGroup's `disabled`/`invalid`, NavigationMenu's `Link` `current`).
+     * `attributes`, if given, are additionally set on the same elements `value` is applied to - for
+     * primitives whose `render()` reads plain per-element data attributes rather than resolving a
+     * collection item (e.g. RadioGroup's `disabled`/`invalid`, NavigationMenu's `Link` `current`).
+     * A boolean value toggles a bare `data-x` attribute (e.g. `{ disabled: true }` -> `data-disabled`,
+     * present only when true); a string value sets `data-x="value"` directly.
      */
-    restampValue(root: Element, value: string, flags?: Record<string, boolean>): void {
+    restampValue(root: Element, value: string, attributes?: Record<string, boolean | string>): void {
         const restamp = (el: Element) => {
             const rawPart = el.getAttribute('data-part');
             if (!rawPart) return;
             const part = toCamelCase(rawPart);
             this.setRefAttributes(el, part, value);
-            for (const [name, flagValue] of Object.entries(flags ?? {})) {
-                el.toggleAttribute(`data-${name}`, flagValue);
+            for (const [name, attributeValue] of Object.entries(attributes ?? {})) {
+                if (typeof attributeValue === 'string') {
+                    el.setAttribute(`data-${name}`, attributeValue);
+                } else {
+                    el.toggleAttribute(`data-${name}`, attributeValue);
+                }
             }
         };
 

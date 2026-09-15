@@ -9,14 +9,15 @@ export interface TemplateOptions {
      */
     value?: string;
     /**
-     * Boolean data attributes to set alongside `value` (e.g. `{ disabled: true }` -> a bare
-     * `data-disabled` attribute, present only when true) - matches the `hasAttribute('data-x')`
-     * convention every primitive's `render()` loop already reads flags by (e.g. RadioGroup's
-     * `disabled`/`invalid`, NavigationMenu's `Link` `current`). Not a fixed prop list - pass
-     * whatever flags the primitive/part you're targeting expects. Applied to the same elements
-     * `value` is, and only takes effect when `value` is also given.
+     * Data attributes to set alongside `value` - a boolean toggles a bare `data-x` attribute
+     * (e.g. `{ disabled: true }` -> `data-disabled`, present only when true, matching the
+     * `hasAttribute('data-x')` convention every primitive's `render()` loop already reads boolean
+     * flags by - e.g. RadioGroup's `disabled`/`invalid`, NavigationMenu's `Link` `current`), while a
+     * string sets `data-x="value"` directly. Not a fixed prop list - pass whatever attributes the
+     * primitive/part you're targeting expects. Applied to the same elements `value` is, and only
+     * takes effect when `value` is also given.
      */
-    flags?: Record<string, boolean>;
+    attributes?: Record<string, boolean | string>;
 }
 
 /**
@@ -52,7 +53,7 @@ export class Template extends DocumentFragment {
         this.root = this.firstElementChild as HTMLElement;
 
         if (options.value !== undefined) {
-            hydrator.restampValue(this.root, options.value, options.flags);
+            hydrator.restampValue(this.root, options.value, options.attributes);
         }
     }
 
