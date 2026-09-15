@@ -7,6 +7,7 @@ namespace Jramke\FluidPrimitives\Service\Component;
 use Jramke\FluidPrimitives\Contexts\AbstractComponentContext;
 use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
 use Jramke\FluidPrimitives\Contexts\FieldContext;
+use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
 use Jramke\FluidPrimitives\Utility\ComponentPartIdUtility;
 use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3Fluid\Fluid\View\TemplateView;
@@ -120,7 +121,10 @@ final readonly class FieldContextVariableMerger
         }
 
         foreach ($excludeIdInheritanceForParents as $parentBaseName) {
-            if (($otherComponentContexts[$parentBaseName] ?? null) === null) {
+            // $otherComponentContexts is keyed by ContextService's camelCase context key;
+            // $parentBaseName comes from ComponentPartIdUtility's kebab-case override map.
+            $parentContextKey = ComponentNameUtility::lowerCaseDashedToCamelCase($parentBaseName);
+            if (($otherComponentContexts[$parentContextKey] ?? null) === null) {
                 continue;
             }
 

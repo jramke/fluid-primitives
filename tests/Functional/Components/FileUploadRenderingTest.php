@@ -221,6 +221,24 @@ final class FileUploadRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function templateContextAcceptsCamelCaseAsWellAsKebabCase(): void
+    {
+        // Same guarantee as RefViewHelper's own context argument - ui:template resolves its own
+        // camelCase<->kebab-case conversion independently, so both need covering.
+        $html = $this->renderTemplate('
+            <primitives:fileUpload.root>
+                <ui:template name="itemTemplate" context="fileUpload">
+                    <primitives:fileUpload.item>
+                        <primitives:fileUpload.itemError>Something went wrong</primitives:fileUpload.itemError>
+                    </primitives:fileUpload.item>
+                </ui:template>
+            </primitives:fileUpload.root>
+        ');
+
+        $this->assertStringContainsString('data-part="item-error"', $html);
+    }
+
+    #[Test]
     public function rendersItemPreviewFallbackWithRefAttributes(): void
     {
         $html = $this->renderTemplate('
@@ -308,6 +326,28 @@ final class FileUploadRenderingTest extends FunctionalTestCase
                             <primitives:fileUpload.itemPreviewFallback />
                         </primitives:fileUpload.itemPreview>
                         <div {ui:ref(name: \'diagField\', context: \'file-upload\')}>diag</div>
+                    </primitives:fileUpload.item>
+                </primitives:fileUpload.itemTemplate>
+            </primitives:fileUpload.root>
+        ');
+
+        $this->assertStringContainsString('data-part="diag-field"', $html);
+    }
+
+    #[Test]
+    public function explicitContextRefAcceptsCamelCaseAsWellAsKebabCase(): void
+    {
+        // Component base names are stored/looked-up in kebab-case everywhere else (data-scope,
+        // hydration keys) - `context: 'fileUpload'` here must resolve identically to the kebab
+        // `context: 'file-upload'` used above, not silently fail to find the component.
+        $html = $this->renderTemplate('
+            <primitives:fileUpload.root rootId="diag-root-3">
+                <primitives:fileUpload.itemTemplate>
+                    <primitives:fileUpload.item>
+                        <primitives:fileUpload.itemPreview match=".*">
+                            <primitives:fileUpload.itemPreviewFallback />
+                        </primitives:fileUpload.itemPreview>
+                        <div {ui:ref(name: \'diagField\', context: \'fileUpload\')}>diag</div>
                     </primitives:fileUpload.item>
                 </primitives:fileUpload.itemTemplate>
             </primitives:fileUpload.root>

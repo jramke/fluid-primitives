@@ -27,7 +27,9 @@ final readonly class CheckboxGroupContextVariableMerger
         array &$arguments,
         ?AbstractComponentContext $ctx,
     ): ?string {
-        $checkboxGroupContext = $otherComponentContexts['checkbox-group'] ?? null;
+        // $otherComponentContexts is keyed by ContextService's camelCase context key, not the
+        // kebab-case baseName used elsewhere (data-scope, hydration, ComponentPartIdUtility's maps).
+        $checkboxGroupContext = $otherComponentContexts['checkboxGroup'] ?? null;
         if (!$checkboxGroupContext instanceof CheckboxGroupContext) {
             return null;
         }

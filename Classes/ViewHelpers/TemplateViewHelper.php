@@ -168,9 +168,16 @@ class TemplateViewHelper extends AbstractViewHelper
         $explicitContextName = (string)($this->arguments['context'] ?? '');
 
         if ($explicitContextName !== '') {
+            // Accept either casing from the template author (both conversions are idempotent on
+            // their own target format). $componentName stays kebab - it's also returned for
+            // data-scope/generatePartId below, which must match everywhere else. ContextService
+            // itself is keyed by the camelCase form, so no per-lookup kebab-casing happens on the
+            // common (camelCase) path.
+            $componentName = ComponentNameUtility::camelCaseToLowerCaseDashed($explicitContextName);
+            $contextKey = ComponentNameUtility::lowerCaseDashedToCamelCase($explicitContextName);
             return [
-                $explicitContextName,
-                ContextService::requireFromRenderingContext($renderingContext, $explicitContextName, 'ui:template'),
+                $componentName,
+                ContextService::requireFromRenderingContext($renderingContext, $contextKey, 'ui:template'),
             ];
         }
 

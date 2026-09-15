@@ -31,6 +31,12 @@ use TYPO3Fluid\Fluid\ViewHelpers\SlotViewHelper;
  * binds the component-collection-specific componentResolver at construction time - a fresh instance
  * per caller, never container-managed itself, so nothing here ever needs a post-construction write.
  */
+// Cyclomatic complexity is summed across the whole class, not per method - renderComponent() is
+// already split as far as the 5-parameter guideline on extracted methods allows (see its own
+// docblock), so this doesn't indicate an actual decomposition opportunity, just an inherently
+// branchy rendering pipeline (mirrors the existing @mago-expect lint:halstead on renderComponent()
+// itself, for the same reason).
+// @mago-expect lint:cyclomatic-complexity
 final readonly class ComponentRenderer implements ComponentRendererInterface
 {
     public function __construct(
@@ -122,8 +128,9 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
             );
         }
 
+        $restoreExposedContext = null;
         if ($propsMarkedForContext !== [] && !$isRootComponent) {
-            $this->contextMarkedPropsExposer->expose(
+            $restoreExposedContext = $this->contextMarkedPropsExposer->expose(
                 $propsMarkedForContext,
                 $arguments,
                 $argumentDefinitions,
@@ -135,11 +142,17 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         $renderState = $this->prepareRenderState($parentRenderingContext, $view, $identity, $arguments);
         $ctx = $renderState['ctx'];
 
-        $rendered = $this->renderComponentOutput($view, $viewHelperName, $arguments, $slots);
+        $rendered = $this->renderComponentOutputAndRestoreContext(
+            $view,
+            $viewHelperName,
+            $arguments,
+            $slots,
+            $restoreExposedContext,
+        );
 
         if ($isRootComponent) {
             // cleanup the context variable from the parent rendering context
-            ContextService::removeFromRenderingContext($parentRenderingContext, $baseName);
+            ContextService::removeFromRenderingContext($parentRenderingContext, $identity->contextKey);
 
             // Call afterRendering lifecycle method only for root or closed components
             if ($ctx && method_exists($ctx, 'afterRendering')) {
@@ -190,10 +203,10 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         $isRootComponent = $identity->isRootComponent;
 
         // Expose other component contexts to allow deep nesting of composable components
-        $otherComponentContexts = $this->getOtherComponentContexts($parentRenderingContext, $baseName);
+        $otherComponentContexts = $this->getOtherComponentContexts($parentRenderingContext, $identity->contextKey);
 
         // Pick up potential context from current component (parent or itself if root)
-        $ctx = $this->getRootComponentContext($parentRenderingContext, $baseName);
+        $ctx = $this->getRootComponentContext($parentRenderingContext, $baseName, $identity->contextKey);
 
         $fieldRootId = null;
         if ($isRootComponent && $this->componentSupportsField($baseName)) {
@@ -246,16 +259,16 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
      */
     protected function getOtherComponentContexts(
         RenderingContextInterface $parentRenderingContext,
-        string $baseName,
+        string $contextKey,
     ): array {
         $contexts = [];
 
         $allContexts = ContextService::getAllFromRenderingContext($parentRenderingContext);
-        foreach ($allContexts as $ctxBaseName => $ctx) {
-            if ($ctxBaseName === $baseName) {
+        foreach ($allContexts as $ctxContextKey => $ctx) {
+            if ($ctxContextKey === $contextKey) {
                 continue;
             }
-            $contexts[$ctxBaseName] = $ctx;
+            $contexts[$ctxContextKey] = $ctx;
         }
 
         return $contexts;
@@ -267,10 +280,11 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
     protected function getRootComponentContext(
         RenderingContextInterface $renderingContext,
         string $baseName,
+        string $contextKey,
     ): ?AbstractComponentContext {
         $variableProvider = $renderingContext->getVariableProvider();
 
-        $ctx = ContextService::getFromRenderingContext($renderingContext, $baseName);
+        $ctx = ContextService::getFromRenderingContext($renderingContext, $contextKey);
 
         if (
             !$ctx instanceof ComponentContextInterface &&
@@ -309,6 +323,30 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         ]);
 
         return $view;
+    }
+
+    /**
+     * Renders this component's output, then reverts any context="{true}" props exposed for the
+     * duration of this render (root and its slot/children) back to whatever they were before -
+     * see {@see ContextMarkedPropsExposer::expose()}'s own docblock for why that revert matters.
+     *
+     * @param array<string, mixed> $arguments
+     * @param array<string, \Closure> $slots
+     */
+    private function renderComponentOutputAndRestoreContext(
+        TemplateView $view,
+        string $viewHelperName,
+        array $arguments,
+        array $slots,
+        ?\Closure $restoreExposedContext,
+    ): string {
+        try {
+            return $this->renderComponentOutput($view, $viewHelperName, $arguments, $slots);
+        } finally {
+            if ($restoreExposedContext instanceof \Closure) {
+                $restoreExposedContext();
+            }
+        }
     }
 
     /**

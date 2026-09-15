@@ -47,15 +47,22 @@ class ContextViewHelper extends AbstractViewHelper
             throw new \RuntimeException('The "name" argument is required for the context ViewHelper.', 1754253444);
         }
 
-        $componentName = ComponentNameUtility::getComponentBaseNameFromContext($renderingContext);
-        if ($componentName === (string)$this->arguments['name']) {
+        // Accept either casing from the template author (both conversions are idempotent on their
+        // own target format) - ContextService itself is keyed by the camelCase form, so no
+        // per-lookup kebab-casing happens on the common (camelCase) path.
+        $requestedContextKey = ComponentNameUtility::lowerCaseDashedToCamelCase((string)$this->arguments['name']);
+
+        $componentContextKey = ComponentNameUtility::lowerCaseDashedToCamelCase(ComponentNameUtility::getComponentBaseNameFromContext(
+            $renderingContext,
+        ));
+        if ($componentContextKey === $requestedContextKey) {
             throw new \RuntimeException(
                 'You cannot access the context of the current component using the context ViewHelper. Use the exposed "context" variable instead.',
                 1754253445,
             );
         }
 
-        $context = ContextService::getFromRenderingContext($renderingContext, (string)$this->arguments['name']);
+        $context = ContextService::getFromRenderingContext($renderingContext, $requestedContextKey);
 
         $as = Typed::string($this->arguments['as']);
         if ($as !== '') {

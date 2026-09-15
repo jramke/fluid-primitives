@@ -97,9 +97,19 @@ class ComponentNameUtility
         return str_replace('_', replace: '-', subject: $result);
     }
 
+    /**
+     * Idempotent on already-camelCase input, unlike `GeneralUtility::underscoredToUpperCamelCase()`
+     * (which lowercases the whole string first, destroying any capitalization a dash-less input -
+     * i.e. already-camelCase - relied on to mark its word boundaries).
+     */
     public static function lowerCaseDashedToCamelCase(string $string): string
     {
-        $result = str_replace('-', replace: '_', subject: $string);
-        return GeneralUtility::underscoredToUpperCamelCase($result);
+        if (!str_contains($string, '-')) {
+            return lcfirst($string);
+        }
+
+        $segments = explode('-', $string);
+        $firstSegment = array_shift($segments);
+        return lcfirst($firstSegment) . implode('', array_map(ucfirst(...), $segments));
     }
 }
