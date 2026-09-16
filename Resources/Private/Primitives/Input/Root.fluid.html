@@ -1,4 +1,6 @@
 <ui:prop name="type" type="string" optional="{true}" default="text" description="The HTML input type attribute, e.g. text, email, password, search, tel, url." />
+<ui:prop name="placeholder" type="string" optional="{true}" description="Placeholder text shown when the input is empty." />
+<ui:prop name="autocomplete" type="string" optional="{true}" description="Hints for browser autofill, e.g. email, tel, given-name, street-address. See the [HTML spec](https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#autofill) for the full list of tokens." />
 <ui:prop name="name" type="string" optional="{true}" client="{true}" description="The name attribute of the input. Useful for form submission. Inherited from a surrounding field when available." />
 <ui:prop name="disabled" type="boolean" optional="{true}" client="{true}" description="Whether the input is disabled. Inherited from a surrounding field when available." />
 <ui:prop name="invalid" type="boolean" optional="{true}" client="{true}" description="Whether the input value is invalid. Inherited from a surrounding field when available." />

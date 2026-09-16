@@ -49,6 +49,19 @@ final class InputRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function rendersPlaceholderAndAutocompleteServerSideWhenSet(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:input.root type="email" placeholder="you@example.com" autocomplete="email">
+                <primitives:input.input />
+            </primitives:input.root>
+        ');
+
+        $this->assertStringContainsString('placeholder="you@example.com"', $html);
+        $this->assertStringContainsString('autocomplete="email"', $html);
+    }
+
+    #[Test]
     public function rendersWordCountTextServerSideWhenMaxLengthIsSet(): void
     {
         $html = $this->renderTemplate('
@@ -161,6 +174,28 @@ final class InputRenderingTest extends FunctionalTestCase
         $inputTag = $this->extractTag($html, 'input');
         $this->assertStringContainsString('id="field:my-field:control"', $inputTag);
         $this->assertStringNotContainsString('id="input:', $inputTag);
+    }
+
+    #[Test]
+    public function primitiveLabelNestedInFieldGetsFieldsGeneratedLabelId(): void
+    {
+        // Recommended pattern per the docs: use the primitive's own `label` part nested inside its
+        // `root`, instead of `primitives:field.label`, mirroring how NumberInput/Select do it.
+        $html = $this->renderTemplate('
+            <primitives:field.root name="email" rootId="my-field">
+                <primitives:input.root>
+                    <primitives:input.label>Email</primitives:input.label>
+                    <primitives:input.input />
+                </primitives:input.root>
+            </primitives:field.root>
+        ');
+
+        $labelTag = $this->extractTag($html, 'label');
+        $this->assertStringContainsString('id="field:my-field:label"', $labelTag);
+        $this->assertStringNotContainsString('id="input:', $labelTag);
+
+        $inputTag = $this->extractTag($html, 'input');
+        $this->assertStringContainsString('id="field:my-field:control"', $inputTag);
     }
 
     private function extractTag(string $html, string $part): string
