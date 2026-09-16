@@ -38,6 +38,7 @@ class Constants
         'combobox',
         'file-upload',
         'select',
+        'input',
         'number-input',
         'radio-group',
         'switch',
