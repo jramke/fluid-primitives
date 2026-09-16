@@ -33,6 +33,22 @@ final class InputRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function rendersPatternAndInputModeServerSideWhenSet(): void
+    {
+        // `pattern` is passed as a bound variable rather than an inline literal - a literal
+        // containing `{3}`/`{4}` would be misparsed by Fluid as embedded object-accessor
+        // expressions, same as any other string argument value with literal curly braces.
+        $html = $this->renderTemplate('
+            <primitives:input.root type="tel" pattern="{pattern}" inputMode="numeric">
+                <primitives:input.input />
+            </primitives:input.root>
+        ', ['pattern' => '[0-9]{3}-[0-9]{4}']);
+
+        $this->assertStringContainsString('pattern="[0-9]{3}-[0-9]{4}"', $html);
+        $this->assertStringContainsString('inputmode="numeric"', $html);
+    }
+
+    #[Test]
     public function rendersWordCountTextServerSideWhenMaxLengthIsSet(): void
     {
         $html = $this->renderTemplate('
@@ -100,6 +116,21 @@ final class InputRenderingTest extends FunctionalTestCase
         $inputData = array_values($hydrationData['input'])[0];
 
         $this->assertSame(['wordCount' => '%count% of %max%'], $inputData['props']['translations']);
+    }
+
+    #[Test]
+    public function includesAnnounceDebounceDefaultInHydrationData(): void
+    {
+        $this->renderTemplate('
+            <primitives:input.root>
+                <primitives:input.input />
+            </primitives:input.root>
+        ');
+
+        $hydrationData = HydrationRegistry::getInstance()->getAll();
+        $inputData = array_values($hydrationData['input'])[0];
+
+        $this->assertSame(600, $inputData['props']['announceDebounce']);
     }
 
     #[Test]

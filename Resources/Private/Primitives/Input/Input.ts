@@ -1,5 +1,3 @@
-import { createLiveRegion } from '@zag-js/live-region';
-import { debounce } from '@zag-js/utils';
 import { FieldAwareComponent, Machine, mergeProps, normalizeProps } from '../../Client';
 import type { FieldMachine } from '../Field/src/field.registry';
 import { connect } from './src/input.connect';
@@ -7,15 +5,8 @@ import * as dom from './src/input.dom';
 import { machine } from './src/input.machine';
 import type { InputApi, InputProps } from './src/input.types';
 
-const ANNOUNCE_DEBOUNCE_MS = 600;
-
 export class Input extends FieldAwareComponent<InputProps, InputApi> {
     static componentName = 'input';
-
-    private liveRegion: ReturnType<typeof createLiveRegion> | null = null;
-    private announceCountChange = debounce((text: string) => {
-        this.liveRegion?.announce(text);
-    }, ANNOUNCE_DEBOUNCE_MS);
 
     propsWithField(props: InputProps, fieldMachine: FieldMachine): InputProps {
         return {
@@ -66,17 +57,6 @@ export class Input extends FieldAwareComponent<InputProps, InputApi> {
         }
 
         const liveRegionEl = this.getElement<HTMLElement>('liveRegion');
-        if (liveRegionEl) {
-            this.spreadProps(liveRegionEl, this.api.getLiveRegionProps());
-            if (!this.liveRegion) {
-                this.liveRegion = createLiveRegion({ level: 'polite', root: liveRegionEl });
-            }
-            if (this.api.countText) this.announceCountChange(this.api.countText);
-        }
-    }
-
-    destroy() {
-        this.liveRegion?.destroy();
-        super.destroy();
+        if (liveRegionEl) this.spreadProps(liveRegionEl, this.api.getLiveRegionProps());
     }
 }

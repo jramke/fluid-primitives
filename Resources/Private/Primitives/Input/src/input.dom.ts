@@ -9,3 +9,4 @@ export const getLiveRegionId = (scope: Scope) =>
     scope.ids?.liveRegion ?? `input:${scope.id}:live-region`;
 
 export const getInputEl = (scope: Scope) => scope.getById<HTMLInputElement>(getInputId(scope));
+export const getLiveRegionEl = (scope: Scope) => scope.getById(getLiveRegionId(scope));

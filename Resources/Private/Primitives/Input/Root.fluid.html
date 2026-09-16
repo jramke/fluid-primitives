@@ -6,7 +6,10 @@
 <ui:prop name="readOnly" type="boolean" optional="{true}" client="{true}" description="Whether the input is readonly. Inherited from a surrounding field when available." />
 <ui:prop name="defaultValue" type="string" optional="{true}" client="{true}" default="" description="The initial value of the input when rendered. Use when you don't need to control the value of the input. Inherited from a surrounding field when available." />
 <ui:prop name="maxLength" type="integer" optional="{true}" client="{true}" description="The maximum number of characters allowed. Also drives the wordCount part, e.g. '42 / 250 characters'." />
+<ui:prop name="pattern" type="string" optional="{true}" client="{true}" description="A regular expression the input's value is checked against on form submission." />
+<ui:prop name="inputMode" type="string" optional="{true}" client="{true}" description="Hints at the type of data that might be entered by the user and the keyboard shown on mobile devices, e.g. numeric, email, tel." />
 <ui:prop name="translations" type="array" optional="{true}" client="{true}" description="Specifies the localized word count string. Set the wordCount entry to false to disable the wordCount part and live-region announcements entirely. Use `f:translate` for per-template localization overrides when needed." />
+<ui:prop name="announceDebounce" type="integer" optional="{true}" client="{true}" default="600" description="Milliseconds to debounce word count live-region announcements by, so rapid typing doesn't spam assistive tech. Set to 0 to announce every change immediately." />
 
 <f:variable name="refData" value="{disabled: context.disabled, invalid: context.invalid}" />
 

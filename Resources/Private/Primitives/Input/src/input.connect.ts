@@ -4,41 +4,25 @@ import { parts } from './input.anatomy';
 import * as dom from './input.dom';
 import type { InputApi, InputHandle, InputSchema } from './input.types';
 
-type InputServiceLike = Pick<Service<InputSchema>, 'prop' | 'context' | 'scope'>;
-
-function formatCountText(
-    count: number,
-    maxLength: number | undefined,
-    wordCountTemplate: string | false | undefined
-): string | null {
-    if (!wordCountTemplate || maxLength == null) return null;
-    return wordCountTemplate
-        .replaceAll('%count%', String(count))
-        .replaceAll('%max%', String(maxLength));
-}
+type InputServiceLike = Pick<Service<InputSchema>, 'prop' | 'context' | 'scope' | 'computed'>;
 
 // Not every <input> type supports selection - `type="email"`/`"number"` etc. throw a
 // DOMException on `.selectionStart`/`.selectionEnd` access per the HTML spec.
 const SELECTABLE_INPUT_TYPES = new Set(['text', 'search', 'tel', 'url', 'password']);
 
 export function createInputHandle(service: InputServiceLike): InputHandle {
-    const { prop, context } = service;
-
-    const value = context.get('value');
-    const maxLength = prop('maxLength');
-    const count = value.length;
-    const translations = prop('translations');
+    const { prop, context, computed } = service;
 
     return {
-        value,
-        count,
-        countText: formatCountText(count, maxLength, translations?.wordCount),
+        value: context.get('value'),
+        count: computed('count'),
+        countText: computed('countText'),
         disabled: !!prop('disabled'),
         readOnly: !!prop('readOnly'),
         required: !!prop('required'),
         invalid: !!prop('invalid'),
         name: prop('name'),
-        maxLength,
+        maxLength: prop('maxLength'),
     };
 }
 
@@ -71,6 +55,8 @@ export function connect<T extends PropTypes>(
                 readOnly: handle.readOnly || undefined,
                 required: handle.required || undefined,
                 maxLength: handle.maxLength,
+                pattern: prop('pattern'),
+                inputMode: prop('inputMode'),
                 value: handle.value,
                 'aria-invalid': handle.invalid ? 'true' : undefined,
                 'data-invalid': handle.invalid ? '' : undefined,
