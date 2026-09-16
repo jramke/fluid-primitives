@@ -33,6 +33,19 @@ final class TextareaRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function rendersPlaceholderAndAutocompleteServerSideWhenSet(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:textarea.root placeholder="Type your message here..." autocomplete="street-address">
+                <primitives:textarea.textarea />
+            </primitives:textarea.root>
+        ');
+
+        $this->assertStringContainsString('placeholder="Type your message here..."', $html);
+        $this->assertStringContainsString('autocomplete="street-address"', $html);
+    }
+
+    #[Test]
     public function rendersWordCountTextServerSideWhenMaxLengthIsSet(): void
     {
         $html = $this->renderTemplate('
@@ -162,6 +175,28 @@ final class TextareaRenderingTest extends FunctionalTestCase
         $textareaTag = $this->extractTag($html, 'textarea');
         $this->assertStringContainsString('id="field:my-field:control"', $textareaTag);
         $this->assertStringNotContainsString('id="textarea:', $textareaTag);
+    }
+
+    #[Test]
+    public function primitiveLabelNestedInFieldGetsFieldsGeneratedLabelId(): void
+    {
+        // Recommended pattern per the docs: use the primitive's own `label` part nested inside its
+        // `root`, instead of `primitives:field.label`, mirroring how NumberInput/Select do it.
+        $html = $this->renderTemplate('
+            <primitives:field.root name="comment" rootId="my-field">
+                <primitives:textarea.root>
+                    <primitives:textarea.label>Comment</primitives:textarea.label>
+                    <primitives:textarea.textarea />
+                </primitives:textarea.root>
+            </primitives:field.root>
+        ');
+
+        $labelTag = $this->extractTag($html, 'label');
+        $this->assertStringContainsString('id="field:my-field:label"', $labelTag);
+        $this->assertStringNotContainsString('id="textarea:', $labelTag);
+
+        $textareaTag = $this->extractTag($html, 'textarea');
+        $this->assertStringContainsString('id="field:my-field:control"', $textareaTag);
     }
 
     private function extractTag(string $html, string $part): string
