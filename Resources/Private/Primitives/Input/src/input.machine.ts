@@ -37,9 +37,6 @@ export const machine = createMachine<InputSchema>({
     // Reads the DOM's actual current value on startup rather than trusting `defaultValue` blindly -
     // a browser can restore a different value than what was server-rendered (autofill, bfcache).
     entry: ['syncValueFromDom'],
-    // Runs for the machine's whole lifetime (not tied to a particular state) - sets up the
-    // liveRegion ref only if the consumer actually placed a `liveRegion` part in their template,
-    // and tears it down when the machine stops.
     effects: ['manageLiveRegion'],
     states: {
         idle: {},

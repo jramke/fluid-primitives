@@ -1,6 +1,6 @@
 import type { EventObject } from '@zag-js/core';
 import type { LiveRegion } from '@zag-js/live-region';
-import type { PropTypes } from '@zag-js/types';
+import type { JSX, PropTypes } from '@zag-js/types';
 
 export interface InputTranslations {
     /** Set to `false` to omit the word count part's text and skip live-region announcements. */
@@ -17,7 +17,7 @@ export interface InputProps {
     defaultValue?: string;
     maxLength?: number;
     pattern?: string;
-    inputMode?: string;
+    inputMode?: JSX.HTMLAttributes<HTMLInputElement>['inputMode'];
     translations?: InputTranslations;
     /**
      * Milliseconds to debounce word count live-region announcements by, so rapid typing doesn't
