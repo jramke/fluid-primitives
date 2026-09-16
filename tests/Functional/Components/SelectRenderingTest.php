@@ -166,7 +166,7 @@ final class SelectRenderingTest extends FunctionalTestCase
     public function rendersContentInsidePortalAndStillRegistersForHydration(): void
     {
         HydrationRegistry::getInstance()->clear();
-        PortalRegistry::clearAll();
+        PortalRegistry::getInstance()->clearAll();
 
         $collection = new ListCollection([
             ['value' => 'opt-1', 'label' => 'Option 1'],
@@ -189,7 +189,7 @@ final class SelectRenderingTest extends FunctionalTestCase
 
         $this->assertStringNotContainsString('data-part="content"', $html);
 
-        $portaled = implode('', PortalRegistry::getAllByName('default'));
+        $portaled = implode('', PortalRegistry::getInstance()->getAllByName('default'));
         $this->assertStringContainsString('data-part="content"', $portaled);
 
         $hydrationData = HydrationRegistry::getInstance()->getAll();

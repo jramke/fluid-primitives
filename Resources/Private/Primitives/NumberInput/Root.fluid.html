@@ -8,6 +8,8 @@
 <ui:prop name="min" type="float" optional="{true}" client="{true}" description="The minimum value of the number input." />
 <ui:prop name="max" type="float" optional="{true}" client="{true}" description="The maximum value of the number input." />
 <ui:prop name="step" type="float" optional="{true}" client="{true}" description="The amount to increment or decrement the value by." />
+<ui:prop name="smallStep" type="float" optional="{true}" client="{true}" description="The amount to increment or decrement the value by when the `Alt` key is held. Defaults to `step / 10`." />
+<ui:prop name="largeStep" type="float" optional="{true}" client="{true}" description="The amount to increment or decrement the value by when the `Shift` key is held. Defaults to `10 * step`." />
 <ui:prop name="allowMouseWheel" type="boolean" optional="{true}" client="{true}" description="Whether to allow mouse wheel to change the value." />
 <ui:prop name="allowOverflow" type="boolean" optional="{true}" client="{true}" default="{false}" description="Whether to allow the value overflow the min/max range." />
 <ui:prop name="clampValueOnBlur" type="boolean" optional="{true}" client="{true}" default="{true}" description="Whether to clamp the value when the input loses focus (blur)." />

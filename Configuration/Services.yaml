@@ -10,3 +10,7 @@ services:
   Jramke\FluidPrimitives\Registry\HydrationRegistry:
     shared: true
     public: true
+
+  Jramke\FluidPrimitives\Registry\PortalRegistry:
+    shared: true
+    public: true

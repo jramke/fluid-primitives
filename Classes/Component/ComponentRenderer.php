@@ -243,7 +243,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         // behind a portal (e.g. a triggerless Dialog/Popover - everything portaled, nothing rendered
         // inline) would otherwise never contain the data-scope="..." string ComponentHydrationCollector
         // looks for. Snapshotting the registry lets it also search whatever this render pass portaled away.
-        $portalRegistrySnapshotBeforeRender = $isRootComponent ? PortalRegistry::getAll() : [];
+        $portalRegistrySnapshotBeforeRender = $isRootComponent ? PortalRegistry::getInstance()->getAll() : [];
 
         return [
             'ctx' => $ctx,
