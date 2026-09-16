@@ -13,6 +13,7 @@ export default defineConfig({
         field: './Resources/Private/Primitives/Field/Field.ts',
         'file-upload': './Resources/Private/Primitives/FileUpload/FileUpload.ts',
         form: './Resources/Private/Primitives/Form/Form.ts',
+        textarea: './Resources/Private/Primitives/Textarea/Textarea.ts',
         input: './Resources/Private/Primitives/Input/Input.ts',
         'navigation-menu': './Resources/Private/Primitives/NavigationMenu/NavigationMenu.ts',
         'number-input': './Resources/Private/Primitives/NumberInput/NumberInput.ts',

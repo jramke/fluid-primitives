@@ -1,0 +1,13 @@
+<textarea
+    {f:if(condition: context.rows, then: 'rows="{context.rows}"' )}
+    {f:if(condition: context.maxLength, then: 'maxlength="{context.maxLength}"' )}
+    {f:if(condition: context.placeholder, then: 'placeholder="{context.placeholder}"' )}
+    {f:if(condition: context.autocomplete, then: 'autocomplete="{context.autocomplete}"' )}
+    {f:if(condition: context.name, then: 'name="{context.name}"' )}
+    {f:if(condition: context.disabled, then: 'disabled="disabled"' )}
+    {f:if(condition: context.required, then: 'required="required"' )}
+    {f:if(condition: context.readOnly, then: 'readonly="readonly"' )}
+    {f:if(condition: context.invalid, then: 'aria-invalid="true"' )}
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'textarea' )}
+    {ui:attributes()}>{context.defaultValue}</textarea>

@@ -42,6 +42,7 @@ class Constants
         'number-input',
         'radio-group',
         'switch',
+        'textarea',
     ];
 
     public const MANUALLY_EXPOSED_TO_CLIENT_MARKER = '<!-- FLUID_PRIMITIVES_COMPONENT_MANUALLY_EXPOSED_TO_CLIENT -->';

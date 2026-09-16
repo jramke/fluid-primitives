@@ -38,6 +38,9 @@
             <trans-unit id="input.wordCount" approved="yes">
                 <target>%count% / %max% Zeichen</target>
             </trans-unit>
+            <trans-unit id="textarea.wordCount" approved="yes">
+              <target>%count% / %max% Zeichen</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

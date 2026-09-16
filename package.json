@@ -59,6 +59,10 @@
             "import": "./dist/form.js",
             "types": "./dist/form.d.ts"
         },
+        "./textarea": {
+            "import": "./dist/textarea.js",
+            "types": "./dist/textarea.d.ts"
+        },
         "./input": {
             "import": "./dist/input.js",
             "types": "./dist/input.d.ts"
