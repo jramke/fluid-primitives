@@ -1,5 +1,5 @@
 import type { Attrs } from '@zag-js/vanilla';
-import { ComponentHydrator, Machine, spreadProps } from '.';
+import { ComponentHydrator, Machine, spreadProps, toKebabCase } from '.';
 import type { ComponentInterface } from '../types';
 
 export abstract class Component<Props, Api> implements ComponentInterface<Api> {
@@ -56,6 +56,14 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
 
     getName() {
         return (this.constructor as typeof Component).componentName;
+    }
+
+    /**
+     * Kebab form of {@see getName} - what actually appears in DOM-facing identifiers (data-scope,
+     * hydration ids). See {@see ComponentHydrator.clientComponentName}.
+     */
+    getClientName() {
+        return toKebabCase(this.getName());
     }
 
     /**

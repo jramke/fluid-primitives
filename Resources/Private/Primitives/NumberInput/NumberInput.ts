@@ -3,7 +3,7 @@ import { FieldAwareComponent, Machine, mergeProps, normalizeProps } from '../../
 import type { FieldMachine } from '../Field/src/field.registry';
 
 export class NumberInput extends FieldAwareComponent<numberInput.Props, numberInput.Api> {
-    static componentName = 'number-input';
+    static componentName = 'numberInput';
 
     propsWithField(props: numberInput.Props, fieldMachine: FieldMachine): numberInput.Props {
         return {

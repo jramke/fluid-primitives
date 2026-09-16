@@ -12,6 +12,7 @@ export {
     getHydrationData,
     mount,
     mountAll,
+    toKebabCase,
 } from './hydration';
 export { Machine } from './machine';
 export { mergeProps } from './merge-props';

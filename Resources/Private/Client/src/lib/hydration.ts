@@ -98,15 +98,21 @@ export function getHydrationData(component?: string, id?: string) {
         return hydrationData;
     }
 
-    if (!hydrationData[component]) {
+    // Hydration data itself is always registered under the kebab-case clientComponentName
+    // (mirrors PHP's HydrationRegistry) - converting here means every caller, direct or via
+    // mount()/mountAll(), can consistently pass the same camelCase name used everywhere else
+    // (static componentName, getElement() part names).
+    const clientComponentName = toKebabCase(component);
+
+    if (!hydrationData[clientComponentName]) {
         return null;
     }
 
     if (!id) {
-        return hydrationData[component];
+        return hydrationData[clientComponentName];
     }
 
-    return hydrationData[component][id] || null;
+    return hydrationData[clientComponentName][id] || null;
 }
 
 export function getGlobals(): FluidPrimitivesGlobals | null {
@@ -142,10 +148,13 @@ export function mountAll(
     const hydrationInstances = getHydrationData(componentName);
     if (!hydrationInstances) return;
 
-    if (!window.FluidPrimitives.uncontrolledInstances[componentName]) {
-        window.FluidPrimitives.uncontrolledInstances[componentName] = {};
+    // Keyed by the kebab form so two mountAll() calls for the same component (one camelCase, one
+    // still kebab mid-migration) share one tracked-instance bucket instead of silently doubling up.
+    const clientComponentName = toKebabCase(componentName);
+    if (!window.FluidPrimitives.uncontrolledInstances[clientComponentName]) {
+        window.FluidPrimitives.uncontrolledInstances[clientComponentName] = {};
     }
-    const mountedInstances = window.FluidPrimitives.uncontrolledInstances[componentName];
+    const mountedInstances = window.FluidPrimitives.uncontrolledInstances[clientComponentName];
 
     Object.keys(hydrationInstances).forEach(id => {
         if (hydrationInstances[id].controlled) return;
@@ -173,13 +182,16 @@ export function destroyComponentsWithin(root: Element | Document) {
 
     for (const instances of Object.values(window.FluidPrimitives.uncontrolledInstances)) {
         for (const [id, instance] of Object.entries(instances)) {
+            // Ids are always generated from the kebab clientComponentName, not the canonical
+            // componentName instance.getName() itself returns - see Component.getClientName().
+            const clientComponentName = instance.getClientName();
             const componentPartsInNode = root.querySelectorAll(
-                `[id^="${instance.getName()}:${id}"]`
+                `[id^="${clientComponentName}:${id}"]`
             );
             const hasComponentPartsInNode = componentPartsInNode.length > 0;
 
             if (hasComponentPartsInNode) {
-                console.log(`Destroying component instance: ${instance.getName()}:${id}`);
+                console.log(`Destroying component instance: ${clientComponentName}:${id}`);
                 instance.destroy();
                 delete instances[id];
             }
@@ -210,6 +222,11 @@ export function mount<T>(
 
 export class ComponentHydrator {
     componentName: string;
+    // Kebab form of componentName - what actually appears in data-scope, hydration ids, and the
+    // ID_NAMESPACE_OVERRIDES/PART_SEGMENT_OVERRIDES maps below (kept in sync with
+    // ComponentPartIdUtility's own kebab maps). Derived once here so nothing downstream converts
+    // repeatedly.
+    clientComponentName: string;
     doc: Document;
     rootId: string;
     ids: { [key: string]: string };
@@ -221,6 +238,7 @@ export class ComponentHydrator {
         doc: Document = document
     ) {
         this.componentName = componentName;
+        this.clientComponentName = toKebabCase(componentName);
         this.doc = doc;
         if (!rootId) {
             throw new Error(`Root ID is required for component hydration: ${componentName}`);
@@ -230,7 +248,7 @@ export class ComponentHydrator {
     }
 
     private getIdNamespace(): string {
-        return ID_NAMESPACE_OVERRIDES[this.componentName] ?? this.componentName;
+        return ID_NAMESPACE_OVERRIDES[this.clientComponentName] ?? this.clientComponentName;
     }
 
     private getPartConfig(part: string): {
@@ -238,7 +256,7 @@ export class ComponentHydrator {
         valueSeparator: string;
         rootIdSeparator?: string;
     } {
-        const override = PART_SEGMENT_OVERRIDES[this.componentName]?.[part];
+        const override = PART_SEGMENT_OVERRIDES[this.clientComponentName]?.[part];
         if (!override) {
             return { segment: part, valueSeparator: ':', rootIdSeparator: ':' };
         }
@@ -311,12 +329,12 @@ export class ComponentHydrator {
 
     generateRefAttributesString(part: string, value?: string): string {
         const id = this.computePartId(part, value);
-        return `id="${id}" data-scope="${this.componentName}" data-part="${toKebabCase(part)}"${value !== undefined ? ` data-value="${value}"` : ''}`;
+        return `id="${id}" data-scope="${this.clientComponentName}" data-part="${toKebabCase(part)}"${value !== undefined ? ` data-value="${value}"` : ''}`;
     }
 
     setRefAttributes(element: Element, part: string, value?: string): void {
         element.setAttribute('id', this.computePartId(part, value));
-        element.setAttribute('data-scope', this.componentName);
+        element.setAttribute('data-scope', this.clientComponentName);
         element.setAttribute('data-part', toKebabCase(part));
         if (value !== undefined) {
             element.setAttribute('data-value', value);
@@ -361,10 +379,13 @@ export class ComponentHydrator {
             }
         };
 
-        if (root.getAttribute('data-scope') === this.componentName && root.hasAttribute('id')) {
+        if (
+            root.getAttribute('data-scope') === this.clientComponentName &&
+            root.hasAttribute('id')
+        ) {
             restamp(root);
         }
-        root.querySelectorAll(`[data-scope="${this.componentName}"][id]`).forEach(restamp);
+        root.querySelectorAll(`[data-scope="${this.clientComponentName}"][id]`).forEach(restamp);
     }
 
     destroy() {

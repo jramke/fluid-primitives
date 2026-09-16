@@ -3,7 +3,7 @@ import { FieldAwareComponent, Machine, mergeProps, normalizeProps } from '../../
 import type { FieldMachine } from '../Field/src/field.registry';
 
 export class RadioGroup extends FieldAwareComponent<radioGroup.Props, radioGroup.Api> {
-    static componentName = 'radio-group';
+    static componentName = 'radioGroup';
 
     propsWithField(props: radioGroup.Props, fieldMachine: FieldMachine): radioGroup.Props {
         return {
