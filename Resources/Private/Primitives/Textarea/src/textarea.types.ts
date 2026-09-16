@@ -1,4 +1,5 @@
 import type { EventObject } from '@zag-js/core';
+import type { LiveRegion } from '@zag-js/live-region';
 import type { PropTypes } from '@zag-js/types';
 
 export interface TextareaTranslations {
@@ -26,6 +27,12 @@ export interface TextareaProps {
     submitOn?: TextareaSubmitOn;
     translations?: TextareaTranslations;
     /**
+     * Milliseconds to debounce word count live-region announcements by, so rapid typing doesn't
+     * spam assistive tech on every keystroke. Set to 0 to announce every change immediately.
+     * @default 600
+     */
+    announceDebounce?: number;
+    /**
      * Runs on every native `input` event, before the value is committed - return the value to
      * actually write back to the textarea (e.g. trimmed, digits-only). Cursor position is
      * preserved across the rewrite. TS-only: functions can't cross the PHP -> client JSON
@@ -40,6 +47,15 @@ export interface TextareaSchema {
     context: {
         value: string;
     };
+    refs: {
+        liveRegion: LiveRegion | null;
+        announce: ((text: string) => void) | null;
+    };
+    computed: {
+        count: number;
+        /** e.g. "42 / 250 characters", or `null` when `maxLength` or the translation is unset. */
+        countText: string | null;
+    };
     state: 'idle';
     event: EventObject;
     action: string;
@@ -49,7 +65,6 @@ export interface TextareaSchema {
 export interface TextareaHandle {
     value: string;
     count: number;
-    /** e.g. "42 / 250 characters", or `null` when `maxLength` or the translation is unset. */
     countText: string | null;
     disabled: boolean;
     readOnly: boolean;

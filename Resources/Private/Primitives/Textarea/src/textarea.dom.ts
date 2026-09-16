@@ -11,3 +11,4 @@ export const getLiveRegionId = (scope: Scope) =>
 
 export const getTextareaEl = (scope: Scope) =>
     scope.getById<HTMLTextAreaElement>(getTextareaId(scope));
+export const getLiveRegionEl = (scope: Scope) => scope.getById(getLiveRegionId(scope));

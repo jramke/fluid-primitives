@@ -4,37 +4,21 @@ import { parts } from './textarea.anatomy';
 import * as dom from './textarea.dom';
 import type { TextareaApi, TextareaHandle, TextareaSchema } from './textarea.types';
 
-type TextareaServiceLike = Pick<Service<TextareaSchema>, 'prop' | 'context' | 'scope'>;
-
-function formatCountText(
-    count: number,
-    maxLength: number | undefined,
-    wordCountTemplate: string | false | undefined
-): string | null {
-    if (!wordCountTemplate || maxLength == null) return null;
-    return wordCountTemplate
-        .replaceAll('%count%', String(count))
-        .replaceAll('%max%', String(maxLength));
-}
+type TextareaServiceLike = Pick<Service<TextareaSchema>, 'prop' | 'context' | 'scope' | 'computed'>;
 
 export function createTextareaHandle(service: TextareaServiceLike): TextareaHandle {
-    const { prop, context } = service;
-
-    const value = context.get('value');
-    const maxLength = prop('maxLength');
-    const count = value.length;
-    const translations = prop('translations');
+    const { prop, context, computed } = service;
 
     return {
-        value,
-        count,
-        countText: formatCountText(count, maxLength, translations?.wordCount),
+        value: context.get('value'),
+        count: computed('count'),
+        countText: computed('countText'),
         disabled: !!prop('disabled'),
         readOnly: !!prop('readOnly'),
         required: !!prop('required'),
         invalid: !!prop('invalid'),
         name: prop('name'),
-        maxLength,
+        maxLength: prop('maxLength'),
     };
 }
 

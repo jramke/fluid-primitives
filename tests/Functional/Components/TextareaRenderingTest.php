@@ -106,7 +106,7 @@ final class TextareaRenderingTest extends FunctionalTestCase
     public function includesSubmitOnInHydrationDataWhenSet(): void
     {
         $this->renderTemplate('
-            <primitives:textarea.root submitOn="mod+enter">
+            <primitives:textarea.root submitOn="{f:constant(name: \'Jramke\FluidPrimitives\Enum\TextareaSubmitOn::ModEnter\')}">
                 <primitives:textarea.textarea />
             </primitives:textarea.root>
         ');
@@ -114,7 +114,24 @@ final class TextareaRenderingTest extends FunctionalTestCase
         $hydrationData = HydrationRegistry::getInstance()->getAll();
         $textareaData = array_values($hydrationData['textarea'])[0];
 
+        // EnumUtility::normalize() unwraps the backed enum to its plain string value before it
+        // ever reaches the hydration payload / client-side TS (which still just sees 'mod+enter').
         $this->assertSame('mod+enter', $textareaData['props']['submitOn']);
+    }
+
+    #[Test]
+    public function includesAnnounceDebounceDefaultInHydrationData(): void
+    {
+        $this->renderTemplate('
+            <primitives:textarea.root>
+                <primitives:textarea.textarea />
+            </primitives:textarea.root>
+        ');
+
+        $hydrationData = HydrationRegistry::getInstance()->getAll();
+        $textareaData = array_values($hydrationData['textarea'])[0];
+
+        $this->assertSame(600, $textareaData['props']['announceDebounce']);
     }
 
     #[Test]
