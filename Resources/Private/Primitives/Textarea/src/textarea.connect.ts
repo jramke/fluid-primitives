@@ -79,7 +79,12 @@ export function connect<T extends PropTypes>(
                     const submitOn = prop('submitOn');
                     // Ignore Enter while an IME composition is still being finalized (e.g. typing
                     // Japanese/Chinese) - that Enter confirms the composition, it isn't a submit intent.
-                    if (!submitOn || event.key !== 'Enter' || event.isComposing) return;
+                    if (
+                        !submitOn ||
+                        event.key !== 'Enter' ||
+                        ('isComposing' in event && event.isComposing)
+                    )
+                        return;
 
                     const modPressed = event.metaKey || event.ctrlKey;
 
