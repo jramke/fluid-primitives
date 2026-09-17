@@ -1,0 +1,8 @@
+<f:variable name="refData" value="{disabled: context.disabled, orientation: context.orientation, invalid: context.invalid}" />
+
+<span
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'valueText' , data: refData )}
+    {ui:attributes()}>
+    {context.valueText}
+</span>

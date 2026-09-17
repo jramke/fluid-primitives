@@ -97,6 +97,10 @@ class ComponentPartIdUtility
         'dialog' => [
             'closeTrigger' => 'close',
         ],
+        'slider' => [
+            'valueText' => 'value-text',
+            'hiddenInput' => 'input',
+        ],
         'scroll-area' => [
             'root' => ['segment' => 'root', 'rootIdSeparator' => '-'],
             'viewport' => ['segment' => 'viewport', 'rootIdSeparator' => '-'],

@@ -1,0 +1,14 @@
+<ui:error when="!{context.thumb}" message="The {component.fullName} must only be used inside a slider.thumb component" />
+
+<f:variable name="index" value="{context.thumb.index}" />
+<f:variable name="inputState">{context -> ui:call(method: 'getHiddenInputState', arguments: {0: context.thumb})}</f:variable>
+
+<input
+    type="text"
+    hidden
+    value="{inputState.value}"
+    {f:if(condition: inputState.name, then: 'name="{inputState.name}"' )}
+    {f:if(condition: context.form, then: 'form="{context.form}"' )}
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'hiddenInput' , value: index )}
+    {ui:attributes()} />

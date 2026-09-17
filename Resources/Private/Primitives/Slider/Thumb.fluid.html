@@ -1,0 +1,22 @@
+<ui:prop name="index" type="integer" optional="{true}" default="0" context="{true}" description="The index of the thumb. Use a distinct index per `slider.thumb` for a range slider with multiple thumbs." />
+<ui:prop name="name" type="string" optional="{true}" context="{true}" description="The name of the thumb. Defaults to the root `name`." />
+
+<f:variable name="thumbState">{context -> ui:call(method: 'getThumbState', arguments: {0: index})}</f:variable>
+<f:variable name="refData" value="{disabled: thumbState.disabled, orientation: context.orientation, name: name}" />
+
+<div
+    role="slider"
+    draggable="false"
+    data-index="{index}"
+    aria-disabled="{f:if(condition: thumbState.disabled, then: 'true', else: 'false')}"
+    aria-orientation="{context.orientation}"
+    aria-valuemin="{thumbState.min}"
+    aria-valuemax="{thumbState.max}"
+    aria-valuenow="{thumbState.value}"
+    {f:if(condition: '!{thumbState.disabled}' , then: 'tabindex="0"' )}
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'thumb' , value: index, data: refData )}
+    {ui:attributes()}
+    style="{f:if(condition: context.isUnmeasured, then: 'visibility: hidden;')}">
+    <f:slot />
+</div>

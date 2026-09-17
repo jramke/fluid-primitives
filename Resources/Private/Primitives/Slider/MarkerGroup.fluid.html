@@ -1,0 +1,11 @@
+<f:variable name="refData" value="{orientation: context.orientation}" />
+
+<div
+    role="presentation"
+    aria-hidden="true"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'markerGroup' , data: refData )}
+    {ui:attributes()}
+    style="user-select: none; pointer-events: none; position: relative;">
+    <f:slot />
+</div>

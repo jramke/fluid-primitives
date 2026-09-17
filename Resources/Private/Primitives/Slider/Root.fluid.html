@@ -1,0 +1,25 @@
+<ui:prop name="disabled" type="boolean" optional="{true}" client="{true}" description="Whether the slider is disabled." />
+<ui:prop name="readOnly" type="boolean" optional="{true}" client="{true}" description="Whether the slider is read-only." />
+<ui:prop name="invalid" type="boolean" optional="{true}" client="{true}" description="Whether the slider is invalid." />
+<ui:prop name="name" type="string" optional="{true}" client="{true}" description="The name associated with each slider thumb (when used in a form)." />
+<ui:prop name="form" type="string" optional="{true}" client="{true}" description="The associate form of the underlying hidden input elements." />
+<ui:prop name="defaultValue" type="float|integer|array" optional="{true}" client="{true}" description="The initial value of the slider when rendered - a single number for one thumb, or a list of numbers (one per thumb) for a range. Use when you don't need to control the value of the slider." />
+<ui:prop name="min" type="float" optional="{true}" client="{true}" default="0" description="The minimum value of the slider." />
+<ui:prop name="max" type="float" optional="{true}" client="{true}" default="100" description="The maximum value of the slider." />
+<ui:prop name="step" type="float" optional="{true}" client="{true}" default="1" description="The step value of the slider." />
+<ui:prop name="largeStep" type="float" optional="{true}" client="{true}" description="The step value of the slider when the `Shift` key is held, or the `PageUp`/`PageDown` keys are used. Defaults to `10 * step`." />
+<ui:prop name="minStepsBetweenThumbs" type="float" optional="{true}" client="{true}" default="0" description="The minimum permitted steps between multiple thumbs. `minStepsBetweenThumbs * step` reflects the gap between the thumbs." />
+<ui:prop name="orientation" type="Jramke\FluidPrimitives\Enum\Orientation" optional="{true}" client="{true}" default="{f:constant(name: 'Jramke\FluidPrimitives\Enum\Orientation::Horizontal')}" description="The orientation of the slider." />
+<ui:prop name="origin" type="Jramke\FluidPrimitives\Enum\SliderOrigin" optional="{true}" client="{true}" default="{f:constant(name: 'Jramke\FluidPrimitives\Enum\SliderOrigin::Start')}" description="The origin of the slider range. The track is filled from the origin to the thumb for single values. `start` is useful when the value represents an absolute value, `center` when it represents an offset (relative), and `end` when it represents an offset from the end." />
+<ui:prop name="thumbAlignment" type="Jramke\FluidPrimitives\Enum\SliderThumbAlignment" optional="{true}" client="{true}" default="{f:constant(name: 'Jramke\FluidPrimitives\Enum\SliderThumbAlignment::Contain')}" description="The alignment of the slider thumb relative to the track. `center` lets the thumb extend beyond the bounds of the track, `contain` keeps it within the track's bounds." />
+<ui:prop name="thumbSize" type="array" optional="{true}" client="{true}" description="The slider thumb dimensions, with a `width` and `height` key." />
+<ui:prop name="thumbCollisionBehavior" type="Jramke\FluidPrimitives\Enum\SliderThumbCollisionBehavior" optional="{true}" client="{true}" default="{f:constant(name: 'Jramke\FluidPrimitives\Enum\SliderThumbCollisionBehavior::None')}" description="Controls how thumbs behave when they collide during pointer interactions. `none` keeps thumbs from moving past each other, `push` makes them push each other, `swap` makes them swap places." />
+
+<f:variable name="refData" value="{disabled: disabled, orientation: orientation, invalid: invalid}" />
+
+<div
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'root' , data: refData )}
+    {ui:attributes()}>
+    <f:slot />
+</div>

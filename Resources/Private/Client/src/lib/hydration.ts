@@ -66,6 +66,10 @@ const PART_SEGMENT_OVERRIDES: Record<string, Record<string, PartSegmentOverride>
     dialog: {
         closeTrigger: 'close',
     },
+    slider: {
+        valueText: 'value-text',
+        hiddenInput: 'input',
+    },
     'scroll-area': {
         root: { segment: 'root', rootIdSeparator: '-' },
         viewport: { segment: 'viewport', rootIdSeparator: '-' },

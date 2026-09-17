@@ -1,0 +1,15 @@
+<ui:error when="!{context.thumb}" message="The {component.fullName} must only be used inside a slider.thumb component" />
+
+<f:variable name="index" value="{context.thumb.index}" />
+<f:variable name="thumbState">{context -> ui:call(method: 'getThumbState', arguments: {0: index})}</f:variable>
+<f:variable name="refData" value="{orientation: context.orientation, index: index, state: 'closed'}" />
+
+<div
+    role="presentation"
+    hidden
+    data-state="closed"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'draggingIndicator' , value: index, data: refData )}
+    {ui:attributes()}>
+    {thumbState.value}
+</div>

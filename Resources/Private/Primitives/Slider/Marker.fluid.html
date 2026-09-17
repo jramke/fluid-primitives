@@ -1,0 +1,15 @@
+<ui:prop name="value" type="float" optional="{true}" context="{true}" requiredAtRuntime="{true}" description="The value along the track at which to render the marker." />
+
+<f:variable name="markerState">{context -> ui:call(method: 'getMarkerState', arguments: {0: value})}</f:variable>
+<f:variable name="refData" value="{orientation: context.orientation, value: value, disabled: markerState.disabled, state: markerState.state}" />
+
+<div
+    role="presentation"
+    data-value="{value}"
+    data-state="{markerState.state}"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'marker' , value: value, data: refData )}
+    {ui:attributes()}
+    style="{f:if(condition: context.isUnmeasured, then: 'visibility: hidden;')}">
+    <f:slot />
+</div>

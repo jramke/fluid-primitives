@@ -1,0 +1,8 @@
+<f:variable name="refData" value="{disabled: context.disabled, orientation: context.orientation, invalid: context.invalid}" />
+
+<div
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'range' , data: refData )}
+    {ui:attributes()}
+    style="{context.rangeStyle}">
+</div>

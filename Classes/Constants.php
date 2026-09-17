@@ -41,6 +41,7 @@ class Constants
         'input',
         'number-input',
         'radio-group',
+        'slider',
         'switch',
         'textarea',
     ];

@@ -86,8 +86,8 @@ class RefViewHelper extends AbstractViewHelper
         );
         $this->registerArgument(
             'value',
-            'string|BackedEnum|UnitEnum|null|array',
-            'Optional discriminator for multi-instance parts (e.g. accordion items, tab triggers).',
+            'string|int|float|BackedEnum|UnitEnum|null|array',
+            'Optional discriminator for multi-instance parts (e.g. accordion items, tab triggers, slider thumbs).',
             false,
             null,
         );
@@ -105,8 +105,8 @@ class RefViewHelper extends AbstractViewHelper
         [$componentName, $rootId, $idsArray] = $this->resolveComponentIdentity();
 
         $part = (string)$this->arguments['name'];
-        // Deliberately left as the full declared union (string|BackedEnum|UnitEnum|null|array) rather
-        // than narrowed here - the array case is still meaningful for the (string) cast below, and
+        // Deliberately left as the full declared union (string|int|float|BackedEnum|UnitEnum|null|array)
+        // rather than narrowed here - the array case is still meaningful for the (string) cast below, and
         // Typed::stringOrNull() would silently discard it. Narrowed only at the one call site
         // (generatePartId() below) that actually requires ?string.
         // @mago-expect analysis:mixed-assignment
