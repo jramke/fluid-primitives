@@ -298,6 +298,22 @@ final class AsChildRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function preservesSingleLevelOfEscapingForClassContainingAmpersand(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:dialog.root>
+                <primitives:dialog.trigger asChild="{true}" class="[&_svg]:size-4">
+                    <a href="/some-link">Open</a>
+                </primitives:dialog.trigger>
+                <primitives:dialog.content>Content</primitives:dialog.content>
+            </primitives:dialog.root>
+        ');
+
+        $this->assertStringContainsString('class="[&amp;_svg]:size-4"', $html);
+        $this->assertStringNotContainsString('&amp;amp;', $html);
+    }
+
+    #[Test]
     public function handlesChildWithDataAttributes(): void
     {
         $html = $this->renderTemplate('

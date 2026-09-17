@@ -36,10 +36,14 @@ final readonly class AsChildAttributeSpreader
             $childAttrs[$name] = $value;
         }
 
-        // Rebuild attributes
+        // Rebuild attributes. $v was extracted straight out of already-rendered HTML (both
+        // $childHtml and $componentHtml are fully-rendered Fluid output, already escaped exactly
+        // once by whatever produced them) - re-escaping it here would double-encode any entity
+        // already present (e.g. a Tailwind `[&_svg]` selector's `&amp;` becoming `&amp;amp;`), so
+        // it's reused verbatim instead of passing through htmlspecialchars() again.
         $finalAttrs = '';
         foreach ($childAttrs as $k => $v) {
-            $finalAttrs .= $v === null ? " {$k}" : ' ' . $k . '="' . htmlspecialchars($v, ENT_QUOTES) . '"';
+            $finalAttrs .= $v === null ? " {$k}" : ' ' . $k . '="' . $v . '"';
         }
 
         // Replace child opening tag
