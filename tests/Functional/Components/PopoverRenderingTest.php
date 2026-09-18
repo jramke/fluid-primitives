@@ -103,6 +103,29 @@ final class PopoverRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function rendersEachCloseTriggerWithAUniqueId(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:popover.root>
+                <primitives:popover.trigger>Open</primitives:popover.trigger>
+                <primitives:popover.positioner>
+                    <primitives:popover.content>
+                        <primitives:popover.closeTrigger>×</primitives:popover.closeTrigger>
+                        Content
+                        <primitives:popover.closeTrigger>Dismiss</primitives:popover.closeTrigger>
+                    </primitives:popover.content>
+                </primitives:popover.positioner>
+            </primitives:popover.root>
+        ');
+
+        preg_match_all('/id="([^"]+)"[^>]*data-part="close-trigger"/', $html, $matches);
+        $closeTriggerIds = $matches[1];
+
+        $this->assertCount(2, $closeTriggerIds);
+        $this->assertCount(2, array_unique($closeTriggerIds));
+    }
+
+    #[Test]
     public function registersInHydrationRegistry(): void
     {
         $this->renderTemplate('

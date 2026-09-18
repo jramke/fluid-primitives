@@ -201,6 +201,31 @@ final class FileUploadRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function rendersEachDirectlyAuthoredItemAndItsNestedPartsWithAUniqueId(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:fileUpload.root>
+                <primitives:fileUpload.itemGroup>
+                    <primitives:fileUpload.item type="existing" value="1">
+                        <primitives:fileUpload.itemName>First</primitives:fileUpload.itemName>
+                    </primitives:fileUpload.item>
+                    <primitives:fileUpload.item type="existing" value="2">
+                        <primitives:fileUpload.itemName>Second</primitives:fileUpload.itemName>
+                    </primitives:fileUpload.item>
+                </primitives:fileUpload.itemGroup>
+            </primitives:fileUpload.root>
+        ');
+
+        preg_match_all('/id="([^"]+)"[^>]*data-part="item"/', $html, $itemMatches);
+        $this->assertCount(2, $itemMatches[1]);
+        $this->assertCount(2, array_unique($itemMatches[1]));
+
+        preg_match_all('/id="([^"]+)"[^>]*data-part="item-name"/', $html, $nameMatches);
+        $this->assertCount(2, $nameMatches[1]);
+        $this->assertCount(2, array_unique($nameMatches[1]));
+    }
+
+    #[Test]
     public function rendersItemErrorHiddenByDefaultWithRefAttributes(): void
     {
         $html = $this->renderTemplate('

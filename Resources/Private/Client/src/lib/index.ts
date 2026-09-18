@@ -13,6 +13,7 @@ export {
     mount,
     mountAll,
     toKebabCase,
+    warnAboutDuplicateIds,
 } from './hydration';
 export { Machine } from './machine';
 export { mergeProps } from './merge-props';

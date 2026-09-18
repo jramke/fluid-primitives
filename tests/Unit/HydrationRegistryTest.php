@@ -58,6 +58,15 @@ final class HydrationRegistryTest extends TestCase
     }
 
     #[Test]
+    public function exposesDebugGlobalRegardlessOfApplicationContext(): void
+    {
+        // No request is bootstrapped in this unit test, so resolveGlobals() returns before the
+        // locale lookup - 'debug' is set unconditionally before that, so it should be there either way.
+        $this->assertArrayHasKey('debug', $this->registry->getGlobals());
+        $this->assertIsBool($this->registry->getGlobals()['debug']);
+    }
+
+    #[Test]
     public function addsInlineJavaScriptWithComponentData(): void
     {
         $this->registry->add('accordion', '«f1»', [

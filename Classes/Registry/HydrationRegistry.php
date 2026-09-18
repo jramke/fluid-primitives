@@ -104,8 +104,10 @@ class HydrationRegistry
         }
 
         $this->globalsResolved = true;
-        $request = $this->getRequest();
 
+        $this->globals['debug'] = $this->scriptBuilder->isDevelopment();
+
+        $request = $this->getRequest();
         if (!$request instanceof ServerRequestInterface) {
             return;
         }
@@ -116,9 +118,7 @@ class HydrationRegistry
         $language = $request->getAttribute('language');
         $locale = is_object($language) && method_exists($language, 'getLocale') ? (string)$language->getLocale() : '';
 
-        $this->globals = [
-            'locale' => $locale,
-        ];
+        $this->globals['locale'] = $locale;
     }
 
     private function getRequest(): ?ServerRequestInterface

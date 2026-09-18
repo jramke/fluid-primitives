@@ -1,7 +1,7 @@
 <button
     type="button"
     {f:if(condition: class, then: 'class="{class}"' )}
-    {ui:ref(name: 'itemDeleteTrigger' )}
+    {ui:ref(name: 'itemDeleteTrigger' , value: context.item.value )}
     {ui:attributes()}>
     <f:slot />
 </button>

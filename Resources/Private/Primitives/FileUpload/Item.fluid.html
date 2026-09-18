@@ -1,11 +1,14 @@
 <ui:prop name="type" type="string" optional="{true}" default="accepted" description="The item's kind, e.g. `accepted`, `rejected`, or a custom value such as `existing` for an already-persisted file authored directly rather than populated from a `ui:template` stencil." />
+<ui:prop name="value" type="string" optional="{true}" context="{true}" description="A unique identifier for this item, e.g. a persisted file reference's own `uid`. Not needed for `accepted`/`rejected` items populated from `itemTemplate` - the client re-stamps those with the picked file's own value on mount. Required when authoring more than one `type=\" existing\"` item directly, so their `item`/`itemName`/`itemSizeText`/`itemDeleteTrigger`/`itemError` ids (picked up automatically) don't collide." />
+
+<ui:error when="!{context.isRenderStencil} && !{value}" message="A unique `value` is required for this item." />
 
 <f:variable name="refData" value="{disabled: context.disabled}" />
 
 <li
     data-type="{type}"
     {f:if(condition: class, then: 'class="{class}"' )}
-    {ui:ref(name: 'item' , data: refData )}
+    {ui:ref(name: 'item' , value: value, data: refData )}
     {ui:attributes()}>
     <f:slot />
 </li>

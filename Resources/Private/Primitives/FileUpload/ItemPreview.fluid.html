@@ -3,7 +3,7 @@
 <div
     data-match="{match}"
     {f:if(condition: class, then: 'class="{class}"' )}
-    {ui:ref(name: 'itemPreview' )}
+    {ui:ref(name: 'itemPreview' , value: context.item.value )}
     {ui:attributes()}>
     <f:slot />
 </div>

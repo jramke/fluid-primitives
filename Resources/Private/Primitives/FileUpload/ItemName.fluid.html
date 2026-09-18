@@ -1,6 +1,6 @@
 <div
     {f:if(condition: class, then: 'class="{class}"' )}
-    {ui:ref(name: 'itemName' )}
+    {ui:ref(name: 'itemName' , value: context.item.value )}
     {ui:attributes()}>
     <f:slot />
 </div>

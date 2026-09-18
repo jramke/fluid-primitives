@@ -34,6 +34,21 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
  * <div {ui:ref(name: 'item', value: value)}">...</div>
  * ```
  *
+ * Without a `value:`, the generated `id` is the same every time that part name renders within one
+ * component instance - correct for a true singleton part (root, trigger, content, ...), but if you
+ * place the *same* value-less part more than once in one instance (e.g. a purely decorative
+ * separator between item groups, which has no data-driven value of its own), every occurrence
+ * gets an identical, duplicate `id`. Browsers don't warn about this - it just makes `id`-based
+ * lookups (including this library's own `getElement`/`getElementById`) silently resolve to
+ * whichever element happens to match first. Give each occurrence its own `value` from {@see
+ * IdViewHelper} instead:
+ * ```html
+ * <f:variable name="separatorId">{ui:id(prefix: 'separator')}</f:variable>
+ * <div {ui:ref(name: 'separator', value: separatorId)}">...</div>
+ * ```
+ * `warnAboutDuplicateIds()` (client-side, on automatically in TYPO3's development Application
+ * Context) flags this in the browser console during development if it slips through.
+ *
  * You can also pass additional data attributes:
  * ```html
  * <div {ui:ref(name: 'button', data: { action: 'submit' })}">Click me</div>

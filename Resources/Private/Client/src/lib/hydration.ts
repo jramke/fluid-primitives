@@ -139,6 +139,64 @@ export function getGlobal<T = unknown>(key: string): T | undefined {
 }
 
 /**
+ * Dev-only safety net for a footgun inherent to `ui:ref`: a part rendered without a `value`
+ * discriminator gets the same `id` every time it renders, which is correct for a true singleton
+ * part (root, trigger, content, ...) but silently produces duplicate ids if the same value-less
+ * part is placed more than once per component instance (e.g. a decorative separator between
+ * groups) - duplicate DOM ids don't throw, they just make `getElementById`/`querySelector`-based
+ * lookups (including this library's own `getElement`) silently resolve to whichever element
+ * happens to match first.
+ *
+ * Scoped to `[data-scope][id]` so it only ever flags fluid-primitives-managed elements, never
+ * unrelated ids elsewhere on the consumer's page. Gated by `window.FluidPrimitives.globals.debug`
+ * (see {@see getGlobal}) - set automatically to whether TYPO3's own Application Context is
+ * development ({@see \Jramke\FluidPrimitives\Registry\HydrationRegistry}), nothing for a consumer
+ * to configure. Never runs unless that's true, so it costs nothing in production and never needs
+ * stripping from the bundle.
+ */
+export function warnAboutDuplicateIds(root: Document | Element = document): void {
+    if (!getGlobal<boolean>('debug')) return;
+
+    const elementsById = new Map<string, Element[]>();
+    root.querySelectorAll('[data-scope][id]').forEach(el => {
+        const matches = elementsById.get(el.id) ?? [];
+        matches.push(el);
+        elementsById.set(el.id, matches);
+    });
+
+    for (const [id, elements] of elementsById) {
+        if (elements.length <= 1) continue;
+
+        console.warn(
+            `[fluid-primitives] Duplicate id "${id}" found on ${elements.length} elements. ` +
+                'A part rendered without a `value` discriminator was likely used more than once ' +
+                'in the same component instance - see the "Marking Elements for Hydration" section ' +
+                'of the Hydration docs.',
+            elements
+        );
+    }
+}
+
+let duplicateIdCheckScheduled = false;
+
+/**
+ * Coalesces {@see warnAboutDuplicateIds} calls into one scan per burst of hydration, rather than
+ * one per `ComponentHydrator` constructed (a page can construct dozens in one synchronous burst
+ * during initial hydration). Scheduled via a microtask so it runs once, right after the current
+ * burst finishes, regardless of how many hydrators triggered it.
+ */
+function scheduleDuplicateIdCheck(): void {
+    if (!getGlobal<boolean>('debug')) return;
+    if (duplicateIdCheckScheduled) return;
+
+    duplicateIdCheckScheduled = true;
+    queueMicrotask(() => {
+        duplicateIdCheckScheduled = false;
+        warnAboutDuplicateIds();
+    });
+}
+
+/**
  * Mounts every not-yet-mounted, uncontrolled hydration instance of `componentName`. Safe to call
  * more than once (e.g. after lazily-inserted DOM adds new instances) - already mounted instances
  * are skipped rather than re-instantiated.

@@ -315,9 +315,15 @@ export class FileUpload extends FieldAwareComponent<FileUploadPrimitiveProps, fi
             previews[previews.length - 1];
 
         previews.forEach(el => {
-            const isMatch = el === matched;
-            el.hidden = !isMatch;
-            if (!isMatch) return;
+            if (el !== matched) {
+                // Prune rather than hide: every unmatched variant would otherwise keep sharing the
+                // matched one's `itemPreview` id (restampValue() stamps every ref'd descendant with
+                // the same file value, since it has no way to know several of them represent
+                // mutually-exclusive alternatives rather than distinct parts) - a duplicate id that's
+                // never actually needed, since the match is permanent for a given file.
+                el.remove();
+                return;
+            }
 
             this.spreadProps(el, this.api.getItemPreviewProps({ file, type }));
 
