@@ -45,4 +45,36 @@ final class UsePropsViewHelperTest extends FunctionalTestCase
         // class was forwarded and merged onto the same element too.
         $this->assertStringContainsString('extra-class', $html);
     }
+
+    #[Test]
+    public function forwardsANonNullDefaultBooleanPropThroughSpreadProps(): void
+    {
+        // Regression test: resolveSpreadProps() used `??=` to decide whether a forwarded prop still
+        // needed pulling from the parent scope. That only works when an unset argument is truly
+        // absent from $arguments. On Fluid's uncached (interpreted) render path - which every
+        // template hits the first time it's rendered in a process, before TemplateCompiler has a
+        // cached class for it - TYPO3Fluid's ViewHelperInvoker pre-fills every declared-but-omitted
+        // argument with its ArgumentDefinition default before the component ever sees it. For
+        // menu.checkboxItem's `checked` prop (default false), that pre-filled `false` was
+        // indistinguishable from "not passed", so `??=` refused to overwrite it with the wrapper's
+        // own `checked="{true}"` - silently rendering an explicitly-checked item as unchecked.
+        $view = $this->getView();
+        $view
+            ->getRenderingContext()
+            ->getViewHelperResolver()
+            ->addNamespace('wrapper', new UsePropsForwardingComponentCollection());
+
+        $html = $this->renderTemplate('
+            <primitives:menu.root>
+                <primitives:menu.positioner>
+                    <primitives:menu.content>
+                        <wrapper:menu.checkboxItem value="bold" checked="{true}">Bold</wrapper:menu.checkboxItem>
+                    </primitives:menu.content>
+                </primitives:menu.positioner>
+            </primitives:menu.root>
+        ');
+
+        $this->assertStringContainsString('aria-checked="true"', $html);
+        $this->assertStringContainsString('data-state="checked"', $html);
+    }
 }

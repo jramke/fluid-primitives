@@ -58,7 +58,12 @@ final readonly class ComponentArgumentResolver
             unset($arguments[$key]);
         }
 
-        $arguments = $this->resolveSpreadProps($arguments, $renderingContext, $parentRenderingContext);
+        $arguments = $this->resolveSpreadProps(
+            $arguments,
+            $argumentDefinitions,
+            $renderingContext,
+            $parentRenderingContext,
+        );
 
         return new ResolvedComponentArguments(
             $arguments,
@@ -117,10 +122,12 @@ final readonly class ComponentArgumentResolver
 
     /**
      * @param array<string, mixed> $arguments
+     * @param array<string, ArgumentDefinition> $argumentDefinitions
      * @return array<string, mixed>
      */
     private function resolveSpreadProps(
         array $arguments,
+        array $argumentDefinitions,
         RenderingContextInterface $renderingContext,
         RenderingContextInterface $parentRenderingContext,
     ): array {
@@ -148,12 +155,49 @@ final readonly class ComponentArgumentResolver
                 continue;
             }
 
-            $arguments[$propToUse] ??=
+            if ($this->isExplicitlyProvidedAtCallSite($propToUse, $arguments, $argumentDefinitions)) {
+                continue;
+            }
+
+            $arguments[$propToUse] =
                 $parentRenderingContext->getVariableProvider()->get(
                     $propToUse,
                 ) ?? $renderingContext->getVariableProvider()->get($propToUse) ?? null;
         }
 
         return $arguments;
+    }
+
+    /**
+     * On Fluid's compiled render path, an argument this component's own call site never wrote is
+     * simply absent from $arguments. But on the *uncached* (interpreted) path - which every
+     * template hits the first time it's rendered in a process, before TemplateCompiler has a
+     * cached class for it - TYPO3Fluid\Fluid\Core\ViewHelper\ViewHelperInvoker::invoke() pre-fills
+     * every declared-but-omitted argument with its ArgumentDefinition default before this class
+     * ever sees it, so the key is always present. A `??=`-style presence check can't tell those
+     * two cases apart, and for any prop whose default isn't null (e.g. a `checked` prop defaulting
+     * to false), that made an explicit call-site value indistinguishable from "not passed",
+     * silently dropping it in favor of the parent's spread value. Comparing against the prop's own
+     * default recovers the distinction; it's a no-op for the (common) null-default case, where
+     * presence alone was already an unambiguous signal.
+     *
+     * @param array<string, mixed> $arguments
+     * @param array<string, ArgumentDefinition> $argumentDefinitions
+     */
+    private function isExplicitlyProvidedAtCallSite(
+        string $propToUse,
+        array $arguments,
+        array $argumentDefinitions,
+    ): bool {
+        if (!array_key_exists($propToUse, $arguments)) {
+            return false;
+        }
+
+        $argumentDefinition = $argumentDefinitions[$propToUse] ?? null;
+        if (!$argumentDefinition instanceof ArgumentDefinition) {
+            return $arguments[$propToUse] !== null;
+        }
+
+        return $arguments[$propToUse] !== $argumentDefinition->getDefaultValue();
     }
 }
