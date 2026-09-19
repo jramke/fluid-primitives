@@ -1,0 +1,12 @@
+<f:variable name="optionItemContext">{f:if(condition: context.checkbox-item, then: context.checkbox-item, else: context.radio-item)}</f:variable>
+<ui:error when="!{optionItemContext.value}" message="The {component.fullName} must only be used within a `menu.checkboxItem` or `menu.radioItem` element." />
+
+<f:variable name="optionState">{context -> ui:call(method: 'getOptionItemState', arguments: {0: optionItemContext})}</f:variable>
+
+<span
+    {f:if(condition: optionState.disabled, then: 'data-disabled=""' )}
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'itemText' , value: optionState.value, data: {state: optionState.state} )}
+    {ui:attributes()}>
+    <f:slot />
+</span>

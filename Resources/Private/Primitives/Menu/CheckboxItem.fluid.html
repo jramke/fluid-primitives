@@ -1,0 +1,16 @@
+<ui:prop name="value" type="string" optional="{true}" context="{true}" requiredAtRuntime="{true}" description="The unique value of the checkbox item." />
+<ui:prop name="checked" type="boolean" optional="{true}" context="{true}" default="{false}" description="Whether the checkbox item is checked when rendered." />
+<ui:prop name="disabled" type="boolean" optional="{true}" context="{true}" description="Whether the checkbox item is disabled." />
+<ui:prop name="valueText" type="string" optional="{true}" context="{true}" description="The textual value of the item, used for typeahead navigation. Falls back to the item's text content when omitted." />
+
+<f:variable name="optionState">{context -> ui:call(method: 'getOptionItemState', arguments: {0: {value: value, valueText: valueText, type: 'checkbox', disabled: disabled, checked: checked}})}</f:variable>
+
+<div
+    role="{optionState.role}"
+    aria-checked="{f:if(condition: optionState.checked, then: 'true', else: 'false')}"
+    {f:if(condition: disabled, then: 'aria-disabled="true" data-disabled=""' )}
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'item' , value: value, data: {type: 'checkbox' , valuetext: valueText, state: optionState.state} )}
+    {ui:attributes()}>
+    <f:slot />
+</div>

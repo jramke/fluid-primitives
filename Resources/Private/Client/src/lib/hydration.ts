@@ -11,7 +11,14 @@ const ID_NAMESPACE_OVERRIDES: Record<string, string> = {
 
 // Keep in sync with: Classes/Utility/ComponentUtility.php
 type PartSegmentOverride =
-    string | { segment: string; valueSeparator?: string; rootIdSeparator?: string };
+    | string
+    | {
+          segment: string;
+          valueSeparator?: string;
+          rootIdSeparator?: string;
+          segmentSeparator?: string;
+          namespace?: string;
+      };
 
 const PART_SEGMENT_OVERRIDES: Record<string, Record<string, PartSegmentOverride>> = {
     // TODO: Revisit this override map after upgrading to zag-js v2.
@@ -66,6 +73,19 @@ const PART_SEGMENT_OVERRIDES: Record<string, Record<string, PartSegmentOverride>
     dialog: {
         closeTrigger: 'close',
     },
+    menu: {
+        contextTrigger: 'ctx-trigger',
+        positioner: 'popper',
+        itemGroup: 'group',
+        itemGroupLabel: 'group-label',
+        item: {
+            namespace: '',
+            segment: '',
+            rootIdSeparator: '',
+            segmentSeparator: '',
+            valueSeparator: '/',
+        },
+    },
     slider: {
         valueText: 'value-text',
         hiddenInput: 'input',
@@ -117,6 +137,20 @@ export function getHydrationData(component?: string, id?: string) {
     }
 
     return hydrationData[clientComponentName][id] || null;
+}
+
+/**
+ * Looks up another already-mounted, uncontrolled component instance by its component name and
+ * hydration id (the `id` prop it was rendered with). For primitives that compose two independent
+ * instances of themselves at runtime (e.g. Menu submenus linking a parent/child pair via their own
+ * `id`s) rather than through props alone.
+ */
+export function getComponentInstance<
+    T extends Component<unknown, unknown> = Component<unknown, unknown>,
+>(componentName: string, id: string): T | undefined {
+    const clientComponentName = toKebabCase(componentName);
+    return window.FluidPrimitives?.uncontrolledInstances?.[clientComponentName]?.[id] as
+        T | undefined;
 }
 
 export function getGlobals(): FluidPrimitivesGlobals | null {
@@ -307,6 +341,7 @@ export class ComponentHydrator {
         }
         this.rootId = rootId;
         this.ids = ids;
+        scheduleDuplicateIdCheck();
     }
 
     private getIdNamespace(): string {
@@ -316,20 +351,34 @@ export class ComponentHydrator {
     private getPartConfig(part: string): {
         segment: string;
         valueSeparator: string;
-        rootIdSeparator?: string;
+        rootIdSeparator: string;
+        segmentSeparator: string;
+        namespace?: string;
     } {
         const override = PART_SEGMENT_OVERRIDES[this.clientComponentName]?.[part];
         if (!override) {
-            return { segment: part, valueSeparator: ':', rootIdSeparator: ':' };
+            return {
+                segment: part,
+                valueSeparator: ':',
+                rootIdSeparator: ':',
+                segmentSeparator: ':',
+            };
         }
         if (typeof override === 'string') {
-            return { segment: override, valueSeparator: ':', rootIdSeparator: ':' };
+            return {
+                segment: override,
+                valueSeparator: ':',
+                rootIdSeparator: ':',
+                segmentSeparator: ':',
+            };
         }
 
         return {
             segment: override.segment,
             valueSeparator: override.valueSeparator ?? ':',
             rootIdSeparator: override.rootIdSeparator ?? ':',
+            segmentSeparator: override.segmentSeparator ?? ':',
+            namespace: override.namespace ?? undefined,
         };
     }
 
@@ -339,17 +388,25 @@ export class ComponentHydrator {
         }
 
         const idNamespace = this.getIdNamespace();
-        const { segment: partSegment, valueSeparator, rootIdSeparator } = this.getPartConfig(part);
+        const {
+            segment: partSegment,
+            valueSeparator,
+            rootIdSeparator,
+            segmentSeparator,
+            namespace,
+        } = this.getPartConfig(part);
+
+        const resolvedIdNamespace = namespace ?? idNamespace;
 
         if (part === 'root') {
-            return `${idNamespace}${rootIdSeparator}${this.rootId}`;
+            return `${resolvedIdNamespace}${rootIdSeparator}${this.rootId}`;
         }
 
         if (value !== undefined && value !== '') {
-            return `${idNamespace}${rootIdSeparator}${this.rootId}:${partSegment}${valueSeparator}${value}`;
+            return `${resolvedIdNamespace}${rootIdSeparator}${this.rootId}${segmentSeparator}${partSegment}${valueSeparator}${value}`;
         }
 
-        return `${idNamespace}${rootIdSeparator}${this.rootId}:${partSegment}`;
+        return `${resolvedIdNamespace}${rootIdSeparator}${this.rootId}${segmentSeparator}${partSegment}`;
     }
 
     private getValueSeparatorForPart(part: string): string {

@@ -106,6 +106,10 @@
         "./navigation-menu": {
             "import": "./dist/navigation-menu.js",
             "types": "./dist/navigation-menu.d.ts"
+        },
+        "./menu": {
+            "import": "./dist/menu.js",
+            "types": "./dist/menu.d.ts"
         }
     },
     "scripts": {
@@ -145,6 +149,7 @@
         "@zag-js/file-utils": "^1.44.0",
         "@zag-js/i18n-utils": "^1.44.0",
         "@zag-js/live-region": "^1.44.0",
+        "@zag-js/menu": "^1.44.0",
         "@zag-js/navigation-menu": "^1.44.0",
         "@zag-js/number-input": "^1.44.0",
         "@zag-js/popover": "^1.44.0",

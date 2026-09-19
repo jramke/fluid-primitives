@@ -1,0 +1,6 @@
+<div
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'itemGroupLabel' , value: context.item-group.value )}
+    {ui:attributes()}>
+    <f:slot />
+</div>

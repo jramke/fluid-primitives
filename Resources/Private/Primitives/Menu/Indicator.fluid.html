@@ -1,0 +1,9 @@
+<f:variable name="state">{f:if(condition: context.defaultOpen, then: 'open', else: 'closed')}</f:variable>
+<f:variable name="refData" value="{state: state}" />
+
+<div
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'indicator' , data: refData )}
+    {ui:attributes()}>
+    <f:slot />
+</div>

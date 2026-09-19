@@ -1,0 +1,14 @@
+<f:variable name="state">{f:if(condition: context.defaultOpen, then: 'open', else: 'closed')}</f:variable>
+<f:variable name="hidden">{f:if(condition: context.defaultOpen, then: '{false}', else: '{true}')}</f:variable>
+<f:variable name="refData" value="{state: state}" />
+
+<div
+    role="{f:if(condition: context.composite, then: 'menu', else: 'dialog')}"
+    tabindex="0"
+    {f:if(condition: context.ariaLabel, then: 'aria-label="{context.ariaLabel}"' )}
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'content' , data: refData )}
+    {ui:attributes(skip: 'hidden' )}
+    {f:if(condition: hidden, then: 'hidden="{hidden}"' )}>
+    <f:slot />
+</div>

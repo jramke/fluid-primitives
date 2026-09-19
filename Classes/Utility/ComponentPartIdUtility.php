@@ -97,6 +97,19 @@ class ComponentPartIdUtility
         'dialog' => [
             'closeTrigger' => 'close',
         ],
+        'menu' => [
+            'contextTrigger' => 'ctx-trigger',
+            'positioner' => 'popper',
+            'itemGroup' => 'group',
+            'itemGroupLabel' => 'group-label',
+            'item' => [
+                'namespace' => '',
+                'segment' => '',
+                'rootIdSeparator' => '',
+                'segmentSeparator' => '',
+                'valueSeparator' => '/',
+            ],
+        ],
         'slider' => [
             'valueText' => 'value-text',
             'hiddenInput' => 'input',
@@ -133,17 +146,21 @@ class ComponentPartIdUtility
             'segment' => $partSegment,
             'valueSeparator' => $valueSeparator,
             'rootIdSeparator' => $rootIdSeparator,
+            'segmentSeparator' => $segmentSeparator,
+            'namespace' => $namespace,
         ] = self::getPartConfig($componentName, $part);
 
+        $resolvedIdNamespace = $namespace ?? $idNamespace;
+
         if ($part === 'root') {
-            return "{$idNamespace}{$rootIdSeparator}{$rootId}";
+            return "{$resolvedIdNamespace}{$rootIdSeparator}{$rootId}";
         }
 
         if ($value !== null && $value !== '') {
-            return "{$idNamespace}{$rootIdSeparator}{$rootId}:{$partSegment}{$valueSeparator}{$value}";
+            return "{$resolvedIdNamespace}{$rootIdSeparator}{$rootId}{$segmentSeparator}{$partSegment}{$valueSeparator}{$value}";
         }
 
-        return "{$idNamespace}{$rootIdSeparator}{$rootId}:{$partSegment}";
+        return "{$resolvedIdNamespace}{$rootIdSeparator}{$rootId}{$segmentSeparator}{$partSegment}";
     }
 
     public static function getOverrideFieldIdKey(string $componentName, string $part): ?string
@@ -173,7 +190,7 @@ class ComponentPartIdUtility
     }
 
     /**
-     * @return array{segment: string, valueSeparator: string, rootIdSeparator: string}
+     * @return array{segment: string, valueSeparator: string, rootIdSeparator: string, segmentSeparator: string, namespace: string|null}
      */
     private static function getPartConfig(string $componentName, string $part): array
     {
@@ -183,12 +200,23 @@ class ComponentPartIdUtility
                 'segment' => is_string($override) ? $override : $part,
                 'valueSeparator' => ':',
                 'rootIdSeparator' => ':',
+                'segmentSeparator' => ':',
+                'namespace' => null,
             ];
         }
 
         $segment = $override['segment'];
         $valueSeparator = $override['valueSeparator'] ?? ':';
         $rootIdSeparator = $override['rootIdSeparator'] ?? ':';
-        return ['segment' => $segment, 'valueSeparator' => $valueSeparator, 'rootIdSeparator' => $rootIdSeparator];
+        $segmentSeparator = $override['segmentSeparator'] ?? ':';
+        $namespace = $override['namespace'] ?? null;
+
+        return [
+            'segment' => $segment,
+            'valueSeparator' => $valueSeparator,
+            'rootIdSeparator' => $rootIdSeparator,
+            'segmentSeparator' => $segmentSeparator,
+            'namespace' => $namespace,
+        ];
     }
 }

@@ -192,7 +192,7 @@ final class FileUploadRenderingTest extends FunctionalTestCase
         $html = $this->renderTemplate('
             <primitives:fileUpload.root>
                 <primitives:fileUpload.itemGroup>
-                    <primitives:fileUpload.item type="existing">Existing file</primitives:fileUpload.item>
+                    <primitives:fileUpload.item type="existing" value="1">Existing file</primitives:fileUpload.item>
                 </primitives:fileUpload.itemGroup>
             </primitives:fileUpload.root>
         ');

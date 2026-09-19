@@ -1,0 +1,12 @@
+<ui:prop name="value" type="string" optional="{true}" context="{true}" requiredAtRuntime="{true}" description="The unique value of the menu item." />
+<ui:prop name="disabled" type="boolean" optional="{true}" context="{true}" description="Whether the menu item is disabled." />
+<ui:prop name="valueText" type="string" optional="{true}" context="{true}" description="The textual value of the item, used for typeahead navigation. Falls back to the item's text content when omitted." />
+
+<div
+    role="menuitem"
+    {f:if(condition: disabled, then: 'aria-disabled="true" data-disabled=""' )}
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'item' , value: value, data: {valuetext: valueText} )}
+    {ui:attributes()}>
+    <f:slot />
+</div>

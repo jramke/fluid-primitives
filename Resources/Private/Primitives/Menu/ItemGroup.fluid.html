@@ -1,0 +1,9 @@
+<ui:prop name="value" type="string" optional="{true}" context="{true}" requiredAtRuntime="{true}" description="The value identifier of the item group. Picked up automatically by a `menu.itemGroupLabel` nested inside it." />
+
+<div
+    role="group"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'itemGroup' , value: value )}
+    {ui:attributes()}>
+    <f:slot />
+</div>

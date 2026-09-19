@@ -1,0 +1,9 @@
+<ui:prop name="childId" type="string" optional="{true}" requiredAtRuntime="{true}" description="The `rootId` of the submenu (its `menu.root`'s `rootId`) that this item opens. That submenu's own `parentId` must point back at this menu's `rootId`." />
+
+<div
+    role="menuitem"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'triggerItem' , value: childId )}
+    {ui:attributes()}>
+    <f:slot />
+</div>

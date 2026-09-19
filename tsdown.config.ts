@@ -15,6 +15,7 @@ export default defineConfig({
         form: './Resources/Private/Primitives/Form/Form.ts',
         textarea: './Resources/Private/Primitives/Textarea/Textarea.ts',
         input: './Resources/Private/Primitives/Input/Input.ts',
+        menu: './Resources/Private/Primitives/Menu/Menu.ts',
         'navigation-menu': './Resources/Private/Primitives/NavigationMenu/NavigationMenu.ts',
         'number-input': './Resources/Private/Primitives/NumberInput/NumberInput.ts',
         popover: './Resources/Private/Primitives/Popover/Popover.ts',

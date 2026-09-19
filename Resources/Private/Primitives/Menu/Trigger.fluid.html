@@ -1,0 +1,13 @@
+<ui:prop name="value" type="string" optional="{true}" context="{true}" description="The value that identifies this specific trigger, for a menu with multiple triggers." />
+
+<f:variable name="triggerState">{context -> ui:call(method: 'getTriggerState', arguments: {0: value})}</f:variable>
+
+<button
+    type="button"
+    aria-haspopup="{f:if(condition: context.composite, then: 'menu', else: 'dialog')}"
+    aria-expanded="{f:if(condition: triggerState.expanded, then: 'true', else: 'false')}"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'trigger' , value: value, data: {state: triggerState.state} )}
+    {ui:attributes()}>
+    <f:slot />
+</button>

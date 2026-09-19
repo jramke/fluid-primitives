@@ -1,0 +1,12 @@
+<ui:prop name="closeOnSelect" type="boolean" optional="{true}" client="{true}" default="{true}" description="Whether to close the menu when an option is selected." />
+<ui:prop name="composite" type="boolean" optional="{true}" client="{true}" default="{true}" description="Whether the menu is composed with other composite widgets like a combobox or tabs." />
+<ui:prop name="typeahead" type="boolean" optional="{true}" client="{true}" default="{true}" description="Whether pressing printable characters should trigger typeahead navigation." />
+<ui:prop name="loopFocus" type="boolean" optional="{true}" client="{true}" default="{false}" description="Whether to loop the keyboard navigation." />
+<ui:prop name="positioning" type="array" optional="{true}" client="{true}" default="{ placement: 'bottom-start', gutter: 8 }" description="The options used to dynamically position the menu." />
+<ui:prop name="defaultOpen" type="boolean" optional="{true}" client="{true}" default="{false}" description="The initial open state of the menu when rendered. Use when you don't need to control the open state of the menu." />
+<ui:prop name="defaultHighlightedValue" type="string" optional="{true}" client="{true}" description="The initial highlighted value of the menu item when rendered." />
+<ui:prop name="defaultTriggerValue" type="string" optional="{true}" client="{true}" description="The initial trigger value when rendered, for a menu with multiple triggers." />
+<ui:prop name="ariaLabel" type="string" optional="{true}" client="{true}" description="The accessibility label for the menu. Forwarded to the machine as `aria-label`." />
+<ui:prop name="parentId" type="string" optional="{true}" client="{true}" description="The `rootId` of the parent menu this menu is a submenu of. Must match a `menu.triggerItem`'s `childId` on that parent, pointing back at this menu's own `rootId` - see the Nested Menu docs example." />
+
+<f:slot />
