@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Tests\Functional\ViewHelpers;
 
+use Jramke\FluidPrimitives\Domain\Dto\ListCollection;
 use Jramke\FluidPrimitives\Registry\PortalRegistry;
 use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
 use PHPUnit\Framework\Attributes\Test;
@@ -59,6 +60,28 @@ final class PortalViewHelperTest extends FunctionalTestCase
 
         $this->assertStringContainsString('<div id="target"><div data-part="sidebar-portaled">', $html);
         $this->assertSame([], PortalRegistry::getInstance()->getAllByName('sidebar'));
+    }
+
+    #[Test]
+    public function rendersInPlaceInsideAUiTemplateStencilInsteadOfPortaling(): void
+    {
+        PortalRegistry::getInstance()->clearAll();
+        $collection = new ListCollection([]);
+
+        $html = $this->renderTemplate('
+            <primitives:combobox.root collection="{collection}">
+                <ui:template name="itemTemplate" context="combobox">
+                    <ui:portal>
+                        <div data-part="stencil-portaled">Portaled content</div>
+                    </ui:portal>
+                </ui:template>
+            </primitives:combobox.root>
+        ', ['collection' => $collection]);
+
+        // The stencil's own <template> tag still wraps it, proving it stayed part of the clonable
+        // content instead of leaking out to the footer.
+        $this->assertMatchesRegularExpression('/<template[^>]*>.*data-part="stencil-portaled".*<\/template>/s', $html);
+        $this->assertStringNotContainsString('data-part="stencil-portaled"', $this->readFooterData());
     }
 
     private function readFooterData(): string
