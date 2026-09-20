@@ -89,9 +89,8 @@ function canRemove(component: FieldArray): boolean {
  * Clones the `itemTemplate` stencil for a new row and appends it to `itemGroup` - `Template`'s own
  * `{value}` option (via `ComponentHydrator.restampValue`) prepares any nested root components the
  * row happens to compose (Field/Input/...) too, but doesn't construct them (see `restampValue`'s
- * own docblock for why that step can't happen here) - the `onItemAdded` prop and the
- * `fluid-primitives:field-array:itemadded` event this fires both carry `clone.componentNames`, so
- * consumer code can call `mountAll()` again for each of them.
+ * own docblock for why that step can't happen here) - `onItemAdded` carries `clone.componentNames`,
+ * so consumer code can call `mountAll()` again for each of them.
  */
 function append(component: FieldArray): void {
     if (!component.hydrator) return;
@@ -105,11 +104,7 @@ function append(component: FieldArray): void {
 
     itemGroupEl.appendChild(clone);
 
-    const detail = { index, componentNames: clone.componentNames };
-    itemGroupEl.dispatchEvent(
-        new CustomEvent('fluid-primitives:field-array:itemadded', { bubbles: true, detail })
-    );
-    component.machine.prop('onItemAdded')?.(detail);
+    component.machine.prop('onItemAdded')?.({ index, componentNames: clone.componentNames });
 
     announce(component, 'rowAdded', index, clone.root);
     component.refresh();
@@ -129,7 +124,6 @@ function remove(component: FieldArray, index: number): void {
         .find(el => el.dataset.value === String(index));
     if (!rowEl) return;
 
-    const itemGroupEl = component.getElement('itemGroup');
     const focusTargetEl = findFocusTargetAfterRemoval(component, rowEl);
     // Read the row's own field values before it's torn down and detached - `rowEl` stays fully
     // readable afterward (`.remove()` only unlinks a node), but announcing first keeps "read the
@@ -140,11 +134,7 @@ function remove(component: FieldArray, index: number): void {
     rowEl.remove();
     reindexRowsAfter(component, index);
 
-    const detail = { index };
-    itemGroupEl?.dispatchEvent(
-        new CustomEvent('fluid-primitives:field-array:itemremoved', { bubbles: true, detail })
-    );
-    component.machine.prop('onItemRemoved')?.(detail);
+    component.machine.prop('onItemRemoved')?.({ index });
 
     component.refresh();
 

@@ -56,18 +56,14 @@ export interface FieldArrayProps {
     /**
      * Called after a new row is appended (from a click on `addTrigger`) with its index and the
      * client component names `ComponentHydrator.restampValue` found nested inside it (e.g.
-     * `['field', 'input']`) - call the matching `mountAll()`s here, since `FieldArray` itself doesn't know
-     * which primitives a row's own `itemTemplate` contains. Mirrors `Form`'s own `onSubmit`/
-     * `render` prop-callback convention, rather than requiring every consumer to wire up the
-     * `fluid-primitives:field-array:itemadded` DOM event by hand - that event still fires too, for
-     * anything that needs to react without holding a reference to this instance.
+     * `['field', 'input']`) - call the matching `mountAll()`s here, since `FieldArray` itself
+     * doesn't know which primitives a row's own `itemTemplate` contains.
      */
     onItemAdded?: (detail: { index: number; componentNames: string[] }) => void;
     /**
      * Called after a row (from a click on that row's own `removeTrigger`) has been torn down and
      * removed, with the index it was removed from (later rows have already been reindexed by this
-     * point). Mirrors `onItemAdded` - a `fluid-primitives:field-array:itemremoved` DOM event also
-     * fires alongside it, for the same reason.
+     * point). Mirrors `onItemAdded`.
      */
     onItemRemoved?: (detail: { index: number }) => void;
 }
