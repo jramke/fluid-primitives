@@ -600,6 +600,14 @@ export class ComponentHydrator {
      * real (PHP records it there too - see `ComponentHydrationCollector`'s FieldArray-ambient-
      * context check) and for one `restampValue` prepared earlier (which migrates the same entry to
      * the row's new id as its own last step, for exactly this reason).
+     *
+     * Restamps id *references* (via {@see restampIdReferences}) across the whole document, not just
+     * `root`'s own subtree - unlike {@see restampValue}, where a fresh clone can't yet have anything
+     * portaled out of it (nothing composed by it has mounted/opened yet), `root` here is an existing,
+     * already-live item, so a nested component it composes may already have portaled its own content
+     * elsewhere in the document (e.g. an open `Popover`'s positioner, rendered via `ui:portal` into
+     * the page footer) by the time this runs. Scoping to `root` alone would restamp that component's
+     * trigger in place but silently miss its portaled content, leaving it referencing a now-stale id.
      */
     renameValue(root: Element, value: string): void {
         const previousScopeKey = root.id;
@@ -608,7 +616,7 @@ export class ComponentHydrator {
         const remaps = nestedRootRemapsFromMetadata(previousScopeKey, value);
         if (remaps.length === 0) return;
 
-        restampIdReferences(root, remaps);
+        restampIdReferences(this.doc, remaps);
 
         for (const { clientComponentName, oldRootId, newRootId } of remaps) {
             renameNestedComponentEntry(clientComponentName, oldRootId, newRootId, remaps);
@@ -654,9 +662,11 @@ function referencesRootId(id: string, rootId: string): boolean {
  * link on every clone, which is why a newly-added row's fields lose their label association and
  * their `<input>` never gets hydrated in the first place. Scoped to `root` (the whole cloned item,
  * not just one nested component's own subtree) since an override can reference a sibling
- * component's id, not just an ancestor's.
+ * component's id, not just an ancestor's - or, from {@see ComponentHydrator.renameValue}, to the
+ * whole document, when a nested component's content may already live outside `root` entirely (see
+ * that method's own docblock).
  */
-function restampIdReferences(root: Element, remaps: RootIdRemap[]): void {
+function restampIdReferences(root: Element | Document, remaps: RootIdRemap[]): void {
     const restamp = (el: Element) => {
         const id = el.getAttribute('id');
         if (!id) return;
