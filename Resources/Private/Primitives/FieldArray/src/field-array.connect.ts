@@ -1,10 +1,6 @@
 import { nextTick } from '@zag-js/dom-query';
 import type { NormalizeProps, PropTypes } from '@zag-js/types';
-import {
-    destroyComponentsWithin,
-    hydrateTemplateClone,
-    renameNestedRootComponents,
-} from '../../../Client/src/lib/hydration';
+import { destroyComponentsWithin } from '../../../Client/src/lib/hydration';
 import { Template } from '../../../Client/src/lib/template';
 import type { FieldValue } from '../../Field/src/field.types';
 import { getFieldValueFromContainer } from '../../Field/src/field.utils';
@@ -48,11 +44,11 @@ export function connect<T extends PropTypes>(
         },
         // No `id` here, unlike every other part's `getXProps()` (including `getAddTriggerProps`
         // above) - `removeTrigger`'s `id` is a *multi-instance*, per-row one, and its ownership
-        // already belongs entirely to `ComponentHydrator.restampValue`/`hydrateTemplateClone`/
-        // `renameNestedRootComponents` (see `reindexRowsAfter` below), which re-key it whenever a
-        // row is cloned or shifted. Recomputing it here from `index` too would create a second,
-        // independent source of truth for the same id, and this one has no way to even agree with
-        // the other - it has no access to the stencil-rootId part those functions restamp from.
+        // already belongs entirely to `ComponentHydrator.restampValue` (see `Client/src/lib/
+        // hydration.ts`), which re-keys it whenever a row is cloned or reindexed. Recomputing it
+        // here from `index` too would create a second, independent source of truth for the same
+        // id, and this one has no way to even agree with the other - it has no access to the
+        // stencil-rootId part that restamping works from.
         getRemoveTriggerProps: (index: number) => {
             const disabled = !actions.canRemove();
             return normalize.button({
@@ -90,13 +86,12 @@ function canRemove(component: FieldArray): boolean {
 }
 
 /**
- * Clones the `itemTemplate` stencil for a new row and appends it to `itemGroup`, exactly
- * `FileUpload.renderItems()`'s pattern for a newly-picked file - `hydrateTemplateClone`
- * additionally prepares any nested root components (Field/Input/...) the row contains, but
- * doesn't construct them (see its own docblock for why that step can't happen here) - the
- * `onItemAdded` prop and the `fluid-primitives:field-array:itemadded` event this fires both
- * carry the client component names found, so consumer code can call `mountAll()` again for
- * each of them.
+ * Clones the `itemTemplate` stencil for a new row and appends it to `itemGroup` - `Template`'s own
+ * `{value}` option (via `ComponentHydrator.restampValue`) prepares any nested root components the
+ * row happens to compose (Field/Input/...) too, but doesn't construct them (see `restampValue`'s
+ * own docblock for why that step can't happen here) - the `onItemAdded` prop and the
+ * `fluid-primitives:field-array:itemadded` event this fires both carry `clone.componentNames`, so
+ * consumer code can call `mountAll()` again for each of them.
  */
 function append(component: FieldArray): void {
     if (!component.hydrator) return;
@@ -107,11 +102,10 @@ function append(component: FieldArray): void {
 
     const index = nextIndex(component);
     const clone = new Template(component.hydrator, 'itemTemplate', { value: String(index) });
-    const componentNames = hydrateTemplateClone(clone.root, String(index));
 
     itemGroupEl.appendChild(clone);
 
-    const detail = { index, componentNames };
+    const detail = { index, componentNames: clone.componentNames };
     itemGroupEl.dispatchEvent(
         new CustomEvent('fluid-primitives:field-array:itemadded', { bubbles: true, detail })
     );
@@ -186,6 +180,8 @@ function nextIndex(component: FieldArray): number {
 }
 
 function reindexRowsAfter(component: FieldArray, removedIndex: number): void {
+    if (!component.hydrator) return;
+
     const rowsToShift = getRows(component).filter(({ index }) => index > removedIndex);
 
     for (const { index } of rowsToShift) {
@@ -208,10 +204,10 @@ function reindexRowsAfter(component: FieldArray, removedIndex: number): void {
         // renameFieldMachineForForm (above) only updates each nested field's `name` prop for
         // submission purposes - it never touches DOM ids. Without also re-keying those here, a
         // later row appended at this now-freed-up index would clone the same stencil and collide
-        // with these nested Field/Input's still-stale ids (see `renameNestedRootComponents`'s own
-        // docblock for the full mechanism).
-        renameNestedRootComponents(rowEl, String(index), String(newIndex));
-        component.hydrator?.restampValue(rowEl, String(newIndex));
+        // with these nested Field/Input's still-stale ids (see `ComponentHydrator.restampValue`'s
+        // own docblock for the full mechanism - it re-keys an *already-valued* item in place here,
+        // rather than copying from a stencil the way a fresh `append()` does).
+        component.hydrator.restampValue(rowEl, String(newIndex));
     }
 }
 

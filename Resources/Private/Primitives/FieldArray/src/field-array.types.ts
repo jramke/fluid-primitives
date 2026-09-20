@@ -55,8 +55,8 @@ export interface FieldArrayProps {
     };
     /**
      * Called after a new row is appended (from a click on `addTrigger`) with its index and the
-     * client component names `hydrateTemplateClone` found nested inside it (e.g. `['field',
-     * 'input']`) - call the matching `mountAll()`s here, since `FieldArray` itself doesn't know
+     * client component names `ComponentHydrator.restampValue` found nested inside it (e.g.
+     * `['field', 'input']`) - call the matching `mountAll()`s here, since `FieldArray` itself doesn't know
      * which primitives a row's own `itemTemplate` contains. Mirrors `Form`'s own `onSubmit`/
      * `render` prop-callback convention, rather than requiring every consumer to wire up the
      * `fluid-primitives:field-array:itemadded` DOM event by hand - that event still fires too, for

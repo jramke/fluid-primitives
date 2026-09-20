@@ -22,7 +22,8 @@ class FieldContext extends AbstractComponentContext
         // `name` and the item's row index (e.g. `people` + row 0 -> `people[0][firstName]`), or
         // with an empty index segment (`people[][firstName]`) inside the unfilled `itemTemplate`
         // stencil, where no real index exists yet - the client rewrites that placeholder to a real
-        // index on each clone (see `FieldArray.ts`/`hydrateTemplateClone`). Consumers set each
+        // index on each clone (see `ComponentHydrator.restampValue` in `Client/src/lib/
+        // hydration.ts`). Consumers set each
         // row's `defaultValue` explicitly (see the FieldArray docs), so the object-bound
         // auto-resolution below is skipped for these fields rather than trying to resolve a
         // prefixed path against the form's bound object.

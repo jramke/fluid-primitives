@@ -3,9 +3,10 @@ import { toKebabCase, type ComponentHydrator } from './hydration';
 export interface TemplateOptions {
     /**
      * Restamps the clone's root and every nested value-scoped ref'd element (id/data-scope/
-     * data-part/data-value) for this value, right after cloning - see
-     * `ComponentHydrator.restampValue`. Omit for a template with no per-instance value/identity
-     * concept.
+     * data-part/data-value) for this value, right after cloning, AND prepares any nested,
+     * independent root component the clone happens to compose (e.g. a `Field`+`Input`) so it's
+     * ready for `mountAll()` too - see `ComponentHydrator.restampValue`, and this class's own
+     * `componentNames`. Omit for a template with no per-instance value/identity concept.
      */
     value?: string;
     /**
@@ -33,6 +34,15 @@ export interface TemplateOptions {
  */
 export class Template extends DocumentFragment {
     readonly root: HTMLElement;
+    /**
+     * Distinct client component names of any nested, independent root components found and
+     * prepared inside this clone (see `ComponentHydrator.restampValue`) - empty when `options.value`
+     * was omitted, or the template contains none (the common case, e.g. `FileUpload`'s own item
+     * previews). Call the matching `mountAll()`s for each of these after inserting the clone into
+     * the document - per `mountAll`'s own docblock, that's exactly what it's for ("after
+     * lazily-inserted DOM adds new instances").
+     */
+    readonly componentNames: string[] = [];
 
     constructor(hydrator: ComponentHydrator, part: string, options: TemplateOptions = {}) {
         super();
@@ -53,7 +63,11 @@ export class Template extends DocumentFragment {
         this.root = this.firstElementChild as HTMLElement;
 
         if (options.value !== undefined) {
-            hydrator.restampValue(this.root, options.value, options.attributes);
+            this.componentNames = hydrator.restampValue(
+                this.root,
+                options.value,
+                options.attributes
+            );
         }
     }
 
