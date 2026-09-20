@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Tests\Functional\Components;
 
+use Jramke\FluidPrimitives\Registry\NestedComponentRegistry;
 use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -75,6 +76,62 @@ final class FieldArrayRenderingTest extends FunctionalTestCase
 
         $this->assertStringContainsString('data-name="people[0][firstName]"', $html);
         $this->assertStringContainsString('data-name="people[1][firstName]"', $html);
+    }
+
+    #[Test]
+    public function tracksEachServerRenderedRowsNestedFieldAgainstItsOwnRowKeyNotTheStencils(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:fieldArray.root name="people" itemCount="2">
+                <primitives:fieldArray.itemTemplate>
+                    <primitives:fieldArray.item>
+                        <primitives:field.root name="firstName">
+                            <primitives:field.control asChild="{true}">
+                                <input type="text" />
+                            </primitives:field.control>
+                        </primitives:field.root>
+                    </primitives:fieldArray.item>
+                </primitives:fieldArray.itemTemplate>
+                <primitives:fieldArray.itemGroup>
+                    <primitives:fieldArray.item index="0">
+                        <primitives:field.root name="firstName">
+                            <primitives:field.control asChild="{true}">
+                                <input type="text" />
+                            </primitives:field.control>
+                        </primitives:field.root>
+                    </primitives:fieldArray.item>
+                    <primitives:fieldArray.item index="1">
+                        <primitives:field.root name="firstName">
+                            <primitives:field.control asChild="{true}">
+                                <input type="text" />
+                            </primitives:field.control>
+                        </primitives:field.root>
+                    </primitives:fieldArray.item>
+                </primitives:fieldArray.itemGroup>
+            </primitives:fieldArray.root>
+        ');
+
+        preg_match('/<template id="(field-array:[^"]*):itemTemplate"/', $html, $stencilMatches);
+        $fieldArrayRootId = str_replace('field-array:', '', $stencilMatches[1] ?? '');
+        $this->assertNotSame('', $fieldArrayRootId);
+
+        preg_match_all('/id="field:([^"]*)" data-scope="field" data-part="root"/', $html, $fieldMatches);
+        [$stencilFieldRootId, $row0FieldRootId, $row1FieldRootId] = $fieldMatches[1];
+
+        $byScope = NestedComponentRegistry::getInstance()->getNestedComponentsByScope();
+
+        $this->assertSame(
+            [['name' => 'field', 'id' => $stencilFieldRootId]],
+            $byScope["field-array:{$fieldArrayRootId}:itemTemplate"] ?? null,
+        );
+        $this->assertSame(
+            [['name' => 'field', 'id' => $row0FieldRootId]],
+            $byScope["field-array:{$fieldArrayRootId}:item:0"] ?? null,
+        );
+        $this->assertSame(
+            [['name' => 'field', 'id' => $row1FieldRootId]],
+            $byScope["field-array:{$fieldArrayRootId}:item:1"] ?? null,
+        );
     }
 
     #[Test]
