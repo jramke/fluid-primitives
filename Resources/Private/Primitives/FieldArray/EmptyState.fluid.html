@@ -1,0 +1,7 @@
+<div
+    {f:if(condition: context.hasItems, then: 'hidden' )}
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'emptyState' )}
+    {ui:attributes()}>
+    <f:slot />
+</div>

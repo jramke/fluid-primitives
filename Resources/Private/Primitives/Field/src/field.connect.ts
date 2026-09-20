@@ -2,7 +2,13 @@ import type { Service } from '@zag-js/core';
 import type { NormalizeProps, PropTypes } from '@zag-js/types';
 import { parts } from './field.anatomy';
 import * as dom from './field.dom';
-import type { FieldApi, FieldHandle, FieldMeta, FieldSchema } from './field.types';
+import type {
+    FieldApi,
+    FieldDependencyChangeDetail,
+    FieldHandle,
+    FieldMeta,
+    FieldSchema,
+} from './field.types';
 import { isFieldValueEqual } from './field.utils';
 
 type FieldServiceLike = Pick<Service<FieldSchema>, 'prop' | 'context' | 'scope'>;
@@ -44,6 +50,18 @@ export function createFieldHandle(service: FieldServiceLike): FieldHandle {
         errors,
         getErrorText() {
             return errors.length > 0 ? errors.join(' ') : null;
+        },
+        addDependencyChangeListener(callback: (detail: FieldDependencyChangeDetail) => void) {
+            const rootEl = dom.getRootEl(scope);
+            if (!rootEl) return () => {};
+
+            const handler = (event: Event) => {
+                callback((event as CustomEvent<FieldDependencyChangeDetail>).detail);
+            };
+
+            rootEl.addEventListener('fluid-primitives:field:dependencychange', handler);
+            return () =>
+                rootEl.removeEventListener('fluid-primitives:field:dependencychange', handler);
         },
     };
 }

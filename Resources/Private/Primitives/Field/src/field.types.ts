@@ -1,6 +1,7 @@
 import type { EventObject } from '@zag-js/core';
 import type { PropTypes } from '@zag-js/types';
 import type { FormMachine } from '../../Form/src/form.registry';
+import type { FormValues } from '../../Form/src/form.types';
 
 export type FieldValue = FormDataEntryValue | FormDataEntryValue[] | null;
 
@@ -20,6 +21,17 @@ export interface FieldProps {
     disabled?: boolean;
     readOnly?: boolean;
     defaultValue?: unknown;
+    /**
+     * Names of sibling fields within the same form whose value changes this field should react
+     * to - see field.machine.ts's `setupDependencyListeners`.
+     */
+    listenTo?: string[];
+}
+
+export interface FieldDependencyChangeDetail {
+    name: string;
+    dependencies: Record<string, FieldValue>;
+    values: FormValues;
 }
 
 export interface FieldSchema {
@@ -60,6 +72,18 @@ export interface FieldHandle {
     required: boolean;
     readOnly: boolean;
     getErrorText(): string | null;
+    /**
+     * Registers `callback` for `fluid-primitives:field:dependencychange` (dispatched whenever a
+     * field named in this field's own `listenTo` prop changes value - see
+     * `field.machine.ts`'s `setupDependencyListeners`) and returns a function that removes it
+     * again, mirroring the native `addEventListener`/cleanup-function idiom rather than a
+     * config-style `onX` prop - this is something you call to start listening, not a value you
+     * set once at construction. A no-op subscription (immediately-inert callback, still-callable
+     * unsubscribe) for a field with no `listenTo`, since the event never fires for one.
+     */
+    addDependencyChangeListener(
+        callback: (detail: FieldDependencyChangeDetail) => void
+    ): () => void;
 }
 
 export interface FieldApi extends FieldHandle {

@@ -18,6 +18,25 @@ class FieldContext extends AbstractComponentContext
         $variableContainer = $parentRenderingContext->getViewHelperVariableContainer();
         $variableContainer->add(self::class, Typed::string($this->get('rootId')), ['name' => $this->get('name')]);
 
+        // A field nested inside a `FieldArray.Item` gets its `name` prefixed with the array's own
+        // `name` and the item's row index (e.g. `people` + row 0 -> `people[0][firstName]`), or
+        // with an empty index segment (`people[][firstName]`) inside the unfilled `itemTemplate`
+        // stencil, where no real index exists yet - the client rewrites that placeholder to a real
+        // index on each clone (see `FieldArray.ts`/`hydrateTemplateClone`). Consumers set each
+        // row's `defaultValue` explicitly (see the FieldArray docs), so the object-bound
+        // auto-resolution below is skipped for these fields rather than trying to resolve a
+        // prefixed path against the form's bound object.
+        $fieldArrayContext = ContextService::getFromRenderingContext($parentRenderingContext, 'fieldArray');
+        if ($fieldArrayContext instanceof ComponentContextInterface && $this->has('name')) {
+            $arrayName = Typed::stringOrNull($fieldArrayContext->get('name'));
+            if ($arrayName !== null) {
+                $index = Typed::intOrNull($fieldArrayContext->get('item.index'));
+                $indexSegment = $index !== null ? (string)$index : '';
+                $this->set('name', "{$arrayName}[{$indexSegment}][{$this->get('name')}]");
+                return;
+            }
+        }
+
         $formContext = ContextService::getFromRenderingContext($parentRenderingContext, 'form');
         if ($formContext instanceof ComponentContextInterface) {
             // Narrowed immediately below via is_object() - no Typed:: equivalent for objects.

@@ -1,0 +1,8 @@
+<ui:prop name="index" type="integer" optional="{true}" context="{true}" description="This row's position in the array, e.g. `0`. Required for a real row; omitted inside `itemTemplate`'s stencil, where the client fills in a real index on each clone." />
+
+<div
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'item' , value: index )}
+    {ui:attributes()}>
+    <f:slot />
+</div>

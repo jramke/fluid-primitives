@@ -1,0 +1,8 @@
+<button
+    type="button"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: '!{context.canRemove}', then: 'aria-disabled="true" data-disabled=""' )}
+    {ui:ref(name: 'removeTrigger' , value: context.item.index )}
+    {ui:attributes()}>
+    <f:slot />
+</button>

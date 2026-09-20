@@ -41,6 +41,12 @@
             <trans-unit id="textarea.wordCount" approved="yes">
                 <source>%count% / %max% characters</source>
             </trans-unit>
+            <trans-unit id="fieldArray.rowAdded" approved="yes">
+                <source>Row %number% added.</source>
+            </trans-unit>
+            <trans-unit id="fieldArray.rowRemoved" approved="yes">
+                <source>Row %number% removed.</source>
+            </trans-unit>
         </body>
     </file>
 </xliff>

@@ -5,6 +5,13 @@ import { machine } from './src/field.machine';
 import { registerFieldMachine } from './src/field.registry';
 import type { FieldApi, FieldProps } from './src/field.types';
 
+export type {
+    FieldDependencyChangeDetail,
+    FieldHandle,
+    FieldProps,
+    FieldValue,
+} from './src/field.types';
+
 export class Field extends Component<FieldProps, FieldApi> {
     static componentName = 'field';
 

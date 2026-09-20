@@ -51,6 +51,10 @@
             "import": "./dist/field.js",
             "types": "./dist/field.d.ts"
         },
+        "./field-array": {
+            "import": "./dist/field-array.js",
+            "types": "./dist/field-array.d.ts"
+        },
         "./file-upload": {
             "import": "./dist/file-upload.js",
             "types": "./dist/file-upload.d.ts"

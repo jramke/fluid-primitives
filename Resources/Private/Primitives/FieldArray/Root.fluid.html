@@ -1,0 +1,14 @@
+<ui:prop name="name" type="string" optional="{true}" client="{true}" requiredAtRuntime="{true}" description="The base field name for this array's rows, e.g. `people` - each row's nested fields are automatically prefixed with it and their row index, producing names like `people[0][firstName]`." />
+<ui:prop name="itemCount" type="integer" optional="{true}" client="{true}" requiredAtRuntime="{true}" description="Number of rows rendered server-side, e.g. `itemCount=\"{people -> f:count()}\"`. Lets `emptyState`/`addTrigger`/`removeTrigger` reflect the correct hidden/disabled state before JavaScript hydrates, instead of only afterward." />
+<ui:prop name="minItems" type="integer" optional="{true}" client="{true}" description="Minimum number of rows required - once exactly this many remain, removing a row is disabled." />
+<ui:prop name="maxItems" type="integer" optional="{true}" client="{true}" description="Maximum number of rows allowed - once this many exist, adding a row is disabled." />
+<ui:prop name="translations" type="array" optional="{true}" client="{true}" description="Localized screen-reader announcements for adding/removing a row. A `%number%` placeholder is replaced with the row's 1-based position. Set an entry to `{false}` to disable that announcement, or (client-side only, via the FieldArray constructor) pass a callback to build the message from the row's own field values instead. Use `f:translate` for per-template localization overrides when needed." />
+
+<div
+    data-name="{name}"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'root' )}
+    {ui:attributes()}>
+    <f:slot />
+    <div {ui:ref(name: 'liveRegion')}></div>
+</div>
