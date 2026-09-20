@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Tests\Unit;
 
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
+use Jramke\FluidPrimitives\Registry\NestedComponentRegistry;
 use Jramke\FluidPrimitives\Tests\TestCase;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\Test;
@@ -78,5 +79,24 @@ final class HydrationRegistryTest extends TestCase
         $this->assertStringContainsString('"accordion"', $this->capturedJs);
         $this->assertStringContainsString('"«f1»"', $this->capturedJs);
         $this->assertStringContainsString('"multiple":true', $this->capturedJs);
+    }
+
+    #[Test]
+    public function includesNestedComponentsFromTheInjectedSiblingRegistryInTheInlineScript(): void
+    {
+        // Constructed directly (not via ::getInstance(), which needs a DI container this unit test
+        // doesn't bootstrap) and wired in through the same constructor param HydrationRegistry's own
+        // DI-resolved instance would receive in production - proving the two registries are meant
+        // to be the *same* object, not proving anything about the container wiring itself.
+        $nestedComponentRegistry = new NestedComponentRegistry();
+        $nestedComponentRegistry->pushTrackingScope('field-array:«f0»:itemTemplate');
+        $nestedComponentRegistry->recordNestedComponent('field', '«f1»');
+        $nestedComponentRegistry->popTrackingScope();
+
+        $registry = new HydrationRegistry($this->assetCollector, nestedComponentRegistry: $nestedComponentRegistry);
+        $registry->add('field', '«f1»', ['props' => ['name' => 'firstName']]);
+
+        $this->assertStringContainsString('nestedComponents', $this->capturedJs);
+        $this->assertStringContainsString('field-array:«f0»:itemTemplate', $this->capturedJs);
     }
 }

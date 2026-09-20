@@ -1,5 +1,9 @@
 import { ListCollection, type CollectionItem } from '@zag-js/collection';
-import type { ComponentHydrationData, FluidPrimitivesGlobals } from '../types';
+import type {
+    ComponentHydrationData,
+    FluidPrimitivesGlobals,
+    NestedComponentEntry,
+} from '../types';
 import { Component } from './component';
 
 // Keep in sync with: Classes/Utility/ComponentUtility.php
@@ -137,6 +141,17 @@ export function getHydrationData(component?: string, id?: string) {
     }
 
     return hydrationData[clientComponentName][id] || null;
+}
+
+/**
+ * Root components PHP found nested inside the tracked scope `scopeId` (a `ui:template` stencil's
+ * own id, or a FieldArray row's own id) - see `HydrationRegistry::recordNestedComponent()`'s own
+ * docblock for why this is authoritative, PHP-recorded data rather than something inferred from
+ * scanning rendered DOM shape (which can't find a component that renders no DOM element of its own,
+ * e.g. `Dialog`'s `Root`, or whose content has since portaled elsewhere).
+ */
+function getNestedComponents(scopeId: string): NestedComponentEntry[] {
+    return window.FluidPrimitives?.nestedComponents?.[scopeId] ?? [];
 }
 
 /**
@@ -466,37 +481,24 @@ export class ComponentHydrator {
     }
 
     /**
-     * Re-stamps every ref'd element within `root` (root included) for a new, real `value` - both
-     * this component's own scope, AND any nested, *independent* root component found inside it
-     * (e.g. a `Field`+`Input` composed inside a `FieldArray` row, or any other primitive that
-     * composes another one inside its own per-item markup) via {@see restampNestedRootComponents}.
-     * Use after cloning a `<template>` (see `Template`) to make the clone represent one real
-     * item/row in a single call, instead of manually recomputing
-     * `id`/`data-scope`/`data-part`/`data-value` for the root and separately for every nested
-     * value-scoped part (e.g. a combobox item's own `item-text`/`item-indicator`) *and* separately
-     * preparing whatever independent components that item happens to compose. Fully generic - not
-     * tied to any one primitive - so a `<template>` item "just works" regardless of what it
-     * contains, without the calling primitive needing to know or handle that itself.
+     * Re-stamps every element within `root` (root included) that belongs to *this* component's own
+     * scope (`data-scope` === this hydrator's) for a new, real `value` - the shared half of
+     * {@see restampValue}/{@see renameValue}, which differ only in what they each then do about any
+     * nested, independent root component `root` happens to compose (a fresh copy vs. an in-place
+     * rename - see `restampValue`'s own docblock for why the two are never auto-detected from one
+     * another).
      *
      * `attributes`, if given, are additionally set on the same elements `value` is applied to - for
      * primitives whose `render()` reads plain per-element data attributes rather than resolving a
      * collection item (e.g. RadioGroup's `disabled`/`invalid`, NavigationMenu's `Link` `current`).
      * A boolean value toggles a bare `data-x` attribute (e.g. `{ disabled: true }` -> `data-disabled`,
      * present only when true); a string value sets `data-x="value"` directly.
-     *
-     * Returns the distinct client component names of any nested root components found and
-     * prepared (empty when `root` contains none, the common case - e.g. `FileUpload`'s own item
-     * previews) - call the matching `mountAll()`s for each of these after inserting a freshly
-     * cloned item into the document, per `mountAll`'s own docblock ("after lazily-inserted DOM
-     * adds new instances"). For an *existing* item whose value is merely changing (not a fresh
-     * clone), nothing further is needed - {@see restampNestedRootComponents} re-keys already
-     * mounted/registered nested components in place instead of treating them as new.
      */
-    restampValue(
+    private restampOwnScope(
         root: Element,
         value: string,
         attributes?: Record<string, boolean | string>
-    ): string[] {
+    ): void {
         const restamp = (el: Element) => {
             const rawPart = el.getAttribute('data-part');
             if (!rawPart) return;
@@ -518,8 +520,101 @@ export class ComponentHydrator {
             restamp(root);
         }
         root.querySelectorAll(`[data-scope="${this.clientComponentName}"][id]`).forEach(restamp);
+    }
 
-        return restampNestedRootComponents(root, value);
+    /**
+     * Re-stamps `root` for a new, real `value` (via {@see restampOwnScope}) and prepares any
+     * nested, *independent* root component found inside it (e.g. a `Field`+`Input` composed inside
+     * a `FieldArray` row, or any other primitive that composes another one inside its own per-item
+     * markup) as a brand-new instance copied from its own pristine stencil data, via
+     * {@see prepareNestedRootComponents}. Use after cloning a `<template>` (see `Template`) to make
+     * the clone represent one real item/row in a single call, instead of manually recomputing
+     * `id`/`data-scope`/`data-part`/`data-value` for the root and separately for every nested
+     * value-scoped part (e.g. a combobox item's own `item-text`/`item-indicator`) *and* separately
+     * preparing whatever independent components that item happens to compose. Fully generic - not
+     * tied to any one primitive - so a `<template>` item "just works" regardless of what it
+     * contains, without the calling primitive needing to know or handle that itself.
+     *
+     * Only for a *freshly cloned* item - one that has never been through this or
+     * {@see renameValue} before (a `<template>`'s content is never mutated by a previous clone, so
+     * this is always true right after `content.cloneNode(true)`). For an *existing* item pulled
+     * from the live DOM whose value is merely changing (e.g. `FieldArray` reindexing a later row
+     * down by one after an earlier row was removed), call {@see renameValue} instead.
+     *
+     * The two used to be auto-detected from a nested component's own *current* id shape (no
+     * `:value` suffix yet vs. already has one) rather than asked for explicitly - but that shape
+     * can't actually tell a never-touched, already-live server-rendered row apart from a
+     * never-touched template clone; both look identical. That silently mis-classified an
+     * already-mounted row as "fresh" the first time an earlier row's removal caused it to be
+     * reindexed: its DOM id moved out from under it (via `restampIdReferences`, which both paths
+     * run) without its `ComponentHydrator.rootId`/`uncontrolledInstances` entry following along -
+     * only {@see renameValue}'s path updates those - leaving its already-mounted `Field`/`Input`
+     * instances silently unable to find their own elements again. The caller already knows
+     * unambiguously which case it's in (a fresh `Template` clone vs. an element already in the
+     * document), so it now says so by calling the matching method instead of leaving it to a guess.
+     *
+     * `stencilId` is the `<template>` element's own id (see `Template`'s constructor, its only
+     * caller) - what nested root components `root` composes is looked up from
+     * `window.FluidPrimitives.nestedComponents[stencilId]` (PHP-recorded, see
+     * `HydrationRegistry::recordNestedComponent()`), not found by scanning `root` itself. That's
+     * what lets this find a nested component regardless of what DOM shape it renders - including
+     * one that renders no identifiable wrapper of its own at all (e.g. `Dialog`'s `Root`, which is
+     * just `<f:slot />` - see `ui:portal`'s own `isRenderStencil` handling for the other half of
+     * making a portalled nested component work inside a stencil).
+     *
+     * Returns the distinct client component names of any nested root components found and
+     * prepared (empty when `root` contains none, the common case - e.g. `FileUpload`'s own item
+     * previews) - call the matching `mountAll()`s for each of these after inserting a freshly
+     * cloned item into the document, per `mountAll`'s own docblock ("after lazily-inserted DOM
+     * adds new instances").
+     */
+    restampValue(
+        root: Element,
+        value: string,
+        stencilId: string,
+        attributes?: Record<string, boolean | string>
+    ): string[] {
+        this.restampOwnScope(root, value, attributes);
+        return prepareNestedRootComponents(stencilId, root, value);
+    }
+
+    /**
+     * Re-stamps `root` for a new, real `value` (via {@see restampOwnScope}) and re-keys every
+     * nested, independent root component found inside it (e.g. a `FieldArray` row's own
+     * `Field`+`Input`) to reference `value` instead of whatever position it previously held - both
+     * their DOM ids (via {@see restampIdReferences}) and, for ones that are already live/mounted,
+     * their own `ComponentHydrator.rootId` and their entry in
+     * `window.FluidPrimitives.uncontrolledInstances`/`hydrationData` (via
+     * {@see renameNestedComponentEntry}), so their future re-renders keep resolving their own
+     * elements and later lookups (`getComponentInstance`, `destroyComponentsWithin`) keep finding
+     * them under their new id.
+     *
+     * For an *existing* item pulled from the live DOM whose position is merely shifting - never for
+     * a freshly cloned `<template>` item, which has no existing instance/hydration-data entry to
+     * re-key in the first place; use {@see restampValue} for that. See that method's own docblock
+     * for why the two are never auto-detected from one another.
+     *
+     * Looks up what `root` composes from `window.FluidPrimitives.nestedComponents[root.id]` - i.e.
+     * `root`'s id *before* this call restamps it, which is why that's read first, before
+     * {@see restampOwnScope} changes it. That's a correct lookup key both for a row rendered for
+     * real (PHP records it there too - see `ComponentHydrationCollector`'s FieldArray-ambient-
+     * context check) and for one `restampValue` prepared earlier (which migrates the same entry to
+     * the row's new id as its own last step, for exactly this reason).
+     */
+    renameValue(root: Element, value: string): void {
+        const previousScopeKey = root.id;
+        this.restampOwnScope(root, value);
+
+        const remaps = nestedRootRemapsFromMetadata(previousScopeKey, value);
+        if (remaps.length === 0) return;
+
+        restampIdReferences(root, remaps);
+
+        for (const { clientComponentName, oldRootId, newRootId } of remaps) {
+            renameNestedComponentEntry(clientComponentName, oldRootId, newRootId, remaps);
+        }
+
+        migrateNestedComponentsScope(previousScopeKey, root.id, remaps);
     }
 
     destroy() {
@@ -592,8 +687,8 @@ function remapIdsProp(ids: Record<string, string>, remaps: RootIdRemap[]): Recor
 
 /**
  * Copies a stencil's cached hydration props to a freshly derived id, for a nested root component
- * found still in its pristine, never-restamped-before state (see {@see restampNestedRootComponents}
- * for how that's told apart from an already-valued one). Deep-clones the stencil's own props
+ * found in a freshly cloned `<template>` item (see {@see prepareNestedRootComponents}). Deep-clones
+ * the stencil's own props
  * (registered once at server-render time, when that one stencil instance rendered) rather than
  * moving them, since the stencil's own entry must stay put for the *next* clone to copy from too -
  * unlike {@see renameNestedComponentEntry}, which re-keys a single existing entry in place.
@@ -634,9 +729,9 @@ function copyNestedComponentEntry(
 
 /**
  * Re-keys a single nested root component's own entry from `oldRootId` to `newRootId` in place -
- * for one found already valued (its id already ends in a `:value` segment - see
- * {@see restampNestedRootComponents}), as opposed to a fresh one still in its pristine stencil
- * state (see {@see copyNestedComponentEntry}). Updates both its `window.FluidPrimitives.
+ * for an existing item pulled from the live DOM (see {@see ComponentHydrator.renameValue}), as
+ * opposed to a fresh one still in its pristine stencil state (see
+ * {@see copyNestedComponentEntry}). Updates both its `window.FluidPrimitives.
  * hydrationData` entry and, for one that's already live/mounted, its own `ComponentHydrator.
  * rootId` and its entry in `window.FluidPrimitives.uncontrolledInstances`, so its future
  * re-renders keep resolving their own elements correctly and later lookups
@@ -674,70 +769,90 @@ function renameNestedComponentEntry(
 }
 
 /**
- * Finds every nested, *independent* root component inside `root` (e.g. a `Field`+`Input` composed
- * inside a `FieldArray` row) - `[data-part="root"]` (`querySelectorAll` never matches `root`
- * itself, so the outer component's own root is naturally excluded without a special case) - and
- * prepares each one for `value`, both as a fresh copy from an inert stencil and as an in-place
- * rename of an already-valued one, told apart from nothing but its own *current* id shape - no
- * separate flag needed from the caller:
+ * Builds the `value`-suffixed id each root component PHP recorded as nested inside `scopeKey`
+ * (see {@see getNestedComponents}) should move to - the metadata itself, not this formula, is what
+ * tells the two apart from any *other* root component on the page.
  *
- * - No `:value` suffix yet (always true right after `content.cloneNode(true)`, since a
- *   `<template>`'s content is never mutated by a previous clone): treated as fresh, via
- *   {@see copyNestedComponentEntry}.
- * - Already ends in `:{someValue}` (from having been through this function before): treated as an
- *   existing item whose value is merely changing, via {@see renameNestedComponentEntry} - e.g.
- *   after removing an earlier `FieldArray` row shifts a later one's own index down by one.
+ * Recovers each one's stable, stencil-rooted prefix from its *current* recorded id first -
+ * stripping back to before the last `:` segment, if it has one - so a component already renamed
+ * once (`x:0` -> `x:1`) has that suffix *replaced* rather than accumulated (`x:0:1`). A component
+ * that's never been touched at all (fresh from either a never-rendered-before-now server row or an
+ * untouched `<template>` stencil) has no `:` in its rootId to strip, so this is a correct no-op for
+ * it - its whole current id already is the stable prefix.
  *
- * Either way, every `[id]` element that *references* one of those root ids - not just the root
- * element itself - is re-stamped too, via {@see restampIdReferences} (which also fixes up any part
- * whose id references a *different* nested component's own id, e.g. Input's label/input reusing
- * Field's), plus the same substitution applied to each one's own `ids` prop override map via
- * {@see remapIdsProp}. Without this, a nested component's non-root parts would keep their prior
- * ids baked in and collide across every clone, since they're outside `restampValue`'s own
- * `data-scope` (which only covers the *outer* component's own parts) - and a part whose id was
- * server-stamped to reuse a *different* component's own id would silently lose that link if its id
- * were instead regenerated from its own component's default formula.
+ * Shared by both {@see prepareNestedRootComponents} (fresh `<template>` clones) and
+ * {@see ComponentHydrator.renameValue} (existing items whose position is shifting) - the remap
+ * shape itself doesn't differ between the two; only what each one does with it afterward (copy a
+ * stencil's props to the new id vs. re-key an existing entry in place) does.
+ */
+function nestedRootRemapsFromMetadata(scopeKey: string, value: string): RootIdRemap[] {
+    return getNestedComponents(scopeKey).map(({ name, id: currentRootId }) => {
+        const lastColonIndex = currentRootId.lastIndexOf(':');
+        const stencilRootId =
+            lastColonIndex === -1 ? currentRootId : currentRootId.slice(0, lastColonIndex);
+
+        return {
+            clientComponentName: name,
+            oldRootId: currentRootId,
+            newRootId: `${stencilRootId}:${value}`,
+        };
+    });
+}
+
+/**
+ * Moves `window.FluidPrimitives.nestedComponents[oldScopeKey]` (if present) to `newScopeKey`,
+ * rewriting each entry's own `id` through the same `remaps` {@see nestedRootRemapsFromMetadata}
+ * just computed from it - so a *later* {@see ComponentHydrator.renameValue} on this same item (a
+ * second reindex) still finds it under the id the item actually has by then, rather than the one
+ * it was first recorded under. Called by both {@see ComponentHydrator.restampValue} (a fresh
+ * clone's new row-level key) and {@see ComponentHydrator.renameValue} (an existing row's new key) -
+ * skipped by neither, since `FileUpload`'s item clones have no row-level key anything ever reads
+ * back, so migrating a never-consulted entry for them is harmless.
+ */
+function migrateNestedComponentsScope(
+    oldScopeKey: string,
+    newScopeKey: string,
+    remaps: RootIdRemap[]
+): void {
+    const entries = window.FluidPrimitives?.nestedComponents?.[oldScopeKey];
+    if (!entries || oldScopeKey === newScopeKey) return;
+
+    if (!window.FluidPrimitives.nestedComponents) {
+        window.FluidPrimitives.nestedComponents = {};
+    }
+
+    delete window.FluidPrimitives.nestedComponents[oldScopeKey];
+    window.FluidPrimitives.nestedComponents[newScopeKey] = entries.map(entry => {
+        const match = remaps.find(
+            remap => remap.clientComponentName === entry.name && remap.oldRootId === entry.id
+        );
+        return match ? { name: entry.name, id: match.newRootId } : entry;
+    });
+}
+
+/**
+ * Prepares every nested, independent root component inside a freshly cloned `<template>` item for
+ * `value` - the fresh-clone half of {@see ComponentHydrator.restampValue}, which this backs. Every
+ * `[id]` element that *references* one of those root ids - not just the root element itself - is
+ * re-stamped too, via {@see restampIdReferences} (which also fixes up any part whose id references
+ * a *different* nested component's own id, e.g. Input's label/input reusing Field's), plus the
+ * same substitution applied to each one's own `ids` prop override map via {@see remapIdsProp}.
+ * Without this, a nested component's non-root parts would keep their prior ids baked in and
+ * collide across every clone, since they're outside `restampValue`'s own `data-scope` (which only
+ * covers the *outer* component's own parts) - and a part whose id was server-stamped to reuse a
+ * *different* component's own id would silently lose that link if its id were instead regenerated
+ * from its own component's default formula.
  *
- * Deliberately does not construct component instances itself for a freshly-copied one - there is
- * no registry mapping a componentName to its constructor anywhere in this library (each
+ * Copies each one's stencil hydration data (registered once at server-render time, when that one
+ * stencil instance rendered) to the new id via {@see copyNestedComponentEntry}, so a subsequent
+ * `mountAll()` can construct it. Deliberately does not construct component instances itself -
+ * there is no registry mapping a componentName to its constructor anywhere in this library (each
  * primitive's own `mountAll('field', callback)` call, with its own constructor, is defined
  * per-consumer in their own entry.ts) - see {@see ComponentHydrator.restampValue}'s own docblock
  * for what to do with the client component names this returns instead.
- *
- * Assumes the default `:` root-id separator for any nested root component found (true for every
- * field-family primitive - `field`, `input`, `select`, `checkbox`, `number-input`, ...); a
- * primitive that overrides its own `root` id format (only `scroll-area` does today, and only for
- * its own parts) isn't a fit as a *nested* component here.
  */
-function restampNestedRootComponents(root: Element, value: string): string[] {
-    const freshRemaps: RootIdRemap[] = [];
-    const renameRemaps: RootIdRemap[] = [];
-
-    root.querySelectorAll<HTMLElement>('[data-part="root"][data-scope][id]').forEach(el => {
-        const clientComponentName = el.dataset.scope;
-        if (!clientComponentName) return;
-
-        const separatorIndex = el.id.indexOf(':');
-        const currentRootId = separatorIndex === -1 ? el.id : el.id.slice(separatorIndex + 1);
-        const lastColonIndex = currentRootId.lastIndexOf(':');
-
-        if (lastColonIndex === -1) {
-            freshRemaps.push({
-                clientComponentName,
-                oldRootId: currentRootId,
-                newRootId: `${currentRootId}:${value}`,
-            });
-        } else {
-            const stencilRootId = currentRootId.slice(0, lastColonIndex);
-            renameRemaps.push({
-                clientComponentName,
-                oldRootId: currentRootId,
-                newRootId: `${stencilRootId}:${value}`,
-            });
-        }
-    });
-
-    const remaps = [...freshRemaps, ...renameRemaps];
+function prepareNestedRootComponents(stencilId: string, root: Element, value: string): string[] {
+    const remaps = nestedRootRemapsFromMetadata(stencilId, value);
     if (remaps.length === 0) return [];
 
     // Restamp DOM ids for every nested root component found before rewriting any hydration
@@ -748,16 +863,17 @@ function restampNestedRootComponents(root: Element, value: string): string[] {
 
     const clientComponentNames = new Set<string>();
 
-    for (const { clientComponentName, oldRootId, newRootId } of freshRemaps) {
+    for (const { clientComponentName, oldRootId, newRootId } of remaps) {
         if (copyNestedComponentEntry(clientComponentName, oldRootId, newRootId, remaps, value)) {
             clientComponentNames.add(clientComponentName);
         }
     }
 
-    for (const { clientComponentName, oldRootId, newRootId } of renameRemaps) {
-        renameNestedComponentEntry(clientComponentName, oldRootId, newRootId, remaps);
-        clientComponentNames.add(clientComponentName);
-    }
+    // root.id (already restamped to `value` by restampOwnScope, just before this runs) becomes the
+    // new scope key for anything migrated here - meaningful for a FieldArray row (renameValue's own
+    // later lookup depends on it); for FileUpload's own item clones nothing ever reads this key
+    // back, so migrating it is harmless, unused bookkeeping rather than a no-op.
+    migrateNestedComponentsScope(stencilId, root.id, remaps);
 
     return Array.from(clientComponentNames);
 }

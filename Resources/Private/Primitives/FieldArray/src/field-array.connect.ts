@@ -194,10 +194,11 @@ function reindexRowsAfter(component: FieldArray, removedIndex: number): void {
         // renameFieldMachineForForm (above) only updates each nested field's `name` prop for
         // submission purposes - it never touches DOM ids. Without also re-keying those here, a
         // later row appended at this now-freed-up index would clone the same stencil and collide
-        // with these nested Field/Input's still-stale ids (see `ComponentHydrator.restampValue`'s
-        // own docblock for the full mechanism - it re-keys an *already-valued* item in place here,
-        // rather than copying from a stencil the way a fresh `append()` does).
-        component.hydrator.restampValue(rowEl, String(newIndex));
+        // with these nested Field/Input's still-stale ids (see `ComponentHydrator.renameValue`'s
+        // own docblock for the full mechanism - `rowEl` is an existing, possibly already-mounted
+        // item, never a fresh `<template>` clone, so this must be `renameValue`, not
+        // `restampValue`).
+        component.hydrator.renameValue(rowEl, String(newIndex));
     }
 }
 

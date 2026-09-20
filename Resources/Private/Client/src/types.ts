@@ -16,8 +16,25 @@ declare global {
                     [id: string]: Component<unknown, unknown>;
                 };
             };
+            /**
+             * Root components PHP found nested inside a tracked scope - a `ui:template` stencil, or
+             * a FieldArray row - keyed by that scope's own id (see
+             * `HydrationRegistry::recordNestedComponent()`'s own docblock for why this exists rather
+             * than inferring nesting from rendered DOM shape). Read via
+             * {@see getNestedComponents}, not indexed directly.
+             */
+            nestedComponents?: {
+                [scopeId: string]: NestedComponentEntry[];
+            };
         };
     }
+}
+
+export interface NestedComponentEntry {
+    /** The nested component's clientComponentName, e.g. "field" or "dialog". */
+    name: string;
+    /** Its bare rootId - the same form `ComponentHydrator`'s own `rootId` uses, no namespace prefix. */
+    id: string;
 }
 
 export interface ComponentInterface<Api> {

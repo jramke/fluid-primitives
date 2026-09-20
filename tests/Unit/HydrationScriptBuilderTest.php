@@ -16,6 +16,7 @@ final class HydrationScriptBuilderTest extends TestCase
         $js = (new HydrationScriptBuilder())->build(
             ['accordion' => ['«f1»' => ['multiple' => true]]],
             ['locale' => 'en_US'],
+            [],
             development: true,
         );
 
@@ -30,6 +31,7 @@ final class HydrationScriptBuilderTest extends TestCase
         $js = (new HydrationScriptBuilder())->build(
             ['accordion' => ['«f1»' => ['multiple' => true]]],
             ['locale' => 'en_US'],
+            [],
             development: false,
         );
 
@@ -44,6 +46,7 @@ final class HydrationScriptBuilderTest extends TestCase
         $js = (new HydrationScriptBuilder())->build(
             ['accordion' => ['«f1»' => ['label' => '</script><script>alert(1)</script>']]],
             ['locale' => 'en_US'],
+            [],
             development: true,
         );
 
@@ -56,9 +59,24 @@ final class HydrationScriptBuilderTest extends TestCase
         $js = (new HydrationScriptBuilder())->build(
             ['accordion' => ['«f1»' => ['label' => '</script><script>alert(1)</script>']]],
             ['locale' => 'en_US'],
+            [],
             development: false,
         );
 
         $this->assertStringNotContainsString('</script>', $js);
+    }
+
+    #[Test]
+    public function includesNestedComponentsByScope(): void
+    {
+        $js = (new HydrationScriptBuilder())->build(
+            ['field' => ['«f1»' => ['name' => 'firstName']]],
+            ['locale' => 'en_US'],
+            ['field-array:«f0»:itemTemplate' => [['name' => 'field', 'id' => '«f1»']]],
+            development: true,
+        );
+
+        $this->assertStringContainsString('nestedComponents', $js);
+        $this->assertStringContainsString('field-array:«f0»:itemTemplate', $js);
     }
 }

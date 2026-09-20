@@ -22,6 +22,7 @@ class HydrationRegistry
     public function __construct(
         private readonly AssetCollector $assetCollector,
         private readonly HydrationScriptBuilder $scriptBuilder = new HydrationScriptBuilder(),
+        private readonly NestedComponentRegistry $nestedComponentRegistry = new NestedComponentRegistry(),
     ) {}
 
     public static function getInstance(): self
@@ -87,7 +88,8 @@ class HydrationRegistry
         }
 
         $development = $this->scriptBuilder->isDevelopment();
-        $js = $this->scriptBuilder->build($this->registry, $this->getGlobals(), $development);
+        $nestedComponents = $this->nestedComponentRegistry->getNestedComponentsByScope();
+        $js = $this->scriptBuilder->build($this->registry, $this->getGlobals(), $nestedComponents, $development);
 
         $scriptAttributes = $development ? ['id' => self::SCRIPT_ID] : [];
 

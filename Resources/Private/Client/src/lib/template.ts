@@ -66,6 +66,7 @@ export class Template extends DocumentFragment {
             this.componentNames = hydrator.restampValue(
                 this.root,
                 options.value,
+                templateEl.id,
                 options.attributes
             );
         }

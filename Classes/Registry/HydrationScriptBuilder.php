@@ -22,14 +22,15 @@ final class HydrationScriptBuilder
         }
     }
 
-    public function build(array $registry, array $globals, bool $development): string
+    public function build(array $registry, array $globals, array $nestedComponentsByScope, bool $development): string
     {
         $js = <<<JS
         (function() {
         window.FluidPrimitives = {
             uncontrolledInstances: {},
             globals: {$this->toJson($globals, $development)},
-            hydrationData: {$this->toJson($registry, $development)}
+            hydrationData: {$this->toJson($registry, $development)},
+            nestedComponents: {$this->toJson($nestedComponentsByScope, $development)}
         };
         })();
         JS;

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Tests\Functional\ViewHelpers;
 
 use Jramke\FluidPrimitives\Domain\Dto\ListCollection;
+use Jramke\FluidPrimitives\Registry\NestedComponentRegistry;
 use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -97,6 +98,37 @@ final class TemplateViewHelperTest extends FunctionalTestCase
             '/<span id="combobox:[^"]*:title" data-scope="combobox" data-part="title">/',
             $html,
         );
+    }
+
+    #[Test]
+    public function recordsRootComponentsRenderedInsideItsChildrenAsNestedInItsOwnStencilId(): void
+    {
+        $collection = new ListCollection([]);
+
+        $html = $this->renderTemplate('
+            <primitives:combobox.root collection="{collection}">
+                <ui:template name="itemTemplate" context="combobox">
+                    <primitives:field.root name="test">
+                        <input type="text" />
+                    </primitives:field.root>
+                </ui:template>
+            </primitives:combobox.root>
+        ', ['collection' => $collection]);
+
+        preg_match('/<template id="(combobox:[^"]*:itemTemplate)"/', $html, $matches);
+        $stencilId = $matches[1] ?? null;
+        $this->assertNotNull($stencilId);
+
+        // The bare rootId (no "field:" DOM-namespace prefix) - the same form
+        // ComponentUtility::getRootIdFromContext()/HydrationRegistry::add() already use, and what
+        // ComponentHydrator's client-side remapping already works with internally.
+        preg_match('/id="field:([^"]*)" data-scope="field" data-part="root"/', $html, $fieldMatches);
+        $fieldRootId = $fieldMatches[1] ?? null;
+        $this->assertNotNull($fieldRootId);
+
+        $byScope = NestedComponentRegistry::getInstance()->getNestedComponentsByScope();
+
+        $this->assertSame([['name' => 'field', 'id' => $fieldRootId]], $byScope[$stencilId] ?? null);
     }
 
     #[Test]

@@ -8,6 +8,7 @@ use Jramke\FluidPrimitives\Constants;
 use Jramke\FluidPrimitives\Contexts\AbstractComponentContext;
 use Jramke\FluidPrimitives\Domain\Dto\ComponentHydrationCandidate;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
+use Jramke\FluidPrimitives\Registry\NestedComponentRegistry;
 use Jramke\FluidPrimitives\Registry\PortalRegistry;
 use Jramke\FluidPrimitives\Utility\ClientPropsContextExtractor;
 use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
@@ -18,6 +19,12 @@ use Jramke\FluidPrimitives\Utility\ComponentUtility;
  * whatever it portaled away, via {@see PortalRegistry}) shows it was actually referenced client-side -
  * `ui:ref` always emits `data-scope="{componentName}"`, which is the detection signal this looks for,
  * mirrored by `ui:exposeToClient`'s marker for components with no ref'd part at all.
+ *
+ * Also the single place every such registration is recorded against whatever
+ * {@see NestedComponentRegistry::recordNestedComponent()} tracking is currently active for it - a
+ * `ui:template` stencil this render happens to be nested inside - so this works for *any* root
+ * component regardless of how it renders (e.g. `Dialog`, whose own `Root` renders no DOM element
+ * at all), not just ones a client-side scan of the rendered HTML would happen to find.
  */
 final readonly class ComponentHydrationCollector
 {
@@ -90,6 +97,10 @@ final readonly class ComponentHydrationCollector
             ...array_filter($candidate->relatedContextRootIds),
         ];
 
+        // Recorded before add() - add() self-triggers the inline hydration script's rebuild, and
+        // this way that rebuild already reflects this component's own nested-tracking entry too,
+        // rather than needing a second component's registration to come along and catch it up.
+        NestedComponentRegistry::getInstance()->recordNestedComponent($candidate->clientBaseName, $rootId);
         HydrationRegistry::getInstance()->add($candidate->clientBaseName, $rootId, $data);
 
         return $rendered;

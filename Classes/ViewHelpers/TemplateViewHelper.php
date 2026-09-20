@@ -6,6 +6,7 @@ namespace Jramke\FluidPrimitives\ViewHelpers;
 
 use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
 use Jramke\FluidPrimitives\Domain\Dto\TagAttributes;
+use Jramke\FluidPrimitives\Registry\NestedComponentRegistry;
 use Jramke\FluidPrimitives\Service\ContextService;
 use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
 use Jramke\FluidPrimitives\Utility\ComponentPartIdUtility;
@@ -134,13 +135,30 @@ class TemplateViewHelper extends AbstractViewHelper
 
         try {
             $part = (string)$this->arguments['name'];
+            $stencilId = ComponentPartIdUtility::generatePartId(
+                $clientBaseName,
+                (string)$context->get('rootId'),
+                $part,
+            );
             $refAttributes = new TagAttributes([
-                'id' => ComponentPartIdUtility::generatePartId($clientBaseName, (string)$context->get('rootId'), $part),
+                'id' => $stencilId,
                 'data-scope' => $clientBaseName,
                 'data-part' => ComponentNameUtility::camelCaseToLowerCaseDashed($part),
             ]);
 
-            return '<template ' . (string)$refAttributes . '>' . (string)$this->renderChildren() . '</template>';
+            // Opens a tracking scope keyed by this stencil's own id, so every root component that
+            // registers itself while rendering our children (however it renders - see
+            // NestedComponentRegistry::recordNestedComponent()'s own docblock) is recorded as nested
+            // inside this stencil. The client reads that list instead of inferring nesting from
+            // rendered DOM shape (see ComponentHydrator.restampValue in Client/src/lib/hydration.ts).
+            NestedComponentRegistry::getInstance()->pushTrackingScope($stencilId);
+            try {
+                $renderedChildren = (string)$this->renderChildren();
+            } finally {
+                NestedComponentRegistry::getInstance()->popTrackingScope();
+            }
+
+            return '<template ' . (string)$refAttributes . '>' . $renderedChildren . '</template>';
         } finally {
             $context->set('isRenderStencil', $wasRenderStencil);
 
