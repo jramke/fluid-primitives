@@ -7,57 +7,50 @@ namespace Jramke\FluidPrimitives\Utility;
 use Jramke\FluidPrimitives\Attributes\ExposeToClient;
 use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
 use ReflectionClass;
-use ReflectionMethod;
 
 class ClientPropsContextExtractor
 {
     public static function extract(ComponentContextInterface $context): array
     {
+        $reflection = new ReflectionClass($context);
         $props = [];
 
-        foreach (self::discover(new ReflectionClass($context)) as $entry) {
-            // Reflection-invoking an arbitrary #[ExposeToClient] getter is inherently mixed -
-            // that's the whole point of this extractor.
-            // @mago-expect analysis:mixed-assignment
-            $value = $entry['method']->invoke($context);
-
-            if ($entry['attribute']->excludeIfNull && $value === null) {
-                continue;
+        foreach ($reflection->getMethods() as $method) {
+            $clientProp = self::buildClientProp($method, $context);
+            if ($clientProp !== false) {
+                $props[$clientProp[0]] = $clientProp[1];
             }
-
-            $props[$entry['name']] = EnumUtility::normalize($value);
         }
 
         return $props;
     }
 
-    /**
-     * The static half of what {@see extract()} does - every public, no-required-parameter method
-     * carrying `#[ExposeToClient]`, with its already-normalized prop name, but without actually
-     * invoking it. Used by `ui:generate-hydration-types` codegen, which only needs a method's own
-     * signature (attribute + declared return type), never a real context instance to call it on.
-     *
-     * @return list<array{method: ReflectionMethod, attribute: ExposeToClient, name: string}>
-     */
-    public static function discover(ReflectionClass $reflection): array
+    private static function buildClientProp(\ReflectionMethod $method, ComponentContextInterface $context): array|false
     {
-        $discovered = [];
+        $attributes = $method->getAttributes(ExposeToClient::class);
 
-        foreach ($reflection->getMethods() as $method) {
-            $attributes = $method->getAttributes(ExposeToClient::class);
-            if ($attributes === [] || !$method->isPublic() || $method->getNumberOfRequiredParameters() > 0) {
-                continue;
-            }
-
-            $attribute = $attributes[0]->newInstance();
-            $discovered[] = [
-                'method' => $method,
-                'attribute' => $attribute,
-                'name' => $attribute->name ?? self::normalizeMethodName($method->getName()),
-            ];
+        if ($attributes === []) {
+            return false;
         }
 
-        return $discovered;
+        if (!$method->isPublic() || $method->getNumberOfRequiredParameters() > 0) {
+            return false;
+        }
+
+        $attribute = $attributes[0]->newInstance();
+
+        // Reflection-invoking an arbitrary #[ExposeToClient] getter is inherently mixed - that's the
+        // whole point of this extractor.
+        // @mago-expect analysis:mixed-assignment
+        $value = $method->invoke($context);
+
+        if ($attribute->excludeIfNull && $value === null) {
+            return false;
+        }
+
+        $name = $attribute->name ?? self::normalizeMethodName($method->getName());
+
+        return [$name, EnumUtility::normalize($value)];
     }
 
     private static function normalizeMethodName(string $method): string

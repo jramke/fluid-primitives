@@ -4,7 +4,6 @@ import { connect } from './src/input.connect';
 import * as dom from './src/input.dom';
 import { machine } from './src/input.machine';
 import type { InputApi, InputProps } from './src/input.types';
-export type { InputHydrationProps } from './Input.hydration';
 
 export class Input extends FieldAwareComponent<InputProps, InputApi> {
     static componentName = 'input';

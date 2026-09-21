@@ -1,7 +1,6 @@
 import * as zagSwitch from '@zag-js/switch';
 import { FieldAwareComponent, Machine, mergeProps, normalizeProps } from '../../Client';
 import type { FieldMachine } from '../Field/src/field.registry';
-export type { SwitchHydrationProps } from './Switch.hydration';
 
 export class Switch extends FieldAwareComponent<zagSwitch.Props, zagSwitch.Api> {
     static componentName = 'switch';

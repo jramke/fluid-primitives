@@ -1,6 +1,5 @@
 import * as popover from '@zag-js/popover';
 import { Component, Machine, mergeProps, normalizeProps } from '../../Client';
-export type { PopoverHydrationProps } from './Popover.hydration';
 
 export class Popover extends Component<popover.Props, popover.Api> {
     static componentName = 'popover';

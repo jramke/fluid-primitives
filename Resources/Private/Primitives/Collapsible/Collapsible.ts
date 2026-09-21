@@ -1,6 +1,5 @@
 import * as collapsible from '@zag-js/collapsible';
 import { Component, Machine, normalizeProps } from '../../Client';
-export type { CollapsibleHydrationProps } from './Collapsible.hydration';
 
 export class Collapsible extends Component<collapsible.Props, collapsible.Api> {
     static componentName = 'collapsible';

@@ -1,6 +1,5 @@
 import * as tabs from '@zag-js/tabs';
 import { Component, Machine, normalizeProps } from '../../Client';
-export type { TabsHydrationProps } from './Tabs.hydration';
 
 export class Tabs extends Component<tabs.Props, tabs.Api> {
     static componentName = 'tabs';

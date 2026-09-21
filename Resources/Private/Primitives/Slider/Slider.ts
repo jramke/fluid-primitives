@@ -1,7 +1,6 @@
 import * as slider from '@zag-js/slider';
 import { FieldAwareComponent, Machine, mergeProps, normalizeProps } from '../../Client';
 import type { FieldMachine } from '../Field/src/field.registry';
-export type { SliderHydrationProps } from './Slider.hydration';
 
 export class Slider extends FieldAwareComponent<slider.Props, slider.Api> {
     static componentName = 'slider';

@@ -2,7 +2,6 @@ import { Component, Machine, normalizeProps } from '../../Client';
 import { connect } from './src/field-array.connect';
 import { machine } from './src/field-array.machine';
 import type { FieldArrayApi, FieldArrayProps } from './src/field-array.types';
-export type { FieldArrayHydrationProps } from './FieldArray.hydration';
 
 export type {
     FieldArrayAnnounceInfo,

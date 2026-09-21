@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Domain\Dto;
 
 use IteratorAggregate;
-use Jramke\FluidPrimitives\Contracts\ClientTypeAwareInterface;
 use Jramke\FluidPrimitives\Utility\Typed;
 use JsonSerializable;
 use Traversable;
@@ -15,7 +14,7 @@ use Traversable;
 /**
  * @implements IteratorAggregate<array-key, ListCollectionItem>
  */
-final class ListCollection implements JsonSerializable, IteratorAggregate, ClientTypeAwareInterface
+final class ListCollection implements JsonSerializable, IteratorAggregate
 {
     /** @var ListCollectionItem[]|null Cached normalized items */
     private ?array $normalizedItems = null;
@@ -373,19 +372,5 @@ final class ListCollection implements JsonSerializable, IteratorAggregate, Clien
             'groupByKey' => $this->groupByKey,
             'groupSort' => $this->groupSort,
         ];
-    }
-
-    // This is the wire shape jsonSerialize() above actually produces, not what a `select.Props`/
-    // `combobox.Props` `collection` key is typed as (a real ListCollection<T> instance with
-    // methods) - see the plan's "Wire type vs. machine type" note. Both Select and Combobox import
-    // this one canonical type rather than each generating their own duplicated inline literal.
-    public function getTsType(): string
-    {
-        return 'ListCollectionData';
-    }
-
-    public function getTsImport(): ?string
-    {
-        return "import type { ListCollectionData } from 'fluid-primitives/client';";
     }
 }

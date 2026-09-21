@@ -1,6 +1,5 @@
 import * as dialog from '@zag-js/dialog';
 import { Component, Machine, normalizeProps } from '../../Client';
-export type { DialogHydrationProps } from './Dialog.hydration';
 
 export class Dialog extends Component<dialog.Props, dialog.Api> {
     static componentName = 'dialog';

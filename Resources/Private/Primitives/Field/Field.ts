@@ -4,7 +4,6 @@ import { connect } from './src/field.connect';
 import { machine } from './src/field.machine';
 import { registerFieldMachine } from './src/field.registry';
 import type { FieldApi, FieldProps } from './src/field.types';
-export type { FieldHydrationProps } from './Field.hydration';
 
 export type {
     FieldDependencyChangeDetail,

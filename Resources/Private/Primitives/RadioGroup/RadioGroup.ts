@@ -1,7 +1,6 @@
 import * as radioGroup from '@zag-js/radio-group';
 import { FieldAwareComponent, Machine, mergeProps, normalizeProps } from '../../Client';
 import type { FieldMachine } from '../Field/src/field.registry';
-export type { RadioGroupHydrationProps } from './RadioGroup.hydration';
 
 export class RadioGroup extends FieldAwareComponent<radioGroup.Props, radioGroup.Api> {
     static componentName = 'radioGroup';

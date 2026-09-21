@@ -1,27 +1,7 @@
 import * as select from '@zag-js/select';
 import { FieldAwareComponent, Machine, mergeProps, normalizeProps } from '../../Client';
-import { registerClientPropConverters } from '../../Client/src/lib/client-prop-converters';
 import { getListCollectionFromHydrationData } from '../../Client/src/lib/hydration';
-import type { ListCollectionData } from '../../Client/src/types';
 import type { FieldMachine } from '../Field/src/field.registry';
-export type { SelectHydrationProps } from './Select.hydration';
-
-// Runs once, at import time, before any mountAll()/mount() call - same ordering guarantee this
-// codebase already relies on for e.g. static componentName. Converts the wire-shape
-// `ListCollectionData` into a real `ListCollection` before the constructor ever sees it, so
-// `new Select(props)` needs no cast between the generated hydration props and this class's own
-// `select.Props`. Wrapped rather than passed directly - `getListCollectionFromHydrationData` is
-// itself generic, and TS can't infer its type parameter through registerClientPropConverters's own
-// generic `convert` parameter; annotating `collection` here gives it a concrete type to infer from.
-registerClientPropConverters('select', {
-    collection: (collection: ListCollectionData) => getListCollectionFromHydrationData(collection),
-});
-
-declare module 'fluid-primitives/client' {
-    interface HydrationPropsOverrides {
-        select: { collection: select.Props['collection'] };
-    }
-}
 
 export class Select extends FieldAwareComponent<select.Props, select.Api> {
     static componentName = 'select';
@@ -37,9 +17,18 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
         };
     }
 
+    transformProps(props: select.Props): select.Props {
+        return {
+            ...props,
+            get collection() {
+                return getListCollectionFromHydrationData(props.collection);
+            },
+        };
+    }
+
     initMachine(props: select.Props): Machine<any> {
         props = this.withFieldProps(props);
-        return new Machine(select.machine, props);
+        return new Machine(select.machine, this.transformProps(props));
     }
 
     initApi() {

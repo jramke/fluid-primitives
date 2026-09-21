@@ -1,6 +1,5 @@
 import * as menu from '@zag-js/menu';
 import { Component, getComponentInstance, Machine, normalizeProps } from '../../Client';
-export type { MenuHydrationProps } from './Menu.hydration';
 
 export class Menu extends Component<menu.Props, menu.Api> {
     static componentName = 'menu';
