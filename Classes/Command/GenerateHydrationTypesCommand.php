@@ -120,12 +120,14 @@ class GenerateHydrationTypesCommand extends Command
     ): array {
         foreach ($locations as $location) {
             $targetFile = $this->targetFile($location, $outputDir);
-            $content = $this->prettierFormatter->format(
+            // PrettierFormatter writes the formatted result to $targetFile itself as a side
+            // effect (see its own docblock for why a real file, not stdin, is required) - this
+            // *is* the write.
+            $this->prettierFormatter->format(
                 $this->generateForComponent($collection, $location),
                 $targetFile,
                 $location->path,
             );
-            file_put_contents($targetFile, $content);
             $io->writeln(sprintf('Generated: %s', $targetFile));
 
             $classFile = $location->path . '/' . $location->name . '.ts';
@@ -150,11 +152,20 @@ class GenerateHydrationTypesCommand extends Command
 
         foreach ($locations as $location) {
             $targetFile = $this->targetFile($location, $outputDir);
-            $content = $this->prettierFormatter->format(
-                $this->generateForComponent($collection, $location),
-                $targetFile,
-                $location->path,
-            );
+            // Formatted into a scratch sibling, never the real $targetFile itself - --check must
+            // never mutate a committed file, only report whether it would change.
+            $checkFile = $targetFile . '.check.ts';
+            try {
+                $content = $this->prettierFormatter->format(
+                    $this->generateForComponent($collection, $location),
+                    $checkFile,
+                    $location->path,
+                );
+            } finally {
+                if (is_file($checkFile)) {
+                    unlink($checkFile);
+                }
+            }
 
             if (!is_file($targetFile) || file_get_contents($targetFile) !== $content) {
                 $drifted[] = $targetFile;
