@@ -1,5 +1,6 @@
 import * as navigationMenu from '@zag-js/navigation-menu';
 import { Component, Machine, normalizeProps } from '../../Client';
+export type { NavigationMenuHydrationProps } from './NavigationMenu.hydration';
 
 export class NavigationMenu extends Component<navigationMenu.Props, navigationMenu.Api> {
     static componentName = 'navigationMenu';

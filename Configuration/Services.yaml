@@ -7,6 +7,10 @@ services:
   Jramke\FluidPrimitives\:
     resource: '../Classes/*'
 
+  _instanceof:
+    Jramke\FluidPrimitives\Contracts\ClientPropConverterInterface:
+      tags: ['fluid_primitives.client_prop_converter']
+
   Jramke\FluidPrimitives\Registry\HydrationRegistry:
     shared: true
     public: true
@@ -14,3 +18,7 @@ services:
   Jramke\FluidPrimitives\Registry\PortalRegistry:
     shared: true
     public: true
+
+  Jramke\FluidPrimitives\Registry\ClientPropConverterRegistry:
+    arguments:
+      $converters: !tagged_iterator fluid_primitives.client_prop_converter

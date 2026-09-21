@@ -1,0 +1,5 @@
+<ui:prop name="requiredProp" type="string" optional="{false}" client="{true}" description="A required client prop with no default, used to test the explicit-null fail-fast." />
+<ui:prop name="objectProp" type="Jramke\FluidPrimitives\Tests\Fixtures\NonConvertibleObject" optional="{true}" client="{true}" description="An object-typed client prop with no ClientTypeAwareInterface/converter." />
+<div {ui:ref(name: 'root')}>
+    <f:slot />
+</div>

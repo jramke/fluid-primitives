@@ -4,6 +4,7 @@ import { connect } from './src/checkbox-group.connect';
 import { machine } from './src/checkbox-group.machine';
 import { registerCheckboxGroup, unregisterCheckboxGroup } from './src/checkbox-group.registry';
 import type { CheckboxGroupApi, CheckboxGroupProps } from './src/checkbox-group.types';
+export type { CheckboxGroupHydrationProps } from './CheckboxGroup.hydration';
 
 export class CheckboxGroup extends FieldAwareComponent<CheckboxGroupProps, CheckboxGroupApi> {
     static componentName = 'checkboxGroup';

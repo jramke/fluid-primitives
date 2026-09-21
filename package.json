@@ -19,6 +19,10 @@
             "import": "./dist/client.js",
             "types": "./dist/client.d.ts"
         },
+        "./client": {
+            "import": "./dist/client.js",
+            "types": "./dist/client.d.ts"
+        },
         "./accordion": {
             "import": "./dist/accordion.js",
             "types": "./dist/accordion.d.ts"

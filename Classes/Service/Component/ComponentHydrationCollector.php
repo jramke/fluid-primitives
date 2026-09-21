@@ -34,6 +34,10 @@ use Jramke\FluidPrimitives\Utility\Typed;
  */
 final readonly class ComponentHydrationCollector
 {
+    public function __construct(
+        private ClientPropValueResolver $clientPropValueResolver,
+    ) {}
+
     public function collectForRootComponent(ComponentHydrationCandidate $candidate): string
     {
         $rendered = $candidate->rendered;
@@ -85,8 +89,24 @@ final readonly class ComponentHydrationCollector
             // value back. `$candidate->ctx` is null only for a root component with no context at
             // all, hence the fallback to the argument/its definition's default.
             $argumentDefinition = $argumentDefinitions[$name] ?? null;
-            $propsMarkedForClientValues[$name] =
-                $candidate->ctx?->get($name) ?? $arguments[$name] ?? $argumentDefinition?->getDefaultValue();
+            // A client-marked prop's resolved value is inherently mixed - it can be any PHP type a
+            // `ui:prop` declares.
+            // @mago-expect analysis:mixed-assignment
+            $value = $candidate->ctx?->get($name) ?? $arguments[$name] ?? $argumentDefinition?->getDefaultValue();
+
+            $this->clientPropValueResolver->assertRequiredPropNotNull(
+                $value,
+                $name,
+                $candidate->clientBaseName,
+                $argumentDefinition,
+            );
+
+            $propsMarkedForClientValues[$name] = $this->clientPropValueResolver->resolveClientValue(
+                $value,
+                $name,
+                $candidate->clientBaseName,
+                $argumentDefinition,
+            );
         }
 
         // we dont want to send null values to the client, defaults should be defined in the component ts file

@@ -3,6 +3,7 @@ import { connect } from './src/form.connect';
 import { machine } from './src/form.machine';
 import { getFieldMachinesFor, registerFormMachine, type FieldMachine } from './src/form.registry';
 import type { FormApi, FormProps, FormState } from './src/form.types';
+export type { FormHydrationProps } from './Form.hydration';
 export type {
     FormApi,
     FormErrors,

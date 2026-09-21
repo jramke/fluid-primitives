@@ -1,5 +1,6 @@
 import * as accordion from '@zag-js/accordion';
 import { Component, Machine, normalizeProps } from '../../Client';
+export type { AccordionHydrationProps } from './Accordion.hydration';
 
 export class Accordion extends Component<accordion.Props, accordion.Api> {
     static componentName = 'accordion';
