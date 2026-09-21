@@ -14,13 +14,8 @@ use Jramke\FluidPrimitives\Contracts\ClientTypeAwareInterface;
  */
 final class ClientTypeAwareOnlyObject implements ClientTypeAwareInterface
 {
-    public function getTsType(): string
+    public function getTsShapeClass(): string
     {
-        return 'ClientTypeAwareOnlyObjectData';
-    }
-
-    public function getTsImport(): ?string
-    {
-        return null;
+        return ClientTypeAwareOnlyObjectData::class;
     }
 }

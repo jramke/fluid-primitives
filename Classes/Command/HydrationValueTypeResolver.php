@@ -13,8 +13,12 @@ use ReflectionClass;
 use ReflectionMethod;
 use ReflectionNamedType;
 use Spatie\TypeScriptTransformer\Actions\TranspilePhpStanTypeToTypeScriptNodeAction;
-use Spatie\TypeScriptTransformer\Data\WritingContext;
 use Spatie\TypeScriptTransformer\TypeResolvers\DocTypeResolver;
+use Spatie\TypeScriptTransformer\TypeScriptNodes\TypeScriptNode;
+use Spatie\TypeScriptTransformer\TypeScriptNodes\TypeScriptNull;
+use Spatie\TypeScriptTransformer\TypeScriptNodes\TypeScriptRaw;
+use Spatie\TypeScriptTransformer\TypeScriptNodes\TypeScriptReference;
+use Spatie\TypeScriptTransformer\TypeScriptNodes\TypeScriptUnion;
 use TYPO3Fluid\Fluid\Core\ViewHelper\ArgumentDefinition;
 use UnitEnum;
 
@@ -53,29 +57,17 @@ final class HydrationValueTypeResolver
         $required = $this->isArgumentRequired($definition);
         $phpType = ltrim($definition->getType(), characters: '?');
 
-        $objectResolution = $this->resolveObjectType($phpType, $clientBaseName, $propName);
-        if ($objectResolution !== null) {
-            return new HydrationPropDefinition(
-                $propName,
-                $required,
-                $objectResolution[0],
-                $objectResolution[1],
-                pickFromPropsType: false,
-            );
+        $shapeReference = $this->resolveShapeReference($phpType, $clientBaseName, $propName);
+        if ($shapeReference !== null) {
+            return new HydrationPropDefinition($propName, $required, $shapeReference, pickFromPropsType: false);
         }
 
         if ($propsSource !== null && !in_array($propName, $propsSource->excludedKeys, strict: true)) {
-            return new HydrationPropDefinition(
-                $propName,
-                $required,
-                tsType: '',
-                tsImport: null,
-                pickFromPropsType: true,
-            );
+            return new HydrationPropDefinition($propName, $required, tsType: null, pickFromPropsType: true);
         }
 
         $tsType = $this->mapScalarOrEnumType($phpType, $clientBaseName, $propName);
-        return new HydrationPropDefinition($propName, $required, $tsType, tsImport: null, pickFromPropsType: false);
+        return new HydrationPropDefinition($propName, $required, $tsType, pickFromPropsType: false);
     }
 
     public function resolveForContextMethod(
@@ -96,42 +88,26 @@ final class HydrationValueTypeResolver
         // `IntlTranslations`), which breaks `new Component(props)`'s own assignability the moment
         // the two diverge.
         if ($propsSource !== null && !in_array($propName, $propsSource->excludedKeys, strict: true)) {
-            return new HydrationPropDefinition(
-                $propName,
-                $required,
-                tsType: '',
-                tsImport: null,
-                pickFromPropsType: true,
-            );
+            return new HydrationPropDefinition($propName, $required, tsType: null, pickFromPropsType: true);
         }
 
         $returnType = $method->getReturnType();
         $baseType = $returnType instanceof ReflectionNamedType ? $returnType->getName() : 'mixed';
 
-        $objectResolution =
-            $baseType !== 'mixed' && $baseType !== 'array'
-                ? $this->resolveObjectType($baseType, $clientBaseName, $propName)
-                : null;
-
-        [$tsType, $tsImport] = $objectResolution ?? [
-            $this->mapScalarOrEnumType($baseType, $clientBaseName, $propName),
-            null,
-        ];
+        $tsType = $this->resolveShapeReference($baseType, $clientBaseName, $propName) ?? $this->mapScalarOrEnumType(
+            $baseType,
+            $clientBaseName,
+            $propName,
+        );
 
         // excludeIfNull: false means ClientPropsContextExtractor sends `key: null` verbatim rather
         // than omitting the key - always-present, but genuinely nullable; excludeIfNull: true drops
         // a null result entirely instead, so the key is optional but never actually null when present.
         if (!$attribute->excludeIfNull) {
-            $tsType .= ' | null';
+            $tsType = new TypeScriptUnion([$tsType, new TypeScriptNull()]);
         }
 
-        return new HydrationPropDefinition(
-            $propName,
-            $required,
-            tsType: $tsType,
-            tsImport: $tsImport,
-            pickFromPropsType: false,
-        );
+        return new HydrationPropDefinition($propName, $required, $tsType, pickFromPropsType: false);
     }
 
     /**
@@ -160,12 +136,14 @@ final class HydrationValueTypeResolver
     }
 
     /**
-     * @return array{0: string, 1: ?string}|null [tsType, tsImport] when `$phpType` is a real,
-     *   instantiable class implementing {@see ClientTypeAwareInterface} or matched by a registered
-     *   converter; null when `$phpType` isn't a class at all (a scalar/enum, left to the caller's
-     *   own Pick-or-map handling).
+     * @return TypeScriptNode|null A {@see TypeScriptReference} pointing at `$phpType`'s declared
+     *   {@see ClientTypeAwareInterface}/converter shape class when `$phpType` is a real, instantiable
+     *   class; null when `$phpType` isn't a class at all (a scalar/enum, left to the caller's own
+     *   Pick-or-map handling). `ConnectReferencesAction` resolves the reference against whichever
+     *   `#[TypeScript]`-transformed `Transformed` the shape class produced, wherever it lands -
+     *   {@see HydrationTransformedProvider} never has to know that path itself.
      */
-    private function resolveObjectType(string $phpType, string $clientBaseName, string $propName): ?array
+    private function resolveShapeReference(string $phpType, string $clientBaseName, string $propName): ?TypeScriptNode
     {
         // class_exists() also returns true for an enum (it shares the same symbol table as
         // classes/interfaces/traits) - excluded here so a backed/unit enum always falls through to
@@ -178,12 +156,12 @@ final class HydrationValueTypeResolver
         $probe = (new ReflectionClass($phpType))->newInstanceWithoutConstructor();
 
         if ($probe instanceof ClientTypeAwareInterface) {
-            return [$probe->getTsType(), $probe->getTsImport()];
+            return TypeScriptReference::referencingPhpClass($probe->getTsShapeClass());
         }
 
         $converter = $this->converterRegistry->findFor($probe, new ArgumentDefinition($propName, $phpType, '', false));
         if ($converter !== null) {
-            return [$converter->getTsType(), $converter->getTsImport()];
+            return TypeScriptReference::referencingPhpClass($converter->getTsShapeClass());
         }
 
         throw new \RuntimeException(
@@ -208,10 +186,10 @@ final class HydrationValueTypeResolver
      * class, not the backed-value union we actually want on the wire - confirmed empirically, not a
      * documented limitation.
      */
-    private function mapScalarOrEnumType(string $phpType, string $clientBaseName, string $propName): string
+    private function mapScalarOrEnumType(string $phpType, string $clientBaseName, string $propName): TypeScriptNode
     {
         if (enum_exists($phpType)) {
-            return $this->enumCasesToTsUnion($phpType);
+            return new TypeScriptRaw($this->enumCasesToTsUnion($phpType));
         }
 
         // DocTypeResolver::type() throws on an empty string; Fluid's own ArgumentDefinition::getType()
@@ -219,7 +197,7 @@ final class HydrationValueTypeResolver
         $typeString = $phpType !== '' ? $phpType : 'mixed';
 
         try {
-            $node = $this->typeTranspiler->execute($this->docTypeResolver->type($typeString), phpClassNode: null);
+            return $this->typeTranspiler->execute($this->docTypeResolver->type($typeString), phpClassNode: null);
         } catch (\Throwable $exception) {
             throw new \RuntimeException(
                 sprintf(
@@ -232,8 +210,6 @@ final class HydrationValueTypeResolver
                 $exception,
             );
         }
-
-        return $node->write(new WritingContext([]));
     }
 
     /**

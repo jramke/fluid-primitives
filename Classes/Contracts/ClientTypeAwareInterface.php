@@ -15,14 +15,10 @@ namespace Jramke\FluidPrimitives\Contracts;
 interface ClientTypeAwareInterface
 {
     /**
-     * The TS type name (or an inline literal, e.g. `'{ items: unknown[] }'`) this value serializes
-     * to on the client.
+     * @return class-string A plain, never-instantiated, `#[TypeScript]`-attributed PHP class
+     *   describing this value's JSON wire shape - reflected by spatie/typescript-transformer into
+     *   real TypeScript, rather than hand-typed as a string with nothing checking it against what
+     *   actually gets serialized.
      */
-    public function getTsType(): string;
-
-    /**
-     * An `import type { ... }` statement for {@see getTsType()}'s type, or null when it's an inline
-     * literal needing none.
-     */
-    public function getTsImport(): ?string;
+    public function getTsShapeClass(): string;
 }

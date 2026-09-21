@@ -23,13 +23,8 @@ final class LegacyObjectConverter implements ClientPropConverterInterface
         return ['legacyValue' => $value->legacyValue];
     }
 
-    public function getTsType(): string
+    public function getTsShapeClass(): string
     {
-        return 'ConvertedLegacyObjectData';
-    }
-
-    public function getTsImport(): ?string
-    {
-        return null;
+        return ConvertedLegacyObjectData::class;
     }
 }

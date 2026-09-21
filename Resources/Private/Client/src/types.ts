@@ -58,28 +58,6 @@ export interface ComponentHydrationData {
 }
 
 /**
- * The wire shape `Jramke\FluidPrimitives\Domain\Dto\ListCollection::jsonSerialize()` actually
- * produces - not the same as `@zag-js/collection`'s own `ListCollection<T>` instance shape a
- * primitive's `transformProps()` constructs *from* this (see `getListCollectionFromHydrationData`).
- * The canonical `getTsType()` target for {@see ListCollection}'s own
- * `ClientTypeAwareInterface` implementation - imported by every generated `*.hydration.ts` whose
- * primitive has a `collection` prop, instead of each one declaring its own duplicate inline literal.
- */
-export interface ListCollectionData {
-    items: unknown[];
-    size: number;
-    first: string | null;
-    last: string | null;
-    itemToValueKey: string | null;
-    itemToStringKey: string | null;
-    isItemDisabledKey: string | null;
-    groupByKey: string | null;
-    // Matches `ListCollection::__construct()`'s own runtime validation - a bare string can only
-    // ever be 'asc'/'desc' there (anything else throws server-side), never an arbitrary string.
-    groupSort: 'asc' | 'desc' | string[] | null;
-}
-
-/**
  * Per-primitive hydration `props` shapes, extended via TS module augmentation by each generated
  * `*.hydration.ts` (`declare module 'fluid-primitives/client' { interface HydrationPropsRegistry {
  * select: SelectHydrationProps } }`) - see `mountAll`/`mount` in `lib/hydration.ts`, which key off

@@ -25,9 +25,11 @@ interface ClientPropConverterInterface
      */
     public function convert(mixed $value): mixed;
 
-    /** The TS type name (or an inline literal) {@see convert()}'s result serializes to. */
-    public function getTsType(): string;
-
-    /** An `import type { ... }` statement for {@see getTsType()}'s type, or null for an inline literal. */
-    public function getTsImport(): ?string;
+    /**
+     * @return class-string A plain, never-instantiated, `#[TypeScript]`-attributed PHP class
+     *   describing {@see convert()}'s result shape - reflected by spatie/typescript-transformer into
+     *   real TypeScript, rather than hand-typed as a string with nothing checking it against what
+     *   {@see convert()} actually returns.
+     */
+    public function getTsShapeClass(): string;
 }

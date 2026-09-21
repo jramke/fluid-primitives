@@ -4,7 +4,7 @@ import { visuallyHiddenStyle } from '@zag-js/dom-query';
 import { FieldAwareComponent, Machine, mergeProps, normalizeProps } from '../../Client';
 import { registerClientPropConverters } from '../../Client/src/lib/client-prop-converters';
 import { getListCollectionFromHydrationData } from '../../Client/src/lib/hydration';
-import type { ListCollectionData } from '../../Client/src/types';
+import type { ListCollectionData } from '../../Client/src/types.generated';
 import type { FieldMachine } from '../Field/src/field.registry';
 export type { ComboboxHydrationProps } from './Combobox.hydration';
 
