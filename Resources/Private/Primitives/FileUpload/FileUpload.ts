@@ -2,6 +2,7 @@ import type { FileRejection, ItemType } from '@zag-js/file-upload';
 import * as fileUpload from '@zag-js/file-upload';
 import { isValidFileType } from '@zag-js/file-utils';
 import { FieldAwareComponent, Machine, mergeProps, normalizeProps, Template } from '../../Client';
+import { registerClientPropConverter } from '../../Client/src/lib/client-prop-converters';
 import type { FieldMachine } from '../Field/src/field.registry';
 export type { FileUploadHydrationProps } from './FileUpload.hydration';
 
@@ -95,6 +96,16 @@ function resolveTranslations(
     return resolved as fileUpload.Props['translations'];
 }
 
+// Runs once, at import time, before any mountAll()/mount() call - see Select's own registration
+// for the ordering guarantee this relies on.
+registerClientPropConverter('fileUpload', 'translations', resolveTranslations);
+
+declare module 'fluid-primitives/client' {
+    interface HydrationPropsOverrides {
+        fileUpload: { translations: fileUpload.Props['translations'] };
+    }
+}
+
 export class FileUpload extends FieldAwareComponent<FileUploadPrimitiveProps, fileUpload.Api> {
     static componentName = 'fileUpload';
 
@@ -121,9 +132,6 @@ export class FileUpload extends FieldAwareComponent<FileUploadPrimitiveProps, fi
         return new Machine(fileUpload.machine, {
             ...props,
             maxFiles: resolveMaxFiles(props),
-            translations: resolveTranslations(
-                props.translations as Record<string, unknown> | undefined
-            ),
         });
     }
 

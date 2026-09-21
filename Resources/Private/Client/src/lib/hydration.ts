@@ -2,18 +2,27 @@ import { ListCollection, type CollectionItem } from '@zag-js/collection';
 import type {
     ComponentHydrationData,
     FluidPrimitivesGlobals,
+    HydrationPropsOverrides,
     HydrationPropsRegistry,
     NestedComponentEntry,
 } from '../types';
+import { applyClientPropConverters } from './client-prop-converters';
 import { Component } from './component';
 
 // The generated `props` type for a given `componentName` string literal `K` - whatever a
 // primitive's own generated `*.hydration.ts` registered into `HydrationPropsRegistry` via module
 // augmentation (e.g. `select: SelectHydrationProps`), or `ComponentHydrationData['props']`'s
 // existing untyped bag as a fallback for a primitive with no generated augmentation yet - graceful
-// degradation, not a hard requirement to migrate every primitive at once.
+// degradation, not a hard requirement to migrate every primitive at once. Any key also present in
+// `HydrationPropsOverrides` (hand-written, next to a `registerClientPropConverter` call - see
+// Select/Combobox/FileUpload) has its generated prop type replaced by the override, since the
+// codegen that produces `HydrationPropsRegistry` has no way to know a prop's wire shape differs
+// from its machine shape.
 type HydrationPropsFor<K extends string> = K extends keyof HydrationPropsRegistry
-    ? HydrationPropsRegistry[K]
+    ? K extends keyof HydrationPropsOverrides
+        ? Omit<HydrationPropsRegistry[K], keyof HydrationPropsOverrides[K]> &
+              HydrationPropsOverrides[K]
+        : HydrationPropsRegistry[K]
     : ComponentHydrationData['props'];
 
 // Keep in sync with: Classes/Utility/ComponentUtility.php
@@ -290,6 +299,7 @@ export function mountAll<K extends string>(
         // HydrationPropsFor<K> resolves to for the call site's own K.
         const instance = callback({
             ...hydrationInstances[id],
+            props: applyClientPropConverters(componentName, hydrationInstances[id].props),
             createHydrator: () =>
                 new ComponentHydrator(componentName, id, hydrationInstances[id].props.ids),
         } as Omit<ComponentHydrationData, 'props'> & {
@@ -357,6 +367,7 @@ export function mount<K extends string, T>(
 
     return callback({
         ...hydrationData,
+        props: applyClientPropConverters(componentName, hydrationData.props),
         createHydrator: () => new ComponentHydrator(componentName, rootId, hydrationData.props.ids),
     } as Omit<ComponentHydrationData, 'props'> & {
         props: HydrationPropsFor<K>;
@@ -918,11 +929,13 @@ function prepareNestedRootComponents(stencilId: string, root: Element, value: st
 
 export function getListCollectionFromHydrationData<T extends CollectionItem>(hydrationCollection: {
     items: T[];
-    itemToValueKey?: string;
-    itemToStringKey?: string;
-    isItemDisabledKey?: string;
-    groupByKey?: string;
-    groupSort?: 'asc' | 'desc' | Array<string>;
+    // `| null`, not just `?`, to match ListCollectionData's own wire shape (PHP JSON-encodes an
+    // absent key as `null`, never omits it) - see ListCollectionData's own docblock.
+    itemToValueKey?: string | null;
+    itemToStringKey?: string | null;
+    isItemDisabledKey?: string | null;
+    groupByKey?: string | null;
+    groupSort?: 'asc' | 'desc' | Array<string> | null;
 }): ListCollection<T> {
     if (hydrationCollection instanceof ListCollection) {
         return hydrationCollection;
@@ -951,7 +964,7 @@ export function getListCollectionFromHydrationData<T extends CollectionItem>(hyd
                   return item?.[key];
               }
             : undefined,
-        groupSort: hydrationCollection.groupSort,
+        groupSort: hydrationCollection.groupSort ?? undefined,
     });
     return collection;
 }

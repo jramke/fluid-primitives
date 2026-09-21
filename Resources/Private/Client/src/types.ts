@@ -74,7 +74,9 @@ export interface ListCollectionData {
     itemToStringKey: string | null;
     isItemDisabledKey: string | null;
     groupByKey: string | null;
-    groupSort: string | string[] | null;
+    // Matches `ListCollection::__construct()`'s own runtime validation - a bare string can only
+    // ever be 'asc'/'desc' there (anything else throws server-side), never an arbitrary string.
+    groupSort: 'asc' | 'desc' | string[] | null;
 }
 
 /**
@@ -87,6 +89,20 @@ export interface ListCollectionData {
  * through to {@see ComponentHydrationData}'s own untyped `props` bag.
  */
 export interface HydrationPropsRegistry {}
+
+/**
+ * Per-primitive overrides onto `HydrationPropsRegistry`, hand-written (never generated) next to a
+ * `registerClientPropConverter` call in the primitive's own `<Name>.ts` (`declare module
+ * 'fluid-primitives/client' { interface HydrationPropsOverrides { select: { collection:
+ * select.Props['collection'] } } }`) - see `mountAll`/`mount`'s `HydrationPropsFor<K>` in
+ * `lib/hydration.ts`, which merges a component's entry here over its generated
+ * `HydrationPropsRegistry` entry. Needed because codegen only ever sees a prop's *wire* shape
+ * (e.g. `ListCollectionData`), never the *machine* shape a registered converter turns it into
+ * before construction - see Select/Combobox's `collection`, FileUpload's `translations`. Empty by
+ * default, like `HydrationPropsRegistry` - a component with no override here just keeps its
+ * generated prop type unchanged.
+ */
+export interface HydrationPropsOverrides {}
 
 export interface FluidPrimitivesGlobals {
     locale?: string;

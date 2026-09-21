@@ -2,9 +2,29 @@ import type { CollectionItem, ListCollection } from '@zag-js/collection';
 import * as combobox from '@zag-js/combobox';
 import { visuallyHiddenStyle } from '@zag-js/dom-query';
 import { FieldAwareComponent, Machine, mergeProps, normalizeProps } from '../../Client';
+import { registerClientPropConverter } from '../../Client/src/lib/client-prop-converters';
 import { getListCollectionFromHydrationData } from '../../Client/src/lib/hydration';
+import type { ListCollectionData } from '../../Client/src/types';
 import type { FieldMachine } from '../Field/src/field.registry';
 export type { ComboboxHydrationProps } from './Combobox.hydration';
+
+// Runs once, at import time, before any mountAll()/mount() call - see Select's own registration
+// for the ordering guarantee this relies on. Unlike Select, `collection` is omitted from hydration
+// data entirely when not passed (e.g. a searchUrl-only, purely async combobox), so the converter
+// itself supplies the empty-collection default rather than delegating straight to
+// getListCollectionFromHydrationData, which doesn't handle `undefined`.
+registerClientPropConverter(
+    'combobox',
+    'collection',
+    (collection: ListCollectionData | undefined) =>
+        getListCollectionFromHydrationData(collection ?? { items: [] })
+);
+
+declare module 'fluid-primitives/client' {
+    interface HydrationPropsOverrides {
+        combobox: { collection: combobox.Props['collection'] };
+    }
+}
 
 export class Combobox extends FieldAwareComponent<combobox.Props, combobox.Api> {
     static componentName = 'combobox';
@@ -23,15 +43,8 @@ export class Combobox extends FieldAwareComponent<combobox.Props, combobox.Api> 
     }
 
     transformProps(props: combobox.Props) {
-        // `collection` is omitted from hydration data entirely when not passed (e.g. a
-        // searchUrl-only, purely async combobox) - default to an empty one rather than crashing.
-        const collection = getListCollectionFromHydrationData(props.collection ?? { items: [] });
-
         return {
             ...props,
-            get collection() {
-                return collection;
-            },
             // when selecting an item for example when the suggestions list is opened by the toggle there is no input/change event dispatched,
             // but thats needed for our form to update the formdata and validation
             // we use the change event because the input event opens the suggestions list again
