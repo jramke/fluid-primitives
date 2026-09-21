@@ -8,10 +8,10 @@ namespace Jramke\FluidPrimitives\Command;
  * Renders a primitive's generated `<Name>.hydration.ts` file content and idempotently ensures its
  * own `<Name>.ts` re-exports the generated type - required so `tsdown`'s per-primitive flat dist
  * entry (`tsdown.config.ts`, one entry per primitive) actually reaches it; a standalone,
- * never-imported-from-`<Name>.ts` file wouldn't reach `dist/<name>.d.ts` at all. Output is plain,
- * reasonably-formatted TS - {@see PrettierFormatter} runs this class's own output through the
- * monorepo's real Prettier config before `GenerateHydrationTypesCommand` writes or diffs it,
- * rather than this class hand-matching `.prettierrc` exactly.
+ * never-imported-from-`<Name>.ts` file wouldn't reach `dist/<name>.d.ts` at all. Output is written
+ * to disk exactly as this class builds it, not reformatted - generated `*.hydration.ts` files are
+ * excluded from this repo's own `prettier --check` (`.prettierignore`) instead, the same way other
+ * generated content already is.
  */
 final class HydrationFileWriter
 {
