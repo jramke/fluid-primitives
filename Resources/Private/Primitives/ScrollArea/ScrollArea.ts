@@ -1,6 +1,7 @@
 import * as scrollArea from '@zag-js/scroll-area';
 import type { Orientation, PropTypes } from '@zag-js/types';
 import { Component, Machine, normalizeProps } from '../../Client';
+export type { ScrollAreaHydrationProps } from './ScrollArea.hydration';
 
 export class ScrollArea extends Component<scrollArea.Props, scrollArea.Api<PropTypes>> {
     static componentName = 'scrollArea';

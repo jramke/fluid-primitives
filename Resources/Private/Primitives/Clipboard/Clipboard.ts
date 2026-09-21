@@ -1,5 +1,6 @@
 import * as clipboard from '@zag-js/clipboard';
 import { Component, Machine, mergeProps, normalizeProps } from '../../Client';
+export type { ClipboardHydrationProps } from './Clipboard.hydration';
 
 type ClipboardTranslations = {
     triggerLabelIdle?: string | null | false;

@@ -7,6 +7,7 @@ import {
 } from '../CheckboxGroup/src/checkbox-group.registry';
 import type { CheckboxGroupApi } from '../CheckboxGroup/src/checkbox-group.types';
 import type { FieldMachine } from '../Field/src/field.registry';
+export type { CheckboxHydrationProps } from './Checkbox.hydration';
 
 export class Checkbox extends FieldAwareComponent<checkbox.Props, checkbox.Api> {
     static componentName = 'checkbox';

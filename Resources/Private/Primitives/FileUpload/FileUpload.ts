@@ -3,6 +3,7 @@ import * as fileUpload from '@zag-js/file-upload';
 import { isValidFileType } from '@zag-js/file-utils';
 import { FieldAwareComponent, Machine, mergeProps, normalizeProps, Template } from '../../Client';
 import type { FieldMachine } from '../Field/src/field.registry';
+export type { FileUploadHydrationProps } from './FileUpload.hydration';
 
 interface ItemEntry {
     file: File;

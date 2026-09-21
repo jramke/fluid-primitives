@@ -1,6 +1,7 @@
 import * as numberInput from '@zag-js/number-input';
 import { FieldAwareComponent, Machine, mergeProps, normalizeProps } from '../../Client';
 import type { FieldMachine } from '../Field/src/field.registry';
+export type { NumberInputHydrationProps } from './NumberInput.hydration';
 
 export class NumberInput extends FieldAwareComponent<numberInput.Props, numberInput.Api> {
     static componentName = 'numberInput';

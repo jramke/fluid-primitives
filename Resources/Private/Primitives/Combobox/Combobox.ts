@@ -4,6 +4,7 @@ import { visuallyHiddenStyle } from '@zag-js/dom-query';
 import { FieldAwareComponent, Machine, mergeProps, normalizeProps } from '../../Client';
 import { getListCollectionFromHydrationData } from '../../Client/src/lib/hydration';
 import type { FieldMachine } from '../Field/src/field.registry';
+export type { ComboboxHydrationProps } from './Combobox.hydration';
 
 export class Combobox extends FieldAwareComponent<combobox.Props, combobox.Api> {
     static componentName = 'combobox';

@@ -2,6 +2,7 @@ import * as select from '@zag-js/select';
 import { FieldAwareComponent, Machine, mergeProps, normalizeProps } from '../../Client';
 import { getListCollectionFromHydrationData } from '../../Client/src/lib/hydration';
 import type { FieldMachine } from '../Field/src/field.registry';
+export type { SelectHydrationProps } from './Select.hydration';
 
 export class Select extends FieldAwareComponent<select.Props, select.Api> {
     static componentName = 'select';

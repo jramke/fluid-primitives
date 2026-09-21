@@ -4,6 +4,7 @@ import { connect } from './src/textarea.connect';
 import * as dom from './src/textarea.dom';
 import { machine } from './src/textarea.machine';
 import type { TextareaApi, TextareaProps } from './src/textarea.types';
+export type { TextareaHydrationProps } from './Textarea.hydration';
 
 export class Textarea extends FieldAwareComponent<TextareaProps, TextareaApi> {
     static componentName = 'textarea';
