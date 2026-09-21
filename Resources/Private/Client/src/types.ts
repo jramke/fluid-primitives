@@ -92,7 +92,7 @@ export interface HydrationPropsRegistry {}
 
 /**
  * Per-primitive overrides onto `HydrationPropsRegistry`, hand-written (never generated) next to a
- * `registerClientPropConverter` call in the primitive's own `<Name>.ts` (`declare module
+ * `registerClientPropConverters` call in the primitive's own `<Name>.ts` (`declare module
  * 'fluid-primitives/client' { interface HydrationPropsOverrides { select: { collection:
  * select.Props['collection'] } } }`) - see `mountAll`/`mount`'s `HydrationPropsFor<K>` in
  * `lib/hydration.ts`, which merges a component's entry here over its generated

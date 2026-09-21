@@ -21,10 +21,13 @@ type ClientPropConverter<TWire = unknown, TMachine = unknown> = (
 // kebab-case the same way mountAll()/mount() already are.
 const converters = new Map<string, Map<string, ClientPropConverter>>();
 
-export function registerClientPropConverter<TWire = unknown, TMachine = unknown>(
+/**
+ * Registers every converter a component needs in one call, keyed by prop name - e.g. Select's own
+ * `{ collection: (collection: ListCollectionData) => getListCollectionFromHydrationData(collection) }`.
+ */
+export function registerClientPropConverters(
     componentName: string,
-    propName: string,
-    convert: ClientPropConverter<TWire, TMachine>
+    propConverters: Record<string, ClientPropConverter>
 ): void {
     const clientComponentName = toKebabCase(componentName);
     let byPropName = converters.get(clientComponentName);
@@ -32,7 +35,9 @@ export function registerClientPropConverter<TWire = unknown, TMachine = unknown>
         byPropName = new Map();
         converters.set(clientComponentName, byPropName);
     }
-    byPropName.set(propName, convert as ClientPropConverter);
+    for (const [propName, convert] of Object.entries(propConverters)) {
+        byPropName.set(propName, convert);
+    }
 }
 
 /**

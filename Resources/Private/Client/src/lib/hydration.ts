@@ -14,7 +14,7 @@ import { Component } from './component';
 // augmentation (e.g. `select: SelectHydrationProps`), or `ComponentHydrationData['props']`'s
 // existing untyped bag as a fallback for a primitive with no generated augmentation yet - graceful
 // degradation, not a hard requirement to migrate every primitive at once. Any key also present in
-// `HydrationPropsOverrides` (hand-written, next to a `registerClientPropConverter` call - see
+// `HydrationPropsOverrides` (hand-written, next to a `registerClientPropConverters` call - see
 // Select/Combobox/FileUpload) has its generated prop type replaced by the override, since the
 // codegen that produces `HydrationPropsRegistry` has no way to know a prop's wire shape differs
 // from its machine shape.
