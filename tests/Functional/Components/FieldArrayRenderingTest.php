@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Tests\Functional\Components;
 
+use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Registry\NestedComponentRegistry;
 use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
 use PHPUnit\Framework\Attributes\Test;
@@ -28,6 +29,40 @@ final class FieldArrayRenderingTest extends FunctionalTestCase
         ');
 
         $this->assertStringContainsString('data-name="people[0][firstName]"', $html);
+    }
+
+    #[Test]
+    public function registersTheRewrittenArrayPrefixedNameForClientHydrationTooNotTheRawArgument(): void
+    {
+        // Field's own client-registered `name` prop used to be read from the raw `name` argument
+        // as literally typed on this tag ("firstName") rather than what `beforeRendering()`
+        // rewrites it to once nested in a FieldArray row ("people[0][firstName]") - the same value
+        // already correctly shown in `data-name` above. A field-aware primitive nested inside a
+        // row (e.g. Input) mirrors this field's own registered `name` reactively so a later rename
+        // propagates to it too - which meant that mechanism would overwrite an already-correct,
+        // freshly-restamped row's own name right back to the un-prefixed one the moment this
+        // field's machine first notified after mount.
+        $html = $this->renderTemplate('
+            <primitives:fieldArray.root name="people" itemCount="1">
+                <primitives:fieldArray.itemGroup>
+                    <primitives:fieldArray.item index="0">
+                        <primitives:field.root name="firstName">
+                            <primitives:field.control asChild="{true}">
+                                <input type="text" />
+                            </primitives:field.control>
+                        </primitives:field.root>
+                    </primitives:fieldArray.item>
+                </primitives:fieldArray.itemGroup>
+            </primitives:fieldArray.root>
+        ');
+
+        preg_match('/id="field:([^"]*)" data-scope="field" data-part="root"/', $html, $fieldMatches);
+        $fieldRootId = $fieldMatches[1] ?? null;
+        $this->assertNotNull($fieldRootId);
+
+        $registeredProps = HydrationRegistry::getInstance()->get('field', $fieldRootId);
+
+        $this->assertSame('people[0][firstName]', $registeredProps['props']['name'] ?? null);
     }
 
     #[Test]

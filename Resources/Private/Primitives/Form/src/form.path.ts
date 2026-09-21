@@ -30,26 +30,6 @@ export function parseFieldPath(fieldName: string): FieldPathSegment[] {
     return fieldPath;
 }
 
-export function stringifyFieldPath(fieldPath: readonly FieldPathSegment[]) {
-    let fieldName = '';
-
-    for (const segment of fieldPath) {
-        if (segment === appendFieldPathSegment) {
-            fieldName += '[]';
-            continue;
-        }
-
-        if (typeof segment === 'number') {
-            fieldName += `[${segment}]`;
-            continue;
-        }
-
-        fieldName += fieldName === '' ? segment : `.${segment}`;
-    }
-
-    return fieldName;
-}
-
 export function stringifyFieldPathAsBrackets(fieldPath: readonly FieldPathSegment[]) {
     let fieldName = '';
 
@@ -93,5 +73,9 @@ export function toCanonicalFieldName(fieldName: string, objectName?: string) {
         fieldPath.shift();
     }
 
-    return normalizeFieldName(stringifyFieldPath(fieldPath));
+    // Bracket notation throughout, matching Field's own name (people[0][firstName], not
+    // people[0].firstName) - not just for the leading array-index segment, since that's what a
+    // registered field machine is actually keyed by (see form.registry.ts) and what SET_ERRORS
+    // lookups match against exactly.
+    return normalizeFieldName(stringifyFieldPathAsBrackets(fieldPath));
 }

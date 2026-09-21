@@ -2,7 +2,7 @@ import { serializeFieldValue } from '../../Field/src/field.utils';
 import {
     type FieldPathSegment,
     normalizeFieldName,
-    stringifyFieldPath,
+    stringifyFieldPathAsBrackets,
     toCanonicalFieldName,
 } from './form.path';
 import {
@@ -178,7 +178,11 @@ function getIssueFieldName(issue: StandardSchemaIssue): string | undefined {
         return undefined;
     }
 
-    return normalizeFieldName(stringifyFieldPath(fieldPath));
+    // Bracket notation throughout (people[0][firstName], not people[0].firstName) - see
+    // toCanonicalFieldName's own comment in form.path.ts for why: a registered field machine is
+    // keyed by its own name exactly as Field renders it, never dot-separated past the first
+    // array index, so a schema issue path like ['people', 0, 'firstName'] must stringify to match.
+    return normalizeFieldName(stringifyFieldPathAsBrackets(fieldPath));
 }
 
 function isPromiseLike(result: StandardSchemaResult | Promise<StandardSchemaResult>) {

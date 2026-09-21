@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Tests\Functional\Components;
 
+use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
 use Jramke\FluidPrimitives\Tests\Helper\TestEntity;
 use PHPUnit\Framework\Attributes\Test;
@@ -123,6 +124,37 @@ final class FormRenderingTest extends FunctionalTestCase
         ', ['entity' => $entity]);
 
         $this->assertStringContainsString('value="Existing title"', $html);
+    }
+
+    #[Test]
+    public function registersTheBoundObjectsResolvedDefaultValueForClientHydrationTooNotJustTheServerRenderedHtml(): void
+    {
+        // ComponentHydrationCollector used to register a root component's client-facing props from
+        // the raw arguments as literally passed to its tag - frozen at that call site - rather than
+        // from its own context, which FieldContext::beforeRendering() (above) mutates via
+        // ObjectAccess::getPropertyPath() for exactly this bound-object case. No `defaultValue`
+        // argument is ever given here (it's meant to auto-resolve), so client hydration used to
+        // register it as entirely absent regardless of what the server-rendered HTML showed.
+        $entity = new TestEntity();
+        $entity->setTitle('Existing title');
+
+        $html = $this->renderTemplate('
+            <primitives:form.root actionUri="/submit" objectName="conference" object="{entity}">
+                <primitives:field.root name="title">
+                    <primitives:field.control asChild="{true}">
+                        <input type="text" />
+                    </primitives:field.control>
+                </primitives:field.root>
+            </primitives:form.root>
+        ', ['entity' => $entity]);
+
+        preg_match('/id="field:([^"]*)" data-scope="field" data-part="root"/', $html, $fieldMatches);
+        $fieldRootId = $fieldMatches[1] ?? null;
+        $this->assertNotNull($fieldRootId);
+
+        $registeredProps = HydrationRegistry::getInstance()->get('field', $fieldRootId);
+
+        $this->assertSame('Existing title', $registeredProps['props']['defaultValue'] ?? null);
     }
 
     #[Test]

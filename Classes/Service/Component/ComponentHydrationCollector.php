@@ -74,12 +74,19 @@ final readonly class ComponentHydrationCollector
 
         $propsMarkedForClientValues = [];
         foreach (array_keys($candidate->propsMarkedForClient) as $name) {
-            if (($arguments[$name] ?? null) === null && ($argumentDefinitions[$name] ?? null) === null) {
-                continue;
-            }
-
+            // Reads from the context first, not the raw argument - a context's own
+            // beforeRendering() may have rewritten this prop after the argument was already frozen
+            // at the tag's own call site (e.g. FieldContext prefixing `name` with its enclosing
+            // FieldArray's own name/index, or auto-resolving `defaultValue` from a bound object).
+            // ComponentRootContextFactory::buildContextVariables() seeds the context with every
+            // argument's own processed value at construction, so this is a strict superset of
+            // reading the argument directly, not a narrower substitute for it - correct for every
+            // other context too, which never touches these variables and so just gets the same
+            // value back. `$candidate->ctx` is null only for a root component with no context at
+            // all, hence the fallback to the argument/its definition's default.
+            $argumentDefinition = $argumentDefinitions[$name] ?? null;
             $propsMarkedForClientValues[$name] =
-                $arguments[$name] ?? $argumentDefinitions[$name]->getDefaultValue() ?? null;
+                $candidate->ctx?->get($name) ?? $arguments[$name] ?? $argumentDefinition?->getDefaultValue();
         }
 
         // we dont want to send null values to the client, defaults should be defined in the component ts file
