@@ -211,6 +211,15 @@ final class HydrationValueTypeResolver
             return $this->enumCasesToTsUnion($phpType);
         }
 
+        // A typed array ("string[]", an enum's own "MyEnum[]", ...) - Fluid's own ui:prop `type`
+        // attribute allows this item-type suffix, distinct from the bare "array" case above. Maps
+        // the item type through this same method (never itself another array - Fluid ui:prop types
+        // don't nest arrays) and wraps the result, rather than adding a second parallel mapping table.
+        if (str_ends_with($phpType, '[]')) {
+            $itemType = substr($phpType, offset: 0, length: -2);
+            return $this->mapScalarOrEnumType($itemType, $clientBaseName, $propName) . '[]';
+        }
+
         throw new \RuntimeException(
             sprintf(
                 'Cannot generate a hydration type for prop "%s" of component "%s": unmapped PHP type "%s".',
