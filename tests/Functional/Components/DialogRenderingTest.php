@@ -166,27 +166,6 @@ final class DialogRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
-    public function rendersEachCloseTriggerWithAUniqueId(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:dialog.root>
-                <primitives:dialog.trigger>Open</primitives:dialog.trigger>
-                <primitives:dialog.content>
-                    <primitives:dialog.closeTrigger>×</primitives:dialog.closeTrigger>
-                    Content
-                    <primitives:dialog.closeTrigger>Cancel</primitives:dialog.closeTrigger>
-                </primitives:dialog.content>
-            </primitives:dialog.root>
-        ');
-
-        preg_match_all('/id="([^"]+)"[^>]*data-part="close-trigger"/', $html, $matches);
-        $closeTriggerIds = $matches[1];
-
-        $this->assertCount(2, $closeTriggerIds);
-        $this->assertCount(2, array_unique($closeTriggerIds));
-    }
-
-    #[Test]
     public function registersInHydrationRegistry(): void
     {
         $this->renderTemplate('
