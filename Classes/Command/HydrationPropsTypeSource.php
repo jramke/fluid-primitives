@@ -17,12 +17,17 @@ final readonly class HydrationPropsTypeSource
         public string $typeName,
         /** The `import type { ... }` statement declaring {@see $typeName} in the generated file. */
         public string $tsImport,
-        /** Raw source text searched for a prop name's presence - see HydrationPropsSourceResolver's own docblock. */
-        public string $haystack,
+        /**
+         * Field names known - from the class file's own source text, not a filesystem lookup - to
+         * belong only to a local intersection's own extension, not to {@see $typeName} itself (e.g.
+         * FileUpload's own `existingFilesCount` in `type FileUploadPrimitiveProps = fileUpload.Props
+         * & { existingFilesCount?: number }`). `Pick<X, K>`ing one of these would be wrong in a way
+         * `npm run types` doesn't reliably catch through a bundled `.d.ts` consumer (see
+         * {@see HydrationPropsSourceResolver}'s own docblock) - almost always empty; only
+         * `HydrationPropsSourceResolver::resolveLocalIntersectionType()` ever populates it.
+         *
+         * @var list<string>
+         */
+        public array $excludedKeys = [],
     ) {}
-
-    public function hasKey(string $propName): bool
-    {
-        return preg_match('/\b' . preg_quote($propName, delimiter: '/') . '\??\s*:/', $this->haystack) === 1;
-    }
 }

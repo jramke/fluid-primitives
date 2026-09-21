@@ -9,27 +9,30 @@ namespace Jramke\FluidPrimitives\Command;
  * {@see GenerateHydrationTypesCommand} to `Pick` client props from - the "does this codebase's
  * `extends Component<XProps, ...>` convention hold" half of the plan's "Wire type vs. machine type"
  * precedence order. A convention bet, not a guarantee (see the plan's own "Problems" section): this
- * is deliberately simple regex/string matching, not a real TS parser, so `hasKey()` is a best-effort
- * substring search across whatever source text was found, not a scoped, brace-aware member list.
- * Every prop this misclassifies still degrades safely - it just falls through to a direct
- * scalar/enum mapping instead of a `Pick`, which is never *wrong*, only less precise about
- * referencing the upstream type - and `npm run types` catches an over-eager `Pick` of a key that
- * doesn't actually exist, since `Pick<T, K>` requires `K extends keyof T`.
+ * is deliberately simple regex/string matching over the class file's own import statements, not a
+ * real TS parser or filesystem walk of the resolved package - once a Props source resolves, every
+ * one of its declared props is `Pick`ed, with no filesystem-backed check that a given prop name
+ * actually exists on it. A wrong guess here isn't silently wrong for the common case: `Pick<T, K>`
+ * requires `K extends keyof T`, so `npm run types`/`ui:generate-hydration-types --check` catches it
+ * as a real type error against the raw source file - except through a *bundled* `.d.ts` consumer
+ * (any downstream package importing the built `dist/*.d.ts` with `skipLibCheck` on, which this
+ * monorepo's own docs package has), where that constraint violation is silently resolved to
+ * `unknown` instead of erroring. {@see HydrationPropsTypeSource::$excludedKeys} is the one narrow
+ * exception where this class still positively knows a key can't be `Pick`ed - derived from the
+ * class file's own text, never a filesystem lookup.
  */
 final class HydrationPropsSourceResolver
 {
-    public function __construct(
-        private readonly ZagPackageTypesLocator $typesLocator,
-    ) {}
-
     /**
      * @return HydrationPropsTypeSource|null Null when the class doesn't follow the
      *   `extends (FieldAwareComponent|Component)<X, Y>` convention at all, or when `X` can't be
-     *   traced back to any importable type whatsoever (a locally-declared, non-exported alias type
-     *   like FileUpload's own `FileUploadPrimitiveProps` still resolves, via its own intersected
-     *   `fileUpload.Props`, to that Zag package's real Props type - see
-     *   {@see resolveLocalIntersectionType}) - callers fall back to scalar/enum mapping per-prop in
-     *   that case.
+     *   traced back to any importable type whatsoever - callers fall back to scalar/enum mapping
+     *   per-prop in that case. A locally-declared, non-exported alias type that *extends* a
+     *   namespace-imported Zag type with its own additional members (e.g. FileUpload's own `type
+     *   FileUploadPrimitiveProps = fileUpload.Props & { existingFilesCount?: number }`) still
+     *   resolves - see {@see resolveLocalIntersectionType} - but with those local-only members
+     *   listed in the result's {@see HydrationPropsTypeSource::$excludedKeys}, since they aren't
+     *   really part of the Zag type being `Pick`ed from.
      */
     public function resolve(
         string $classFileContent,
@@ -55,11 +58,14 @@ final class HydrationPropsSourceResolver
      * `select.Props` style - a Zag package namespace-imported as `import * as select from
      * '@zag-js/select'`. `Props` is always the re-exported name Zag packages use for their own
      * machine's props interface (confirmed uniform across every primitive in this codebase).
+     *
+     * @param list<string> $excludedKeys See {@see HydrationPropsTypeSource::$excludedKeys}.
      */
     private function resolveNamespaced(
         string $classFileContent,
         string $propsExpression,
         string $aliasTypeName,
+        array $excludedKeys = [],
     ): ?HydrationPropsTypeSource {
         [$alias] = explode('.', $propsExpression, limit: 2);
 
@@ -75,15 +81,11 @@ final class HydrationPropsSourceResolver
         }
 
         $packageName = $matches[1];
-        $haystack = $this->typesLocator->locateHaystack($packageName, 'Props', getcwd() ?: __DIR__);
-        if ($haystack === null) {
-            return null;
-        }
 
         return new HydrationPropsTypeSource(
             $aliasTypeName,
             sprintf("import type { Props as %s } from '%s';", $aliasTypeName, $packageName),
-            $haystack,
+            $excludedKeys,
         );
     }
 
@@ -123,6 +125,12 @@ final class HydrationPropsSourceResolver
         return $this->resolveLocalIntersectionType($classFileContent, $typeName, $aliasTypeName);
     }
 
+    /**
+     * Matches `type X = y.Props;` and `type X = y.Props & { extra: string };` alike - the optional
+     * `& { ... }` group's own field names (parsed straight out of this same match, not looked up
+     * anywhere) become {@see HydrationPropsTypeSource::$excludedKeys}, since they belong to the
+     * local extension, not to `y.Props` itself.
+     */
     private function resolveLocalIntersectionType(
         string $classFileContent,
         string $typeName,
@@ -131,7 +139,9 @@ final class HydrationPropsSourceResolver
         $matches = [];
         if (
             preg_match(
-                '/\btype\s+' . preg_quote($typeName, delimiter: '/') . '\s*=\s*(\w+)\.Props\b/',
+                '/\btype\s+' .
+                preg_quote($typeName, delimiter: '/') .
+                '\s*=\s*(\w+)\.Props(?:\s*&\s*\{([^}]*)\})?\s*;/',
                 $classFileContent,
                 $matches,
             ) !== 1
@@ -139,7 +149,22 @@ final class HydrationPropsSourceResolver
             return null;
         }
 
-        return $this->resolveNamespaced($classFileContent, $matches[1] . '.Props', $aliasTypeName);
+        $excludedKeys = $this->extractLocalExtensionKeys($matches[2] ?? '');
+
+        return $this->resolveNamespaced($classFileContent, $matches[1] . '.Props', $aliasTypeName, $excludedKeys);
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function extractLocalExtensionKeys(string $objectLiteralBody): array
+    {
+        $matches = [];
+        if (preg_match_all('/(\w+)\??\s*:/', $objectLiteralBody, $matches) === 0) {
+            return [];
+        }
+
+        return array_values($matches[1]);
     }
 
     private function matchNamedImportSource(
@@ -162,10 +187,10 @@ final class HydrationPropsSourceResolver
             return null;
         }
 
-        return new HydrationPropsTypeSource(
+        return new HydrationPropsTypeSource($typeName, sprintf(
+            "import type { %s } from '%s';",
             $typeName,
-            sprintf("import type { %s } from '%s';", $typeName, $importSource),
-            (string)file_get_contents($resolvedPath),
-        );
+            $importSource,
+        ));
     }
 }

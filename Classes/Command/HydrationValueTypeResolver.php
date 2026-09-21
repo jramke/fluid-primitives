@@ -21,14 +21,17 @@ use UnitEnum;
  * (checked against a constructor-less probe instance of the prop's declared PHP class, since
  * codegen has no real rendered value to check against - the same reason
  * {@see \Jramke\FluidPrimitives\Contracts\ClientPropConverterInterface::supports()} is only ever
- * called with the class's own zero-state shape here); otherwise a `ui:prop`-sourced prop
- * is `Pick`ed from the primitive's own Props type when the (best-effort, see
- * {@see HydrationPropsSourceResolver}) resolved source appears to declare it; anything left maps
- * its PHP type string directly to a TS scalar/enum. A `#[ExposeToClient]` context prop tries the
- * same `Pick` first when it happens to share a name with a real Props-type key (it frequently does -
- * a context method commonly overrides a same-named ui:prop, e.g. `SelectContext::getTranslations()`
- * overriding the raw `translations` ui:prop), since `Pick` is always more precise than this class's
- * own direct mapping could ever be; only a context prop with no such match maps directly.
+ * called with the class's own zero-state shape here); otherwise a `ui:prop`-sourced prop is `Pick`ed
+ * from the primitive's own Props type whenever that (best-effort, see
+ * {@see HydrationPropsSourceResolver}) source resolved and doesn't list this prop in its own
+ * {@see HydrationPropsTypeSource::$excludedKeys} - beyond that one narrow, statically-known
+ * exception there's no further per-key existence check, `npm run types`/`--check` is what catches a
+ * wrong guess; a prop falls back to mapping its PHP type string directly to a TS scalar/enum when no
+ * Props source resolved at all, or when it's excluded. A `#[ExposeToClient]` context prop tries the
+ * same `Pick` first under the same condition, since `Pick` is always more precise than this class's
+ * own direct mapping could ever be (a context method commonly overrides a same-named ui:prop, e.g.
+ * `SelectContext::getTranslations()` overriding the raw `translations` ui:prop); only when no
+ * source resolved, or the prop is excluded, does a context prop map directly.
  */
 final class HydrationValueTypeResolver
 {
@@ -56,7 +59,7 @@ final class HydrationValueTypeResolver
             );
         }
 
-        if ($propsSource !== null && $propsSource->hasKey($propName)) {
+        if ($propsSource !== null && !in_array($propName, $propsSource->excludedKeys, strict: true)) {
             return new HydrationPropDefinition(
                 $propName,
                 $required,
@@ -81,12 +84,13 @@ final class HydrationValueTypeResolver
 
         // A context method frequently overrides a same-named ui:prop with a server-computed value
         // (e.g. SelectContext::getTranslations() overriding the raw `translations` ui:prop) - Pick
-        // from the primitive's own Props type here too when it declares the same key, exactly like
-        // resolveForArgument() does, rather than always falling back to a direct PHP-type mapping:
-        // a direct mapping can only ever approximate the real field's shape (e.g. `Record<string,
-        // unknown>` for what the Props type actually types as `IntlTranslations`), which breaks
-        // `new Component(props)`'s own assignability the moment the two diverge.
-        if ($propsSource !== null && $propsSource->hasKey($propName)) {
+        // from the primitive's own Props type here too whenever one resolved (and doesn't exclude
+        // this prop), exactly like resolveForArgument() does, rather than always falling back to a
+        // direct PHP-type mapping: a direct mapping can only ever approximate the real field's shape
+        // (e.g. `Record<string, unknown>` for what the Props type actually types as
+        // `IntlTranslations`), which breaks `new Component(props)`'s own assignability the moment
+        // the two diverge.
+        if ($propsSource !== null && !in_array($propName, $propsSource->excludedKeys, strict: true)) {
             return new HydrationPropDefinition(
                 $propName,
                 $required,
