@@ -12,6 +12,9 @@ use Jramke\FluidPrimitives\Registry\ClientPropConverterRegistry;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionNamedType;
+use Spatie\TypeScriptTransformer\Actions\TranspilePhpStanTypeToTypeScriptNodeAction;
+use Spatie\TypeScriptTransformer\Data\WritingContext;
+use Spatie\TypeScriptTransformer\TypeResolvers\DocTypeResolver;
 use TYPO3Fluid\Fluid\Core\ViewHelper\ArgumentDefinition;
 use UnitEnum;
 
@@ -37,6 +40,8 @@ final class HydrationValueTypeResolver
 {
     public function __construct(
         private readonly ClientPropConverterRegistry $converterRegistry,
+        private readonly DocTypeResolver $docTypeResolver = new DocTypeResolver(),
+        private readonly TranspilePhpStanTypeToTypeScriptNodeAction $typeTranspiler = new TranspilePhpStanTypeToTypeScriptNodeAction(),
     ) {}
 
     public function resolveForArgument(
@@ -193,42 +198,42 @@ final class HydrationValueTypeResolver
         );
     }
 
+    /**
+     * Delegates to spatie's own PHPStan-style type-string parser/transpiler instead of a hand-rolled
+     * `match` - natively handles union types (`float|integer|array`, the real `Slider::defaultValue`
+     * shape that the old `match` statement had no case for at all) and nested/typed-array syntax
+     * (`string[]`), not just the single-level scalar cases the old table covered. An enum still goes
+     * through {@see enumCasesToTsUnion()}, not this resolver: feeding a bare enum FQCN through it
+     * produces a dangling `TypeScriptReference` to the enum's own (never `#[TypeScript]`-transformed)
+     * class, not the backed-value union we actually want on the wire - confirmed empirically, not a
+     * documented limitation.
+     */
     private function mapScalarOrEnumType(string $phpType, string $clientBaseName, string $propName): string
     {
-        $mapped = match ($phpType) {
-            'string' => 'string',
-            'boolean', 'bool' => 'boolean',
-            'integer', 'int', 'float', 'double' => 'number',
-            'array' => 'Record<string, unknown>',
-            'mixed', '' => 'unknown',
-            default => null,
-        };
-        if ($mapped !== null) {
-            return $mapped;
-        }
-
         if (enum_exists($phpType)) {
             return $this->enumCasesToTsUnion($phpType);
         }
 
-        // A typed array ("string[]", an enum's own "MyEnum[]", ...) - Fluid's own ui:prop `type`
-        // attribute allows this item-type suffix, distinct from the bare "array" case above. Maps
-        // the item type through this same method (never itself another array - Fluid ui:prop types
-        // don't nest arrays) and wraps the result, rather than adding a second parallel mapping table.
-        if (str_ends_with($phpType, '[]')) {
-            $itemType = substr($phpType, offset: 0, length: -2);
-            return $this->mapScalarOrEnumType($itemType, $clientBaseName, $propName) . '[]';
+        // DocTypeResolver::type() throws on an empty string; Fluid's own ArgumentDefinition::getType()
+        // returns '' for an untyped prop, same meaning as an explicit "mixed" here.
+        $typeString = $phpType !== '' ? $phpType : 'mixed';
+
+        try {
+            $node = $this->typeTranspiler->execute($this->docTypeResolver->type($typeString), phpClassNode: null);
+        } catch (\Throwable $exception) {
+            throw new \RuntimeException(
+                sprintf(
+                    'Cannot generate a hydration type for prop "%s" of component "%s": unmapped PHP type "%s".',
+                    $propName,
+                    $clientBaseName,
+                    $phpType,
+                ),
+                1_788_400_002,
+                $exception,
+            );
         }
 
-        throw new \RuntimeException(
-            sprintf(
-                'Cannot generate a hydration type for prop "%s" of component "%s": unmapped PHP type "%s".',
-                $propName,
-                $clientBaseName,
-                $phpType,
-            ),
-            1_788_400_002,
-        );
+        return $node->write(new WritingContext([]));
     }
 
     /**
