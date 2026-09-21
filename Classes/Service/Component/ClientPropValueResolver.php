@@ -16,10 +16,6 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\ArgumentDefinition;
  */
 final readonly class ClientPropValueResolver
 {
-    public function __construct(
-        private ClientPropConverterRegistry $converterRegistry,
-    ) {}
-
     /**
      * A required prop (no default, optional="{false}") resolving to null means it was explicitly
      * passed null at the call site - Fluid's own required-argument check only guards presence, not
@@ -66,22 +62,6 @@ final readonly class ClientPropValueResolver
     ): mixed {
         if (!is_object($value)) {
             return $value;
-        }
-
-        if ($value instanceof ClientTypeAwareInterface) {
-            return $value;
-        }
-
-        // $argumentDefinition is only null for a prop the candidate's own $argumentDefinitions map
-        // doesn't (any longer) carry an entry for - defensive, since every name iterated here comes
-        // from $candidate->propsMarkedForClient, itself built from that same map. Converters need a
-        // real ArgumentDefinition to match against, so this case skips straight to the
-        // JsonSerializable fallback below rather than fabricating one.
-        $converter = $argumentDefinition instanceof ArgumentDefinition
-            ? $this->converterRegistry->findFor($value, $argumentDefinition)
-            : null;
-        if ($converter !== null) {
-            return $converter->convert($value);
         }
 
         if ($value instanceof JsonSerializable) {
