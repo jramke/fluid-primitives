@@ -4,6 +4,7 @@ import { destroyComponentsWithin } from '../../../Client/src/lib/hydration';
 import { Template } from '../../../Client/src/lib/template';
 import type { FieldValue } from '../../Field/src/field.types';
 import { getFieldValueFromContainer } from '../../Field/src/field.utils';
+import { parseFieldPath, stringifyFieldPathAsBrackets } from '../../Form/src/form.path';
 import { renameFieldMachineForForm } from '../../Form/src/form.registry';
 import type { FieldArray } from '../FieldArray';
 import { parts } from './field-array.anatomy';
@@ -232,5 +233,10 @@ function getRowFieldValue(
     name: string
 ): FieldValue {
     const arrayName = component.machine.prop('name');
-    return getFieldValueFromContainer(rowEl, `${arrayName}[${index}][${name}]`);
+    // `name` is a bare field name as the consumer wrote it (see FieldArrayAnnounceInfo's own
+    // docblock) - re-parsed rather than interpolated raw, so a dotted nested name (`address.city`)
+    // still resolves to `people[0][address][city]`, matching what FieldContext itself renders,
+    // instead of leaking a literal dot into one bracket segment.
+    const fullName = stringifyFieldPathAsBrackets([arrayName, index, ...parseFieldPath(name)]);
+    return getFieldValueFromContainer(rowEl, fullName);
 }
