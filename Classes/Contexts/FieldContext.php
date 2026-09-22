@@ -66,14 +66,14 @@ class FieldContext extends AbstractComponentContext
                 // submission-name detail, not part of the property path - ObjectAccess has no
                 // concept of it and throws when it's left in.
                 $name = (string)$this->get('name');
-                $propertyPath = str_ends_with($name, '[]') ? substr($name, offset: 0, length: -2) : $name;
+                $propertyPath = $this->extbaseFormFieldNamer->trimArraySuffix($name);
                 $this->set('defaultValue', ObjectAccess::getPropertyPath($formObject, $propertyPath));
             }
         }
 
         // Canonicalize every other field's `name` to the same full-bracket wire format the
         // FieldArray branch above already uses (e.g. `person.country` -> `person[country]`), so the
-        // client registry and toCanonicalFieldName() always have exactly one notation to match
+        // client registry and toRegisteredFieldName() always have exactly one notation to match
         // against, whichever notation the template author wrote. Must run after the `defaultValue`
         // resolution above, which needs the original dot-notation path for ObjectAccess.
         if ($this->has('name')) {

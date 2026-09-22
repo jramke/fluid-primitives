@@ -1,4 +1,4 @@
-import { normalizeFieldName } from '../../Form/src/form.path';
+import { trimArraySuffix } from '../../Form/src/form.path';
 import * as dom from './field.dom';
 import type { FieldValue } from './field.types';
 
@@ -45,7 +45,7 @@ export function getDefaultFieldValue(defaultValue: unknown): FieldValue {
 }
 
 export function getFieldValueFromContainer(container: ParentNode, fieldName: string) {
-    const normalizedFieldName = normalizeFieldName(fieldName);
+    const normalizedFieldName = trimArraySuffix(fieldName);
     const selector = [
         `input[name="${CSS.escape(normalizedFieldName)}"]`,
         `input[name="${CSS.escape(normalizedFieldName)}[]"]`,

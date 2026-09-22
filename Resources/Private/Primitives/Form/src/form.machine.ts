@@ -13,7 +13,7 @@ import {
     setFieldMachineErrors,
     syncAllFieldMachines,
 } from './form.fields';
-import { normalizeFieldName, prefixFieldName } from './form.path';
+import { prefixFieldName, trimArraySuffix } from './form.path';
 import type { FormErrors, FormSchema } from './form.types';
 import { FormError, ValidationError } from './form.types';
 import {
@@ -211,7 +211,7 @@ export const machine = createMachine<FormSchema>({
                 const fieldName = event.detail?.fieldName;
                 if (!fieldName) return;
 
-                const normalizedFieldName = normalizeFieldName(fieldName);
+                const normalizedFieldName = trimArraySuffix(fieldName);
                 const formData = getFormData(scope);
                 const values = createFormValues(formData);
                 const serverError = getCurrentErrorForField(

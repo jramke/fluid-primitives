@@ -1,9 +1,9 @@
 import { serializeFieldValue } from '../../Field/src/field.utils';
 import {
     type FieldPathSegment,
-    normalizeFieldName,
     stringifyFieldPathAsBrackets,
-    toCanonicalFieldName,
+    toRegisteredFieldName,
+    trimArraySuffix,
 } from './form.path';
 import {
     type FieldError,
@@ -61,7 +61,7 @@ export function validateWithStandardSchema(
 export function attachErrorValues(errors: FormErrors, values: FormValues): FormErrors {
     return Object.fromEntries(
         Object.entries(errors).map(([fieldName, error]) => [
-            toCanonicalFieldName(fieldName),
+            toRegisteredFieldName(fieldName),
             {
                 ...error,
                 value:
@@ -92,7 +92,7 @@ export function getCurrentErrorForField(
     fieldName: string,
     values: FormValues
 ): FieldError | undefined {
-    const error = errors[normalizeFieldName(fieldName)];
+    const error = errors[trimArraySuffix(fieldName)];
     if (!error || error.value === undefined) return;
 
     const currentValue = getFieldErrorValue(values, fieldName);
@@ -120,7 +120,7 @@ export function mapServerErrors(
     const out: FormErrors = {};
 
     for (const key in responseErrors) {
-        const canonicalFieldName = toCanonicalFieldName(key, objectName);
+        const canonicalFieldName = toRegisteredFieldName(key, objectName);
         out[canonicalFieldName] = {
             messages: responseErrors[key],
             value: getFieldErrorValue(values, canonicalFieldName),
@@ -179,10 +179,10 @@ function getIssueFieldName(issue: StandardSchemaIssue): string | undefined {
     }
 
     // Bracket notation throughout (people[0][firstName], not people[0].firstName) - see
-    // toCanonicalFieldName's own comment in form.path.ts for why: a registered field machine is
+    // toRegisteredFieldName's own comment in form.path.ts for why: a registered field machine is
     // keyed by its own name exactly as Field renders it, never dot-separated past the first
     // array index, so a schema issue path like ['people', 0, 'firstName'] must stringify to match.
-    return normalizeFieldName(stringifyFieldPathAsBrackets(fieldPath));
+    return trimArraySuffix(stringifyFieldPathAsBrackets(fieldPath));
 }
 
 function isPromiseLike(result: StandardSchemaResult | Promise<StandardSchemaResult>) {

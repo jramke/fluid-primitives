@@ -1,5 +1,5 @@
 import type { Machine } from '../../../Client';
-import { normalizeFieldName } from './form.path';
+import { trimArraySuffix } from './form.path';
 
 export type FormMachine = Machine<any>;
 export type FieldMachine = Machine<any>;
@@ -28,7 +28,7 @@ export function registerFieldMachineForForm(el: Element | null, fieldMachine: Fi
     if (!form) return;
 
     const handleEntry = (entry: RegistryEntry) => {
-        entry.fields.set(normalizeFieldName(fieldMachine.prop('name')), fieldMachine);
+        entry.fields.set(trimArraySuffix(fieldMachine.prop('name')), fieldMachine);
 
         // trigger initial form render when all fields are registered
         if (entry.fields.size === entry.expectedFieldCount) {
@@ -76,13 +76,13 @@ export function renameFieldMachineForForm(el: Element | null, oldName: string, n
     const entry = registry.get(form);
     if (!entry) return;
 
-    const normalizedOldName = normalizeFieldName(oldName);
+    const normalizedOldName = trimArraySuffix(oldName);
     const fieldMachine = entry.fields.get(normalizedOldName);
     if (!fieldMachine) return;
 
     entry.fields.delete(normalizedOldName);
     fieldMachine.updateProps({ name: newName });
-    entry.fields.set(normalizeFieldName(newName), fieldMachine);
+    entry.fields.set(trimArraySuffix(newName), fieldMachine);
 }
 
 function resolveElToForm(el: Element | null): HTMLFormElement | null {

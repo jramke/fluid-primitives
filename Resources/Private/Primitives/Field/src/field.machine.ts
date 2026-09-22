@@ -1,6 +1,6 @@
 import { createMachine } from '@zag-js/core';
 import { debounce } from '@zag-js/utils';
-import { normalizeFieldName } from '../../Form/src/form.path';
+import { trimArraySuffix } from '../../Form/src/form.path';
 import {
     getFieldMachinesFor,
     getFormMachineFor,
@@ -271,7 +271,7 @@ export const machine = createMachine<FieldSchema>({
                 const formEl = rootEl.closest('form');
                 if (!formEl) return;
 
-                const normalizedNames = listenTo.map(normalizeFieldName);
+                const normalizedNames = listenTo.map(trimArraySuffix);
                 const lastValues = new Map<string, FieldValue>();
                 const pending = new Set(normalizedNames);
 

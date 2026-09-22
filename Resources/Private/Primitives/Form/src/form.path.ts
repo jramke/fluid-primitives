@@ -1,13 +1,22 @@
+/** Matches one path segment: either a bare run of non-delimiter chars, or bracket contents. */
 const fieldPathSegmentPattern = /([^.[\]]+)|\[(.*?)\]/g;
 
+/** Sentinel for an empty `[]` segment - "append to this array" - distinct from any real field name. */
 export const appendFieldPathSegment = Symbol('append-field-path-segment');
 
+/** One parsed path segment: an object key, an array index, or the append marker. */
 export type FieldPathSegment = string | number | typeof appendFieldPathSegment;
 
-export function normalizeFieldName(fieldName: string) {
+/** Strips a trailing `[]` (the manual-bracket array-submission marker, e.g. `a11yNeeds[]`) if present. */
+export function trimArraySuffix(fieldName: string) {
     return fieldName.replace(/\[\]$/, '');
 }
 
+/**
+ * Splits a field name into its path segments, treating `.` and `[...]` as equivalent
+ * delimiters - `person.country` and `person[country]` both parse to `['person', 'country']`.
+ * An all-digit segment becomes a number, and an empty `[]` becomes {@link appendFieldPathSegment}.
+ */
 export function parseFieldPath(fieldName: string): FieldPathSegment[] {
     const fieldPath: FieldPathSegment[] = [];
 
@@ -30,6 +39,10 @@ export function parseFieldPath(fieldName: string): FieldPathSegment[] {
     return fieldPath;
 }
 
+/**
+ * Joins path segments back into one bracketed name: the first segment stays bare, every
+ * segment after it gets wrapped in `[...]`, and {@link appendFieldPathSegment} becomes `[]`.
+ */
 export function stringifyFieldPathAsBrackets(fieldPath: readonly FieldPathSegment[]) {
     let fieldName = '';
 
@@ -46,6 +59,11 @@ export function stringifyFieldPathAsBrackets(fieldPath: readonly FieldPathSegmen
     return fieldName;
 }
 
+/**
+ * Parses `fieldName` (dot or bracket notation) and rebuilds it fully bracketed, with
+ * `prefix` and `objectName` unshifted onto the front in that order. Used to rewrite submitted
+ * `FormData` keys into the form's real Extbase argument name just before `fetch()`.
+ */
 export function prefixFieldName(fieldName: string, prefix: string, objectName?: string) {
     if (fieldName === '') {
         return '';
@@ -63,10 +81,14 @@ export function prefixFieldName(fieldName: string, prefix: string, objectName?: 
     return stringifyFieldPathAsBrackets(fieldPath);
 }
 
-export function toCanonicalFieldName(fieldName: string, objectName?: string) {
+/**
+ * Resolves any field-name string (dot or bracket, optionally objectName-prefixed) to the exact
+ * bracket-notation key the field registry uses.
+ */
+export function toRegisteredFieldName(fieldName: string, objectName?: string) {
     const fieldPath = parseFieldPath(fieldName);
     if (fieldPath.length === 0) {
-        return normalizeFieldName(fieldName);
+        return trimArraySuffix(fieldName);
     }
 
     if (objectName && fieldPath[0] === objectName) {
@@ -77,5 +99,5 @@ export function toCanonicalFieldName(fieldName: string, objectName?: string) {
     // people[0].firstName) - not just for the leading array-index segment, since that's what a
     // registered field machine is actually keyed by (see form.registry.ts) and what SET_ERRORS
     // lookups match against exactly.
-    return normalizeFieldName(stringifyFieldPathAsBrackets(fieldPath));
+    return trimArraySuffix(stringifyFieldPathAsBrackets(fieldPath));
 }

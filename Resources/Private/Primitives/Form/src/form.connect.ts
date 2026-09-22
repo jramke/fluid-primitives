@@ -5,7 +5,7 @@ import type { FieldHandle } from '../../Field/src/field.types';
 import { parts } from './form.anatomy';
 import * as dom from './form.dom';
 import { getRegisteredFieldMachines, renameFieldMachine } from './form.fields';
-import { normalizeFieldName } from './form.path';
+import { trimArraySuffix } from './form.path';
 import type { FormApi, FormDirty, FormErrors, FormSchema, FormTouched } from './form.types';
 import { createFormValues } from './form.values';
 
@@ -120,7 +120,7 @@ export function connect<T extends PropTypes>(
             return getFieldHandles();
         },
         getField(name) {
-            return this.getAllFields().get(normalizeFieldName(name));
+            return this.getAllFields().get(trimArraySuffix(name));
         },
         getAction() {
             return formEl?.getAttribute('action') || '';

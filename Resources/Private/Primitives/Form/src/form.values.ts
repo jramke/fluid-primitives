@@ -1,7 +1,7 @@
 import {
     appendFieldPathSegment,
-    normalizeFieldName,
     parseFieldPath,
+    trimArraySuffix,
     type FieldPathSegment,
 } from './form.path';
 import type { FormValueLeaf, FormValues, FormValuesObject, FormValueTree } from './form.types';
@@ -48,7 +48,7 @@ export function getFieldErrorValue(
 }
 
 function formDataToObject(formData: FormData): FormValuesObject {
-    const fieldNames = new Set(Array.from(formData.keys(), normalizeFieldName));
+    const fieldNames = new Set(Array.from(formData.keys(), trimArraySuffix));
 
     const dataObject: FormValuesObject = {};
 
@@ -80,7 +80,7 @@ function readFieldEntries(
     formData: FormData,
     fieldName: string
 ): { entries: FormValueLeaf[]; isArrayValue: boolean } {
-    const normalizedFieldName = normalizeFieldName(fieldName);
+    const normalizedFieldName = trimArraySuffix(fieldName);
     const directEntries = formData.getAll(normalizedFieldName);
     const bracketEntries = formData.getAll(`${normalizedFieldName}[]`);
     const entries = directEntries.length > 0 ? directEntries : bracketEntries;
@@ -174,7 +174,7 @@ function setValueAtFieldPath(
 }
 
 function getValueAtFieldPath(values: FormValuesObject, fieldName: string): FormValueTree | null {
-    const fieldPath = parseFieldPath(normalizeFieldName(fieldName));
+    const fieldPath = parseFieldPath(trimArraySuffix(fieldName));
     if (fieldPath.length === 0) {
         return null;
     }
