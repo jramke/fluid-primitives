@@ -61,7 +61,7 @@ export function validateWithStandardSchema(
 export function attachErrorValues(errors: FormErrors, values: FormValues): FormErrors {
     return Object.fromEntries(
         Object.entries(errors).map(([fieldName, error]) => [
-            normalizeFieldName(fieldName),
+            toCanonicalFieldName(fieldName),
             {
                 ...error,
                 value:

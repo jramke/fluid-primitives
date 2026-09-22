@@ -31,7 +31,7 @@ final readonly class ExtbaseFormFieldNamer
     }
 
     /** @return list<string> */
-    private function parseFieldPath(string $fieldName): array
+    public function parseFieldPath(string $fieldName): array
     {
         $matches = null;
         preg_match_all('/([^.[\]]+)|\[(.*?)\]/', $fieldName, $matches, PREG_SET_ORDER);
@@ -50,7 +50,7 @@ final readonly class ExtbaseFormFieldNamer
     }
 
     /** @param list<string> $fieldPath */
-    private function stringifyFieldPathAsBrackets(array $fieldPath): string
+    public function stringifyFieldPathAsBrackets(array $fieldPath): string
     {
         $fieldName = '';
 

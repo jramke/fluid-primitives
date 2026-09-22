@@ -127,6 +127,33 @@ final class FormRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function canonicalizesADotNotationNameToBracketsWhileStillResolvingDefaultValueFromTheDottedPath(): void
+    {
+        // FieldContext::beforeRendering() must resolve `defaultValue` from the *original*
+        // dot-notation name (ObjectAccess::getPropertyPath() has no concept of brackets) before
+        // canonicalizing `name` itself to the bracket wire format Extbase's own argument mapping
+        // requires - a regression here would silently break either nested error matching
+        // (person.country vs person[country], see form.path.ts) or nested defaultValue resolution.
+        $nested = new TestEntity();
+        $nested->setTitle('Nested title');
+        $entity = new TestEntity();
+        $entity->setNested($nested);
+
+        $html = $this->renderTemplate('
+            <primitives:form.root actionUri="/submit" objectName="conference" object="{entity}">
+                <primitives:field.root name="nested.title">
+                    <primitives:field.control asChild="{true}">
+                        <input type="text" />
+                    </primitives:field.control>
+                </primitives:field.root>
+            </primitives:form.root>
+        ', ['entity' => $entity]);
+
+        $this->assertStringContainsString('data-name="nested[title]"', $html);
+        $this->assertStringContainsString('value="Nested title"', $html);
+    }
+
+    #[Test]
     public function registersTheBoundObjectsResolvedDefaultValueForClientHydrationTooNotJustTheServerRenderedHtml(): void
     {
         // ComponentHydrationCollector used to register a root component's client-facing props from

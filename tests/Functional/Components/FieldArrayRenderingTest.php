@@ -66,6 +66,30 @@ final class FieldArrayRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function canonicalizesADottedChildFieldNameToNestedBracketsInsideARow(): void
+    {
+        // The array-prefix branch used to splice the child's raw `name` string in unprocessed, so a
+        // dotted child name leaked a literal dot into one bracket segment (`people[0][address.city]`)
+        // instead of nesting properly - re-parsing the child name before rebuilding the full bracket
+        // path fixes that.
+        $html = $this->renderTemplate('
+            <primitives:fieldArray.root name="people" itemCount="1">
+                <primitives:fieldArray.itemGroup>
+                    <primitives:fieldArray.item index="0">
+                        <primitives:field.root name="address.city">
+                            <primitives:field.control asChild="{true}">
+                                <input type="text" />
+                            </primitives:field.control>
+                        </primitives:field.root>
+                    </primitives:fieldArray.item>
+                </primitives:fieldArray.itemGroup>
+            </primitives:fieldArray.root>
+        ');
+
+        $this->assertStringContainsString('data-name="people[0][address][city]"', $html);
+    }
+
+    #[Test]
     public function prefixesNestedFieldNameWithEmptyIndexInsideTheUnfilledStencil(): void
     {
         $html = $this->renderTemplate('

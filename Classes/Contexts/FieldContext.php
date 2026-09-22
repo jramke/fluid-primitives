@@ -6,11 +6,18 @@ namespace Jramke\FluidPrimitives\Contexts;
 
 use Jramke\FluidPrimitives\Service\ContextService;
 use Jramke\FluidPrimitives\Utility\ComponentPartIdUtility;
+use Jramke\FluidPrimitives\Utility\ExtbaseFormFieldNamer;
 use Jramke\FluidPrimitives\Utility\Typed;
+use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use TYPO3\CMS\Extbase\Reflection\ObjectAccess;
 
+#[Autoconfigure(public: true)]
 class FieldContext extends AbstractComponentContext
 {
+    public function __construct(
+        private readonly ExtbaseFormFieldNamer $extbaseFormFieldNamer,
+    ) {}
+
     public function beforeRendering(): void
     {
         $parentRenderingContext = $this->getParentRenderingContext();
@@ -23,17 +30,27 @@ class FieldContext extends AbstractComponentContext
         // with an empty index segment (`people[][firstName]`) inside the unfilled `itemTemplate`
         // stencil, where no real index exists yet - the client rewrites that placeholder to a real
         // index on each clone (see `ComponentHydrator.restampValue` in `Client/src/lib/
-        // hydration.ts`). Consumers set each
-        // row's `defaultValue` explicitly (see the FieldArray docs), so the object-bound
-        // auto-resolution below is skipped for these fields rather than trying to resolve a
-        // prefixed path against the form's bound object.
+        // hydration.ts`). The child's own name is re-parsed rather than spliced in as a raw string,
+        // so a dotted child name (`address.city`) canonicalizes to full brackets
+        // (`people[0][address][city]`) instead of leaking a literal dot into one bracket segment.
+        // Consumers set each row's `defaultValue` explicitly (see the FieldArray docs), so the
+        // object-bound auto-resolution below is skipped for these fields rather than trying to
+        // resolve a prefixed path against the form's bound object.
         $fieldArrayContext = ContextService::getFromRenderingContext($parentRenderingContext, 'fieldArray');
         if ($fieldArrayContext instanceof ComponentContextInterface && $this->has('name')) {
             $arrayName = Typed::stringOrNull($fieldArrayContext->get('name'));
             if ($arrayName !== null) {
                 $index = Typed::intOrNull($fieldArrayContext->get('item.index'));
                 $indexSegment = $index !== null ? (string)$index : '';
-                $this->set('name', "{$arrayName}[{$indexSegment}][{$this->get('name')}]");
+                $childPath = $this->extbaseFormFieldNamer->parseFieldPath((string)$this->get('name'));
+                $this->set(
+                    'name',
+                    $this->extbaseFormFieldNamer->stringifyFieldPathAsBrackets([
+                        $arrayName,
+                        $indexSegment,
+                        ...$childPath,
+                    ]),
+                );
                 return;
             }
         }
@@ -52,6 +69,16 @@ class FieldContext extends AbstractComponentContext
                 $propertyPath = str_ends_with($name, '[]') ? substr($name, offset: 0, length: -2) : $name;
                 $this->set('defaultValue', ObjectAccess::getPropertyPath($formObject, $propertyPath));
             }
+        }
+
+        // Canonicalize every other field's `name` to the same full-bracket wire format the
+        // FieldArray branch above already uses (e.g. `person.country` -> `person[country]`), so the
+        // client registry and toCanonicalFieldName() always have exactly one notation to match
+        // against, whichever notation the template author wrote. Must run after the `defaultValue`
+        // resolution above, which needs the original dot-notation path for ObjectAccess.
+        if ($this->has('name')) {
+            $canonicalPath = $this->extbaseFormFieldNamer->parseFieldPath((string)$this->get('name'));
+            $this->set('name', $this->extbaseFormFieldNamer->stringifyFieldPathAsBrackets($canonicalPath));
         }
     }
 
