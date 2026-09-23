@@ -1,5 +1,13 @@
 import * as checkbox from '@zag-js/checkbox';
-import { FieldAwareComponent, Machine, mergeProps, normalizeProps } from '../../Client';
+import {
+    FieldAwareComponent,
+    Machine,
+    mergeProps,
+    normalizeProps,
+    registerClientPropConverters,
+    type ClientPropConverterMap,
+    type ConverterMachineProps,
+} from '../../Client';
 import { connect as connectCheckboxGroup } from '../CheckboxGroup/src/checkbox-group.connect';
 import {
     getCheckboxGroupMachineFor,
@@ -7,6 +15,21 @@ import {
 } from '../CheckboxGroup/src/checkbox-group.registry';
 import type { CheckboxGroupApi } from '../CheckboxGroup/src/checkbox-group.types';
 import type { FieldMachine } from '../Field/src/field.registry';
+
+// `defaultChecked` is declared type="mixed" (it's `boolean | 'indeterminate'`, and PHP has no
+// closed type for that union) so it resolves to `unknown` on the wire - this converter just tells
+// TS what it actually is (Zag's own CheckedState) rather than transforming the value itself.
+const checkboxPropConverters = {
+    defaultChecked: (defaultChecked: checkbox.Props['defaultChecked']) => defaultChecked,
+} satisfies ClientPropConverterMap;
+
+registerClientPropConverters('checkbox', checkboxPropConverters);
+
+declare module 'fluid-primitives' {
+    interface HydrationPropsOverrides {
+        checkbox: ConverterMachineProps<typeof checkboxPropConverters>;
+    }
+}
 
 export class Checkbox extends FieldAwareComponent<checkbox.Props, checkbox.Api> {
     static componentName = 'checkbox';

@@ -9,9 +9,13 @@ import {
     registerClientPropConverters,
     type ClientPropConverterMap,
     type ConverterMachineProps,
+    type WithWireTranslations,
 } from '../../Client';
+
 import { getListCollectionFromHydrationData } from '../../Client/src/lib/hydration';
 import type { FieldMachine } from '../Field/src/field.registry';
+
+type ComboboxProps = WithWireTranslations<combobox.Props>;
 
 // Wire shape -> real @zag-js/collection ListCollection instance, registered here (not in
 // transformProps) so mountAll/mount convert it before the component is even constructed - see
@@ -24,6 +28,10 @@ const comboboxPropConverters = {
     collection: (
         collection: Parameters<typeof getListCollectionFromHydrationData>[0] | undefined
     ) => getListCollectionFromHydrationData(collection ?? { items: [] }),
+    // PHP can't distinguish a list-shaped array from an object-shaped one for a bare `type="array"`
+    // prop (see WireTypeResolver), so `positioning` resolves to `unknown` on the wire - this just
+    // tells TS what it actually is (a real @zag-js/popper PositioningOptions object).
+    positioning: (positioning: combobox.Props['positioning']) => positioning,
 } satisfies ClientPropConverterMap;
 
 registerClientPropConverters('combobox', comboboxPropConverters);
@@ -34,12 +42,12 @@ declare module 'fluid-primitives' {
     }
 }
 
-export class Combobox extends FieldAwareComponent<combobox.Props, combobox.Api> {
+export class Combobox extends FieldAwareComponent<ComboboxProps, combobox.Api> {
     static componentName = 'combobox';
 
     private sourceCollection?: ListCollection<any>;
 
-    propsWithField(props: combobox.Props, fieldMachine: FieldMachine): combobox.Props {
+    propsWithField(props: ComboboxProps, fieldMachine: FieldMachine): ComboboxProps {
         return {
             ...props,
             disabled: props.disabled ?? fieldMachine.context.get('disabled'),
@@ -50,7 +58,7 @@ export class Combobox extends FieldAwareComponent<combobox.Props, combobox.Api> 
         };
     }
 
-    transformProps(props: combobox.Props) {
+    transformProps(props: ComboboxProps) {
         return {
             ...props,
             // when selecting an item for example when the suggestions list is opened by the toggle there is no input/change event dispatched,
@@ -60,6 +68,11 @@ export class Combobox extends FieldAwareComponent<combobox.Props, combobox.Api> 
                 this.getElement('input')?.dispatchEvent(new Event('change', { bubbles: true }));
                 props?.onSelect?.(details);
             },
+            // Combobox never reads translations client-side itself (triggerLabel/clearTriggerLabel
+            // are both server-rendered directly in Trigger.fluid.html/ClearTrigger.fluid.html) - our
+            // own `string | false` wire convention only exists for those templates, never for Zag's
+            // own `translations` (plain strings), so it's blanked here rather than forwarded as-is.
+            translations: undefined,
         };
     }
 
@@ -134,7 +147,7 @@ export class Combobox extends FieldAwareComponent<combobox.Props, combobox.Api> 
         });
     }
 
-    initMachine(props: combobox.Props): Machine<any> {
+    initMachine(props: ComboboxProps): Machine<any> {
         props = this.withFieldProps(props);
         const transformedProps = this.transformProps(props);
 

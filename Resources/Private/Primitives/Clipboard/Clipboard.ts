@@ -1,15 +1,18 @@
 import * as clipboard from '@zag-js/clipboard';
-import { Component, Machine, mergeProps, normalizeProps } from '../../Client';
+import {
+    Component,
+    Machine,
+    mergeProps,
+    normalizeProps,
+    type WithWireTranslations,
+} from '../../Client';
 
-type ClipboardTranslations = {
-    triggerLabelIdle?: string | null | false;
-    triggerLabelCopied?: string | null | false;
-};
+type ClipboardProps = WithWireTranslations<clipboard.Props>;
 
-export class Clipboard extends Component<clipboard.Props, clipboard.Api> {
+export class Clipboard extends Component<ClipboardProps, clipboard.Api> {
     static componentName = 'clipboard';
 
-    initMachine(props: clipboard.Props): Machine<any> {
+    initMachine(props: ClipboardProps): Machine<any> {
         return new Machine(clipboard.machine, { ...props, translations: undefined });
     }
 
@@ -36,7 +39,7 @@ export class Clipboard extends Component<clipboard.Props, clipboard.Api> {
 
         const triggerEl = this.getElement('trigger');
         if (triggerEl) {
-            const translations = this.userProps?.translations as ClipboardTranslations | undefined;
+            const translations = this.userProps?.translations;
             const mergedProps = mergeProps(this.api.getTriggerProps(), {
                 'aria-label': this.api.copied
                     ? translations?.triggerLabelCopied || null

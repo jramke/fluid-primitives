@@ -1,16 +1,48 @@
 import * as popover from '@zag-js/popover';
-import { Component, Machine, mergeProps, normalizeProps } from '../../Client';
+import {
+    Component,
+    Machine,
+    mergeProps,
+    normalizeProps,
+    registerClientPropConverters,
+    type ClientPropConverterMap,
+    type ConverterMachineProps,
+    type WithWireTranslations,
+} from '../../Client';
 
-export class Popover extends Component<popover.Props, popover.Api> {
+type PopoverProps = WithWireTranslations<popover.Props>;
+
+// PHP can't distinguish a list-shaped array from an object-shaped one for a bare `type="array"`
+// prop (see WireTypeResolver), so `positioning` resolves to `unknown` on the wire - this converter
+// just tells TS what it actually is (a real @zag-js/popper PositioningOptions object) rather than
+// transforming the value itself.
+const popoverPropConverters = {
+    positioning: (positioning: popover.Props['positioning']) => positioning,
+} satisfies ClientPropConverterMap;
+
+registerClientPropConverters('popover', popoverPropConverters);
+
+declare module 'fluid-primitives' {
+    interface HydrationPropsOverrides {
+        popover: ConverterMachineProps<typeof popoverPropConverters>;
+    }
+}
+
+export class Popover extends Component<PopoverProps, popover.Api> {
     static componentName = 'popover';
 
-    initMachine(props: popover.Props): Machine<any> {
+    initMachine(props: PopoverProps): Machine<any> {
         return new Machine(popover.machine, {
             ...props,
             positioning: {
                 gutter: 6,
                 ...props.positioning,
             },
+            // Our own translations carry a `string | false` "disable this label" convention render()
+            // already applies via userProps below - zag's own translations only ever accept
+            // `string | undefined`, and blanking it here (rather than forwarding ours as-is) avoids
+            // feeding zag's internal aria-label default a shape it was never meant to see.
+            translations: undefined,
         });
     }
 

@@ -1,6 +1,30 @@
 import * as slider from '@zag-js/slider';
-import { FieldAwareComponent, Machine, mergeProps, normalizeProps } from '../../Client';
+import {
+    FieldAwareComponent,
+    Machine,
+    mergeProps,
+    normalizeProps,
+    registerClientPropConverters,
+    type ClientPropConverterMap,
+    type ConverterMachineProps,
+} from '../../Client';
 import type { FieldMachine } from '../Field/src/field.registry';
+
+// PHP can't distinguish a list-shaped array from an object-shaped one for a bare `type="array"`
+// prop (see WireTypeResolver), so `thumbSize` resolves to `unknown` on the wire - this converter
+// just tells TS what it actually is (a real @zag-js/slider `{ width, height }` size) rather than
+// transforming the value itself.
+const sliderPropConverters = {
+    thumbSize: (thumbSize: slider.Props['thumbSize']) => thumbSize,
+} satisfies ClientPropConverterMap;
+
+registerClientPropConverters('slider', sliderPropConverters);
+
+declare module 'fluid-primitives' {
+    interface HydrationPropsOverrides {
+        slider: ConverterMachineProps<typeof sliderPropConverters>;
+    }
+}
 
 export class Slider extends FieldAwareComponent<slider.Props, slider.Api> {
     static componentName = 'slider';

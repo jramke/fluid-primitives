@@ -1,5 +1,28 @@
 import * as tooltip from '@zag-js/tooltip';
-import { Component, Machine, normalizeProps } from '../../Client';
+import {
+    Component,
+    Machine,
+    normalizeProps,
+    registerClientPropConverters,
+    type ClientPropConverterMap,
+    type ConverterMachineProps,
+} from '../../Client';
+
+// PHP can't distinguish a list-shaped array from an object-shaped one for a bare `type="array"`
+// prop (see WireTypeResolver), so `positioning` resolves to `unknown` on the wire - this converter
+// just tells TS what it actually is (a real @zag-js/popper PositioningOptions object) rather than
+// transforming the value itself.
+const tooltipPropConverters = {
+    positioning: (positioning: tooltip.Props['positioning']) => positioning,
+} satisfies ClientPropConverterMap;
+
+registerClientPropConverters('tooltip', tooltipPropConverters);
+
+declare module 'fluid-primitives' {
+    interface HydrationPropsOverrides {
+        tooltip: ConverterMachineProps<typeof tooltipPropConverters>;
+    }
+}
 
 export class Tooltip extends Component<tooltip.Props, tooltip.Api> {
     static componentName = 'tooltip';

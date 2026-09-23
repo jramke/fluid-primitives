@@ -30,7 +30,11 @@ class NumberInputContext extends AbstractComponentContext
         return Typed::string($this->get('defaultValue'));
     }
 
-    #[ExposeToClient]
+    // excludeIfNull: no locale override should mean "key absent" (Zag falls back to its own
+    // default), not a `null` sent over the wire - @zag-js/number-input passes `locale` straight
+    // into `new Intl.NumberFormat(locale, ...)` with no nullish handling of its own, and a literal
+    // `null` there is not the same as an absent/undefined argument.
+    #[ExposeToClient(excludeIfNull: true)]
     public function getLocale(): ?string
     {
         return $this->translator->getLocale($this->getRequest());

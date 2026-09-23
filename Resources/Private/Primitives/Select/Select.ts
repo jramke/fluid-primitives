@@ -7,9 +7,12 @@ import {
     registerClientPropConverters,
     type ClientPropConverterMap,
     type ConverterMachineProps,
+    type WithWireTranslations,
 } from '../../Client';
 import { getListCollectionFromHydrationData } from '../../Client/src/lib/hydration';
 import type { FieldMachine } from '../Field/src/field.registry';
+
+type SelectProps = WithWireTranslations<select.Props>;
 
 // Wire shape -> real @zag-js/collection ListCollection instance. Registered here (not in
 // transformProps) so mountAll/mount convert it before the component is even constructed - see
@@ -18,6 +21,10 @@ import type { FieldMachine } from '../Field/src/field.registry';
 const selectPropConverters = {
     collection: (collection: Parameters<typeof getListCollectionFromHydrationData>[0]) =>
         getListCollectionFromHydrationData(collection),
+    // PHP can't distinguish a list-shaped array from an object-shaped one for a bare `type="array"`
+    // prop (see WireTypeResolver), so `positioning` resolves to `unknown` on the wire - this just
+    // tells TS what it actually is (a real @zag-js/popper PositioningOptions object).
+    positioning: (positioning: select.Props['positioning']) => positioning,
 } satisfies ClientPropConverterMap;
 
 registerClientPropConverters('select', selectPropConverters);
@@ -28,10 +35,10 @@ declare module 'fluid-primitives' {
     }
 }
 
-export class Select extends FieldAwareComponent<select.Props, select.Api> {
+export class Select extends FieldAwareComponent<SelectProps, select.Api> {
     static componentName = 'select';
 
-    propsWithField(props: select.Props, fieldMachine: FieldMachine): select.Props {
+    propsWithField(props: SelectProps, fieldMachine: FieldMachine): SelectProps {
         return {
             ...props,
             disabled: props.disabled ?? fieldMachine.context.get('disabled'),
@@ -42,8 +49,15 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
         };
     }
 
-    initMachine(props: select.Props): Machine<any> {
-        return new Machine(select.machine, this.withFieldProps(props));
+    initMachine(props: SelectProps): Machine<any> {
+        return new Machine(select.machine, {
+            ...this.withFieldProps(props),
+            // Our own translations carry a `string | false` "disable this label" convention render()
+            // already applies via userProps below - zag's own translations only ever accept
+            // `string | undefined`, and blanking it here (rather than forwarding ours as-is) avoids
+            // feeding zag's internal aria-label default a shape it was never meant to see.
+            translations: undefined,
+        });
     }
 
     initApi() {

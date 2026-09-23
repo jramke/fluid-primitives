@@ -1,5 +1,29 @@
 import * as menu from '@zag-js/menu';
-import { Component, getComponentInstance, Machine, normalizeProps } from '../../Client';
+import {
+    Component,
+    getComponentInstance,
+    Machine,
+    normalizeProps,
+    registerClientPropConverters,
+    type ClientPropConverterMap,
+    type ConverterMachineProps,
+} from '../../Client';
+
+// PHP can't distinguish a list-shaped array from an object-shaped one for a bare `type="array"`
+// prop (see WireTypeResolver), so `positioning` resolves to `unknown` on the wire - this converter
+// just tells TS what it actually is (a real @zag-js/popper PositioningOptions object) rather than
+// transforming the value itself.
+const menuPropConverters = {
+    positioning: (positioning: menu.Props['positioning']) => positioning,
+} satisfies ClientPropConverterMap;
+
+registerClientPropConverters('menu', menuPropConverters);
+
+declare module 'fluid-primitives' {
+    interface HydrationPropsOverrides {
+        menu: ConverterMachineProps<typeof menuPropConverters>;
+    }
+}
 
 export class Menu extends Component<menu.Props, menu.Api> {
     static componentName = 'menu';

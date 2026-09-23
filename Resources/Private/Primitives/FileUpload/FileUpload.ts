@@ -1,8 +1,34 @@
 import type { FileRejection, ItemType } from '@zag-js/file-upload';
 import * as fileUpload from '@zag-js/file-upload';
 import { isValidFileType } from '@zag-js/file-utils';
-import { FieldAwareComponent, Machine, mergeProps, normalizeProps, Template } from '../../Client';
+import {
+    FieldAwareComponent,
+    Machine,
+    mergeProps,
+    normalizeProps,
+    registerClientPropConverters,
+    Template,
+    type ClientPropConverterMap,
+    type ConverterMachineProps,
+    type WithWireTranslations,
+} from '../../Client';
 import type { FieldMachine } from '../Field/src/field.registry';
+
+// `accept` is declared type="mixed" (it's a MIME type, a list of them, or an per-extension accept
+// map, and PHP has no closed type for that union) so it resolves to `unknown` on the wire - this
+// converter just tells TS what it actually is (Zag's own accept shape) rather than transforming the
+// value itself.
+const fileUploadPropConverters = {
+    accept: (accept: fileUpload.Props['accept']) => accept,
+} satisfies ClientPropConverterMap;
+
+registerClientPropConverters('fileUpload', fileUploadPropConverters);
+
+declare module 'fluid-primitives' {
+    interface HydrationPropsOverrides {
+        fileUpload: ConverterMachineProps<typeof fileUploadPropConverters>;
+    }
+}
 
 interface ItemEntry {
     file: File;
@@ -19,7 +45,9 @@ interface ItemEntry {
  * `maxFiles` instead gets the same "remaining slots" UX (and the machine's own `TOO_MANY_FILES`
  * rejection) without ever touching a real `File`.
  */
-type FileUploadPrimitiveProps = fileUpload.Props & { existingFilesCount?: number };
+type FileUploadPrimitiveProps = WithWireTranslations<
+    fileUpload.Props & { existingFilesCount?: number }
+>;
 
 function resolveMaxFiles(props: FileUploadPrimitiveProps): number | undefined {
     const existingFilesCount = props.existingFilesCount ?? 0;
@@ -77,7 +105,7 @@ const FILE_NAME_PLACEHOLDER = '%fileName%';
  * untouched.
  */
 function resolveTranslations(
-    translations: Record<string, unknown> | undefined
+    translations: Record<string, string | false> | undefined
 ): fileUpload.Props['translations'] {
     if (!translations) return undefined;
 
@@ -120,9 +148,7 @@ export class FileUpload extends FieldAwareComponent<FileUploadPrimitiveProps, fi
         return new Machine(fileUpload.machine, {
             ...props,
             maxFiles: resolveMaxFiles(props),
-            translations: resolveTranslations(
-                props.translations as Record<string, unknown> | undefined
-            ),
+            translations: resolveTranslations(props.translations),
         });
     }
 

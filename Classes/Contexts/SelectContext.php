@@ -28,6 +28,9 @@ class SelectContext extends AbstractComponentContext
     }
 
     #[ExposeToClient(excludeIfNull: true)]
+    /**
+     * @return list<string>|null
+     */
     public function getDefaultValue(): ?array
     {
         // `defaultValue` is declared type="mixed" and genuinely accepts either shape checked below.

@@ -261,7 +261,7 @@ final class DialogRenderingTest extends FunctionalTestCase
     public function passesRoleProp(): void
     {
         $this->renderTemplate('
-            <primitives:dialog.root role="alertdialog">
+            <primitives:dialog.root role="{f:constant(name: \'Jramke\FluidPrimitives\Enum\DialogRole::AlertDialog\')}">
                 <primitives:dialog.trigger>Open</primitives:dialog.trigger>
                 <primitives:dialog.content>Alert!</primitives:dialog.content>
             </primitives:dialog.root>
