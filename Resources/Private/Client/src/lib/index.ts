@@ -1,4 +1,10 @@
 export { AsyncList } from './async-list';
+export { applyClientPropConverters, registerClientPropConverters } from './client-prop-converters';
+export type {
+    ClientPropConverter,
+    ClientPropConverterMap,
+    ConverterMachineProps,
+} from './client-prop-converters';
 export { Component } from './component';
 export { DelayedIndicator } from './delayed-indicator';
 export type { DelayedIndicatorOptions } from './delayed-indicator';

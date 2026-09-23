@@ -2,8 +2,11 @@ import { ListCollection, type CollectionItem } from '@zag-js/collection';
 import type {
     ComponentHydrationData,
     FluidPrimitivesGlobals,
+    HydrationPropsFor,
+    KnownComponentName,
     NestedComponentEntry,
 } from '../types';
+import { applyClientPropConverters } from './client-prop-converters';
 import { Component } from './component';
 
 // Keep in sync with: Classes/Utility/ComponentUtility.php
@@ -249,12 +252,18 @@ function scheduleDuplicateIdCheck(): void {
  * Mounts every not-yet-mounted, uncontrolled hydration instance of `componentName`. Safe to call
  * more than once (e.g. after lazily-inserted DOM adds new instances) - already mounted instances
  * are skipped rather than re-instantiated.
+ *
+ * `props` in the callback is inferred from `componentName` itself via {@see HydrationPropsFor} -
+ * no explicit generic needed at the call site. A component name a project hasn't generated types
+ * for yet (or ever) falls back to the untyped bag, same as today.
  */
-export function mountAll(
-    componentName: string,
-    callback: (
-        data: ComponentHydrationData & { createHydrator: () => ComponentHydrator }
-    ) => Component<unknown, unknown> | void
+export function mountAll<K extends KnownComponentName | (string & {})>(
+    componentName: K,
+    callback: (data: {
+        controlled: boolean;
+        props: HydrationPropsFor<Extract<K, string>>;
+        createHydrator: () => ComponentHydrator;
+    }) => Component<unknown, unknown> | void
 ) {
     const hydrationInstances = getHydrationData(componentName);
     if (!hydrationInstances) return;
@@ -273,6 +282,10 @@ export function mountAll(
 
         const instance = callback({
             ...hydrationInstances[id],
+            props: applyClientPropConverters(
+                componentName,
+                hydrationInstances[id].props
+            ) as HydrationPropsFor<Extract<K, string>>,
             createHydrator: () =>
                 new ComponentHydrator(componentName, id, hydrationInstances[id].props.ids),
         });
@@ -321,17 +334,26 @@ export function destroyComponentsWithin(root: Element | Document) {
  * {@see mountAll}, this does not track mounted state - calling it twice for the same `rootId`
  * runs the callback twice, and instances created this way are invisible to
  * {@see destroyComponentsWithin}.
+ *
+ * `props` in the callback is inferred from `componentName` the same way {@see mountAll}'s is.
  */
-export function mount<T>(
-    componentName: string,
+export function mount<K extends KnownComponentName | (string & {}), T>(
+    componentName: K,
     rootId: string,
-    callback: (data: ComponentHydrationData & { createHydrator: () => ComponentHydrator }) => T
+    callback: (data: {
+        controlled: boolean;
+        props: HydrationPropsFor<Extract<K, string>>;
+        createHydrator: () => ComponentHydrator;
+    }) => T
 ): T | undefined {
     const hydrationData = getHydrationData(componentName, rootId);
     if (!hydrationData) return undefined;
 
     return callback({
         ...hydrationData,
+        props: applyClientPropConverters(componentName, hydrationData.props) as HydrationPropsFor<
+            Extract<K, string>
+        >,
         createHydrator: () => new ComponentHydrator(componentName, rootId, hydrationData.props.ids),
     });
 }

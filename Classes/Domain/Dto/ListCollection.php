@@ -359,6 +359,24 @@ final class ListCollection implements JsonSerializable, IteratorAggregate
         return implode(',', $parts);
     }
 
+    /**
+     * The actual wire shape sent to the client - not this class's own constructor
+     * properties/internal state, which differ (e.g. `size`/`first`/`last` are computed here, not
+     * stored). This docblock is the authoritative source a TypeScript-generation tool should read
+     * for this class's client-facing shape, rather than reflecting its properties directly.
+     *
+     * @return array{
+     *     items: array<array-key, array<array-key, mixed>|object>,
+     *     size: int,
+     *     first: string|null,
+     *     last: string|null,
+     *     itemToValueKey: string|null,
+     *     itemToStringKey: string|null,
+     *     isItemDisabledKey: string|null,
+     *     groupByKey: string|null,
+     *     groupSort: array<string>|string|null,
+     * }
+     */
     public function jsonSerialize(): array
     {
         return [

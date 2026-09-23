@@ -29,6 +29,9 @@ class PopoverContext extends AbstractComponentContext
     }
 
     #[ExposeToClient]
+    /**
+     * @return array{closeTriggerLabel: string|false}
+     */
     public function getTranslations(): array
     {
         return $this->translationsWithDefaults([

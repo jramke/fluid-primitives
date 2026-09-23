@@ -1,9 +1,38 @@
 import type { CollectionItem, ListCollection } from '@zag-js/collection';
 import * as combobox from '@zag-js/combobox';
 import { visuallyHiddenStyle } from '@zag-js/dom-query';
-import { FieldAwareComponent, Machine, mergeProps, normalizeProps } from '../../Client';
+import {
+    FieldAwareComponent,
+    Machine,
+    mergeProps,
+    normalizeProps,
+    registerClientPropConverters,
+    type ClientPropConverterMap,
+    type ConverterMachineProps,
+} from '../../Client';
 import { getListCollectionFromHydrationData } from '../../Client/src/lib/hydration';
 import type { FieldMachine } from '../Field/src/field.registry';
+
+// Wire shape -> real @zag-js/collection ListCollection instance, registered here (not in
+// transformProps) so mountAll/mount convert it before the component is even constructed - see
+// client-prop-converters.ts. Runs for every mount regardless of whether `collection` was actually
+// present on the wire (e.g. a searchUrl-only, purely async combobox sends none) since a converter
+// is registered per prop name, not per wire value - defaulting to an empty collection here rather
+// than crashing. The override type below is derived from this const via `typeof` rather than
+// hand-typed a second time, so the two can't drift.
+const comboboxPropConverters = {
+    collection: (
+        collection: Parameters<typeof getListCollectionFromHydrationData>[0] | undefined
+    ) => getListCollectionFromHydrationData(collection ?? { items: [] }),
+} satisfies ClientPropConverterMap;
+
+registerClientPropConverters('combobox', comboboxPropConverters);
+
+declare module 'fluid-primitives' {
+    interface HydrationPropsOverrides {
+        combobox: ConverterMachineProps<typeof comboboxPropConverters>;
+    }
+}
 
 export class Combobox extends FieldAwareComponent<combobox.Props, combobox.Api> {
     static componentName = 'combobox';
@@ -22,15 +51,8 @@ export class Combobox extends FieldAwareComponent<combobox.Props, combobox.Api> 
     }
 
     transformProps(props: combobox.Props) {
-        // `collection` is omitted from hydration data entirely when not passed (e.g. a
-        // searchUrl-only, purely async combobox) - default to an empty one rather than crashing.
-        const collection = getListCollectionFromHydrationData(props.collection ?? { items: [] });
-
         return {
             ...props,
-            get collection() {
-                return collection;
-            },
             // when selecting an item for example when the suggestions list is opened by the toggle there is no input/change event dispatched,
             // but thats needed for our form to update the formdata and validation
             // we use the change event because the input event opens the suggestions list again

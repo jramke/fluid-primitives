@@ -25,6 +25,9 @@ class InputContext extends AbstractComponentContext
     }
 
     #[ExposeToClient]
+    /**
+     * @return array{wordCount: string|false}
+     */
     public function getTranslations(): array
     {
         return $this->translationsWithDefaults([

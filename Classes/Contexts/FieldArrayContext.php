@@ -25,6 +25,9 @@ class FieldArrayContext extends AbstractComponentContext
     }
 
     #[ExposeToClient]
+    /**
+     * @return array{rowAdded: string|false, rowRemoved: string|false}
+     */
     public function getTranslations(): array
     {
         return $this->translationsWithDefaults([

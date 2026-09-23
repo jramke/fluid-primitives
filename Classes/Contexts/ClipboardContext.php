@@ -23,6 +23,9 @@ class ClipboardContext extends AbstractComponentContext
         return $this->translator;
     }
 
+    /**
+     * @return array{triggerLabelIdle: string|false, triggerLabelCopied: string|false}
+     */
     #[ExposeToClient]
     public function getTranslations(): array
     {

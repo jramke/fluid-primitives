@@ -1,7 +1,32 @@
 import * as select from '@zag-js/select';
-import { FieldAwareComponent, Machine, mergeProps, normalizeProps } from '../../Client';
+import {
+    FieldAwareComponent,
+    Machine,
+    mergeProps,
+    normalizeProps,
+    registerClientPropConverters,
+    type ClientPropConverterMap,
+    type ConverterMachineProps,
+} from '../../Client';
 import { getListCollectionFromHydrationData } from '../../Client/src/lib/hydration';
 import type { FieldMachine } from '../Field/src/field.registry';
+
+// Wire shape -> real @zag-js/collection ListCollection instance. Registered here (not in
+// transformProps) so mountAll/mount convert it before the component is even constructed - see
+// client-prop-converters.ts. The override type below is derived from this const via `typeof`
+// rather than hand-typed a second time, so the two can't drift.
+const selectPropConverters = {
+    collection: (collection: Parameters<typeof getListCollectionFromHydrationData>[0]) =>
+        getListCollectionFromHydrationData(collection),
+} satisfies ClientPropConverterMap;
+
+registerClientPropConverters('select', selectPropConverters);
+
+declare module 'fluid-primitives' {
+    interface HydrationPropsOverrides {
+        select: ConverterMachineProps<typeof selectPropConverters>;
+    }
+}
 
 export class Select extends FieldAwareComponent<select.Props, select.Api> {
     static componentName = 'select';
@@ -17,18 +42,8 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
         };
     }
 
-    transformProps(props: select.Props): select.Props {
-        return {
-            ...props,
-            get collection() {
-                return getListCollectionFromHydrationData(props.collection);
-            },
-        };
-    }
-
     initMachine(props: select.Props): Machine<any> {
-        props = this.withFieldProps(props);
-        return new Machine(select.machine, this.transformProps(props));
+        return new Machine(select.machine, this.withFieldProps(props));
     }
 
     initApi() {

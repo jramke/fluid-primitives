@@ -58,6 +58,27 @@ readonly class PackageResolver
         return $packages;
     }
 
+    /**
+     * The `Classes/` folder of every locally-authored package in the current project (the same set
+     * {@see getAvailablePackagesForDisplay()} resolves - a real path-repository package, not a
+     * vendor/Composer-installed one, TYPO3 system extensions excluded either way).
+     *
+     * @return list<string>
+     */
+    public function getLocalClassesDirectories(): array
+    {
+        $directories = [];
+
+        foreach ($this->getAvailablePackagesForDisplay() as $package) {
+            $classesDirectory = rtrim($package->getPackagePath(), '/') . '/Classes';
+            if (is_dir($classesDirectory)) {
+                $directories[] = $classesDirectory;
+            }
+        }
+
+        return $directories;
+    }
+
     public function getComposerProjectVendor(): string
     {
         if (!Environment::isComposerMode()) {

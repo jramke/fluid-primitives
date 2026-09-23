@@ -36,6 +36,9 @@ class FileUploadContext extends AbstractComponentContext
      * template (e.g. `translations="{deleteFile: 'Remove {fileName}'}"`).
      */
     #[ExposeToClient]
+    /**
+     * @return array{dropzone: string|false, itemPreview: string|false, deleteFile: string|false}
+     */
     public function getTranslations(): array
     {
         return $this->translationsWithDefaults([

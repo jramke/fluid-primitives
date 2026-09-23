@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Service;
 
+use Jramke\FluidPrimitives\Component\ComponentCollectionInterface;
 use RuntimeException;
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use TYPO3\CMS\Fluid\Core\ViewHelper\ViewHelperResolverFactoryInterface;
@@ -68,6 +69,37 @@ class ComponentCollectionService
         }
 
         return $viewHelperResolverDelegate;
+    }
+
+    /**
+     * Every registered Fluid component collection in the current installation - reads the same
+     * namespace registry {@see getViewHelperNamespaceIdentifierByCollectionClassName()} does, just
+     * in the opposite direction (every collection, not one looked up by class name).
+     *
+     * @return list<class-string<ComponentCollectionInterface>>
+     */
+    public function discoverCollections(): array
+    {
+        $viewHelperResolver = $this->viewHelperResolverFactory->create();
+        $registeredNamespaces = $viewHelperResolver->getNamespaces();
+
+        $collections = [];
+        foreach ($registeredNamespaces as $delegateClassNames) {
+            if (!is_array($delegateClassNames)) {
+                continue;
+            }
+
+            foreach ($delegateClassNames as $delegateClassName) {
+                if (
+                    is_string($delegateClassName) &&
+                    is_a($delegateClassName, ComponentCollectionInterface::class, allow_string: true)
+                ) {
+                    $collections[$delegateClassName] = $delegateClassName;
+                }
+            }
+        }
+
+        return array_values($collections);
     }
 
     public function getViewHelperNamespaceIdentifierByCollectionClassName(string $collectionClassName): ?string

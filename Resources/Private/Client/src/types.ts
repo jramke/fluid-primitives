@@ -57,6 +57,43 @@ export interface ComponentHydrationData {
     };
 }
 
+/**
+ * Keyed by component name (kebab or camelCase, matching whatever a `mountAll`/`mount` call site
+ * uses), extended per-component by a project's own generated hydration types via `declare module
+ * 'fluid-primitives' { interface HydrationPropsRegistry { select: SelectHydrationProps } }` -
+ * empty here by design, fluid-primitives itself never populates this. A component name absent
+ * from this registry (not yet generated, or a project that never runs the generator) falls back
+ * to {@see ComponentHydrationData}'s own untyped `props` shape - graceful degradation, not an error.
+ */
+export interface HydrationPropsRegistry {}
+
+/**
+ * Per-component overrides for props whose wire (JSON) shape differs from what the constructor
+ * actually needs after a registered client prop converter runs (see `client-prop-converters.ts`) -
+ * e.g. Select's `collection`: a plain JSON shape on the wire, a real `@zag-js/collection`
+ * `ListCollection` instance once converted. Populated by the primitive itself (co-located with its
+ * own `registerClientPropConverters` call, always shipped - see `Select.ts`), not by generated
+ * code, and derived from the converter function's own signature via `ConverterMachineProps`
+ * rather than hand-typed a second time.
+ */
+export interface HydrationPropsOverrides {}
+
+export type KnownComponentName = Extract<keyof HydrationPropsRegistry, string>;
+
+type PickOverride<K extends string> = K extends keyof HydrationPropsOverrides
+    ? HydrationPropsOverrides[K]
+    : object;
+
+/**
+ * The typed `props` shape for `mountAll`/`mount`'s callback, keyed off the component-name string
+ * literal passed at the call site - registry entry minus whatever keys have a registered
+ * converter override, plus that override. Falls back to the generic untyped bag for a component
+ * name not present in {@see HydrationPropsRegistry} at all.
+ */
+export type HydrationPropsFor<K extends string> = K extends keyof HydrationPropsRegistry
+    ? Omit<HydrationPropsRegistry[K], keyof PickOverride<K>> & PickOverride<K>
+    : ComponentHydrationData['props'];
+
 export interface FluidPrimitivesGlobals {
     locale?: string;
     /**

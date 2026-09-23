@@ -81,6 +81,23 @@ class ComponentNameUtility
         return self::camelCaseToLowerCaseDashed(self::getComponentBaseNameFromContext($renderingContext));
     }
 
+    /**
+     * The candidate root viewHelperNames a directory named `$entryName` (a component's own folder,
+     * e.g. "Select") could resolve to, in the same precedence {@see isRootComponent()} itself
+     * recognizes - a bare single-segment name (a single-file component with no sub-parts, e.g.
+     * "clipboard" -> "Clipboard/Clipboard.*") or an explicit ".root" suffix (a component with its
+     * own sub-parts, e.g. "select.root" -> "Select/Root.*"). Kept next to `isRootComponent()` so
+     * both share one definition of what makes a component root, rather than a caller re-deriving
+     * the same two rules independently.
+     *
+     * @return array{0: string, 1: string}
+     */
+    public static function getRootViewHelperNameCandidates(string $entryName): array
+    {
+        $baseName = lcfirst($entryName);
+        return [$baseName, "{$baseName}.root"];
+    }
+
     public static function isRootComponent(string|RenderingContextInterface $viewHelperNameOrRenderingContext): bool
     {
         $viewHelperName = $viewHelperNameOrRenderingContext instanceof RenderingContextInterface
