@@ -2,15 +2,11 @@ import * as popover from '@zag-js/popover';
 import {
     Component,
     Machine,
-    mergeProps,
     normalizeProps,
     registerClientPropConverters,
     type ClientPropConverterMap,
     type ConverterMachineProps,
-    type WithWireTranslations,
 } from '../../Client';
-
-type PopoverProps = WithWireTranslations<popover.Props>;
 
 // PHP can't distinguish a list-shaped array from an object-shaped one for a bare `type="array"`
 // prop (see WireTypeResolver), so `positioning` resolves to `unknown` on the wire - this converter
@@ -28,21 +24,16 @@ declare module 'fluid-primitives' {
     }
 }
 
-export class Popover extends Component<PopoverProps, popover.Api> {
+export class Popover extends Component<popover.Props, popover.Api> {
     static componentName = 'popover';
 
-    initMachine(props: PopoverProps): Machine<any> {
+    initMachine(props: popover.Props): Machine<any> {
         return new Machine(popover.machine, {
             ...props,
             positioning: {
                 gutter: 6,
                 ...props.positioning,
             },
-            // Our own translations carry a `string | false` "disable this label" convention render()
-            // already applies via userProps below - zag's own translations only ever accept
-            // `string | undefined`, and blanking it here (rather than forwarding ours as-is) avoids
-            // feeding zag's internal aria-label default a shape it was never meant to see.
-            translations: undefined,
         });
     }
 
@@ -74,12 +65,7 @@ export class Popover extends Component<PopoverProps, popover.Api> {
         if (descriptionEl) this.spreadProps(descriptionEl, this.api.getDescriptionProps());
 
         const closeTriggerEl = this.getElement('closeTrigger');
-        if (closeTriggerEl) {
-            const closeTriggerProps = mergeProps(this.api.getCloseTriggerProps(), {
-                'aria-label': this.userProps?.translations?.closeTriggerLabel || null,
-            });
-            this.spreadProps(closeTriggerEl, closeTriggerProps);
-        }
+        if (closeTriggerEl) this.spreadProps(closeTriggerEl, this.api.getCloseTriggerProps());
 
         const indicatorEl = this.getElement('indicator');
         if (indicatorEl) this.spreadProps(indicatorEl, this.api.getIndicatorProps());

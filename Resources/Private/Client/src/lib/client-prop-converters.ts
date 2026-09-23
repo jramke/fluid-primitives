@@ -16,19 +16,6 @@ export type ConverterMachineProps<T extends ClientPropConverterMap> = {
     [K in keyof T]: T[K] extends ClientPropConverter<any, infer TMachine> ? TMachine : never;
 };
 
-/**
- * Widens a Zag prop type's own `translations` field to also accept this project's `string | false`
- * "disable this label" wire convention (`false` renders no aria-label at all, never a bare
- * `boolean`) - the shape `#[ExposeToClient] getTranslations()` context methods actually send. A
- * primitive with Zag-facing translated labels (Popover, NumberInput, Combobox, Clipboard,
- * FileUpload) reads this wire shape via `this.userProps.translations` in `render()`, and blanks
- * `translations` back to `undefined` before constructing the real Zag machine - Zag's own
- * translations only ever accept a plain `string`, and were never meant to see this richer shape.
- */
-export type WithWireTranslations<T extends { translations?: unknown }> = Omit<T, 'translations'> & {
-    translations?: Record<string, string | false>;
-};
-
 const converters = new Map<string, ClientPropConverterMap>();
 
 /**

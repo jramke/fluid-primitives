@@ -1,13 +1,13 @@
 import * as clipboard from '@zag-js/clipboard';
-import {
-    Component,
-    Machine,
-    mergeProps,
-    normalizeProps,
-    type WithWireTranslations,
-} from '../../Client';
+import { Component, Machine, mergeProps, normalizeProps } from '../../Client';
 
-type ClipboardProps = WithWireTranslations<clipboard.Props>;
+// Zag's own `translations` is a single `triggerLabel: (copied) => string` callback - Fluid can't
+// author a callback, so `ClipboardContext::getTranslations()` sends two plain strings instead
+// (`triggerLabelIdle`/`triggerLabelCopied`), picked between in render() below rather than forwarded
+// to Zag's machine as-is.
+type ClipboardProps = Omit<clipboard.Props, 'translations'> & {
+    translations?: { triggerLabelIdle?: string; triggerLabelCopied?: string };
+};
 
 export class Clipboard extends Component<ClipboardProps, clipboard.Api> {
     static componentName = 'clipboard';

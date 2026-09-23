@@ -42,7 +42,7 @@ class NumberInputContext extends AbstractComponentContext
 
     #[ExposeToClient]
     /**
-     * @return array{incrementLabel: string|false, decrementLabel: string|false}
+     * @return array{incrementLabel: string, decrementLabel: string}
      */
     public function getTranslations(): array
     {

@@ -9,13 +9,10 @@ import {
     registerClientPropConverters,
     type ClientPropConverterMap,
     type ConverterMachineProps,
-    type WithWireTranslations,
 } from '../../Client';
 
 import { getListCollectionFromHydrationData } from '../../Client/src/lib/hydration';
 import type { FieldMachine } from '../Field/src/field.registry';
-
-type ComboboxProps = WithWireTranslations<combobox.Props>;
 
 // Wire shape -> real @zag-js/collection ListCollection instance, registered here (not in
 // transformProps) so mountAll/mount convert it before the component is even constructed - see
@@ -42,12 +39,12 @@ declare module 'fluid-primitives' {
     }
 }
 
-export class Combobox extends FieldAwareComponent<ComboboxProps, combobox.Api> {
+export class Combobox extends FieldAwareComponent<combobox.Props, combobox.Api> {
     static componentName = 'combobox';
 
     private sourceCollection?: ListCollection<any>;
 
-    propsWithField(props: ComboboxProps, fieldMachine: FieldMachine): ComboboxProps {
+    propsWithField(props: combobox.Props, fieldMachine: FieldMachine): combobox.Props {
         return {
             ...props,
             disabled: props.disabled ?? fieldMachine.context.get('disabled'),
@@ -58,7 +55,7 @@ export class Combobox extends FieldAwareComponent<ComboboxProps, combobox.Api> {
         };
     }
 
-    transformProps(props: ComboboxProps) {
+    transformProps(props: combobox.Props) {
         return {
             ...props,
             // when selecting an item for example when the suggestions list is opened by the toggle there is no input/change event dispatched,
@@ -68,11 +65,6 @@ export class Combobox extends FieldAwareComponent<ComboboxProps, combobox.Api> {
                 this.getElement('input')?.dispatchEvent(new Event('change', { bubbles: true }));
                 props?.onSelect?.(details);
             },
-            // Combobox never reads translations client-side itself (triggerLabel/clearTriggerLabel
-            // are both server-rendered directly in Trigger.fluid.html/ClearTrigger.fluid.html) - our
-            // own `string | false` wire convention only exists for those templates, never for Zag's
-            // own `translations` (plain strings), so it's blanked here rather than forwarded as-is.
-            translations: undefined,
         };
     }
 
@@ -147,7 +139,7 @@ export class Combobox extends FieldAwareComponent<ComboboxProps, combobox.Api> {
         });
     }
 
-    initMachine(props: ComboboxProps): Machine<any> {
+    initMachine(props: combobox.Props): Machine<any> {
         props = this.withFieldProps(props);
         const transformedProps = this.transformProps(props);
 

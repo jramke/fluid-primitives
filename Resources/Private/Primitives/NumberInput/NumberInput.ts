@@ -7,11 +7,8 @@ import {
     registerClientPropConverters,
     type ClientPropConverterMap,
     type ConverterMachineProps,
-    type WithWireTranslations,
 } from '../../Client';
 import type { FieldMachine } from '../Field/src/field.registry';
-
-type NumberInputProps = WithWireTranslations<numberInput.Props>;
 
 // PHP can't distinguish a list-shaped array from an object-shaped one for a bare `type="array"`
 // prop (see WireTypeResolver), so `formatOptions` resolves to `unknown` on the wire - this converter
@@ -29,10 +26,10 @@ declare module 'fluid-primitives' {
     }
 }
 
-export class NumberInput extends FieldAwareComponent<NumberInputProps, numberInput.Api> {
+export class NumberInput extends FieldAwareComponent<numberInput.Props, numberInput.Api> {
     static componentName = 'numberInput';
 
-    propsWithField(props: NumberInputProps, fieldMachine: FieldMachine): NumberInputProps {
+    propsWithField(props: numberInput.Props, fieldMachine: FieldMachine): numberInput.Props {
         return {
             ...props,
             disabled: props.disabled ?? fieldMachine.context.get('disabled'),
@@ -43,7 +40,7 @@ export class NumberInput extends FieldAwareComponent<NumberInputProps, numberInp
         };
     }
 
-    transformProps(props: NumberInputProps): NumberInputProps {
+    transformProps(props: numberInput.Props): numberInput.Props {
         return {
             ...props,
             onValueChange: details => {
@@ -53,16 +50,9 @@ export class NumberInput extends FieldAwareComponent<NumberInputProps, numberInp
         };
     }
 
-    initMachine(props: NumberInputProps): Machine<any> {
+    initMachine(props: numberInput.Props): Machine<any> {
         props = this.withFieldProps(props);
-        return new Machine(numberInput.machine, {
-            ...this.transformProps(props),
-            // Our own translations carry a `string | false` "disable this label" convention render()
-            // already applies via userProps below - zag's own translations only ever accept
-            // `string | undefined`, and blanking it here (rather than forwarding ours as-is) avoids
-            // feeding zag's internal aria-label default a shape it was never meant to see.
-            translations: undefined,
-        });
+        return new Machine(numberInput.machine, this.transformProps(props));
     }
 
     initApi() {
@@ -90,20 +80,12 @@ export class NumberInput extends FieldAwareComponent<NumberInputProps, numberInp
         }
 
         const incrementTriggerEl = this.getElement('incrementTrigger');
-        if (incrementTriggerEl) {
-            const triggerProps = mergeProps(this.api.getIncrementTriggerProps(), {
-                'aria-label': this.userProps?.translations?.incrementLabel || null,
-            });
-            this.spreadProps(incrementTriggerEl, triggerProps);
-        }
+        if (incrementTriggerEl)
+            this.spreadProps(incrementTriggerEl, this.api.getIncrementTriggerProps());
 
         const decrementTriggerEl = this.getElement('decrementTrigger');
-        if (decrementTriggerEl) {
-            const triggerProps = mergeProps(this.api.getDecrementTriggerProps(), {
-                'aria-label': this.userProps?.translations?.decrementLabel || null,
-            });
-            this.spreadProps(decrementTriggerEl, triggerProps);
-        }
+        if (decrementTriggerEl)
+            this.spreadProps(decrementTriggerEl, this.api.getDecrementTriggerProps());
 
         const valueTextEl = this.getElement('valueText');
         if (valueTextEl) this.spreadProps(valueTextEl, this.api.getValueTextProps());

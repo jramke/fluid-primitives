@@ -10,7 +10,6 @@ import {
     Template,
     type ClientPropConverterMap,
     type ConverterMachineProps,
-    type WithWireTranslations,
 } from '../../Client';
 import type { FieldMachine } from '../Field/src/field.registry';
 
@@ -45,9 +44,13 @@ interface ItemEntry {
  * `maxFiles` instead gets the same "remaining slots" UX (and the machine's own `TOO_MANY_FILES`
  * rejection) without ever touching a real `File`.
  */
-type FileUploadPrimitiveProps = WithWireTranslations<
-    fileUpload.Props & { existingFilesCount?: number }
->;
+// Zag's own `itemPreview`/`deleteFile` translations are functions (`(file: File) => string`) -
+// Fluid can't author a callback, so `FileUploadContext::getTranslations()` sends plain strings
+// (with a `%fileName%` placeholder) instead, converted by `resolveTranslations()` below.
+type FileUploadPrimitiveProps = Omit<fileUpload.Props, 'translations'> & {
+    existingFilesCount?: number;
+    translations?: { dropzone?: string; itemPreview?: string; deleteFile?: string };
+};
 
 function resolveMaxFiles(props: FileUploadPrimitiveProps): number | undefined {
     const existingFilesCount = props.existingFilesCount ?? 0;
@@ -97,15 +100,10 @@ const FILE_NAME_PLACEHOLDER = '%fileName%';
  * own inline array/object syntax already treats a bare `{...}` inside a string as a nested variable
  * expression, so a curly-brace placeholder breaks the moment someone overrides `translations` from a
  * template); this wraps such a string into the function zag-js actually expects, substituting the
- * placeholder per file. `false` (Root's documented way to omit a translation's `aria-label`/`alt`
- * entirely) is turned into a function returning `undefined` instead of being left as a bare `false`
- * - zag-js calls these unconditionally with optional chaining (`translations.deleteFile?.(file)`),
- * which only guards against `null`/`undefined` and would otherwise try to call `false` as a
- * function. Any other non-string value (e.g. a real function passed in from an entry.ts) is left
- * untouched.
+ * placeholder per file.
  */
 function resolveTranslations(
-    translations: Record<string, string | false> | undefined
+    translations: FileUploadPrimitiveProps['translations']
 ): fileUpload.Props['translations'] {
     if (!translations) return undefined;
 
@@ -114,8 +112,6 @@ function resolveTranslations(
         const template = resolved[key];
         if (typeof template === 'string') {
             resolved[key] = (file: File) => template.replaceAll(FILE_NAME_PLACEHOLDER, file.name);
-        } else if (template === false) {
-            resolved[key] = () => undefined;
         }
     }
 

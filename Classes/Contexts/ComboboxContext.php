@@ -125,7 +125,7 @@ class ComboboxContext extends AbstractComponentContext
 
     #[ExposeToClient]
     /**
-     * @return array{triggerLabel: string|false, clearTriggerLabel: string|false}
+     * @return array{triggerLabel: string, clearTriggerLabel: string}
      */
     public function getTranslations(): array
     {

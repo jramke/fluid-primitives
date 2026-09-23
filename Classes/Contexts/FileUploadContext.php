@@ -37,7 +37,7 @@ class FileUploadContext extends AbstractComponentContext
      */
     #[ExposeToClient]
     /**
-     * @return array{dropzone: string|false, itemPreview: string|false, deleteFile: string|false}
+     * @return array{dropzone: string, itemPreview: string, deleteFile: string}
      */
     public function getTranslations(): array
     {

@@ -7,12 +7,9 @@ import {
     registerClientPropConverters,
     type ClientPropConverterMap,
     type ConverterMachineProps,
-    type WithWireTranslations,
 } from '../../Client';
 import { getListCollectionFromHydrationData } from '../../Client/src/lib/hydration';
 import type { FieldMachine } from '../Field/src/field.registry';
-
-type SelectProps = WithWireTranslations<select.Props>;
 
 // Wire shape -> real @zag-js/collection ListCollection instance. Registered here (not in
 // transformProps) so mountAll/mount convert it before the component is even constructed - see
@@ -35,10 +32,10 @@ declare module 'fluid-primitives' {
     }
 }
 
-export class Select extends FieldAwareComponent<SelectProps, select.Api> {
+export class Select extends FieldAwareComponent<select.Props, select.Api> {
     static componentName = 'select';
 
-    propsWithField(props: SelectProps, fieldMachine: FieldMachine): SelectProps {
+    propsWithField(props: select.Props, fieldMachine: FieldMachine): select.Props {
         return {
             ...props,
             disabled: props.disabled ?? fieldMachine.context.get('disabled'),
@@ -49,15 +46,8 @@ export class Select extends FieldAwareComponent<SelectProps, select.Api> {
         };
     }
 
-    initMachine(props: SelectProps): Machine<any> {
-        return new Machine(select.machine, {
-            ...this.withFieldProps(props),
-            // Our own translations carry a `string | false` "disable this label" convention render()
-            // already applies via userProps below - zag's own translations only ever accept
-            // `string | undefined`, and blanking it here (rather than forwarding ours as-is) avoids
-            // feeding zag's internal aria-label default a shape it was never meant to see.
-            translations: undefined,
-        });
+    initMachine(props: select.Props): Machine<any> {
+        return new Machine(select.machine, this.withFieldProps(props));
     }
 
     initApi() {
@@ -171,12 +161,7 @@ export class Select extends FieldAwareComponent<SelectProps, select.Api> {
         );
 
         const clearTriggerEl = this.getElement('clearTrigger');
-        if (clearTriggerEl) {
-            const clearTriggerProps = mergeProps(this.api.getClearTriggerProps(), {
-                'aria-label': this.userProps?.translations?.clearTriggerLabel || null,
-            });
-            this.spreadProps(clearTriggerEl, clearTriggerProps);
-        }
+        if (clearTriggerEl) this.spreadProps(clearTriggerEl, this.api.getClearTriggerProps());
 
         const indicatorEl = this.getElement('indicator');
         if (indicatorEl) this.spreadProps(indicatorEl, this.api.getIndicatorProps());

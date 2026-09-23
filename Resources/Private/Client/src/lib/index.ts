@@ -4,7 +4,6 @@ export type {
     ClientPropConverter,
     ClientPropConverterMap,
     ConverterMachineProps,
-    WithWireTranslations,
 } from './client-prop-converters';
 export { Component } from './component';
 export { DelayedIndicator } from './delayed-indicator';

@@ -49,7 +49,7 @@ class SelectContext extends AbstractComponentContext
 
     #[ExposeToClient]
     /**
-     * @return array{clearTriggerLabel: string|false}
+     * @return array{clearTriggerLabel: string}
      */
     public function getTranslations(): array
     {
