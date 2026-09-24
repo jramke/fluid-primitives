@@ -1,0 +1,7 @@
+<ui:prop name="view" type="string" optional="{true}" default="day" description="The view this table body belongs to: `day`, `month`, or `year`." />
+
+<tbody
+    {ui:ref(name: 'tableBody' , value: view )}
+    {ui:attributes()}>
+    <f:slot />
+</tbody>

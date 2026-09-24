@@ -47,6 +47,10 @@
             "import": "./dist/collapsible.js",
             "types": "./dist/collapsible.d.ts"
         },
+        "./date-picker": {
+            "import": "./dist/date-picker.js",
+            "types": "./dist/date-picker.d.ts"
+        },
         "./field": {
             "import": "./dist/field.js",
             "types": "./dist/field.d.ts"
@@ -147,6 +151,7 @@
         "@zag-js/collection": "^1.44.0",
         "@zag-js/combobox": "^1.44.0",
         "@zag-js/core": "^1.44.0",
+        "@zag-js/date-picker": "^1.44.0",
         "@zag-js/dialog": "^1.44.0",
         "@zag-js/dom-query": "^1.44.0",
         "@zag-js/file-upload": "^1.44.0",

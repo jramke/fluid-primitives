@@ -1,0 +1,14 @@
+<f:variable name="state">{context -> ui:call(method: 'getState')}</f:variable>
+<f:variable name="empty">{f:if(condition: context.defaultValue, then: '{false}', else: '{true}')}</f:variable>
+<f:variable name="refData" value="{state: state, placeholder-shown: empty}" />
+
+<button
+    type="button"
+    aria-haspopup="grid"
+    aria-expanded="{f:if(condition: context.defaultOpen, then: 'true', else: 'false')}"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'trigger' , data: refData )}
+    {f:if(condition: context.disabled, then: 'disabled' )}
+    {ui:attributes()}>
+    <f:slot />
+</button>

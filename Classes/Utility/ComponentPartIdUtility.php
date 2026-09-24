@@ -15,6 +15,7 @@ class ComponentPartIdUtility
         'navigation-menu' => 'nav-menu',
         'clipboard' => 'clip',
         'file-upload' => 'file',
+        'date-picker' => 'datepicker',
     ];
 
     // Maps a component's `ui:ref` part name to the enclosing Field's `fieldIds` key ('label' or
@@ -30,6 +31,7 @@ class ComponentPartIdUtility
         'checkbox' => ['label' => 'label', 'control' => 'hiddenInput'],
         'file-upload' => ['label' => 'label', 'control' => 'hiddenInput'],
         'checkbox-group' => ['label' => 'label'],
+        'date-picker' => ['label' => 'label', 'control' => 'input'],
     ];
 
     private const array FIELD_ID_OVERRIDE_KEYS = ['label', 'control'];
@@ -118,6 +120,14 @@ class ComponentPartIdUtility
             'root' => ['segment' => 'root', 'rootIdSeparator' => '-'],
             'viewport' => ['segment' => 'viewport', 'rootIdSeparator' => '-'],
             'content' => ['segment' => 'content', 'rootIdSeparator' => '-'],
+        ],
+        'date-picker' => [
+            'clearTrigger' => 'clear',
+            'nextTrigger' => 'next',
+            'prevTrigger' => 'prev',
+            'viewTrigger' => 'view',
+            'monthSelect' => 'month-select',
+            'yearSelect' => 'year-select',
         ],
     ];
 

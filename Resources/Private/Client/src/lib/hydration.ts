@@ -14,6 +14,7 @@ const ID_NAMESPACE_OVERRIDES: Record<string, string> = {
     'navigation-menu': 'nav-menu',
     clipboard: 'clip',
     'file-upload': 'file',
+    'date-picker': 'datepicker',
 };
 
 // Keep in sync with: Classes/Utility/ComponentUtility.php
@@ -101,6 +102,14 @@ const PART_SEGMENT_OVERRIDES: Record<string, Record<string, PartSegmentOverride>
         root: { segment: 'root', rootIdSeparator: '-' },
         viewport: { segment: 'viewport', rootIdSeparator: '-' },
         content: { segment: 'content', rootIdSeparator: '-' },
+    },
+    'date-picker': {
+        clearTrigger: 'clear',
+        nextTrigger: 'next',
+        prevTrigger: 'prev',
+        viewTrigger: 'view',
+        monthSelect: 'month-select',
+        yearSelect: 'year-select',
     },
 };
 

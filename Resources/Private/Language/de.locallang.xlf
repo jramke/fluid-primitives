@@ -47,6 +47,21 @@
             <trans-unit id="fieldArray.rowRemoved" approved="yes">
                 <target>Zeile %number% entfernt.</target>
             </trans-unit>
+            <trans-unit id="date-picker.clearTriggerLabel" approved="yes">
+                <target>Wert löschen</target>
+            </trans-unit>
+            <trans-unit id="date-picker.monthSelectLabel" approved="yes">
+                <target>Monat auswählen</target>
+            </trans-unit>
+            <trans-unit id="date-picker.yearSelectLabel" approved="yes">
+                <target>Jahr auswählen</target>
+            </trans-unit>
+            <trans-unit id="date-picker.contentLabel" approved="yes">
+                <target>Datum auswählen</target>
+            </trans-unit>
+            <trans-unit id="date-picker.weekColumnHeaderLabel" approved="yes">
+                <target>Woche</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

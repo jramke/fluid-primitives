@@ -1,0 +1,17 @@
+<ui:prop name="index" type="integer" optional="{true}" default="0" description="The index of this input, in range mode (`0` or `1`)." />
+
+<f:variable name="state">{context -> ui:call(method: 'getState')}</f:variable>
+<f:variable name="empty">{f:if(condition: context.defaultValue, then: '{false}', else: '{true}')}</f:variable>
+<f:variable name="refData" value="{state: state, index: index, placeholder-shown: empty}" />
+
+<input
+    type="text"
+    {f:if(condition: context.name, then: 'name="{context.name}"' )}
+    {f:if(condition: context.placeholder, then: 'placeholder="{context.placeholder}"' )}
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.disabled, then: 'disabled' )}
+    {f:if(condition: context.required, then: 'required' )}
+    {f:if(condition: context.readOnly, then: 'readonly' )}
+    aria-invalid="{f:if(condition: context.invalid, then: 'true', else: 'false')}"
+    {ui:ref(name: 'input' , value: index, data: refData )}
+    {ui:attributes()} />

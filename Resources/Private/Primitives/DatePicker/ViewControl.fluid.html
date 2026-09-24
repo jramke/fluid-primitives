@@ -1,0 +1,10 @@
+<ui:prop name="view" type="string" optional="{true}" requiredAtRuntime="{true}" description="The view this element controls: `day`, `month`, or `year`." />
+
+<f:variable name="refData" value="{view: view}" />
+
+<div
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'viewControl' , value: view, data: refData )}
+    {ui:attributes()}>
+    <f:slot />
+</div>

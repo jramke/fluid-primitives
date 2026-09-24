@@ -1,0 +1,11 @@
+<ui:prop name="index" type="integer" optional="{true}" default="0" description="The index of the input this label is for, in range mode (`0` or `1`)." />
+
+<f:variable name="state">{context -> ui:call(method: 'getState')}</f:variable>
+<f:variable name="refData" value="{state: state, index: index, disabled: context.disabled, readonly: context.readOnly, invalid: context.invalid}" />
+
+<label
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'label' , value: index, data: refData )}
+    {ui:attributes()}>
+    <f:slot />
+</label>

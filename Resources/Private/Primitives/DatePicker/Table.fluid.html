@@ -1,0 +1,10 @@
+<ui:prop name="view" type="string" optional="{true}" default="day" description="The view this table renders: `day`, `month`, or `year`." />
+
+<f:variable name="refData" value="{view: view}" />
+
+<table
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'table' , value: view, data: refData )}
+    {ui:attributes()}>
+    <f:slot />
+</table>

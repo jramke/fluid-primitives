@@ -1,0 +1,7 @@
+<select
+    {f:if(condition: context.translations.monthSelectLabel, then: 'aria-label="{context.translations.monthSelectLabel}"' )}
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'monthSelect' )}
+    {f:if(condition: context.disabled, then: 'disabled' )}
+    {ui:attributes()}>
+</select>

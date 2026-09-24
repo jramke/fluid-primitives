@@ -1,0 +1,9 @@
+<ui:prop name="value" type="string" optional="{true}" requiredAtRuntime="{true}" description="One of `thisWeek`, `lastWeek`, `thisMonth`, `lastMonth`, `thisQuarter`, `lastQuarter`, `thisYear`, `lastYear`, `last3Days`, `last7Days`, `last14Days`, `last30Days`, `last90Days`." />
+
+<button
+    type="button"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'presetTrigger' , value: value )}
+    {ui:attributes()}>
+    <f:slot />
+</button>

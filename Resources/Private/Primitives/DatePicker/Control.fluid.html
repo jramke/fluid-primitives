@@ -1,0 +1,9 @@
+<f:variable name="empty">{f:if(condition: context.defaultValue, then: '{false}', else: '{true}')}</f:variable>
+<f:variable name="refData" value="{disabled: context.disabled, invalid: context.invalid, placeholder-shown: empty}" />
+
+<div
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'control' , data: refData )}
+    {ui:attributes()}>
+    <f:slot />
+</div>

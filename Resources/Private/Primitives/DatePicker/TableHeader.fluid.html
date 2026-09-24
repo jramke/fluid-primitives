@@ -1,0 +1,7 @@
+<ui:prop name="view" type="string" optional="{true}" default="day" description="The view this table header belongs to: `day`, `month`, or `year`." />
+
+<thead
+    {ui:ref(name: 'tableHeader' , value: view )}
+    {ui:attributes()}>
+    <f:slot />
+</thead>

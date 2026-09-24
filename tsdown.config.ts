@@ -10,6 +10,7 @@ export default defineConfig({
         clipboard: './Resources/Private/Primitives/Clipboard/Clipboard.ts',
         collapsible: './Resources/Private/Primitives/Collapsible/Collapsible.ts',
         combobox: './Resources/Private/Primitives/Combobox/Combobox.ts',
+        'date-picker': './Resources/Private/Primitives/DatePicker/DatePicker.ts',
         field: './Resources/Private/Primitives/Field/Field.ts',
         'field-array': './Resources/Private/Primitives/FieldArray/FieldArray.ts',
         'file-upload': './Resources/Private/Primitives/FileUpload/FileUpload.ts',
