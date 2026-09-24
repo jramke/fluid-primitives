@@ -179,7 +179,7 @@ final class FormRenderingTest extends FunctionalTestCase
         $fieldRootId = $fieldMatches[1] ?? null;
         $this->assertNotNull($fieldRootId);
 
-        $registeredProps = HydrationRegistry::getInstance()->get('field', $fieldRootId);
+        $registeredProps = HydrationRegistry::getInstance()->get('primitives', 'field', $fieldRootId);
 
         $this->assertSame('Existing title', $registeredProps['props']['defaultValue'] ?? null);
     }

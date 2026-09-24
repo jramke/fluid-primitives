@@ -50,7 +50,7 @@ final class DialogRenderingTest extends FunctionalTestCase
             </primitives:dialog.root>
         ');
 
-        $hydrationData = HydrationRegistry::getInstance()->getAll();
+        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
         $this->assertArrayHasKey('portaled-only-dialog', $hydrationData['dialog'] ?? []);
     }
 
@@ -175,7 +175,7 @@ final class DialogRenderingTest extends FunctionalTestCase
             </primitives:dialog.root>
         ');
 
-        $hydrationData = HydrationRegistry::getInstance()->getAll();
+        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
 
         $this->assertArrayHasKey('dialog', $hydrationData);
         $this->assertNotEmpty($hydrationData['dialog']);
@@ -235,7 +235,7 @@ final class DialogRenderingTest extends FunctionalTestCase
             </primitives:dialog.root>
         ');
 
-        $hydrationData = HydrationRegistry::getInstance()->getAll();
+        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
 
         $this->assertCount(3, $hydrationData['dialog']);
         $this->assertArrayHasKey('level-1', $hydrationData['dialog']);
@@ -267,7 +267,7 @@ final class DialogRenderingTest extends FunctionalTestCase
             </primitives:dialog.root>
         ');
 
-        $hydrationData = HydrationRegistry::getInstance()->getAll();
+        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
         $dialogData = array_values($hydrationData['dialog'])[0];
 
         $this->assertArrayHasKey('role', $dialogData['props']);

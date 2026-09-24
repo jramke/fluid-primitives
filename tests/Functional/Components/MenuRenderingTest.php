@@ -30,7 +30,7 @@ final class MenuRenderingTest extends FunctionalTestCase
             </primitives:menu.root>
         ');
 
-        $hydrationData = HydrationRegistry::getInstance()->getAll();
+        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
 
         $this->assertArrayHasKey('menu', $hydrationData);
         $this->assertArrayHasKey('share-menu', $hydrationData['menu']);
@@ -56,7 +56,7 @@ final class MenuRenderingTest extends FunctionalTestCase
             </primitives:menu.root>
         ');
 
-        $hydrationData = HydrationRegistry::getInstance()->getAll();
+        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
 
         $this->assertArrayNotHasKey('parentId', $hydrationData['menu']['standalone-menu']['props'] ?? []);
     }

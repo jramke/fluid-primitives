@@ -13,7 +13,7 @@ class HydrationRegistry
 {
     private const string SCRIPT_ID = 'fluid-primitives-hydration-data';
 
-    /** @var array<string, array<string, mixed>> */
+    /** @var array<string, array<string, array<string, mixed>>> */
     private array $registry = [];
     private static ?self $instance = null;
     private array $globals = [];
@@ -36,32 +36,36 @@ class HydrationRegistry
         return self::$instance;
     }
 
-    public function add(string $componentType, string $id, array $props): void
+    /**
+     * `$namespace` is the Fluid namespace identifier (e.g. "ui"/"primitives") the collection that
+     * rendered this component is registered under - see
+     * {@see \Jramke\FluidPrimitives\Domain\Dto\ComponentIdentity::$namespaceIdentifier}. Two
+     * collections can legitimately register a same-named `$componentType` (e.g. a styled `ui`
+     * wrapper around a `primitives` component it doesn't expose every prop of) - nesting by
+     * namespace first keeps those genuinely separate instead of one silently overwriting the other.
+     */
+    public function add(string $namespace, string $componentType, string $id, array $props): void
     {
-        if (($this->registry[$componentType] ?? null) === null) {
-            $this->registry[$componentType] = [];
-        }
-
         /** @var array<string, mixed> $normalizedProps */
         $normalizedProps = EnumUtility::normalize($props);
-        $this->registry[$componentType][$id] = $normalizedProps;
+        $this->registry[$namespace][$componentType][$id] = $normalizedProps;
 
         // Update the asset collector whenever data changes
         $this->updateAssetCollector();
     }
 
-    public function get(string $componentType, string $id): ?array
+    public function get(string $namespace, string $componentType, string $id): ?array
     {
         // Not actually redundant - the assignment is what the @var narrows; inlining it into the
         // return statement would lose that annotation and bring back the mixed-return-statement error.
         // @mago-expect lint:inline-variable-return
         /** @var array<string, mixed>|null $props */
-        $props = $this->registry[$componentType][$id] ?? null;
+        $props = $this->registry[$namespace][$componentType][$id] ?? null;
         return $props;
     }
 
     /**
-     * @return array<string, array<string, mixed>>
+     * @return array<string, array<string, array<string, mixed>>>
      */
     public function getAll(): array
     {

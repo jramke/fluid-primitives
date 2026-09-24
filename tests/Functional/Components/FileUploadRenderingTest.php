@@ -148,7 +148,7 @@ final class FileUploadRenderingTest extends FunctionalTestCase
             </primitives:fileUpload.root>
         ');
 
-        $hydrationData = HydrationRegistry::getInstance()->getAll();
+        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
         $translations = array_values($hydrationData['file-upload'])[0]['props']['translations'];
 
         $this->assertSame('Preview of %fileName%', $translations['itemPreview']);
@@ -164,7 +164,7 @@ final class FileUploadRenderingTest extends FunctionalTestCase
             </primitives:fileUpload.root>
         ');
 
-        $hydrationData = HydrationRegistry::getInstance()->getAll();
+        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
         $translations = array_values($hydrationData['file-upload'])[0]['props']['translations'];
 
         $this->assertSame('Remove %fileName%', $translations['deleteFile']);
@@ -180,7 +180,7 @@ final class FileUploadRenderingTest extends FunctionalTestCase
             </primitives:fileUpload.root>
         ');
 
-        $hydrationData = HydrationRegistry::getInstance()->getAll();
+        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
         $translations = array_values($hydrationData['file-upload'])[0]['props']['translations'];
 
         $this->assertFalse($translations['deleteFile']);
@@ -380,7 +380,7 @@ final class FileUploadRenderingTest extends FunctionalTestCase
             </primitives:fileUpload.root>
         ');
 
-        $hydrationData = HydrationRegistry::getInstance()->getAll();
+        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
         $props = array_values($hydrationData['file-upload'])[0]['props'];
 
         $this->assertSame(10, $props['maxFiles']);
@@ -396,7 +396,7 @@ final class FileUploadRenderingTest extends FunctionalTestCase
             </primitives:fileUpload.root>
         ');
 
-        $hydrationData = HydrationRegistry::getInstance()->getAll();
+        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
 
         $this->assertArrayHasKey('file-upload', $hydrationData);
         $fileUploadData = array_values($hydrationData['file-upload'])[0];

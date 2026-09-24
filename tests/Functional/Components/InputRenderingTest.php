@@ -125,7 +125,7 @@ final class InputRenderingTest extends FunctionalTestCase
             </primitives:input.root>
         ');
 
-        $hydrationData = HydrationRegistry::getInstance()->getAll();
+        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
         $inputData = array_values($hydrationData['input'])[0];
 
         $this->assertSame(['wordCount' => '%count% of %max%'], $inputData['props']['translations']);
@@ -140,7 +140,7 @@ final class InputRenderingTest extends FunctionalTestCase
             </primitives:input.root>
         ');
 
-        $hydrationData = HydrationRegistry::getInstance()->getAll();
+        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
         $inputData = array_values($hydrationData['input'])[0];
 
         $this->assertSame(600, $inputData['props']['announceDebounce']);

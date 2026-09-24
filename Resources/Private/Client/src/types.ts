@@ -5,15 +5,33 @@ import type { Component } from './lib/component';
 declare global {
     interface Window {
         FluidPrimitives: {
+            /**
+             * Nested by Fluid namespace identifier first (e.g. "ui"/"primitives" - the same prefix
+             * a `mountAll`/`mount` call must use, see `parseNamespacedComponentName`), then by the
+             * bare component name, then by rootId - never a flat `"ui:select"`-string-keyed map.
+             * Two collections can legitimately register a same-named component with a different
+             * shape (a styled wrapper around a primitive it doesn't expose every prop of), and
+             * nesting by namespace first keeps those genuinely separate.
+             */
             hydrationData: {
-                [componentName: string]: {
-                    [id: string]: ComponentHydrationData;
+                [namespace: string]: {
+                    [componentName: string]: {
+                        [id: string]: ComponentHydrationData;
+                    };
                 };
             };
             globals?: FluidPrimitivesGlobals;
-            uncontrolledInstances: {
-                [componentName: string]: {
-                    [id: string]: Component<unknown, unknown>;
+            /**
+             * Every component instance `mountAll`/`mount` has created, nested the same way as
+             * `hydrationData` above - populated by both (not just `mountAll`, as the older
+             * `uncontrolledInstances` name implied), so `getComponentInstance` can find a `mount`-ed
+             * controlled component too.
+             */
+            componentInstances: {
+                [namespace: string]: {
+                    [componentName: string]: {
+                        [id: string]: Component<unknown, unknown>;
+                    };
                 };
             };
             /**
@@ -31,7 +49,11 @@ declare global {
 }
 
 export interface NestedComponentEntry {
-    /** The nested component's clientComponentName, e.g. "field" or "dialog". */
+    /**
+     * The nested component's own hydration registry key, "namespace:clientBaseName" (e.g.
+     * "primitives:field") - a single opaque, round-tripped string, never parsed/indexed as an
+     * object path the way `hydrationData`/`componentInstances` are.
+     */
     name: string;
     /** Its bare rootId - the same form `ComponentHydrator`'s own `rootId` uses, no namespace prefix. */
     id: string;
@@ -58,12 +80,12 @@ export interface ComponentHydrationData {
 }
 
 /**
- * Keyed by component name (kebab or camelCase, matching whatever a `mountAll`/`mount` call site
- * uses), extended per-component by a project's own generated hydration types via `declare module
- * 'fluid-primitives' { interface HydrationPropsRegistry { select: SelectHydrationProps } }` -
- * empty here by design, fluid-primitives itself never populates this. A component name absent
- * from this registry (not yet generated, or a project that never runs the generator) falls back
- * to {@see ComponentHydrationData}'s own untyped `props` shape - graceful degradation, not an error.
+ * Keyed by the exact namespaced string a `mountAll`/`mount` call site uses (e.g. `"ui:select"`),
+ * extended per-namespace by a project's own generated hydration types via `declare module
+ * 'fluid-primitives' { interface HydrationPropsRegistry { "ui:select": SelectHydrationProps } }` -
+ * empty here by design, fluid-primitives itself never populates this. A key absent from this
+ * registry (not yet generated, or a project that never runs the generator) falls back to
+ * {@see ComponentHydrationData}'s own untyped `props` shape - graceful degradation, not an error.
  */
 export interface HydrationPropsRegistry {}
 
@@ -80,15 +102,23 @@ export interface HydrationPropsOverrides {}
 
 export type KnownComponentName = Extract<keyof HydrationPropsRegistry, string>;
 
-type PickOverride<K extends string> = K extends keyof HydrationPropsOverrides
-    ? HydrationPropsOverrides[K]
+/**
+ * `K` with any `"namespace:"` prefix stripped (e.g. `"ui:select"` -> `"select"`) - converters (see
+ * `client-prop-converters.ts`) are registered once per TS class under its own bare name,
+ * independent of which namespace ends up mounting it, so {@see HydrationPropsOverrides} stays
+ * bare-keyed even though {@see HydrationPropsRegistry} itself is namespaced.
+ */
+type BareComponentName<K extends string> = K extends `${string}:${infer BaseName}` ? BaseName : K;
+
+type PickOverride<K extends string> = BareComponentName<K> extends keyof HydrationPropsOverrides
+    ? HydrationPropsOverrides[BareComponentName<K>]
     : object;
 
 /**
- * The typed `props` shape for `mountAll`/`mount`'s callback, keyed off the component-name string
- * literal passed at the call site - registry entry minus whatever keys have a registered
- * converter override, plus that override. Falls back to the generic untyped bag for a component
- * name not present in {@see HydrationPropsRegistry} at all.
+ * The typed `props` shape for `mountAll`/`mount`'s callback, keyed off the exact namespaced string
+ * literal passed at the call site - registry entry minus whatever keys have a registered converter
+ * override, plus that override. Falls back to the generic untyped bag for a key not present in
+ * {@see HydrationPropsRegistry} at all.
  */
 export type HydrationPropsFor<K extends string> = K extends keyof HydrationPropsRegistry
     ? Omit<HydrationPropsRegistry[K], keyof PickOverride<K>> & PickOverride<K>

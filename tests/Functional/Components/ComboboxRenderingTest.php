@@ -351,7 +351,7 @@ final class ComboboxRenderingTest extends FunctionalTestCase
         $this->assertStringContainsString('data-part="content"', $portaled);
         $this->assertStringContainsString('Berlin', $portaled);
 
-        $hydrationData = HydrationRegistry::getInstance()->getAll();
+        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
         $this->assertArrayHasKey('portaled-combobox', $hydrationData['combobox'] ?? []);
     }
 }

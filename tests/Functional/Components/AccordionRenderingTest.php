@@ -187,7 +187,7 @@ final class AccordionRenderingTest extends FunctionalTestCase
             </primitives:accordion.root>
         ');
 
-        $hydrationData = HydrationRegistry::getInstance()->getAll();
+        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
 
         $this->assertArrayHasKey('accordion', $hydrationData);
         $this->assertIsArray($hydrationData['accordion']);
@@ -206,7 +206,7 @@ final class AccordionRenderingTest extends FunctionalTestCase
             </primitives:accordion.root>
         ');
 
-        $hydrationData = HydrationRegistry::getInstance()->getAll();
+        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
         $accordionData = array_values($hydrationData['accordion'])[0];
 
         $this->assertArrayHasKey('multiple', $accordionData['props']);
@@ -227,7 +227,7 @@ final class AccordionRenderingTest extends FunctionalTestCase
             </primitives:accordion.root>
         ');
 
-        $hydrationData = HydrationRegistry::getInstance()->getAll();
+        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
         $accordionData = array_values($hydrationData['accordion'])[0];
 
         $this->assertArrayHasKey('defaultValue', $accordionData['props']);

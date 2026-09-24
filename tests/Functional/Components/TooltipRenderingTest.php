@@ -77,7 +77,7 @@ final class TooltipRenderingTest extends FunctionalTestCase
             </primitives:tooltip.root>
         ');
 
-        $hydrationData = HydrationRegistry::getInstance()->getAll();
+        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
         $tooltipData = array_values($hydrationData['tooltip'])[0];
 
         $this->assertSame(800, $tooltipData['props']['openDelay']);

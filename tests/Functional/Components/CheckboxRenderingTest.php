@@ -100,7 +100,7 @@ final class CheckboxRenderingTest extends FunctionalTestCase
             </primitives:checkbox.root>
         ');
 
-        $hydrationData = HydrationRegistry::getInstance()->getAll();
+        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
 
         $this->assertArrayHasKey('checkbox', $hydrationData);
         $checkboxData = array_values($hydrationData['checkbox'])[0];

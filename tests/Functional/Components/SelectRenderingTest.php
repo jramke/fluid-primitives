@@ -108,7 +108,7 @@ final class SelectRenderingTest extends FunctionalTestCase
             </primitives:select.root>
         ', ['collection' => $collection]);
 
-        $hydrationData = HydrationRegistry::getInstance()->getAll();
+        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
         $selectData = array_values($hydrationData['select'])[0];
 
         $this->assertSame(['opt-1'], $selectData['props']['defaultValue']);
@@ -130,7 +130,7 @@ final class SelectRenderingTest extends FunctionalTestCase
             </primitives:select.root>
         ', ['collection' => $collection]);
 
-        $hydrationData = HydrationRegistry::getInstance()->getAll();
+        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
         $selectData = array_values($hydrationData['select'])[0];
 
         $this->assertSame(['opt-1', 'opt-2'], $selectData['props']['defaultValue']);
@@ -151,7 +151,7 @@ final class SelectRenderingTest extends FunctionalTestCase
             </primitives:select.root>
         ', ['collection' => $collection]);
 
-        $hydrationData = HydrationRegistry::getInstance()->getAll();
+        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
         $selectData = array_values($hydrationData['select'])[0];
 
         $this->assertArrayNotHasKey('defaultValue', $selectData['props']);
@@ -192,7 +192,7 @@ final class SelectRenderingTest extends FunctionalTestCase
         $portaled = implode('', PortalRegistry::getInstance()->getAllByName('default'));
         $this->assertStringContainsString('data-part="content"', $portaled);
 
-        $hydrationData = HydrationRegistry::getInstance()->getAll();
+        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
         $this->assertArrayHasKey('portaled-select', $hydrationData['select'] ?? []);
     }
 }

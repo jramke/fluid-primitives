@@ -15,6 +15,9 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\ViewHelperResolverDelegateInterface;
 #[Autoconfigure(public: true)]
 class ComponentCollectionService
 {
+    /** @var array<class-string, string|null> */
+    private array $namespaceIdentifierCache = [];
+
     public function __construct(
         private readonly ViewHelperResolverFactoryInterface $viewHelperResolverFactory,
     ) {}
@@ -102,14 +105,27 @@ class ComponentCollectionService
         return array_values($collections);
     }
 
+    /**
+     * The Fluid namespace identifier (e.g. "ui"/"primitives") `$collectionClassName` is registered
+     * under - the first one found if it's ever registered under more than one (no collection in
+     * this codebase currently is). Returns `null` if it isn't registered globally at all (e.g. a
+     * collection only ever added to one render's own local resolver via `addNamespace()`, never
+     * through `$GLOBALS['TYPO3_CONF_VARS']['SYS']['fluid']['namespaces']`).
+     *
+     * Memoized per class per request - {@see ViewHelperResolverFactoryInterface::create()} merges
+     * and re-resolves the whole namespace list on every call, and this is called once per rendered
+     * root component.
+     */
     public function getViewHelperNamespaceIdentifierByCollectionClassName(string $collectionClassName): ?string
     {
+        if (array_key_exists($collectionClassName, $this->namespaceIdentifierCache)) {
+            return $this->namespaceIdentifierCache[$collectionClassName];
+        }
+
         $viewHelperResolver = $this->viewHelperResolverFactory->create();
         $registeredNamespaces = $viewHelperResolver->getNamespaces();
 
-        if ($registeredNamespaces === []) {
-            return null;
-        }
+        $resolvedNamespaceIdentifier = null;
 
         foreach ($registeredNamespaces as $namespaceIdentifier => $delegateClassNames) {
             if (!is_array($delegateClassNames)) {
@@ -126,11 +142,14 @@ class ComponentCollectionService
                 if (
                     is_string($delegateClassName) && is_a($delegateClassName, $collectionClassName, allow_string: true)
                 ) {
-                    return $namespaceIdentifier;
+                    $resolvedNamespaceIdentifier = $namespaceIdentifier;
+                    break 2;
                 }
             }
         }
 
-        return null;
+        $this->namespaceIdentifierCache[$collectionClassName] = $resolvedNamespaceIdentifier;
+
+        return $resolvedNamespaceIdentifier;
     }
 }
