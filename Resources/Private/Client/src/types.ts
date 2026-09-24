@@ -110,9 +110,10 @@ export type KnownComponentName = Extract<keyof HydrationPropsRegistry, string>;
  */
 type BareComponentName<K extends string> = K extends `${string}:${infer BaseName}` ? BaseName : K;
 
-type PickOverride<K extends string> = BareComponentName<K> extends keyof HydrationPropsOverrides
-    ? HydrationPropsOverrides[BareComponentName<K>]
-    : object;
+type PickOverride<K extends string> =
+    BareComponentName<K> extends keyof HydrationPropsOverrides
+        ? HydrationPropsOverrides[BareComponentName<K>]
+        : object;
 
 /**
  * The typed `props` shape for `mountAll`/`mount`'s callback, keyed off the exact namespaced string

@@ -123,7 +123,10 @@ function toCamelCase(part: string): string {
  * component with a different shape (a styled wrapper around a primitive it doesn't expose every
  * prop of), so the caller always states which one it means.
  */
-function parseNamespacedComponentName(componentName: string): { namespace: string; baseName: string } {
+function parseNamespacedComponentName(componentName: string): {
+    namespace: string;
+    baseName: string;
+} {
     const separatorIndex = componentName.indexOf(':');
     if (separatorIndex === -1) {
         throw new Error(
@@ -190,8 +193,9 @@ export function getComponentInstance<
     T extends Component<unknown, unknown> = Component<unknown, unknown>,
 >(componentName: string, id: string): T | undefined {
     const { namespace, baseName } = parseNamespacedComponentName(componentName);
-    return window.FluidPrimitives?.componentInstances?.[namespace]?.[toKebabCase(baseName)]?.[id] as
-        T | undefined;
+    return window.FluidPrimitives?.componentInstances?.[namespace]?.[toKebabCase(baseName)]?.[
+        id
+    ] as T | undefined;
 }
 
 export function getGlobals(): FluidPrimitivesGlobals | null {

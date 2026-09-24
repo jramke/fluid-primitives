@@ -148,6 +148,9 @@ class ComponentCollectionService
             }
         }
 
+        // $collectionClassName isn't provably a class-string here, same reason as the @mago-expect
+        // above - it's always one in practice, just typed as plain `string` by Fluid's own interface.
+        // @mago-expect analysis:invalid-property-assignment-value
         $this->namespaceIdentifierCache[$collectionClassName] = $resolvedNamespaceIdentifier;
 
         return $resolvedNamespaceIdentifier;
