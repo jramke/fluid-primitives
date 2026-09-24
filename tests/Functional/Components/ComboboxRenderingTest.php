@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Tests\Functional\Components;
 
 use Jramke\FluidPrimitives\Domain\Dto\ListCollection;
+use Jramke\FluidPrimitives\Enum\ComboboxInputBehavior;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Registry\PortalRegistry;
 use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
@@ -29,6 +30,27 @@ final class ComboboxRenderingTest extends FunctionalTestCase
         $this->assertStringContainsString('data-state="closed"', $html);
         $this->assertStringContainsString('aria-expanded="false"', $html);
         $this->assertStringNotContainsString('data-state="open"', $html);
+    }
+
+    #[Test]
+    public function resolvesInputBehaviorEnumDefaultInsteadOfTheRawConstantExpression(): void
+    {
+        // Regression test: `f:constant('Enum::Case')` (name passed positionally) silently fails to
+        // parse as a ViewHelper call inside a `ui:prop` default - Fluid falls back to treating the
+        // whole `{...}` expression as literal text, so `context.inputBehavior`/the hydrated prop
+        // ended up as the raw string "{f:constant('...')}" instead of the enum's `none` value. Only
+        // reproduces with the argument passed positionally; `f:constant(name: 'Enum::Case')` (used
+        // by every other enum-typed prop default in this codebase) is unaffected.
+        $this->renderTemplate('
+            <primitives:combobox.root>
+                <primitives:combobox.trigger>Toggle</primitives:combobox.trigger>
+            </primitives:combobox.root>
+        ');
+
+        $hydrationData = HydrationRegistry::getInstance()->getAll();
+        $comboboxData = array_values($hydrationData['combobox'])[0];
+
+        $this->assertSame(ComboboxInputBehavior::None->value, $comboboxData['props']['inputBehavior']);
     }
 
     #[Test]
