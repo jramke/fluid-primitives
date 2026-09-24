@@ -1,13 +1,45 @@
 import * as datePicker from '@zag-js/date-picker';
-import { FieldAwareComponent, Machine, normalizeProps } from '../../Client';
+import {
+    FieldAwareComponent,
+    Machine,
+    normalizeProps,
+    registerClientPropConverters,
+    type ClientPropConverterMap,
+    type ConverterMachineProps,
+} from '../../Client';
 import type { FieldMachine } from '../Field/src/field.registry';
 
 // PHP normalizes `defaultValue` to an array (or omits it) before it reaches the client - see
 // DatePickerContext::getDefaultValue(), mirroring SelectContext. `min`/`max`/`defaultFocusedValue`
-// pass through Root's plain `ui:prop`s as raw ISO strings instead.
+// pass through Root's plain `ui:prop`s as raw ISO strings instead. Registered as converters (not in
+// transformProps) so mountAll/mount convert them before the component is even constructed - see
+// Select.ts's own `collection` converter for the same reasoning.
 const parseDateValue = (value?: unknown) => (value ? datePicker.parse(value as string) : undefined);
 const parseDateValues = (values?: unknown) =>
     values ? datePicker.parse(values as string[]) : undefined;
+
+const datePickerPropConverters = {
+    min: parseDateValue,
+    max: parseDateValue,
+    defaultFocusedValue: parseDateValue,
+    defaultValue: parseDateValues,
+    // DatePickerContext::getTranslations() returns a plain array - the generated wire type has no
+    // way to know it matches @zag-js/date-picker's own IntlTranslations shape, so this just tells
+    // TS what it actually is rather than transforming the value itself (same as positioning below).
+    translations: (translations: datePicker.Props['translations']) => translations,
+    // PHP can't distinguish a list-shaped array from an object-shaped one for a bare `type="array"`
+    // prop (see WireTypeResolver), so `positioning` resolves to `unknown` on the wire - this just
+    // tells TS what it actually is (a real @zag-js/popper PositioningOptions object).
+    positioning: (positioning: datePicker.Props['positioning']) => positioning,
+} satisfies ClientPropConverterMap;
+
+registerClientPropConverters('datePicker', datePickerPropConverters);
+
+declare module 'fluid-primitives' {
+    interface HydrationPropsOverrides {
+        datePicker: ConverterMachineProps<typeof datePickerPropConverters>;
+    }
+}
 
 export class DatePicker extends FieldAwareComponent<datePicker.Props, datePicker.Api> {
     static componentName = 'datePicker';
@@ -23,19 +55,9 @@ export class DatePicker extends FieldAwareComponent<datePicker.Props, datePicker
         };
     }
 
-    transformProps(props: datePicker.Props): datePicker.Props {
-        return {
-            ...props,
-            defaultValue: parseDateValues(props.defaultValue),
-            min: parseDateValue(props.min),
-            max: parseDateValue(props.max),
-            defaultFocusedValue: parseDateValue(props.defaultFocusedValue),
-        };
-    }
-
     initMachine(props: datePicker.Props): Machine<any> {
         props = this.withFieldProps(props);
-        return new Machine(datePicker.machine, this.transformProps(props));
+        return new Machine(datePicker.machine, props);
     }
 
     initApi() {

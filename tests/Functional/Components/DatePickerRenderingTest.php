@@ -74,7 +74,7 @@ final class DatePickerRenderingTest extends FunctionalTestCase
     public function passesArrayDefaultValueAsIs(): void
     {
         $this->renderTemplate('
-            <primitives:datePicker.root defaultValue="{0: \'2024-01-15\', 1: \'2024-01-20\'}" selectionMode="range">
+            <primitives:datePicker.root defaultValue="{0: \'2024-01-15\', 1: \'2024-01-20\'}" selectionMode="{f:constant(name: \'Jramke\FluidPrimitives\Enum\DatePickerSelectionMode::Range\')}">
                 <primitives:datePicker.trigger>Open</primitives:datePicker.trigger>
             </primitives:datePicker.root>
         ');
