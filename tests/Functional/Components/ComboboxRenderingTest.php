@@ -47,7 +47,7 @@ final class ComboboxRenderingTest extends FunctionalTestCase
             </primitives:combobox.root>
         ');
 
-        $hydrationData = HydrationRegistry::getInstance()->getAll();
+        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
         $comboboxData = array_values($hydrationData['combobox'])[0];
 
         $this->assertSame(ComboboxInputBehavior::None->value, $comboboxData['props']['inputBehavior']);
