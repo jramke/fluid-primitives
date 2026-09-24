@@ -79,7 +79,7 @@ final class ClipboardRenderingTest extends FunctionalTestCase
             </primitives:clipboard.root>
         ');
 
-        $hydrationData = HydrationRegistry::getInstance()->getAll();
+        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
         $clipboardData = array_values($hydrationData['clipboard'])[0];
 
         $this->assertSame(

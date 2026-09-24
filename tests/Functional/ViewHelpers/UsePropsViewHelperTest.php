@@ -10,6 +10,26 @@ use PHPUnit\Framework\Attributes\Test;
 
 final class UsePropsViewHelperTest extends FunctionalTestCase
 {
+    /**
+     * Hydration now requires a component's collection to be globally registered (see
+     * ComponentIdentityResolver::resolve()/ComponentHydrationCollector::collectForRootComponent()) -
+     * registering it only on this one view's own resolver (still needed for ViewHelper resolution
+     * itself) is no longer enough on its own for the namespace-identifier reverse lookup to succeed.
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $GLOBALS['TYPO3_CONF_VARS']['SYS']['fluid']['namespaces']['wrapper'] = [
+            UsePropsForwardingComponentCollection::class,
+        ];
+    }
+
+    protected function tearDown(): void
+    {
+        unset($GLOBALS['TYPO3_CONF_VARS']['SYS']['fluid']['namespaces']['wrapper']);
+        parent::tearDown();
+    }
+
     #[Test]
     public function forwardsAsChildAndClassThroughAThinWrapperThatDelegatesViaSpreadProps(): void
     {

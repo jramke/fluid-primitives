@@ -130,15 +130,31 @@ final readonly class ComponentHydrationCollector
             ...array_filter($candidate->relatedContextRootIds),
         ];
 
+        // Enforced here, lazily, rather than unconditionally for every root component in
+        // ComponentIdentityResolver: a purely server-rendered root component with no ui:ref/exposed
+        // prop at all never reaches this point (see the early return above) and so never needs its
+        // collection globally registered just to render - only a component that's actually about
+        // to be hydrated does.
+        $namespaceIdentifier = $candidate->namespaceIdentifier ?? throw new \RuntimeException(sprintf(
+            'Cannot hydrate "%s": its component collection is not registered under any Fluid ' .
+            'namespace via $GLOBALS[\'TYPO3_CONF_VARS\'][\'SYS\'][\'fluid\'][\'namespaces\'] - a ' .
+            'component collection must be globally registered for its components to be hydratable.',
+            $candidate->clientBaseName,
+        ));
+
         // Recorded before add() - add() self-triggers the inline hydration script's rebuild, and
         // this way that rebuild already reflects this component's own nested-tracking entry too,
         // rather than needing a second component's registration to come along and catch it up.
+        // NestedComponentRegistry keeps a single combined "namespace:baseName" string (built here,
+        // not restructured into HydrationRegistry's own per-namespace nesting) - its client-side
+        // consumers already treat this value as an opaque round-tripped identifier, never index
+        // into it as an object path, so there's no benefit to nesting it there too.
         NestedComponentRegistry::getInstance()->recordNestedComponent(
-            $candidate->clientBaseName,
+            "{$namespaceIdentifier}:{$candidate->clientBaseName}",
             $rootId,
             $this->resolveFieldArrayItemScopeKey($candidate),
         );
-        HydrationRegistry::getInstance()->add($candidate->clientBaseName, $rootId, $data);
+        HydrationRegistry::getInstance()->add($namespaceIdentifier, $candidate->clientBaseName, $rootId, $data);
 
         return $rendered;
     }

@@ -20,6 +20,26 @@ use PHPUnit\Framework\Attributes\Test;
  */
 final class ComponentHydrationCollectorTest extends FunctionalTestCase
 {
+    /**
+     * Hydration now requires a component's collection to be globally registered (see
+     * ComponentIdentityResolver::resolve()) - registering it only on this one view's own resolver
+     * (as every other test in this file used to, and still does for the *ViewHelper-resolution*
+     * side) is no longer enough on its own for the namespace-identifier reverse lookup to succeed.
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $GLOBALS['TYPO3_CONF_VARS']['SYS']['fluid']['namespaces']['hydrationFixture'] = [
+            HydrationEdgeCasesCollection::class,
+        ];
+    }
+
+    protected function tearDown(): void
+    {
+        unset($GLOBALS['TYPO3_CONF_VARS']['SYS']['fluid']['namespaces']['hydrationFixture']);
+        parent::tearDown();
+    }
+
     #[Test]
     public function throwsWhenARequiredClientPropIsExplicitlyNull(): void
     {
@@ -47,7 +67,7 @@ final class ComponentHydrationCollectorTest extends FunctionalTestCase
         $html = $this->renderTemplate('<hydrationFixture:edgeCases requiredProp="a real value" />');
 
         $hydrationData = HydrationRegistry::getInstance()->getAll();
-        $edgeCaseData = array_values($hydrationData['edge-cases'])[0];
+        $edgeCaseData = array_values($hydrationData['hydrationFixture']['edge-cases'])[0];
 
         $this->assertStringContainsString('data-scope="edge-cases"', $html);
         $this->assertSame('a real value', $edgeCaseData['props']['requiredProp']);
@@ -87,13 +107,13 @@ final class ComponentHydrationCollectorTest extends FunctionalTestCase
             '<primitives:select.root collection="{collection}"><primitives:select.control><primitives:select.trigger>Select</primitives:select.trigger></primitives:select.control></primitives:select.root>',
             ['collection' => $collection],
         );
-        $selectData = array_values(HydrationRegistry::getInstance()->getAll()['select'])[0];
+        $selectData = array_values(HydrationRegistry::getInstance()->getAll()['primitives']['select'])[0];
         $this->assertSame($collection, $selectData['props']['collection']);
 
         HydrationRegistry::getInstance()->clear();
 
         $this->renderTemplate('<primitives:combobox.root collection="{collection}" />', ['collection' => $collection]);
-        $comboboxData = array_values(HydrationRegistry::getInstance()->getAll()['combobox'])[0];
+        $comboboxData = array_values(HydrationRegistry::getInstance()->getAll()['primitives']['combobox'])[0];
         $this->assertSame($collection, $comboboxData['props']['collection']);
     }
 }

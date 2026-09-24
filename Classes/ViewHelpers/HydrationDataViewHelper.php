@@ -19,13 +19,21 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
  *
  * Example:
  * ```html
- * <ui:hydrationData name="some-block" props="{someProp: 'someValue', anotherProp: 123}" />
+ * <ui:hydrationData namespace="ui" name="some-block" props="{someProp: 'someValue', anotherProp: 123}" />
  * ```
  */
 class HydrationDataViewHelper extends AbstractViewHelper
 {
     public function initializeArguments(): void
     {
+        $this->registerArgument(
+            'namespace',
+            'string',
+            'The Fluid namespace identifier (e.g. "ui") this hydration data is registered under - ' .
+            'matches the namespace a mountAll()/mount() call must use to find it client-side, ' .
+            'since this data has no component collection of its own to resolve one from automatically.',
+            true,
+        );
         $this->registerArgument('name', 'string', 'The name under which the hydration data should be exposed', true);
         $this->registerArgument(
             'id',
@@ -68,7 +76,12 @@ class HydrationDataViewHelper extends AbstractViewHelper
         ];
 
         $registry = HydrationRegistry::getInstance();
-        $registry->add(Typed::string($this->arguments['name']), $id, $data);
+        $registry->add(
+            Typed::string($this->arguments['namespace']),
+            Typed::string($this->arguments['name']),
+            $id,
+            $data,
+        );
     }
 
     private function normalizeData(mixed $data): array

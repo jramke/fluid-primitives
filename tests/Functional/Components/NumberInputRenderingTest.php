@@ -86,7 +86,7 @@ final class NumberInputRenderingTest extends FunctionalTestCase
             </primitives:numberInput.root>
         ');
 
-        $hydrationData = HydrationRegistry::getInstance()->getAll();
+        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
         $numberInputData = array_values($hydrationData['number-input'])[0];
 
         $this->assertSame(

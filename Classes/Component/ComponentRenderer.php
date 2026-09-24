@@ -80,7 +80,12 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         $renderingContext->setTemplatePaths($this->componentResolver->getTemplatePaths());
         $renderingContext->setViewHelperResolver($renderingContext->getViewHelperResolver()->getScopedCopy());
 
-        $identity = $this->identityResolver->resolve($viewHelperName, $arguments, $renderingContext);
+        $identity = $this->identityResolver->resolve(
+            $viewHelperName,
+            $arguments,
+            $renderingContext,
+            $this->componentResolver,
+        );
         $isRootComponent = $identity->isRootComponent;
 
         $argumentDefinitions = $this->componentResolver
@@ -164,6 +169,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
                     $viewHelperName,
                     $renderingContext,
                     $identity->clientBaseName,
+                    $identity->namespaceIdentifier,
                     $arguments,
                     $argumentDefinitions,
                     $propsMarkedForClient,

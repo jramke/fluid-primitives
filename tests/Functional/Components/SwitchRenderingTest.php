@@ -104,7 +104,7 @@ final class SwitchRenderingTest extends FunctionalTestCase
             </primitives:switch.root>
         ');
 
-        $hydrationData = HydrationRegistry::getInstance()->getAll();
+        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
 
         $this->assertArrayHasKey('switch', $hydrationData);
         $switchData = array_values($hydrationData['switch'])[0];

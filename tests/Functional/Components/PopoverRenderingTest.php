@@ -114,7 +114,7 @@ final class PopoverRenderingTest extends FunctionalTestCase
             </primitives:popover.root>
         ');
 
-        $hydrationData = HydrationRegistry::getInstance()->getAll();
+        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
         $popoverData = array_values($hydrationData['popover'])[0];
 
         $this->assertTrue($popoverData['props']['modal']);

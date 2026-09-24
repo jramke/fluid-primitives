@@ -109,7 +109,7 @@ final class TextareaRenderingTest extends FunctionalTestCase
             </primitives:textarea.root>
         ');
 
-        $hydrationData = HydrationRegistry::getInstance()->getAll();
+        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
         $textareaData = array_values($hydrationData['textarea'])[0];
 
         $this->assertSame(['wordCount' => '%count% of %max%'], $textareaData['props']['translations']);
@@ -124,7 +124,7 @@ final class TextareaRenderingTest extends FunctionalTestCase
             </primitives:textarea.root>
         ');
 
-        $hydrationData = HydrationRegistry::getInstance()->getAll();
+        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
         $textareaData = array_values($hydrationData['textarea'])[0];
 
         // EnumUtility::normalize() unwraps the backed enum to its plain string value before it
@@ -141,7 +141,7 @@ final class TextareaRenderingTest extends FunctionalTestCase
             </primitives:textarea.root>
         ');
 
-        $hydrationData = HydrationRegistry::getInstance()->getAll();
+        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
         $textareaData = array_values($hydrationData['textarea'])[0];
 
         $this->assertSame(600, $textareaData['props']['announceDebounce']);

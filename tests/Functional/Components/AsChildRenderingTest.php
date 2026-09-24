@@ -188,7 +188,7 @@ final class AsChildRenderingTest extends FunctionalTestCase
             </primitives:dialog.root>
         ');
 
-        $hydrationData = HydrationRegistry::getInstance()->getAll();
+        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
 
         $this->assertArrayHasKey('dialog', $hydrationData);
         $this->assertArrayHasKey('as-child-dialog', $hydrationData['dialog']);

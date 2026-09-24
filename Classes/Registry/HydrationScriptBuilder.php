@@ -27,7 +27,7 @@ final class HydrationScriptBuilder
         $js = <<<JS
         (function() {
         window.FluidPrimitives = {
-            uncontrolledInstances: {},
+            componentInstances: {},
             globals: {$this->toJson($globals, $development)},
             hydrationData: {$this->toJson($registry, $development)},
             nestedComponents: {$this->toJson($nestedComponentsByScope, $development)}

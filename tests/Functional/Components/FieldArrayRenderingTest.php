@@ -60,7 +60,7 @@ final class FieldArrayRenderingTest extends FunctionalTestCase
         $fieldRootId = $fieldMatches[1] ?? null;
         $this->assertNotNull($fieldRootId);
 
-        $registeredProps = HydrationRegistry::getInstance()->get('field', $fieldRootId);
+        $registeredProps = HydrationRegistry::getInstance()->get('primitives', 'field', $fieldRootId);
 
         $this->assertSame('people[0][firstName]', $registeredProps['props']['name'] ?? null);
     }
@@ -180,15 +180,15 @@ final class FieldArrayRenderingTest extends FunctionalTestCase
         $byScope = NestedComponentRegistry::getInstance()->getNestedComponentsByScope();
 
         $this->assertSame(
-            [['name' => 'field', 'id' => $stencilFieldRootId]],
+            [['name' => 'primitives:field', 'id' => $stencilFieldRootId]],
             $byScope["field-array:{$fieldArrayRootId}:itemTemplate"] ?? null,
         );
         $this->assertSame(
-            [['name' => 'field', 'id' => $row0FieldRootId]],
+            [['name' => 'primitives:field', 'id' => $row0FieldRootId]],
             $byScope["field-array:{$fieldArrayRootId}:item:0"] ?? null,
         );
         $this->assertSame(
-            [['name' => 'field', 'id' => $row1FieldRootId]],
+            [['name' => 'primitives:field', 'id' => $row1FieldRootId]],
             $byScope["field-array:{$fieldArrayRootId}:item:1"] ?? null,
         );
     }

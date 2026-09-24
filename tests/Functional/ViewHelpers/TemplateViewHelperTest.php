@@ -128,7 +128,7 @@ final class TemplateViewHelperTest extends FunctionalTestCase
 
         $byScope = NestedComponentRegistry::getInstance()->getNestedComponentsByScope();
 
-        $this->assertSame([['name' => 'field', 'id' => $fieldRootId]], $byScope[$stencilId] ?? null);
+        $this->assertSame([['name' => 'primitives:field', 'id' => $fieldRootId]], $byScope[$stencilId] ?? null);
     }
 
     #[Test]

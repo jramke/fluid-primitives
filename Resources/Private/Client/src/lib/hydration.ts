@@ -116,6 +116,30 @@ function toCamelCase(part: string): string {
     return part.replace(/-([a-z0-9])/g, (_match, char: string) => char.toUpperCase());
 }
 
+/**
+ * Splits a required `"namespace:name"` string (e.g. `"ui:select"`) into its two parts - every
+ * public lookup below (`getHydrationData`, `mountAll`, `mount`, `getComponentInstance`) requires
+ * this form, with no bare-name fallback: two collections can legitimately define a same-named
+ * component with a different shape (a styled wrapper around a primitive it doesn't expose every
+ * prop of), so the caller always states which one it means.
+ */
+function parseNamespacedComponentName(componentName: string): {
+    namespace: string;
+    baseName: string;
+} {
+    const separatorIndex = componentName.indexOf(':');
+    if (separatorIndex === -1) {
+        throw new Error(
+            `[fluid-primitives] "${componentName}" must include a namespace, e.g. "ui:${componentName}" - ` +
+                'mountAll/mount/getHydrationData/getComponentInstance always require one.'
+        );
+    }
+    return {
+        namespace: componentName.slice(0, separatorIndex),
+        baseName: componentName.slice(separatorIndex + 1),
+    };
+}
+
 export function getHydrationData(component: string): Record<string, ComponentHydrationData> | null;
 export function getHydrationData(component: string, id: string): ComponentHydrationData | null;
 export function getHydrationData(component?: string, id?: string) {
@@ -129,21 +153,23 @@ export function getHydrationData(component?: string, id?: string) {
         return hydrationData;
     }
 
-    // Hydration data itself is always registered under the kebab-case clientComponentName
-    // (mirrors PHP's HydrationRegistry) - converting here means every caller, direct or via
+    const { namespace, baseName } = parseNamespacedComponentName(component);
+    // Hydration data itself is always registered under the kebab-case clientBaseName (mirrors
+    // PHP's HydrationRegistry) - converting here means every caller, direct or via
     // mount()/mountAll(), can consistently pass the same camelCase name used everywhere else
     // (static componentName, getElement() part names).
-    const clientComponentName = toKebabCase(component);
+    const clientBaseName = toKebabCase(baseName);
 
-    if (!hydrationData[clientComponentName]) {
+    const instances = hydrationData[namespace]?.[clientBaseName];
+    if (!instances) {
         return null;
     }
 
     if (!id) {
-        return hydrationData[clientComponentName];
+        return instances;
     }
 
-    return hydrationData[clientComponentName][id] || null;
+    return instances[id] || null;
 }
 
 /**
@@ -158,17 +184,18 @@ function getNestedComponents(scopeId: string): NestedComponentEntry[] {
 }
 
 /**
- * Looks up another already-mounted, uncontrolled component instance by its component name and
- * hydration id (the `id` prop it was rendered with). For primitives that compose two independent
- * instances of themselves at runtime (e.g. Menu submenus linking a parent/child pair via their own
- * `id`s) rather than through props alone.
+ * Looks up another already-mounted component instance (from either `mountAll` or `mount`) by its
+ * namespaced component name and hydration id (the `id` prop it was rendered with). For primitives
+ * that compose two independent instances of themselves at runtime (e.g. Menu submenus linking a
+ * parent/child pair via their own `id`s) rather than through props alone.
  */
 export function getComponentInstance<
     T extends Component<unknown, unknown> = Component<unknown, unknown>,
 >(componentName: string, id: string): T | undefined {
-    const clientComponentName = toKebabCase(componentName);
-    return window.FluidPrimitives?.uncontrolledInstances?.[clientComponentName]?.[id] as
-        T | undefined;
+    const { namespace, baseName } = parseNamespacedComponentName(componentName);
+    return window.FluidPrimitives?.componentInstances?.[namespace]?.[toKebabCase(baseName)]?.[
+        id
+    ] as T | undefined;
 }
 
 export function getGlobals(): FluidPrimitivesGlobals | null {
@@ -249,9 +276,10 @@ function scheduleDuplicateIdCheck(): void {
 }
 
 /**
- * Mounts every not-yet-mounted, uncontrolled hydration instance of `componentName`. Safe to call
- * more than once (e.g. after lazily-inserted DOM adds new instances) - already mounted instances
- * are skipped rather than re-instantiated.
+ * Mounts every not-yet-mounted, uncontrolled hydration instance of `componentName` (a required
+ * `"namespace:name"` string, e.g. `"ui:select"`). Safe to call more than once (e.g. after
+ * lazily-inserted DOM adds new instances) - already mounted instances are skipped rather than
+ * re-instantiated.
  *
  * `props` in the callback is inferred from `componentName` itself via {@see HydrationPropsFor} -
  * no explicit generic needed at the call site. A component name a project hasn't generated types
@@ -265,16 +293,14 @@ export function mountAll<K extends KnownComponentName | (string & {})>(
         createHydrator: () => ComponentHydrator;
     }) => Component<unknown, unknown> | void
 ) {
+    const { namespace, baseName } = parseNamespacedComponentName(componentName);
     const hydrationInstances = getHydrationData(componentName);
     if (!hydrationInstances) return;
 
-    // Keyed by the kebab form so two mountAll() calls for the same component (one camelCase, one
-    // still kebab mid-migration) share one tracked-instance bucket instead of silently doubling up.
-    const clientComponentName = toKebabCase(componentName);
-    if (!window.FluidPrimitives.uncontrolledInstances[clientComponentName]) {
-        window.FluidPrimitives.uncontrolledInstances[clientComponentName] = {};
-    }
-    const mountedInstances = window.FluidPrimitives.uncontrolledInstances[clientComponentName];
+    const clientBaseName = toKebabCase(baseName);
+    window.FluidPrimitives.componentInstances[namespace] ??= {};
+    window.FluidPrimitives.componentInstances[namespace][clientBaseName] ??= {};
+    const mountedInstances = window.FluidPrimitives.componentInstances[namespace][clientBaseName];
 
     Object.keys(hydrationInstances).forEach(id => {
         if (hydrationInstances[id].controlled) return;
@@ -283,11 +309,11 @@ export function mountAll<K extends KnownComponentName | (string & {})>(
         const instance = callback({
             ...hydrationInstances[id],
             props: applyClientPropConverters(
-                componentName,
+                baseName,
                 hydrationInstances[id].props
             ) as HydrationPropsFor<Extract<K, string>>,
             createHydrator: () =>
-                new ComponentHydrator(componentName, id, hydrationInstances[id].props.ids),
+                new ComponentHydrator(baseName, id, hydrationInstances[id].props.ids),
         });
         if (!instance) return;
 
@@ -296,10 +322,10 @@ export function mountAll<K extends KnownComponentName | (string & {})>(
 }
 
 /**
- * Destroys every mounted, uncontrolled component instance whose root element
- * is `root` itself or a descendant of it, and drops them from the tracked
- * instance registry. Intended for cleaning up before removing a subtree from
- * the DOM (e.g. a lazily-mounted recurring-field row).
+ * Destroys every mounted component instance (from either `mountAll` or `mount`) whose root element
+ * is `root` itself or a descendant of it, and drops them from the tracked instance registry.
+ * Intended for cleaning up before removing a subtree from the DOM (e.g. a lazily-mounted recurring-
+ * field row).
  *
  * Matches only on the instance's own `[data-part="root"]` element, not a bare id-prefix - a
  * prefix-only match would also catch that instance's *own* repeated sub-parts (e.g. a
@@ -310,52 +336,67 @@ export function mountAll<K extends KnownComponentName | (string & {})>(
 export function destroyComponentsWithin(root: Element | Document) {
     if (!window.FluidPrimitives) return;
 
-    for (const instances of Object.values(window.FluidPrimitives.uncontrolledInstances)) {
-        for (const [id, instance] of Object.entries(instances)) {
-            // Ids are always generated from the kebab clientComponentName, not the canonical
-            // componentName instance.getName() itself returns - see Component.getClientName().
-            const clientComponentName = instance.getClientName();
-            const rootPartSelector = `[id^="${clientComponentName}:${id}"][data-part="root"]`;
-            const isRootItself = root instanceof Element && root.matches(rootPartSelector);
-            const hasRootPartInNode = root.querySelectorAll(rootPartSelector).length > 0;
+    for (const namespaceBucket of Object.values(window.FluidPrimitives.componentInstances)) {
+        for (const instances of Object.values(namespaceBucket)) {
+            for (const [id, instance] of Object.entries(instances)) {
+                // Ids are always generated from the kebab clientComponentName, not the canonical
+                // componentName instance.getName() itself returns - see Component.getClientName().
+                const clientComponentName = instance.getClientName();
+                const rootPartSelector = `[id^="${clientComponentName}:${id}"][data-part="root"]`;
+                const isRootItself = root instanceof Element && root.matches(rootPartSelector);
+                const hasRootPartInNode = root.querySelectorAll(rootPartSelector).length > 0;
 
-            if (isRootItself || hasRootPartInNode) {
-                console.log(`Destroying component instance: ${clientComponentName}:${id}`);
-                instance.destroy();
-                delete instances[id];
+                if (isRootItself || hasRootPartInNode) {
+                    console.log(`Destroying component instance: ${clientComponentName}:${id}`);
+                    instance.destroy();
+                    delete instances[id];
+                }
             }
         }
     }
 }
 
 /**
- * Gets one specific hydration instance of `componentName` by its `rootId` and hands it to
- * `callback`, regardless of whether it was rendered with `controlled="{true}"`. Unlike
- * {@see mountAll}, this does not track mounted state - calling it twice for the same `rootId`
- * runs the callback twice, and instances created this way are invisible to
- * {@see destroyComponentsWithin}.
+ * Gets one specific hydration instance of `componentName` (a required `"namespace:name"` string)
+ * by its `rootId` and hands it to `callback`, regardless of whether it was rendered with
+ * `controlled="{true}"`. Unlike {@see mountAll}, calling it twice for the same `rootId` re-invokes
+ * `callback` and constructs a new instance each time - but the resulting instance is still tracked
+ * (overwriting whichever one a previous call tracked), so {@see getComponentInstance} and
+ * {@see destroyComponentsWithin} can find it, the same way a `mountAll`-created instance can.
  *
  * `props` in the callback is inferred from `componentName` the same way {@see mountAll}'s is.
  */
-export function mount<K extends KnownComponentName | (string & {}), T>(
+export function mount<
+    K extends KnownComponentName | (string & {}),
+    T extends Component<unknown, unknown>,
+>(
     componentName: K,
     rootId: string,
     callback: (data: {
         controlled: boolean;
         props: HydrationPropsFor<Extract<K, string>>;
         createHydrator: () => ComponentHydrator;
-    }) => T
+    }) => T | void
 ): T | undefined {
+    const { namespace, baseName } = parseNamespacedComponentName(componentName);
     const hydrationData = getHydrationData(componentName, rootId);
     if (!hydrationData) return undefined;
 
-    return callback({
+    const instance = callback({
         ...hydrationData,
-        props: applyClientPropConverters(componentName, hydrationData.props) as HydrationPropsFor<
+        props: applyClientPropConverters(baseName, hydrationData.props) as HydrationPropsFor<
             Extract<K, string>
         >,
-        createHydrator: () => new ComponentHydrator(componentName, rootId, hydrationData.props.ids),
+        createHydrator: () => new ComponentHydrator(baseName, rootId, hydrationData.props.ids),
     });
+    if (!instance) return undefined;
+
+    const clientBaseName = toKebabCase(baseName);
+    window.FluidPrimitives.componentInstances[namespace] ??= {};
+    window.FluidPrimitives.componentInstances[namespace][clientBaseName] ??= {};
+    window.FluidPrimitives.componentInstances[namespace][clientBaseName][rootId] = instance;
+
+    return instance;
 }
 
 export class ComponentHydrator {
@@ -569,7 +610,7 @@ export class ComponentHydrator {
      * never-touched template clone; both look identical. That silently mis-classified an
      * already-mounted row as "fresh" the first time an earlier row's removal caused it to be
      * reindexed: its DOM id moved out from under it (via `restampIdReferences`, which both paths
-     * run) without its `ComponentHydrator.rootId`/`uncontrolledInstances` entry following along -
+     * run) without its `ComponentHydrator.rootId`/`componentInstances` entry following along -
      * only {@see renameValue}'s path updates those - leaving its already-mounted `Field`/`Input`
      * instances silently unable to find their own elements again. The caller already knows
      * unambiguously which case it's in (a fresh `Template` clone vs. an element already in the
@@ -606,7 +647,7 @@ export class ComponentHydrator {
      * `Field`+`Input`) to reference `value` instead of whatever position it previously held - both
      * their DOM ids (via {@see restampIdReferences}) and, for ones that are already live/mounted,
      * their own `ComponentHydrator.rootId` and their entry in
-     * `window.FluidPrimitives.uncontrolledInstances`/`hydrationData` (via
+     * `window.FluidPrimitives.componentInstances`/`hydrationData` (via
      * {@see renameNestedComponentEntry}), so their future re-renders keep resolving their own
      * elements and later lookups (`getComponentInstance`, `destroyComponentsWithin`) keep finding
      * them under their new id.
@@ -640,8 +681,8 @@ export class ComponentHydrator {
 
         restampIdReferences(this.doc, remaps);
 
-        for (const { clientComponentName, oldRootId, newRootId } of remaps) {
-            renameNestedComponentEntry(clientComponentName, oldRootId, newRootId, remaps);
+        for (const { componentName, oldRootId, newRootId } of remaps) {
+            renameNestedComponentEntry(componentName, oldRootId, newRootId, remaps);
         }
 
         migrateNestedComponentsScope(previousScopeKey, root.id, remaps);
@@ -653,7 +694,10 @@ export class ComponentHydrator {
 }
 
 interface RootIdRemap {
-    clientComponentName: string;
+    /** The nested component's own namespaced hydration key (e.g. "primitives:field") - the same
+     * opaque form `NestedComponentEntry.name` carries, matching what `getHydrationData`/`mountAll`
+     * themselves require. */
+    componentName: string;
     oldRootId: string;
     newRootId: string;
 }
@@ -731,13 +775,13 @@ function remapIdsProp(ids: Record<string, string>, remaps: RootIdRemap[]): Recor
  * component name as "found" when there was real hydration data to prepare.
  */
 function copyNestedComponentEntry(
-    clientComponentName: string,
+    componentName: string,
     stencilRootId: string,
     newRootId: string,
     remaps: RootIdRemap[],
     value: string
 ): boolean {
-    const stencilData = getHydrationData(clientComponentName, stencilRootId);
+    const stencilData = getHydrationData(componentName, stencilRootId);
     if (!stencilData) return false;
 
     const rewrittenProps: ComponentHydrationData['props'] = {
@@ -749,10 +793,11 @@ function copyNestedComponentEntry(
         rewrittenProps.name = rewrittenProps.name.replace('[]', `[${value}]`);
     }
 
-    if (!window.FluidPrimitives.hydrationData[clientComponentName]) {
-        window.FluidPrimitives.hydrationData[clientComponentName] = {};
-    }
-    window.FluidPrimitives.hydrationData[clientComponentName][newRootId] = {
+    const { namespace, baseName } = parseNamespacedComponentName(componentName);
+    const clientBaseName = toKebabCase(baseName);
+    window.FluidPrimitives.hydrationData[namespace] ??= {};
+    window.FluidPrimitives.hydrationData[namespace][clientBaseName] ??= {};
+    window.FluidPrimitives.hydrationData[namespace][clientBaseName][newRootId] = {
         ...stencilData,
         props: rewrittenProps,
     };
@@ -765,17 +810,20 @@ function copyNestedComponentEntry(
  * opposed to a fresh one still in its pristine stencil state (see
  * {@see copyNestedComponentEntry}). Updates both its `window.FluidPrimitives.
  * hydrationData` entry and, for one that's already live/mounted, its own `ComponentHydrator.
- * rootId` and its entry in `window.FluidPrimitives.uncontrolledInstances`, so its future
+ * rootId` and its entry in `window.FluidPrimitives.componentInstances`, so its future
  * re-renders keep resolving their own elements correctly and later lookups
  * (`getComponentInstance`, `destroyComponentsWithin`) keep finding it under its new id.
  */
 function renameNestedComponentEntry(
-    clientComponentName: string,
+    componentName: string,
     oldRootId: string,
     newRootId: string,
     remaps: RootIdRemap[]
 ): void {
-    const instances = window.FluidPrimitives?.uncontrolledInstances?.[clientComponentName];
+    const { namespace, baseName } = parseNamespacedComponentName(componentName);
+    const clientBaseName = toKebabCase(baseName);
+
+    const instances = window.FluidPrimitives?.componentInstances?.[namespace]?.[clientBaseName];
     const instance = instances?.[oldRootId];
     if (instance) {
         delete instances[oldRootId];
@@ -785,7 +833,7 @@ function renameNestedComponentEntry(
         }
     }
 
-    const hydrationInstances = window.FluidPrimitives?.hydrationData?.[clientComponentName];
+    const hydrationInstances = window.FluidPrimitives?.hydrationData?.[namespace]?.[clientBaseName];
     const stencilData = hydrationInstances?.[oldRootId];
     if (hydrationInstances && stencilData) {
         delete hydrationInstances[oldRootId];
@@ -824,7 +872,7 @@ function nestedRootRemapsFromMetadata(scopeKey: string, value: string): RootIdRe
             lastColonIndex === -1 ? currentRootId : currentRootId.slice(0, lastColonIndex);
 
         return {
-            clientComponentName: name,
+            componentName: name,
             oldRootId: currentRootId,
             newRootId: `${stencilRootId}:${value}`,
         };
@@ -856,7 +904,7 @@ function migrateNestedComponentsScope(
     delete window.FluidPrimitives.nestedComponents[oldScopeKey];
     window.FluidPrimitives.nestedComponents[newScopeKey] = entries.map(entry => {
         const match = remaps.find(
-            remap => remap.clientComponentName === entry.name && remap.oldRootId === entry.id
+            remap => remap.componentName === entry.name && remap.oldRootId === entry.id
         );
         return match ? { name: entry.name, id: match.newRootId } : entry;
     });
@@ -893,11 +941,11 @@ function prepareNestedRootComponents(stencilId: string, root: Element, value: st
     // known up front rather than resolved one component at a time.
     restampIdReferences(root, remaps);
 
-    const clientComponentNames = new Set<string>();
+    const componentNames = new Set<string>();
 
-    for (const { clientComponentName, oldRootId, newRootId } of remaps) {
-        if (copyNestedComponentEntry(clientComponentName, oldRootId, newRootId, remaps, value)) {
-            clientComponentNames.add(clientComponentName);
+    for (const { componentName, oldRootId, newRootId } of remaps) {
+        if (copyNestedComponentEntry(componentName, oldRootId, newRootId, remaps, value)) {
+            componentNames.add(componentName);
         }
     }
 
@@ -907,7 +955,7 @@ function prepareNestedRootComponents(stencilId: string, root: Element, value: st
     // back, so migrating it is harmless, unused bookkeeping rather than a no-op.
     migrateNestedComponentsScope(stencilId, root.id, remaps);
 
-    return Array.from(clientComponentNames);
+    return Array.from(componentNames);
 }
 
 export function getListCollectionFromHydrationData<T extends CollectionItem>(hydrationCollection: {

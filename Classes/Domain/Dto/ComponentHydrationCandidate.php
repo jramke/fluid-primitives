@@ -29,6 +29,14 @@ final readonly class ComponentHydrationCandidate
         public string $viewHelperName,
         public RenderingContextInterface $renderingContext,
         public string $clientBaseName,
+        /**
+         * The hydration registry namespace this root component should be recorded under - see
+         * {@see ComponentIdentity::$namespaceIdentifier}. `null` when its collection isn't
+         * registered globally - {@see ComponentHydrationCollector::collectForRootComponent()}
+         * throws on that, but only once it's already established this candidate actually needs
+         * hydration at all.
+         */
+        public ?string $namespaceIdentifier,
         public array $arguments,
         public array $argumentDefinitions,
         public array $propsMarkedForClient,

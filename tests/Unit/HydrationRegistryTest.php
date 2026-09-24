@@ -40,19 +40,31 @@ final class HydrationRegistryTest extends TestCase
     #[Test]
     public function storesAndRetrievesMultipleComponentTypes(): void
     {
-        $this->registry->add('accordion', '«f1»', ['type' => 'accordion']);
-        $this->registry->add('dialog', '«f2»', ['type' => 'dialog']);
+        $this->registry->add('ui', 'accordion', '«f1»', ['type' => 'accordion']);
+        $this->registry->add('ui', 'dialog', '«f2»', ['type' => 'dialog']);
 
         $all = $this->registry->getAll();
 
-        $this->assertSame(['type' => 'accordion'], $all['accordion']['«f1»']);
-        $this->assertSame(['type' => 'dialog'], $all['dialog']['«f2»']);
+        $this->assertSame(['type' => 'accordion'], $all['ui']['accordion']['«f1»']);
+        $this->assertSame(['type' => 'dialog'], $all['ui']['dialog']['«f2»']);
+    }
+
+    #[Test]
+    public function keepsSameNamedComponentsFromDifferentNamespacesSeparate(): void
+    {
+        $this->registry->add('ui', 'select', '«f1»', ['type' => 'ui-select']);
+        $this->registry->add('primitives', 'select', '«f2»', ['type' => 'primitives-select']);
+
+        $all = $this->registry->getAll();
+
+        $this->assertSame(['type' => 'ui-select'], $all['ui']['select']['«f1»']);
+        $this->assertSame(['type' => 'primitives-select'], $all['primitives']['select']['«f2»']);
     }
 
     #[Test]
     public function clearsTheRegistry(): void
     {
-        $this->registry->add('accordion', '«f1»', ['props' => []]);
+        $this->registry->add('ui', 'accordion', '«f1»', ['props' => []]);
         $this->registry->clear();
 
         $this->assertSame([], $this->registry->getAll());
@@ -70,7 +82,7 @@ final class HydrationRegistryTest extends TestCase
     #[Test]
     public function addsInlineJavaScriptWithComponentData(): void
     {
-        $this->registry->add('accordion', '«f1»', [
+        $this->registry->add('ui', 'accordion', '«f1»', [
             'controlled' => false,
             'props' => ['multiple' => true],
         ]);
@@ -94,7 +106,7 @@ final class HydrationRegistryTest extends TestCase
         $nestedComponentRegistry->popTrackingScope();
 
         $registry = new HydrationRegistry($this->assetCollector, nestedComponentRegistry: $nestedComponentRegistry);
-        $registry->add('field', '«f1»', ['props' => ['name' => 'firstName']]);
+        $registry->add('primitives', 'field', '«f1»', ['props' => ['name' => 'firstName']]);
 
         $this->assertStringContainsString('nestedComponents', $this->capturedJs);
         $this->assertStringContainsString('field-array:«f0»:itemTemplate', $this->capturedJs);
