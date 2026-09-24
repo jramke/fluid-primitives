@@ -108,6 +108,11 @@ const PART_SEGMENT_OVERRIDES: Record<string, Record<string, PartSegmentOverride>
         nextTrigger: 'next',
         prevTrigger: 'prev',
         viewTrigger: 'view',
+        // Zag has no id for the `view` wrapper itself, only for `viewTrigger` (which must keep the
+        // 'view' segment above to match what `getViewTriggerProps()` stamps onto it on hydration) -
+        // without this override both parts would default to the same 'view' segment and collide on
+        // one id for the same `value`.
+        view: 'view-panel',
         monthSelect: 'month-select',
         yearSelect: 'year-select',
     },

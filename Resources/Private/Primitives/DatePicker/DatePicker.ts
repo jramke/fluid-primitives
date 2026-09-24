@@ -91,38 +91,70 @@ export class DatePicker extends FieldAwareComponent<datePicker.Props, datePicker
         if (rangeTextEl) this.spreadProps(rangeTextEl, this.api.getRangeTextProps());
 
         const positionerEl = this.getElement('positioner');
-        if (positionerEl) this.spreadProps(positionerEl, this.api.getPositionerProps());
+        if (positionerEl) {
+            const positionerProps = this.api.getPositionerProps();
+            // `getPositionerProps()` always returns @zag-js/popper's floating styles, even for
+            // `inline` - with no trigger to anchor to, no placement ever gets computed, and an
+            // un-placed floating element gets `transform: translate3d(0, -100vh, 0)` from
+            // @zag-js/popper's own default (shoved a full viewport-height off-screen). `inline`
+            // wants normal document flow instead, so drop the style and let it sit static.
+            if (this.api.inline) delete positionerProps.style;
+            this.spreadProps(positionerEl, positionerProps);
+        }
 
         const contentEl = this.getElement('content');
         if (contentEl) this.spreadProps(contentEl, this.api.getContentProps());
 
+        // Every part below lives inside `content`, which `ui:portal` may have moved out from under
+        // `root` entirely (the default for a popup - only `inline` leaves it in place) - `getElements`
+        // defaults to searching within `root` when no `parent` is given, so without this, none of
+        // these would ever be found once portaled, and `buildTable()` would always bail out early on
+        // a missing `theadEl`/`tbodyEl`. Mirrors Select.ts/Combobox.ts's own item/itemGroup lookups,
+        // which need the same `{ parent: this.doc }` for the same reason.
         (['day', 'month', 'year'] as const).forEach(view => {
-            this.spreadPropsByValue('view', ({ value }) =>
-                value === view ? this.api.getViewProps({ view }) : null
+            this.spreadPropsByValue(
+                'view',
+                ({ value }) => (value === view ? this.api.getViewProps({ view }) : null),
+                { parent: this.doc }
             );
-            this.spreadPropsByValue('viewControl', ({ value }) =>
-                value === view ? this.api.getViewControlProps({ view }) : null
+            this.spreadPropsByValue(
+                'viewControl',
+                ({ value }) => (value === view ? this.api.getViewControlProps({ view }) : null),
+                { parent: this.doc }
             );
-            this.spreadPropsByValue('viewTrigger', ({ el, value }) => {
-                if (value !== view) return null;
-                el.textContent = this.api.visibleRangeText.formatted;
-                return this.api.getViewTriggerProps({ view });
-            });
-            this.spreadPropsByValue('prevTrigger', ({ value }) =>
-                value === view ? this.api.getPrevTriggerProps({ view }) : null
+            this.spreadPropsByValue(
+                'viewTrigger',
+                ({ el, value }) => {
+                    if (value !== view) return null;
+                    el.textContent = this.api.visibleRangeText.formatted;
+                    return this.api.getViewTriggerProps({ view });
+                },
+                { parent: this.doc }
             );
-            this.spreadPropsByValue('nextTrigger', ({ value }) =>
-                value === view ? this.api.getNextTriggerProps({ view }) : null
+            this.spreadPropsByValue(
+                'prevTrigger',
+                ({ value }) => (value === view ? this.api.getPrevTriggerProps({ view }) : null),
+                { parent: this.doc }
             );
-            this.spreadPropsByValue('table', ({ value }) =>
-                value === view ? this.api.getTableProps({ view }) : null
+            this.spreadPropsByValue(
+                'nextTrigger',
+                ({ value }) => (value === view ? this.api.getNextTriggerProps({ view }) : null),
+                { parent: this.doc }
+            );
+            this.spreadPropsByValue(
+                'table',
+                ({ value }) => (value === view ? this.api.getTableProps({ view }) : null),
+                { parent: this.doc }
             );
 
             this.buildTable(view);
         });
 
-        this.spreadPropsByValue('presetTrigger', ({ value }) =>
-            this.api.getPresetTriggerProps({ value: value as datePicker.DateRangePreset })
+        this.spreadPropsByValue(
+            'presetTrigger',
+            ({ value }) =>
+                this.api.getPresetTriggerProps({ value: value as datePicker.DateRangePreset }),
+            { parent: this.doc }
         );
 
         const monthSelectEl = this.getElement<HTMLSelectElement>('monthSelect');
@@ -133,8 +165,12 @@ export class DatePicker extends FieldAwareComponent<datePicker.Props, datePicker
     }
 
     private buildTable(view: 'day' | 'month' | 'year') {
-        const theadEl = this.getElements('tableHeader').find(el => el.dataset.value === view);
-        const tbodyEl = this.getElements('tableBody').find(el => el.dataset.value === view);
+        const theadEl = this.getElements('tableHeader', this.doc).find(
+            el => el.dataset.value === view
+        );
+        const tbodyEl = this.getElements('tableBody', this.doc).find(
+            el => el.dataset.value === view
+        );
         if (!theadEl || !tbodyEl) return;
 
         theadEl.replaceChildren();

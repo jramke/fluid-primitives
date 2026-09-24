@@ -26,6 +26,14 @@ class DatePickerContext extends AbstractComponentContext
 
     public function getState(): string
     {
+        // @zag-js/date-picker's own machine forces `open = true` whenever `inline` is set
+        // (`const open = prop("inline") || (prop("open") ?? prop("defaultOpen"))`), regardless of
+        // `defaultOpen` - mirror that here so the server-rendered state/hidden markup agrees with
+        // what the client machine settles into on hydration.
+        if (Typed::bool($this->get('inline'))) {
+            return 'open';
+        }
+
         return $this->get('defaultOpen') ? 'open' : 'closed';
     }
 
