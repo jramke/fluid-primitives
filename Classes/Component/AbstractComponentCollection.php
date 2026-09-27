@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Component;
 
 use Jramke\FluidPrimitives\Factory\ComponentRendererFactory;
-use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
+use Jramke\FluidPrimitives\Utility\ComponentRootUtility;
 use Jramke\FluidPrimitives\Utility\PropsUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3Fluid\Fluid\Core\Component\ComponentAdapter;
@@ -107,7 +107,7 @@ abstract class AbstractComponentCollection implements ComponentCollectionInterfa
                 $this->getTemplatePaths()->getTemplateIdentifier('Default', $templateName),
             );
 
-            $isRootComponent = ComponentNameUtility::isRootComponent($viewHelperName);
+            $isDeclaredRoot = ComponentRootUtility::isDeclaredRootFromViewHelperName($viewHelperName, $this);
             $argumentDefinitions = $parsedTemplate->getArgumentDefinitions();
 
             // No reserved-prop collision check here: a template can only ever end up with a reserved
@@ -141,7 +141,7 @@ abstract class AbstractComponentCollection implements ComponentCollectionInterfa
                 );
             }
 
-            if ($isRootComponent) {
+            if ($isDeclaredRoot) {
                 $argumentDefinitions['rootId'] = new ArgumentDefinition(
                     'rootId',
                     'string',
@@ -218,6 +218,18 @@ abstract class AbstractComponentCollection implements ComponentCollectionInterfa
             );
         }
         return $this->componentDefinitionsCache[$viewHelperName];
+    }
+
+    /**
+     * Whether $viewHelperName's own declared shape (folder-shape default included) is root - see
+     * {@see \Jramke\FluidPrimitives\Utility\ComponentRootUtility::isDeclaredRootFromViewHelperName()}
+     * for the underlying rule. A plain lookup on `getComponentDefinition()`'s own (already memoized)
+     * result, not a second cache: `rootId` is only ever added to a root component's own argument
+     * definitions, so its presence is exactly this fact.
+     */
+    final public function isDeclaredRoot(string $viewHelperName): bool
+    {
+        return array_key_exists('rootId', $this->getComponentDefinition($viewHelperName)->getArgumentDefinitions());
     }
 
     final public function getComponentRenderer(): ComponentRendererInterface

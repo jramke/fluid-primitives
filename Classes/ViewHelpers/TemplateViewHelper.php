@@ -112,11 +112,15 @@ class TemplateViewHelper extends AbstractViewHelper
         if ($hadComponent) {
             $variableProvider->remove('component');
         }
+        // Mirrors the shape ComponentIdentity::forView() produces for a real render - deliberately
+        // no isDeclaredRoot/isRenderedAsRoot here: those live on the ViewHelperVariableContainer for
+        // a real component render (see ComponentRenderer::createView()), not on this Fluid variable,
+        // and nothing that reads them (ui:prop, ui:exposeToClient) is ever legitimately used from
+        // slot content in the first place - so there's nothing to fake here.
         $variableProvider->add('component', [
             'fullName' => $baseName . '.template',
             'baseName' => $baseName,
-            'isRoot' => false,
-            'isComposable' => true,
+            'clientBaseName' => $clientBaseName,
         ]);
 
         if ($hadContext) {

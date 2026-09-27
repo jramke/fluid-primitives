@@ -13,7 +13,7 @@ class HydrationRegistry
 {
     private const string SCRIPT_ID = 'fluid-primitives-hydration-data';
 
-    /** @var array<string, array<string, array<string, mixed>>> */
+    /** @var array<string, mixed> */
     private array $registry = [];
     private static ?self $instance = null;
     private array $globals = [];
@@ -43,12 +43,34 @@ class HydrationRegistry
      * collections can legitimately register a same-named `$componentType` (e.g. a styled `ui`
      * wrapper around a `primitives` component it doesn't expose every prop of) - nesting by
      * namespace first keeps those genuinely separate instead of one silently overwriting the other.
+     *
+     * `$componentType` (see {@see \Jramke\FluidPrimitives\Utility\ComponentNameUtility::getComponentBaseNameFromViewHelperName()})
+     * can itself be a dot-joined path (e.g. "molecules.checkboxGroup") - each segment becomes its
+     * own nested level here, mirroring the client's own `getHydrationData()` walk, so a tiered or
+     * otherwise multi-segment identity gets its own distinct branch of the tree rather than
+     * colliding with an unrelated component sharing only its first segment.
      */
     public function add(string $namespace, string $componentType, string $id, array $props): void
     {
         /** @var array<string, mixed> $normalizedProps */
         $normalizedProps = EnumUtility::normalize($props);
-        $this->registry[$namespace][$componentType][$id] = $normalizedProps;
+
+        $segments = explode('.', $componentType);
+        $lastSegment = array_pop($segments);
+
+        $this->registry[$namespace] ??= [];
+        /** @var array<string, mixed> $bucket */
+        $bucket = &$this->registry[$namespace];
+        foreach ($segments as $segment) {
+            $bucket[$segment] ??= [];
+            /** @var array<string, mixed> $bucket */
+            $bucket = &$bucket[$segment];
+        }
+
+        $bucket[$lastSegment] ??= [];
+        /** @var array<string, array<string, mixed>> $leaf */
+        $leaf = &$bucket[$lastSegment];
+        $leaf[$id] = $normalizedProps;
 
         // Update the asset collector whenever data changes
         $this->updateAssetCollector();
@@ -56,16 +78,30 @@ class HydrationRegistry
 
     public function get(string $namespace, string $componentType, string $id): ?array
     {
+        /** @var array<string, mixed>|null $bucket */
+        $bucket = $this->registry[$namespace] ?? null;
+        foreach (explode('.', $componentType) as $segment) {
+            if (!is_array($bucket)) {
+                return null;
+            }
+            /** @var array<string, mixed>|null $bucket */
+            $bucket = $bucket[$segment] ?? null;
+        }
+
+        if (!is_array($bucket)) {
+            return null;
+        }
+
         // Not actually redundant - the assignment is what the @var narrows; inlining it into the
         // return statement would lose that annotation and bring back the mixed-return-statement error.
         // @mago-expect lint:inline-variable-return
         /** @var array<string, mixed>|null $props */
-        $props = $this->registry[$namespace][$componentType][$id] ?? null;
+        $props = $bucket[$id] ?? null;
         return $props;
     }
 
     /**
-     * @return array<string, array<string, array<string, mixed>>>
+     * @return array<string, mixed>
      */
     public function getAll(): array
     {

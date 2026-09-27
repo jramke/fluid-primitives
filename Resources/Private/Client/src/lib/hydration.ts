@@ -157,10 +157,18 @@ export function getHydrationData(component?: string, id?: string) {
     // Hydration data itself is always registered under the kebab-case clientBaseName (mirrors
     // PHP's HydrationRegistry) - converting here means every caller, direct or via
     // mount()/mountAll(), can consistently pass the same camelCase name used everywhere else
-    // (static componentName, getElement() part names).
+    // (static componentName, getElement() part names). A multi-segment name (e.g.
+    // "molecules.checkboxGroup") walks one nested level per dot-segment, mirroring how PHP's
+    // HydrationRegistry.add() builds the tree - toKebabCase() is dot-agnostic, so it can run on
+    // the whole string before splitting.
     const clientBaseName = toKebabCase(baseName);
-
-    const instances = hydrationData[namespace]?.[clientBaseName];
+    let instances: unknown = hydrationData[namespace];
+    for (const segment of clientBaseName.split('.')) {
+        if (!instances || typeof instances !== 'object') {
+            return null;
+        }
+        instances = (instances as Record<string, unknown>)[segment];
+    }
     if (!instances) {
         return null;
     }
@@ -169,7 +177,7 @@ export function getHydrationData(component?: string, id?: string) {
         return instances;
     }
 
-    return instances[id] || null;
+    return (instances as Record<string, unknown>)[id] || null;
 }
 
 /**

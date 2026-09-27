@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Tests\Unit;
 
+use Jramke\FluidPrimitives\Domain\Dto\ComponentIdentity;
 use Jramke\FluidPrimitives\Tests\TestCase;
 use Jramke\FluidPrimitives\ViewHelpers\RefViewHelper;
 use PHPUnit\Framework\Attributes\Test;
@@ -31,7 +32,7 @@ final class RefViewHelperTest extends TestCase
     #[Test]
     public function rendersDataAttributesForARef(): void
     {
-        $this->variableProvider->add('component', ['fullName' => 'Collapsible.Root', 'baseName' => 'collapsible']);
+        $this->markAsDeclaredRootComponent('Collapsible.Root', 'collapsible');
         $this->variableProvider->add('rootId', '«f1»');
         $this->variableProvider->add('context', ['ids' => []]);
 
@@ -53,7 +54,7 @@ final class RefViewHelperTest extends TestCase
     #[Test]
     public function rendersRootRefCorrectly(): void
     {
-        $this->variableProvider->add('component', ['fullName' => 'Collapsible.Root', 'baseName' => 'collapsible']);
+        $this->markAsDeclaredRootComponent('Collapsible.Root', 'collapsible');
         $this->variableProvider->add('rootId', '«f1»');
         $this->variableProvider->add('context', ['ids' => []]);
 
@@ -93,7 +94,7 @@ final class RefViewHelperTest extends TestCase
     #[Test]
     public function usesExplicitIdFromIdsConfiguration(): void
     {
-        $this->variableProvider->add('component', ['fullName' => 'Collapsible.Root', 'baseName' => 'collapsible']);
+        $this->markAsDeclaredRootComponent('Collapsible.Root', 'collapsible');
         $this->variableProvider->add('rootId', '«f1»');
         $this->variableProvider->add('context', ['ids' => ['trigger' => 'my-custom-trigger-id']]);
 
@@ -112,7 +113,7 @@ final class RefViewHelperTest extends TestCase
     #[Test]
     public function includesAdditionalDataAttributes(): void
     {
-        $this->variableProvider->add('component', ['fullName' => 'Collapsible.Root', 'baseName' => 'collapsible']);
+        $this->markAsDeclaredRootComponent('Collapsible.Root', 'collapsible');
         $this->variableProvider->add('rootId', '«f1»');
         $this->variableProvider->add('context', ['ids' => []]);
 
@@ -135,7 +136,7 @@ final class RefViewHelperTest extends TestCase
     #[Test]
     public function returnsArrayWhenAsArrayIsTrue(): void
     {
-        $this->variableProvider->add('component', ['fullName' => 'Collapsible.Root', 'baseName' => 'collapsible']);
+        $this->markAsDeclaredRootComponent('Collapsible.Root', 'collapsible');
         $this->variableProvider->add('rootId', '«f1»');
         $this->variableProvider->add('context', ['ids' => []]);
 
@@ -179,6 +180,9 @@ final class RefViewHelperTest extends TestCase
     #[Test]
     public function handlesPrimitivesNamespaceCorrectly(): void
     {
+        // 'Primitives.Dialog.Root' is deliberately not declared-root here: the classic string rule
+        // only checks segment[1] specifically ('Dialog', not 'Root'), a documented quirk covered by
+        // ComponentRootUtilityTest::handlesPrimitivesNamespaceSecondPartIsNotRoot().
         $this->variableProvider->add('component', ['fullName' => 'Primitives.Dialog.Root', 'baseName' => 'dialog']);
         $this->variableProvider->add('context', ['rootId' => '«f1»', 'ids' => []]);
 
@@ -213,7 +217,7 @@ final class RefViewHelperTest extends TestCase
     #[Test]
     public function throwsExceptionWhenRootIdIsMissing(): void
     {
-        $this->variableProvider->add('component', ['fullName' => 'Collapsible.Root', 'baseName' => 'collapsible']);
+        $this->markAsDeclaredRootComponent('Collapsible.Root', 'collapsible');
 
         $this->viewHelper->setArguments([
             'name' => 'trigger',
@@ -226,5 +230,22 @@ final class RefViewHelperTest extends TestCase
         $this->expectExceptionMessage('No rootId found');
 
         $this->viewHelper->render();
+    }
+
+    /**
+     * Sets up both channels a real render would: the public `component` Fluid variable (`fullName`/
+     * `baseName`, as a real render's {@see \Jramke\FluidPrimitives\Domain\Dto\ComponentIdentity::forView()}
+     * would produce it) and the internal `ComponentIdentity` on the `ViewHelperVariableContainer`
+     * (`isDeclaredRoot: true` - all {@see \Jramke\FluidPrimitives\Utility\ComponentUtility::getRootIdFromContext()}
+     * needs to pick the bare `rootId` variable branch these tests exercise).
+     */
+    private function markAsDeclaredRootComponent(string $fullName, string $baseName): void
+    {
+        $this->variableProvider->add('component', ['fullName' => $fullName, 'baseName' => $baseName]);
+        $this->renderingContext->getViewHelperVariableContainer()->add(
+            ComponentIdentity::class,
+            ComponentIdentity::VHVC_KEY,
+            new ComponentIdentity(true, true, null, $baseName, $baseName, null),
+        );
     }
 }

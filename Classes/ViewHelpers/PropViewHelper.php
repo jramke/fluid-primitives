@@ -8,6 +8,7 @@ use Jramke\FluidPrimitives\Annotations\ClientArgumentAnnotation;
 use Jramke\FluidPrimitives\Annotations\ContextArgumentAnnotation;
 use Jramke\FluidPrimitives\Annotations\RequiredAtRuntimeArgumentAnnotation;
 use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
+use Jramke\FluidPrimitives\Utility\ComponentRootUtility;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use Jramke\FluidPrimitives\Utility\PropsUtility;
 use Jramke\FluidPrimitives\Utility\Typed;
@@ -79,17 +80,17 @@ class PropViewHelper extends AbstractViewHelper implements ViewHelperNodeInitial
             throw new \RuntimeException('The prop ViewHelper can only be used inside a component context.', 1698255600);
         }
 
-        $isRootComponent = ComponentNameUtility::isRootComponent($renderingContext);
+        $isDeclaredRoot = ComponentRootUtility::isDeclaredRootFromContext($renderingContext);
         $name = Typed::string($this->arguments['name']);
 
-        if (Typed::bool($this->arguments['context']) && $isRootComponent) {
+        if (Typed::bool($this->arguments['context']) && $isDeclaredRoot) {
             throw new \RuntimeException(
                 'The context argument can only be used inside a composable component. All props from the root component are automatically available in the context.',
                 1698255601,
             );
         }
 
-        if (Typed::bool($this->arguments['client']) && !$isRootComponent) {
+        if (Typed::bool($this->arguments['client']) && !$isDeclaredRoot) {
             throw new \RuntimeException('The client argument can only be used inside a root component.', 1698255602);
         }
 

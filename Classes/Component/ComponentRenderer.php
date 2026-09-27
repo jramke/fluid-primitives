@@ -86,7 +86,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
             $renderingContext,
             $this->componentResolver,
         );
-        $isRootComponent = $identity->isRootComponent;
+        $isRenderedAsRoot = $identity->isRenderedAsRoot;
 
         $argumentDefinitions = $this->componentResolver
             ->getComponentDefinition($viewHelperName)
@@ -122,7 +122,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         $view->assignMultiple($this->componentResolver->getAdditionalVariables($viewHelperName));
 
         // Expose variables as context so it can be picked up in other components rendered inside this component.
-        if ($isRootComponent) {
+        if ($isRenderedAsRoot) {
             $this->rootContextFactory->create(
                 $argumentDefinitions,
                 $view,
@@ -133,7 +133,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         }
 
         $restoreExposedContext = null;
-        if ($propsMarkedForContext !== [] && !$isRootComponent) {
+        if ($propsMarkedForContext !== [] && !$isRenderedAsRoot) {
             $restoreExposedContext = $this->contextMarkedPropsExposer->expose(
                 $propsMarkedForContext,
                 $arguments,
@@ -154,7 +154,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
             $restoreExposedContext,
         );
 
-        if ($isRootComponent) {
+        if ($isRenderedAsRoot) {
             // cleanup the context variable from the parent rendering context
             ContextService::removeFromRenderingContext($parentRenderingContext, $identity->baseName);
 
@@ -205,7 +205,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         array &$arguments,
     ): array {
         $baseName = $identity->baseName;
-        $isRootComponent = $identity->isRootComponent;
+        $isRenderedAsRoot = $identity->isRenderedAsRoot;
 
         // Expose other component contexts to allow deep nesting of composable components
         $otherComponentContexts = $this->getOtherComponentContexts($parentRenderingContext, $baseName);
@@ -214,7 +214,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         $ctx = $this->getRootComponentContext($parentRenderingContext, $baseName);
 
         $fieldRootId = null;
-        if ($isRootComponent && $this->componentSupportsField($identity->clientBaseName)) {
+        if ($isRenderedAsRoot && $this->componentSupportsField($identity->clientBaseName)) {
             $fieldRootId = $this->fieldContextVariableMerger->apply(
                 $otherComponentContexts,
                 $identity->clientBaseName,
@@ -225,7 +225,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         }
 
         $checkboxGroupRootId = null;
-        if ($isRootComponent && $baseName === 'checkbox') {
+        if ($isRenderedAsRoot && $baseName === 'checkbox') {
             $checkboxGroupRootId = $this->checkboxGroupContextVariableMerger->apply(
                 $otherComponentContexts,
                 $view,
@@ -240,7 +240,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         }
 
         // Call beforeRendering lifecycle method only for root or closed components
-        if ($ctx && $isRootComponent && method_exists($ctx, 'beforeRendering')) {
+        if ($ctx && $isRenderedAsRoot && method_exists($ctx, 'beforeRendering')) {
             $ctx->beforeRendering();
         }
 
@@ -249,7 +249,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         // behind a portal (e.g. a triggerless Dialog/Popover - everything portaled, nothing rendered
         // inline) would otherwise never contain the data-scope="..." string ComponentHydrationCollector
         // looks for. Snapshotting the registry lets it also search whatever this render pass portaled away.
-        $portalRegistrySnapshotBeforeRender = $isRootComponent ? PortalRegistry::getInstance()->getAll() : [];
+        $portalRegistrySnapshotBeforeRender = $isRenderedAsRoot ? PortalRegistry::getInstance()->getAll() : [];
 
         return [
             'ctx' => $ctx,
@@ -319,12 +319,20 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         $view->getRenderingContext()->getVariableProvider()->remove('settings');
         $view->assign('settings', ComponentUtility::getSettings());
 
-        $view->assign('component', [
-            'fullName' => $viewHelperName,
-            'baseName' => $identity->baseName,
-            'isRoot' => $identity->isRootComponent,
-            'isComposable' => $identity->isComposableComponent,
-        ]);
+        // Two deliberately separate channels: `component` is the small, public, template-facing
+        // subset (see ComponentIdentity::forView()) - readable via `{component.fullName}` etc., and
+        // therefore never safe to add internal bookkeeping to without risking a breaking change for
+        // whoever already reads it. The full $identity - including isDeclaredRoot/isRenderedAsRoot,
+        // which only PropViewHelper/ExposeToClientViewHelper/ComponentUtility::getRootIdFromContext()
+        // ever need - goes on the ViewHelperVariableContainer instead
+        // ({@see \Jramke\FluidPrimitives\Utility\ComponentRootUtility}), unreachable from a template
+        // expression.
+        $view->assign('component', $identity->forView($viewHelperName));
+        $renderingContext->getViewHelperVariableContainer()->add(
+            ComponentIdentity::class,
+            ComponentIdentity::VHVC_KEY,
+            $identity,
+        );
 
         return $view;
     }

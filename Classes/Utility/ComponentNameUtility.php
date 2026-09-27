@@ -19,25 +19,58 @@ class ComponentNameUtility
     }
 
     /**
-     * Returns the component's canonical camelCase base name (e.g. "fileUpload" for both
-     * "FileUpload.Root" and "FileUpload.Item") - this is the form used for context storage/lookup
-     * and the `component.baseName` Fluid variable. `$viewHelperName` itself is Fluid's own resolved
-     * dot-path, PascalCased per segment to match the ViewHelper's PHP class name (e.g.
-     * "FileUpload.Root", not the lowercase-first "fileUpload.root" a template author types) -
-     * `lcfirst()` undoes just that leading capital, the one part of the resolved name that isn't
-     * already what a template author would write. Deliberately does *not* go through
-     * `getComponentFullNameFromViewHelperName()`'s kebab-casing - use {@see camelCaseToLowerCaseDashed}
-     * on the result for the few things that genuinely need kebab-case (data-scope, hydration keys,
-     * `ComponentPartIdUtility`'s override maps).
+     * Returns the component's canonical camelCase base name/identity path (e.g. "fileUpload" for
+     * both "FileUpload.Root" and "FileUpload.Item", or "molecules.checkboxGroup" for a tiered
+     * `Molecules.CheckboxGroup.Root`) - this is the form used for context storage/lookup, the
+     * `component.baseName` Fluid variable, and (dot-segments intact) the nested hydration registry
+     * key. `$viewHelperName` itself is Fluid's own resolved dot-path, PascalCased per segment to
+     * match the ViewHelper's PHP class name (e.g. "FileUpload.Root", not the lowercase-first
+     * "fileUpload.root" a template author types) - `lcfirst()` per segment undoes just that leading
+     * capital, the one part of the resolved name that isn't already what a template author would
+     * write. Deliberately does *not* go through `getComponentFullNameFromViewHelperName()`'s
+     * kebab-casing - use {@see camelCaseToLowerCaseDashed} on the result for the few things that
+     * genuinely need kebab-case (data-scope, hydration keys, `ComponentPartIdUtility`'s override maps).
+     *
+     * `$isDeclaredRoot` (the caller already knows or can state this - see
+     * {@see \Jramke\FluidPrimitives\Utility\ComponentRootUtility::isDeclaredRootFromViewHelperName()})
+     * decides how the call's own last segment is treated:
+     *
+     * - A subcomponent (`$isDeclaredRoot` false, e.g. `Accordion.Item`, `Molecules.CheckboxGroup.Label`)
+     *   always shares its sibling root's identity - its own containing folder, i.e. everything but
+     *   its own last segment.
+     * - A classic `.Root` call (`Accordion.Root`, `Molecules.CheckboxGroup.Root`) drops that trailing
+     *   marker segment the same way - it names the same folder its subcomponent siblings already
+     *   resolve to, and adds nothing of its own.
+     * - An independently-root leaf (folder-shape default - no `.Root`/subcomponent marker at all,
+     *   e.g. `CheckboxGroupExamples.SelectAll`) has no marker to drop: its own last segment *is* its
+     *   distinguishing identity, so the full path is kept. This is what keeps it from ever colliding
+     *   with an unrelated real component sharing a leading segment - which is also why an example
+     *   needing its own hydration bucket lives in its own sibling `<Component>Examples/` folder,
+     *   never nested inside the real component's own folder (that folder's identity is already a
+     *   leaf holding real instance records, not a namespace another component can nest under).
+     *
+     * Tiered components intentionally do *not* collapse their tier prefix away anymore - a `molecules`
+     * tier is real, kept identity, not discarded, so `Molecules.CheckboxGroup.Root` and a
+     * non-tiered `CheckboxGroup.Root` are deliberately different identities, never merged. Single-segment
+     * names (`Clipboard`) have no other segment to drop or keep, so they're their own identity either way.
      */
-    public static function getComponentBaseNameFromViewHelperName(string $viewHelperName): string
+    public static function getComponentBaseNameFromViewHelperName(string $viewHelperName, bool $isDeclaredRoot): string
     {
         $parts = explode('.', $viewHelperName);
-        $baseName = $parts[0];
-        if (strtolower($baseName) === 'primitives') {
-            $baseName = $parts[1] ?? $baseName;
+        if (strtolower($parts[0]) === 'primitives') {
+            array_shift($parts);
         }
-        return lcfirst($baseName);
+
+        if (count($parts) === 1) {
+            return lcfirst($parts[0]);
+        }
+
+        if ($isDeclaredRoot && strtolower($parts[count($parts) - 1]) !== 'root') {
+            return implode('.', array_map(lcfirst(...), $parts));
+        }
+
+        array_pop($parts);
+        return implode('.', array_map(lcfirst(...), $parts));
     }
 
     public static function getSubcomponentNameFromViewHelperName(string $viewHelperName): string
@@ -75,6 +108,12 @@ class ComponentNameUtility
     /**
      * The kebab-case form of {@see getComponentBaseNameFromContext} - for the few things that
      * genuinely need it (data-scope, hydration keys, `ComponentPartIdUtility`'s override maps).
+     * Deliberately still derives this from `component.baseName` via case conversion rather than
+     * reading `component.clientBaseName` directly, even though a real render's `component` variable
+     * (see {@see \Jramke\FluidPrimitives\Domain\Dto\ComponentIdentity::forView()}) carries both -
+     * `baseName` alone is enough to answer this, so nothing that only sets `baseName` (a handwritten
+     * test fixture, `ui:template`'s synthetic identity) needs to also remember to keep a second,
+     * independently-derivable field in sync.
      */
     public static function getClientBaseNameFromContext(RenderingContextInterface $renderingContext): string
     {
@@ -83,12 +122,13 @@ class ComponentNameUtility
 
     /**
      * The candidate root viewHelperNames a directory named `$entryName` (a component's own folder,
-     * e.g. "Select") could resolve to, in the same precedence {@see isRootComponent()} itself
-     * recognizes - a bare single-segment name (a single-file component with no sub-parts, e.g.
+     * e.g. "Select") could resolve to, in the same precedence
+     * {@see \Jramke\FluidPrimitives\Utility\ComponentRootUtility::isDeclaredRootFromViewHelperName()}
+     * itself recognizes - a bare single-segment name (a single-file component with no sub-parts, e.g.
      * "clipboard" -> "Clipboard/Clipboard.*") or an explicit ".root" suffix (a component with its
-     * own sub-parts, e.g. "select.root" -> "Select/Root.*"). Kept next to `isRootComponent()` so
-     * both share one definition of what makes a component root, rather than a caller re-deriving
-     * the same two rules independently.
+     * own sub-parts, e.g. "select.root" -> "Select/Root.*"). Kept next to that method so both share
+     * one definition of what makes a component root, rather than a caller re-deriving the same two
+     * rules independently.
      *
      * @return array{0: string, 1: string}
      */
@@ -96,37 +136,6 @@ class ComponentNameUtility
     {
         $baseName = lcfirst($entryName);
         return [$baseName, "{$baseName}.root"];
-    }
-
-    public static function isRootComponent(string|RenderingContextInterface $viewHelperNameOrRenderingContext): bool
-    {
-        $viewHelperName = $viewHelperNameOrRenderingContext instanceof RenderingContextInterface
-            ? self::getComponentFullNameFromContext($viewHelperNameOrRenderingContext)
-            : $viewHelperNameOrRenderingContext;
-
-        if ($viewHelperName === '' || $viewHelperName === '0') {
-            return false;
-        }
-
-        $componentParts = explode('.', $viewHelperName);
-        if (count($componentParts) === 1) {
-            return true; // Single part components are considered root components
-        }
-
-        $end = $componentParts[1] ?? '';
-        return strtolower($end) === 'root';
-    }
-
-    // This is not very accurate as a closed component like `alert.simple` would also return true
-    // but its (currently) only used for exposing the `context` variable, so it's acceptable for now.
-    public static function isComposableComponent(string $viewHelperName): bool
-    {
-        if ($viewHelperName === '' || $viewHelperName === '0') {
-            return false;
-        }
-
-        $componentParts = explode('.', $viewHelperName);
-        return count($componentParts) > 1;
     }
 
     public static function camelCaseToLowerCaseDashed(string $string): string
