@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\ViewHelpers;
 
 use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
+use Jramke\FluidPrimitives\Domain\Dto\ComponentIdentity;
 use Jramke\FluidPrimitives\Domain\Dto\TagAttributes;
 use Jramke\FluidPrimitives\Registry\NestedComponentRegistry;
 use Jramke\FluidPrimitives\Service\ContextService;
@@ -112,16 +113,18 @@ class TemplateViewHelper extends AbstractViewHelper
         if ($hadComponent) {
             $variableProvider->remove('component');
         }
-        // Mirrors the shape ComponentIdentity::forView() produces for a real render - deliberately
-        // no isDeclaredRoot/isRenderedAsRoot here: those live on the ViewHelperVariableContainer for
-        // a real component render (see ComponentRenderer::createView()), not on this Fluid variable,
-        // and nothing that reads them (ui:prop, ui:exposeToClient) is ever legitimately used from
-        // slot content in the first place - so there's nothing to fake here.
-        $variableProvider->add('component', [
-            'fullName' => $baseName . '.template',
-            'baseName' => $baseName,
-            'clientBaseName' => $clientBaseName,
-        ]);
+        // The same shape a real render's ComponentIdentity::forView() produces, built via the
+        // shared ComponentIdentity::viewShape() instead of a hand-written array literal here -
+        // deliberately no isDeclaredRoot/isRenderedAsRoot: those live on the
+        // ViewHelperVariableContainer for a real component render (see
+        // ComponentRenderer::createView()), not on this Fluid variable, and nothing that reads
+        // them (ui:prop, ui:exposeToClient) is ever legitimately used from slot content in the
+        // first place - so there's nothing to fake here.
+        $variableProvider->add('component', ComponentIdentity::viewShape(
+            $baseName . '.template',
+            $baseName,
+            $clientBaseName,
+        ));
 
         if ($hadContext) {
             $variableProvider->remove('context');

@@ -84,10 +84,26 @@ final readonly class ComponentIdentity
      */
     public function forView(string $viewHelperName): array
     {
+        return self::viewShape($viewHelperName, $this->baseName, $this->clientBaseName);
+    }
+
+    /**
+     * The same `component` Fluid variable shape {@see forView()} builds from a real render's own
+     * identity, built directly from a baseName/clientBaseName pair instead - for
+     * {@see \Jramke\FluidPrimitives\ViewHelpers\TemplateViewHelper}'s synthetic identity, which has
+     * neither a real `ComponentIdentity` nor a `viewHelperName` of its own (it fakes this variable
+     * for slot content that isn't genuinely a component's own template body - see that ViewHelper's
+     * own docblock). Keeping both call sites going through this one array shape is what keeps them
+     * from drifting apart if that shape ever changes.
+     *
+     * @return array{fullName: string, baseName: string, clientBaseName: string}
+     */
+    public static function viewShape(string $fullName, string $baseName, string $clientBaseName): array
+    {
         return [
-            'fullName' => $viewHelperName,
-            'baseName' => $this->baseName,
-            'clientBaseName' => $this->clientBaseName,
+            'fullName' => $fullName,
+            'baseName' => $baseName,
+            'clientBaseName' => $clientBaseName,
         ];
     }
 }
