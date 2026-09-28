@@ -27,28 +27,6 @@ class PropsUtility
         return in_array($propKey, Constants::RESERVED_PROPS, strict: true);
     }
 
-    public static function createPropsMarkedForClientArgumentDefinition(mixed $defaultValue): ArgumentDefinition
-    {
-        return new ArgumentDefinition(
-            Constants::PROPS_MARKED_FOR_CLIENT_KEY,
-            'array',
-            'DO NOT USE THIS ARGUMENT, IT IS FOR INTERNAL USE ONLY',
-            false,
-            $defaultValue,
-        );
-    }
-
-    public static function createPropsMarkedForContextArgumentDefinition(mixed $defaultValue): ArgumentDefinition
-    {
-        return new ArgumentDefinition(
-            Constants::PROPS_MARKED_FOR_CONTEXT_KEY,
-            'array',
-            'DO NOT USE THIS ARGUMENT, IT IS FOR INTERNAL USE ONLY',
-            false,
-            $defaultValue,
-        );
-    }
-
     public static function createSpreadPropsArgumentDefinition(mixed $defaultValue = false): ArgumentDefinition
     {
         return new ArgumentDefinition(
