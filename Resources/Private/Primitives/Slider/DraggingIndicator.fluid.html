@@ -10,6 +10,7 @@
     data-state="closed"
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'draggingIndicator' , value: index, data: refData )}
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
     {thumbState.value}
 </div>

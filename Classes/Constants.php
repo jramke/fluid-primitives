@@ -47,4 +47,12 @@ class Constants
     ];
 
     public const MANUALLY_EXPOSED_TO_CLIENT_MARKER = '<!-- FLUID_PRIMITIVES_COMPONENT_MANUALLY_EXPOSED_TO_CLIENT -->';
+
+    /**
+     * Reserved boolean attribute {@see \Jramke\FluidPrimitives\ViewHelpers\AsChildViewHelper} renders
+     * onto whichever tag it's placed on, so {@see \Jramke\FluidPrimitives\Service\Component\AsChildAttributeSpreader}
+     * can find that exact tag in the rendered component HTML instead of assuming it's the first one.
+     * Stripped before the merged attributes reach the final output.
+     */
+    public const AS_CHILD_TARGET_MARKER = 'data-fluid-primitives-aschild-target';
 }

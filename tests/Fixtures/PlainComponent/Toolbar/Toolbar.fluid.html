@@ -1,0 +1,5 @@
+<div class="outer-wrapper" data-outer="yes">
+    <div {f:if(condition: class, then: 'class="{class}"')} {ui:attributes()} {ui:asChild()} data-inner="yes">
+        <f:slot />
+    </div>
+</div>

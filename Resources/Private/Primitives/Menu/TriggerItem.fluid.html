@@ -4,6 +4,7 @@
     role="menuitem"
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'triggerItem' , value: childId )}
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
     <f:slot />
 </div>

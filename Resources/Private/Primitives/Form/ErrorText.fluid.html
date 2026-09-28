@@ -3,6 +3,7 @@
     {f:if(condition: class, then: 'class="{class}"' )}
     role="alert"
     {ui:ref(name: 'errorText' )}
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
     <f:slot />
 </span>

@@ -13,4 +13,5 @@
     {f:if(condition: context.invalid, then: 'aria-invalid="true"' )}
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'input' )}
-    {ui:attributes()} />
+    {ui:attributes()}
+    {ui:asChild()} />

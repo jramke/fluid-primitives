@@ -17,7 +17,8 @@
     {f:if(condition: class, then: 'class="{class}"' )}
     {f:if(condition: '!{itemState.open}' , then: 'hidden' )}
     {ui:ref(name: 'content' , value: contentValue, data: refData)}
-    {ui:attributes(skip: 'hidden' )}>
+    {ui:attributes(skip: 'hidden' )}
+    {ui:asChild()}>
     <f:slot />
 </div>
 

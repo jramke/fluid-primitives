@@ -5,6 +5,7 @@
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'trigger' , data: refData )}
     aria-expanded="{context.defaultOpen ? 'true' : 'false'}"
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
     <f:slot />
 </button>

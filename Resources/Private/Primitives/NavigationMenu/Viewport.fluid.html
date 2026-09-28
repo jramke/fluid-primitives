@@ -4,6 +4,7 @@
     {f:if(condition: '!{context.globalState.open}' , then: 'hidden="true"' )}
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'viewport' , data: refData)}
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
     <f:slot />
 </div>

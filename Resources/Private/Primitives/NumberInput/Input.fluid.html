@@ -22,4 +22,5 @@
     {f:if(condition: context.required, then: 'required' )}
     {f:if(condition: context.readOnly, then: 'readonly' )}
     {ui:ref(name: 'input' , data: refData )}
-    {ui:attributes()} />
+    {ui:attributes()}
+    {ui:asChild()} />

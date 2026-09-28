@@ -4,6 +4,7 @@
     {f:if(condition: isEmpty, then: 'data-empty="true"' )}
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'list' )}
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
     <f:slot />
 </div>

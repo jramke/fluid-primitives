@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Service\Component;
 
+use Jramke\FluidPrimitives\Constants;
+
 /**
  * Implements the `asChild` prop pattern: instead of rendering its own wrapping tag, a component
  * spreads its own resolved attributes onto its single child element's opening tag (the child's own
@@ -21,12 +23,27 @@ final readonly class AsChildAttributeSpreader
         $childTag = $childMatches[1];
         $childAttrs = $this->parseAttributes(trim($childMatches[2]));
 
-        // Extract parent/component attributes
+        // Extract the component's own asChild-target tag + attributes. Searched anywhere in the
+        // rendered output (not just anchored at the start) and identified by
+        // Constants::AS_CHILD_TARGET_MARKER - the attribute AsChildViewHelper renders onto whichever
+        // tag it was placed on - rather than assuming it's the first tag in the string, so a
+        // component with more than one bare tag still merges onto the one its author actually marked.
         $compMatches = null;
-        if (!preg_match('/^\s*<([a-zA-Z0-9]+)([^>]*)>/', $componentHtml, $compMatches)) {
-            return $childHtml;
+        if (!preg_match(
+            '/<([a-zA-Z0-9]+)([^>]*\b' . preg_quote(Constants::AS_CHILD_TARGET_MARKER, delimiter: '/') . '\b[^>]*)>/',
+            $componentHtml,
+            $compMatches,
+        )) {
+            // No marked tag in $componentHtml itself - this call has no wrapper tag of its own to
+            // merge onto (a thin ui:useProps + spreadProps wrapper, which only ever forwards
+            // asChild="{true}" one level down to a real primitive that DOES declare {ui:asChild()}).
+            // $componentHtml is then already that primitive's fully-rendered, already-merged result
+            // (its own marker consumed by this same method one call down) - the correct thing to
+            // return, not the wrapper's own raw, unmerged slot content.
+            return $componentHtml;
         }
         $componentAttrs = $this->parseAttributes(trim($compMatches[2]));
+        unset($componentAttrs[Constants::AS_CHILD_TARGET_MARKER]);
 
         foreach ($componentAttrs as $name => $value) {
             if (($childAttrs[$name] ?? null) !== null) {

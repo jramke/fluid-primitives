@@ -3,6 +3,7 @@
 <div
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'emptyState', value: type)}
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
     <f:slot />
 </div>

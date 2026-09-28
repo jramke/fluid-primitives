@@ -9,6 +9,7 @@
     data-type="{type}"
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'item' , value: value, data: refData )}
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
     <f:slot />
 </li>

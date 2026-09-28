@@ -4,5 +4,6 @@
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'thumb' , value: resolvedOrientation, data: {orientation: resolvedOrientation} )}
     style="{context.thumbStyles}"
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
 </div>

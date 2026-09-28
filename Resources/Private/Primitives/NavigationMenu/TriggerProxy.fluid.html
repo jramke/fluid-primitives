@@ -10,5 +10,6 @@
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'triggerProxy' , value: context.item.value)}
     style="{settings.visuallyHiddenStyles}"
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
 </span>

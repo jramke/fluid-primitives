@@ -4,6 +4,7 @@
     data-match="{match}"
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'itemPreview' , value: context.item.value )}
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
     <f:slot />
 </div>

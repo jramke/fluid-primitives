@@ -10,6 +10,7 @@
     {f:if(condition: context.multiple, then: 'aria-multiselectable="true"' )}
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'content' , data: refData )}
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
     <f:slot />
 </div>

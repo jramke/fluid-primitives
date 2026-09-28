@@ -11,4 +11,5 @@
     {f:if(condition: context.form, then: 'form="{context.form}"' )}
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'hiddenInput' , value: index )}
-    {ui:attributes()} />
+    {ui:attributes()}
+    {ui:asChild()} />

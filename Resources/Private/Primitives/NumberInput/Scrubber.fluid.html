@@ -5,6 +5,7 @@
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'scrubber' , data: refData )}
     {ui:attributes()}
+    {ui:asChild()}
     style="{f:if(condition: '!{context.disabled}', then: 'cursor: ew-resize;')}">
     <f:slot />
 </div>

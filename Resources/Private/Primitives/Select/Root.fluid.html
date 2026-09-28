@@ -18,6 +18,7 @@
 <div
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'root' , data: {invalid: invalid, readonly: readOnly} )}
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
     <f:slot />
 </div>

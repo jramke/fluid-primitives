@@ -3,6 +3,7 @@
     {f:if(condition: class, then: 'class="{class}"' )}
     {f:if(condition: '!{context.canAppend}', then: 'aria-disabled="true" data-disabled=""' )}
     {ui:ref(name: 'addTrigger' )}
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
     <f:slot />
 </button>

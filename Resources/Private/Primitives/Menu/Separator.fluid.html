@@ -3,5 +3,6 @@
     aria-orientation="horizontal"
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'separator' , value: '{ui:id()}' )}
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
 </div>

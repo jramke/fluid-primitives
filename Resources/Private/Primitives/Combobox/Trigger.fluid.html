@@ -15,6 +15,7 @@
     {f:if(condition: class, then: 'class="{class}"' )}
     {f:if(condition: context.disabled, then: 'disabled' )}
     {ui:ref(name: 'trigger' , data: refData )}
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
     <f:slot />
 </button>

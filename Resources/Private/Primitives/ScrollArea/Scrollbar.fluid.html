@@ -4,6 +4,7 @@
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'scrollbar' , value: orientation, data: {orientation: orientation} )}
     style="{context.scrollbarStyles}"
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
     <f:slot />
 </div>

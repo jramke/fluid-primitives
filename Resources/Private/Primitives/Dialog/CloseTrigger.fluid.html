@@ -1,6 +1,7 @@
 <button
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'closeTrigger' )}
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
     <f:slot />
 </button>

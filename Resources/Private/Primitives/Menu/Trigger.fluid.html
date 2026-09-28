@@ -8,6 +8,7 @@
     aria-expanded="{f:if(condition: triggerState.expanded, then: 'true', else: 'false')}"
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'trigger' , value: value, data: {state: triggerState.state} )}
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
     <f:slot />
 </button>

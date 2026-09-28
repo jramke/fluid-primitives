@@ -15,6 +15,7 @@
     {f:if(condition: itemState.disabled, then: 'data-disabled="true"' )}
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'item' , value: itemState.value, data: refData )}
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
     <f:slot />
 </div>

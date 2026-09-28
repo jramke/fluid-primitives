@@ -8,6 +8,7 @@
 <label
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'item' , value: value, data: itemDataAttributes )}
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
     <f:slot />
 </label>

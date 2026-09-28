@@ -11,6 +11,7 @@
     {f:if(condition: '!{itemState.open}' , then: 'hidden="true"' )}
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'itemIndicator' , value: value, data: refData)}
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
     <f:slot />
 </div>

@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Tests\Functional\Components;
 
+use Jramke\FluidPrimitives\Constants;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Tests\Fixtures\PlainComponentCollection;
 use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
 use PHPUnit\Framework\Attributes\Test;
+use TYPO3Fluid\Fluid\Core\ViewHelper\InvalidArgumentValueException;
 
 final class AsChildRenderingTest extends FunctionalTestCase
 {
@@ -276,11 +278,9 @@ final class AsChildRenderingTest extends FunctionalTestCase
     #[Test]
     public function supportsAsChildOnAComponentWithNoClientHydrationAtAll(): void
     {
-        // Regression test: asChild's argument used to only be registered for templates calling
-        // ui:ref, so a plain, purely server-rendered component (no hydration part at all, like a
-        // userland Card) couldn't declare asChild="{true}" even though it has a perfectly good root
-        // <div> for AsChildAttributeSpreader to merge onto - it would throw an unknown-argument
-        // error instead of spreading.
+        // asChild is opted into per-component via {ui:asChild()} - this demonstrates it works even
+        // on a plain, purely server-rendered component with no hydration part at all (no ui:ref),
+        // like a userland Card, as long as it places {ui:asChild()} on its own root <div>.
         $view = $this->getView();
         $view->getRenderingContext()->getViewHelperResolver()->addNamespace('plain', new PlainComponentCollection());
 
@@ -329,5 +329,70 @@ final class AsChildRenderingTest extends FunctionalTestCase
         $this->assertStringContainsString('data-analytics="open-dialog"', $html);
         $this->assertStringContainsString('data-part="trigger"', $html);
         $this->assertStringContainsString('data-scope="dialog"', $html);
+    }
+
+    #[Test]
+    public function rejectsAsChildOnAComponentThatDidNotOptIn(): void
+    {
+        // asChild is opt-in per component via {ui:asChild()} - a component whose template never
+        // calls it (NoAsChildOptIn fixture: a plain <div>, no {ui:attributes()} either) doesn't
+        // declare asChild as an argument at all, so passing it is just an unknown argument, exactly
+        // like passing any other undeclared prop.
+        $view = $this->getView();
+        $view->getRenderingContext()->getViewHelperResolver()->addNamespace('plain', new PlainComponentCollection());
+
+        $this->expectException(InvalidArgumentValueException::class);
+        $this->expectExceptionMessage('asChild');
+
+        $this->renderTemplate('
+            <plain:noAsChildOptIn asChild="{true}">
+                <a href="/some-link">Link</a>
+            </plain:noAsChildOptIn>
+        ');
+    }
+
+    #[Test]
+    public function neverLeaksTheAsChildTargetMarkerIntoRenderedOutput(): void
+    {
+        $htmlWhenTrue = $this->renderTemplate('
+            <primitives:dialog.root>
+                <primitives:dialog.trigger asChild="{true}">
+                    <a href="/some-link">Open Dialog</a>
+                </primitives:dialog.trigger>
+                <primitives:dialog.content>Content</primitives:dialog.content>
+            </primitives:dialog.root>
+        ');
+        $htmlWhenFalse = $this->renderTemplate('
+            <primitives:dialog.root>
+                <primitives:dialog.trigger asChild="{false}">Open</primitives:dialog.trigger>
+                <primitives:dialog.content>Content</primitives:dialog.content>
+            </primitives:dialog.root>
+        ');
+
+        $this->assertStringNotContainsString(Constants::AS_CHILD_TARGET_MARKER, $htmlWhenTrue);
+        $this->assertStringNotContainsString(Constants::AS_CHILD_TARGET_MARKER, $htmlWhenFalse);
+    }
+
+    #[Test]
+    public function targetsTheTagCarryingTheMarkerNotJustTheFirstBareTag(): void
+    {
+        // Toolbar fixture nests two bare tags: a decorative outer <div data-outer="yes"> and the
+        // real target inner <div {ui:asChild()} data-inner="yes">. Merging onto "whichever tag comes
+        // first" would incorrectly grab the outer one - this proves the marker-based lookup finds
+        // the tag its author actually placed {ui:asChild()} on instead.
+        $view = $this->getView();
+        $view->getRenderingContext()->getViewHelperResolver()->addNamespace('plain', new PlainComponentCollection());
+
+        $html = $this->renderTemplate('
+            <plain:toolbar asChild="{true}">
+                <a href="/some-link">Link</a>
+            </plain:toolbar>
+        ');
+
+        $this->assertStringContainsString('<a', $html);
+        $this->assertStringContainsString('href="/some-link"', $html);
+        $this->assertStringContainsString('data-inner="yes"', $html);
+        $this->assertStringNotContainsString('data-outer="yes"', $html);
+        $this->assertStringNotContainsString('outer-wrapper', $html);
     }
 }

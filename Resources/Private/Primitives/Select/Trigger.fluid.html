@@ -17,6 +17,7 @@
     {ui:ref(name: 'trigger' , data: refData )}
     {f:if(condition: context.disabled, then: 'disabled' )}
     aria-invalid="{context.invalid}"
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
     <f:slot />
 </button>

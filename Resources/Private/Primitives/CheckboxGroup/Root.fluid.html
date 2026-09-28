@@ -16,6 +16,7 @@
     aria-readonly="{f:if(condition: readOnly, then: 'true', else: 'false')}"
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'root' , data: refData )}
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
     <f:slot />
 </div>

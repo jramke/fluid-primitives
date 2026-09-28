@@ -2,6 +2,7 @@
     hidden
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'itemError' , value: context.item.value )}
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
     <f:slot />
 </div>

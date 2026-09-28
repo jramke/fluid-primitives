@@ -6,6 +6,7 @@
 <span
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'itemText' , value: value, data: itemDataAttributes )}
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
     <f:slot />
 </span>

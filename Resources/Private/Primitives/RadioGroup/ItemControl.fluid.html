@@ -7,6 +7,7 @@
     aria-hidden="true"
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'itemControl' , value: value, data: itemDataAttributes )}
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
     <f:slot />
 </div>

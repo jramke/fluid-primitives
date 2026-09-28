@@ -7,6 +7,7 @@
     role="presentation"
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'itemGroupLabel' , value: value)}
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
     <f:slot />
 </div>

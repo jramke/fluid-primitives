@@ -10,5 +10,6 @@
         value="{value}"
         {ui:ref(name: 'hiddenInput' , value: value)}
         style="{settings.visuallyHiddenStyles}"
-        {ui:attributes(skip: 'style' )} />
+        {ui:attributes(skip: 'style' )}
+        {ui:asChild()} />
 </f:for>
