@@ -42,7 +42,8 @@ final readonly class ComponentIdentityResolver
         // bookkeeping - $isDeclaredRoot (unadjusted) is what the rendered template itself still
         // needs, see that property's own docblock on ComponentIdentity.
         $isRenderedAsRoot = $isDeclaredRoot;
-        if (($arguments['spreadProps'] ?? null) === true) {
+        $spreadProps = Typed::arrayOrNull($arguments['spreadProps'] ?? null);
+        if ($spreadProps !== null && $spreadProps !== []) {
             $isRenderedAsRoot = false;
         }
 

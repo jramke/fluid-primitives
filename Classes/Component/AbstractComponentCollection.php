@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Component;
 
+use Jramke\FluidPrimitives\Annotations\AdditionalArgumentsAllowedAnnotation;
 use Jramke\FluidPrimitives\Factory\ComponentRendererFactory;
 use Jramke\FluidPrimitives\Utility\ComponentRootUtility;
 use Jramke\FluidPrimitives\Utility\PropsUtility;
@@ -164,35 +165,27 @@ abstract class AbstractComponentCollection implements ComponentCollectionInterfa
                 );
             }
 
+            // additionalArgumentsAllowed is fully structural now: AttributesViewHelper (for a
+            // template's own ui:attributes() usage) and UsePropsViewHelper (for a genuine as=
+            // delegation import, see its nodeInitializedEvent()) are the only two producers, both
+            // attaching AdditionalArgumentsAllowedAnnotation to whichever real argument definition
+            // is the reason - no text scanning, nothing to strip afterward.
             $additionalArgumentsAllowed = false;
-            if (str_contains($templateString, 'ui:attributes(')) {
-                // if the user used the ui:attributes viewhelper in the component template,
-                // we want to allow tag attributes (additionalArguments) for this component
-                $additionalArgumentsAllowed = true;
-
-                $argumentDefinitions['attributes'] = new ArgumentDefinition(
-                    'attributes',
-                    'array',
-                    'Additional attributes that should be rendered on the component where ui:attributes is used.',
-                    false,
-                    [],
-                );
+            foreach ($argumentDefinitions as $argumentDefinition) {
+                foreach ($argumentDefinition->getAnnotations() as $annotation) {
+                    if (!$annotation instanceof AdditionalArgumentsAllowedAnnotation) {
+                        continue;
+                    }
+                    $additionalArgumentsAllowed = true;
+                    break 2;
+                }
             }
 
-            // for now we just allow additional arguments if a primitive is used with the spreadProps pattern
-            // because all primitives support additional arguments/attributes
-            if (
-                str_contains($templateString, 'spreadProps') &&
-                str_contains($templateString, '<ui:useProps name="primitives:')
-            ) {
-                $additionalArgumentsAllowed = true;
-            }
-
-            // If the ui:spreadProps viewhelper did not already initialized the spreadProps
-            // with an array of the keys as default value, declare it here
-            if (!array_key_exists('spreadProps', $argumentDefinitions)) {
-                $argumentDefinitions['spreadProps'] = PropsUtility::createSpreadPropsArgumentDefinition();
-            }
+            // Every component gets a spreadProps argument, the same way rootId/class do - not
+            // conditionally patched in only when missing, since UsePropsViewHelper no longer ever
+            // declares one itself (it binds the forwardable prop names under the author-chosen
+            // `as=` name instead).
+            $argumentDefinitions['spreadProps'] = PropsUtility::createSpreadPropsArgumentDefinition();
 
             $this->componentDefinitionsCache[$viewHelperName] = new ComponentDefinition(
                 $viewHelperName,

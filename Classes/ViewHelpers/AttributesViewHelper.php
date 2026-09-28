@@ -4,11 +4,16 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\ViewHelpers;
 
+use Jramke\FluidPrimitives\Annotations\AdditionalArgumentsAllowedAnnotation;
 use Jramke\FluidPrimitives\Domain\Dto\TagAttributes;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3Fluid\Fluid\Core\Parser\ParsingState;
+use TYPO3Fluid\Fluid\Core\Parser\SyntaxTree\ViewHelperNode;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
+use TYPO3Fluid\Fluid\Core\ViewHelper\ArgumentDefinition;
+use TYPO3Fluid\Fluid\Core\ViewHelper\ViewHelperNodeInitializedEventInterface;
 
 /**
  * Renders arbitrary HTML attributes.
@@ -37,7 +42,7 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
  * <ui:someComponent attributes="{ui:attributes()}" />
  * ```
  */
-class AttributesViewHelper extends AbstractViewHelper
+class AttributesViewHelper extends AbstractViewHelper implements ViewHelperNodeInitializedEventInterface
 {
     protected $escapeOutput = false;
 
@@ -114,5 +119,30 @@ class AttributesViewHelper extends AbstractViewHelper
         }
 
         return $asArray ? $tagAttributes->renderAsArray() : (string)$tagAttributes;
+    }
+
+    // Unconditional, no early-return guard: unlike AsChildViewHelper's reserved-name-backed
+    // 'asChild' key, 'attributes' isn't a reserved prop name and can legitimately already exist in
+    // $argumentDefinitions from an unrelated ui:useProps import - bailing on "already present" would
+    // then also wrongly skip attaching AdditionalArgumentsAllowedAnnotation for this template's own,
+    // real ui:attributes() usage. Redeclaring with the same shape is harmless.
+    public static function nodeInitializedEvent(
+        ViewHelperNode $node,
+        array $arguments,
+        ParsingState $parsingState,
+    ): void {
+        $argumentDefinitions = $parsingState->getArgumentDefinitions();
+
+        $argumentDefinitions['attributes'] = new ArgumentDefinition(
+            'attributes',
+            'array',
+            'Additional attributes that should be rendered on the component where ui:attributes is used.',
+            false,
+            [],
+            null,
+            [new AdditionalArgumentsAllowedAnnotation()],
+        );
+
+        $parsingState->setArgumentDefinitions($argumentDefinitions);
     }
 }

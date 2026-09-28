@@ -131,11 +131,10 @@ final readonly class ComponentArgumentResolver
         RenderingContextInterface $renderingContext,
         RenderingContextInterface $parentRenderingContext,
     ): array {
-        if (!($arguments['spreadProps'] ?? false)) {
-            return $arguments;
-        }
-
-        $propsToUse = Typed::arrayOrNull($parentRenderingContext->getVariableProvider()->get('spreadProps')) ?? [];
+        // spreadProps carries the forwardable prop names directly (bound by UsePropsViewHelper's
+        // `as=` argument, see its nodeInitializedEvent()) - no separate parent-scope lookup needed,
+        // since the array has nowhere else to travel from ui:useProps to this call.
+        $propsToUse = Typed::arrayOrNull($arguments['spreadProps'] ?? null) ?? [];
         if ($propsToUse === []) {
             return $arguments;
         }
