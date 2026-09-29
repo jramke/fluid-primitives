@@ -6,6 +6,7 @@ namespace Jramke\FluidPrimitives\Tests\Functional\ViewHelpers;
 
 use Jramke\FluidPrimitives\Domain\Dto\ListCollection;
 use Jramke\FluidPrimitives\Registry\NestedComponentRegistry;
+use Jramke\FluidPrimitives\Tests\Fixtures\TemplateWrapperCollection;
 use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -27,6 +28,26 @@ final class TemplateViewHelperTest extends FunctionalTestCase
         // The one ref attribute and nothing else (no id, no data-scope/data-part).
         $this->assertStringContainsString('<template data-combobox-item-template="my-combobox">', $html);
         $this->assertStringContainsString('<span>static content</span>', $html);
+    }
+
+    /**
+     * A `ui:ref` reads the bare `rootId` variable when the template it sits in is itself a declared root
+     * component (a docs example wrapping a combobox, say) - inside the stencil that must still be the
+     * combobox's id, not the wrapper's own.
+     */
+    #[Test]
+    public function resolvesRefsInsideTheStencilToTheEnclosingComponentNotAWrappingRoot(): void
+    {
+        $this
+            ->getView()
+            ->getRenderingContext()
+            ->getViewHelperResolver()
+            ->addNamespace('wrapperFixture', new TemplateWrapperCollection());
+
+        $html = $this->renderTemplate('<wrapperFixture:wrapper rootId="outer-wrapper" />');
+
+        $this->assertStringContainsString('data-combobox-title="inner-combobox"', $html);
+        $this->assertStringNotContainsString('outer-wrapper', $html);
     }
 
     #[Test]

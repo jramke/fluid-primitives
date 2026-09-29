@@ -13,6 +13,7 @@ use Jramke\FluidPrimitives\Service\ContextService;
 use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
 use Jramke\FluidPrimitives\Utility\ComponentRefUtility;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
+use TYPO3Fluid\Fluid\Core\Variables\VariableProviderInterface;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
 /**
@@ -30,7 +31,7 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
  * `ui:template` fixes this generically for any component, by reading the real, currently-active
  * component context (which - unlike the plain `component`/`context`
  * variables `ui:ref` reads - is threaded correctly through slot-content nesting) and temporarily
- * re-exposing it as those ordinary variables. `ui:ref` itself accepts the same `context` argument
+ * re-exposing it as those ordinary variables (`component`, `context` and `rootId`). `ui:ref` itself accepts the same `context` argument
  * directly, for hand-authored elements that need this without being wrapped in a `<template>` -
  * see its own docblock for when to reach for that instead.
  *
@@ -98,43 +99,26 @@ class TemplateViewHelper extends AbstractViewHelper
             'Template ViewHelper is missing its rendering context.',
             1_788_100_004,
         );
-        $variableProvider = $renderingContext->getVariableProvider();
-
-        // component/context are round-tripped Fluid template variables (saved here, restored in the
-        // finally block below) - their real type is whatever a previous render put there, unknowable
-        // here, and must stay opaque to be restored faithfully.
-        $hadComponent = $variableProvider->exists('component');
-        // @mago-expect analysis:mixed-assignment
-        $previousComponent = $hadComponent ? $variableProvider->get('component') : null;
-        $hadContext = $variableProvider->exists('context');
-        // @mago-expect analysis:mixed-assignment
-        $previousContext = $hadContext ? $variableProvider->get('context') : null;
-
-        if ($hadComponent) {
-            $variableProvider->remove('component');
-        }
-        // The same shape a real render's ComponentIdentity::forView() produces, built via the
-        // shared ComponentIdentity::viewShape() instead of a hand-written array literal here -
+        // `component` is the same shape a real render's ComponentIdentity::forView() produces, built via
+        // the shared ComponentIdentity::viewShape() instead of a hand-written array literal here -
         // deliberately no isDeclaredRoot/isRenderedAsRoot: those live on the
         // ViewHelperVariableContainer for a real component render (see
         // ComponentRenderer::createView()), not on this Fluid variable, and nothing that reads
         // them (ui:prop, ui:exposeToClient) is ever legitimately used from slot content in the
-        // first place - so there's nothing to fake here.
-        $variableProvider->add('component', ComponentIdentity::viewShape(
-            $baseName . '.template',
-            $baseName,
-            $clientBaseName,
-        ));
-
-        if ($hadContext) {
-            $variableProvider->remove('context');
-        }
-        $variableProvider->add('context', $context);
+        // first place - so there's nothing to fake here. A `ui:ref` reads the bare `rootId` variable
+        // when the template it sits in is itself a declared root component (e.g. a docs example
+        // wrapping a combobox) - that variable is the *wrapper's* own id, not the enclosing
+        // component's this stencil belongs to.
+        $restoreVariables = $this->overrideVariables($renderingContext->getVariableProvider(), [
+            'component' => ComponentIdentity::viewShape($baseName . '.template', $baseName, $clientBaseName),
+            'context' => $context,
+            'rootId' => (string)$context->get('rootId'),
+        ]);
 
         // Marks the context as "rendering a client-filled stencil" for the duration of rendering
         // our children, so a nested component (e.g. combobox.item/.itemText/.itemIndicator) can
         // detect this automatically via `context.isRenderStencil`, instead of requiring an
-        // explicit prop from the template author. Saved/restored like component/context above,
+        // explicit prop from the template author. Saved/restored like the variables above,
         // for correct behavior if ui:template is ever nested; same opaque-mixed reasoning applies.
         // @mago-expect analysis:mixed-assignment
         $wasRenderStencil = $context->get('isRenderStencil');
@@ -164,17 +148,38 @@ class TemplateViewHelper extends AbstractViewHelper
             return '<template ' . (string)$refAttributes . '>' . $renderedChildren . '</template>';
         } finally {
             $context->set('isRenderStencil', $wasRenderStencil);
-
-            $variableProvider->remove('component');
-            if ($hadComponent) {
-                $variableProvider->add('component', $previousComponent);
-            }
-
-            $variableProvider->remove('context');
-            if ($hadContext) {
-                $variableProvider->add('context', $previousContext);
-            }
+            $restoreVariables();
         }
+    }
+
+    /**
+     * Replaces the given Fluid variables and returns a callback restoring exactly what was there
+     * before - the previous values are whatever an earlier render put there, unknowable here, and
+     * must stay opaque to be restored faithfully.
+     *
+     * @param array<string, mixed> $variables
+     */
+    private function overrideVariables(VariableProviderInterface $variableProvider, array $variables): \Closure
+    {
+        $previous = [];
+        // Each variable is genuinely heterogeneous (an identity array, a context object, a string).
+        // @mago-expect analysis:mixed-assignment
+        foreach ($variables as $name => $value) {
+            if ($variableProvider->exists($name)) {
+                $previous[$name] = $variableProvider->get($name);
+                $variableProvider->remove($name);
+            }
+            $variableProvider->add($name, $value);
+        }
+
+        return static function () use ($variableProvider, $variables, $previous): void {
+            foreach (array_keys($variables) as $name) {
+                $variableProvider->remove($name);
+                if (array_key_exists($name, $previous)) {
+                    $variableProvider->add($name, $previous[$name]);
+                }
+            }
+        };
     }
 
     /**
