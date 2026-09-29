@@ -4,14 +4,16 @@ import type { ComponentInterface } from '../types';
 
 export abstract class Component<Props, Api> implements ComponentInterface<Api> {
     document: Document;
-    machine: Machine<any>;
-    api: Api;
+    /** Created by {@see init}. */
+    machine!: Machine<any>;
+    /** Created by {@see init}. */
+    api!: Api;
     hydrator: ComponentHydrator | null = null;
     userProps?: Partial<Props>;
     /**
      * The Fluid namespace identifier (e.g. "ui") this instance was mounted under - assigned by
      * `mountAll`/`mount` right after their callback returns, so not yet available while it runs
-     * (constructor, `init()`).
+     * (`init()` included).
      */
     namespace?: string;
     static componentName: string;
@@ -20,17 +22,11 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
         return this.document;
     }
 
-    constructor(props: Props, userDocument: Document = document) {
+    constructor(
+        private readonly initialProps: Props,
+        userDocument: Document = document
+    ) {
         this.document = userDocument;
-        this.userProps = this.transformProps(props);
-        // Deliberately the original props, not `userProps` - subclasses that override
-        // transformProps() call it themselves inside initMachine(), after their own
-        // field/group merging and prop filtering. Passing the already-transformed
-        // `userProps` here would run transformProps() twice, double-wrapping callback
-        // props like Combobox/NumberInput's onSelect/onValueChange.
-        this.hydrator = this.initHydrator(props);
-        this.machine = this.initMachine(props);
-        this.api = this.initApi();
     }
 
     abstract initMachine(props: Props): Machine<any>;
@@ -42,7 +38,26 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
         return new ComponentHydrator(this.getName(), id, this.doc);
     }
 
+    /**
+     * Builds everything the instance runs on - `userProps`, hydrator, machine and api - then renders
+     * once and starts the machine.
+     *
+     * None of it happens in the constructor on purpose: `transformProps`, `initMachine` and
+     * `initApi` are overridden by subclasses, and a subclass' own field initializers only run after
+     * `super()` returns. A hook called from the base constructor would see those fields unset, and
+     * whatever it assigned to one would be reset right afterwards.
+     */
     init() {
+        this.userProps = this.transformProps(this.initialProps);
+        // Deliberately the original props, not `userProps` - subclasses that override
+        // transformProps() call it themselves inside initMachine(), after their own
+        // field/group merging and prop filtering. Passing the already-transformed
+        // `userProps` here would run transformProps() twice, double-wrapping callback
+        // props like Combobox/NumberInput's onSelect/onValueChange.
+        this.hydrator = this.initHydrator(this.initialProps);
+        this.machine = this.initMachine(this.initialProps);
+        this.api = this.initApi();
+
         this.render();
         this.machine.subscribe(() => {
             this.api = this.initApi();

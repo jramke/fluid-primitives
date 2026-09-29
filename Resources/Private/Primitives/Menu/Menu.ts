@@ -48,8 +48,7 @@ export class Menu extends Component<menu.Props, menu.Api> {
         this.linkToParent();
     }
 
-    // Read from `userProps` (set by the base constructor first), not stored from `initMachine()`:
-    // that runs inside the base constructor, and a subclass field declaration would then reset it.
+    // Not a machine prop (`splitProps` drops it), so it's read from the props the instance was created with.
     private get parentId(): string | undefined {
         return (this.userProps as { parentId?: string } | undefined)?.parentId;
     }

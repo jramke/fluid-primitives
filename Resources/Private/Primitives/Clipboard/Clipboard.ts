@@ -12,14 +12,11 @@ type ClipboardProps = Omit<clipboard.Props, 'translations'> & {
 export class Clipboard extends Component<ClipboardProps, clipboard.Api> {
     static componentName = 'clipboard';
 
-    // Read from `userProps` (set by the base constructor first), not stored from `initMachine()`:
-    // that runs inside the base constructor, and a subclass field declaration would then reset it.
-    private get translations(): ClipboardProps['translations'] {
-        return (this.userProps as Partial<ClipboardProps> | undefined)?.translations;
-    }
+    private translations: ClipboardProps['translations'];
 
     initMachine(props: ClipboardProps): Machine<any> {
-        const { translations: _translations, ...rest } = props;
+        const { translations, ...rest } = props;
+        this.translations = translations;
         const [machineProps] = clipboard.contextProps(rest);
         return new Machine(clipboard.machine, machineProps);
     }
