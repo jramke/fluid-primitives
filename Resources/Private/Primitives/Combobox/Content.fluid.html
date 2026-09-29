@@ -3,11 +3,9 @@
 <f:variable name="refData" value="{state: state, empty: isEmpty}" />
 
 <div
-    role="listbox"
-    tabindex="-1"
+    role="presentation"
     {f:if(condition: context.defaultOpen, then: '' , else: 'hidden="true"' )}
     {f:if(condition: isEmpty, then: 'data-empty="true"' )}
-    {f:if(condition: context.multiple, then: 'aria-multiselectable="true"' )}
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'content' , data: refData )}
     {ui:attributes()}

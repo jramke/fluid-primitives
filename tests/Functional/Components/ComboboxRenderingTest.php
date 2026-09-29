@@ -6,6 +6,7 @@ namespace Jramke\FluidPrimitives\Tests\Functional\Components;
 
 use Jramke\FluidPrimitives\Domain\Dto\ListCollection;
 use Jramke\FluidPrimitives\Enum\ComboboxInputBehavior;
+use Jramke\FluidPrimitives\Enum\PopupType;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Registry\PortalRegistry;
 use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
@@ -51,6 +52,43 @@ final class ComboboxRenderingTest extends FunctionalTestCase
         $comboboxData = array_values($hydrationData['combobox'])[0];
 
         $this->assertSame(ComboboxInputBehavior::None->value, $comboboxData['props']['inputBehavior']);
+    }
+
+    #[Test]
+    public function rendersTheListboxOnTheListPartInsideAPresentationalContent(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:combobox.root multiple="{true}">
+                <primitives:combobox.positioner>
+                    <primitives:combobox.content>
+                        <primitives:combobox.list>List</primitives:combobox.list>
+                    </primitives:combobox.content>
+                </primitives:combobox.positioner>
+            </primitives:combobox.root>
+        ');
+
+        preg_match('/<div[^>]*data-combobox-content="[^"]+"[^>]*>/', $html, $content);
+        preg_match('/<div[^>]*data-combobox-list="[^"]+"[^>]*>/', $html, $list);
+
+        $this->assertStringContainsString('role="presentation"', $content[0]);
+        $this->assertStringNotContainsString('aria-multiselectable', $content[0]);
+        $this->assertStringContainsString('role="listbox"', $list[0]);
+        $this->assertStringContainsString('aria-multiselectable="true"', $list[0]);
+    }
+
+    #[Test]
+    public function shipsThePopupTypeToTheClientDefaultingToListbox(): void
+    {
+        $this->renderTemplate('
+            <primitives:combobox.root>
+                <primitives:combobox.trigger>Toggle</primitives:combobox.trigger>
+            </primitives:combobox.root>
+        ');
+
+        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
+        $comboboxData = array_values($hydrationData['combobox'])[0];
+
+        $this->assertSame(PopupType::Listbox->value, $comboboxData['props']['popupType']);
     }
 
     #[Test]

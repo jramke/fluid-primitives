@@ -1,9 +1,7 @@
-<f:variable name="isEmpty">{f:if(condition: context.collection.size, then: '{false}', else: '{true}')}</f:variable>
-
 <div
     role="listbox"
+    tabindex="0"
     {f:if(condition: context.multiple, then: 'aria-multiselectable="true"' )}
-    {f:if(condition: isEmpty, then: 'data-empty="true"' )}
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'list' )}
     {ui:attributes()}

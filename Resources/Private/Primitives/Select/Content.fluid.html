@@ -2,7 +2,7 @@
 <f:variable name="refData" value="{state: state}" />
 
 <div
-    tabindex="0"
+    role="presentation"
     hidden="true"
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'content' , data: refData )}
