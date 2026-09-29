@@ -34,9 +34,11 @@ export class Menu extends Component<menu.Props, menu.Api> {
      * longer matches `getElements('triggerItem')`'s lookup - caching it here keeps it updatable.
      */
     private triggerItemEls = new Map<string, HTMLElement>();
+    private parentId: string | undefined;
 
     initMachine(props: menu.Props): Machine<any> {
-        const [menuProps] = menu.splitProps(props);
+        const [menuProps, restProps] = menu.splitProps(props as menu.Props & { parentId?: string });
+        this.parentId = restProps.parentId;
 
         return new Machine(menu.machine, {
             // navigate({ href }) {
@@ -56,7 +58,7 @@ export class Menu extends Component<menu.Props, menu.Api> {
     }
 
     private getParentId(): string | undefined {
-        return (this.userProps as { parentId?: string } | undefined)?.parentId;
+        return this.parentId;
     }
 
     private getParentInstance(): Menu | null {

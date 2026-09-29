@@ -17,7 +17,11 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
     constructor(props: Props, userDocument: Document = document) {
         this.document = userDocument;
         this.userProps = this.transformProps(props);
-        // TODO: should we pass the transformed props to initHydrator and initMachine? Or should we pass the original props?
+        // Deliberately the original props, not `userProps` - subclasses that override
+        // transformProps() call it themselves inside initMachine(), after their own
+        // field/group merging and prop filtering. Passing the already-transformed
+        // `userProps` here would run transformProps() twice, double-wrapping callback
+        // props like Combobox/NumberInput's onSelect/onValueChange.
         this.hydrator = this.initHydrator(props);
         this.machine = this.initMachine(props);
         this.api = this.initApi();

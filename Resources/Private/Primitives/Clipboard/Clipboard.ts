@@ -12,8 +12,11 @@ type ClipboardProps = Omit<clipboard.Props, 'translations'> & {
 export class Clipboard extends Component<ClipboardProps, clipboard.Api> {
     static componentName = 'clipboard';
 
+    private translations: ClipboardProps['translations'];
+
     initMachine(props: ClipboardProps): Machine<any> {
-        const { translations: _translations, ...rest } = props;
+        const { translations, ...rest } = props;
+        this.translations = translations;
         const [machineProps] = clipboard.contextProps(rest);
         return new Machine(clipboard.machine, machineProps);
     }
@@ -41,7 +44,7 @@ export class Clipboard extends Component<ClipboardProps, clipboard.Api> {
 
         const triggerEl = this.getElement('trigger');
         if (triggerEl) {
-            const translations = this.userProps?.translations;
+            const translations = this.translations;
             const mergedProps = mergeProps(this.api.getTriggerProps(), {
                 'aria-label': this.api.copied
                     ? translations?.triggerLabelCopied || null

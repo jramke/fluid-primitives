@@ -79,7 +79,7 @@ export class Combobox extends FieldAwareComponent<combobox.Props, combobox.Api> 
             return this.sourceCollection;
         }
 
-        const initialCollection = this.userProps?.collection;
+        const initialCollection = this.machine.prop('collection');
         if (!initialCollection) {
             throw new Error('Combobox source collection is not available.');
         }
@@ -125,7 +125,7 @@ export class Combobox extends FieldAwareComponent<combobox.Props, combobox.Api> 
         // computation: the input's text no longer matches what the current selection stringifies to.
         const inputValue = this.api.inputValue;
         const isCustomValue =
-            !!this.userProps?.allowCustomValue &&
+            !!this.machine.prop('allowCustomValue') &&
             inputValue.trim() !== '' &&
             inputValue !== this.api.valueAsString;
 

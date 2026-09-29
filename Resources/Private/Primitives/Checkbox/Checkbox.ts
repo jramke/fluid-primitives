@@ -188,8 +188,8 @@ export class Checkbox extends FieldAwareComponent<checkbox.Props, checkbox.Api> 
             this.checkboxGroupMachine = getCheckboxGroupMachineFor(this.closestCheckboxGroup);
         }
 
-        if (this.checkboxGroupMachine && this.userProps?.value) {
-            const value = this.userProps.value;
+        if (this.checkboxGroupMachine && this.machine.prop('value')) {
+            const value = this.machine.prop('value');
 
             this.groupUnsubscribe = this.checkboxGroupMachine.subscribe(() => {
                 queueMicrotask(() => {
@@ -214,7 +214,7 @@ export class Checkbox extends FieldAwareComponent<checkbox.Props, checkbox.Api> 
 
                     // Always update disabled/invalid props
                     this.machine.updateProps({
-                        disabled: this.userProps?.disabled || groupItemProps.disabled,
+                        disabled: this.machine.prop('disabled') || groupItemProps.disabled,
                         invalid: groupItemProps.invalid,
                     });
                 });
