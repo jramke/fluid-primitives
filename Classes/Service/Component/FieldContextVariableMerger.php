@@ -8,7 +8,7 @@ use Jramke\FluidPrimitives\Contexts\AbstractComponentContext;
 use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
 use Jramke\FluidPrimitives\Contexts\FieldContext;
 use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
-use Jramke\FluidPrimitives\Utility\ComponentPartIdUtility;
+use Jramke\FluidPrimitives\Utility\FieldIdMapping;
 use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3Fluid\Fluid\View\TemplateView;
 
@@ -70,7 +70,7 @@ final readonly class FieldContextVariableMerger
     /**
      * Merges the Field's generic ("label"/"control") generated ids with whatever ids the component
      * itself was given, then maps the generic keys to the component's own part names - e.g. "control"
-     * becomes "hiddenInput" for a Switch (per `ComponentPartIdUtility::FIELD_ID_PARTS`) - so the Field's
+     * becomes "hiddenInput" for a Switch (per `FieldIdMapping::FIELD_ID_PARTS`) - so the Field's
      * `<label for="...">` (built from its own "control" id) actually reaches the component's real
      * native input.
      *
@@ -94,7 +94,7 @@ final readonly class FieldContextVariableMerger
                 continue;
             }
 
-            $overrideFieldIdKey = ComponentPartIdUtility::getOverrideFieldIdKey($baseName, $fieldIdKey);
+            $overrideFieldIdKey = FieldIdMapping::getOverrideFieldIdKey($baseName, $fieldIdKey);
             if ($overrideFieldIdKey === null) {
                 $updatedIds[$fieldIdKey] = $fieldIdValue;
                 continue;
@@ -115,20 +115,20 @@ final readonly class FieldContextVariableMerger
      */
     private function excludeInheritedIdsWhenNested(string $baseName, array $ids, array $otherComponentContexts): array
     {
-        $excludeIdInheritanceForParents = ComponentPartIdUtility::shouldSkipFieldIdsInheritanceWhenNestedIn($baseName);
+        $excludeIdInheritanceForParents = FieldIdMapping::shouldSkipFieldIdsInheritanceWhenNestedIn($baseName);
         if ($excludeIdInheritanceForParents === []) {
             return $ids;
         }
 
         foreach ($excludeIdInheritanceForParents as $parentBaseName) {
             // $otherComponentContexts is keyed by ContextService's camelCase context key;
-            // $parentBaseName comes from ComponentPartIdUtility's kebab-case override map.
+            // $parentBaseName comes from FieldIdMapping's kebab-case map.
             $parentContextKey = ComponentNameUtility::lowerCaseDashedToCamelCase($parentBaseName);
             if (($otherComponentContexts[$parentContextKey] ?? null) === null) {
                 continue;
             }
 
-            foreach (ComponentPartIdUtility::getFieldIdOverrideKeys() as $fieldIdKey) {
+            foreach (FieldIdMapping::getFieldIdOverrideKeys() as $fieldIdKey) {
                 unset($ids[$fieldIdKey]);
             }
         }
