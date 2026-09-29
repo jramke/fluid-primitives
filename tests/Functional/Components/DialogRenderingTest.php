@@ -273,4 +273,18 @@ final class DialogRenderingTest extends FunctionalTestCase
         $this->assertArrayHasKey('role', $dialogData['props']);
         $this->assertSame('alertdialog', $dialogData['props']['role']);
     }
+
+    /**
+     * The rootId is the value of every part attribute and lands unescaped inside zag's attribute selectors.
+     */
+    #[Test]
+    public function rejectsARootIdThatWouldBreakThePartSelectors(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('must not contain quotes or backslashes');
+
+        $this->renderTemplate(
+            '<primitives:dialog.root rootId=\'my"dialog\'><primitives:dialog.trigger>Open</primitives:dialog.trigger></primitives:dialog.root>',
+        );
+    }
 }

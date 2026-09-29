@@ -48,6 +48,13 @@ final readonly class ComponentIdentityResolver
         }
 
         $rootId = Typed::stringOrNull($arguments['rootId'] ?? null);
+        if ($rootId !== null && preg_match('/["\\\\]/', $rootId) === 1) {
+            // The rootId is the value of every part attribute and lands unescaped in zag's own attribute selectors.
+            throw new \InvalidArgumentException(
+                sprintf('The rootId "%s" must not contain quotes or backslashes.', $rootId),
+                1_788_200_001,
+            );
+        }
         if ($rootId === null) {
             // For a non-root component we assign the rootId of the parent component when rendering subcomponents.
             $rootId = $isRenderedAsRoot
