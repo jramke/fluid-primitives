@@ -36,12 +36,6 @@ console.log();
 // Determine target version
 let versionToInstall;
 if (targetVersion) {
-    // Validate version format
-    const versionRegex = /^\d+\.\d+\.\d+$/;
-    if (!versionRegex.test(targetVersion)) {
-        console.error('Error: Invalid version format. Must be X.Y.Z (e.g., 1.26.4)');
-        process.exit(1);
-    }
     versionToInstall = targetVersion;
     console.log(`📌 Using specified version: ${versionToInstall}\n`);
 } else {
