@@ -166,6 +166,7 @@ export function mountAll<K extends KnownComponentName | (string & {})>(
         });
         if (!instance) return;
 
+        instance.namespace = namespace;
         mountedInstances[id] = instance;
     });
 }
@@ -238,6 +239,7 @@ export function mount<
     });
     if (!instance) return undefined;
 
+    instance.namespace = namespace;
     const clientBaseName = toKebabCase(baseName);
     window.FluidPrimitives.componentInstances[namespace] ??= {};
     window.FluidPrimitives.componentInstances[namespace][clientBaseName] ??= {};

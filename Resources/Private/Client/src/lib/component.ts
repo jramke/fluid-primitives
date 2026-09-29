@@ -1,5 +1,5 @@
 import type { Attrs } from '@zag-js/vanilla';
-import { ComponentHydrator, Machine, spreadProps, toKebabCase } from '.';
+import { ComponentHydrator, getComponentInstance, Machine, spreadProps, toKebabCase } from '.';
 import type { ComponentInterface } from '../types';
 
 export abstract class Component<Props, Api> implements ComponentInterface<Api> {
@@ -8,6 +8,12 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
     api: Api;
     hydrator: ComponentHydrator | null = null;
     userProps?: Partial<Props>;
+    /**
+     * The Fluid namespace identifier (e.g. "ui") this instance was mounted under - assigned by
+     * `mountAll`/`mount` right after their callback returns, so not yet available while it runs
+     * (constructor, `init()`).
+     */
+    namespace?: string;
     static componentName: string;
 
     get doc(): Document {
@@ -76,6 +82,17 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
      */
     transformProps(props: Partial<Props>): Partial<Props> {
         return props;
+    }
+
+    /**
+     * Another already-mounted instance of this same component, by root id - for a primitive that
+     * composes two independent instances of itself (Menu submenus). Only resolves once
+     * `mountAll`/`mount` assigned {@see namespace}.
+     */
+    protected getPeerInstance<T extends Component<any, any>>(rootId: string): T | undefined {
+        return this.namespace
+            ? getComponentInstance<T>(`${this.namespace}:${this.getName()}`, rootId)
+            : undefined;
     }
 
     updateProps(newProps: Partial<Props>) {
