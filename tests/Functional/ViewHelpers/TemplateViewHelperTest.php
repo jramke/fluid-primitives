@@ -17,20 +17,16 @@ final class TemplateViewHelperTest extends FunctionalTestCase
         $collection = new ListCollection([]);
 
         $html = $this->renderTemplate('
-            <primitives:combobox.root collection="{collection}">
+            <primitives:combobox.root collection="{collection}" rootId="my-combobox">
                 <ui:template name="itemTemplate" context="combobox">
                     <span>static content</span>
                 </ui:template>
             </primitives:combobox.root>
         ', ['collection' => $collection]);
 
-        $this->assertStringContainsString('<template', $html);
-        $this->assertStringContainsString('data-part="item-template"', $html);
+        // The one ref attribute and nothing else (no id, no data-scope/data-part).
+        $this->assertStringContainsString('<template data-combobox-item-template="my-combobox">', $html);
         $this->assertStringContainsString('<span>static content</span>', $html);
-        $this->assertMatchesRegularExpression(
-            '/<template id="combobox:[^"]*:itemTemplate" data-scope="combobox" data-part="item-template">/',
-            $html,
-        );
     }
 
     #[Test]
@@ -39,17 +35,14 @@ final class TemplateViewHelperTest extends FunctionalTestCase
         $collection = new ListCollection([]);
 
         $html = $this->renderTemplate('
-            <primitives:combobox.root collection="{collection}">
+            <primitives:combobox.root collection="{collection}" rootId="my-combobox">
                 <ui:template name="itemTemplate" context="combobox">
                     <span {ui:ref(name: \'title\')}></span>
                 </ui:template>
             </primitives:combobox.root>
         ', ['collection' => $collection]);
 
-        $this->assertMatchesRegularExpression(
-            '/<span id="combobox:[^"]*:title" data-scope="combobox" data-part="title">/',
-            $html,
-        );
+        $this->assertStringContainsString('<span data-combobox-title="my-combobox">', $html);
     }
 
     #[Test]
@@ -58,7 +51,7 @@ final class TemplateViewHelperTest extends FunctionalTestCase
         $collection = new ListCollection([]);
 
         $html = $this->renderTemplate('
-            <primitives:combobox.root collection="{collection}">
+            <primitives:combobox.root collection="{collection}" rootId="my-combobox">
                 <ui:template name="itemTemplate" context="combobox">
                     <span {ui:ref(name: \'title\')}></span>
                 </ui:template>
@@ -69,8 +62,7 @@ final class TemplateViewHelperTest extends FunctionalTestCase
         // The real combobox.input part (a dedicated component tag, rendered right after the
         // ui:template block within the same root's slot) must still resolve to the real combobox
         // context - not whatever ui:template temporarily set - proving the finally-restoration works.
-        $this->assertStringContainsString('data-scope="combobox"', $html);
-        $this->assertStringContainsString('data-part="input"', $html);
+        $this->assertStringContainsString('data-combobox-input="my-combobox"', $html);
         $this->assertStringContainsString('role="combobox"', $html);
     }
 
@@ -84,7 +76,7 @@ final class TemplateViewHelperTest extends FunctionalTestCase
         $collection = new ListCollection([]);
 
         $html = $this->renderTemplate('
-            <primitives:combobox.root collection="{collection}">
+            <primitives:combobox.root collection="{collection}" rootId="my-combobox">
                 <ui:template name="outerTemplate" context="combobox">
                     <ui:template name="innerTemplate">
                         <span {ui:ref(name: \'title\')}></span>
@@ -93,42 +85,36 @@ final class TemplateViewHelperTest extends FunctionalTestCase
             </primitives:combobox.root>
         ', ['collection' => $collection]);
 
-        $this->assertStringContainsString('data-part="inner-template"', $html);
-        $this->assertMatchesRegularExpression(
-            '/<span id="combobox:[^"]*:title" data-scope="combobox" data-part="title">/',
-            $html,
-        );
+        $this->assertStringContainsString('<template data-combobox-inner-template="my-combobox">', $html);
+        $this->assertStringContainsString('<span data-combobox-title="my-combobox">', $html);
     }
 
     #[Test]
-    public function recordsRootComponentsRenderedInsideItsChildrenAsNestedInItsOwnStencilId(): void
+    public function recordsRootComponentsRenderedInsideItsChildrenAsNestedInItsOwnStencilKey(): void
     {
         $collection = new ListCollection([]);
 
         $html = $this->renderTemplate('
-            <primitives:combobox.root collection="{collection}">
+            <primitives:combobox.root collection="{collection}" rootId="my-combobox">
                 <ui:template name="itemTemplate" context="combobox">
-                    <primitives:field.root name="test">
+                    <primitives:field.root name="test" rootId="my-field">
                         <input type="text" />
                     </primitives:field.root>
                 </ui:template>
             </primitives:combobox.root>
         ', ['collection' => $collection]);
 
-        preg_match('/<template id="(combobox:[^"]*:itemTemplate)"/', $html, $matches);
-        $stencilId = $matches[1] ?? null;
-        $this->assertNotNull($stencilId);
-
-        // The bare rootId (no "field:" DOM-namespace prefix) - the same form
-        // ComponentUtility::getRootIdFromContext()/HydrationRegistry::add() already use, and what
-        // ComponentHydrator's client-side remapping already works with internally.
-        preg_match('/id="field:([^"]*)" data-scope="field" data-part="root"/', $html, $fieldMatches);
-        $fieldRootId = $fieldMatches[1] ?? null;
-        $this->assertNotNull($fieldRootId);
+        // The stencil's key is `<client>:<rootId>:<kebab-part>`, rebuilt client-side from the rendered
+        // `<template data-combobox-item-template>`; the nested entry keeps the bare rootId.
+        $this->assertStringContainsString('<template data-combobox-item-template="my-combobox">', $html);
+        $this->assertStringContainsString('data-field-root="my-field"', $html);
 
         $byScope = NestedComponentRegistry::getInstance()->getNestedComponentsByScope();
 
-        $this->assertSame([['name' => 'primitives:field', 'id' => $fieldRootId]], $byScope[$stencilId] ?? null);
+        $this->assertSame(
+            [['name' => 'primitives:field', 'id' => 'my-field']],
+            $byScope['combobox:my-combobox:item-template'] ?? null,
+        );
     }
 
     #[Test]

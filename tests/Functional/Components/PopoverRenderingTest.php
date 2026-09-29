@@ -22,9 +22,8 @@ final class PopoverRenderingTest extends FunctionalTestCase
             </primitives:popover.root>
         ');
 
-        $this->assertStringContainsString('data-scope="popover"', $html);
-        $this->assertStringContainsString('data-part="trigger"', $html);
-        $this->assertStringContainsString('data-part="content"', $html);
+        $this->assertStringContainsString('data-popover-trigger="', $html);
+        $this->assertStringContainsString('data-popover-content="', $html);
     }
 
     #[Test]
@@ -39,13 +38,13 @@ final class PopoverRenderingTest extends FunctionalTestCase
             </primitives:popover.root>
         ');
 
-        $this->assertMatchesRegularExpression('/data-part="content"[^>]*hidden/', $html);
+        $this->assertMatchesRegularExpression('/data-popover-content="[^"]*"[^>]*hidden/', $html);
         // Regression test: `defaultOpen` used to have no explicit default, so `context.defaultOpen`
         // was `null` rather than `false` when unset. TYPO3 Fluid's inline ternary shorthand
         // (`{x ? a : b}`) treats a bare `null` as truthy - unlike `f:if`, which correctly treats it
         // as falsy - so the `expanded` variable computed from it rendered a stray `data-expanded`
         // attribute on an otherwise-closed popover.
-        $this->assertDoesNotMatchRegularExpression('/data-part="content"[^>]*data-expanded/', $html);
+        $this->assertDoesNotMatchRegularExpression('/data-popover-content="[^"]*"[^>]*data-expanded/', $html);
     }
 
     #[Test]
@@ -61,7 +60,7 @@ final class PopoverRenderingTest extends FunctionalTestCase
         ');
 
         $this->assertStringContainsString('data-state="open"', $html);
-        $this->assertDoesNotMatchRegularExpression('/data-part="content"[^>]*hidden/', $html);
+        $this->assertDoesNotMatchRegularExpression('/data-popover-content="[^"]*"[^>]*hidden/', $html);
     }
 
     #[Test]

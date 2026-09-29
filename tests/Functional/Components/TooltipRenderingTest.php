@@ -22,9 +22,8 @@ final class TooltipRenderingTest extends FunctionalTestCase
             </primitives:tooltip.root>
         ');
 
-        $this->assertStringContainsString('data-scope="tooltip"', $html);
-        $this->assertStringContainsString('data-part="trigger"', $html);
-        $this->assertStringContainsString('data-part="content"', $html);
+        $this->assertStringContainsString('data-tooltip-trigger="', $html);
+        $this->assertStringContainsString('data-tooltip-content="', $html);
     }
 
     #[Test]
@@ -44,9 +43,9 @@ final class TooltipRenderingTest extends FunctionalTestCase
             </primitives:tooltip.root>
         ');
 
-        $this->assertMatchesRegularExpression('/data-part="content"[^>]*hidden/', $html);
-        $this->assertMatchesRegularExpression('/data-part="content"[^>]*data-state="closed"/', $html);
-        $this->assertDoesNotMatchRegularExpression('/data-part="trigger"[^>]*data-expanded/', $html);
+        $this->assertMatchesRegularExpression('/data-tooltip-content="[^"]*"[^>]*hidden/', $html);
+        $this->assertMatchesRegularExpression('/data-tooltip-content="[^"]*"[^>]*data-state="closed"/', $html);
+        $this->assertDoesNotMatchRegularExpression('/data-tooltip-trigger="[^"]*"[^>]*data-expanded/', $html);
     }
 
     #[Test]
@@ -61,8 +60,8 @@ final class TooltipRenderingTest extends FunctionalTestCase
             </primitives:tooltip.root>
         ');
 
-        $this->assertDoesNotMatchRegularExpression('/data-part="content"[^>]*hidden/', $html);
-        $this->assertMatchesRegularExpression('/data-part="trigger"[^>]*data-state="open"/', $html);
+        $this->assertDoesNotMatchRegularExpression('/data-tooltip-content="[^"]*"[^>]*hidden/', $html);
+        $this->assertMatchesRegularExpression('/data-tooltip-trigger="[^"]*"[^>]*data-state="open"/', $html);
     }
 
     #[Test]

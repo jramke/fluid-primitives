@@ -24,7 +24,7 @@ final class SelectRenderingTest extends FunctionalTestCase
             </primitives:select.root>
         ');
 
-        $this->assertStringContainsString('data-scope="select"', $html);
+        $this->assertStringContainsString('data-select-hidden-select="', $html);
     }
 
     #[Test]
@@ -67,8 +67,7 @@ final class SelectRenderingTest extends FunctionalTestCase
             </primitives:select.root>
         ', ['collection' => $collection]);
 
-        $this->assertStringContainsString('data-scope="select"', $html);
-        $this->assertStringContainsString('data-part="root"', $html);
+        $this->assertStringContainsString('data-select-root="', $html);
     }
 
     #[Test]
@@ -187,10 +186,10 @@ final class SelectRenderingTest extends FunctionalTestCase
             </primitives:select.root>
         ', ['collection' => $collection]);
 
-        $this->assertStringNotContainsString('data-part="content"', $html);
+        $this->assertStringNotContainsString('data-select-content="', $html);
 
         $portaled = implode('', PortalRegistry::getInstance()->getAllByName('default'));
-        $this->assertStringContainsString('data-part="content"', $portaled);
+        $this->assertStringContainsString('data-select-content="portaled-select"', $portaled);
 
         $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
         $this->assertArrayHasKey('portaled-select', $hydrationData['select'] ?? []);

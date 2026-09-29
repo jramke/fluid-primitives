@@ -37,10 +37,10 @@ final class MenuRenderingTest extends FunctionalTestCase
         $this->assertSame('file-menu', $hydrationData['menu']['share-menu']['props']['parentId'] ?? null);
         $this->assertArrayNotHasKey('parentId', $hydrationData['menu']['file-menu']['props'] ?? []);
 
-        $this->assertMatchesRegularExpression(
-            '/data-part="trigger-item"[^>]*data-value="share-menu"|data-value="share-menu"[^>]*data-part="trigger-item"/',
-            $html,
-        );
+        // Zag composes a submenu's trigger item from the *child's* trigger props, so it's marked with the
+        // child's own root id - that's what the submenu finds its anchor by.
+        $this->assertStringContainsString('data-menu-trigger-item="share-menu"', $html);
+        $this->assertStringNotContainsString('data-menu-trigger-item="file-menu"', $html);
     }
 
     #[Test]
@@ -77,8 +77,7 @@ final class MenuRenderingTest extends FunctionalTestCase
 
         $this->assertStringContainsString('<button', $html);
         $this->assertStringContainsString('type="button"', $html);
-        $this->assertStringContainsString('data-scope="menu"', $html);
-        $this->assertStringContainsString('data-part="trigger"', $html);
+        $this->assertStringContainsString('data-menu-trigger="', $html);
         $this->assertStringContainsString('aria-expanded="false"', $html);
     }
 
@@ -96,7 +95,7 @@ final class MenuRenderingTest extends FunctionalTestCase
             </primitives:menu.root>
         ');
 
-        $this->assertMatchesRegularExpression('/data-part="content"[^>]*hidden/', $closed);
+        $this->assertMatchesRegularExpression('/data-menu-content="[^"]*"[^>]*hidden/', $closed);
         $this->assertStringContainsString('aria-expanded="false"', $closed);
 
         $open = $this->renderTemplate('
@@ -110,7 +109,7 @@ final class MenuRenderingTest extends FunctionalTestCase
             </primitives:menu.root>
         ');
 
-        $this->assertDoesNotMatchRegularExpression('/data-part="content"[^>]*hidden/', $open);
+        $this->assertDoesNotMatchRegularExpression('/data-menu-content="[^"]*"[^>]*hidden/', $open);
         $this->assertStringContainsString('aria-expanded="true"', $open);
         $this->assertStringContainsString('data-state="open"', $open);
     }
@@ -127,7 +126,7 @@ final class MenuRenderingTest extends FunctionalTestCase
                 </primitives:menu.positioner>
             </primitives:menu.root>
         ');
-        $this->assertMatchesRegularExpression('/role="menu"[^>]*data-part="content"/', $composite);
+        $this->assertMatchesRegularExpression('/role="menu"[^>]*data-menu-content="/', $composite);
 
         $nonComposite = $this->renderTemplate('
             <primitives:menu.root composite="{false}">
@@ -138,7 +137,7 @@ final class MenuRenderingTest extends FunctionalTestCase
                 </primitives:menu.positioner>
             </primitives:menu.root>
         ');
-        $this->assertMatchesRegularExpression('/role="dialog"[^>]*data-part="content"/', $nonComposite);
+        $this->assertMatchesRegularExpression('/role="dialog"[^>]*data-menu-content="/', $nonComposite);
     }
 
     #[Test]
@@ -197,11 +196,8 @@ final class MenuRenderingTest extends FunctionalTestCase
             </primitives:menu.root>
         ');
 
-        $this->assertMatchesRegularExpression('/id="menu:[^"]*:group:fruits"[^>]*data-part="item-group"/', $html);
-        $this->assertMatchesRegularExpression(
-            '/id="menu:[^"]*:group-label:fruits"[^>]*data-part="item-group-label"/',
-            $html,
-        );
+        $this->assertMatchesRegularExpression('/data-menu-item-group="[^"]*"[^>]*data-value="fruits"/', $html);
+        $this->assertMatchesRegularExpression('/data-menu-item-group-label="[^"]*"[^>]*data-value="fruits"/', $html);
     }
 
     #[Test]

@@ -24,8 +24,7 @@ final class NavigationMenuRenderingTest extends FunctionalTestCase
         ');
 
         $this->assertStringContainsString('<nav', $html);
-        $this->assertStringContainsString('data-scope="navigation-menu"', $html);
-        $this->assertStringContainsString('data-part="root"', $html);
+        $this->assertStringContainsString('data-navigation-menu-root="', $html);
     }
 
     #[Test]
@@ -43,7 +42,7 @@ final class NavigationMenuRenderingTest extends FunctionalTestCase
         ');
 
         $this->assertStringContainsString('<ul', $html);
-        $this->assertStringContainsString('data-part="list"', $html);
+        $this->assertStringContainsString('data-navigation-menu-list="', $html);
     }
 
     #[Test]
@@ -61,7 +60,7 @@ final class NavigationMenuRenderingTest extends FunctionalTestCase
         ');
 
         $this->assertStringContainsString('<li', $html);
-        $this->assertStringContainsString('data-part="item"', $html);
+        $this->assertStringContainsString('data-navigation-menu-item="', $html);
         $this->assertStringContainsString('data-value="products"', $html);
     }
 
@@ -82,7 +81,7 @@ final class NavigationMenuRenderingTest extends FunctionalTestCase
         $this->assertStringContainsString('<button', $html);
         $this->assertStringContainsString('type="button"', $html);
         $this->assertStringContainsString('aria-haspopup="menu"', $html);
-        $this->assertStringContainsString('data-part="trigger"', $html);
+        $this->assertStringContainsString('data-navigation-menu-trigger="', $html);
     }
 
     #[Test]

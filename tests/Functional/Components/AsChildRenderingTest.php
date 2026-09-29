@@ -24,7 +24,7 @@ final class AsChildRenderingTest extends FunctionalTestCase
         ');
 
         $this->assertStringContainsString('<button', $html);
-        $this->assertStringContainsString('data-part="trigger"', $html);
+        $this->assertStringContainsString('data-dialog-trigger="', $html);
         $this->assertStringContainsString('Open', $html);
     }
 
@@ -42,10 +42,9 @@ final class AsChildRenderingTest extends FunctionalTestCase
 
         $this->assertStringContainsString('<a', $html);
         $this->assertStringContainsString('href="/some-link"', $html);
-        $this->assertStringContainsString('data-part="trigger"', $html);
-        $this->assertStringContainsString('data-scope="dialog"', $html);
+        $this->assertStringContainsString('data-dialog-trigger="', $html);
         $this->assertStringContainsString('Open Dialog', $html);
-        $this->assertDoesNotMatchRegularExpression('/<button[^>]*data-part="trigger"/', $html);
+        $this->assertDoesNotMatchRegularExpression('/<button[^>]*data-dialog-trigger="/', $html);
     }
 
     #[Test]
@@ -63,8 +62,7 @@ final class AsChildRenderingTest extends FunctionalTestCase
         $this->assertStringContainsString('type="submit"', $html);
         $this->assertStringContainsString('class="my-custom-class"', $html);
         $this->assertStringContainsString('data-custom="value"', $html);
-        $this->assertStringContainsString('data-part="trigger"', $html);
-        $this->assertStringContainsString('data-scope="dialog"', $html);
+        $this->assertStringContainsString('data-dialog-trigger="', $html);
     }
 
     #[Test]
@@ -97,7 +95,7 @@ final class AsChildRenderingTest extends FunctionalTestCase
         $this->assertStringContainsString('<div', $html);
         $this->assertStringContainsString('role="button"', $html);
         $this->assertStringContainsString('tabindex="0"', $html);
-        $this->assertStringContainsString('data-part="trigger"', $html);
+        $this->assertStringContainsString('data-dialog-trigger="', $html);
     }
 
     #[Test]
@@ -114,7 +112,7 @@ final class AsChildRenderingTest extends FunctionalTestCase
 
         $this->assertStringContainsString('<span', $html);
         $this->assertStringContainsString('class="trigger-span"', $html);
-        $this->assertStringContainsString('data-part="trigger"', $html);
+        $this->assertStringContainsString('data-dialog-trigger="', $html);
     }
 
     #[Test]
@@ -132,7 +130,7 @@ final class AsChildRenderingTest extends FunctionalTestCase
         $this->assertStringContainsString('<button', $html);
         $this->assertStringContainsString('data-variant="primary"', $html);
         $this->assertStringContainsString('data-size="large"', $html);
-        $this->assertStringContainsString('data-part="trigger"', $html);
+        $this->assertStringContainsString('data-dialog-trigger="', $html);
     }
 
     #[Test]
@@ -154,7 +152,7 @@ final class AsChildRenderingTest extends FunctionalTestCase
 
         $this->assertStringContainsString('<div', $html);
         $this->assertStringContainsString('class="custom-accordion-trigger"', $html);
-        $this->assertStringContainsString('data-part="item-trigger"', $html);
+        $this->assertStringContainsString('data-accordion-item-trigger="', $html);
         $this->assertStringContainsString('Toggle Section', $html);
     }
 
@@ -175,7 +173,7 @@ final class AsChildRenderingTest extends FunctionalTestCase
         $this->assertStringContainsString('<span', $html);
         $this->assertStringContainsString('class="close-icon"', $html);
         $this->assertStringContainsString('aria-label="Close"', $html);
-        $this->assertStringContainsString('data-part="close-trigger"', $html);
+        $this->assertStringContainsString('data-dialog-close-trigger="', $html);
     }
 
     #[Test]
@@ -194,8 +192,8 @@ final class AsChildRenderingTest extends FunctionalTestCase
 
         $this->assertArrayHasKey('dialog', $hydrationData);
         $this->assertArrayHasKey('as-child-dialog', $hydrationData['dialog']);
-        $this->assertStringContainsString('id="dialog:as-child-dialog:trigger"', $html);
-        $this->assertStringContainsString('id="dialog:as-child-dialog:content"', $html);
+        $this->assertStringContainsString('data-dialog-trigger="as-child-dialog"', $html);
+        $this->assertStringContainsString('data-dialog-content="as-child-dialog"', $html);
     }
 
     #[Test]
@@ -217,11 +215,11 @@ final class AsChildRenderingTest extends FunctionalTestCase
 
         $this->assertStringContainsString('class="open-link"', $html);
         $this->assertStringContainsString('class="close-link"', $html);
-        $this->assertStringContainsString('data-part="trigger"', $html);
-        $this->assertStringContainsString('data-part="close-trigger"', $html);
+        $this->assertStringContainsString('data-dialog-trigger="multi-aschild"', $html);
+        $this->assertStringContainsString('data-dialog-close-trigger="multi-aschild"', $html);
 
-        // Check that multiple parts within the same dialog instance have IDs using the instance's rootId
-        preg_match_all('/id="dialog:multi-aschild/', $html, $matches);
+        // Check that multiple parts within the same dialog instance carry the instance's rootId
+        preg_match_all('/data-dialog-[a-z-]+="multi-aschild"/', $html, $matches);
         $this->assertGreaterThanOrEqual(3, count($matches[0]));
     }
 
@@ -239,7 +237,7 @@ final class AsChildRenderingTest extends FunctionalTestCase
 
         $this->assertStringContainsString('disabled', $html);
         $this->assertStringContainsString('autofocus', $html);
-        $this->assertStringContainsString('data-part="trigger"', $html);
+        $this->assertStringContainsString('data-dialog-trigger="', $html);
     }
 
     #[Test]
@@ -254,7 +252,7 @@ final class AsChildRenderingTest extends FunctionalTestCase
             </primitives:dialog.root>
         ');
 
-        $this->assertStringContainsString('data-part="trigger"', $html);
+        $this->assertStringContainsString('data-dialog-trigger="', $html);
     }
 
     #[Test]
@@ -272,7 +270,7 @@ final class AsChildRenderingTest extends FunctionalTestCase
         $this->assertStringContainsString('<input', $html);
         $this->assertStringContainsString('type="button"', $html);
         $this->assertStringContainsString('value="Open"', $html);
-        $this->assertStringContainsString('data-part="trigger"', $html);
+        $this->assertStringContainsString('data-dialog-trigger="', $html);
     }
 
     #[Test]
@@ -327,8 +325,7 @@ final class AsChildRenderingTest extends FunctionalTestCase
 
         $this->assertStringContainsString('data-testid="dialog-trigger"', $html);
         $this->assertStringContainsString('data-analytics="open-dialog"', $html);
-        $this->assertStringContainsString('data-part="trigger"', $html);
-        $this->assertStringContainsString('data-scope="dialog"', $html);
+        $this->assertStringContainsString('data-dialog-trigger="', $html);
     }
 
     #[Test]
