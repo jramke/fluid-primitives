@@ -35,7 +35,8 @@ export class Accordion extends Component<accordion.Props, accordion.Api> {
             this.api.getItemIndicatorProps({ value, disabled: el.hasAttribute('data-disabled') })
         );
 
-        // just so they are hydrated (data-attributes removed)
-        this.getElements('itemHeader');
+        this.spreadPropsByValue('itemHeader', ({ el, value }) =>
+            this.api.getItemHeaderProps({ value, disabled: el.hasAttribute('data-disabled') })
+        );
     }
 }

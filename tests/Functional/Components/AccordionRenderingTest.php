@@ -110,6 +110,27 @@ final class AccordionRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function rendersItemHeaderWithItsItemsValueAndDisabledState(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:accordion.root>
+                <primitives:accordion.item value="item-1" disabled="{true}">
+                    <primitives:accordion.itemHeader>
+                        <primitives:accordion.itemTrigger>Trigger</primitives:accordion.itemTrigger>
+                    </primitives:accordion.itemHeader>
+                    <primitives:accordion.itemContent>Content</primitives:accordion.itemContent>
+                </primitives:accordion.item>
+            </primitives:accordion.root>
+        ');
+
+        preg_match('/<h3[^>]*data-accordion-item-header="[^"]+"[^>]*>/', $html, $header);
+
+        $this->assertNotEmpty($header);
+        $this->assertStringContainsString('data-value="item-1"', $header[0]);
+        $this->assertStringContainsString('data-disabled', $header[0]);
+    }
+
+    #[Test]
     public function rendersContentContainerWithDataAttributes(): void
     {
         $html = $this->renderTemplate('
