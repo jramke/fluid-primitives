@@ -71,7 +71,7 @@ export function connect<T extends PropTypes>(
                 'data-disabled': disabled ? '' : undefined,
                 'data-readonly': readOnly ? '' : undefined,
                 'data-invalid': invalid ? '' : undefined,
-                'aria-labelledby': dom.getLabelId(scope),
+                'aria-labelledby': dom.getLabelEl(scope) ? dom.getLabelId(scope) : undefined,
                 'aria-disabled': disabled || undefined,
                 'aria-invalid': invalid || undefined,
                 'aria-required': required || undefined,
