@@ -128,7 +128,7 @@ export type HydrationPropsFor<K extends string> = K extends keyof HydrationProps
 export interface FluidPrimitivesGlobals {
     locale?: string;
     /**
-     * Enables dev-only checks like {@see warnAboutDuplicateIds}. Set automatically to whether
+     * Enables dev-only checks. Set automatically to whether
      * TYPO3's own Application Context is development (see `HydrationRegistry::resolveGlobals()`),
      * nothing for a consumer to configure. These checks aren't gated by a bundler env variable, so
      * nothing is stripped from the production bundle either way - they simply never run unless

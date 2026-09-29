@@ -133,7 +133,7 @@ export class Combobox extends FieldAwareComponent<combobox.Props, combobox.Api> 
 
         resolvedValues.forEach(value => {
             const inputEl = this.doc.createElement('input');
-            this.hydrator?.setRefAttributes(inputEl, 'hiddenInput', value);
+            this.hydrator?.stamp(inputEl, 'hiddenInput', value);
             this.spreadProps(inputEl, this.getHiddenInputProps(value, attrs));
             rootEl.appendChild(inputEl);
         });

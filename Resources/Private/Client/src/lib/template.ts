@@ -1,9 +1,9 @@
-import { toKebabCase, type ComponentHydrator } from './hydration';
+import type { ComponentHydrator } from './hydration';
 
 export interface TemplateOptions {
     /**
-     * Restamps the clone's root and every nested value-scoped ref'd element (id/data-scope/
-     * data-part/data-value) for this value, right after cloning, AND prepares any nested,
+     * Sets `data-value` on the clone's root and every nested value-scoped ref'd element for this
+     * value, right after cloning, AND prepares any nested,
      * independent root component the clone happens to compose (e.g. a `Field`+`Input`) so it's
      * ready for `mountAll()` too - see `ComponentHydrator.restampValue`, and this class's own
      * `componentNames`. Omit for a template with no per-instance value/identity concept.
@@ -44,10 +44,14 @@ export class Template extends DocumentFragment {
      */
     readonly componentNames: string[] = [];
 
-    constructor(hydrator: ComponentHydrator, part: string, options: TemplateOptions = {}) {
+    constructor(
+        private readonly hydrator: ComponentHydrator,
+        part: string,
+        options: TemplateOptions = {}
+    ) {
         super();
 
-        const templateEl = hydrator.getElement<HTMLTemplateElement>(part);
+        const templateEl = hydrator.query<HTMLTemplateElement>(part);
         if (!templateEl) {
             throw new Error(`Template: no <template> found for part "${part}".`);
         }
@@ -66,17 +70,17 @@ export class Template extends DocumentFragment {
             this.componentNames = hydrator.restampValue(
                 this.root,
                 options.value,
-                templateEl.id,
+                hydrator.scopeKey(part),
                 options.attributes
             );
         }
     }
 
-    getElement<T extends Element>(part: string): T | null {
-        return this.querySelector<T>(`[data-part="${toKebabCase(part)}"]`);
+    query<T extends Element>(part: string): T | null {
+        return this.querySelector<T>(this.hydrator.selector(part));
     }
 
-    getElements<T extends Element>(part: string): T[] {
-        return Array.from(this.querySelectorAll<T>(`[data-part="${toKebabCase(part)}"]`));
+    queryAll<T extends Element>(part: string): T[] {
+        return Array.from(this.querySelectorAll<T>(this.hydrator.selector(part)));
     }
 }

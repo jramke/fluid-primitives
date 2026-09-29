@@ -33,7 +33,7 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
     initHydrator(props: Props) {
         const id = (props as any).id;
         if (!id) throw new Error('ComponentHydrator requires an id prop to initialize.');
-        return new ComponentHydrator(this.getName(), id, (props as any).ids, this.doc);
+        return new ComponentHydrator(this.getName(), id, this.doc);
     }
 
     init() {
@@ -63,8 +63,8 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
     }
 
     /**
-     * Kebab form of {@see getName} - what actually appears in DOM-facing identifiers (data-scope,
-     * hydration ids). See {@see ComponentHydrator.clientComponentName}.
+     * Kebab form of {@see getName} - what actually appears in DOM-facing identifiers (part attribute
+     * names, hydration keys). See {@see ComponentHydrator.clientComponentName}.
      */
     getClientName() {
         return toKebabCase(this.getName());
@@ -91,12 +91,12 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
         spreadProps(node, attrs, this.machine.scope.id);
     }
 
-    getElement<T extends HTMLElement>(part: string, parent?: HTMLElement | Document): T | null {
-        return this.hydrator?.getElement<T>(part, parent) || null;
+    query<T extends HTMLElement>(part: string, parent?: HTMLElement | Document): T | null {
+        return this.hydrator?.query<T>(part, parent) ?? null;
     }
 
-    getElements<T extends HTMLElement>(part: string, parent?: HTMLElement | Document): T[] {
-        return this.hydrator?.getElements<T>(part, parent) || [];
+    queryAll<T extends HTMLElement>(part: string, parent?: HTMLElement | Document): T[] {
+        return this.hydrator?.queryAll<T>(part, parent) ?? [];
     }
 
     /**
@@ -112,7 +112,7 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
         getProps: (ctx: { el: HTMLElement; value: string }) => Attrs | null | undefined,
         options?: { parent?: HTMLElement | Document }
     ): void {
-        this.getElements<HTMLElement>(part, options?.parent).forEach(el => {
+        this.queryAll<HTMLElement>(part, options?.parent).forEach(el => {
             const value = el.dataset.value;
             if (value === undefined) return;
             const props = getProps({ el, value });
@@ -125,7 +125,7 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
         getProps: (ctx: { el: HTMLElement; value?: string }) => Attrs | null | undefined,
         options?: { parent?: HTMLElement | Document }
     ): void {
-        this.getElements<HTMLElement>(part, options?.parent).forEach(el => {
+        this.queryAll<HTMLElement>(part, options?.parent).forEach(el => {
             const value = el.dataset.value;
             const props = getProps({ el, value });
             if (props) this.spreadProps(el, props);
