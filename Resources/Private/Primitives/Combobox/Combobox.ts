@@ -55,7 +55,7 @@ export class Combobox extends FieldAwareComponent<combobox.Props, combobox.Api> 
         };
     }
 
-    transformProps(props: Partial<combobox.Props>): Partial<combobox.Props> {
+    transformProps(props: combobox.Props): combobox.Props {
         return {
             ...props,
             // when selecting an item for example when the suggestions list is opened by the toggle there is no input/change event dispatched,
@@ -142,9 +142,7 @@ export class Combobox extends FieldAwareComponent<combobox.Props, combobox.Api> 
     initMachine(props: combobox.Props): Machine<any> {
         props = this.withFieldProps(props);
         const [machineProps] = combobox.splitProps(props);
-        const transformedProps = this.transformProps(machineProps);
-
-        return new Machine(combobox.machine, transformedProps);
+        return new Machine(combobox.machine, machineProps);
     }
 
     initApi() {

@@ -9,7 +9,11 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
     /** Created by {@see init}. */
     api!: Api;
     hydrator: ComponentHydrator | null = null;
-    userProps?: Partial<Props>;
+    /**
+     * The props the instance runs on - what {@see transformProps} made of the ones it was created
+     * with. Created by {@see init}.
+     */
+    userProps!: Props;
     /**
      * The Fluid namespace identifier (e.g. "ui") this instance was mounted under - assigned by
      * `mountAll`/`mount` right after their callback returns, so not yet available while it runs
@@ -49,13 +53,8 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
      */
     init() {
         this.userProps = this.transformProps(this.initialProps);
-        // Deliberately the original props, not `userProps` - subclasses that override
-        // transformProps() call it themselves inside initMachine(), after their own
-        // field/group merging and prop filtering. Passing the already-transformed
-        // `userProps` here would run transformProps() twice, double-wrapping callback
-        // props like Combobox/NumberInput's onSelect/onValueChange.
-        this.hydrator = this.initHydrator(this.initialProps);
-        this.machine = this.initMachine(this.initialProps);
+        this.hydrator = this.initHydrator(this.userProps);
+        this.machine = this.initMachine(this.userProps);
         this.api = this.initApi();
 
         this.render();
@@ -92,10 +91,11 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
     }
 
     /**
-     * Override in consumer for example when a getter is used for collection
-     * Needs to be used manually inside the initMachine method
+     * Override to adjust the props before anything else sees them, e.g. to wrap a callback prop.
+     * Runs once, first in {@see init}: the result becomes `userProps`, which `initHydrator()` and
+     * `initMachine()` receive.
      */
-    transformProps(props: Partial<Props>): Partial<Props> {
+    transformProps(props: Props): Props {
         return props;
     }
 

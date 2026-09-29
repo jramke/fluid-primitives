@@ -53,7 +53,7 @@ export abstract class FieldAwareComponent<Props, Api> extends Component<Props, A
         } else {
             const handler = () => {
                 this.fieldMachine = getFieldMachineFor(this.closestField);
-                this.updateProps(this.propsWithField(this.userProps!, this.fieldMachine!));
+                this.updateProps(this.propsWithField(this.userProps, this.fieldMachine!));
                 this.closestField?.removeEventListener(
                     'fluid-primitives:field:registered',
                     handler

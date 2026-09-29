@@ -50,7 +50,7 @@ export class Menu extends Component<menu.Props, menu.Api> {
 
     // Not a machine prop (`splitProps` drops it), so it's read from the props the instance was created with.
     private get parentId(): string | undefined {
-        return (this.userProps as { parentId?: string } | undefined)?.parentId;
+        return (this.userProps as menu.Props & { parentId?: string }).parentId;
     }
 
     private getParentInstance(): Menu | null {

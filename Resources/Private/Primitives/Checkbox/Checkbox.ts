@@ -120,7 +120,7 @@ export class Checkbox extends FieldAwareComponent<checkbox.Props, checkbox.Api> 
                     this.getClosestCheckboxGroup()
                 );
                 if (this.checkboxGroupMachine) {
-                    this.updateProps(this.buildGroupProps(this.userProps as checkbox.Props));
+                    this.updateProps(this.buildGroupProps(this.userProps));
                 }
                 this.closestCheckboxGroup?.removeEventListener(
                     'fluid-primitives:checkbox-group:registered',
