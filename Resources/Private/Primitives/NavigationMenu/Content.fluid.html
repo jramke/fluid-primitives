@@ -13,7 +13,6 @@
 {context -> ui:call(method: 'setIsInsideContent')}
 
 <div
-    data-uid="{context.rootId}"
     {f:if(condition: class, then: 'class="{class}"' )}
     {f:if(condition: '!{itemState.open}' , then: 'hidden' )}
     {ui:ref(name: 'content' , value: contentValue, data: refData)}

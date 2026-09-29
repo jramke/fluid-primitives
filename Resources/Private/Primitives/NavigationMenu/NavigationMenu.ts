@@ -20,9 +20,6 @@ export class NavigationMenu extends Component<navigationMenu.Props, navigationMe
         const listEl = this.query('list');
         if (listEl) this.spreadProps(listEl, this.api.getListProps());
 
-        // hydrate indicator-track wrapper (no specific Zag API)
-        this.getElement('indicatorTrack');
-
         this.spreadPropsByValue('item', ({ el, value }) =>
             this.api.getItemProps({ value, disabled: el.hasAttribute('data-disabled') })
         );
