@@ -80,6 +80,24 @@ final class RefViewHelperTest extends TestCase
     }
 
     #[Test]
+    public function attachesTheRefToAnotherInstancesRootIdIgnoringTheAmbientIds(): void
+    {
+        $this->markAsDeclaredRootComponent('Menu.Root', 'menu');
+        $this->variableProvider->add('rootId', '«f1»');
+        $this->variableProvider->add('context', ['ids' => ['triggerItem' => 'ambient-id']]);
+
+        $this->viewHelper->setArguments([
+            'name' => 'triggerItem',
+            'asArray' => false,
+            'data' => [],
+            'value' => null,
+            'rootId' => 'share-menu',
+        ]);
+
+        $this->assertSame('data-menu-trigger-item="share-menu"', $this->viewHelper->render());
+    }
+
+    #[Test]
     public function includesAdditionalDataAttributes(): void
     {
         $this->markAsDeclaredRootComponent('Collapsible.Root', 'collapsible');

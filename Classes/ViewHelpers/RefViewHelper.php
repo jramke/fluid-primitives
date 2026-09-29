@@ -56,6 +56,14 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
  * <div data-my-component-button="..." data-action="submit">Click me</div>
  * ```
  *
+ * `rootId` attaches the ref to another instance of the same component, by its root id, instead of the
+ * ambient one - for a part that belongs to a different instance's scope than the template it's
+ * rendered in, like a submenu's trigger item, which sits in its parent menu's content but is the
+ * submenu's own anchor. The ambient component's `ids` don't apply to it:
+ * ```html
+ * <div {ui:ref(name: 'triggerItem', rootId: childId)}>Share</div>
+ * ```
+ *
  * A component's slot content (the markup a consumer writes between its opening/closing tags) is
  * always evaluated against the *calling* rendering context, not the component's own internal one -
  * so a bare `ui:ref` written directly inside such slot content doesn't, by default, know which
@@ -103,6 +111,13 @@ class RefViewHelper extends AbstractViewHelper
             'Optional discriminator for multi-instance parts (e.g. accordion items, tab triggers, slider thumbs).',
             false,
             null,
+        );
+        $this->registerArgument(
+            'rootId',
+            'string',
+            'Root id of another instance of the same component to attach this ref to instead of the ambient one, e.g. a submenu\'s trigger item rendered inside its parent menu\'s content. The ambient component\'s `ids` do not apply.',
+            false,
+            '',
         );
         $this->registerArgument(
             'context',
@@ -168,6 +183,11 @@ class RefViewHelper extends AbstractViewHelper
         [$componentName, $rootId, $ids] = $explicitContextName !== ''
             ? $this->resolveExplicitContext($explicitContextName)
             : $this->resolveAmbientContext();
+
+        $explicitRootId = (string)($this->arguments['rootId'] ?? '');
+        if ($explicitRootId !== '') {
+            return [$componentName, $explicitRootId, []];
+        }
 
         if ($rootId === '' || $rootId === '0') {
             throw new \RuntimeException('No rootId found for component ' . $componentName . '.', 1756025267);
