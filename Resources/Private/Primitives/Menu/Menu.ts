@@ -118,7 +118,7 @@ export class Menu extends Component<menu.Props, menu.Api> {
             this.api.getItemGroupLabelProps({ htmlFor: value })
         );
 
-        this.spreadPropsByValue('separator', () => this.api.getSeparatorProps());
+        this.spreadPropsByOptionalValue('separator', () => this.api.getSeparatorProps());
 
         this.spreadPropsByValue('item', ({ value, el }) => {
             if (el.dataset.type) {

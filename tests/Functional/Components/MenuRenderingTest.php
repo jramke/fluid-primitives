@@ -224,10 +224,10 @@ final class MenuRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
-    public function rendersEachSeparatorWithAUniqueId(): void
+    public function rendersRepeatedSeparatorsWithTheSameRootIdAndNoId(): void
     {
         $html = $this->renderTemplate('
-            <primitives:menu.root>
+            <primitives:menu.root rootId="separator-menu">
                 <primitives:menu.positioner>
                     <primitives:menu.content>
                         <primitives:menu.item value="a">A</primitives:menu.item>
@@ -240,10 +240,11 @@ final class MenuRenderingTest extends FunctionalTestCase
             </primitives:menu.root>
         ');
 
-        preg_match_all('/id="([^"]+)"[^>]*data-part="separator"/', $html, $matches);
-        $separatorIds = $matches[1];
+        preg_match_all('/<div\b[^>]*\bdata-menu-separator="([^"]*)"[^>]*>/', $html, $matches);
 
-        $this->assertCount(2, $separatorIds);
-        $this->assertCount(2, array_unique($separatorIds));
+        $this->assertSame(['separator-menu', 'separator-menu'], $matches[1]);
+        foreach ($matches[0] as $separatorTag) {
+            $this->assertDoesNotMatchRegularExpression('/\sid=/', $separatorTag);
+        }
     }
 }
