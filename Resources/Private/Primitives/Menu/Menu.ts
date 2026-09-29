@@ -41,9 +41,6 @@ export class Menu extends Component<menu.Props, menu.Api> {
         this.parentId = restProps.parentId;
 
         return new Machine(menu.machine, {
-            // navigate({ href }) {
-            //     window.location.href = href;
-            // },
             ...menuProps,
         });
     }
