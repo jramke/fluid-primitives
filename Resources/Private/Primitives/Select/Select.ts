@@ -118,50 +118,30 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
             }
         }
 
-        this.spreadPropsByValue(
-            'itemGroup',
-            ({ value }) => {
-                return this.api.getItemGroupProps({ id: value });
-            },
-            { parent: this.doc }
-        );
+        this.spreadPropsByValue('itemGroup', ({ value }) => {
+            return this.api.getItemGroupProps({ id: value });
+        });
 
-        this.spreadPropsByValue(
-            'itemGroupLabel',
-            ({ value }) => {
-                return this.api.getItemGroupLabelProps({ htmlFor: value });
-            },
-            { parent: this.doc }
-        );
+        this.spreadPropsByValue('itemGroupLabel', ({ value }) => {
+            return this.api.getItemGroupLabelProps({ htmlFor: value });
+        });
 
-        this.spreadPropsByValue(
-            'item',
-            ({ value }) => {
-                const item = this.api.collection.find(value);
-                return item ? this.api.getItemProps({ item }) : null;
-            },
-            { parent: this.doc }
-        );
+        this.spreadPropsByValue('item', ({ value }) => {
+            const item = this.api.collection.find(value);
+            return item ? this.api.getItemProps({ item }) : null;
+        });
 
-        this.spreadPropsByValue(
-            'itemText',
-            ({ value }) => {
-                const item = this.api.collection.find(value);
-                return item ? this.api.getItemTextProps({ item }) : null;
-            },
-            { parent: this.doc }
-        );
+        this.spreadPropsByValue('itemText', ({ value }) => {
+            const item = this.api.collection.find(value);
+            return item ? this.api.getItemTextProps({ item }) : null;
+        });
 
-        this.spreadPropsByValue(
-            'itemIndicator',
-            ({ value }) => {
-                const item = this.api.collection.find(value);
-                return item ? this.api.getItemIndicatorProps({ item }) : null;
-            },
-            { parent: this.doc }
-        );
+        this.spreadPropsByValue('itemIndicator', ({ value }) => {
+            const item = this.api.collection.find(value);
+            return item ? this.api.getItemIndicatorProps({ item }) : null;
+        });
 
-        const clearTriggerEl = this.getElement('clearTrigger');
+        const clearTriggerEl = this.query('clearTrigger');
         if (clearTriggerEl) this.spreadProps(clearTriggerEl, this.api.getClearTriggerProps());
 
         const indicatorEl = this.query('indicator');
