@@ -1,4 +1,5 @@
 import type { Scope } from '@zag-js/core';
+import { parts } from './field.anatomy';
 
 export const getRootId = (scope: Scope) => scope.ids?.root ?? `field:${scope.id}`;
 export const getLabelId = (scope: Scope) => scope.ids?.label ?? `field:${scope.id}:label`;
@@ -6,11 +7,11 @@ export const getControlId = (scope: Scope) => scope.ids?.control ?? `field:${sco
 export const getErrorId = (scope: Scope) => scope.ids?.error ?? `field:${scope.id}:error`;
 export const getDescriptionId = (scope: Scope) =>
     scope.ids?.description ?? `field:${scope.id}:description`;
-export const getRootEl = (scope: Scope) => scope.getById(getRootId(scope));
+export const getRootEl = (scope: Scope) => scope.query(scope.selector(parts.root));
 export const getLabelEl = (scope: Scope) => scope.getById(getLabelId(scope));
 export const getControlEl = (scope: Scope) => scope.getById(getControlId(scope));
 export const getErrorEl = (scope: Scope) => scope.getById(getErrorId(scope));
-export const getDescriptionEl = (scope: Scope) => scope.getById(getDescriptionId(scope));
+export const getDescriptionEl = (scope: Scope) => scope.query(scope.selector(parts.description));
 
 export const getClosestFieldRoot = (target: Element | null) => {
     return target?.closest('[data-field-root]') ?? null;

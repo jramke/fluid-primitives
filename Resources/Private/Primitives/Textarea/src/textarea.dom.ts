@@ -1,4 +1,5 @@
 import type { Scope } from '@zag-js/core';
+import { parts } from './textarea.anatomy';
 
 export const getRootId = (scope: Scope) => scope.ids?.root ?? `textarea:${scope.id}`;
 export const getLabelId = (scope: Scope) => scope.ids?.label ?? `textarea:${scope.id}:label`;
@@ -10,5 +11,5 @@ export const getLiveRegionId = (scope: Scope) =>
     scope.ids?.liveRegion ?? `textarea:${scope.id}:liveRegion`;
 
 export const getTextareaEl = (scope: Scope) =>
-    scope.getById<HTMLTextAreaElement>(getTextareaId(scope));
-export const getLiveRegionEl = (scope: Scope) => scope.getById(getLiveRegionId(scope));
+    scope.query<HTMLTextAreaElement>(scope.selector(parts.textarea));
+export const getLiveRegionEl = (scope: Scope) => scope.query(scope.selector(parts.liveRegion));
