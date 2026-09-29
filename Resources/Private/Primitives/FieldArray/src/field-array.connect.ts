@@ -70,7 +70,7 @@ export function connect<T extends PropTypes>(
 
 function getRows(component: FieldArray): { index: number }[] {
     return component
-        .getElements<HTMLElement>('item')
+        .queryAll<HTMLElement>('item')
         .map(el => ({ index: Number(el.dataset.value) }))
         .filter(({ index }) => !Number.isNaN(index))
         .sort((a, b) => a.index - b.index);
@@ -97,7 +97,7 @@ function append(component: FieldArray): void {
     if (!component.hydrator) return;
     if (!canAppend(component)) return;
 
-    const itemGroupEl = component.getElement('itemGroup');
+    const itemGroupEl = component.query('itemGroup');
     if (!itemGroupEl) return;
 
     const index = nextIndex(component);
@@ -121,7 +121,7 @@ function remove(component: FieldArray, index: number): void {
     if (!canRemove(component)) return;
 
     const rowEl = component
-        .getElements<HTMLElement>('item')
+        .queryAll<HTMLElement>('item')
         .find(el => el.dataset.value === String(index));
     if (!rowEl) return;
 
@@ -148,14 +148,14 @@ function remove(component: FieldArray, index: number): void {
  * `removeTrigger`) disappears: the next row's `removeTrigger`, or the previous row's if the
  * removed row was last, or `addTrigger` if no rows remain. Resolved to a real element
  * *before* removal, so the reference stays valid through the DOM mutation and reindexing that
- * follow - `getElements('item')` already reflects visual/DOM order, so this doesn't need to
+ * follow - `queryAll('item')` already reflects visual/DOM order, so this doesn't need to
  * reason about numeric row indices at all.
  */
 function findFocusTargetAfterRemoval(
     component: FieldArray,
     rowEl: HTMLElement
 ): HTMLElement | null {
-    const rows = component.getElements<HTMLElement>('item');
+    const rows = component.queryAll<HTMLElement>('item');
     const removedPosition = rows.indexOf(rowEl);
     const siblingRowEl = rows[removedPosition + 1] ?? rows[removedPosition - 1];
 
@@ -177,7 +177,7 @@ function reindexRowsAfter(component: FieldArray, removedIndex: number): void {
 
     for (const { index } of rowsToShift) {
         const rowEl = component
-            .getElements<HTMLElement>('item')
+            .queryAll<HTMLElement>('item')
             .find(el => el.dataset.value === String(index));
         if (!rowEl) continue;
 

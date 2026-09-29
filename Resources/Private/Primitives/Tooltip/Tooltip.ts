@@ -49,16 +49,16 @@ export class Tooltip extends Component<tooltip.Props, tooltip.Api> {
             this.api.getTriggerProps({ value })
         );
 
-        const positionerEl = this.getElement('positioner');
+        const positionerEl = this.query('positioner');
         if (positionerEl) this.spreadProps(positionerEl, this.api.getPositionerProps());
 
-        const arrowEl = this.getElement('arrow');
+        const arrowEl = this.query('arrow');
         if (arrowEl) this.spreadProps(arrowEl, this.api.getArrowProps());
 
-        const arrowTipEl = this.getElement('arrowTip');
+        const arrowTipEl = this.query('arrowTip');
         if (arrowTipEl) this.spreadProps(arrowTipEl, this.api.getArrowTipProps());
 
-        const contentEl = this.getElement('content');
+        const contentEl = this.query('content');
         if (contentEl) this.spreadProps(contentEl, this.api.getContentProps());
     }
 }

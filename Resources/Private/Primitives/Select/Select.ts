@@ -58,13 +58,13 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
     render = () => {
         this.subscribeToFieldService();
 
-        const rootEl = this.getElement('root');
+        const rootEl = this.query('root');
         if (rootEl) this.spreadProps(rootEl, this.api.getRootProps());
 
-        const controlEl = this.getElement('control');
+        const controlEl = this.query('control');
         if (controlEl) this.spreadProps(controlEl, this.api.getControlProps());
 
-        const hiddenSelectEl = this.getElement('hiddenSelect');
+        const hiddenSelectEl = this.query('hiddenSelect');
         if (hiddenSelectEl) {
             const mergedProps = mergeProps(this.api.getHiddenSelectProps(), {
                 'aria-describedby': this.fieldMachine?.context.get('describeIds') || undefined,
@@ -79,22 +79,22 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
             if (defaultOption) defaultOption.selected = isValueEmpty;
         }
 
-        const labelEl = this.getElement('label');
+        const labelEl = this.query('label');
         if (labelEl) this.spreadProps(labelEl, this.api.getLabelProps());
 
-        const triggerEl = this.getElement('trigger');
+        const triggerEl = this.query('trigger');
         if (triggerEl) this.spreadProps(triggerEl, this.api.getTriggerProps());
 
-        const positionerEl = this.getElement('positioner');
+        const positionerEl = this.query('positioner');
         if (positionerEl) this.spreadProps(positionerEl, this.api.getPositionerProps());
 
-        const contentEl = this.getElement('content');
+        const contentEl = this.query('content');
         if (contentEl) this.spreadProps(contentEl, this.api.getContentProps());
 
         // We need to make sure the element is rerendered because otherwise safari doesnt update the spans value in the a11y tree
         // and the button would announce an old value when it receives focus.
         // see: https://github.com/chakra-ui/zag/issues/3099
-        const valueTextEl = this.getElement('valueText');
+        const valueTextEl = this.query('valueText');
         if (valueTextEl) {
             const currentText = valueTextEl.textContent || valueTextEl.dataset.placeholder || '';
             const nextValue = this.api.valueAsString || valueTextEl.dataset.placeholder || '';
@@ -108,7 +108,7 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
 
             if (nextValue !== currentText) {
                 queueMicrotask(() => {
-                    const el = this.getElement('valueText');
+                    const el = this.query('valueText');
                     if (el?.isConnected) {
                         const next = el.cloneNode(true) as HTMLElement;
                         el.replaceWith(next);
@@ -164,7 +164,7 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
         const clearTriggerEl = this.getElement('clearTrigger');
         if (clearTriggerEl) this.spreadProps(clearTriggerEl, this.api.getClearTriggerProps());
 
-        const indicatorEl = this.getElement('indicator');
+        const indicatorEl = this.query('indicator');
         if (indicatorEl) this.spreadProps(indicatorEl, this.api.getIndicatorProps());
     };
 }

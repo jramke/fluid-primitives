@@ -14,7 +14,7 @@ export class Accordion extends Component<accordion.Props, accordion.Api> {
     }
 
     render() {
-        const rootEl = this.getElement('root');
+        const rootEl = this.query('root');
         if (rootEl) {
             this.spreadProps(rootEl, this.api.getRootProps());
         }

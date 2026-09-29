@@ -44,7 +44,7 @@ export class NumberInput extends FieldAwareComponent<numberInput.Props, numberIn
         return {
             ...props,
             onValueChange: details => {
-                this.getElement('input')?.dispatchEvent(new Event('input', { bubbles: true }));
+                this.query('input')?.dispatchEvent(new Event('input', { bubbles: true }));
                 props?.onValueChange?.(details);
             },
         };
@@ -63,16 +63,16 @@ export class NumberInput extends FieldAwareComponent<numberInput.Props, numberIn
     render() {
         this.subscribeToFieldService();
 
-        const rootEl = this.getElement('root');
+        const rootEl = this.query('root');
         if (rootEl) this.spreadProps(rootEl, this.api.getRootProps());
 
-        const labelEl = this.getElement('label');
+        const labelEl = this.query('label');
         if (labelEl) this.spreadProps(labelEl, this.api.getLabelProps());
 
-        const controlEl = this.getElement('control');
+        const controlEl = this.query('control');
         if (controlEl) this.spreadProps(controlEl, this.api.getControlProps());
 
-        const inputEl = this.getElement('input');
+        const inputEl = this.query('input');
         if (inputEl) {
             const mergedProps = mergeProps(this.api.getInputProps(), {
                 'aria-describedby': this.fieldMachine?.context.get('describeIds') || undefined,
@@ -80,18 +80,18 @@ export class NumberInput extends FieldAwareComponent<numberInput.Props, numberIn
             this.spreadProps(inputEl, mergedProps);
         }
 
-        const incrementTriggerEl = this.getElement('incrementTrigger');
+        const incrementTriggerEl = this.query('incrementTrigger');
         if (incrementTriggerEl)
             this.spreadProps(incrementTriggerEl, this.api.getIncrementTriggerProps());
 
-        const decrementTriggerEl = this.getElement('decrementTrigger');
+        const decrementTriggerEl = this.query('decrementTrigger');
         if (decrementTriggerEl)
             this.spreadProps(decrementTriggerEl, this.api.getDecrementTriggerProps());
 
-        const valueTextEl = this.getElement('valueText');
+        const valueTextEl = this.query('valueText');
         if (valueTextEl) this.spreadProps(valueTextEl, this.api.getValueTextProps());
 
-        const scrubberEl = this.getElement('scrubber');
+        const scrubberEl = this.query('scrubber');
         if (scrubberEl) this.spreadProps(scrubberEl, this.api.getScrubberProps());
     }
 }

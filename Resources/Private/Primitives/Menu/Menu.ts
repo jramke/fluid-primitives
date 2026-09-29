@@ -96,19 +96,19 @@ export class Menu extends Component<menu.Props, menu.Api> {
             this.api.getContextTriggerProps({ value })
         );
 
-        const indicatorEl = this.getElement('indicator');
+        const indicatorEl = this.query('indicator');
         if (indicatorEl) this.spreadProps(indicatorEl, this.api.getIndicatorProps());
 
-        const positionerEl = this.getElement('positioner');
+        const positionerEl = this.query('positioner');
         if (positionerEl) this.spreadProps(positionerEl, this.api.getPositionerProps());
 
-        const arrowEl = this.getElement('arrow');
+        const arrowEl = this.query('arrow');
         if (arrowEl) this.spreadProps(arrowEl, this.api.getArrowProps());
 
-        const arrowTipEl = this.getElement('arrowTip');
+        const arrowTipEl = this.query('arrowTip');
         if (arrowTipEl) this.spreadProps(arrowTipEl, this.api.getArrowTipProps());
 
-        const contentEl = this.getElement('content');
+        const contentEl = this.query('content');
         if (contentEl) this.spreadProps(contentEl, this.api.getContentProps());
 
         this.spreadPropsByValue('itemGroup', ({ value }) =>
@@ -188,7 +188,7 @@ export class Menu extends Component<menu.Props, menu.Api> {
             valueText,
             onCheckedChange: nextChecked => {
                 if (type === 'radio' && name) {
-                    this.getElements<HTMLElement>('item').forEach(sibling => {
+                    this.queryAll<HTMLElement>('item').forEach(sibling => {
                         if (sibling.dataset.name === name) {
                             sibling.dataset.state = sibling === el ? 'checked' : 'unchecked';
                         }
@@ -201,7 +201,7 @@ export class Menu extends Component<menu.Props, menu.Api> {
         });
         this.spreadProps(el, optionProps);
 
-        const indicatorEl = this.getElement('itemIndicator', el);
+        const indicatorEl = this.query('itemIndicator', el);
         if (indicatorEl) {
             this.spreadProps(
                 indicatorEl,
@@ -209,7 +209,7 @@ export class Menu extends Component<menu.Props, menu.Api> {
             );
         }
 
-        const textEl = this.getElement('itemText', el);
+        const textEl = this.query('itemText', el);
         if (textEl) {
             this.spreadProps(
                 textEl,

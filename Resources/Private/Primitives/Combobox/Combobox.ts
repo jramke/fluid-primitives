@@ -62,7 +62,7 @@ export class Combobox extends FieldAwareComponent<combobox.Props, combobox.Api> 
             // but thats needed for our form to update the formdata and validation
             // we use the change event because the input event opens the suggestions list again
             onSelect: details => {
-                this.getElement('input')?.dispatchEvent(new Event('change', { bubbles: true }));
+                this.query('input')?.dispatchEvent(new Event('change', { bubbles: true }));
                 props?.onSelect?.(details);
             },
         };
@@ -103,7 +103,7 @@ export class Combobox extends FieldAwareComponent<combobox.Props, combobox.Api> 
             value,
             // mirrors `@zag-js/select`'s own `getHiddenSelectProps()`.
             onFocus: () => {
-                this.getElement<HTMLInputElement>('input')?.focus({ preventScroll: true });
+                this.query<HTMLInputElement>('input')?.focus({ preventScroll: true });
             },
         });
     }
@@ -112,10 +112,10 @@ export class Combobox extends FieldAwareComponent<combobox.Props, combobox.Api> 
     // Ensures the FormData gets the real value of the collection item(s) rather than the visible input's label.
     // See https://github.com/chakra-ui/zag/discussions/3333
     private syncHiddenInput(attrs: { name?: string; form?: string; disabled?: boolean }) {
-        const rootEl = this.getElement('root');
+        const rootEl = this.query('root');
         if (!rootEl) return;
 
-        this.getElements<HTMLInputElement>('hiddenInput').forEach(el => el.remove());
+        this.queryAll<HTMLInputElement>('hiddenInput').forEach(el => el.remove());
 
         const values = this.api.value;
 
@@ -154,13 +154,13 @@ export class Combobox extends FieldAwareComponent<combobox.Props, combobox.Api> 
     render() {
         this.subscribeToFieldService();
 
-        const rootEl = this.getElement('root');
+        const rootEl = this.query('root');
         if (rootEl) this.spreadProps(rootEl, this.api.getRootProps());
 
-        const labelEl = this.getElement('label');
+        const labelEl = this.query('label');
         if (labelEl) this.spreadProps(labelEl, this.api.getLabelProps());
 
-        const controlEl = this.getElement('control');
+        const controlEl = this.query('control');
         if (controlEl) this.spreadProps(controlEl, this.api.getControlProps());
 
         // `name`/`form` are stripped from the visible input's props before spreading - it holds the
@@ -168,7 +168,7 @@ export class Combobox extends FieldAwareComponent<combobox.Props, combobox.Api> 
         // value the form should submit. `hiddenInput` carries the real value(s) instead, see below.
         const { name, form, ...inputProps } = this.api.getInputProps() as Record<string, unknown>;
 
-        const inputEl = this.getElement('input');
+        const inputEl = this.query('input');
         if (inputEl) {
             const mergedProps = mergeProps(inputProps, {
                 'aria-describedby': this.fieldMachine?.context.get('describeIds') || undefined,
@@ -182,19 +182,19 @@ export class Combobox extends FieldAwareComponent<combobox.Props, combobox.Api> 
             disabled: inputProps.disabled as boolean | undefined,
         });
 
-        const triggerEl = this.getElement('trigger');
+        const triggerEl = this.query('trigger');
         if (triggerEl) this.spreadProps(triggerEl, this.api.getTriggerProps());
 
-        const clearTriggerEl = this.getElement('clearTrigger');
+        const clearTriggerEl = this.query('clearTrigger');
         if (clearTriggerEl) this.spreadProps(clearTriggerEl, this.api.getClearTriggerProps());
 
-        const positionerEl = this.getElement('positioner');
+        const positionerEl = this.query('positioner');
         if (positionerEl) this.spreadProps(positionerEl, this.api.getPositionerProps());
 
-        const contentEl = this.getElement('content');
+        const contentEl = this.query('content');
         if (contentEl) this.spreadProps(contentEl, this.api.getContentProps());
 
-        const listEl = this.getElement('list');
+        const listEl = this.query('list');
         if (listEl) this.spreadProps(listEl, this.api.getListProps());
 
         this.spreadPropsByValue(
@@ -256,7 +256,7 @@ export class Combobox extends FieldAwareComponent<combobox.Props, combobox.Api> 
 
         const itemGroupEls = this.getElements('itemGroup', this.doc);
         itemGroupEls.forEach(itemGroupEl => {
-            const hasVisibleItems = this.getElements('item', itemGroupEl).some(
+            const hasVisibleItems = this.queryAll('item', itemGroupEl).some(
                 itemEl => !itemEl.hidden
             );
             itemGroupEl.hidden = !hasVisibleItems;
@@ -273,7 +273,7 @@ export class Combobox extends FieldAwareComponent<combobox.Props, combobox.Api> 
             listEl.toggleAttribute('data-empty', !hasVisibleItems);
         }
 
-        const emptyEl = this.getElement('empty');
+        const emptyEl = this.query('empty');
         if (emptyEl) emptyEl.hidden = hasVisibleItems;
     }
 }

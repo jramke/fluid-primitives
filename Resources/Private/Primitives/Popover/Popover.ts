@@ -47,28 +47,28 @@ export class Popover extends Component<popover.Props, popover.Api> {
             this.api.getTriggerProps({ value })
         );
 
-        const positionerEl = this.getElement('positioner');
+        const positionerEl = this.query('positioner');
         if (positionerEl) this.spreadProps(positionerEl, this.api.getPositionerProps());
 
-        const arrowEl = this.getElement('arrow');
+        const arrowEl = this.query('arrow');
         if (arrowEl) this.spreadProps(arrowEl, this.api.getArrowProps());
 
-        const arrowTipEl = this.getElement('arrowTip');
+        const arrowTipEl = this.query('arrowTip');
         if (arrowTipEl) this.spreadProps(arrowTipEl, this.api.getArrowTipProps());
 
-        const contentEl = this.getElement('content');
+        const contentEl = this.query('content');
         if (contentEl) this.spreadProps(contentEl, this.api.getContentProps());
 
-        const titleEl = this.getElement('title');
+        const titleEl = this.query('title');
         if (titleEl) this.spreadProps(titleEl, this.api.getTitleProps());
 
-        const descriptionEl = this.getElement('description');
+        const descriptionEl = this.query('description');
         if (descriptionEl) this.spreadProps(descriptionEl, this.api.getDescriptionProps());
 
         const closeTriggerEl = this.getElement('closeTrigger');
         if (closeTriggerEl) this.spreadProps(closeTriggerEl, this.api.getCloseTriggerProps());
 
-        const indicatorEl = this.getElement('indicator');
+        const indicatorEl = this.query('indicator');
         if (indicatorEl) this.spreadProps(indicatorEl, this.api.getIndicatorProps());
     }
 }

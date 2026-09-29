@@ -157,19 +157,19 @@ export class FileUpload extends FieldAwareComponent<FileUploadPrimitiveProps, fi
     render() {
         this.subscribeToFieldService();
 
-        const rootEl = this.getElement('root');
+        const rootEl = this.query('root');
         if (rootEl) this.spreadProps(rootEl, this.api.getRootProps());
 
-        const labelEl = this.getElement('label');
+        const labelEl = this.query('label');
         if (labelEl) this.spreadProps(labelEl, this.api.getLabelProps());
 
-        const dropzoneEl = this.getElement('dropzone');
+        const dropzoneEl = this.query('dropzone');
         if (dropzoneEl) this.spreadProps(dropzoneEl, this.api.getDropzoneProps());
 
-        const triggerEl = this.getElement('trigger');
+        const triggerEl = this.query('trigger');
         if (triggerEl) this.spreadProps(triggerEl, this.api.getTriggerProps());
 
-        const hiddenInputEl = this.getElement<HTMLInputElement>('hiddenInput');
+        const hiddenInputEl = this.query<HTMLInputElement>('hiddenInput');
         if (hiddenInputEl) {
             const mergedProps = mergeProps(this.api.getHiddenInputProps(), {
                 'aria-describedby': this.fieldMachine?.context.get('describeIds') || undefined,
@@ -177,7 +177,7 @@ export class FileUpload extends FieldAwareComponent<FileUploadPrimitiveProps, fi
             this.spreadProps(hiddenInputEl, mergedProps);
         }
 
-        const clearTriggerEl = this.getElement('clearTrigger');
+        const clearTriggerEl = this.query('clearTrigger');
         if (clearTriggerEl) this.spreadProps(clearTriggerEl, this.api.getClearTriggerProps());
 
         this.renderItemGroups();
@@ -190,7 +190,7 @@ export class FileUpload extends FieldAwareComponent<FileUploadPrimitiveProps, fi
         const filesChanged =
             acceptedFiles !== this.lastAcceptedFiles || rejectedFiles !== this.lastRejectedFiles;
 
-        const itemGroupEls = this.getElements<HTMLElement>('itemGroup');
+        const itemGroupEls = this.queryAll<HTMLElement>('itemGroup');
         itemGroupEls.forEach(itemGroupEl => {
             const type = (itemGroupEl.dataset.value as ItemType) || 'accepted';
             this.spreadProps(itemGroupEl, this.api.getItemGroupProps({ type }));
@@ -271,7 +271,7 @@ export class FileUpload extends FieldAwareComponent<FileUploadPrimitiveProps, fi
      * consumers are unaffected.
      */
     private resolveItemTemplatePart(type: ItemType): string {
-        if (type === 'rejected' && this.getElement('rejectedItemTemplate')) {
+        if (type === 'rejected' && this.query('rejectedItemTemplate')) {
             return 'rejectedItemTemplate';
         }
         return 'itemTemplate';
@@ -298,19 +298,19 @@ export class FileUpload extends FieldAwareComponent<FileUploadPrimitiveProps, fi
 
             this.spreadProps(itemEl, this.api.getItemProps({ file, type }));
 
-            const errorEl = instance.getElement<HTMLElement>('itemError');
+            const errorEl = instance.query<HTMLElement>('itemError');
             if (errorEl) {
                 errorEl.hidden = !errors?.length;
                 errorEl.textContent = errors?.join(', ') ?? '';
             }
 
-            const nameEl = instance.getElement<HTMLElement>('itemName');
+            const nameEl = instance.query<HTMLElement>('itemName');
             if (nameEl) {
                 this.spreadProps(nameEl, this.api.getItemNameProps({ file, type }));
                 nameEl.textContent = file.name;
             }
 
-            const sizeEl = instance.getElement<HTMLElement>('itemSizeText');
+            const sizeEl = instance.query<HTMLElement>('itemSizeText');
             if (sizeEl) {
                 this.spreadProps(sizeEl, this.api.getItemSizeTextProps({ file, type }));
                 sizeEl.textContent = this.api.getFileSize(file);
@@ -318,7 +318,7 @@ export class FileUpload extends FieldAwareComponent<FileUploadPrimitiveProps, fi
 
             this.renderPreview(instance, file, type);
 
-            const deleteTriggerEl = instance.getElement<HTMLElement>('itemDeleteTrigger');
+            const deleteTriggerEl = instance.query<HTMLElement>('itemDeleteTrigger');
             if (deleteTriggerEl) {
                 this.spreadProps(
                     deleteTriggerEl,
@@ -331,7 +331,7 @@ export class FileUpload extends FieldAwareComponent<FileUploadPrimitiveProps, fi
     }
 
     private renderPreview(instance: Template, file: File, type: ItemType) {
-        const previews = instance.getElements<HTMLElement>('itemPreview');
+        const previews = instance.queryAll<HTMLElement>('itemPreview');
         if (previews.length === 0) return;
 
         const matched =

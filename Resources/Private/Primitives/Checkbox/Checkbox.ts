@@ -153,19 +153,19 @@ export class Checkbox extends FieldAwareComponent<checkbox.Props, checkbox.Api> 
         this.subscribeToFieldService();
         this.subscribeToCheckboxGroup();
 
-        const rootEl = this.getElement('root');
+        const rootEl = this.query('root');
         if (rootEl) this.spreadProps(rootEl, this.api.getRootProps());
 
-        const labelEl = this.getElement('label');
+        const labelEl = this.query('label');
         if (labelEl) this.spreadProps(labelEl, this.api.getLabelProps());
 
-        const controlEl = this.getElement('control');
+        const controlEl = this.query('control');
         if (controlEl) this.spreadProps(controlEl, this.api.getControlProps());
 
-        const indicatorEl = this.getElement('indicator');
+        const indicatorEl = this.query('indicator');
         if (indicatorEl) this.spreadProps(indicatorEl, this.api.getIndicatorProps());
 
-        const hiddenInputEl = this.getElement('hiddenInput');
+        const hiddenInputEl = this.query('hiddenInput');
         if (hiddenInputEl) {
             const mergedProps = mergeProps(this.api.getHiddenInputProps(), {
                 'aria-describedby': this.fieldMachine?.context.get('describeIds') || undefined,
