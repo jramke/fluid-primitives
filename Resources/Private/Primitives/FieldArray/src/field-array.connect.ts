@@ -15,10 +15,10 @@ import type { FieldArrayApi, FieldArrayApiActions, FieldArrayApiProps } from './
  * Builds `FieldArray`'s API. Deliberately takes the `Component` instance itself, not a Zag
  * `service` the way `Field`/`Form`'s own `connect()` do - their API is "read context, return a
  * plain object", but `append`/`remove` here are DOM mutations over an open-ended row collection,
- * which needs `Component`-level helpers (`getElement`/`getElements`/`hydrator`/`refresh`) that a
+ * which needs `Component`-level helpers (`query`/`queryAll`/`hydrator`/`refresh`) that a
  * Zag service's `context`/`scope` alone don't provide. Still takes `normalize` like every other
  * `connect()` though, so `getAddTriggerProps`/`getRemoveTriggerProps` stay framework-portable and
- * carry the same `data-scope`/`data-part` anatomy attrs every other primitive's parts do.
+ * carry the same anatomy attrs every other primitive's parts do.
  */
 export function connect<T extends PropTypes>(
     component: FieldArray,
@@ -36,24 +36,18 @@ export function connect<T extends PropTypes>(
         getAddTriggerProps: () => {
             const disabled = !actions.canAppend();
             return normalize.button({
-                ...parts.addTrigger.attrs,
+                ...parts.addTrigger.attrs(component.machine.scope.id),
                 id: dom.getAddTriggerId(component.machine.scope),
                 onClick: () => actions.append(),
                 'aria-disabled': disabled ? true : undefined,
                 'data-disabled': disabled ? true : undefined,
             });
         },
-        // No `id` here, unlike every other part's `getXProps()` (including `getAddTriggerProps`
-        // above) - `removeTrigger`'s `id` is a *multi-instance*, per-row one, and its ownership
-        // already belongs entirely to `ComponentHydrator.restampValue` (see `Client/src/lib/
-        // hydration.ts`), which re-keys it whenever a row is cloned or reindexed. Recomputing it
-        // here from `index` too would create a second, independent source of truth for the same
-        // id, and this one has no way to even agree with the other - it has no access to the
-        // stencil-rootId part that restamping works from.
+        // No `id`: `removeTrigger` is a per-row part, identified by its `data-value` (the row index).
         getRemoveTriggerProps: (index: number) => {
             const disabled = !actions.canRemove();
             return normalize.button({
-                ...parts.removeTrigger.attrs,
+                ...parts.removeTrigger.attrs(component.machine.scope.id),
                 onClick: () => actions.remove(index),
                 'aria-disabled': disabled ? true : undefined,
                 'data-disabled': disabled ? true : undefined,

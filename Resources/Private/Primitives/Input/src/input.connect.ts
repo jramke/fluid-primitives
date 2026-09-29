@@ -38,7 +38,7 @@ export function connect<T extends PropTypes>(
 
         getRootProps() {
             return normalize.element({
-                ...parts.root.attrs,
+                ...parts.root.attrs(scope.id),
                 id: dom.getRootId(scope),
                 'data-invalid': handle.invalid ? '' : undefined,
                 'data-disabled': handle.disabled ? '' : undefined,
@@ -48,7 +48,7 @@ export function connect<T extends PropTypes>(
 
         getInputProps() {
             return normalize.input({
-                ...parts.input.attrs,
+                ...parts.input.attrs(scope.id),
                 id: dom.getInputId(scope),
                 name: handle.name,
                 disabled: handle.disabled || undefined,
@@ -89,7 +89,7 @@ export function connect<T extends PropTypes>(
 
         getLabelProps() {
             return normalize.label({
-                ...parts.label.attrs,
+                ...parts.label.attrs(scope.id),
                 id: dom.getLabelId(scope),
                 htmlFor: dom.getInputId(scope),
                 'data-invalid': handle.invalid ? '' : undefined,
@@ -103,7 +103,7 @@ export function connect<T extends PropTypes>(
         // whichever assistive tech already monitors generic DOM changes.
         getWordCountProps() {
             return normalize.element({
-                ...parts.wordCount.attrs,
+                ...parts.wordCount.attrs(scope.id),
                 id: dom.getWordCountId(scope),
                 'aria-hidden': 'true',
             });
@@ -111,7 +111,7 @@ export function connect<T extends PropTypes>(
 
         getLiveRegionProps() {
             return normalize.element({
-                ...parts.liveRegion.attrs,
+                ...parts.liveRegion.attrs(scope.id),
                 id: dom.getLiveRegionId(scope),
             });
         },

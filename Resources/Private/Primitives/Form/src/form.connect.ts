@@ -139,21 +139,21 @@ export function connect<T extends PropTypes>(
 
         getContentProps() {
             return normalize.element({
-                ...parts.content.attrs,
+                ...parts.content.attrs(scope.id),
                 hidden: isError || isSuccessful,
             });
         },
 
         getIndicatorProps(indicatorState) {
             return normalize.element({
-                ...parts.indicator.attrs,
+                ...parts.indicator.attrs(scope.id),
                 hidden: stateValue !== indicatorState,
             });
         },
 
         getErrorTextProps() {
             return normalize.element({
-                ...parts['errorText'].attrs,
+                ...parts['errorText'].attrs(scope.id),
                 hidden: !isError,
                 role: 'alert',
             });
@@ -161,7 +161,7 @@ export function connect<T extends PropTypes>(
 
         getSuccessTextProps() {
             return normalize.element({
-                ...parts['successText'].attrs,
+                ...parts['successText'].attrs(scope.id),
                 hidden: !isSuccessful,
                 role: 'status',
                 'aria-live': 'polite',
@@ -170,7 +170,7 @@ export function connect<T extends PropTypes>(
 
         getFormProps() {
             return normalize.element({
-                ...parts.form.attrs,
+                ...parts.root.attrs(scope.id),
                 noValidate: true,
                 id: dom.getFormId(scope),
                 'data-state': stateValue,
