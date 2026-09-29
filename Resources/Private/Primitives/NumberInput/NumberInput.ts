@@ -40,7 +40,7 @@ export class NumberInput extends FieldAwareComponent<numberInput.Props, numberIn
         };
     }
 
-    transformProps(props: numberInput.Props): numberInput.Props {
+    transformProps(props: Partial<numberInput.Props>): Partial<numberInput.Props> {
         return {
             ...props,
             onValueChange: details => {

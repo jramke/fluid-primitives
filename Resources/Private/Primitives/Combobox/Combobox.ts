@@ -55,7 +55,7 @@ export class Combobox extends FieldAwareComponent<combobox.Props, combobox.Api> 
         };
     }
 
-    transformProps(props: combobox.Props) {
+    transformProps(props: Partial<combobox.Props>): Partial<combobox.Props> {
         return {
             ...props,
             // when selecting an item for example when the suggestions list is opened by the toggle there is no input/change event dispatched,
@@ -85,7 +85,7 @@ export class Combobox extends FieldAwareComponent<combobox.Props, combobox.Api> 
         }
 
         this.sourceCollection = initialCollection;
-        return this.sourceCollection;
+        return initialCollection;
     }
 
     private getHiddenInputProps(
