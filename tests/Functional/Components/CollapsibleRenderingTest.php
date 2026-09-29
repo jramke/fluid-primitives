@@ -39,6 +39,21 @@ final class CollapsibleRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function marksEveryTriggerOfOneCollapsibleWithItsRootIdAndNoIds(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:collapsible.root rootId="my-collapsible">
+                <primitives:collapsible.trigger>Toggle</primitives:collapsible.trigger>
+                <primitives:collapsible.content>Content</primitives:collapsible.content>
+                <primitives:collapsible.trigger>Toggle again</primitives:collapsible.trigger>
+            </primitives:collapsible.root>
+        ');
+
+        $this->assertSame(2, substr_count($html, 'data-collapsible-trigger="my-collapsible"'));
+        $this->assertStringNotContainsString(' id=', $html);
+    }
+
+    #[Test]
     public function rendersExpandedStateWhenDefaultOpenTrue(): void
     {
         $html = $this->renderTemplate('

@@ -165,6 +165,28 @@ final class DialogRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function marksEveryCloseTriggerOfADialogWithoutIdsSoTheyCannotCollide(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:dialog.root rootId="my-dialog">
+                <primitives:dialog.trigger>Open</primitives:dialog.trigger>
+                <primitives:dialog.content>
+                    <primitives:dialog.closeTrigger>X</primitives:dialog.closeTrigger>
+                    Content
+                    <primitives:dialog.closeTrigger>Cancel</primitives:dialog.closeTrigger>
+                </primitives:dialog.content>
+            </primitives:dialog.root>
+        ');
+
+        preg_match_all('/<button[^>]*data-dialog-close-trigger="my-dialog"[^>]*>/', $html, $matches);
+
+        $this->assertCount(2, $matches[0]);
+        foreach ($matches[0] as $closeTriggerTag) {
+            $this->assertStringNotContainsString(' id=', $closeTriggerTag);
+        }
+    }
+
+    #[Test]
     public function registersInHydrationRegistry(): void
     {
         $this->renderTemplate('
