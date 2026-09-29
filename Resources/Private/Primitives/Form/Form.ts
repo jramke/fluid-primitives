@@ -1,6 +1,7 @@
 import { Component, Machine, normalizeProps } from '../../Client';
 import { connect } from './src/form.connect';
 import { machine } from './src/form.machine';
+import { splitProps } from './src/form.props';
 import { getFieldMachinesFor, registerFormMachine, type FieldMachine } from './src/form.registry';
 import type { FormApi, FormProps, FormState } from './src/form.types';
 export type {
@@ -21,7 +22,8 @@ export class Form extends Component<FormProps, FormApi> {
     private fieldSubscriptions = new Map<FieldMachine, () => void>();
 
     initMachine(props: FormProps) {
-        const createdMachine = new Machine(machine, props);
+        const [machineProps] = splitProps(props);
+        const createdMachine = new Machine(machine, machineProps);
         registerFormMachine(this.getElement('root'), createdMachine);
         return createdMachine;
     }

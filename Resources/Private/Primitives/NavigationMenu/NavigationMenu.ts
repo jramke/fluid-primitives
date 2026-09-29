@@ -5,7 +5,8 @@ export class NavigationMenu extends Component<navigationMenu.Props, navigationMe
     static componentName = 'navigationMenu';
 
     initMachine(props: navigationMenu.Props): Machine<any> {
-        return new Machine(navigationMenu.machine, props);
+        const [machineProps] = navigationMenu.splitProps(props);
+        return new Machine(navigationMenu.machine, machineProps);
     }
 
     initApi() {

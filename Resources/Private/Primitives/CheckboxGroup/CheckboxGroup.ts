@@ -2,6 +2,7 @@ import { FieldAwareComponent, Machine, mergeProps, normalizeProps } from '../../
 import type { FieldMachine } from '../Form/src/form.registry';
 import { connect } from './src/checkbox-group.connect';
 import { machine } from './src/checkbox-group.machine';
+import { splitProps } from './src/checkbox-group.props';
 import { registerCheckboxGroup, unregisterCheckboxGroup } from './src/checkbox-group.registry';
 import type { CheckboxGroupApi, CheckboxGroupProps } from './src/checkbox-group.types';
 
@@ -21,7 +22,8 @@ export class CheckboxGroup extends FieldAwareComponent<CheckboxGroupProps, Check
 
     initMachine(props: CheckboxGroupProps) {
         props = this.withFieldProps(props);
-        const createdMachine = new Machine(machine, props);
+        const [machineProps] = splitProps(props);
+        const createdMachine = new Machine(machine, machineProps);
         registerCheckboxGroup(this.getElement('root'), createdMachine);
         return createdMachine;
     }

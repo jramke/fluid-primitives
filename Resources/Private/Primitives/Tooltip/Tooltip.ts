@@ -28,13 +28,14 @@ export class Tooltip extends Component<tooltip.Props, tooltip.Api> {
     static componentName = 'tooltip';
 
     initMachine(props: tooltip.Props): Machine<any> {
+        const [machineProps] = tooltip.splitProps(props);
         return new Machine(tooltip.machine, {
             interactive: true,
-            ...props,
+            ...machineProps,
             positioning: {
                 placement: 'top',
                 gutter: 6,
-                ...props.positioning,
+                ...machineProps.positioning,
             },
         });
     }

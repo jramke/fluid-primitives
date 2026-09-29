@@ -3,6 +3,7 @@ import type { FieldMachine } from '../Field/src/field.registry';
 import { connect } from './src/textarea.connect';
 import * as dom from './src/textarea.dom';
 import { machine } from './src/textarea.machine';
+import { splitProps } from './src/textarea.props';
 import type { TextareaApi, TextareaProps } from './src/textarea.types';
 
 export class Textarea extends FieldAwareComponent<TextareaProps, TextareaApi> {
@@ -21,7 +22,8 @@ export class Textarea extends FieldAwareComponent<TextareaProps, TextareaApi> {
 
     initMachine(props: TextareaProps): Machine<any> {
         props = this.withFieldProps(props);
-        return new Machine(machine, props);
+        const [machineProps] = splitProps(props);
+        return new Machine(machine, machineProps);
     }
 
     initApi() {

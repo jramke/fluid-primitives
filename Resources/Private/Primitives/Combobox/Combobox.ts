@@ -141,7 +141,8 @@ export class Combobox extends FieldAwareComponent<combobox.Props, combobox.Api> 
 
     initMachine(props: combobox.Props): Machine<any> {
         props = this.withFieldProps(props);
-        const transformedProps = this.transformProps(props);
+        const [machineProps] = combobox.splitProps(props);
+        const transformedProps = this.transformProps(machineProps);
 
         return new Machine(combobox.machine, transformedProps);
     }

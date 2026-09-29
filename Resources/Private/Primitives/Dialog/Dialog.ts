@@ -5,7 +5,8 @@ export class Dialog extends Component<dialog.Props, dialog.Api> {
     static componentName = 'dialog';
 
     initMachine(props: dialog.Props): Machine<any> {
-        return new Machine(dialog.machine, props);
+        const [machineProps] = dialog.splitProps(props);
+        return new Machine(dialog.machine, machineProps);
     }
 
     initApi() {

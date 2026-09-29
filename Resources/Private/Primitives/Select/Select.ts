@@ -47,7 +47,8 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
     }
 
     initMachine(props: select.Props): Machine<any> {
-        return new Machine(select.machine, this.withFieldProps(props));
+        const [machineProps] = select.splitProps(this.withFieldProps(props));
+        return new Machine(select.machine, machineProps);
     }
 
     initApi() {

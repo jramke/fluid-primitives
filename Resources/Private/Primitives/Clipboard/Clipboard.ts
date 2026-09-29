@@ -13,7 +13,9 @@ export class Clipboard extends Component<ClipboardProps, clipboard.Api> {
     static componentName = 'clipboard';
 
     initMachine(props: ClipboardProps): Machine<any> {
-        return new Machine(clipboard.machine, { ...props, translations: undefined });
+        const { translations: _translations, ...rest } = props;
+        const [machineProps] = clipboard.contextProps(rest);
+        return new Machine(clipboard.machine, machineProps);
     }
 
     initApi() {

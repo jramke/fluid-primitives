@@ -43,7 +43,8 @@ export class Slider extends FieldAwareComponent<slider.Props, slider.Api> {
 
     initMachine(props: slider.Props): Machine<any> {
         props = this.withFieldProps(props);
-        return new Machine(slider.machine, props);
+        const [machineProps] = slider.splitProps(props);
+        return new Machine(slider.machine, machineProps);
     }
 
     initApi() {

@@ -18,7 +18,8 @@ export class Switch extends FieldAwareComponent<zagSwitch.Props, zagSwitch.Api> 
 
     initMachine(props: zagSwitch.Props): Machine<any> {
         props = this.withFieldProps(props);
-        return new Machine(zagSwitch.machine, props);
+        const [machineProps] = zagSwitch.splitProps(props);
+        return new Machine(zagSwitch.machine, machineProps);
     }
 
     initApi() {

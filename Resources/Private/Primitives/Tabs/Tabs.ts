@@ -5,7 +5,8 @@ export class Tabs extends Component<tabs.Props, tabs.Api> {
     static componentName = 'tabs';
 
     initMachine(props: tabs.Props): Machine<any> {
-        return new Machine(tabs.machine, props);
+        const [machineProps] = tabs.splitProps(props);
+        return new Machine(tabs.machine, machineProps);
     }
 
     initApi() {

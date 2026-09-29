@@ -5,9 +5,8 @@ export class Accordion extends Component<accordion.Props, accordion.Api> {
     static componentName = 'accordion';
 
     initMachine(props: accordion.Props): Machine<any> {
-        return new Machine(accordion.machine, {
-            ...props,
-        });
+        const [machineProps] = accordion.splitProps(props);
+        return new Machine(accordion.machine, machineProps);
     }
 
     initApi() {

@@ -3,6 +3,7 @@ import type { FieldMachine } from '../Field/src/field.registry';
 import { connect } from './src/input.connect';
 import * as dom from './src/input.dom';
 import { machine } from './src/input.machine';
+import { splitProps } from './src/input.props';
 import type { InputApi, InputProps } from './src/input.types';
 
 export class Input extends FieldAwareComponent<InputProps, InputApi> {
@@ -21,7 +22,8 @@ export class Input extends FieldAwareComponent<InputProps, InputApi> {
 
     initMachine(props: InputProps): Machine<any> {
         props = this.withFieldProps(props);
-        return new Machine(machine, props);
+        const [machineProps] = splitProps(props);
+        return new Machine(machine, machineProps);
     }
 
     initApi() {

@@ -6,7 +6,8 @@ export class ScrollArea extends Component<scrollArea.Props, scrollArea.Api<PropT
     static componentName = 'scrollArea';
 
     initMachine(props: scrollArea.Props): Machine<any> {
-        return new Machine(scrollArea.machine, props);
+        const [machineProps] = scrollArea.splitProps(props);
+        return new Machine(scrollArea.machine, machineProps);
     }
 
     initApi() {

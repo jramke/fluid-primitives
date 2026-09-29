@@ -141,10 +141,12 @@ export class FileUpload extends FieldAwareComponent<FileUploadPrimitiveProps, fi
 
     initMachine(props: FileUploadPrimitiveProps): Machine<any> {
         props = this.withFieldProps(props);
+        const { translations, ...rest } = props;
+        const [machineProps] = fileUpload.splitProps(rest);
         return new Machine(fileUpload.machine, {
-            ...props,
+            ...machineProps,
             maxFiles: resolveMaxFiles(props),
-            translations: resolveTranslations(props.translations),
+            translations: resolveTranslations(translations),
         });
     }
 

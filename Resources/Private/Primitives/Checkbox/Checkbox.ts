@@ -141,7 +141,8 @@ export class Checkbox extends FieldAwareComponent<checkbox.Props, checkbox.Api> 
     initMachine(props: checkbox.Props): Machine<any> {
         props = this.withFieldProps(props);
         props = this.withGroupProps(props);
-        return new Machine(checkbox.machine, props);
+        const [machineProps] = checkbox.splitProps(props);
+        return new Machine(checkbox.machine, machineProps);
     }
 
     initApi() {

@@ -18,7 +18,8 @@ export class RadioGroup extends FieldAwareComponent<radioGroup.Props, radioGroup
 
     initMachine(props: radioGroup.Props): Machine<any> {
         props = this.withFieldProps(props);
-        return new Machine(radioGroup.machine, props);
+        const [machineProps] = radioGroup.splitProps(props);
+        return new Machine(radioGroup.machine, machineProps);
     }
 
     initApi() {

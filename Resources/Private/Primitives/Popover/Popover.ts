@@ -28,11 +28,12 @@ export class Popover extends Component<popover.Props, popover.Api> {
     static componentName = 'popover';
 
     initMachine(props: popover.Props): Machine<any> {
+        const [machineProps] = popover.splitProps(props);
         return new Machine(popover.machine, {
-            ...props,
+            ...machineProps,
             positioning: {
                 gutter: 6,
-                ...props.positioning,
+                ...machineProps.positioning,
             },
         });
     }

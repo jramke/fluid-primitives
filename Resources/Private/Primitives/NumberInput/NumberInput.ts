@@ -52,7 +52,8 @@ export class NumberInput extends FieldAwareComponent<numberInput.Props, numberIn
 
     initMachine(props: numberInput.Props): Machine<any> {
         props = this.withFieldProps(props);
-        return new Machine(numberInput.machine, this.transformProps(props));
+        const [machineProps] = numberInput.splitProps(props);
+        return new Machine(numberInput.machine, this.transformProps(machineProps));
     }
 
     initApi() {

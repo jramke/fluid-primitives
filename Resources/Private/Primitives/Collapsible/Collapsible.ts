@@ -5,7 +5,8 @@ export class Collapsible extends Component<collapsible.Props, collapsible.Api> {
     static componentName = 'collapsible';
 
     initMachine(props: collapsible.Props): Machine<any> {
-        return new Machine(collapsible.machine, props);
+        const [machineProps] = collapsible.splitProps(props);
+        return new Machine(collapsible.machine, machineProps);
     }
 
     initApi() {

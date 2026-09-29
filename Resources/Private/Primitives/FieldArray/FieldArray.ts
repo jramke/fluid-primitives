@@ -1,6 +1,7 @@
 import { Component, Machine, normalizeProps } from '../../Client';
 import { connect } from './src/field-array.connect';
 import { machine } from './src/field-array.machine';
+import { splitProps } from './src/field-array.props';
 import type { FieldArrayApi, FieldArrayProps } from './src/field-array.types';
 
 export type {
@@ -14,7 +15,8 @@ export class FieldArray extends Component<FieldArrayProps, FieldArrayApi> {
     static componentName = 'fieldArray';
 
     initMachine(props: FieldArrayProps): Machine<any> {
-        return new Machine(machine, props);
+        const [machineProps] = splitProps(props);
+        return new Machine(machine, machineProps);
     }
 
     initApi(): FieldArrayApi {

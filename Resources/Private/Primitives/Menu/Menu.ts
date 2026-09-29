@@ -36,7 +36,7 @@ export class Menu extends Component<menu.Props, menu.Api> {
     private triggerItemEls = new Map<string, HTMLElement>();
 
     initMachine(props: menu.Props): Machine<any> {
-        const { parentId: _parentId, ...menuProps } = props as menu.Props & { parentId?: string };
+        const [menuProps] = menu.splitProps(props);
 
         return new Machine(menu.machine, {
             // navigate({ href }) {
