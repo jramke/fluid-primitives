@@ -10,19 +10,18 @@ use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
 use Jramke\FluidPrimitives\Domain\Dto\ComponentHydrationCandidate;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Registry\NestedComponentRegistry;
-use Jramke\FluidPrimitives\Registry\PortalRegistry;
+use Jramke\FluidPrimitives\Registry\ReferencedRootRegistry;
 use Jramke\FluidPrimitives\Service\ContextService;
 use Jramke\FluidPrimitives\Utility\ClientPropsContextExtractor;
-use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
-use Jramke\FluidPrimitives\Utility\ComponentPartIdUtility;
+use Jramke\FluidPrimitives\Utility\ComponentRefUtility;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use Jramke\FluidPrimitives\Utility\Typed;
 
 /**
- * Registers a rendered root component's client-facing props for hydration, once its output (or
- * whatever it portaled away, via {@see PortalRegistry}) shows it was actually referenced client-side -
- * `ui:ref` always emits `data-scope="{componentName}"`, which is the detection signal this looks for,
- * mirrored by `ui:exposeToClient`'s marker for components with no ref'd part at all.
+ * Registers a rendered root component's client-facing props for hydration, once it was actually
+ * referenced client-side - `ui:ref`/`ui:template` record that in {@see ReferencedRootRegistry} (so it
+ * holds however the ref'd markup ends up rendered, portaled away included), mirrored by
+ * `ui:exposeToClient`'s marker for components with no ref'd part at all.
  *
  * Also the single place every such registration is recorded against whatever
  * {@see NestedComponentRegistry::recordNestedComponent()} tracking is currently active for it - a
@@ -51,15 +50,7 @@ final readonly class ComponentHydrationCollector
         }
 
         // only register the components props for hydration if the user used the ui:ref viewhelper
-        // ui:ref always emits data-scope="{clientBaseName}", so that's our detection signal
-        $clientBaseName = ComponentNameUtility::getClientBaseNameFromContext($candidate->renderingContext);
-        $newlyPortaledHtml = $this->extractNewlyPortaledHtml(
-            $candidate->portalRegistrySnapshotBeforeRender,
-            PortalRegistry::getInstance()->getAll(),
-        );
-        $hasRef =
-            str_contains($rendered, 'data-scope="' . $clientBaseName . '"') ||
-            str_contains($newlyPortaledHtml, 'data-scope="' . $clientBaseName . '"');
+        $hasRef = ReferencedRootRegistry::isReferenced($candidate->clientBaseName, $rootId);
 
         $manuallyExposedToClient = str_contains($rendered, Constants::MANUALLY_EXPOSED_TO_CLIENT_MARKER);
 
@@ -166,7 +157,7 @@ final readonly class ComponentHydrationCollector
      * `ui:template` content) - `null` when this component isn't rendering inside a `FieldArray` item
      * at all, or is rendering inside `itemTemplate`'s own unfilled stencil (`item.index` is null
      * there; that case is already covered by the tracking-scope stack instead, via the stencil's own
-     * id), the common case for every other root component.
+     * key), the common case for every other root component.
      *
      * Reads `$candidate->ctx`'s own `getParentRenderingContext()` - the same ambient-context lookup
      * `FieldContext::beforeRendering()` already performs to prefix a nested field's own `name` - not
@@ -174,10 +165,9 @@ final readonly class ComponentHydrationCollector
      * context (see `ComponentRenderer::renderComponent()`), not the one carrying the `fieldArray`
      * context on its `ContextService` stack.
      *
-     * Uses `ComponentPartIdUtility::generatePartId()` (the same formula `ui:ref` itself uses for
-     * `fieldArray.item`'s own `{ui:ref(name: 'item', value: index)}`) rather than building the id by
-     * hand, so this can never drift out of sync with what the row's own DOM id - and therefore what
-     * `ComponentHydrator.renameValue()` looks this key up by client-side - actually is.
+     * Uses `ComponentRefUtility::getScopeKey()` - the same key `ComponentHydrator.scopeKey()`
+     * rebuilds client-side from the row's own `item` part and `data-value`, which is what
+     * `ComponentHydrator.renameValue()` looks it up by.
      */
     private function resolveFieldArrayItemScopeKey(ComponentHydrationCandidate $candidate): ?string
     {
@@ -203,29 +193,6 @@ final readonly class ComponentHydrationCollector
             return null;
         }
 
-        return ComponentPartIdUtility::generatePartId('field-array', $fieldArrayRootId, 'item', (string)$itemIndex);
-    }
-
-    /**
-     * Concatenates whatever `PortalRegistry` entries were added between `$before` and `$after` -
-     * i.e. everything `ui:portal` buffered away while rendering this component, across every named
-     * portal bucket. Diffed by per-bucket length rather than array-diffed by value, since two
-     * unrelated portaled fragments could legitimately render identical markup (e.g. two dialogs
-     * with the same content) and would otherwise be indistinguishable/collapsed.
-     *
-     * @param array<string, string[]> $before
-     * @param array<string, string[]> $after
-     */
-    private function extractNewlyPortaledHtml(array $before, array $after): string
-    {
-        $newlyPortaledHtml = '';
-        foreach ($after as $name => $entries) {
-            $previousCount = count($before[$name] ?? []);
-            foreach (array_slice($entries, $previousCount) as $entry) {
-                $newlyPortaledHtml .= $entry;
-            }
-        }
-
-        return $newlyPortaledHtml;
+        return ComponentRefUtility::getScopeKey('field-array', $fieldArrayRootId, 'item', (string)$itemIndex);
     }
 }

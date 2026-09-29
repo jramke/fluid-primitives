@@ -8,9 +8,10 @@ use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
 use Jramke\FluidPrimitives\Domain\Dto\ComponentIdentity;
 use Jramke\FluidPrimitives\Domain\Dto\TagAttributes;
 use Jramke\FluidPrimitives\Registry\NestedComponentRegistry;
+use Jramke\FluidPrimitives\Registry\ReferencedRootRegistry;
 use Jramke\FluidPrimitives\Service\ContextService;
 use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
-use Jramke\FluidPrimitives\Utility\ComponentPartIdUtility;
+use Jramke\FluidPrimitives\Utility\ComponentRefUtility;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
@@ -43,9 +44,8 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
  * rendered as a client-filled stencil rather than a real instance, without the template author
  * having to pass an explicit prop for it.
  *
- * `name` follows the same camelCase convention as `ui:ref`'s own `name` argument - it's likewise
- * kebab-cased for `data-part` (e.g. `itemTemplate` -> `data-part="item-template"`) while the `id`
- * keeps it verbatim, for CSS/selector consistency with every other part in the DOM.
+ * `name` follows the same camelCase convention as `ui:ref`'s own `name` argument - the `<template>`
+ * itself is marked like any other part (e.g. `itemTemplate` -> `data-combobox-item-template="{rootId}"`).
  *
  * `context` is only required when this `ui:template` sits inside slot content passed into
  * *another* component - the common case: item/row markup a consumer authors for a primitive like
@@ -142,23 +142,19 @@ class TemplateViewHelper extends AbstractViewHelper
 
         try {
             $part = (string)$this->arguments['name'];
-            $stencilId = ComponentPartIdUtility::generatePartId(
-                $clientBaseName,
-                (string)$context->get('rootId'),
-                $part,
-            );
+            $rootId = (string)$context->get('rootId');
+            $stencilKey = ComponentRefUtility::getScopeKey($clientBaseName, $rootId, $part);
             $refAttributes = new TagAttributes([
-                'id' => $stencilId,
-                'data-scope' => $clientBaseName,
-                'data-part' => ComponentNameUtility::camelCaseToLowerCaseDashed($part),
+                ComponentRefUtility::getAttributeName($clientBaseName, $part) => $rootId,
             ]);
+            ReferencedRootRegistry::mark($clientBaseName, $rootId);
 
-            // Opens a tracking scope keyed by this stencil's own id, so every root component that
+            // Opens a tracking scope keyed by this stencil's own key, so every root component that
             // registers itself while rendering our children (however it renders - see
             // NestedComponentRegistry::recordNestedComponent()'s own docblock) is recorded as nested
             // inside this stencil. The client reads that list instead of inferring nesting from
             // rendered DOM shape (see ComponentHydrator.restampValue in Client/src/lib/hydration.ts).
-            NestedComponentRegistry::getInstance()->pushTrackingScope($stencilId);
+            NestedComponentRegistry::getInstance()->pushTrackingScope($stencilKey);
             try {
                 $renderedChildren = (string)$this->renderChildren();
             } finally {

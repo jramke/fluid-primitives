@@ -53,8 +53,9 @@ final readonly class ComponentIdentity
         public string $baseName,
         /**
          * `$baseName`, kebab-cased (e.g. "file-upload") - for the few things that genuinely need
-         * it: `data-scope` and {@see \Jramke\FluidPrimitives\Utility\ComponentPartIdUtility}'s
-         * override maps. DOM-facing identity stays namespace-agnostic by design - see
+         * it: the `ui:ref` attribute name (`data-<clientBaseName>-<part>`) and
+         * {@see \Jramke\FluidPrimitives\Utility\FieldIdMapping}'s keys. DOM-facing identity stays
+         * namespace-agnostic by design - see
          * `$namespaceIdentifier` for the hydration registry key instead.
          */
         public string $clientBaseName,

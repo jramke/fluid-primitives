@@ -5,57 +5,55 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\ViewHelpers;
 
 use Jramke\FluidPrimitives\Domain\Dto\TagAttributes;
+use Jramke\FluidPrimitives\Registry\ReferencedRootRegistry;
 use Jramke\FluidPrimitives\Service\ContextService;
 use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
-use Jramke\FluidPrimitives\Utility\ComponentPartIdUtility;
+use Jramke\FluidPrimitives\Utility\ComponentRefUtility;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use Jramke\FluidPrimitives\Utility\EnumUtility;
 use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
 /**
- * Generates a reference to a part of a component.
+ * Marks a part of a component for JavaScript interaction or styling.
  *
- * This is used to mark parts of a component for JavaScript interaction or styling.
- * It generates the element `id` (using a deterministic formula based on component name, root ID and part name)
- * along with `data-scope` and `data-part` attributes.
+ * It renders a single `data-<component>-<part>="<rootId>"` attribute - the convention Zag.js uses for
+ * its own parts - so the client finds the element with `query('<part>')` and CSS can target it with
+ * `[data-<component>-<part>]`. No `id` is generated: Zag adds the ids it needs for ARIA links itself
+ * when the component hydrates.
  *
  * ## Example
  * ```html
- * <div {ui:ref(name: 'button')}">Click me</div>
+ * <div {ui:ref(name: 'button')}>Click me</div>
  * ```
  * This will generate:
  * ```html
- * <div id="my-component:«uniqueRootId»:button" data-scope="my-component" data-part="button">Click me</div>
+ * <div data-my-component-button="«uniqueRootId»">Click me</div>
  * ```
  *
- * For multi-instance parts (e.g. accordion items, tab panels) pass a `value:` discriminator:
+ * For multi-instance parts (e.g. accordion items, tab panels) pass a `value:` discriminator, which
+ * additionally renders `data-value`:
  * ```html
- * <div {ui:ref(name: 'item', value: value)}">...</div>
+ * <div {ui:ref(name: 'item', value: value)}>...</div>
  * ```
  *
- * Without a `value:`, the generated `id` is the same every time that part name renders within one
- * component instance - correct for a true singleton part (root, trigger, content, ...), but if you
- * place the *same* value-less part more than once in one instance (e.g. a purely decorative
- * separator between item groups, which has no data-driven value of its own), every occurrence
- * gets an identical, duplicate `id`. Browsers don't warn about this - it just makes `id`-based
- * lookups (including this library's own `getElement`/`getElementById`) silently resolve to
- * whichever element happens to match first. Give each occurrence its own `value` from {@see
- * IdViewHelper} instead:
- * ```html
- * <f:variable name="separatorId">{ui:id(prefix: 'separator')}</f:variable>
- * <div {ui:ref(name: 'separator', value: separatorId)}">...</div>
- * ```
- * `warnAboutDuplicateIds()` (client-side, on automatically in TYPO3's development Application
- * Context) flags this in the browser console during development if it slips through.
+ * A part without a `value:` may legitimately appear more than once within one component instance
+ * (e.g. two close buttons of a dialog) - read them with `queryAll()` on the client.
+ *
+ * Ids are only rendered where you declare them: pass `ids` on the component's root
+ * (`ids="{content: 'my-content'}"`, the same override Zag uses - for the primitives and your own
+ * components alike) and the ref'd part with that name renders that `id`, while the client uses the
+ * same one. Never write an `id` attribute on an element that carries `ui:ref` yourself - the client
+ * doesn't know about it and Zag replaces it on hydration. A part rendered with a `value:` never
+ * gets an id from `ids`.
  *
  * You can also pass additional data attributes:
  * ```html
- * <div {ui:ref(name: 'button', data: { action: 'submit' })}">Click me</div>
+ * <div {ui:ref(name: 'button', data: { action: 'submit' })}>Click me</div>
  * ```
  * This will generate:
  * ```html
- * <div id="..." data-scope="my-component" data-part="button" data-action="submit">Click me</div>
+ * <div data-my-component-button="..." data-action="submit">Click me</div>
  * ```
  *
  * A component's slot content (the markup a consumer writes between its opening/closing tags) is
@@ -122,8 +120,7 @@ class RefViewHelper extends AbstractViewHelper
         $part = (string)$this->arguments['name'];
         // Deliberately left as the full declared union (string|int|float|BackedEnum|UnitEnum|null|array)
         // rather than narrowed here - the array case is still meaningful for the (string) cast below, and
-        // Typed::stringOrNull() would silently discard it. Narrowed only at the one call site
-        // (generatePartId() below) that actually requires ?string.
+        // Typed::stringOrNull() would silently discard it.
         // @mago-expect analysis:mixed-assignment
         $value = EnumUtility::normalize($this->arguments['value']);
 
@@ -136,23 +133,18 @@ class RefViewHelper extends AbstractViewHelper
             );
         }
 
-        $baseAttributes = [
-            'data-scope' => $componentName,
-            'data-part' => ComponentNameUtility::camelCaseToLowerCaseDashed($part),
-        ];
+        $baseAttributes = [ComponentRefUtility::getAttributeName($componentName, $part) => $rootId];
 
         if ($value !== null) {
             $baseAttributes['data-value'] = (string)$value;
         }
 
-        $id = ComponentPartIdUtility::generatePartId(
-            $componentName,
-            $rootId,
-            $part,
-            Typed::stringOrNull($value),
-            $idsArray,
-        );
-        $baseAttributes = array_merge(['id' => $id], $baseAttributes);
+        $explicitId = $value === null ? $idsArray[$part] ?? '' : '';
+        if ($explicitId !== '') {
+            $baseAttributes = ['id' => $explicitId, ...$baseAttributes];
+        }
+
+        ReferencedRootRegistry::mark($componentName, $rootId);
 
         $attributes = new TagAttributes(array_merge($baseAttributes, $additionalData));
 
@@ -215,7 +207,7 @@ class RefViewHelper extends AbstractViewHelper
         );
         // ContextService is keyed by the component's canonical camelCase base name, so no
         // conversion happens on the lookup itself. $componentName stays kebab here - it's used
-        // below for data-scope/generatePartId, which must match everywhere else.
+        // below for the ref attribute name/registry key, which must match everywhere else.
         $componentName = ComponentNameUtility::camelCaseToLowerCaseDashed($explicitContextName);
         $context = ContextService::requireFromRenderingContext($renderingContext, $explicitContextName, 'ui:ref');
 

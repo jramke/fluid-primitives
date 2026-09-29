@@ -22,7 +22,6 @@ final readonly class ComponentHydrationCandidate
      *   related ancestor context merged in (see {@see FieldContextVariableMerger},
      *   {@see CheckboxGroupContextVariableMerger}), keyed by the hydration data key they're exposed
      *   under.
-     * @param array<string, string[]> $portalRegistrySnapshotBeforeRender
      */
     public function __construct(
         public string $rendered,
@@ -42,6 +41,5 @@ final readonly class ComponentHydrationCandidate
         public array $propsMarkedForClient,
         public ?AbstractComponentContext $ctx,
         public array $relatedContextRootIds,
-        public array $portalRegistrySnapshotBeforeRender,
     ) {}
 }

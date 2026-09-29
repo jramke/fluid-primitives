@@ -7,6 +7,7 @@ namespace Jramke\FluidPrimitives\Tests\Functional;
 use Jramke\FluidPrimitives\Component\ComponentPrimitivesCollection;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Registry\NestedComponentRegistry;
+use Jramke\FluidPrimitives\Registry\ReferencedRootRegistry;
 use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Core\Core\SystemEnvironmentBuilder;
 use TYPO3\CMS\Core\Http\NormalizedParams;
@@ -187,6 +188,7 @@ abstract class FunctionalTestCase extends TYPO3FunctionalTestCase
         // Clear the hydration registry
         HydrationRegistry::getInstance()->clear();
         NestedComponentRegistry::getInstance()->clear();
+        ReferencedRootRegistry::clear();
 
         return $view;
     }
