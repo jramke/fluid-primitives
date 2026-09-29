@@ -67,7 +67,6 @@ export function connect<T extends PropTypes>(
         getRootProps() {
             return normalize.element({
                 ...parts.root.attrs(scope.id),
-                id: dom.getRootId(scope),
                 role: 'group',
                 'data-disabled': disabled ? '' : undefined,
                 'data-readonly': readOnly ? '' : undefined,

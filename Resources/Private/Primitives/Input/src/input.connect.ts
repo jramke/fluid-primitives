@@ -39,7 +39,6 @@ export function connect<T extends PropTypes>(
         getRootProps() {
             return normalize.element({
                 ...parts.root.attrs(scope.id),
-                id: dom.getRootId(scope),
                 'data-invalid': handle.invalid ? '' : undefined,
                 'data-disabled': handle.disabled ? '' : undefined,
                 'data-readonly': handle.readOnly ? '' : undefined,
@@ -90,7 +89,6 @@ export function connect<T extends PropTypes>(
         getLabelProps() {
             return normalize.label({
                 ...parts.label.attrs(scope.id),
-                id: dom.getLabelId(scope),
                 htmlFor: dom.getInputId(scope),
                 'data-invalid': handle.invalid ? '' : undefined,
                 'data-disabled': handle.disabled ? '' : undefined,
@@ -112,7 +110,6 @@ export function connect<T extends PropTypes>(
         getLiveRegionProps() {
             return normalize.element({
                 ...parts.liveRegion.attrs(scope.id),
-                id: dom.getLiveRegionId(scope),
             });
         },
     };

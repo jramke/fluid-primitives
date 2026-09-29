@@ -8,7 +8,6 @@ import { parseFieldPath, stringifyFieldPathAsBrackets } from '../../Form/src/for
 import { renameFieldMachineForForm } from '../../Form/src/form.registry';
 import type { FieldArray } from '../FieldArray';
 import { parts } from './field-array.anatomy';
-import * as dom from './field-array.dom';
 import type { FieldArrayApi, FieldArrayApiActions, FieldArrayApiProps } from './field-array.types';
 
 /**
@@ -37,7 +36,6 @@ export function connect<T extends PropTypes>(
             const disabled = !actions.canAppend();
             return normalize.button({
                 ...parts.addTrigger.attrs(component.machine.scope.id),
-                id: dom.getAddTriggerId(component.machine.scope),
                 onClick: () => actions.append(),
                 'aria-disabled': disabled ? true : undefined,
                 'data-disabled': disabled ? true : undefined,

@@ -172,7 +172,6 @@ export function connect<T extends PropTypes>(
             return normalize.element({
                 ...parts.root.attrs(scope.id),
                 noValidate: true,
-                id: dom.getFormId(scope),
                 'data-state': stateValue,
                 'data-submitting': isSubmitting ? '' : undefined,
                 'data-invalid': isInvalid ? '' : undefined,
