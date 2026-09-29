@@ -222,12 +222,10 @@ export class FileUpload extends FieldAwareComponent<FileUploadPrimitiveProps, fi
      * underneath them.
      */
     private updateEmptyState(itemGroupEl: HTMLElement) {
-        const emptyStateEl = itemGroupEl.querySelector<HTMLElement>('[data-part="empty-state"]');
+        const emptyStateEl = this.query('emptyState', itemGroupEl);
         if (!emptyStateEl) return;
 
-        const hasVisibleItems = Array.from(
-            itemGroupEl.querySelectorAll<HTMLElement>('[data-part="item"]')
-        ).some(el => !el.hidden);
+        const hasVisibleItems = this.queryAll('item', itemGroupEl).some(el => !el.hidden);
 
         emptyStateEl.hidden = hasVisibleItems;
     }
@@ -241,17 +239,15 @@ export class FileUpload extends FieldAwareComponent<FileUploadPrimitiveProps, fi
      * render.
      */
     private wireExistingItemDeleteTriggers(itemGroupEl: HTMLElement) {
-        const existingItemEls = itemGroupEl.querySelectorAll<HTMLElement>(
-            '[data-part="item"][data-type="existing"]:not([data-file-upload-wired])'
+        const existingItemEls = this.queryAll('item', itemGroupEl).filter(
+            el => el.dataset.type === 'existing' && !el.dataset.fileUploadWired
         );
 
         existingItemEls.forEach(itemEl => {
             itemEl.dataset.fileUploadWired = 'true';
 
             const checkboxEl = itemEl.querySelector<HTMLInputElement>('input[type="checkbox"]');
-            const deleteTriggerEl = itemEl.querySelector<HTMLElement>(
-                '[data-part="item-delete-trigger"]'
-            );
+            const deleteTriggerEl = this.query('itemDeleteTrigger', itemEl);
             if (!checkboxEl || !deleteTriggerEl) return;
 
             deleteTriggerEl.addEventListener('click', () => {
@@ -278,8 +274,8 @@ export class FileUpload extends FieldAwareComponent<FileUploadPrimitiveProps, fi
     }
 
     private renderItems(itemGroupEl: HTMLElement, entries: ItemEntry[], type: ItemType) {
-        itemGroupEl
-            .querySelectorAll<HTMLElement>('[data-part="item"]:not([data-type="existing"])')
+        this.queryAll('item', itemGroupEl)
+            .filter(el => el.dataset.type !== 'existing')
             .forEach(el => {
                 this.previewCleanups.get(el)?.();
                 this.previewCleanups.delete(el);
@@ -340,24 +336,21 @@ export class FileUpload extends FieldAwareComponent<FileUploadPrimitiveProps, fi
 
         previews.forEach(el => {
             if (el !== matched) {
-                // Prune rather than hide: every unmatched variant would otherwise keep sharing the
-                // matched one's `itemPreview` id (restampValue() stamps every ref'd descendant with
-                // the same file value, since it has no way to know several of them represent
-                // mutually-exclusive alternatives rather than distinct parts) - a duplicate id that's
-                // never actually needed, since the match is permanent for a given file.
+                // Prune rather than hide: the unmatched variants are mutually-exclusive alternatives
+                // and the match is permanent for a given file, so they'd only be dead markup.
                 el.remove();
                 return;
             }
 
             this.spreadProps(el, this.api.getItemPreviewProps({ file, type }));
 
-            const fallbackEl = el.querySelector<HTMLElement>('[data-part="item-preview-fallback"]');
+            const fallbackEl = this.query('itemPreviewFallback', el);
             if (fallbackEl) fallbackEl.textContent = fileExtension(file.name);
         });
 
         if (!matched) return;
 
-        const imageEl = matched.querySelector<HTMLImageElement>('[data-part="item-preview-image"]');
+        const imageEl = this.query<HTMLImageElement>('itemPreviewImage', matched);
         if (!imageEl || !file.type.startsWith('image/')) return;
 
         const cleanup = this.api.createFileUrl(file, url => {

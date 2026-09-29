@@ -37,9 +37,7 @@ export abstract class FieldAwareComponent<Props, Api> extends Component<Props, A
     protected getClosestField() {
         return (
             this.closestField ||
-            (this.getElement('root')?.closest(
-                '[data-scope="field"][data-part="root"]'
-            ) as HTMLElement) ||
+            (this.query('root')?.closest('[data-field-root]') as HTMLElement) ||
             null
         );
     }

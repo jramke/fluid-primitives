@@ -13,7 +13,7 @@ export const getErrorEl = (scope: Scope) => scope.getById(getErrorId(scope));
 export const getDescriptionEl = (scope: Scope) => scope.getById(getDescriptionId(scope));
 
 export const getClosestFieldRoot = (target: Element | null) => {
-    return target?.closest('[data-scope="field"][data-part="root"]') ?? null;
+    return target?.closest('[data-field-root]') ?? null;
 };
 
 export const getClosestFieldName = (target: Element | null): string | undefined => {

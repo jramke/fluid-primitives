@@ -154,8 +154,8 @@ function findFocusTargetAfterRemoval(
     const siblingRowEl = rows[removedPosition + 1] ?? rows[removedPosition - 1];
 
     return (
-        siblingRowEl?.querySelector<HTMLElement>('[data-part="remove-trigger"]') ??
-        component.getElement<HTMLElement>('addTrigger')
+        (siblingRowEl && component.query<HTMLElement>('removeTrigger', siblingRowEl)) ||
+        component.query<HTMLElement>('addTrigger')
     );
 }
 
@@ -177,19 +177,17 @@ function reindexRowsAfter(component: FieldArray, removedIndex: number): void {
 
         const newIndex = index - 1;
 
-        rowEl
-            .querySelectorAll<HTMLElement>('[data-scope="field"][data-part="root"]')
-            .forEach(fieldRootEl => {
-                const oldName = fieldRootEl.dataset.name;
-                if (!oldName) return;
-                const newName = oldName.replace(`[${index}]`, `[${newIndex}]`);
-                renameFieldMachineForForm(fieldRootEl, oldName, newName);
-            });
+        rowEl.querySelectorAll<HTMLElement>('[data-field-root]').forEach(fieldRootEl => {
+            const oldName = fieldRootEl.dataset.name;
+            if (!oldName) return;
+            const newName = oldName.replace(`[${index}]`, `[${newIndex}]`);
+            renameFieldMachineForForm(fieldRootEl, oldName, newName);
+        });
 
         // renameFieldMachineForForm (above) only updates each nested field's `name` prop for
-        // submission purposes - it never touches DOM ids. Without also re-keying those here, a
+        // submission purposes - it never touches their root ids. Without also re-keying those here, a
         // later row appended at this now-freed-up index would clone the same stencil and collide
-        // with these nested Field/Input's still-stale ids (see `ComponentHydrator.renameValue`'s
+        // with these nested Field/Input's still-stale root ids (see `ComponentHydrator.renameValue`'s
         // own docblock for the full mechanism - `rowEl` is an existing, possibly already-mounted
         // item, never a fresh `<template>` clone, so this must be `renameValue`, not
         // `restampValue`).

@@ -55,9 +55,7 @@ export class Checkbox extends FieldAwareComponent<checkbox.Props, checkbox.Api> 
     private getClosestCheckboxGroup(): HTMLElement | null {
         return (
             this.closestCheckboxGroup ||
-            (this.getElement('root')?.closest(
-                '[data-scope="checkbox-group"][data-part="root"]'
-            ) as HTMLElement | null)
+            (this.query('root')?.closest('[data-checkbox-group-root]') as HTMLElement | null)
         );
     }
 
