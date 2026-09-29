@@ -1,8 +1,7 @@
 import type { Scope } from '@zag-js/core';
+import { parts } from './field-array.anatomy';
 
-export const getLiveRegionId = (scope: Scope) =>
-    scope.ids?.liveRegion ?? `field-array:${scope.id}:liveRegion`;
-export const getLiveRegionEl = (scope: Scope) => scope.getById(getLiveRegionId(scope));
+export const getLiveRegionEl = (scope: Scope) => scope.query(scope.selector(parts.liveRegion));
 
 /**
  * `addTrigger` is a singleton part, server-stamped once and never restamped afterward (unlike
