@@ -9,6 +9,8 @@ export interface InputTranslations {
 
 export interface InputProps {
     id: string;
+    /** Ids of the parts other elements reference: `input` (its label's `for`) and `wordCount`. */
+    ids?: Record<string, string>;
     name?: string;
     disabled?: boolean;
     readOnly?: boolean;

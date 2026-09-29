@@ -4,6 +4,7 @@ import type { InputProps } from './input.types';
 
 export const props = createProps<InputProps>()([
     'id',
+    'ids',
     'name',
     'disabled',
     'readOnly',

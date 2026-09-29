@@ -11,6 +11,8 @@ export type TextareaSubmitOn = 'enter' | 'mod+enter';
 
 export interface TextareaProps {
     id: string;
+    /** Ids of the parts other elements reference: `textarea` (its label's `for`) and `wordCount`. */
+    ids?: Record<string, string>;
     name?: string;
     disabled?: boolean;
     readOnly?: boolean;

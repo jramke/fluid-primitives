@@ -4,6 +4,7 @@ import type { TextareaProps } from './textarea.types';
 
 export const props = createProps<TextareaProps>()([
     'id',
+    'ids',
     'name',
     'disabled',
     'readOnly',
