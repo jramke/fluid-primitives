@@ -65,8 +65,9 @@ export class Popover extends Component<popover.Props, popover.Api> {
         const descriptionEl = this.query('description');
         if (descriptionEl) this.spreadProps(descriptionEl, this.api.getDescriptionProps());
 
-        const closeTriggerEl = this.getElement('closeTrigger');
-        if (closeTriggerEl) this.spreadProps(closeTriggerEl, this.api.getCloseTriggerProps());
+        this.queryAll('closeTrigger').forEach(closeTriggerEl => {
+            this.spreadProps(closeTriggerEl, this.api.getCloseTriggerProps());
+        });
 
         const indicatorEl = this.query('indicator');
         if (indicatorEl) this.spreadProps(indicatorEl, this.api.getIndicatorProps());

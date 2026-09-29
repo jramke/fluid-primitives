@@ -27,6 +27,30 @@ final class PopoverRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function marksEveryCloseTriggerOfAPopoverWithoutIdsSoTheyCannotCollide(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:popover.root rootId="my-popover">
+                <primitives:popover.trigger>Open</primitives:popover.trigger>
+                <primitives:popover.positioner>
+                    <primitives:popover.content>
+                        <primitives:popover.closeTrigger>X</primitives:popover.closeTrigger>
+                        Content
+                        <primitives:popover.closeTrigger>Cancel</primitives:popover.closeTrigger>
+                    </primitives:popover.content>
+                </primitives:popover.positioner>
+            </primitives:popover.root>
+        ');
+
+        preg_match_all('/<button[^>]*data-popover-close-trigger="my-popover"[^>]*>/', $html, $matches);
+
+        $this->assertCount(2, $matches[0]);
+        foreach ($matches[0] as $closeTriggerTag) {
+            $this->assertStringNotContainsString(' id=', $closeTriggerTag);
+        }
+    }
+
+    #[Test]
     public function rendersClosedStateByDefault(): void
     {
         $html = $this->renderTemplate('
