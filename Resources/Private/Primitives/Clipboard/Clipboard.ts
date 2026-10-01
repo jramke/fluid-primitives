@@ -26,23 +26,23 @@ export class Clipboard extends Component<ClipboardProps, clipboard.Api> {
     }
 
     render() {
-        const rootEl = this.getElement('root');
+        const rootEl = this.hydrator.query('root');
         if (rootEl) this.spreadProps(rootEl, this.api.getRootProps());
 
-        const labelEl = this.getElement('label');
+        const labelEl = this.hydrator.query('label');
         if (labelEl) this.spreadProps(labelEl, this.api.getLabelProps());
 
-        const controlEl = this.getElement('control');
+        const controlEl = this.hydrator.query('control');
         if (controlEl) this.spreadProps(controlEl, this.api.getControlProps());
 
-        const inputEl = this.getElement('input');
+        const inputEl = this.hydrator.query('input');
         if (inputEl) this.spreadProps(inputEl, this.api.getInputProps());
 
         this.spreadPropsByValue('indicator', ({ value }) =>
             this.api.getIndicatorProps({ copied: value === 'copied' })
         );
 
-        const triggerEl = this.getElement('trigger');
+        const triggerEl = this.hydrator.query('trigger');
         if (triggerEl) {
             const translations = this.translations;
             const mergedProps = mergeProps(this.api.getTriggerProps(), {

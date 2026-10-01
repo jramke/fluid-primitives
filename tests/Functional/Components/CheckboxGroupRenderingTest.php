@@ -22,8 +22,7 @@ final class CheckboxGroupRenderingTest extends FunctionalTestCase
         ');
 
         $this->assertStringContainsString('role="group"', $html);
-        $this->assertStringContainsString('data-scope="checkbox-group"', $html);
-        $this->assertStringContainsString('data-part="root"', $html);
+        $this->assertStringContainsString('data-checkbox-group-root="', $html);
     }
 
     #[Test]

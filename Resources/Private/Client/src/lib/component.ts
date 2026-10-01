@@ -1,30 +1,69 @@
 import type { Attrs } from '@zag-js/vanilla';
-import { ComponentHydrator, Machine, spreadProps, toKebabCase } from '.';
+import { ComponentHydrator, getComponentInstance, Machine, spreadProps, toKebabCase } from '.';
 import type { ComponentInterface } from '../types';
 
 export abstract class Component<Props, Api> implements ComponentInterface<Api> {
     document: Document;
-    machine: Machine<any>;
-    api: Api;
-    hydrator: ComponentHydrator | null = null;
-    userProps?: Partial<Props>;
+    #machine?: Machine<any>;
+    #api?: Api;
+    #hydrator?: ComponentHydrator;
+    #userProps?: Props;
+    /**
+     * The Fluid namespace identifier (e.g. "ui") this instance was mounted under - assigned by
+     * `mountAll`/`mount` right after their callback returns, so not yet available while it runs
+     * (`init()` included).
+     */
+    namespace?: string;
     static componentName: string;
 
     get doc(): Document {
         return this.document;
     }
 
-    constructor(props: Props, userDocument: Document = document) {
+    constructor(
+        private readonly initialProps: Props,
+        userDocument: Document = document
+    ) {
         this.document = userDocument;
-        this.userProps = this.transformProps(props);
-        // Deliberately the original props, not `userProps` - subclasses that override
-        // transformProps() call it themselves inside initMachine(), after their own
-        // field/group merging and prop filtering. Passing the already-transformed
-        // `userProps` here would run transformProps() twice, double-wrapping callback
-        // props like Combobox/NumberInput's onSelect/onValueChange.
-        this.hydrator = this.initHydrator(props);
-        this.machine = this.initMachine(props);
-        this.api = this.initApi();
+    }
+
+    /** Created by {@see init} - reading it earlier throws. */
+    get machine(): Machine<any> {
+        return this.#requireInit(this.#machine, 'machine');
+    }
+
+    /** Created by {@see init} - reading it earlier throws. */
+    get api(): Api {
+        return this.#requireInit(this.#api, 'api');
+    }
+
+    protected set api(api: Api) {
+        this.#api = api;
+    }
+
+    /**
+     * Finds the component's parts by name, see {@see ComponentHydrator.query}. Created by
+     * {@see init} - reading it earlier throws.
+     */
+    get hydrator(): ComponentHydrator {
+        return this.#requireInit(this.#hydrator, 'hydrator');
+    }
+
+    /**
+     * The props the instance runs on - what {@see transformProps} made of the ones it was created
+     * with. Created by {@see init} - reading it earlier throws.
+     */
+    get userProps(): Props {
+        return this.#requireInit(this.#userProps, 'userProps');
+    }
+
+    #requireInit<T>(value: T | undefined, member: string): T {
+        if (value === undefined) {
+            throw new Error(
+                `${this.getName()}: \`${member}\` was accessed before init(). It only exists once init() has run - call init() first.`
+            );
+        }
+        return value;
     }
 
     abstract initMachine(props: Props): Machine<any>;
@@ -33,16 +72,30 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
     initHydrator(props: Props) {
         const id = (props as any).id;
         if (!id) throw new Error('ComponentHydrator requires an id prop to initialize.');
-        return new ComponentHydrator(this.getName(), id, (props as any).ids, this.doc);
+        return new ComponentHydrator(this.getName(), id, this.doc);
     }
 
+    /**
+     * Builds everything the instance runs on - `userProps`, hydrator, machine and api - then renders
+     * once and starts the machine.
+     *
+     * None of it happens in the constructor on purpose: `transformProps`, `initMachine` and
+     * `initApi` are overridden by subclasses, and a subclass' own field initializers only run after
+     * `super()` returns. A hook called from the base constructor would see those fields unset, and
+     * whatever it assigned to one would be reset right afterwards.
+     */
     init() {
+        this.#userProps = this.transformProps(this.initialProps);
+        this.#hydrator = this.initHydrator(this.#userProps);
+        this.#machine = this.initMachine(this.#userProps);
+        this.#api = this.initApi();
+
         this.render();
-        this.machine.subscribe(() => {
-            this.api = this.initApi();
+        this.#machine.subscribe(() => {
+            this.#api = this.initApi();
             this.render();
         });
-        this.machine.start();
+        this.#machine.start();
     }
 
     /**
@@ -63,19 +116,31 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
     }
 
     /**
-     * Kebab form of {@see getName} - what actually appears in DOM-facing identifiers (data-scope,
-     * hydration ids). See {@see ComponentHydrator.clientComponentName}.
+     * Kebab form of {@see getName} - what actually appears in DOM-facing identifiers (part attribute
+     * names, hydration keys). See {@see ComponentHydrator.clientComponentName}.
      */
     getClientName() {
         return toKebabCase(this.getName());
     }
 
     /**
-     * Override in consumer for example when a getter is used for collection
-     * Needs to be used manually inside the initMachine method
+     * Override to adjust the props before anything else sees them, e.g. to wrap a callback prop.
+     * Runs once, first in {@see init}: the result becomes `userProps`, which `initHydrator()` and
+     * `initMachine()` receive.
      */
-    transformProps(props: Partial<Props>): Partial<Props> {
+    transformProps(props: Props): Props {
         return props;
+    }
+
+    /**
+     * Another already-mounted instance of this same component, by root id - for a primitive that
+     * composes two independent instances of itself (Menu submenus). Only resolves once
+     * `mountAll`/`mount` assigned {@see namespace}.
+     */
+    protected getPeerInstance<T extends Component<any, any>>(rootId: string): T | undefined {
+        return this.namespace
+            ? getComponentInstance<T>(`${this.namespace}:${this.getName()}`, rootId)
+            : undefined;
     }
 
     updateProps(newProps: Partial<Props>) {
@@ -84,19 +149,11 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
 
     destroy() {
         this.machine.stop();
-        this.hydrator?.destroy();
+        this.hydrator.destroy();
     }
 
     spreadProps(node: HTMLElement, attrs: Attrs) {
         spreadProps(node, attrs, this.machine.scope.id);
-    }
-
-    getElement<T extends HTMLElement>(part: string, parent?: HTMLElement | Document): T | null {
-        return this.hydrator?.getElement<T>(part, parent) || null;
-    }
-
-    getElements<T extends HTMLElement>(part: string, parent?: HTMLElement | Document): T[] {
-        return this.hydrator?.getElements<T>(part, parent) || [];
     }
 
     /**
@@ -112,7 +169,7 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
         getProps: (ctx: { el: HTMLElement; value: string }) => Attrs | null | undefined,
         options?: { parent?: HTMLElement | Document }
     ): void {
-        this.getElements<HTMLElement>(part, options?.parent).forEach(el => {
+        this.hydrator.queryAll<HTMLElement>(part, options?.parent).forEach(el => {
             const value = el.dataset.value;
             if (value === undefined) return;
             const props = getProps({ el, value });
@@ -125,7 +182,7 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
         getProps: (ctx: { el: HTMLElement; value?: string }) => Attrs | null | undefined,
         options?: { parent?: HTMLElement | Document }
     ): void {
-        this.getElements<HTMLElement>(part, options?.parent).forEach(el => {
+        this.hydrator.queryAll<HTMLElement>(part, options?.parent).forEach(el => {
             const value = el.dataset.value;
             const props = getProps({ el, value });
             if (props) this.spreadProps(el, props);

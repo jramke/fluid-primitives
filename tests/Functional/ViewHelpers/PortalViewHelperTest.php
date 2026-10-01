@@ -19,14 +19,14 @@ final class PortalViewHelperTest extends FunctionalTestCase
 
         $html = $this->renderTemplate('
             <ui:portal>
-                <div data-part="portaled">Portaled content</div>
+                <div data-testid="portaled">Portaled content</div>
             </ui:portal>
         ');
 
         // No ui:portalContainer was used, yet the portal still renders nothing in place - it went
         // straight into PageRenderer's footer instead.
         $this->assertSame('', trim($html));
-        $this->assertStringContainsString('data-part="portaled"', $this->readFooterData());
+        $this->assertStringContainsString('data-testid="portaled"', $this->readFooterData());
     }
 
     #[Test]
@@ -36,14 +36,14 @@ final class PortalViewHelperTest extends FunctionalTestCase
 
         $this->renderTemplate('
             <ui:portal name="sidebar">
-                <div data-part="sidebar-portaled">Sidebar content</div>
+                <div data-testid="sidebar-portaled">Sidebar content</div>
             </ui:portal>
         ');
 
-        $this->assertStringNotContainsString('data-part="sidebar-portaled"', $this->readFooterData());
+        $this->assertStringNotContainsString('data-testid="sidebar-portaled"', $this->readFooterData());
 
         $sidebarPortaled = implode('', PortalRegistry::getInstance()->getAllByName('sidebar'));
-        $this->assertStringContainsString('data-part="sidebar-portaled"', $sidebarPortaled);
+        $this->assertStringContainsString('data-testid="sidebar-portaled"', $sidebarPortaled);
     }
 
     #[Test]
@@ -53,12 +53,12 @@ final class PortalViewHelperTest extends FunctionalTestCase
 
         $html = $this->renderTemplate('
             <ui:portal name="sidebar">
-                <div data-part="sidebar-portaled">Sidebar content</div>
+                <div data-testid="sidebar-portaled">Sidebar content</div>
             </ui:portal>
             <div id="target"><ui:portalContainer name="sidebar" /></div>
         ');
 
-        $this->assertStringContainsString('<div id="target"><div data-part="sidebar-portaled">', $html);
+        $this->assertStringContainsString('<div id="target"><div data-testid="sidebar-portaled">', $html);
         $this->assertSame([], PortalRegistry::getInstance()->getAllByName('sidebar'));
     }
 
@@ -72,7 +72,7 @@ final class PortalViewHelperTest extends FunctionalTestCase
             <primitives:combobox.root collection="{collection}">
                 <ui:template name="itemTemplate" context="combobox">
                     <ui:portal>
-                        <div data-part="stencil-portaled">Portaled content</div>
+                        <div data-testid="stencil-portaled">Portaled content</div>
                     </ui:portal>
                 </ui:template>
             </primitives:combobox.root>
@@ -80,8 +80,11 @@ final class PortalViewHelperTest extends FunctionalTestCase
 
         // The stencil's own <template> tag still wraps it, proving it stayed part of the clonable
         // content instead of leaking out to the footer.
-        $this->assertMatchesRegularExpression('/<template[^>]*>.*data-part="stencil-portaled".*<\/template>/s', $html);
-        $this->assertStringNotContainsString('data-part="stencil-portaled"', $this->readFooterData());
+        $this->assertMatchesRegularExpression(
+            '/<template data-combobox-item-template="[^"]*">.*data-testid="stencil-portaled".*<\/template>/s',
+            $html,
+        );
+        $this->assertStringNotContainsString('data-testid="stencil-portaled"', $this->readFooterData());
     }
 
     private function readFooterData(): string

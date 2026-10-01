@@ -19,8 +19,8 @@ export class Field extends Component<FieldProps, FieldApi> {
     initMachine(props: FieldProps) {
         const [machineProps] = splitProps(props);
         const createdMachine = new Machine(machine, machineProps);
-        registerFieldMachine(this.getElement('root'), createdMachine);
-        registerFieldMachineForForm(this.getElement('root'), createdMachine);
+        registerFieldMachine(this.hydrator.query('root'), createdMachine);
+        registerFieldMachineForForm(this.hydrator.query('root'), createdMachine);
         return createdMachine;
     }
 
@@ -29,15 +29,15 @@ export class Field extends Component<FieldProps, FieldApi> {
     }
 
     render() {
-        const rootEl = this.getElement('root');
+        const rootEl = this.hydrator.query('root');
         if (rootEl) {
             this.spreadProps(rootEl, this.api.getRootProps());
         }
 
-        const labelEl = this.getElement('label');
+        const labelEl = this.hydrator.query('label');
         if (labelEl) this.spreadProps(labelEl, this.api.getLabelProps());
 
-        const controlEl = this.getElement('control');
+        const controlEl = this.hydrator.query('control');
         // For field-aware primitives, this id is shared with one of their own parts (see
         // ComponentUtility::FIELD_ID_PARTS) just so `<label for>` targets the right element - that
         // element already manages its own name/disabled/required/etc, so only apply ours when
@@ -46,10 +46,10 @@ export class Field extends Component<FieldProps, FieldApi> {
             this.spreadProps(controlEl, this.api.getControlProps());
         }
 
-        const descriptionEl = this.getElement('description');
+        const descriptionEl = this.hydrator.query('description');
         if (descriptionEl) this.spreadProps(descriptionEl, this.api.getDescriptionProps());
 
-        const errorEl = this.getElement('error');
+        const errorEl = this.hydrator.query('error');
         if (errorEl) {
             this.spreadProps(errorEl, this.api.getErrorProps());
             const msg = this.api.getErrorText();

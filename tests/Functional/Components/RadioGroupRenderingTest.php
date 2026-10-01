@@ -22,8 +22,7 @@ final class RadioGroupRenderingTest extends FunctionalTestCase
         ');
 
         $this->assertStringContainsString('role="radiogroup"', $html);
-        $this->assertStringContainsString('data-scope="radio-group"', $html);
-        $this->assertStringContainsString('data-part="root"', $html);
+        $this->assertStringContainsString('data-radio-group-root="', $html);
     }
 
     #[Test]

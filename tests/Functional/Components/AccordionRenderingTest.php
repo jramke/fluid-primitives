@@ -23,8 +23,7 @@ final class AccordionRenderingTest extends FunctionalTestCase
             </primitives:accordion.root>
         ');
 
-        $this->assertStringContainsString('data-scope="accordion"', $html);
-        $this->assertStringContainsString('data-part="root"', $html);
+        $this->assertStringContainsString('data-accordion-root="', $html);
     }
 
     #[Test]
@@ -39,7 +38,10 @@ final class AccordionRenderingTest extends FunctionalTestCase
             </primitives:accordion.root>
         ');
 
-        $this->assertMatchesRegularExpression('/id="accordion:[^"]+"/', $html);
+        preg_match('/data-accordion-root="([^"]+)"/', $html, $root);
+
+        $this->assertNotEmpty($root[1]);
+        $this->assertStringContainsString('data-accordion-item="' . $root[1] . '"', $html);
     }
 
     #[Test]
@@ -54,7 +56,7 @@ final class AccordionRenderingTest extends FunctionalTestCase
             </primitives:accordion.root>
         ');
 
-        $this->assertStringContainsString('data-part="item"', $html);
+        $this->assertStringContainsString('data-accordion-item="', $html);
         $this->assertStringContainsString('data-value="my-unique-value"', $html);
     }
 
@@ -72,7 +74,7 @@ final class AccordionRenderingTest extends FunctionalTestCase
 
         $this->assertStringContainsString('<button', $html);
         $this->assertStringContainsString('type="button"', $html);
-        $this->assertStringContainsString('data-part="item-trigger"', $html);
+        $this->assertStringContainsString('data-accordion-item-trigger="', $html);
     }
 
     #[Test]
@@ -108,6 +110,27 @@ final class AccordionRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function rendersItemHeaderWithItsItemsValueAndDisabledState(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:accordion.root>
+                <primitives:accordion.item value="item-1" disabled="{true}">
+                    <primitives:accordion.itemHeader>
+                        <primitives:accordion.itemTrigger>Trigger</primitives:accordion.itemTrigger>
+                    </primitives:accordion.itemHeader>
+                    <primitives:accordion.itemContent>Content</primitives:accordion.itemContent>
+                </primitives:accordion.item>
+            </primitives:accordion.root>
+        ');
+
+        preg_match('/<h3[^>]*data-accordion-item-header="[^"]+"[^>]*>/', $html, $header);
+
+        $this->assertNotEmpty($header);
+        $this->assertStringContainsString('data-value="item-1"', $header[0]);
+        $this->assertStringContainsString('data-disabled', $header[0]);
+    }
+
+    #[Test]
     public function rendersContentContainerWithDataAttributes(): void
     {
         $html = $this->renderTemplate('
@@ -119,7 +142,7 @@ final class AccordionRenderingTest extends FunctionalTestCase
             </primitives:accordion.root>
         ');
 
-        $this->assertStringContainsString('data-part="item-content"', $html);
+        $this->assertStringContainsString('data-accordion-item-content="', $html);
         $this->assertStringContainsString('My Content Here', $html);
     }
 

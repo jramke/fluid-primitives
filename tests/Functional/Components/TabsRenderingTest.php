@@ -21,8 +21,7 @@ final class TabsRenderingTest extends FunctionalTestCase
             </primitives:tabs.root>
         ');
 
-        $this->assertStringContainsString('data-scope="tabs"', $html);
-        $this->assertStringContainsString('data-part="root"', $html);
+        $this->assertStringContainsString('data-tabs-root="', $html);
     }
 
     #[Test]
@@ -38,7 +37,7 @@ final class TabsRenderingTest extends FunctionalTestCase
         ');
 
         $this->assertStringContainsString('role="tablist"', $html);
-        $this->assertStringContainsString('data-part="list"', $html);
+        $this->assertStringContainsString('data-tabs-list="', $html);
     }
 
     #[Test]
@@ -56,7 +55,7 @@ final class TabsRenderingTest extends FunctionalTestCase
         $this->assertStringContainsString('<button', $html);
         $this->assertStringContainsString('role="tab"', $html);
         $this->assertStringContainsString('type="button"', $html);
-        $this->assertStringContainsString('data-part="trigger"', $html);
+        $this->assertStringContainsString('data-tabs-trigger="', $html);
     }
 
     #[Test]

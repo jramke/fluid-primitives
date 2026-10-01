@@ -16,8 +16,7 @@ export function registerFormMachine(form: HTMLFormElement | null, service: FormM
     registry.set(form, {
         machine: service,
         fields: new Map(),
-        expectedFieldCount:
-            form.querySelectorAll('[data-scope="field"][data-part="root"]').length || 0,
+        expectedFieldCount: form.querySelectorAll('[data-field-root]').length || 0,
     });
     form.dispatchEvent(new CustomEvent('fluid-primitives:form:registered', { bubbles: true }));
 }

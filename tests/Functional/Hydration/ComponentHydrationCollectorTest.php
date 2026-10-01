@@ -69,8 +69,31 @@ final class ComponentHydrationCollectorTest extends FunctionalTestCase
         $hydrationData = HydrationRegistry::getInstance()->getAll();
         $edgeCaseData = array_values($hydrationData['hydrationFixture']['edge-cases'])[0];
 
-        $this->assertStringContainsString('data-scope="edge-cases"', $html);
+        $this->assertStringContainsString('data-edge-cases-root="', $html);
         $this->assertSame('a real value', $edgeCaseData['props']['requiredProp']);
+    }
+
+    /**
+     * The `ids` prop every root component takes is the only way to give a ref'd part an id - for a custom
+     * component just as for a primitive - and it's the same map the client machine receives, so the
+     * server-rendered id and the one the client uses can't disagree.
+     */
+    #[Test]
+    public function rendersAnIdForARefDeclaredThroughTheRootsIdsPropAndShipsItToTheClient(): void
+    {
+        $view = $this->getView();
+        $view
+            ->getRenderingContext()
+            ->getViewHelperResolver()
+            ->addNamespace('hydrationFixture', new HydrationEdgeCasesCollection());
+
+        $html = $this->renderTemplate(
+            '<hydrationFixture:edgeCases requiredProp="a real value" rootId="my-root" ids="{root: \'my-explicit-root-id\'}" />',
+        );
+
+        $this->assertStringContainsString('id="my-explicit-root-id" data-edge-cases-root="my-root"', $html);
+        $edgeCaseData = HydrationRegistry::getInstance()->getAll()['hydrationFixture']['edge-cases']['my-root'];
+        $this->assertSame(['root' => 'my-explicit-root-id'], $edgeCaseData['props']['ids']);
     }
 
     #[Test]

@@ -24,7 +24,7 @@ export class FieldArray extends Component<FieldArrayProps, FieldArrayApi> {
     }
 
     render() {
-        const addTriggerEl = this.getElement('addTrigger');
+        const addTriggerEl = this.hydrator.query('addTrigger');
         if (addTriggerEl) {
             // `aria-disabled`, not the real `disabled` attribute - a genuinely disabled button
             // can't hold focus, which would fight `findFocusTargetAfterRemoval`'s own focus
@@ -35,15 +35,15 @@ export class FieldArray extends Component<FieldArrayProps, FieldArrayApi> {
             this.spreadProps(addTriggerEl, this.api.getAddTriggerProps());
         }
 
-        for (const removeTriggerEl of this.getElements<HTMLElement>('removeTrigger')) {
+        for (const removeTriggerEl of this.hydrator.queryAll<HTMLElement>('removeTrigger')) {
             const index = Number(removeTriggerEl.dataset.value);
             if (Number.isNaN(index)) continue;
             this.spreadProps(removeTriggerEl, this.api.getRemoveTriggerProps(index));
         }
 
-        const emptyStateEl = this.getElement('emptyState');
+        const emptyStateEl = this.hydrator.query('emptyState');
         if (emptyStateEl) {
-            emptyStateEl.hidden = this.getElements('item').length > 0;
+            emptyStateEl.hidden = this.hydrator.queryAll('item').length > 0;
         }
     }
 }

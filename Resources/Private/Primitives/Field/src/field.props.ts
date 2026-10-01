@@ -4,6 +4,7 @@ import type { FieldProps } from './field.types';
 
 export const props = createProps<FieldProps>()([
     'id',
+    'ids',
     'name',
     'invalid',
     'required',

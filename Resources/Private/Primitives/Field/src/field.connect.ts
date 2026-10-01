@@ -78,8 +78,7 @@ export function connect<T extends PropTypes>(
 
         getRootProps() {
             return normalize.element({
-                ...parts.root.attrs,
-                id: dom.getRootId(scope),
+                ...parts.root.attrs(scope.id),
                 'data-invalid': handle.invalid ? '' : undefined,
                 'data-disabled': handle.disabled ? '' : undefined,
                 'data-readonly': handle.readOnly ? '' : undefined,
@@ -95,7 +94,7 @@ export function connect<T extends PropTypes>(
 
         getLabelProps() {
             return normalize.label({
-                ...parts.label.attrs,
+                ...parts.label.attrs(scope.id),
                 id: dom.getLabelId(scope),
                 htmlFor: dom.getControlId(scope),
                 'data-invalid': handle.invalid ? '' : undefined,
@@ -106,7 +105,7 @@ export function connect<T extends PropTypes>(
 
         getControlProps() {
             return normalize.element({
-                ...parts.control.attrs,
+                ...parts.control.attrs(scope.id),
                 id: dom.getControlId(scope),
                 name: handle.name,
                 disabled: handle.disabled || undefined,
@@ -123,7 +122,7 @@ export function connect<T extends PropTypes>(
 
         getErrorProps() {
             return normalize.element({
-                ...parts.error.attrs,
+                ...parts.error.attrs(scope.id),
                 id: dom.getErrorId(scope),
                 hidden: !handle.invalid,
             });
@@ -131,7 +130,7 @@ export function connect<T extends PropTypes>(
 
         getDescriptionProps() {
             return normalize.element({
-                ...parts.description.attrs,
+                ...parts.description.attrs(scope.id),
                 id: dom.getDescriptionId(scope),
             });
         },

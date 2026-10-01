@@ -55,9 +55,9 @@ export class Checkbox extends FieldAwareComponent<checkbox.Props, checkbox.Api> 
     private getClosestCheckboxGroup(): HTMLElement | null {
         return (
             this.closestCheckboxGroup ||
-            (this.getElement('root')?.closest(
-                '[data-scope="checkbox-group"][data-part="root"]'
-            ) as HTMLElement | null)
+            (this.hydrator
+                .query('root')
+                ?.closest('[data-checkbox-group-root]') as HTMLElement | null)
         );
     }
 
@@ -122,7 +122,7 @@ export class Checkbox extends FieldAwareComponent<checkbox.Props, checkbox.Api> 
                     this.getClosestCheckboxGroup()
                 );
                 if (this.checkboxGroupMachine) {
-                    this.updateProps(this.buildGroupProps(this.userProps as checkbox.Props));
+                    this.updateProps(this.buildGroupProps(this.userProps));
                 }
                 this.closestCheckboxGroup?.removeEventListener(
                     'fluid-primitives:checkbox-group:registered',
@@ -153,19 +153,19 @@ export class Checkbox extends FieldAwareComponent<checkbox.Props, checkbox.Api> 
         this.subscribeToFieldService();
         this.subscribeToCheckboxGroup();
 
-        const rootEl = this.getElement('root');
+        const rootEl = this.hydrator.query('root');
         if (rootEl) this.spreadProps(rootEl, this.api.getRootProps());
 
-        const labelEl = this.getElement('label');
+        const labelEl = this.hydrator.query('label');
         if (labelEl) this.spreadProps(labelEl, this.api.getLabelProps());
 
-        const controlEl = this.getElement('control');
+        const controlEl = this.hydrator.query('control');
         if (controlEl) this.spreadProps(controlEl, this.api.getControlProps());
 
-        const indicatorEl = this.getElement('indicator');
+        const indicatorEl = this.hydrator.query('indicator');
         if (indicatorEl) this.spreadProps(indicatorEl, this.api.getIndicatorProps());
 
-        const hiddenInputEl = this.getElement('hiddenInput');
+        const hiddenInputEl = this.hydrator.query('hiddenInput');
         if (hiddenInputEl) {
             const mergedProps = mergeProps(this.api.getHiddenInputProps(), {
                 'aria-describedby': this.fieldMachine?.context.get('describeIds') || undefined,

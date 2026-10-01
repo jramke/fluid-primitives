@@ -157,19 +157,19 @@ export class FileUpload extends FieldAwareComponent<FileUploadPrimitiveProps, fi
     render() {
         this.subscribeToFieldService();
 
-        const rootEl = this.getElement('root');
+        const rootEl = this.hydrator.query('root');
         if (rootEl) this.spreadProps(rootEl, this.api.getRootProps());
 
-        const labelEl = this.getElement('label');
+        const labelEl = this.hydrator.query('label');
         if (labelEl) this.spreadProps(labelEl, this.api.getLabelProps());
 
-        const dropzoneEl = this.getElement('dropzone');
+        const dropzoneEl = this.hydrator.query('dropzone');
         if (dropzoneEl) this.spreadProps(dropzoneEl, this.api.getDropzoneProps());
 
-        const triggerEl = this.getElement('trigger');
+        const triggerEl = this.hydrator.query('trigger');
         if (triggerEl) this.spreadProps(triggerEl, this.api.getTriggerProps());
 
-        const hiddenInputEl = this.getElement<HTMLInputElement>('hiddenInput');
+        const hiddenInputEl = this.hydrator.query<HTMLInputElement>('hiddenInput');
         if (hiddenInputEl) {
             const mergedProps = mergeProps(this.api.getHiddenInputProps(), {
                 'aria-describedby': this.fieldMachine?.context.get('describeIds') || undefined,
@@ -177,7 +177,7 @@ export class FileUpload extends FieldAwareComponent<FileUploadPrimitiveProps, fi
             this.spreadProps(hiddenInputEl, mergedProps);
         }
 
-        const clearTriggerEl = this.getElement('clearTrigger');
+        const clearTriggerEl = this.hydrator.query('clearTrigger');
         if (clearTriggerEl) this.spreadProps(clearTriggerEl, this.api.getClearTriggerProps());
 
         this.renderItemGroups();
@@ -190,7 +190,7 @@ export class FileUpload extends FieldAwareComponent<FileUploadPrimitiveProps, fi
         const filesChanged =
             acceptedFiles !== this.lastAcceptedFiles || rejectedFiles !== this.lastRejectedFiles;
 
-        const itemGroupEls = this.getElements<HTMLElement>('itemGroup');
+        const itemGroupEls = this.hydrator.queryAll<HTMLElement>('itemGroup');
         itemGroupEls.forEach(itemGroupEl => {
             const type = (itemGroupEl.dataset.value as ItemType) || 'accepted';
             this.spreadProps(itemGroupEl, this.api.getItemGroupProps({ type }));
@@ -222,12 +222,10 @@ export class FileUpload extends FieldAwareComponent<FileUploadPrimitiveProps, fi
      * underneath them.
      */
     private updateEmptyState(itemGroupEl: HTMLElement) {
-        const emptyStateEl = itemGroupEl.querySelector<HTMLElement>('[data-part="empty-state"]');
+        const emptyStateEl = this.hydrator.query('emptyState', itemGroupEl);
         if (!emptyStateEl) return;
 
-        const hasVisibleItems = Array.from(
-            itemGroupEl.querySelectorAll<HTMLElement>('[data-part="item"]')
-        ).some(el => !el.hidden);
+        const hasVisibleItems = this.hydrator.queryAll('item', itemGroupEl).some(el => !el.hidden);
 
         emptyStateEl.hidden = hasVisibleItems;
     }
@@ -241,17 +239,15 @@ export class FileUpload extends FieldAwareComponent<FileUploadPrimitiveProps, fi
      * render.
      */
     private wireExistingItemDeleteTriggers(itemGroupEl: HTMLElement) {
-        const existingItemEls = itemGroupEl.querySelectorAll<HTMLElement>(
-            '[data-part="item"][data-type="existing"]:not([data-file-upload-wired])'
-        );
+        const existingItemEls = this.hydrator
+            .queryAll('item', itemGroupEl)
+            .filter(el => el.dataset.type === 'existing' && !el.dataset.fileUploadWired);
 
         existingItemEls.forEach(itemEl => {
             itemEl.dataset.fileUploadWired = 'true';
 
             const checkboxEl = itemEl.querySelector<HTMLInputElement>('input[type="checkbox"]');
-            const deleteTriggerEl = itemEl.querySelector<HTMLElement>(
-                '[data-part="item-delete-trigger"]'
-            );
+            const deleteTriggerEl = this.hydrator.query('itemDeleteTrigger', itemEl);
             if (!checkboxEl || !deleteTriggerEl) return;
 
             deleteTriggerEl.addEventListener('click', () => {
@@ -271,46 +267,45 @@ export class FileUpload extends FieldAwareComponent<FileUploadPrimitiveProps, fi
      * consumers are unaffected.
      */
     private resolveItemTemplatePart(type: ItemType): string {
-        if (type === 'rejected' && this.getElement('rejectedItemTemplate')) {
+        if (type === 'rejected' && this.hydrator.query('rejectedItemTemplate')) {
             return 'rejectedItemTemplate';
         }
         return 'itemTemplate';
     }
 
     private renderItems(itemGroupEl: HTMLElement, entries: ItemEntry[], type: ItemType) {
-        itemGroupEl
-            .querySelectorAll<HTMLElement>('[data-part="item"]:not([data-type="existing"])')
+        this.hydrator
+            .queryAll('item', itemGroupEl)
+            .filter(el => el.dataset.type !== 'existing')
             .forEach(el => {
                 this.previewCleanups.get(el)?.();
                 this.previewCleanups.delete(el);
                 el.remove();
             });
 
-        if (!this.hydrator) return;
-
         const templatePart = this.resolveItemTemplatePart(type);
 
         entries.forEach(({ file, type, errors }) => {
-            const instance = new Template(this.hydrator!, templatePart, {
+            const instance = new Template(this.hydrator, templatePart, {
                 value: fileValue(file),
             });
             const itemEl = instance.root;
 
             this.spreadProps(itemEl, this.api.getItemProps({ file, type }));
 
-            const errorEl = instance.getElement<HTMLElement>('itemError');
+            const errorEl = instance.query<HTMLElement>('itemError');
             if (errorEl) {
                 errorEl.hidden = !errors?.length;
                 errorEl.textContent = errors?.join(', ') ?? '';
             }
 
-            const nameEl = instance.getElement<HTMLElement>('itemName');
+            const nameEl = instance.query<HTMLElement>('itemName');
             if (nameEl) {
                 this.spreadProps(nameEl, this.api.getItemNameProps({ file, type }));
                 nameEl.textContent = file.name;
             }
 
-            const sizeEl = instance.getElement<HTMLElement>('itemSizeText');
+            const sizeEl = instance.query<HTMLElement>('itemSizeText');
             if (sizeEl) {
                 this.spreadProps(sizeEl, this.api.getItemSizeTextProps({ file, type }));
                 sizeEl.textContent = this.api.getFileSize(file);
@@ -318,7 +313,7 @@ export class FileUpload extends FieldAwareComponent<FileUploadPrimitiveProps, fi
 
             this.renderPreview(instance, file, type);
 
-            const deleteTriggerEl = instance.getElement<HTMLElement>('itemDeleteTrigger');
+            const deleteTriggerEl = instance.query<HTMLElement>('itemDeleteTrigger');
             if (deleteTriggerEl) {
                 this.spreadProps(
                     deleteTriggerEl,
@@ -331,7 +326,7 @@ export class FileUpload extends FieldAwareComponent<FileUploadPrimitiveProps, fi
     }
 
     private renderPreview(instance: Template, file: File, type: ItemType) {
-        const previews = instance.getElements<HTMLElement>('itemPreview');
+        const previews = instance.queryAll<HTMLElement>('itemPreview');
         if (previews.length === 0) return;
 
         const matched =
@@ -340,24 +335,21 @@ export class FileUpload extends FieldAwareComponent<FileUploadPrimitiveProps, fi
 
         previews.forEach(el => {
             if (el !== matched) {
-                // Prune rather than hide: every unmatched variant would otherwise keep sharing the
-                // matched one's `itemPreview` id (restampValue() stamps every ref'd descendant with
-                // the same file value, since it has no way to know several of them represent
-                // mutually-exclusive alternatives rather than distinct parts) - a duplicate id that's
-                // never actually needed, since the match is permanent for a given file.
+                // Prune rather than hide: the unmatched variants are mutually-exclusive alternatives
+                // and the match is permanent for a given file, so they'd only be dead markup.
                 el.remove();
                 return;
             }
 
             this.spreadProps(el, this.api.getItemPreviewProps({ file, type }));
 
-            const fallbackEl = el.querySelector<HTMLElement>('[data-part="item-preview-fallback"]');
+            const fallbackEl = this.hydrator.query('itemPreviewFallback', el);
             if (fallbackEl) fallbackEl.textContent = fileExtension(file.name);
         });
 
         if (!matched) return;
 
-        const imageEl = matched.querySelector<HTMLImageElement>('[data-part="item-preview-image"]');
+        const imageEl = this.hydrator.query<HTMLImageElement>('itemPreviewImage', matched);
         if (!imageEl || !file.type.startsWith('image/')) return;
 
         const cleanup = this.api.createFileUrl(file, url => {

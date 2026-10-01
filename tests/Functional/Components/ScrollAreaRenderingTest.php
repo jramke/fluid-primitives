@@ -20,10 +20,9 @@ final class ScrollAreaRenderingTest extends FunctionalTestCase
             </primitives:scrollArea.root>
         ');
 
-        $this->assertStringContainsString('data-scope="scroll-area"', $html);
-        $this->assertStringContainsString('data-part="root"', $html);
-        $this->assertStringContainsString('data-part="viewport"', $html);
-        $this->assertStringContainsString('data-part="content"', $html);
+        $this->assertStringContainsString('data-scroll-area-root="', $html);
+        $this->assertStringContainsString('data-scroll-area-viewport="', $html);
+        $this->assertStringContainsString('data-scroll-area-content="', $html);
         $this->assertStringContainsString('Scrollable content', $html);
     }
 
@@ -40,7 +39,7 @@ final class ScrollAreaRenderingTest extends FunctionalTestCase
 
         $this->assertStringContainsString('data-value="vertical"', $html);
         $this->assertMatchesRegularExpression(
-            '/data-part="scrollbar"[^>]*style="[^"]*bottom: var\(--corner-height\)/',
+            '/data-scroll-area-scrollbar="[^"]*"[^>]*style="[^"]*bottom: var\(--corner-height\)/',
             $html,
         );
     }
@@ -58,7 +57,7 @@ final class ScrollAreaRenderingTest extends FunctionalTestCase
 
         $this->assertStringContainsString('data-value="horizontal"', $html);
         $this->assertMatchesRegularExpression(
-            '/data-part="scrollbar"[^>]*style="[^"]*inset-inline-end: var\(--corner-width\)/',
+            '/data-scroll-area-scrollbar="[^"]*"[^>]*style="[^"]*inset-inline-end: var\(--corner-width\)/',
             $html,
         );
     }
@@ -74,6 +73,9 @@ final class ScrollAreaRenderingTest extends FunctionalTestCase
             </primitives:scrollArea.root>
         ');
 
-        $this->assertMatchesRegularExpression('/data-part="thumb"[^>]*style="width: var\(--thumb-width\);"/', $html);
+        $this->assertMatchesRegularExpression(
+            '/data-scroll-area-thumb="[^"]*"[^>]*style="width: var\(--thumb-width\);"/',
+            $html,
+        );
     }
 }

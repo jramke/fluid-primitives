@@ -14,10 +14,10 @@ export class Collapsible extends Component<collapsible.Props, collapsible.Api> {
     }
 
     render() {
-        const rootEl = this.getElement('root');
+        const rootEl = this.hydrator.query('root');
         if (rootEl) this.spreadProps(rootEl, this.api.getRootProps());
 
-        const triggerEls = this.getElements('trigger');
+        const triggerEls = this.hydrator.queryAll('trigger');
         triggerEls.forEach(triggerEl => {
             this.spreadProps(triggerEl, this.api.getTriggerProps());
         });
@@ -30,7 +30,7 @@ export class Collapsible extends Component<collapsible.Props, collapsible.Api> {
             });
         });
 
-        const contentEl = this.getElement('content');
+        const contentEl = this.hydrator.query('content');
         if (contentEl) this.spreadProps(contentEl, this.api.getContentProps());
     }
 }

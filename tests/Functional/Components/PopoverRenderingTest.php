@@ -22,9 +22,32 @@ final class PopoverRenderingTest extends FunctionalTestCase
             </primitives:popover.root>
         ');
 
-        $this->assertStringContainsString('data-scope="popover"', $html);
-        $this->assertStringContainsString('data-part="trigger"', $html);
-        $this->assertStringContainsString('data-part="content"', $html);
+        $this->assertStringContainsString('data-popover-trigger="', $html);
+        $this->assertStringContainsString('data-popover-content="', $html);
+    }
+
+    #[Test]
+    public function marksEveryCloseTriggerOfAPopoverWithoutIdsSoTheyCannotCollide(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:popover.root rootId="my-popover">
+                <primitives:popover.trigger>Open</primitives:popover.trigger>
+                <primitives:popover.positioner>
+                    <primitives:popover.content>
+                        <primitives:popover.closeTrigger>X</primitives:popover.closeTrigger>
+                        Content
+                        <primitives:popover.closeTrigger>Cancel</primitives:popover.closeTrigger>
+                    </primitives:popover.content>
+                </primitives:popover.positioner>
+            </primitives:popover.root>
+        ');
+
+        preg_match_all('/<button[^>]*data-popover-close-trigger="my-popover"[^>]*>/', $html, $matches);
+
+        $this->assertCount(2, $matches[0]);
+        foreach ($matches[0] as $closeTriggerTag) {
+            $this->assertStringNotContainsString(' id=', $closeTriggerTag);
+        }
     }
 
     #[Test]
@@ -39,13 +62,13 @@ final class PopoverRenderingTest extends FunctionalTestCase
             </primitives:popover.root>
         ');
 
-        $this->assertMatchesRegularExpression('/data-part="content"[^>]*hidden/', $html);
+        $this->assertMatchesRegularExpression('/data-popover-content="[^"]*"[^>]*hidden/', $html);
         // Regression test: `defaultOpen` used to have no explicit default, so `context.defaultOpen`
         // was `null` rather than `false` when unset. TYPO3 Fluid's inline ternary shorthand
         // (`{x ? a : b}`) treats a bare `null` as truthy - unlike `f:if`, which correctly treats it
         // as falsy - so the `expanded` variable computed from it rendered a stray `data-expanded`
         // attribute on an otherwise-closed popover.
-        $this->assertDoesNotMatchRegularExpression('/data-part="content"[^>]*data-expanded/', $html);
+        $this->assertDoesNotMatchRegularExpression('/data-popover-content="[^"]*"[^>]*data-expanded/', $html);
     }
 
     #[Test]
@@ -61,7 +84,7 @@ final class PopoverRenderingTest extends FunctionalTestCase
         ');
 
         $this->assertStringContainsString('data-state="open"', $html);
-        $this->assertDoesNotMatchRegularExpression('/data-part="content"[^>]*hidden/', $html);
+        $this->assertDoesNotMatchRegularExpression('/data-popover-content="[^"]*"[^>]*hidden/', $html);
     }
 
     #[Test]

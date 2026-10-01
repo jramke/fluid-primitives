@@ -56,7 +56,7 @@ final class FieldArrayRenderingTest extends FunctionalTestCase
             </primitives:fieldArray.root>
         ');
 
-        preg_match('/id="field:([^"]*)" data-scope="field" data-part="root"/', $html, $fieldMatches);
+        preg_match('/data-field-root="([^"]*)"/', $html, $fieldMatches);
         $fieldRootId = $fieldMatches[1] ?? null;
         $this->assertNotNull($fieldRootId);
 
@@ -170,18 +170,18 @@ final class FieldArrayRenderingTest extends FunctionalTestCase
             </primitives:fieldArray.root>
         ');
 
-        preg_match('/<template id="(field-array:[^"]*):itemTemplate"/', $html, $stencilMatches);
-        $fieldArrayRootId = str_replace('field-array:', '', $stencilMatches[1] ?? '');
+        preg_match('/<template data-field-array-item-template="([^"]*)"/', $html, $stencilMatches);
+        $fieldArrayRootId = $stencilMatches[1] ?? '';
         $this->assertNotSame('', $fieldArrayRootId);
 
-        preg_match_all('/id="field:([^"]*)" data-scope="field" data-part="root"/', $html, $fieldMatches);
+        preg_match_all('/data-field-root="([^"]*)"/', $html, $fieldMatches);
         [$stencilFieldRootId, $row0FieldRootId, $row1FieldRootId] = $fieldMatches[1];
 
         $byScope = NestedComponentRegistry::getInstance()->getNestedComponentsByScope();
 
         $this->assertSame(
             [['name' => 'primitives:field', 'id' => $stencilFieldRootId]],
-            $byScope["field-array:{$fieldArrayRootId}:itemTemplate"] ?? null,
+            $byScope["field-array:{$fieldArrayRootId}:item-template"] ?? null,
         );
         $this->assertSame(
             [['name' => 'primitives:field', 'id' => $row0FieldRootId]],
@@ -210,7 +210,7 @@ final class FieldArrayRenderingTest extends FunctionalTestCase
     #[Test]
     public function hidesEmptyStateOnlyWhenItemCountIsPositive(): void
     {
-        $hiddenEmptyState = '/<div[^>]*\bhidden\b[^>]*data-part="empty-state"[^>]*>/';
+        $hiddenEmptyState = '/<div[^>]*\bhidden\b[^>]*data-field-array-empty-state="[^"]*"[^>]*>/';
 
         $withRows = $this->renderTemplate('
             <primitives:fieldArray.root name="people" itemCount="1">

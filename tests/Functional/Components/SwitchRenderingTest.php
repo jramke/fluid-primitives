@@ -23,8 +23,7 @@ final class SwitchRenderingTest extends FunctionalTestCase
         ');
 
         $this->assertStringContainsString('<label', $html);
-        $this->assertStringContainsString('data-scope="switch"', $html);
-        $this->assertStringContainsString('data-part="root"', $html);
+        $this->assertStringContainsString('data-switch-root="', $html);
     }
 
     #[Test]

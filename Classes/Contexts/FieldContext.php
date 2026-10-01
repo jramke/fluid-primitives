@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Contexts;
 
 use Jramke\FluidPrimitives\Service\ContextService;
-use Jramke\FluidPrimitives\Utility\ComponentPartIdUtility;
 use Jramke\FluidPrimitives\Utility\ExtbaseFormFieldNamer;
 use Jramke\FluidPrimitives\Utility\Typed;
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
@@ -92,8 +91,8 @@ class FieldContext extends AbstractComponentContext
         $givenIds = (array)($this->get('ids') ?? []);
         /** @var array<string, string> $ids */
         $ids = array_merge($givenIds, [
-            'control' => ComponentPartIdUtility::generatePartId('field', $rootId, 'control'),
-            'label' => ComponentPartIdUtility::generatePartId('field', $rootId, 'label'),
+            'control' => "field:{$rootId}:control",
+            'label' => "field:{$rootId}:label",
         ]);
 
         return [

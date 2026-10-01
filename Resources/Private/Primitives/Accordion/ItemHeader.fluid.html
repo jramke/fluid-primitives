@@ -4,9 +4,14 @@
 
 <f:variable name="value" value="{context.item.value}" />
 
+<f:variable name="itemState">{context -> ui:call(method: 'getItemState', arguments: {0: context.item})}</f:variable>
+
+<f:variable name="state">{itemState.expanded ? 'open' : 'closed'}</f:variable>
+<f:variable name="refData" value="{disabled: itemState.disabled, orientation: context.orientation, state: state}" />
+
 <h{level}
     {f:if(condition: class, then: 'class="{class}"' )}
-    {ui:ref(name: 'itemHeader' , value: value )}
+    {ui:ref(name: 'itemHeader' , value: value, data: refData )}
     {ui:attributes()}>
     <f:slot />
 </h{level}>

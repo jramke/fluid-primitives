@@ -60,8 +60,7 @@ final class UsePropsViewHelperTest extends FunctionalTestCase
         // asChild worked: the primitive rendered the consumer's own <input> instead of throwing its
         // "asChild is required" error, and merged its own ref/data attributes onto it.
         $this->assertStringContainsString('<input', $html);
-        $this->assertStringContainsString('data-scope="field"', $html);
-        $this->assertStringContainsString('data-part="control"', $html);
+        $this->assertStringContainsString('data-field-control="test-root"', $html);
         $this->assertStringContainsString('name="username"', $html);
 
         // class was forwarded and merged onto the same element too.

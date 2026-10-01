@@ -58,13 +58,13 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
     render = () => {
         this.subscribeToFieldService();
 
-        const rootEl = this.getElement('root');
+        const rootEl = this.hydrator.query('root');
         if (rootEl) this.spreadProps(rootEl, this.api.getRootProps());
 
-        const controlEl = this.getElement('control');
+        const controlEl = this.hydrator.query('control');
         if (controlEl) this.spreadProps(controlEl, this.api.getControlProps());
 
-        const hiddenSelectEl = this.getElement('hiddenSelect');
+        const hiddenSelectEl = this.hydrator.query('hiddenSelect');
         if (hiddenSelectEl) {
             const mergedProps = mergeProps(this.api.getHiddenSelectProps(), {
                 'aria-describedby': this.fieldMachine?.context.get('describeIds') || undefined,
@@ -79,22 +79,25 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
             if (defaultOption) defaultOption.selected = isValueEmpty;
         }
 
-        const labelEl = this.getElement('label');
+        const labelEl = this.hydrator.query('label');
         if (labelEl) this.spreadProps(labelEl, this.api.getLabelProps());
 
-        const triggerEl = this.getElement('trigger');
+        const triggerEl = this.hydrator.query('trigger');
         if (triggerEl) this.spreadProps(triggerEl, this.api.getTriggerProps());
 
-        const positionerEl = this.getElement('positioner');
+        const positionerEl = this.hydrator.query('positioner');
         if (positionerEl) this.spreadProps(positionerEl, this.api.getPositionerProps());
 
-        const contentEl = this.getElement('content');
+        const contentEl = this.hydrator.query('content');
         if (contentEl) this.spreadProps(contentEl, this.api.getContentProps());
+
+        const listEl = this.hydrator.query('list');
+        if (listEl) this.spreadProps(listEl, this.api.getListProps());
 
         // We need to make sure the element is rerendered because otherwise safari doesnt update the spans value in the a11y tree
         // and the button would announce an old value when it receives focus.
         // see: https://github.com/chakra-ui/zag/issues/3099
-        const valueTextEl = this.getElement('valueText');
+        const valueTextEl = this.hydrator.query('valueText');
         if (valueTextEl) {
             const currentText = valueTextEl.textContent || valueTextEl.dataset.placeholder || '';
             const nextValue = this.api.valueAsString || valueTextEl.dataset.placeholder || '';
@@ -108,7 +111,7 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
 
             if (nextValue !== currentText) {
                 queueMicrotask(() => {
-                    const el = this.getElement('valueText');
+                    const el = this.hydrator.query('valueText');
                     if (el?.isConnected) {
                         const next = el.cloneNode(true) as HTMLElement;
                         el.replaceWith(next);
@@ -118,53 +121,33 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
             }
         }
 
-        this.spreadPropsByValue(
-            'itemGroup',
-            ({ value }) => {
-                return this.api.getItemGroupProps({ id: value });
-            },
-            { parent: this.doc }
-        );
+        this.spreadPropsByValue('itemGroup', ({ value }) => {
+            return this.api.getItemGroupProps({ id: value });
+        });
 
-        this.spreadPropsByValue(
-            'itemGroupLabel',
-            ({ value }) => {
-                return this.api.getItemGroupLabelProps({ htmlFor: value });
-            },
-            { parent: this.doc }
-        );
+        this.spreadPropsByValue('itemGroupLabel', ({ value }) => {
+            return this.api.getItemGroupLabelProps({ htmlFor: value });
+        });
 
-        this.spreadPropsByValue(
-            'item',
-            ({ value }) => {
-                const item = this.api.collection.find(value);
-                return item ? this.api.getItemProps({ item }) : null;
-            },
-            { parent: this.doc }
-        );
+        this.spreadPropsByValue('item', ({ value }) => {
+            const item = this.api.collection.find(value);
+            return item ? this.api.getItemProps({ item }) : null;
+        });
 
-        this.spreadPropsByValue(
-            'itemText',
-            ({ value }) => {
-                const item = this.api.collection.find(value);
-                return item ? this.api.getItemTextProps({ item }) : null;
-            },
-            { parent: this.doc }
-        );
+        this.spreadPropsByValue('itemText', ({ value }) => {
+            const item = this.api.collection.find(value);
+            return item ? this.api.getItemTextProps({ item }) : null;
+        });
 
-        this.spreadPropsByValue(
-            'itemIndicator',
-            ({ value }) => {
-                const item = this.api.collection.find(value);
-                return item ? this.api.getItemIndicatorProps({ item }) : null;
-            },
-            { parent: this.doc }
-        );
+        this.spreadPropsByValue('itemIndicator', ({ value }) => {
+            const item = this.api.collection.find(value);
+            return item ? this.api.getItemIndicatorProps({ item }) : null;
+        });
 
-        const clearTriggerEl = this.getElement('clearTrigger');
+        const clearTriggerEl = this.hydrator.query('clearTrigger');
         if (clearTriggerEl) this.spreadProps(clearTriggerEl, this.api.getClearTriggerProps());
 
-        const indicatorEl = this.getElement('indicator');
+        const indicatorEl = this.hydrator.query('indicator');
         if (indicatorEl) this.spreadProps(indicatorEl, this.api.getIndicatorProps());
     };
 }

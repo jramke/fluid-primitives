@@ -1,7 +1,12 @@
 import * as asyncList from '@zag-js/async-list';
 import { Machine } from './machine';
 
-export type AsyncListOptions<T, C = unknown> = asyncList.Props<T, C>;
+export type AsyncListOptions<
+    T,
+    Filter = string,
+    Sorting = asyncList.SortDescriptor<T>,
+    Cursor = string,
+> = asyncList.Props<T, Filter, Sorting, Cursor>;
 
 /**
  * Wraps @zag-js/async-list's machine lifecycle (construct -> init -> subscribe -> destroy),
@@ -9,22 +14,22 @@ export type AsyncListOptions<T, C = unknown> = asyncList.Props<T, C>;
  * - but with no DOM/hydration ties, since async-list has no rendering concerns of its own.
  * Consumers own their own DOM updates from inside subscribe().
  *
- * Debouncing/throttling setFilterText() is left to the caller - wrap the call site with
+ * Debouncing/throttling setFilter() is left to the caller - wrap the call site with
  * @zag-js/utils's own debounce/throttle (already a dependency of this library), the same way
  * you'd debounce any other callback. Keeping that out of this class means it's not tied to one
  * fixed shape or default, and callers who don't need it (e.g. dependencies-driven autoReload
  * only) don't pay for it either.
  */
-export class AsyncList<T, C = unknown> {
+export class AsyncList<T, Filter = string, Sorting = asyncList.SortDescriptor<T>, Cursor = string> {
     private machine: Machine<any>;
 
-    constructor(options: AsyncListOptions<T, C>) {
+    constructor(options: AsyncListOptions<T, Filter, Sorting, Cursor>) {
         this.machine = new Machine(asyncList.machine, options);
     }
 
     /** The connected API for the machine's current snapshot - recomputed fresh on every access. */
-    get api(): asyncList.Api<T, C> {
-        return asyncList.connect<T, C>(this.machine.service);
+    get api(): asyncList.Api<T, Filter, Sorting, Cursor> {
+        return asyncList.connect<T, Filter, Sorting, Cursor>(this.machine.service);
     }
 
     /**
@@ -32,12 +37,14 @@ export class AsyncList<T, C = unknown> {
      * (not the raw zag `Service`). Does not fire immediately with the current snapshot - read
      * `.api` directly beforehand if you need it.
      */
-    subscribe(fn: (api: asyncList.Api<T, C>) => void): () => void {
-        return this.machine.subscribe(service => fn(asyncList.connect<T, C>(service)));
+    subscribe(fn: (api: asyncList.Api<T, Filter, Sorting, Cursor>) => void): () => void {
+        return this.machine.subscribe(service =>
+            fn(asyncList.connect<T, Filter, Sorting, Cursor>(service))
+        );
     }
 
-    setFilterText(filterText: string): void {
-        this.api.setFilterText(filterText);
+    setFilter(filter: Filter): void {
+        this.api.setFilter(filter);
     }
 
     /**
@@ -45,7 +52,9 @@ export class AsyncList<T, C = unknown> {
      * runtime to trigger an `autoReload`. `load` is fixed at construction time and can't be
      * swapped here.
      */
-    updateProps(newProps: Partial<Omit<asyncList.Props<T, C>, 'load'>>): void {
+    updateProps(
+        newProps: Partial<Omit<asyncList.Props<T, Filter, Sorting, Cursor>, 'load'>>
+    ): void {
         this.machine.updateProps(newProps);
     }
 

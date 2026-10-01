@@ -37,9 +37,7 @@ export abstract class FieldAwareComponent<Props, Api> extends Component<Props, A
     protected getClosestField() {
         return (
             this.closestField ||
-            (this.getElement('root')?.closest(
-                '[data-scope="field"][data-part="root"]'
-            ) as HTMLElement) ||
+            (this.hydrator.query('root')?.closest('[data-field-root]') as HTMLElement) ||
             null
         );
     }
@@ -55,7 +53,7 @@ export abstract class FieldAwareComponent<Props, Api> extends Component<Props, A
         } else {
             const handler = () => {
                 this.fieldMachine = getFieldMachineFor(this.closestField);
-                this.updateProps(this.propsWithField(this.userProps!, this.fieldMachine!));
+                this.updateProps(this.propsWithField(this.userProps, this.fieldMachine!));
                 this.closestField?.removeEventListener(
                     'fluid-primitives:field:registered',
                     handler

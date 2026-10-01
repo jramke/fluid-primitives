@@ -6,6 +6,7 @@ namespace Jramke\FluidPrimitives\Tests\Functional\Components;
 
 use Jramke\FluidPrimitives\Domain\Dto\ListCollection;
 use Jramke\FluidPrimitives\Enum\ComboboxInputBehavior;
+use Jramke\FluidPrimitives\Enum\PopupType;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Registry\PortalRegistry;
 use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
@@ -54,6 +55,43 @@ final class ComboboxRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function rendersTheListboxOnTheListPartInsideAPresentationalContent(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:combobox.root multiple="{true}">
+                <primitives:combobox.positioner>
+                    <primitives:combobox.content>
+                        <primitives:combobox.list>List</primitives:combobox.list>
+                    </primitives:combobox.content>
+                </primitives:combobox.positioner>
+            </primitives:combobox.root>
+        ');
+
+        preg_match('/<div[^>]*data-combobox-content="[^"]+"[^>]*>/', $html, $content);
+        preg_match('/<div[^>]*data-combobox-list="[^"]+"[^>]*>/', $html, $list);
+
+        $this->assertStringContainsString('role="presentation"', $content[0]);
+        $this->assertStringNotContainsString('aria-multiselectable', $content[0]);
+        $this->assertStringContainsString('role="listbox"', $list[0]);
+        $this->assertStringContainsString('aria-multiselectable="true"', $list[0]);
+    }
+
+    #[Test]
+    public function shipsThePopupTypeToTheClientDefaultingToListbox(): void
+    {
+        $this->renderTemplate('
+            <primitives:combobox.root>
+                <primitives:combobox.trigger>Toggle</primitives:combobox.trigger>
+            </primitives:combobox.root>
+        ');
+
+        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
+        $comboboxData = array_values($hydrationData['combobox'])[0];
+
+        $this->assertSame(PopupType::Listbox->value, $comboboxData['props']['popupType']);
+    }
+
+    #[Test]
     public function rendersItemFromARealCollectionItem(): void
     {
         $collection = new ListCollection([
@@ -72,7 +110,7 @@ final class ComboboxRenderingTest extends FunctionalTestCase
             </primitives:combobox.root>
         ', ['collection' => $collection]);
 
-        $this->assertStringContainsString('data-part="item"', $html);
+        $this->assertStringContainsString('data-combobox-item="', $html);
         $this->assertStringContainsString('data-value="berlin"', $html);
         $this->assertStringContainsString('Berlin', $html);
     }
@@ -94,7 +132,7 @@ final class ComboboxRenderingTest extends FunctionalTestCase
             </primitives:combobox.root>
         ', ['collection' => $collection]);
 
-        $this->assertStringContainsString('data-part="item"', $html);
+        $this->assertStringContainsString('data-combobox-item="', $html);
         $this->assertStringContainsString('data-state="unchecked"', $html);
         $this->assertStringNotContainsString('aria-selected', $html);
     }
@@ -127,7 +165,7 @@ final class ComboboxRenderingTest extends FunctionalTestCase
             </primitives:combobox.root>
         ');
 
-        $this->assertStringContainsString('data-scope="combobox"', $html);
+        $this->assertStringContainsString('data-combobox-root="', $html);
         $this->assertStringContainsString('data-empty="true"', $html);
     }
 
@@ -144,7 +182,7 @@ final class ComboboxRenderingTest extends FunctionalTestCase
             </primitives:combobox.root>
         ');
 
-        $this->assertStringContainsString('data-scope="combobox"', $html);
+        $this->assertStringContainsString('data-combobox-root="', $html);
         $this->assertStringContainsString('data-empty="true"', $html);
     }
 
@@ -161,10 +199,10 @@ final class ComboboxRenderingTest extends FunctionalTestCase
             </primitives:combobox.root>
         ', ['collection' => $collection]);
 
-        $this->assertStringContainsString('data-part="empty"', $html);
+        $this->assertStringContainsString('data-combobox-empty="', $html);
         $this->assertStringContainsString('role="presentation"', $html);
         $this->assertStringContainsString('No results found', $html);
-        $this->assertDoesNotMatchRegularExpression('/<div[^>]*\bhidden\b[^>]*data-part="empty"/', $html);
+        $this->assertDoesNotMatchRegularExpression('/<div[^>]*\bhidden\b[^>]*data-combobox-empty="/', $html);
     }
 
     #[Test]
@@ -182,7 +220,7 @@ final class ComboboxRenderingTest extends FunctionalTestCase
             </primitives:combobox.root>
         ', ['collection' => $collection]);
 
-        $this->assertMatchesRegularExpression('/<div[^>]*\bhidden\b[^>]*data-part="empty"/', $html);
+        $this->assertMatchesRegularExpression('/<div[^>]*\bhidden\b[^>]*data-combobox-empty="/', $html);
     }
 
     #[Test]
@@ -205,7 +243,7 @@ final class ComboboxRenderingTest extends FunctionalTestCase
         ', ['collection' => $collection]);
 
         $this->assertMatchesRegularExpression(
-            '/<span[^>]*data-scope="combobox"[^>]*data-part="status-text"[^>]*>Loading…<\/span>/',
+            '/<span[^>]*data-combobox-status-text="[^"]*"[^>]*>Loading…<\/span>/',
             $html,
         );
     }
@@ -247,11 +285,8 @@ final class ComboboxRenderingTest extends FunctionalTestCase
             </primitives:combobox.root>
         ', ['collection' => $collection]);
 
-        $this->assertMatchesRegularExpression('/<template id="combobox:[^"]*:itemTemplate"/', $html);
-        $this->assertMatchesRegularExpression(
-            '/<span id="combobox:[^"]*:title" data-scope="combobox" data-part="title">/',
-            $html,
-        );
+        $this->assertMatchesRegularExpression('/<template data-combobox-item-template="[^"]+">/', $html);
+        $this->assertMatchesRegularExpression('/<span data-combobox-title="[^"]+"><\/span>/', $html);
     }
 
     #[Test]
@@ -266,8 +301,8 @@ final class ComboboxRenderingTest extends FunctionalTestCase
             </primitives:combobox.root>
         ');
 
-        $this->assertStringContainsString('data-scope="combobox"', $html);
-        $this->assertStringNotContainsString('data-part="hidden-input"', $html);
+        $this->assertStringContainsString('data-combobox-root="', $html);
+        $this->assertStringNotContainsString('data-combobox-hidden-input="', $html);
     }
 
     #[Test]
@@ -284,7 +319,7 @@ final class ComboboxRenderingTest extends FunctionalTestCase
             </primitives:combobox.root>
         ', ['collection' => $collection]);
 
-        $this->assertStringContainsString('data-part="hidden-input"', $html);
+        $this->assertStringContainsString('data-combobox-hidden-input="', $html);
         $this->assertMatchesRegularExpression('/<input[^>]*type="text"[^>]*name="country"[^>]*value="us"/', $html);
         $this->assertStringContainsString('aria-hidden="true"', $html);
         $this->assertStringContainsString('tabindex="-1"', $html);
@@ -310,7 +345,7 @@ final class ComboboxRenderingTest extends FunctionalTestCase
         $this->assertMatchesRegularExpression('/<input[^>]*value="us"/', $html);
         $this->assertMatchesRegularExpression('/<input[^>]*value="fr"/', $html);
         $this->assertStringNotContainsString('value="de"', $html);
-        $this->assertSame(2, substr_count($html, 'data-part="hidden-input"'));
+        $this->assertSame(2, substr_count($html, 'data-combobox-hidden-input="'));
     }
 
     #[Test]
@@ -333,8 +368,8 @@ final class ComboboxRenderingTest extends FunctionalTestCase
             </primitives:combobox.root>
         ', ['collection' => $collection]);
 
-        $this->assertStringContainsString('data-part="item-text"', $html);
-        $this->assertStringContainsString('data-part="item-indicator"', $html);
+        $this->assertStringContainsString('data-combobox-item-text="', $html);
+        $this->assertStringContainsString('data-combobox-item-indicator="', $html);
         $this->assertStringNotContainsString('renderedOnClient', $html);
     }
 
@@ -367,10 +402,10 @@ final class ComboboxRenderingTest extends FunctionalTestCase
             </primitives:combobox.root>
         ', ['collection' => $collection]);
 
-        $this->assertStringNotContainsString('data-part="content"', $html);
+        $this->assertStringNotContainsString('data-combobox-content="', $html);
 
         $portaled = implode('', PortalRegistry::getInstance()->getAllByName('default'));
-        $this->assertStringContainsString('data-part="content"', $portaled);
+        $this->assertStringContainsString('data-combobox-content="portaled-combobox"', $portaled);
         $this->assertStringContainsString('Berlin', $portaled);
 
         $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];

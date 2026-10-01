@@ -15,6 +15,8 @@ export interface FieldMeta {
 
 export interface FieldProps {
     id: string;
+    /** Ids of the parts other elements reference: `label`, `control`, `error`, `description`. */
+    ids?: Record<string, string>;
     name: string;
     invalid?: boolean;
     required?: boolean;

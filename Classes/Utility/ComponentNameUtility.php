@@ -29,7 +29,7 @@ class ComponentNameUtility
      * capital, the one part of the resolved name that isn't already what a template author would
      * write. Deliberately does *not* go through `getComponentFullNameFromViewHelperName()`'s
      * kebab-casing - use {@see camelCaseToLowerCaseDashed} on the result for the few things that
-     * genuinely need kebab-case (data-scope, hydration keys, `ComponentPartIdUtility`'s override maps).
+     * genuinely need kebab-case (ref attribute names, hydration keys).
      *
      * `$isDeclaredRoot` (the caller already knows or can state this - see
      * {@see \Jramke\FluidPrimitives\Utility\ComponentRootUtility::isDeclaredRootFromViewHelperName()})
@@ -107,7 +107,7 @@ class ComponentNameUtility
 
     /**
      * The kebab-case form of {@see getComponentBaseNameFromContext} - for the few things that
-     * genuinely need it (data-scope, hydration keys, `ComponentPartIdUtility`'s override maps).
+     * genuinely need it (ref attribute names, hydration keys).
      * Deliberately still derives this from `component.baseName` via case conversion rather than
      * reading `component.clientBaseName` directly, even though a real render's `component` variable
      * (see {@see \Jramke\FluidPrimitives\Domain\Dto\ComponentIdentity::forView()}) carries both -

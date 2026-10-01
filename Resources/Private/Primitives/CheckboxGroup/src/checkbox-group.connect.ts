@@ -1,5 +1,6 @@
 import type { Service } from '@zag-js/core';
 import type { NormalizeProps, PropTypes } from '@zag-js/types';
+import { parts } from './checkbox-group.anatomy';
 import * as dom from './checkbox-group.dom';
 import type {
     CheckboxGroupApi,
@@ -65,14 +66,12 @@ export function connect<T extends PropTypes>(
 
         getRootProps() {
             return normalize.element({
-                id: dom.getRootId(scope),
+                ...parts.root.attrs(scope.id),
                 role: 'group',
-                'data-scope': 'checkbox-group',
-                'data-part': 'root',
                 'data-disabled': disabled ? '' : undefined,
                 'data-readonly': readOnly ? '' : undefined,
                 'data-invalid': invalid ? '' : undefined,
-                'aria-labelledby': dom.getLabelId(scope),
+                'aria-labelledby': dom.getLabelEl(scope) ? dom.getLabelId(scope) : undefined,
                 'aria-disabled': disabled || undefined,
                 'aria-invalid': invalid || undefined,
                 'aria-required': required || undefined,
@@ -81,9 +80,8 @@ export function connect<T extends PropTypes>(
 
         getLabelProps() {
             return normalize.element({
+                ...parts.label.attrs(scope.id),
                 id: dom.getLabelId(scope),
-                'data-scope': 'checkbox-group',
-                'data-part': 'label',
                 'data-disabled': disabled ? '' : undefined,
                 'data-readonly': readOnly ? '' : undefined,
                 'data-invalid': invalid ? '' : undefined,
