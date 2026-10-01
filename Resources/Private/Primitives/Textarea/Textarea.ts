@@ -33,13 +33,13 @@ export class Textarea extends FieldAwareComponent<TextareaProps, TextareaApi> {
     render() {
         this.subscribeToFieldService();
 
-        const rootEl = this.query('root');
+        const rootEl = this.hydrator.query('root');
         if (rootEl) this.spreadProps(rootEl, this.api.getRootProps());
 
-        const wordCountEl = this.query('wordCount');
+        const wordCountEl = this.hydrator.query('wordCount');
         const wordCountId = wordCountEl ? dom.getWordCountId(this.machine.scope) : undefined;
 
-        const textareaEl = this.query<HTMLTextAreaElement>('textarea');
+        const textareaEl = this.hydrator.query<HTMLTextAreaElement>('textarea');
         if (textareaEl) {
             const describeIds = [this.fieldMachine?.context.get('describeIds'), wordCountId]
                 .filter(Boolean)
@@ -50,7 +50,7 @@ export class Textarea extends FieldAwareComponent<TextareaProps, TextareaApi> {
             this.spreadProps(textareaEl, mergedProps);
         }
 
-        const labelEl = this.query('label');
+        const labelEl = this.hydrator.query('label');
         if (labelEl) this.spreadProps(labelEl, this.api.getLabelProps());
 
         if (wordCountEl) {
@@ -58,7 +58,7 @@ export class Textarea extends FieldAwareComponent<TextareaProps, TextareaApi> {
             wordCountEl.textContent = this.api.countText ?? '';
         }
 
-        const liveRegionEl = this.query<HTMLElement>('liveRegion');
+        const liveRegionEl = this.hydrator.query<HTMLElement>('liveRegion');
         if (liveRegionEl) this.spreadProps(liveRegionEl, this.api.getLiveRegionProps());
     }
 }

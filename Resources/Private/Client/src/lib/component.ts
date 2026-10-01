@@ -4,16 +4,10 @@ import type { ComponentInterface } from '../types';
 
 export abstract class Component<Props, Api> implements ComponentInterface<Api> {
     document: Document;
-    /** Created by {@see init}. */
-    machine!: Machine<any>;
-    /** Created by {@see init}. */
-    api!: Api;
-    hydrator: ComponentHydrator | null = null;
-    /**
-     * The props the instance runs on - what {@see transformProps} made of the ones it was created
-     * with. Created by {@see init}.
-     */
-    userProps!: Props;
+    #machine?: Machine<any>;
+    #api?: Api;
+    #hydrator?: ComponentHydrator;
+    #userProps?: Props;
     /**
      * The Fluid namespace identifier (e.g. "ui") this instance was mounted under - assigned by
      * `mountAll`/`mount` right after their callback returns, so not yet available while it runs
@@ -31,6 +25,45 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
         userDocument: Document = document
     ) {
         this.document = userDocument;
+    }
+
+    /** Created by {@see init} - reading it earlier throws. */
+    get machine(): Machine<any> {
+        return this.#requireInit(this.#machine, 'machine');
+    }
+
+    /** Created by {@see init} - reading it earlier throws. */
+    get api(): Api {
+        return this.#requireInit(this.#api, 'api');
+    }
+
+    protected set api(api: Api) {
+        this.#api = api;
+    }
+
+    /**
+     * Finds the component's parts by name, see {@see ComponentHydrator.query}. Created by
+     * {@see init} - reading it earlier throws.
+     */
+    get hydrator(): ComponentHydrator {
+        return this.#requireInit(this.#hydrator, 'hydrator');
+    }
+
+    /**
+     * The props the instance runs on - what {@see transformProps} made of the ones it was created
+     * with. Created by {@see init} - reading it earlier throws.
+     */
+    get userProps(): Props {
+        return this.#requireInit(this.#userProps, 'userProps');
+    }
+
+    #requireInit<T>(value: T | undefined, member: string): T {
+        if (value === undefined) {
+            throw new Error(
+                `${this.getName()}: \`${member}\` was accessed before init(). It only exists once init() has run - call init() first.`
+            );
+        }
+        return value;
     }
 
     abstract initMachine(props: Props): Machine<any>;
@@ -52,17 +85,17 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
      * whatever it assigned to one would be reset right afterwards.
      */
     init() {
-        this.userProps = this.transformProps(this.initialProps);
-        this.hydrator = this.initHydrator(this.userProps);
-        this.machine = this.initMachine(this.userProps);
-        this.api = this.initApi();
+        this.#userProps = this.transformProps(this.initialProps);
+        this.#hydrator = this.initHydrator(this.#userProps);
+        this.#machine = this.initMachine(this.#userProps);
+        this.#api = this.initApi();
 
         this.render();
-        this.machine.subscribe(() => {
-            this.api = this.initApi();
+        this.#machine.subscribe(() => {
+            this.#api = this.initApi();
             this.render();
         });
-        this.machine.start();
+        this.#machine.start();
     }
 
     /**
@@ -116,19 +149,11 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
 
     destroy() {
         this.machine.stop();
-        this.hydrator?.destroy();
+        this.hydrator.destroy();
     }
 
     spreadProps(node: HTMLElement, attrs: Attrs) {
         spreadProps(node, attrs, this.machine.scope.id);
-    }
-
-    query<T extends HTMLElement>(part: string, parent?: HTMLElement | Document): T | null {
-        return this.hydrator?.query<T>(part, parent) ?? null;
-    }
-
-    queryAll<T extends HTMLElement>(part: string, parent?: HTMLElement | Document): T[] {
-        return this.hydrator?.queryAll<T>(part, parent) ?? [];
     }
 
     /**
@@ -144,7 +169,7 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
         getProps: (ctx: { el: HTMLElement; value: string }) => Attrs | null | undefined,
         options?: { parent?: HTMLElement | Document }
     ): void {
-        this.queryAll<HTMLElement>(part, options?.parent).forEach(el => {
+        this.hydrator.queryAll<HTMLElement>(part, options?.parent).forEach(el => {
             const value = el.dataset.value;
             if (value === undefined) return;
             const props = getProps({ el, value });
@@ -157,7 +182,7 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
         getProps: (ctx: { el: HTMLElement; value?: string }) => Attrs | null | undefined,
         options?: { parent?: HTMLElement | Document }
     ): void {
-        this.queryAll<HTMLElement>(part, options?.parent).forEach(el => {
+        this.hydrator.queryAll<HTMLElement>(part, options?.parent).forEach(el => {
             const value = el.dataset.value;
             const props = getProps({ el, value });
             if (props) this.spreadProps(el, props);

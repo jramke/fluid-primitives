@@ -96,19 +96,19 @@ export class Menu extends Component<menu.Props, menu.Api> {
             this.api.getContextTriggerProps({ value })
         );
 
-        const indicatorEl = this.query('indicator');
+        const indicatorEl = this.hydrator.query('indicator');
         if (indicatorEl) this.spreadProps(indicatorEl, this.api.getIndicatorProps());
 
-        const positionerEl = this.query('positioner');
+        const positionerEl = this.hydrator.query('positioner');
         if (positionerEl) this.spreadProps(positionerEl, this.api.getPositionerProps());
 
-        const arrowEl = this.query('arrow');
+        const arrowEl = this.hydrator.query('arrow');
         if (arrowEl) this.spreadProps(arrowEl, this.api.getArrowProps());
 
-        const arrowTipEl = this.query('arrowTip');
+        const arrowTipEl = this.hydrator.query('arrowTip');
         if (arrowTipEl) this.spreadProps(arrowTipEl, this.api.getArrowTipProps());
 
-        const contentEl = this.query('content');
+        const contentEl = this.hydrator.query('content');
         if (contentEl) this.spreadProps(contentEl, this.api.getContentProps());
 
         this.spreadPropsByValue('itemGroup', ({ value }) =>
@@ -156,7 +156,7 @@ export class Menu extends Component<menu.Props, menu.Api> {
             // first spread.
             if (!child.machine.context.get('isSubmenu')) return;
 
-            const el = child.query('triggerItem');
+            const el = child.hydrator.query('triggerItem');
             if (el) this.spreadProps(el, this.api.getTriggerItemProps(child.api));
         });
     }
@@ -186,7 +186,7 @@ export class Menu extends Component<menu.Props, menu.Api> {
             valueText,
             onCheckedChange: nextChecked => {
                 if (type === 'radio' && name) {
-                    this.queryAll<HTMLElement>('item').forEach(sibling => {
+                    this.hydrator.queryAll<HTMLElement>('item').forEach(sibling => {
                         if (sibling.dataset.name === name) {
                             sibling.dataset.state = sibling === el ? 'checked' : 'unchecked';
                         }
@@ -199,7 +199,7 @@ export class Menu extends Component<menu.Props, menu.Api> {
         });
         this.spreadProps(el, optionProps);
 
-        const indicatorEl = this.query('itemIndicator', el);
+        const indicatorEl = this.hydrator.query('itemIndicator', el);
         if (indicatorEl) {
             this.spreadProps(
                 indicatorEl,
@@ -207,7 +207,7 @@ export class Menu extends Component<menu.Props, menu.Api> {
             );
         }
 
-        const textEl = this.query('itemText', el);
+        const textEl = this.hydrator.query('itemText', el);
         if (textEl) {
             this.spreadProps(
                 textEl,

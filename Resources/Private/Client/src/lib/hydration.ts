@@ -188,7 +188,7 @@ export function destroyComponentsWithin(root: Element | Document) {
     for (const namespaceBucket of Object.values(window.FluidPrimitives.componentInstances)) {
         for (const instances of Object.values(namespaceBucket)) {
             for (const [id, instance] of Object.entries(instances)) {
-                const rootPartSelector = instance.hydrator?.selector('root');
+                const rootPartSelector = instance.hydrator.selector('root');
                 if (!rootPartSelector) continue;
 
                 const isRootItself = root instanceof Element && root.matches(rootPartSelector);
@@ -291,11 +291,17 @@ export class ComponentHydrator {
         return value ? `${key}:${value}` : key;
     }
 
-    query<T extends Element>(part: string, parent: Element | Document = this.doc): T | null {
+    query<T extends Element = HTMLElement>(
+        part: string,
+        parent: Element | Document = this.doc
+    ): T | null {
         return parent.querySelector<T>(this.selector(part));
     }
 
-    queryAll<T extends Element>(part: string, parent: Element | Document = this.doc): T[] {
+    queryAll<T extends Element = HTMLElement>(
+        part: string,
+        parent: Element | Document = this.doc
+    ): T[] {
         return Array.from(parent.querySelectorAll<T>(this.selector(part)));
     }
 
@@ -605,9 +611,7 @@ function renameNestedComponentEntry(
     if (instance) {
         delete instances[oldRootId];
         instances[newRootId] = instance;
-        if (instance.hydrator) {
-            instance.hydrator.rootId = newRootId;
-        }
+        instance.hydrator.rootId = newRootId;
     }
 
     const hydrationInstances = window.FluidPrimitives?.hydrationData?.[namespace]?.[clientBaseName];

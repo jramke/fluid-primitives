@@ -24,7 +24,7 @@ export class Form extends Component<FormProps, FormApi> {
     initMachine(props: FormProps) {
         const [machineProps] = splitProps(props);
         const createdMachine = new Machine(machine, machineProps);
-        registerFormMachine(this.query('root'), createdMachine);
+        registerFormMachine(this.hydrator.query('root'), createdMachine);
         return createdMachine;
     }
 
@@ -46,14 +46,14 @@ export class Form extends Component<FormProps, FormApi> {
     }
 
     render() {
-        const formEl = this.query('root') as HTMLFormElement | null;
+        const formEl = this.hydrator.query('root') as HTMLFormElement | null;
         if (!formEl) return;
 
         this.subscribeToFieldMachines(formEl);
 
         this.spreadProps(formEl, this.api.getFormProps());
 
-        this.queryAll('content').forEach(contentEl => {
+        this.hydrator.queryAll('content').forEach(contentEl => {
             this.spreadProps(contentEl, this.api.getContentProps());
         });
 
@@ -61,12 +61,12 @@ export class Form extends Component<FormProps, FormApi> {
             this.api.getIndicatorProps(value as FormState)
         );
 
-        this.queryAll('errorText').forEach(errorTextEl => {
+        this.hydrator.queryAll('errorText').forEach(errorTextEl => {
             this.spreadProps(errorTextEl, this.api.getErrorTextProps());
             syncStatusText(errorTextEl, this.api.getErrorText());
         });
 
-        this.queryAll('successText').forEach(successTextEl => {
+        this.hydrator.queryAll('successText').forEach(successTextEl => {
             this.spreadProps(successTextEl, this.api.getSuccessTextProps());
             syncStatusText(successTextEl, this.api.getSuccessText());
         });

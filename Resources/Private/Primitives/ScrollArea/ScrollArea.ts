@@ -15,16 +15,16 @@ export class ScrollArea extends Component<scrollArea.Props, scrollArea.Api<PropT
     }
 
     render() {
-        const rootEl = this.query('root');
+        const rootEl = this.hydrator.query('root');
         if (rootEl) this.spreadProps(rootEl, this.api.getRootProps());
 
-        const viewportEl = this.query('viewport');
+        const viewportEl = this.hydrator.query('viewport');
         if (viewportEl) this.spreadProps(viewportEl, this.api.getViewportProps());
 
-        const contentEl = this.query('content');
+        const contentEl = this.hydrator.query('content');
         if (contentEl) this.spreadProps(contentEl, this.api.getContentProps());
 
-        const scrollbarEls = this.queryAll('scrollbar');
+        const scrollbarEls = this.hydrator.queryAll('scrollbar');
         scrollbarEls.forEach(scrollbarEl => {
             this.spreadProps(
                 scrollbarEl,
@@ -34,10 +34,10 @@ export class ScrollArea extends Component<scrollArea.Props, scrollArea.Api<PropT
             );
         });
 
-        const cornerEl = this.query('corner');
+        const cornerEl = this.hydrator.query('corner');
         if (cornerEl) this.spreadProps(cornerEl, this.api.getCornerProps());
 
-        const thumbEls = this.queryAll('thumb');
+        const thumbEls = this.hydrator.queryAll('thumb');
         thumbEls.forEach(thumbEl => {
             this.spreadProps(
                 thumbEl,

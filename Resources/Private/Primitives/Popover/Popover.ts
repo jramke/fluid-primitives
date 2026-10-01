@@ -47,29 +47,29 @@ export class Popover extends Component<popover.Props, popover.Api> {
             this.api.getTriggerProps({ value })
         );
 
-        const positionerEl = this.query('positioner');
+        const positionerEl = this.hydrator.query('positioner');
         if (positionerEl) this.spreadProps(positionerEl, this.api.getPositionerProps());
 
-        const arrowEl = this.query('arrow');
+        const arrowEl = this.hydrator.query('arrow');
         if (arrowEl) this.spreadProps(arrowEl, this.api.getArrowProps());
 
-        const arrowTipEl = this.query('arrowTip');
+        const arrowTipEl = this.hydrator.query('arrowTip');
         if (arrowTipEl) this.spreadProps(arrowTipEl, this.api.getArrowTipProps());
 
-        const contentEl = this.query('content');
+        const contentEl = this.hydrator.query('content');
         if (contentEl) this.spreadProps(contentEl, this.api.getContentProps());
 
-        const titleEl = this.query('title');
+        const titleEl = this.hydrator.query('title');
         if (titleEl) this.spreadProps(titleEl, this.api.getTitleProps());
 
-        const descriptionEl = this.query('description');
+        const descriptionEl = this.hydrator.query('description');
         if (descriptionEl) this.spreadProps(descriptionEl, this.api.getDescriptionProps());
 
-        this.queryAll('closeTrigger').forEach(closeTriggerEl => {
+        this.hydrator.queryAll('closeTrigger').forEach(closeTriggerEl => {
             this.spreadProps(closeTriggerEl, this.api.getCloseTriggerProps());
         });
 
-        const indicatorEl = this.query('indicator');
+        const indicatorEl = this.hydrator.query('indicator');
         if (indicatorEl) this.spreadProps(indicatorEl, this.api.getIndicatorProps());
     }
 }

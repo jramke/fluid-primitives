@@ -76,11 +76,11 @@ export class Template extends DocumentFragment {
         }
     }
 
-    query<T extends Element>(part: string): T | null {
+    query<T extends Element = HTMLElement>(part: string): T | null {
         return this.querySelector<T>(this.hydrator.selector(part));
     }
 
-    queryAll<T extends Element>(part: string): T[] {
+    queryAll<T extends Element = HTMLElement>(part: string): T[] {
         return Array.from(this.querySelectorAll<T>(this.hydrator.selector(part)));
     }
 }

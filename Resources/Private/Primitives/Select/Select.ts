@@ -58,13 +58,13 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
     render = () => {
         this.subscribeToFieldService();
 
-        const rootEl = this.query('root');
+        const rootEl = this.hydrator.query('root');
         if (rootEl) this.spreadProps(rootEl, this.api.getRootProps());
 
-        const controlEl = this.query('control');
+        const controlEl = this.hydrator.query('control');
         if (controlEl) this.spreadProps(controlEl, this.api.getControlProps());
 
-        const hiddenSelectEl = this.query('hiddenSelect');
+        const hiddenSelectEl = this.hydrator.query('hiddenSelect');
         if (hiddenSelectEl) {
             const mergedProps = mergeProps(this.api.getHiddenSelectProps(), {
                 'aria-describedby': this.fieldMachine?.context.get('describeIds') || undefined,
@@ -79,25 +79,25 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
             if (defaultOption) defaultOption.selected = isValueEmpty;
         }
 
-        const labelEl = this.query('label');
+        const labelEl = this.hydrator.query('label');
         if (labelEl) this.spreadProps(labelEl, this.api.getLabelProps());
 
-        const triggerEl = this.query('trigger');
+        const triggerEl = this.hydrator.query('trigger');
         if (triggerEl) this.spreadProps(triggerEl, this.api.getTriggerProps());
 
-        const positionerEl = this.query('positioner');
+        const positionerEl = this.hydrator.query('positioner');
         if (positionerEl) this.spreadProps(positionerEl, this.api.getPositionerProps());
 
-        const contentEl = this.query('content');
+        const contentEl = this.hydrator.query('content');
         if (contentEl) this.spreadProps(contentEl, this.api.getContentProps());
 
-        const listEl = this.query('list');
+        const listEl = this.hydrator.query('list');
         if (listEl) this.spreadProps(listEl, this.api.getListProps());
 
         // We need to make sure the element is rerendered because otherwise safari doesnt update the spans value in the a11y tree
         // and the button would announce an old value when it receives focus.
         // see: https://github.com/chakra-ui/zag/issues/3099
-        const valueTextEl = this.query('valueText');
+        const valueTextEl = this.hydrator.query('valueText');
         if (valueTextEl) {
             const currentText = valueTextEl.textContent || valueTextEl.dataset.placeholder || '';
             const nextValue = this.api.valueAsString || valueTextEl.dataset.placeholder || '';
@@ -111,7 +111,7 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
 
             if (nextValue !== currentText) {
                 queueMicrotask(() => {
-                    const el = this.query('valueText');
+                    const el = this.hydrator.query('valueText');
                     if (el?.isConnected) {
                         const next = el.cloneNode(true) as HTMLElement;
                         el.replaceWith(next);
@@ -144,10 +144,10 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
             return item ? this.api.getItemIndicatorProps({ item }) : null;
         });
 
-        const clearTriggerEl = this.query('clearTrigger');
+        const clearTriggerEl = this.hydrator.query('clearTrigger');
         if (clearTriggerEl) this.spreadProps(clearTriggerEl, this.api.getClearTriggerProps());
 
-        const indicatorEl = this.query('indicator');
+        const indicatorEl = this.hydrator.query('indicator');
         if (indicatorEl) this.spreadProps(indicatorEl, this.api.getIndicatorProps());
     };
 }

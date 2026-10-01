@@ -24,7 +24,7 @@ export class CheckboxGroup extends FieldAwareComponent<CheckboxGroupProps, Check
         props = this.withFieldProps(props);
         const [machineProps] = splitProps(props);
         const createdMachine = new Machine(machine, machineProps);
-        registerCheckboxGroup(this.query('root'), createdMachine);
+        registerCheckboxGroup(this.hydrator.query('root'), createdMachine);
         return createdMachine;
     }
 
@@ -35,7 +35,7 @@ export class CheckboxGroup extends FieldAwareComponent<CheckboxGroupProps, Check
     render() {
         this.subscribeToFieldService();
 
-        const rootEl = this.query('root');
+        const rootEl = this.hydrator.query('root');
         if (rootEl) {
             const mergedProps = mergeProps(this.api.getRootProps(), {
                 'aria-describedby': this.fieldMachine?.context.get('describeIds') || undefined,
@@ -43,12 +43,12 @@ export class CheckboxGroup extends FieldAwareComponent<CheckboxGroupProps, Check
             this.spreadProps(rootEl, mergedProps);
         }
 
-        const labelEl = this.query('label');
+        const labelEl = this.hydrator.query('label');
         if (labelEl) this.spreadProps(labelEl, this.api.getLabelProps());
     }
 
     destroy() {
-        unregisterCheckboxGroup(this.query('root'));
+        unregisterCheckboxGroup(this.hydrator.query('root'));
         super.destroy();
     }
 }

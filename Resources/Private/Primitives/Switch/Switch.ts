@@ -29,19 +29,19 @@ export class Switch extends FieldAwareComponent<zagSwitch.Props, zagSwitch.Api> 
     render() {
         this.subscribeToFieldService();
 
-        const rootEl = this.query('root');
+        const rootEl = this.hydrator.query('root');
         if (rootEl) this.spreadProps(rootEl, this.api.getRootProps());
 
-        const labelEl = this.query('label');
+        const labelEl = this.hydrator.query('label');
         if (labelEl) this.spreadProps(labelEl, this.api.getLabelProps());
 
-        const controlEl = this.query('control');
+        const controlEl = this.hydrator.query('control');
         if (controlEl) this.spreadProps(controlEl, this.api.getControlProps());
 
-        const thumbEl = this.query('thumb');
+        const thumbEl = this.hydrator.query('thumb');
         if (thumbEl) this.spreadProps(thumbEl, this.api.getThumbProps());
 
-        const hiddenInputEl = this.query('hiddenInput');
+        const hiddenInputEl = this.hydrator.query('hiddenInput');
         if (hiddenInputEl) {
             const mergedProps = mergeProps(this.api.getHiddenInputProps(), {
                 'aria-describedby': this.fieldMachine?.context.get('describeIds') || undefined,

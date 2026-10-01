@@ -14,7 +14,7 @@ import type { FieldArrayApi, FieldArrayApiActions, FieldArrayApiProps } from './
  * Builds `FieldArray`'s API. Deliberately takes the `Component` instance itself, not a Zag
  * `service` the way `Field`/`Form`'s own `connect()` do - their API is "read context, return a
  * plain object", but `append`/`remove` here are DOM mutations over an open-ended row collection,
- * which needs `Component`-level helpers (`query`/`queryAll`/`hydrator`/`refresh`) that a
+ * which needs `Component`-level helpers (`hydrator`/`refresh`) that a
  * Zag service's `context`/`scope` alone don't provide. Still takes `normalize` like every other
  * `connect()` though, so `getAddTriggerProps`/`getRemoveTriggerProps` stay framework-portable and
  * carry the same anatomy attrs every other primitive's parts do.
@@ -61,7 +61,7 @@ export function connect<T extends PropTypes>(
 }
 
 function getRows(component: FieldArray): { index: number }[] {
-    return component
+    return component.hydrator
         .queryAll<HTMLElement>('item')
         .map(el => ({ index: Number(el.dataset.value) }))
         .filter(({ index }) => !Number.isNaN(index))
@@ -86,10 +86,9 @@ function canRemove(component: FieldArray): boolean {
  * so consumer code can call `mountAll()` again for each of them.
  */
 function append(component: FieldArray): void {
-    if (!component.hydrator) return;
     if (!canAppend(component)) return;
 
-    const itemGroupEl = component.query('itemGroup');
+    const itemGroupEl = component.hydrator.query('itemGroup');
     if (!itemGroupEl) return;
 
     const index = nextIndex(component);
@@ -112,7 +111,7 @@ function append(component: FieldArray): void {
 function remove(component: FieldArray, index: number): void {
     if (!canRemove(component)) return;
 
-    const rowEl = component
+    const rowEl = component.hydrator
         .queryAll<HTMLElement>('item')
         .find(el => el.dataset.value === String(index));
     if (!rowEl) return;
@@ -147,13 +146,13 @@ function findFocusTargetAfterRemoval(
     component: FieldArray,
     rowEl: HTMLElement
 ): HTMLElement | null {
-    const rows = component.queryAll<HTMLElement>('item');
+    const rows = component.hydrator.queryAll<HTMLElement>('item');
     const removedPosition = rows.indexOf(rowEl);
     const siblingRowEl = rows[removedPosition + 1] ?? rows[removedPosition - 1];
 
     return (
-        (siblingRowEl && component.query<HTMLElement>('removeTrigger', siblingRowEl)) ||
-        component.query<HTMLElement>('addTrigger')
+        (siblingRowEl && component.hydrator.query<HTMLElement>('removeTrigger', siblingRowEl)) ||
+        component.hydrator.query<HTMLElement>('addTrigger')
     );
 }
 
@@ -163,12 +162,10 @@ function nextIndex(component: FieldArray): number {
 }
 
 function reindexRowsAfter(component: FieldArray, removedIndex: number): void {
-    if (!component.hydrator) return;
-
     const rowsToShift = getRows(component).filter(({ index }) => index > removedIndex);
 
     for (const { index } of rowsToShift) {
-        const rowEl = component
+        const rowEl = component.hydrator
             .queryAll<HTMLElement>('item')
             .find(el => el.dataset.value === String(index));
         if (!rowEl) continue;

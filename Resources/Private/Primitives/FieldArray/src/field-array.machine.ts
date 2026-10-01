@@ -12,7 +12,7 @@ import type { FieldArraySchema } from './field-array.types';
 // Textarea/Input's own `manageLiveRegion` effect uses - `machine.stop()` (called from
 // `Component.destroy()`) runs this effect's cleanup automatically, so `FieldArray.ts` needs no
 // `destroy()` override for it. Everything else (`append`/`remove`) operates directly on
-// `Component`-level DOM helpers (`query`/`queryAll`/`hydrator`) instead, since managing
+// `Component`-level DOM helpers (`hydrator`) instead, since managing
 // an open-ended collection of rows doesn't map onto a Zag machine's usual fixed set of known-id
 // parts the way a single field's or form's own state does.
 export const machine = createMachine<FieldArraySchema>({

@@ -14,10 +14,10 @@ export class NavigationMenu extends Component<navigationMenu.Props, navigationMe
     }
 
     render() {
-        const rootEl = this.query('root');
+        const rootEl = this.hydrator.query('root');
         if (rootEl) this.spreadProps(rootEl, this.api.getRootProps());
 
-        const listEl = this.query('list');
+        const listEl = this.hydrator.query('list');
         if (listEl) this.spreadProps(listEl, this.api.getListProps());
 
         this.spreadPropsByValue('item', ({ el, value }) =>
@@ -42,20 +42,20 @@ export class NavigationMenu extends Component<navigationMenu.Props, navigationMe
             this.api.getLinkProps({ value, current: el.hasAttribute('data-current') })
         );
 
-        const indicatorEl = this.query('indicator');
+        const indicatorEl = this.hydrator.query('indicator');
         if (indicatorEl) this.spreadProps(indicatorEl, this.api.getIndicatorProps());
 
-        const arrowEl = this.query('arrow');
+        const arrowEl = this.hydrator.query('arrow');
         if (arrowEl) this.spreadProps(arrowEl, this.api.getArrowProps());
 
-        const viewportPositionerEl = this.query('viewportPositioner');
+        const viewportPositionerEl = this.hydrator.query('viewportPositioner');
         if (viewportPositionerEl) {
             const align = (viewportPositionerEl.dataset.align ||
                 undefined) as navigationMenu.ViewportProps['align'];
             this.spreadProps(viewportPositionerEl, this.api.getViewportPositionerProps({ align }));
         }
 
-        const viewportEl = this.query('viewport');
+        const viewportEl = this.hydrator.query('viewport');
         if (viewportEl) {
             const align = (viewportEl.dataset.align ||
                 undefined) as navigationMenu.ViewportProps['align'];

@@ -157,19 +157,19 @@ export class FileUpload extends FieldAwareComponent<FileUploadPrimitiveProps, fi
     render() {
         this.subscribeToFieldService();
 
-        const rootEl = this.query('root');
+        const rootEl = this.hydrator.query('root');
         if (rootEl) this.spreadProps(rootEl, this.api.getRootProps());
 
-        const labelEl = this.query('label');
+        const labelEl = this.hydrator.query('label');
         if (labelEl) this.spreadProps(labelEl, this.api.getLabelProps());
 
-        const dropzoneEl = this.query('dropzone');
+        const dropzoneEl = this.hydrator.query('dropzone');
         if (dropzoneEl) this.spreadProps(dropzoneEl, this.api.getDropzoneProps());
 
-        const triggerEl = this.query('trigger');
+        const triggerEl = this.hydrator.query('trigger');
         if (triggerEl) this.spreadProps(triggerEl, this.api.getTriggerProps());
 
-        const hiddenInputEl = this.query<HTMLInputElement>('hiddenInput');
+        const hiddenInputEl = this.hydrator.query<HTMLInputElement>('hiddenInput');
         if (hiddenInputEl) {
             const mergedProps = mergeProps(this.api.getHiddenInputProps(), {
                 'aria-describedby': this.fieldMachine?.context.get('describeIds') || undefined,
@@ -177,7 +177,7 @@ export class FileUpload extends FieldAwareComponent<FileUploadPrimitiveProps, fi
             this.spreadProps(hiddenInputEl, mergedProps);
         }
 
-        const clearTriggerEl = this.query('clearTrigger');
+        const clearTriggerEl = this.hydrator.query('clearTrigger');
         if (clearTriggerEl) this.spreadProps(clearTriggerEl, this.api.getClearTriggerProps());
 
         this.renderItemGroups();
@@ -190,7 +190,7 @@ export class FileUpload extends FieldAwareComponent<FileUploadPrimitiveProps, fi
         const filesChanged =
             acceptedFiles !== this.lastAcceptedFiles || rejectedFiles !== this.lastRejectedFiles;
 
-        const itemGroupEls = this.queryAll<HTMLElement>('itemGroup');
+        const itemGroupEls = this.hydrator.queryAll<HTMLElement>('itemGroup');
         itemGroupEls.forEach(itemGroupEl => {
             const type = (itemGroupEl.dataset.value as ItemType) || 'accepted';
             this.spreadProps(itemGroupEl, this.api.getItemGroupProps({ type }));
@@ -222,10 +222,10 @@ export class FileUpload extends FieldAwareComponent<FileUploadPrimitiveProps, fi
      * underneath them.
      */
     private updateEmptyState(itemGroupEl: HTMLElement) {
-        const emptyStateEl = this.query('emptyState', itemGroupEl);
+        const emptyStateEl = this.hydrator.query('emptyState', itemGroupEl);
         if (!emptyStateEl) return;
 
-        const hasVisibleItems = this.queryAll('item', itemGroupEl).some(el => !el.hidden);
+        const hasVisibleItems = this.hydrator.queryAll('item', itemGroupEl).some(el => !el.hidden);
 
         emptyStateEl.hidden = hasVisibleItems;
     }
@@ -239,15 +239,15 @@ export class FileUpload extends FieldAwareComponent<FileUploadPrimitiveProps, fi
      * render.
      */
     private wireExistingItemDeleteTriggers(itemGroupEl: HTMLElement) {
-        const existingItemEls = this.queryAll('item', itemGroupEl).filter(
-            el => el.dataset.type === 'existing' && !el.dataset.fileUploadWired
-        );
+        const existingItemEls = this.hydrator
+            .queryAll('item', itemGroupEl)
+            .filter(el => el.dataset.type === 'existing' && !el.dataset.fileUploadWired);
 
         existingItemEls.forEach(itemEl => {
             itemEl.dataset.fileUploadWired = 'true';
 
             const checkboxEl = itemEl.querySelector<HTMLInputElement>('input[type="checkbox"]');
-            const deleteTriggerEl = this.query('itemDeleteTrigger', itemEl);
+            const deleteTriggerEl = this.hydrator.query('itemDeleteTrigger', itemEl);
             if (!checkboxEl || !deleteTriggerEl) return;
 
             deleteTriggerEl.addEventListener('click', () => {
@@ -267,14 +267,15 @@ export class FileUpload extends FieldAwareComponent<FileUploadPrimitiveProps, fi
      * consumers are unaffected.
      */
     private resolveItemTemplatePart(type: ItemType): string {
-        if (type === 'rejected' && this.query('rejectedItemTemplate')) {
+        if (type === 'rejected' && this.hydrator.query('rejectedItemTemplate')) {
             return 'rejectedItemTemplate';
         }
         return 'itemTemplate';
     }
 
     private renderItems(itemGroupEl: HTMLElement, entries: ItemEntry[], type: ItemType) {
-        this.queryAll('item', itemGroupEl)
+        this.hydrator
+            .queryAll('item', itemGroupEl)
             .filter(el => el.dataset.type !== 'existing')
             .forEach(el => {
                 this.previewCleanups.get(el)?.();
@@ -282,12 +283,10 @@ export class FileUpload extends FieldAwareComponent<FileUploadPrimitiveProps, fi
                 el.remove();
             });
 
-        if (!this.hydrator) return;
-
         const templatePart = this.resolveItemTemplatePart(type);
 
         entries.forEach(({ file, type, errors }) => {
-            const instance = new Template(this.hydrator!, templatePart, {
+            const instance = new Template(this.hydrator, templatePart, {
                 value: fileValue(file),
             });
             const itemEl = instance.root;
@@ -344,13 +343,13 @@ export class FileUpload extends FieldAwareComponent<FileUploadPrimitiveProps, fi
 
             this.spreadProps(el, this.api.getItemPreviewProps({ file, type }));
 
-            const fallbackEl = this.query('itemPreviewFallback', el);
+            const fallbackEl = this.hydrator.query('itemPreviewFallback', el);
             if (fallbackEl) fallbackEl.textContent = fileExtension(file.name);
         });
 
         if (!matched) return;
 
-        const imageEl = this.query<HTMLImageElement>('itemPreviewImage', matched);
+        const imageEl = this.hydrator.query<HTMLImageElement>('itemPreviewImage', matched);
         if (!imageEl || !file.type.startsWith('image/')) return;
 
         const cleanup = this.api.createFileUrl(file, url => {

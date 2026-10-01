@@ -14,10 +14,10 @@ export class Tabs extends Component<tabs.Props, tabs.Api> {
     }
 
     render = () => {
-        const rootEl = this.query('root');
+        const rootEl = this.hydrator.query('root');
         if (rootEl) this.spreadProps(rootEl, this.api.getRootProps());
 
-        const listEl = this.query('list');
+        const listEl = this.hydrator.query('list');
         if (listEl) this.spreadProps(listEl, this.api.getListProps());
 
         this.spreadPropsByValue('trigger', ({ el, value }) =>
@@ -26,7 +26,7 @@ export class Tabs extends Component<tabs.Props, tabs.Api> {
 
         this.spreadPropsByValue('content', ({ value }) => this.api.getContentProps({ value }));
 
-        const indicatorEl = this.query('indicator');
+        const indicatorEl = this.hydrator.query('indicator');
         if (indicatorEl) {
             this.spreadProps(indicatorEl, this.api.getIndicatorProps());
         }

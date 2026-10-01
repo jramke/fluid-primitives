@@ -44,7 +44,7 @@ export class NumberInput extends FieldAwareComponent<numberInput.Props, numberIn
         return {
             ...props,
             onValueChange: details => {
-                this.query('input')?.dispatchEvent(new Event('input', { bubbles: true }));
+                this.hydrator.query('input')?.dispatchEvent(new Event('input', { bubbles: true }));
                 props?.onValueChange?.(details);
             },
         };
@@ -63,16 +63,16 @@ export class NumberInput extends FieldAwareComponent<numberInput.Props, numberIn
     render() {
         this.subscribeToFieldService();
 
-        const rootEl = this.query('root');
+        const rootEl = this.hydrator.query('root');
         if (rootEl) this.spreadProps(rootEl, this.api.getRootProps());
 
-        const labelEl = this.query('label');
+        const labelEl = this.hydrator.query('label');
         if (labelEl) this.spreadProps(labelEl, this.api.getLabelProps());
 
-        const controlEl = this.query('control');
+        const controlEl = this.hydrator.query('control');
         if (controlEl) this.spreadProps(controlEl, this.api.getControlProps());
 
-        const inputEl = this.query('input');
+        const inputEl = this.hydrator.query('input');
         if (inputEl) {
             const mergedProps = mergeProps(this.api.getInputProps(), {
                 'aria-describedby': this.fieldMachine?.context.get('describeIds') || undefined,
@@ -80,18 +80,18 @@ export class NumberInput extends FieldAwareComponent<numberInput.Props, numberIn
             this.spreadProps(inputEl, mergedProps);
         }
 
-        const incrementTriggerEl = this.query('incrementTrigger');
+        const incrementTriggerEl = this.hydrator.query('incrementTrigger');
         if (incrementTriggerEl)
             this.spreadProps(incrementTriggerEl, this.api.getIncrementTriggerProps());
 
-        const decrementTriggerEl = this.query('decrementTrigger');
+        const decrementTriggerEl = this.hydrator.query('decrementTrigger');
         if (decrementTriggerEl)
             this.spreadProps(decrementTriggerEl, this.api.getDecrementTriggerProps());
 
-        const valueTextEl = this.query('valueText');
+        const valueTextEl = this.hydrator.query('valueText');
         if (valueTextEl) this.spreadProps(valueTextEl, this.api.getValueTextProps());
 
-        const scrubberEl = this.query('scrubber');
+        const scrubberEl = this.hydrator.query('scrubber');
         if (scrubberEl) this.spreadProps(scrubberEl, this.api.getScrubberProps());
     }
 }

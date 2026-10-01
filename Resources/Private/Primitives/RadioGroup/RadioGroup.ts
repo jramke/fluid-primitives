@@ -29,7 +29,7 @@ export class RadioGroup extends FieldAwareComponent<radioGroup.Props, radioGroup
     render() {
         this.subscribeToFieldService();
 
-        const rootEl = this.query('root');
+        const rootEl = this.hydrator.query('root');
         if (rootEl)
             this.spreadProps(
                 rootEl,
@@ -39,7 +39,7 @@ export class RadioGroup extends FieldAwareComponent<radioGroup.Props, radioGroup
                 })
             );
 
-        const labelEl = this.query('label');
+        const labelEl = this.hydrator.query('label');
         if (labelEl) this.spreadProps(labelEl, this.api.getLabelProps());
 
         // Note: previously read `getAttribute('data-disabled'/'data-invalid') === 'true'`, which
@@ -77,7 +77,7 @@ export class RadioGroup extends FieldAwareComponent<radioGroup.Props, radioGroup
             })
         );
 
-        const indicatorEl = this.query('indicator');
+        const indicatorEl = this.hydrator.query('indicator');
         if (indicatorEl) this.spreadProps(indicatorEl, this.api.getIndicatorProps());
     }
 }

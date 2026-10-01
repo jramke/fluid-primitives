@@ -18,32 +18,32 @@ export class Dialog extends Component<dialog.Props, dialog.Api> {
             this.api.getTriggerProps({ value })
         );
 
-        const backdropEl = this.query('backdrop');
+        const backdropEl = this.hydrator.query('backdrop');
         if (backdropEl) {
             this.spreadProps(backdropEl, this.api.getBackdropProps());
         }
 
-        const positionerEl = this.query('positioner');
+        const positionerEl = this.hydrator.query('positioner');
         if (positionerEl) {
             this.spreadProps(positionerEl, this.api.getPositionerProps());
         }
 
-        const contentEl = this.query('content');
+        const contentEl = this.hydrator.query('content');
         if (contentEl) {
             this.spreadProps(contentEl, this.api.getContentProps());
         }
 
-        const titleEl = this.query('title');
+        const titleEl = this.hydrator.query('title');
         if (titleEl) {
             this.spreadProps(titleEl, this.api.getTitleProps());
         }
 
-        const descriptionEl = this.query('description');
+        const descriptionEl = this.hydrator.query('description');
         if (descriptionEl) {
             this.spreadProps(descriptionEl, this.api.getDescriptionProps());
         }
 
-        const closeTriggers = this.queryAll('closeTrigger');
+        const closeTriggers = this.hydrator.queryAll('closeTrigger');
         closeTriggers.forEach(trigger => {
             this.spreadProps(trigger, this.api.getCloseTriggerProps());
         });

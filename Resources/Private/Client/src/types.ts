@@ -63,7 +63,7 @@ export interface ComponentInterface<Api> {
     document: Document;
     machine: Machine<any>;
     api: Api;
-    hydrator: ComponentHydrator | null;
+    hydrator: ComponentHydrator;
 
     init(): void;
     destroy(): void;

@@ -55,7 +55,9 @@ export class Checkbox extends FieldAwareComponent<checkbox.Props, checkbox.Api> 
     private getClosestCheckboxGroup(): HTMLElement | null {
         return (
             this.closestCheckboxGroup ||
-            (this.query('root')?.closest('[data-checkbox-group-root]') as HTMLElement | null)
+            (this.hydrator
+                .query('root')
+                ?.closest('[data-checkbox-group-root]') as HTMLElement | null)
         );
     }
 
@@ -151,19 +153,19 @@ export class Checkbox extends FieldAwareComponent<checkbox.Props, checkbox.Api> 
         this.subscribeToFieldService();
         this.subscribeToCheckboxGroup();
 
-        const rootEl = this.query('root');
+        const rootEl = this.hydrator.query('root');
         if (rootEl) this.spreadProps(rootEl, this.api.getRootProps());
 
-        const labelEl = this.query('label');
+        const labelEl = this.hydrator.query('label');
         if (labelEl) this.spreadProps(labelEl, this.api.getLabelProps());
 
-        const controlEl = this.query('control');
+        const controlEl = this.hydrator.query('control');
         if (controlEl) this.spreadProps(controlEl, this.api.getControlProps());
 
-        const indicatorEl = this.query('indicator');
+        const indicatorEl = this.hydrator.query('indicator');
         if (indicatorEl) this.spreadProps(indicatorEl, this.api.getIndicatorProps());
 
-        const hiddenInputEl = this.query('hiddenInput');
+        const hiddenInputEl = this.hydrator.query('hiddenInput');
         if (hiddenInputEl) {
             const mergedProps = mergeProps(this.api.getHiddenInputProps(), {
                 'aria-describedby': this.fieldMachine?.context.get('describeIds') || undefined,
