@@ -8,6 +8,8 @@ Fluid Primitives brings modern component patterns to TYPO3. Build accessible, co
 
 ## Documentation
 
+Optimistic UI helpers: [Documentation/optimistic-ui.md](Documentation/optimistic-ui.md).
+
 Full documentation can be found at [fluid-primitives.com](https://fluid-primitives.com).
 
 ## What You Get
