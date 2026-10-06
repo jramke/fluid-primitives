@@ -8,6 +8,7 @@ use Jramke\FluidPrimitives\Tests\Helper\TestEntity;
 use Jramke\FluidPrimitives\Tests\TestCase;
 use Jramke\FluidPrimitives\Utility\ExtbasePersistedObjectResolver;
 use PHPUnit\Framework\Attributes\Test;
+use TYPO3\CMS\Extbase\Persistence\Generic\LazyLoadingProxy;
 
 final class ExtbasePersistedObjectResolverTest extends TestCase
 {
@@ -31,6 +32,20 @@ final class ExtbasePersistedObjectResolverTest extends TestCase
     {
         $this->assertNull((new ExtbasePersistedObjectResolver())->resolve('not an object'));
         $this->assertNull((new ExtbasePersistedObjectResolver())->resolve(null));
+    }
+
+    #[Test]
+    public function unwrapsLazyLoadingProxiesBeforeJudgingTheirRealInstance(): void
+    {
+        $persisted = new TestEntity();
+        $persisted->setTestUid(42);
+
+        $resolver = new ExtbasePersistedObjectResolver();
+
+        $this->assertSame($persisted, $resolver->resolve($this->proxyLoading($persisted)));
+        // A proxy whose record no longer exists loads as null.
+        $this->assertNull($resolver->resolve($this->proxyLoading(null)));
+        $this->assertNull($resolver->resolve($this->proxyLoading(new TestEntity())));
     }
 
     #[Test]
@@ -76,5 +91,13 @@ final class ExtbasePersistedObjectResolverTest extends TestCase
         $resolver = new ExtbasePersistedObjectResolver();
 
         $this->assertSame([], $resolver->getNestedPersistedObjects(null, ['field1' => ['name' => 'nested.name']]));
+    }
+
+    private function proxyLoading(?object $realInstance): LazyLoadingProxy
+    {
+        $proxy = $this->createStub(LazyLoadingProxy::class);
+        $proxy->method('_loadRealInstance')->willReturn($realInstance);
+
+        return $proxy;
     }
 }
