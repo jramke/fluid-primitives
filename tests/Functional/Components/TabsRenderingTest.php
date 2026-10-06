@@ -93,4 +93,27 @@ final class TabsRenderingTest extends FunctionalTestCase
         $this->assertStringContainsString('disabled', $html);
         $this->assertStringContainsString('data-disabled', $html);
     }
+
+    #[Test]
+    public function keepsTriggersAndPanelsOutOfTheTabOrderWithVirtualFocus(): void
+    {
+        $render = fn(string $attributes): string => $this->renderTemplate(
+            '
+            <primitives:tabs.root defaultValue="tab-1" ' . $attributes . '>
+                <primitives:tabs.list>
+                    <primitives:tabs.trigger value="tab-1">Tab 1</primitives:tabs.trigger>
+                </primitives:tabs.list>
+                <primitives:tabs.content value="tab-1">Content 1</primitives:tabs.content>
+            </primitives:tabs.root>
+        ',
+        );
+
+        $roving = $render('');
+        $this->assertMatchesRegularExpression('/role="tab"[^>]*tabindex="0"/', $roving);
+        $this->assertMatchesRegularExpression('/role="tabpanel"[^>]*tabindex="0"/', $roving);
+
+        $virtual = $render('virtualFocus="{true}"');
+        $this->assertMatchesRegularExpression('/role="tab"[^>]*tabindex="-1"/', $virtual);
+        $this->assertMatchesRegularExpression('/role="tabpanel"[^>]*tabindex="-1"/', $virtual);
+    }
 }
