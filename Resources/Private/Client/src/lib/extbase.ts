@@ -50,6 +50,18 @@ function prefixKey(key: string, prefix: string | null): string {
     return prefix ? `${prefix}[${key}]` : key;
 }
 
+function buildExtbaseBody(url: string, data?: Record<string, unknown>): FormData {
+    const prefix = getExtbaseArgumentPrefix(url);
+    const formData = new FormData();
+
+    for (const [key, value] of Object.entries(data ?? {})) {
+        if (value === null || value === undefined) continue;
+        formData.append(prefixKey(key, prefix), String(value));
+    }
+
+    return formData;
+}
+
 /**
  * POSTs a flat key/value payload to an Extbase controller action URL, bracket-prefixing each key
  * under the URL's own Extbase argument namespace - same `prefix[key]` convention Form uses. The
@@ -67,18 +79,86 @@ async function postToExtbase(
     data?: Record<string, unknown>,
     init?: RequestInit
 ): Promise<Response> {
-    const prefix = getExtbaseArgumentPrefix(url);
-    const formData = new FormData();
+    return fetch(url, { ...init, method: 'POST', body: buildExtbaseBody(url, data) });
+}
 
-    for (const [key, value] of Object.entries(data ?? {})) {
-        if (value === null || value === undefined) continue;
-        formData.append(prefixKey(key, prefix), String(value));
+/** Header carrying the per-intent key the server dedupes retried requests on. */
+export const IDEMPOTENCY_HEADER = 'X-Idempotency-Key';
+
+export interface ExtbaseRequestOptions {
+    signal?: AbortSignal;
+    /** Sent as `X-Idempotency-Key`, so the server can replay the original response on a retry. */
+    idempotencyKey?: string;
+}
+
+export type ExtbaseRequestResult<T = unknown> =
+    | { ok: true; status: number; data: T | null }
+    | {
+          ok: false;
+          /** HTTP status, or `0` for a network failure / aborted request. */
+          status: number;
+          /** Field -> messages map, only set for a 422 with a JSON body in that shape. */
+          errors?: Record<string, string[]>;
+          data?: unknown;
+      };
+
+function isErrorMap(value: unknown): value is Record<string, string[]> {
+    return (
+        typeof value === 'object' &&
+        value !== null &&
+        !Array.isArray(value) &&
+        Object.values(value).every(
+            messages => Array.isArray(messages) && messages.every(m => typeof m === 'string')
+        )
+    );
+}
+
+/**
+ * Like `post`, but never throws for HTTP/network failures - it resolves to a result object, which
+ * is the shape `OptimisticAction` treats as success/failure. Sends `Accept: application/json`,
+ * parses a JSON body when the response has one, and maps a 422 body in the
+ * `{ field: [messages] }` shape (what `AjaxValidationTrait` emits) to `errors`.
+ * An aborted request resolves to `{ ok: false, status: 0 }` as well.
+ */
+async function requestExtbase<T = unknown>(
+    url: string,
+    data?: Record<string, unknown>,
+    options: ExtbaseRequestOptions = {}
+): Promise<ExtbaseRequestResult<T>> {
+    const headers: Record<string, string> = { Accept: 'application/json' };
+    if (options.idempotencyKey) headers[IDEMPOTENCY_HEADER] = options.idempotencyKey;
+
+    let response: Response;
+    try {
+        response = await fetch(url, {
+            method: 'POST',
+            body: buildExtbaseBody(url, data),
+            headers,
+            signal: options.signal,
+        });
+    } catch {
+        return { ok: false, status: 0 };
     }
 
-    return fetch(url, { ...init, method: 'POST', body: formData });
+    let body: unknown = null;
+    if ((response.headers.get('content-type') ?? '').includes('json')) {
+        try {
+            body = await response.json();
+        } catch {
+            body = null;
+        }
+    }
+
+    if (response.ok) return { ok: true, status: response.status, data: body as T | null };
+
+    const result: ExtbaseRequestResult<T> = { ok: false, status: response.status };
+    if (body !== null) result.data = body;
+    if (response.status === 422 && isErrorMap(body)) result.errors = body;
+    return result;
 }
 
 export const extbase = {
     post: postToExtbase,
+    request: requestExtbase,
     getArgumentPrefix: getExtbaseArgumentPrefix,
 };

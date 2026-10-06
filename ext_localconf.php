@@ -5,6 +5,8 @@ declare(strict_types=1);
 use Jramke\FluidPrimitives\Component\ComponentPrimitivesCollection;
 use Jramke\FluidPrimitives\Constants;
 use Jramke\FluidPrimitives\Utility\Typed;
+use TYPO3\CMS\Core\Cache\Backend\Typo3DatabaseBackend;
+use TYPO3\CMS\Core\Cache\Frontend\VariableFrontend;
 use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
@@ -46,6 +48,19 @@ $GLOBALS['TYPO3_CONF_VARS']['SYS']['fluid']['namespaces']['ui'][] = 'Jramke\\Flu
 // @mago-expect analysis:mixed-array-assignment
 $GLOBALS['TYPO3_CONF_VARS']['SYS']['fluid']['namespaces']['primitives'] = [
     ComponentPrimitivesCollection::class,
+];
+
+// Cache holding replayable responses for IdempotencyService (24h default, swap the backend as needed)
+// @mago-expect lint:no-global
+// @mago-expect analysis:mixed-array-assignment
+// @mago-expect analysis:mixed-array-assignment
+// @mago-expect analysis:mixed-array-assignment
+// @mago-expect analysis:mixed-array-assignment
+$GLOBALS['TYPO3_CONF_VARS']['SYS']['caching']['cacheConfigurations']['fluidprimitives_idempotency'] ??= [
+    'frontend' => VariableFrontend::class,
+    'backend' => Typo3DatabaseBackend::class,
+    'options' => ['defaultLifetime' => 86400],
+    'groups' => [],
 ];
 
 // Exclude specific arguments from storybook controls when using EXT:storybook

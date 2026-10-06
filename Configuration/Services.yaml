@@ -14,3 +14,6 @@ services:
   Jramke\FluidPrimitives\Registry\PortalRegistry:
     shared: true
     public: true
+
+  Jramke\FluidPrimitives\Service\IdempotencyService:
+    public: true

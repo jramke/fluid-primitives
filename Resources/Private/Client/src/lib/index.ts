@@ -8,7 +8,8 @@ export type {
 export { Component } from './component';
 export { DelayedIndicator } from './delayed-indicator';
 export type { DelayedIndicatorOptions } from './delayed-indicator';
-export { extbase } from './extbase';
+export { extbase, IDEMPOTENCY_HEADER } from './extbase';
+export type { ExtbaseRequestOptions, ExtbaseRequestResult } from './extbase';
 export { FieldAwareComponent } from './field-aware-component';
 export {
     ComponentHydrator,
@@ -21,6 +22,16 @@ export {
     mountAll,
     toKebabCase,
 } from './hydration';
+export { OptimisticAction } from './optimistic-action';
+export type {
+    OptimisticActionOptions,
+    OptimisticCommitContext,
+    OptimisticErrorContext,
+    OptimisticMode,
+    OptimisticOutcome,
+    OptimisticRecord,
+    OptimisticView,
+} from './optimistic-action';
 export { Machine } from './machine';
 export { mergeProps } from './merge-props';
 export { normalizeProps } from './normalize-props';
