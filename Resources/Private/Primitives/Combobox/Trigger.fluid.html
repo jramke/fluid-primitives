@@ -1,4 +1,5 @@
 <f:variable name="state">{context.defaultOpen ? 'open' : 'closed'}</f:variable>
+<f:variable name="isDialogPopup" value="{context.dialogPopup}" />
 <f:variable name="refData" value="{
     disabled: context.disabled,
     invalid: context.invalid,
@@ -9,7 +10,7 @@
 <button
     type="button"
     aria-label="{context.translations.triggerLabel}"
-    aria-haspopup="listbox"
+    aria-haspopup="{f:if(condition: isDialogPopup, then: 'dialog', else: 'listbox')}"
     aria-expanded="{f:if(condition: context.defaultOpen, then: 'true', else: 'false')}"
     data-state="{state}"
     {f:if(condition: class, then: 'class="{class}"' )}

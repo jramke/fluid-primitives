@@ -1,8 +1,9 @@
 <f:variable name="state">{context.defaultOpen ? 'open' : 'closed'}</f:variable>
 <f:variable name="refData" value="{state: state}" />
+<f:variable name="isDialogPopup" value="{context.dialogPopup}" />
 
 <div
-    role="presentation"
+    role="{f:if(condition: isDialogPopup, then: 'dialog', else: 'presentation')}"
     hidden="true"
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'content' , data: refData )}

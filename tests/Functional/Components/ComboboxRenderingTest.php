@@ -92,6 +92,29 @@ final class ComboboxRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function rendersTheTriggerAndContentForThePopupType(): void
+    {
+        $render = fn(string $attributes): string => $this->renderTemplate('
+            <primitives:combobox.root ' .
+        $attributes .
+        '>
+                <primitives:combobox.trigger>Open</primitives:combobox.trigger>
+                <primitives:combobox.positioner>
+                    <primitives:combobox.content><primitives:combobox.list>List</primitives:combobox.list></primitives:combobox.content>
+                </primitives:combobox.positioner>
+            </primitives:combobox.root>
+        ');
+
+        $listbox = $render('');
+        $dialog = $render('popupType="{f:constant(name: \'Jramke\FluidPrimitives\Enum\PopupType::Dialog\')}"');
+
+        $this->assertStringContainsString('aria-haspopup="listbox"', $listbox);
+        $this->assertMatchesRegularExpression('/<div[^>]*role="presentation"[^>]*data-combobox-content="/', $listbox);
+        $this->assertStringContainsString('aria-haspopup="dialog"', $dialog);
+        $this->assertMatchesRegularExpression('/<div[^>]*role="dialog"[^>]*data-combobox-content="/', $dialog);
+    }
+
+    #[Test]
     public function rendersItemFromARealCollectionItem(): void
     {
         $collection = new ListCollection([

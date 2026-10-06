@@ -135,6 +135,29 @@ final class SelectRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function rendersTheTriggerAndContentForThePopupType(): void
+    {
+        $render = fn(string $attributes): string => $this->renderTemplate('
+            <primitives:select.root ' .
+        $attributes .
+        '>
+                <primitives:select.trigger>Open</primitives:select.trigger>
+                <primitives:select.positioner>
+                    <primitives:select.content><primitives:select.list>List</primitives:select.list></primitives:select.content>
+                </primitives:select.positioner>
+            </primitives:select.root>
+        ');
+
+        $listbox = $render('');
+        $dialog = $render('popupType="{f:constant(name: \'Jramke\FluidPrimitives\Enum\PopupType::Dialog\')}"');
+
+        $this->assertStringContainsString('aria-haspopup="listbox"', $listbox);
+        $this->assertMatchesRegularExpression('/<div[^>]*role="presentation"[^>]*data-select-content="/', $listbox);
+        $this->assertStringContainsString('aria-haspopup="dialog"', $dialog);
+        $this->assertMatchesRegularExpression('/<div[^>]*role="dialog"[^>]*data-select-content="/', $dialog);
+    }
+
+    #[Test]
     public function normalizesStringDefaultValueToArrayInHydrationData(): void
     {
         $collection = new ListCollection([

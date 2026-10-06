@@ -9,6 +9,7 @@ use Jramke\FluidPrimitives\Domain\Dto\ListCollection;
 use Jramke\FluidPrimitives\Domain\Dto\ListCollectionItem;
 use Jramke\FluidPrimitives\Service\TranslatorService;
 use Jramke\FluidPrimitives\Traits\HasListCollectionTrait;
+use Jramke\FluidPrimitives\Traits\HasPopupTypeTrait;
 use Jramke\FluidPrimitives\Traits\HasTranslationsTrait;
 use Jramke\FluidPrimitives\Utility\Typed;
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
@@ -17,6 +18,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 class ComboboxContext extends AbstractComponentContext
 {
     use HasListCollectionTrait;
+    use HasPopupTypeTrait;
     use HasTranslationsTrait;
 
     public function __construct(
