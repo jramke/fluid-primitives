@@ -8,7 +8,7 @@ export type {
 export { Component } from './component';
 export { DelayedIndicator } from './delayed-indicator';
 export type { DelayedIndicatorOptions } from './delayed-indicator';
-export { extbase } from './extbase';
+export { ExtbaseHttpError, extbase } from './extbase';
 export { FieldAwareComponent } from './field-aware-component';
 export {
     ComponentHydrator,
