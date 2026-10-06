@@ -8,7 +8,7 @@
 <f:comment>HTML/zag default is 'on' but we use '1' for easier boolean conversion with extbase</f:comment>
 <ui:prop name="value" type="string" optional="{true}" client="{true}" default="1" description="The value of switch input. Useful for form submission." />
 
-<f:variable name="refData">{context -> ui:call(method: 'getDataAttributes')}</f:variable>
+<f:variable name="refData">{context.dataAttributes}</f:variable>
 
 <label
     {f:if(condition: class, then: 'class="{class}"' )}

@@ -1,4 +1,4 @@
-<f:variable name="refData">{context -> ui:call(method: 'getDataAttributes')}</f:variable>
+<f:variable name="refData">{context.dataAttributes}</f:variable>
 
 <div
     {f:if(condition: '!{context.indeterminate} && !{context.checked}' , then: 'hidden' )}

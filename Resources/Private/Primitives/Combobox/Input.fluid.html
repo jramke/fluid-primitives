@@ -1,5 +1,5 @@
 <f:variable name="state">{context.defaultOpen ? 'open' : 'closed'}</f:variable>
-<f:variable name="defaultInputValue">{context -> ui:call(method: 'getInitialInputValue')}</f:variable>
+<f:variable name="defaultInputValue">{context.initialInputValue}</f:variable>
 <f:variable name="refData" value="{state: state, disabled: context.disabled, invalid: context.invalid}" />
 
 <input
