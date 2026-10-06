@@ -51,6 +51,16 @@ class ComboboxContext extends AbstractComponentContext
         return is_array($defaultValue) ? array_map(Typed::string(...), $defaultValue) : null;
     }
 
+    /**
+     * Whether the trigger can receive focus: what the trigger part's own `focusable` prop says, and
+     * otherwise whatever Zag does by default - only a dialog popup has a focusable trigger, since its
+     * input moved into the content and the trigger is what opens it.
+     */
+    public function isTriggerFocusable(?bool $focusable = null): bool
+    {
+        return $focusable ?? $this->isDialogPopup();
+    }
+
     public function getInitialInputValue(): string
     {
         // `defaultInputValue` is declared type="mixed"; is_string() below rejects anything else.

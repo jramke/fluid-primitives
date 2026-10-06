@@ -180,8 +180,15 @@ export class Combobox extends FieldAwareComponent<combobox.Props, combobox.Api> 
             disabled: inputProps.disabled as boolean | undefined,
         });
 
+        // The server already resolved the trigger's `focusable` (its own prop, else the popup type's
+        // default) into `data-focusable`; handing it back keeps that decision across re-renders.
         const triggerEl = this.hydrator.query('trigger');
-        if (triggerEl) this.spreadProps(triggerEl, this.api.getTriggerProps());
+        if (triggerEl) {
+            this.spreadProps(
+                triggerEl,
+                this.api.getTriggerProps({ focusable: triggerEl.hasAttribute('data-focusable') })
+            );
+        }
 
         const clearTriggerEl = this.hydrator.query('clearTrigger');
         if (clearTriggerEl) this.spreadProps(clearTriggerEl, this.api.getClearTriggerProps());

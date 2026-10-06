@@ -115,6 +115,37 @@ final class ComboboxRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function resolvesTheTriggerFocusFromItsPropElseThePopupType(): void
+    {
+        $render = fn(string $rootAttributes, string $triggerAttributes = ''): string => $this->renderTemplate(
+            '
+            <primitives:combobox.root ' .
+            $rootAttributes .
+            '>
+                <primitives:combobox.trigger ' .
+            $triggerAttributes .
+            '>Open</primitives:combobox.trigger>
+            </primitives:combobox.root>
+        ',
+        );
+        $trigger = static function (string $html): string {
+            preg_match('/<button[^>]*data-combobox-trigger="[^"]+"[^>]*>/', $html, $match);
+
+            return $match[0];
+        };
+        $dialog = 'popupType="{f:constant(name: \'Jramke\FluidPrimitives\Enum\PopupType::Dialog\')}"';
+
+        $this->assertStringContainsString('tabindex="-1"', $trigger($render('')));
+        $this->assertStringNotContainsString('data-focusable', $trigger($render('')));
+
+        $this->assertStringContainsString('data-focusable', $trigger($render($dialog)));
+        $this->assertStringNotContainsString('tabindex', $trigger($render($dialog)));
+
+        $this->assertStringContainsString('data-focusable', $trigger($render('', 'focusable="{true}"')));
+        $this->assertStringContainsString('tabindex="-1"', $trigger($render($dialog, 'focusable="{false}"')));
+    }
+
+    #[Test]
     public function rendersItemFromARealCollectionItem(): void
     {
         $collection = new ListCollection([
