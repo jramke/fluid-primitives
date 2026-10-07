@@ -102,7 +102,7 @@ export const machine = createMachine({
         ],
         'CONTROL.CHANGE': [
             { guard: 'shouldCommit', actions: ['trackValueState', 'commitValidation'] },
-            { actions: ['trackValueState', 'silentValidate', 'recoverValueMissing'] },
+            { actions: ['trackValueState', 'dropStaleValidation', 'recoverValueMissing'] },
         ],
         // Native `invalid` event fired at submit time (bubble suppressed in connect)
         'SUBMIT.INVALID': {
@@ -282,8 +282,11 @@ export const machine = createMachine({
                 context.set('filled', value.length > 0);
             },
 
-            silentValidate(params) {
-                silentValidate(params, params.event.value);
+            // the value moved on without a new commit, so what is still being validated is outdated
+            dropStaleValidation({ context, refs }) {
+                if (!context.get('validating')) return;
+                refs.set('seq', refs.get('seq') + 1);
+                context.set('validating', false);
             },
 
             recoverValueMissing(params) {
@@ -437,38 +440,6 @@ function applyValidation(params: FieldParams, options: ApplyOptions) {
             validity,
             value: options.value,
         });
-    }
-}
-
-/**
- * Runs custom validation and mirrors the result into `setCustomValidity` without
- * committing it to context. Keeps native `:invalid` and submit gating in sync
- * while the error stays hidden until the mode's commit point.
- */
-function silentValidate(params: FieldParams, value: string) {
-    const { prop, refs } = params;
-    const validate = prop('validate');
-    if (!validate) return;
-
-    const hostEl = getHostEl(params);
-    if (!hostEl) return;
-
-    hostEl.setCustomValidity('');
-    const validity = readValidity(params, value);
-
-    const seq = refs.get('seq') + 1;
-    refs.set('seq', seq);
-
-    const apply = (result: ValidateResult) => {
-        if (refs.get('seq') !== seq) return;
-        hostEl.setCustomValidity(toErrorArray(result).join(' '));
-    };
-
-    const result = validate({ value, validity });
-    if (isPromise(result)) {
-        result.then(apply, () => apply(null));
-    } else {
-        apply(result);
     }
 }
 

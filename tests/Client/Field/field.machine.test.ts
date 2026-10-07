@@ -205,6 +205,42 @@ describe('field validity', () => {
         expect(field.computed('valid')).toBe(true);
     });
 
+    test("validate runs at the mode's commit points, not on every settled change", async () => {
+        vi.useFakeTimers();
+        const validate = vi.fn(() => null);
+        mountField('<input id="field:f1:control" name="email" value="">', { validate });
+
+        type(input(), 'a');
+        await settle();
+        type(input(), 'ab');
+        await settle();
+        expect(validate).not.toHaveBeenCalled();
+
+        focusOut(input(), document.getElementById('outside'));
+        await settle(0);
+        expect(validate).toHaveBeenCalledOnce();
+    });
+
+    test('an async result is dropped when the value changed while it was pending', async () => {
+        vi.useFakeTimers();
+        const field = mountField('<input id="field:f1:control" name="email" value="">', {
+            validate: ({ value }) =>
+                new Promise(resolve => setTimeout(() => resolve(`${value} is taken`), 200)),
+        });
+
+        type(input(), 'taken');
+        focusOut(input(), document.getElementById('outside'));
+        await settle(50);
+        expect(field.context.get('validating')).toBe(true);
+
+        // no error is showing yet, so this edit does not commit; the pending result is for old text
+        type(input(), 'free');
+        await settle(500);
+
+        expect(field.context.get('errors')).toEqual([]);
+        expect(field.context.get('validating')).toBe(false);
+    });
+
     test('a read-only required field is not missing a value', async () => {
         vi.useFakeTimers();
         const field = mountField('<input name="email" readonly>', {
