@@ -1,16 +1,11 @@
-import type { Service } from '@zag-js/core';
+import { getFormMachineFor, type FormMachine } from '../../Form/src/form.registry';
 import type { FormValues } from '../../Form/src/form.types';
-import * as dom from './field.dom';
-import type { FieldSchema } from './field.types';
-import { isFieldValueEqual, type FieldValue } from './field.value';
+import type { FieldMachine } from './field.registry';
+import type { FieldApi } from './field.types';
+import { getCurrentFieldValue, type FieldValue } from './field.value';
 
-export interface FieldMeta {
-    isTouched: boolean;
-    isDirty: boolean;
-    isPristine: boolean;
-    isBlurred: boolean;
-    isDefaultValue: boolean;
-}
+/** Dispatched on a field's root whenever a field named in its own `listenTo` changes value. */
+export const FIELD_DEPENDENCY_CHANGE_EVENT = 'fluid-primitives:field:dependencychange';
 
 export interface FieldDependencyChangeDetail {
     name: string;
@@ -18,27 +13,21 @@ export interface FieldDependencyChangeDetail {
     values: FormValues;
 }
 
-export interface FieldHandle {
-    getFormMachine(): FieldSchema['context']['formMachine'];
+/** What a field offers on top of Zag's api: its name, its value, its form and its `listenTo` event. */
+export interface FieldHandleExtras {
+    name: string;
+    getValue(): FieldValue;
+    getErrorText(): string | null;
     getRootEl(): HTMLElement | null;
+    getFormMachine(): FormMachine | undefined;
     setDisabled(disabled: boolean): void;
     setRequired(required: boolean): void;
     setReadOnly(readOnly: boolean): void;
-    meta: FieldMeta;
-    value: FieldValue;
-    invalid: boolean;
-    errors: string[];
-    name: string;
-    disabled: boolean;
-    required: boolean;
-    readOnly: boolean;
-    getErrorText(): string | null;
     /**
      * Registers `callback` for `fluid-primitives:field:dependencychange` (dispatched whenever a
-     * field named in this field's own `listenTo` prop changes value - see
-     * `field.machine.ts`'s `setupDependencyListeners`) and returns a function that removes it
-     * again, mirroring the native `addEventListener`/cleanup-function idiom rather than a
-     * config-style `onX` prop - this is something you call to start listening, not a value you
+     * field named in this field's own `listenTo` prop changes value) and returns a function that
+     * removes it again, mirroring the native `addEventListener`/cleanup-function idiom rather than
+     * a config-style `onX` prop - this is something you call to start listening, not a value you
      * set once at construction. A no-op subscription (immediately-inert callback, still-callable
      * unsubscribe) for a field with no `listenTo`, since the event never fires for one.
      */
@@ -47,57 +36,76 @@ export interface FieldHandle {
     ): () => void;
 }
 
-type FieldServiceLike = Pick<Service<FieldSchema>, 'prop' | 'context' | 'scope'>;
+/** What `form.api.getField(name)` returns: the field's state and actions, flat. */
+export type FieldHandle = Pick<
+    FieldApi,
+    | 'disabled'
+    | 'required'
+    | 'readOnly'
+    | 'invalid'
+    | 'valid'
+    | 'touched'
+    | 'dirty'
+    | 'filled'
+    | 'focused'
+    | 'validating'
+    | 'errors'
+    | 'validate'
+    | 'clearErrors'
+    | 'reset'
+> &
+    FieldHandleExtras;
 
-export function createFieldHandle(service: FieldServiceLike): FieldHandle {
-    const { prop, context, scope } = service;
+export function createFieldHandleExtras(machine: FieldMachine): FieldHandleExtras {
+    const { context, prop, refs } = machine;
 
-    const invalid = context.get('invalid');
-    const disabled = context.get('disabled');
-    const required = context.get('required');
-    const readOnly = context.get('readOnly');
-    const errors = context.get('errors');
-    const value = context.get('value');
-    const initialValue = context.get('initialValue');
-
-    const meta: FieldMeta = {
-        isTouched: context.get('touched'),
-        isDirty: context.get('dirty'),
-        isPristine: !context.get('dirty'),
-        isBlurred: context.get('blurred'),
-        isDefaultValue: isFieldValueEqual(value, initialValue),
-    };
-
-    // TODO: is it possible that we can expose the fields child control machine (if any and not a native input) here
-    // so the user can acces its machine api to do more custom stuff
     return {
-        getFormMachine: () => context.get('formMachine'),
-        getRootEl: () => dom.getRootEl(scope),
         name: prop('name'),
-        value,
-        meta,
-        disabled,
-        setDisabled: disabled => context.set('disabled', disabled),
-        required,
-        setRequired: required => context.set('required', required),
-        readOnly,
-        setReadOnly: readOnly => context.set('readOnly', readOnly),
-        invalid,
-        errors,
+        getValue: () =>
+            getCurrentFieldValue(refs.get('rootEl'), prop('name'), prop('defaultValue')),
         getErrorText() {
+            const errors = context.get('errors');
             return errors.length > 0 ? errors.join(' ') : null;
         },
-        addDependencyChangeListener(callback: (detail: FieldDependencyChangeDetail) => void) {
-            const rootEl = dom.getRootEl(scope);
+        getRootEl: () => refs.get('rootEl'),
+        getFormMachine: () => getFormMachineFor(refs.get('rootEl')),
+        setDisabled: disabled => machine.updateProps({ disabled }),
+        setRequired: required => machine.updateProps({ required }),
+        setReadOnly: readOnly => machine.updateProps({ readOnly }),
+        addDependencyChangeListener(callback) {
+            const rootEl = refs.get('rootEl');
             if (!rootEl) return () => {};
 
             const handler = (event: Event) => {
                 callback((event as CustomEvent<FieldDependencyChangeDetail>).detail);
             };
 
-            rootEl.addEventListener('fluid-primitives:field:dependencychange', handler);
-            return () =>
-                rootEl.removeEventListener('fluid-primitives:field:dependencychange', handler);
+            rootEl.addEventListener(FIELD_DEPENDENCY_CHANGE_EVENT, handler);
+            return () => rootEl.removeEventListener(FIELD_DEPENDENCY_CHANGE_EVENT, handler);
         },
+    };
+}
+
+/** Reads the machine directly instead of building the whole api: the Form makes one per field per render. */
+export function createFieldHandle(machine: FieldMachine): FieldHandle {
+    const { context, computed, prop } = machine;
+    const disabled = computed('disabled');
+
+    return {
+        disabled,
+        required: !!prop('required'),
+        readOnly: !!prop('readOnly'),
+        invalid: computed('invalid'),
+        valid: computed('valid'),
+        touched: context.get('touched'),
+        dirty: context.get('dirty'),
+        filled: context.get('filled'),
+        focused: !disabled && context.get('focused'),
+        validating: context.get('validating'),
+        errors: context.get('errors'),
+        validate: () => machine.send({ type: 'VALIDATE' }),
+        clearErrors: () => machine.send({ type: 'ERRORS.CLEAR' }),
+        reset: () => machine.send({ type: 'RESET' }),
+        ...createFieldHandleExtras(machine),
     };
 }
