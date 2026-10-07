@@ -126,10 +126,10 @@ export function getGlobal<T = unknown>(key: string): T | undefined {
 }
 
 /**
- * Mounts every not-yet-mounted, uncontrolled hydration instance of `componentName` (a required
- * `"namespace:name"` string, e.g. `"ui:select"`). Safe to call more than once (e.g. after
- * lazily-inserted DOM adds new instances) - already mounted instances are skipped rather than
- * re-instantiated.
+ * Mounts every not-yet-mounted hydration instance of `componentName` (a required
+ * `"namespace:name"` string, e.g. `"ui:select"`) that was not rendered with `autoMount="{false}"`.
+ * Safe to call more than once (e.g. after lazily-inserted DOM adds new instances) - already
+ * mounted instances are skipped rather than re-instantiated.
  *
  * `props` in the callback is inferred from `componentName` itself via {@see HydrationPropsFor} -
  * no explicit generic needed at the call site. A component name a project hasn't generated types
@@ -138,7 +138,7 @@ export function getGlobal<T = unknown>(key: string): T | undefined {
 export function mountAll<K extends KnownComponentName | (string & {})>(
     componentName: K,
     callback: (data: {
-        controlled: boolean;
+        autoMount: boolean;
         props: HydrationPropsFor<Extract<K, string>>;
         createHydrator: () => ComponentHydrator;
     }) => Component<unknown, unknown> | void
@@ -153,7 +153,7 @@ export function mountAll<K extends KnownComponentName | (string & {})>(
     const mountedInstances = window.FluidPrimitives.componentInstances[namespace][clientBaseName];
 
     Object.keys(hydrationInstances).forEach(id => {
-        if (hydrationInstances[id].controlled) return;
+        if (hydrationInstances[id].autoMount === false) return;
         if (mountedInstances[id]) return;
 
         const instance = callback({
@@ -207,7 +207,7 @@ export function destroyComponentsWithin(root: Element | Document) {
 /**
  * Gets one specific hydration instance of `componentName` (a required `"namespace:name"` string)
  * by its `rootId` and hands it to `callback`, regardless of whether it was rendered with
- * `controlled="{true}"`. Unlike {@see mountAll}, calling it twice for the same `rootId` re-invokes
+ * `autoMount="{false}"`. Unlike {@see mountAll}, calling it twice for the same `rootId` re-invokes
  * `callback` and constructs a new instance each time - but the resulting instance is still tracked
  * (overwriting whichever one a previous call tracked), so {@see getComponentInstance} and
  * {@see destroyComponentsWithin} can find it, the same way a `mountAll`-created instance can.
@@ -221,7 +221,7 @@ export function mount<
     componentName: K,
     rootId: string,
     callback: (data: {
-        controlled: boolean;
+        autoMount: boolean;
         props: HydrationPropsFor<Extract<K, string>>;
         createHydrator: () => ComponentHydrator;
     }) => T | void

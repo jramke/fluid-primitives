@@ -143,12 +143,12 @@ abstract class AbstractComponentCollection implements ComponentCollectionInterfa
                     [],
                 );
 
-                $argumentDefinitions['controlled'] = new ArgumentDefinition(
-                    'controlled',
+                $argumentDefinitions['autoMount'] = new ArgumentDefinition(
+                    'autoMount',
                     'boolean',
-                    'If true, the component is meant to be initialized manually inside another component',
+                    'Whether the client initializes the component on its own. Set it to false to mount it yourself with `mount()`',
                     false,
-                    false,
+                    true,
                 );
             }
 

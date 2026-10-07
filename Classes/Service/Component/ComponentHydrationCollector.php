@@ -112,7 +112,7 @@ final readonly class ComponentHydrationCollector
         unset($props['ids']);
 
         $data = [
-            'controlled' => $arguments['controlled'] ?? false,
+            'autoMount' => $arguments['autoMount'] ?? true,
             'props' => [
                 'id' => $rootId,
                 'ids' => $arguments['ids'] ?? [],
