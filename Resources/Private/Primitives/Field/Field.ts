@@ -16,6 +16,7 @@ import {
     type FieldDependencyChangeDetail,
 } from './src/field.handle';
 import { machine } from './src/field.machine';
+import { isPointerPressed, whenPointerReleased } from './src/field.pointer';
 import { splitProps } from './src/field.props';
 import {
     registerFieldMachine,
@@ -42,6 +43,7 @@ export class Field extends Component<FieldProps, FieldClientApi> {
     /** The `validate` a consumer set; the machine itself runs {@link validate}, which adds the form's. */
     private ownValidate: FieldProps['validate'];
     private cleanups: Array<() => void> = [];
+    private cancelDeferredRender: (() => void) | undefined;
 
     /** The base class types its machine as `Machine<any>`. */
     private get fieldMachine(): FieldMachine {
@@ -91,6 +93,16 @@ export class Field extends Component<FieldProps, FieldClientApi> {
         const helperTextEl = this.hydrator.query('helperText');
         if (helperTextEl) this.spreadProps(helperTextEl, this.api.getHelperTextProps());
 
+        // Showing or hiding texts shifts the layout. Pressing a button blurs the field on mousedown,
+        // so doing it now would move the button away from under the pointer and lose the click.
+        if (isPointerPressed()) {
+            this.cancelDeferredRender ??= whenPointerReleased(() => {
+                this.cancelDeferredRender = undefined;
+                this.render();
+            });
+            return;
+        }
+
         this.spreadPropsByOptionalValue('errorText', ({ el, value }) => {
             // the error text without a `match` shows the messages, a narrowed one keeps its own text
             if (value === undefined && this.api.errors.length > 0) {
@@ -109,6 +121,7 @@ export class Field extends Component<FieldProps, FieldClientApi> {
         if (rootEl) unregisterFieldMachine(rootEl);
         unregisterFieldMachineForForm(rootEl, this.fieldMachine);
 
+        this.cancelDeferredRender?.();
         for (const cleanup of this.cleanups.splice(0)) cleanup();
         super.destroy();
     }
