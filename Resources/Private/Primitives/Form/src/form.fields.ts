@@ -45,15 +45,11 @@ export function getRegisteredFieldMachines(scope: Scope) {
     return getFieldMachinesFor(dom.getFormEl(scope));
 }
 
+/** A field counts while its own root is in the DOM; it may have no named control (an empty combobox). */
 export function pruneStaleFieldMachines(scope: Scope) {
-    const form = dom.getFormEl(scope);
-    if (!form) return;
     const machines = getRegisteredFieldMachines(scope);
-    for (const [name] of machines) {
-        const stillThere = getFieldElement(form, name) != null;
-        if (!stillThere) {
-            machines.delete(name);
-        }
+    for (const [name, fieldMachine] of machines) {
+        if (!fieldMachine.refs.get('rootEl')?.isConnected) machines.delete(name);
     }
 }
 

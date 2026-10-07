@@ -166,6 +166,21 @@ describe('submitting a form of fields', () => {
         expect(onSubmit).toHaveBeenCalledOnce();
     });
 
+    test('a required field without any named control, like an empty combobox, still blocks the submit', async () => {
+        vi.useFakeTimers();
+        const onSubmit = vi.fn(() => true);
+        const { fields, submit } = mount(
+            field('f-fruit', 'fruit', '<input id="field:f-fruit:control" required>'),
+            { form: { onSubmit }, fields: { fruit: { required: true } } }
+        );
+
+        submit();
+        await settle();
+
+        expect(onSubmit).not.toHaveBeenCalled();
+        expect(fields.get('fruit')!.api.invalid).toBe(true);
+    });
+
     test('a disabled field is exempt from validation', async () => {
         vi.useFakeTimers();
         const onSubmit = vi.fn(() => true);
