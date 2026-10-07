@@ -52,6 +52,17 @@ class ComboboxContext extends AbstractComponentContext
     }
 
     /**
+     * What the hidden inputs submit. Nothing selected still renders one empty input, like a native
+     * input does, so the name is always submitted and a field has an input to put its focus on.
+     *
+     * @return array<string>
+     */
+    public function getHiddenInputValues(): array
+    {
+        return $this->getDefaultValue() ?? [''];
+    }
+
+    /**
      * Whether the trigger can receive focus: what the trigger part's own `focusable` prop says, and
      * otherwise whatever Zag does by default - only a dialog popup has a focusable trigger, since its
      * input moved into the content and the trigger is what opens it.
