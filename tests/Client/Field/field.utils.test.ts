@@ -139,33 +139,73 @@ describe('isErrorMatch', () => {
 });
 
 describe('shouldCommit', () => {
+    const base = { submitAttempted: false, edited: false, showingErrors: false };
+
     test('onChange commits on every change, not on blur', () => {
+        expect(shouldCommit({ ...base, mode: 'onChange', eventType: 'CONTROL.CHANGE' })).toBe(true);
         expect(
-            shouldCommit({ mode: 'onChange', submitAttempted: false, eventType: 'CONTROL.CHANGE' })
-        ).toBe(true);
-        expect(
-            shouldCommit({ mode: 'onChange', submitAttempted: false, eventType: 'CONTROL.BLUR' })
+            shouldCommit({ ...base, mode: 'onChange', edited: true, eventType: 'CONTROL.BLUR' })
         ).toBe(false);
     });
 
-    test('onBlur commits on blur, not on change', () => {
+    test('onBlur commits on blur once the value was edited or a submit was attempted', () => {
+        expect(shouldCommit({ ...base, mode: 'onBlur', eventType: 'CONTROL.BLUR' })).toBe(false);
         expect(
-            shouldCommit({ mode: 'onBlur', submitAttempted: false, eventType: 'CONTROL.BLUR' })
+            shouldCommit({ ...base, mode: 'onBlur', edited: true, eventType: 'CONTROL.BLUR' })
         ).toBe(true);
         expect(
-            shouldCommit({ mode: 'onBlur', submitAttempted: true, eventType: 'CONTROL.CHANGE' })
-        ).toBe(false);
+            shouldCommit({
+                ...base,
+                mode: 'onBlur',
+                submitAttempted: true,
+                eventType: 'CONTROL.BLUR',
+            })
+        ).toBe(true);
     });
 
-    test('onSubmit commits on change only after a submit attempt', () => {
+    test('onBlur does not commit on change until an error is showing', () => {
         expect(
-            shouldCommit({ mode: 'onSubmit', submitAttempted: false, eventType: 'CONTROL.CHANGE' })
+            shouldCommit({ ...base, mode: 'onBlur', edited: true, eventType: 'CONTROL.CHANGE' })
         ).toBe(false);
         expect(
-            shouldCommit({ mode: 'onSubmit', submitAttempted: true, eventType: 'CONTROL.CHANGE' })
+            shouldCommit({
+                ...base,
+                mode: 'onBlur',
+                edited: true,
+                showingErrors: true,
+                eventType: 'CONTROL.CHANGE',
+            })
+        ).toBe(true);
+    });
+
+    test('onSubmit commits on change only after a submit attempt or while an error shows', () => {
+        expect(shouldCommit({ ...base, mode: 'onSubmit', eventType: 'CONTROL.CHANGE' })).toBe(
+            false
+        );
+        expect(
+            shouldCommit({
+                ...base,
+                mode: 'onSubmit',
+                submitAttempted: true,
+                eventType: 'CONTROL.CHANGE',
+            })
         ).toBe(true);
         expect(
-            shouldCommit({ mode: 'onSubmit', submitAttempted: true, eventType: 'CONTROL.BLUR' })
+            shouldCommit({
+                ...base,
+                mode: 'onSubmit',
+                showingErrors: true,
+                eventType: 'CONTROL.CHANGE',
+            })
+        ).toBe(true);
+        expect(
+            shouldCommit({
+                ...base,
+                mode: 'onSubmit',
+                submitAttempted: true,
+                edited: true,
+                eventType: 'CONTROL.BLUR',
+            })
         ).toBe(false);
     });
 });

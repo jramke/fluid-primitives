@@ -122,7 +122,7 @@ export interface FieldProps extends DirectionProperty, CommonProperties {
     validate?: ((details: ValidateDetails) => ValidateResult | Promise<ValidateResult>) | undefined;
     /**
      * When validation results become visible.
-     * @default "onSubmit"
+     * @default "onBlur"
      */
     validationMode?: ValidationMode | undefined;
     /**

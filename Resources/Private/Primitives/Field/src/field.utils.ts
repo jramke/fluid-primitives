@@ -142,17 +142,26 @@ export interface ShouldCommitOptions {
     mode: ValidationMode;
     submitAttempted: boolean;
     eventType: string;
+    /** The value was changed at least once; sticky, reverting it does not undo it. */
+    edited: boolean;
+    /** The field currently shows committed errors. */
+    showingErrors: boolean;
 }
 
 /**
  * Whether this event should commit validation (make it visible).
  * `VALIDATE` / `SUBMIT.INVALID` always commit and do not go through this.
+ *
+ * Two rules go beyond the modes: an error that is showing revalidates on every change in every
+ * mode, so it clears the moment it is fixed; and a blur only commits once the value was edited or a
+ * submit was attempted, so tabbing through a pristine field, or a popup taking focus from its
+ * trigger, shows nothing.
  */
 export function shouldCommit(options: ShouldCommitOptions): boolean {
-    const { mode, submitAttempted, eventType } = options;
-    if (eventType === 'CONTROL.BLUR') return mode === 'onBlur';
+    const { mode, submitAttempted, eventType, edited, showingErrors } = options;
+    if (eventType === 'CONTROL.BLUR') return mode === 'onBlur' && (edited || submitAttempted);
     if (eventType === 'CONTROL.CHANGE')
-        return mode === 'onChange' || (mode === 'onSubmit' && submitAttempted);
+        return mode === 'onChange' || (mode === 'onSubmit' && submitAttempted) || showingErrors;
     return false;
 }
 

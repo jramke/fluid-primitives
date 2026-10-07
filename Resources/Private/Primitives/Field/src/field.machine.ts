@@ -24,7 +24,7 @@ export const machine = createMachine({
             disabled: false,
             readOnly: false,
             required: false,
-            validationMode: 'onSubmit',
+            validationMode: 'onBlur',
             ...props,
         };
     },
@@ -129,11 +129,13 @@ export const machine = createMachine({
     implementations: {
         guards: {
             isCurrentValidation: ({ refs, event }) => event.seq === refs.get('seq'),
-            shouldCommit: ({ prop, context, event }) =>
+            shouldCommit: ({ prop, context, refs, event }) =>
                 shouldCommit({
                     mode: prop('validationMode'),
                     submitAttempted: context.get('submitAttempted'),
                     eventType: event.type,
+                    edited: refs.get('markedDirty') || context.get('dirty'),
+                    showingErrors: context.get('errors').length > 0,
                 }),
         },
 
