@@ -4,6 +4,7 @@ import * as dom from './form.dom';
 import {
     distributeFieldErrors,
     getFieldElement,
+    getFieldMessages,
     getFirstInvalidFieldMachine,
     getFormData,
     getRegisteredFieldMachines,
@@ -19,7 +20,6 @@ import { FormError, ValidationError } from './form.types';
 import {
     attachErrorValues,
     filterErrorsForCurrentValues,
-    getCurrentErrorForField,
     getFormErrorMessages,
     mapServerErrors,
     validateWithValidation,
@@ -211,27 +211,8 @@ export const machine = createMachine<FormSchema>({
                 const fieldName = event.detail?.fieldName;
                 if (!fieldName) return;
 
-                const normalizedFieldName = trimArraySuffix(fieldName);
-                const formData = getFormData(scope);
-                const values = createFormValues(formData);
-                const serverError = getCurrentErrorForField(
-                    refs.get('serverErrors'),
-                    normalizedFieldName,
-                    values
-                );
-
-                let fieldErrors: string[] = serverError?.messages ?? [];
-                if (!serverError) {
-                    const validation = prop('validation');
-                    if (validation) {
-                        fieldErrors =
-                            validateWithValidation(validation, values, normalizedFieldName)[
-                                normalizedFieldName
-                            ]?.messages ?? [];
-                    }
-                }
-
-                setFieldMachineErrors(scope, normalizedFieldName, fieldErrors);
+                const fieldErrors = getFieldMessages({ prop, refs, scope }, fieldName);
+                setFieldMachineErrors(scope, trimArraySuffix(fieldName), fieldErrors);
 
                 if (hasInvalidFieldMachines(scope)) {
                     state.set('invalid');

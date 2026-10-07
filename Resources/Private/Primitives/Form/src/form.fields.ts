@@ -1,14 +1,44 @@
-import type { Scope } from '@zag-js/core';
+import type { Params, Scope } from '@zag-js/core';
 import { getFieldElement } from '../../Field/src/field.value';
 import * as dom from './form.dom';
+import { trimArraySuffix } from './form.path';
 import { getFieldMachinesFor, renameFieldMachineForForm } from './form.registry';
-import type { FormErrors } from './form.types';
+import type { FormErrors, FormSchema } from './form.types';
+import { getCurrentErrorForField, validateWithValidation } from './form.validation';
+import { createFormValues } from './form.values';
 
 export { getFieldElement };
 
 export function getFormData(scope: Scope) {
     const form = dom.getFormEl(scope);
     return form ? new FormData(form) : new FormData();
+}
+
+/**
+ * The messages the form has for one field right now: a server error whose captured value still
+ * matches the field's current value, else what `validation` (schema or callback) reports for it.
+ */
+export function getFieldMessages(
+    form: Pick<Params<FormSchema>, 'prop' | 'refs' | 'scope'>,
+    fieldName: string
+): string[] {
+    const normalizedFieldName = trimArraySuffix(fieldName);
+    const values = createFormValues(getFormData(form.scope));
+
+    const serverError = getCurrentErrorForField(
+        form.refs.get('serverErrors'),
+        normalizedFieldName,
+        values
+    );
+    if (serverError) return serverError.messages;
+
+    const validation = form.prop('validation');
+    if (!validation) return [];
+
+    return (
+        validateWithValidation(validation, values, normalizedFieldName)[normalizedFieldName]
+            ?.messages ?? []
+    );
 }
 
 export function getRegisteredFieldMachines(scope: Scope) {
