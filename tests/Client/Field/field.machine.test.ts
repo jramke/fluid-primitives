@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { Machine } from '../../../Resources/Private/Client/src/lib/machine';
+import { FIELD_VALUE_CHANGE_EVENT } from '../../../Resources/Private/Primitives/Field/src/field.dom';
 import { machine } from '../../../Resources/Private/Primitives/Field/src/field.machine';
 import type {
     FieldProps,
@@ -240,5 +241,28 @@ describe('field baseline', () => {
         input().dispatchEvent(new Event('change', { bubbles: true }));
         await settle();
         expect(field.context.get('dirty')).toBe(false);
+    });
+});
+
+describe('field value announcements', () => {
+    test('the root announces a settled value change once, not for events that change nothing', async () => {
+        vi.useFakeTimers();
+        mountField('<input name="email" value="">');
+        const announced: string[] = [];
+        document
+            .querySelector('[data-field-root]')!
+            .addEventListener(FIELD_VALUE_CHANGE_EVENT, event => {
+                announced.push((event as CustomEvent<{ value: string }>).detail.value);
+            });
+
+        type(input(), 'a');
+        type(input(), 'ab');
+        await settle();
+        input().dispatchEvent(new Event('change', { bubbles: true }));
+        await settle();
+        type(input(), 'abc');
+        await settle();
+
+        expect(announced).toEqual(['ab', 'abc']);
     });
 });

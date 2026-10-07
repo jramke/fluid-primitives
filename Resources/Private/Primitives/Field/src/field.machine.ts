@@ -196,9 +196,22 @@ export const machine = createMachine({
 
                 let timer: ReturnType<typeof setTimeout> | undefined;
                 const read = () => readValue({ refs, prop });
+                let announced = read();
                 const sendChange = () => {
                     timer = undefined;
-                    send({ type: 'CONTROL.CHANGE', value: read() });
+                    const value = read();
+                    send({ type: 'CONTROL.CHANGE', value });
+
+                    // the machine only notifies when a flag flips, so fields that listen to this one
+                    // (`listenTo`) would miss every keystroke after the first
+                    if (value === announced) return;
+                    announced = value;
+                    rootEl.dispatchEvent(
+                        new CustomEvent(dom.FIELD_VALUE_CHANGE_EVENT, {
+                            bubbles: true,
+                            detail: { value },
+                        })
+                    );
                 };
                 // The value is read when the timer fires, not when the event does: a primitive's
                 // synthetic input/change event can precede its DOM update (NumberInput's text, the

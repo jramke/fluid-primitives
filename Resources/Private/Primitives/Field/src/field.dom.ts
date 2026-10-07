@@ -2,6 +2,9 @@ import type { Scope } from '@zag-js/core';
 import { parts } from './field.anatomy';
 import type { ValidityMatch } from './field.types';
 
+/** Dispatched on the field root once its settled value differs from the last one it announced. */
+export const FIELD_VALUE_CHANGE_EVENT = 'fluid-primitives:field:valuechange';
+
 export type FieldControlElement = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
 
 export const getRootId = (ctx: Scope) => ctx.ids?.root ?? ctx.id;
