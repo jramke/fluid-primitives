@@ -6,7 +6,8 @@ import { splitProps } from './src/field.props';
 import { registerFieldMachine } from './src/field.registry';
 import type { FieldApi, FieldProps } from './src/field.types';
 
-export type { FieldDependencyChangeDetail, FieldHandle, FieldProps } from './src/field.types';
+export type { FieldDependencyChangeDetail, FieldHandle } from './src/field.handle';
+export type { FieldProps } from './src/field.types';
 export type { FieldValue } from './src/field.value';
 
 export class Field extends Component<FieldProps, FieldApi> {

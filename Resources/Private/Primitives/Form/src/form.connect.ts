@@ -1,7 +1,6 @@
 import type { Service } from '@zag-js/core';
 import type { NormalizeProps, PropTypes } from '@zag-js/types';
-import { createFieldHandle } from '../../Field/src/field.connect';
-import type { FieldHandle } from '../../Field/src/field.types';
+import { createFieldHandle, type FieldHandle } from '../../Field/src/field.handle';
 import { parts } from './form.anatomy';
 import * as dom from './form.dom';
 import { getRegisteredFieldMachines, renameFieldMachine } from './form.fields';

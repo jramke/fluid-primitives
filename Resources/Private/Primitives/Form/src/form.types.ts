@@ -1,6 +1,6 @@
 import type { EventObject } from '@zag-js/core';
 import type { JSX, PropTypes } from '@zag-js/types';
-import type { FieldHandle } from '../../Field/src/field.types';
+import type { FieldHandle } from '../../Field/src/field.handle';
 import type { Form } from '../Form';
 
 export interface FieldError {

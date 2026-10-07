@@ -8,7 +8,8 @@ import {
 } from '../../Form/src/form.registry';
 import { createFormValues } from '../../Form/src/form.values';
 import * as dom from './field.dom';
-import type { FieldDependencyChangeDetail, FieldSchema } from './field.types';
+import type { FieldDependencyChangeDetail } from './field.handle';
+import type { FieldSchema } from './field.types';
 import {
     getCurrentFieldValue,
     getDefaultFieldValue,
