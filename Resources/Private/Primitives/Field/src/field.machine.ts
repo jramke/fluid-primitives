@@ -220,11 +220,13 @@ export const machine = createMachine({
                     clearTimeout(timer);
                     timer = setTimeout(sendChange, getSettleDelay(rootEl));
                 };
-                // A blur has to see the edit it follows, or the edited-only commit rule would miss it.
-                const flush = () => {
-                    if (timer === undefined) return;
+                const sendNow = () => {
                     clearTimeout(timer);
                     sendChange();
+                };
+                // A blur has to see the edit it follows, or the edited-only commit rule would miss it.
+                const flush = () => {
+                    if (timer !== undefined) sendNow();
                 };
 
                 const listeners: Record<string, (event: any) => void> = {
@@ -235,7 +237,10 @@ export const machine = createMachine({
                         send({ type: 'CONTROL.BLUR', value: read() });
                     },
                     input: schedule,
-                    change: schedule,
+                    // A native control's own change (checkbox, radio, select) is complete when it
+                    // fires; waiting would let the error text vanish - and shift the layout - under
+                    // the next click, which then lands on whatever moved into its place.
+                    change: (event: Event) => (event.isTrusted ? sendNow() : schedule()),
                     // Zag's checkbox, switch and radio announce programmatic changes with a synthetic click only
                     click: (event: Event) => {
                         if (!event.isTrusted && isChoiceInput(event.target)) schedule();

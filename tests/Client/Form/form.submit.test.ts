@@ -2,7 +2,10 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import { Field } from '../../../Resources/Private/Primitives/Field/Field';
 import type { FieldProps } from '../../../Resources/Private/Primitives/Field/src/field.types';
 import { Form } from '../../../Resources/Private/Primitives/Form/Form';
-import type { FormProps } from '../../../Resources/Private/Primitives/Form/src/form.types';
+import type {
+    FormErrors,
+    FormProps,
+} from '../../../Resources/Private/Primitives/Form/src/form.types';
 
 const instances: Array<{ destroy(): void }> = [];
 
@@ -82,7 +85,7 @@ describe('submitting a form of fields', () => {
             {
                 form: {
                     onSubmit,
-                    validation: ({ values }) =>
+                    validation: ({ values }): FormErrors =>
                         values.get('name')
                             ? {}
                             : { name: { messages: ['Please enter your name'] } },
