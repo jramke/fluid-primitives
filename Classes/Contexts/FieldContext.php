@@ -113,7 +113,7 @@ class FieldContext extends AbstractComponentContext
      */
     public function isErrorTextHidden(?ValidityMatch $match): bool
     {
-        return $match !== null || !Typed::bool($this->get('invalid'));
+        return $match instanceof ValidityMatch || !Typed::bool($this->get('invalid'));
     }
 
     /**
