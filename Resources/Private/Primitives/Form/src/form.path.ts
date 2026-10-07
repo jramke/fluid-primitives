@@ -97,7 +97,7 @@ export function toRegisteredFieldName(fieldName: string, objectName?: string) {
 
     // Bracket notation throughout, matching Field's own name (people[0][firstName], not
     // people[0].firstName) - not just for the leading array-index segment, since that's what a
-    // registered field machine is actually keyed by (see form.registry.ts) and what SET_ERRORS
-    // lookups match against exactly.
+    // registered field machine is actually keyed by (see form.registry.ts) and what the error
+    // lookups (getFieldMessages) match against exactly.
     return trimArraySuffix(stringifyFieldPathAsBrackets(fieldPath));
 }

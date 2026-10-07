@@ -95,6 +95,11 @@ export interface FormProps {
     id: string;
     validation?: FormValidation;
     objectName?: string;
+    /**
+     * How long the fields of the form wait after the last change before they read their value, 100
+     * by default and never less than 50: some primitives update their inputs a few frames after they
+     * announce a change, and a `validate` that sends a request should not fire on every keystroke.
+     */
     inputDebounceMs?: number;
     onSubmit?: ({
         values,
