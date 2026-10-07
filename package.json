@@ -56,6 +56,10 @@
             "import": "./dist/field-array.js",
             "types": "./dist/field-array.d.ts"
         },
+        "./fieldset": {
+            "import": "./dist/fieldset.js",
+            "types": "./dist/fieldset.d.ts"
+        },
         "./file-upload": {
             "import": "./dist/file-upload.js",
             "types": "./dist/file-upload.d.ts"
@@ -153,6 +157,7 @@
         "@zag-js/core": "^2.0.0-next.3",
         "@zag-js/dialog": "^2.0.0-next.3",
         "@zag-js/dom-query": "^2.0.0-next.3",
+        "@zag-js/fieldset": "^2.0.0-next.3",
         "@zag-js/file-upload": "^2.0.0-next.3",
         "@zag-js/file-utils": "^2.0.0-next.3",
         "@zag-js/i18n-utils": "^2.0.0-next.3",
