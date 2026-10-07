@@ -8,8 +8,6 @@ import type { FormErrors, FormSchema } from './form.types';
 import { getCurrentErrorForField, validateWithValidation } from './form.validation';
 import { createFormValues } from './form.values';
 
-export { getFieldElement };
-
 export function getFormData(scope: Scope) {
     const form = dom.getFormEl(scope);
     return form ? new FormData(form) : new FormData();
