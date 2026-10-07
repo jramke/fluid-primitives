@@ -57,7 +57,7 @@ export class Checkbox extends FieldAwareComponent<checkbox.Props, checkbox.Api> 
      * checkboxes: the Field's `required` would otherwise mean "every one of them has to be checked".
      * Mirrors FieldContextVariableMerger's server-side rule.
      */
-    protected getClosestField() {
+    protected getClosestField(): HTMLElement | null {
         return this.getClosestCheckboxGroup() ? null : super.getClosestField();
     }
 

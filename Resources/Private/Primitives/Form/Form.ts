@@ -37,6 +37,7 @@ export class Form extends Component<FormProps, FormApi> {
             if (this.fieldSubscriptions.has(fieldMachine)) continue;
 
             const unsubscribe = fieldMachine.subscribe(() => {
+                this.machine.send({ type: 'FIELDS_CHANGED' });
                 this.api = this.initApi();
                 this.render();
             });

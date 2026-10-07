@@ -27,7 +27,7 @@ export abstract class FieldAwareComponent<Props, Api> extends Component<Props, A
         return this.fieldMachine ? connectField(this.fieldMachine) : undefined;
     }
 
-    protected getClosestField() {
+    protected getClosestField(): HTMLElement | null {
         return (
             this.closestField ||
             (this.hydrator.query('root')?.closest('[data-field-root]') as HTMLElement) ||

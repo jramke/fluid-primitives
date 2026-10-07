@@ -1,4 +1,4 @@
-import type { Params, Scope } from '@zag-js/core';
+import { MachineStatus, type Params, type Scope } from '@zag-js/core';
 import { getFieldElement } from '../../Field/src/field.value';
 import * as dom from './form.dom';
 import { trimArraySuffix } from './form.path';
@@ -45,12 +45,6 @@ export function getRegisteredFieldMachines(scope: Scope) {
     return getFieldMachinesFor(dom.getFormEl(scope));
 }
 
-export function syncAllFieldMachines(scope: Scope) {
-    for (const [, fieldMachine] of getRegisteredFieldMachines(scope)) {
-        fieldMachine.send({ type: 'SYNC_FROM_DOM' });
-    }
-}
-
 export function pruneStaleFieldMachines(scope: Scope) {
     const form = dom.getFormEl(scope);
     if (!form) return;
@@ -63,37 +57,55 @@ export function pruneStaleFieldMachines(scope: Scope) {
     }
 }
 
-export function setFieldMachineErrors(scope: Scope, fieldName: string, errors: string[]) {
-    getRegisteredFieldMachines(scope)
-        .get(fieldName)
-        ?.send({ type: 'SET_ERRORS', detail: { errors } });
-}
-
-export function distributeFieldErrors(scope: Scope, errors: FormErrors) {
-    for (const [name, fieldMachine] of getRegisteredFieldMachines(scope)) {
-        fieldMachine.send({
-            type: 'SET_ERRORS',
-            detail: { errors: errors[name]?.messages ?? [] },
-        });
+export function sendToFieldMachines(scope: Scope, type: string) {
+    for (const fieldMachine of getRegisteredFieldMachines(scope).values()) {
+        fieldMachine.send({ type });
     }
 }
 
-export function resetFieldMachines(scope: Scope) {
-    for (const [, fieldMachine] of getRegisteredFieldMachines(scope)) {
-        fieldMachine.send({ type: 'RESET' });
+/**
+ * Resolves once the events just sent to the fields were handled (a machine handles `send` in a
+ * microtask) and no field is validating anymore, so an async validator can still block a submit.
+ */
+export async function settleFieldMachines(scope: Scope) {
+    await Promise.resolve();
+
+    const validating = () =>
+        Array.from(getRegisteredFieldMachines(scope).values()).filter(
+            fieldMachine =>
+                fieldMachine.service.getStatus() === MachineStatus.Started &&
+                fieldMachine.context.get('validating')
+        );
+
+    for (let pending = validating(); pending.length > 0; pending = validating()) {
+        await new Promise<void>(resolve => {
+            const unsubscribe = pending.map(fieldMachine =>
+                fieldMachine.subscribe(() => {
+                    if (fieldMachine.context.get('validating')) return;
+                    unsubscribe.forEach(stop => stop());
+                    resolve();
+                })
+            );
+        });
     }
 }
 
 export function hasInvalidFieldMachines(scope: Scope) {
     return Array.from(getRegisteredFieldMachines(scope).values()).some(fieldMachine =>
-        fieldMachine.context.get('invalid')
+        fieldMachine.computed('invalid')
     );
 }
 
 export function getFirstInvalidFieldMachine(scope: Scope) {
     return Array.from(getRegisteredFieldMachines(scope)).find(([, fieldMachine]) =>
-        fieldMachine.context.get('invalid')
+        fieldMachine.computed('invalid')
     )?.[0];
+}
+
+/** Errors for names no registered field owns (a hidden input, say) still make the form invalid. */
+export function hasUnownedErrors(scope: Scope, errors: FormErrors) {
+    const fieldMachines = getRegisteredFieldMachines(scope);
+    return Object.keys(errors).some(name => !fieldMachines.has(name));
 }
 
 export function renameFieldMachine(scope: Scope, oldName: string, newName: string) {

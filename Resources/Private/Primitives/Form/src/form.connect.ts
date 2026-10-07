@@ -36,7 +36,7 @@ export function connect<T extends PropTypes>(
             if (field.errors.length === 0) continue;
             errors[name] = {
                 messages: [...field.errors],
-                value: field.value,
+                value: field.getValue(),
             };
         }
 
@@ -47,7 +47,7 @@ export function connect<T extends PropTypes>(
         const dirty: FormDirty = {};
 
         for (const [name, field] of getFieldHandles()) {
-            if (field.meta.isDirty) {
+            if (field.dirty) {
                 dirty[name] = true;
             }
         }
@@ -59,7 +59,7 @@ export function connect<T extends PropTypes>(
         const touched: FormTouched = {};
 
         for (const [name, field] of getFieldHandles()) {
-            if (field.meta.isTouched) {
+            if (field.touched) {
                 touched[name] = true;
             }
         }
@@ -77,11 +77,11 @@ export function connect<T extends PropTypes>(
 
     const fieldHandles = getFieldHandles();
     const isSubmitting = state.matches('submitting');
-    const isDirty = Array.from(fieldHandles.values()).some(field => field.meta.isDirty);
+    const isDirty = Array.from(fieldHandles.values()).some(field => field.dirty);
     const isInvalid = Array.from(fieldHandles.values()).some(field => field.invalid);
     const isSuccessful = state.matches('success');
     const isError = state.matches('error');
-    const isTouched = Array.from(fieldHandles.values()).some(field => field.meta.isTouched);
+    const isTouched = Array.from(fieldHandles.values()).some(field => field.touched);
     const stateValue = state.get();
 
     return {
