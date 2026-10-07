@@ -66,10 +66,7 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
 
         const hiddenSelectEl = this.hydrator.query('hiddenSelect');
         if (hiddenSelectEl) {
-            const mergedProps = mergeProps(this.api.getHiddenSelectProps(), {
-                'aria-describedby': this.field?.ariaDescribedby,
-            });
-            this.spreadProps(hiddenSelectEl, mergedProps);
+            this.spreadProps(hiddenSelectEl, this.api.getHiddenSelectProps());
 
             // We need to handle this client side so the select can default to an empty string
             // Setting the select attribute server side has no effect
@@ -82,8 +79,15 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
         const labelEl = this.hydrator.query('label');
         if (labelEl) this.spreadProps(labelEl, this.api.getLabelProps());
 
+        // The trigger is what receives focus, the hidden select is aria-hidden: the field's helper
+        // and error texts have to be described from the trigger to be announced at all.
         const triggerEl = this.hydrator.query('trigger');
-        if (triggerEl) this.spreadProps(triggerEl, this.api.getTriggerProps());
+        if (triggerEl) {
+            const mergedProps = mergeProps(this.api.getTriggerProps(), {
+                'aria-describedby': this.field?.ariaDescribedby,
+            });
+            this.spreadProps(triggerEl, mergedProps);
+        }
 
         const positionerEl = this.hydrator.query('positioner');
         if (positionerEl) this.spreadProps(positionerEl, this.api.getPositionerProps());

@@ -163,19 +163,22 @@ export class FileUpload extends FieldAwareComponent<FileUploadPrimitiveProps, fi
         const labelEl = this.hydrator.query('label');
         if (labelEl) this.spreadProps(labelEl, this.api.getLabelProps());
 
+        // The dropzone and the trigger receive focus, the hidden input is aria-hidden: the field's
+        // helper and error texts have to be described from them to be announced at all.
+        const fieldDescribedBy = { 'aria-describedby': this.field?.ariaDescribedby };
+
         const dropzoneEl = this.hydrator.query('dropzone');
-        if (dropzoneEl) this.spreadProps(dropzoneEl, this.api.getDropzoneProps());
+        if (dropzoneEl) {
+            this.spreadProps(dropzoneEl, mergeProps(this.api.getDropzoneProps(), fieldDescribedBy));
+        }
 
         const triggerEl = this.hydrator.query('trigger');
-        if (triggerEl) this.spreadProps(triggerEl, this.api.getTriggerProps());
+        if (triggerEl) {
+            this.spreadProps(triggerEl, mergeProps(this.api.getTriggerProps(), fieldDescribedBy));
+        }
 
         const hiddenInputEl = this.hydrator.query<HTMLInputElement>('hiddenInput');
-        if (hiddenInputEl) {
-            const mergedProps = mergeProps(this.api.getHiddenInputProps(), {
-                'aria-describedby': this.field?.ariaDescribedby,
-            });
-            this.spreadProps(hiddenInputEl, mergedProps);
-        }
+        if (hiddenInputEl) this.spreadProps(hiddenInputEl, this.api.getHiddenInputProps());
 
         const clearTriggerEl = this.hydrator.query('clearTrigger');
         if (clearTriggerEl) this.spreadProps(clearTriggerEl, this.api.getClearTriggerProps());
