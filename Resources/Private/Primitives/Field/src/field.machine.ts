@@ -2,6 +2,7 @@ import { setup } from '@zag-js/core';
 import { observeChildren, raf, trackFormControl } from '@zag-js/dom-query';
 import { isEqual } from '@zag-js/utils';
 import { trimArraySuffix } from '../../Form/src/form.path';
+import { getFormMachineFor } from '../../Form/src/form.registry';
 import * as dom from './field.dom';
 import type { FieldParams, FieldSchema, ValidateResult, ValiditySnapshot } from './field.types';
 import {
@@ -89,7 +90,7 @@ export const machine = createMachine({
         });
     },
 
-    effects: ['trackRoot', 'trackControlState', 'trackTextParts'],
+    effects: ['trackRoot', 'trackControlState', 'trackTextParts', 'trackFieldEvents'],
 
     on: {
         'CONTROL.FOCUS': {
@@ -179,6 +180,64 @@ export const machine = createMachine({
                     attributes: true,
                     attributeFilter: ['hidden'],
                 });
+            },
+
+            // Our controls are composite (focus on a Select's trigger, value in a hidden <select>, a
+            // portaled listbox, groups of inputs), so instead of handlers on one control the field
+            // listens on its root: capture phase also sees the non-bubbling `invalid` event.
+            trackFieldEvents({ refs, send, prop }) {
+                const rootEl = refs.get('rootEl');
+                if (!rootEl) return;
+
+                let timer: ReturnType<typeof setTimeout> | undefined;
+                const read = () => readValue({ refs, prop });
+                const sendChange = () => {
+                    timer = undefined;
+                    send({ type: 'CONTROL.CHANGE', value: read() });
+                };
+                // The value is read when the timer fires, not when the event does: a primitive's
+                // synthetic input/change event can precede its DOM update (NumberInput's text, the
+                // Combobox's hidden inputs).
+                const schedule = () => {
+                    clearTimeout(timer);
+                    timer = setTimeout(sendChange, getSettleDelay(rootEl));
+                };
+                // A blur has to see the edit it follows, or the edited-only commit rule would miss it.
+                const flush = () => {
+                    if (timer === undefined) return;
+                    clearTimeout(timer);
+                    sendChange();
+                };
+
+                const listeners: Record<string, (event: any) => void> = {
+                    focusin: () => send({ type: 'CONTROL.FOCUS' }),
+                    focusout: (event: FocusEvent) => {
+                        if (dom.isInsideField(rootEl, event.relatedTarget)) return;
+                        flush();
+                        send({ type: 'CONTROL.BLUR', value: read() });
+                    },
+                    input: schedule,
+                    change: schedule,
+                    // Zag's checkbox, switch and radio announce programmatic changes with a synthetic click only
+                    click: (event: Event) => {
+                        if (!event.isTrusted && isChoiceInput(event.target)) schedule();
+                    },
+                    // suppress the native browser bubble; the field surfaces the error itself
+                    invalid: (event: Event) => {
+                        event.preventDefault();
+                        send({ type: 'SUBMIT.INVALID', value: read() });
+                    },
+                };
+                for (const [type, listener] of Object.entries(listeners)) {
+                    rootEl.addEventListener(type, listener, true);
+                }
+
+                return () => {
+                    clearTimeout(timer);
+                    for (const [type, listener] of Object.entries(listeners)) {
+                        rootEl.removeEventListener(type, listener, true);
+                    }
+                };
             },
         },
 
@@ -438,4 +497,17 @@ function getNativeMessage(
 
 function isPromise(value: unknown): value is Promise<ValidateResult> {
     return typeof value === 'object' && value !== null && 'then' in value;
+}
+
+/** At least a short settle, whatever the form's `inputDebounceMs`: see `schedule` in `trackFieldEvents`. */
+function getSettleDelay(rootEl: HTMLElement): number {
+    const debounceMs = getFormMachineFor(rootEl)?.prop('inputDebounceMs') ?? 100;
+    return Math.max(debounceMs, 50);
+}
+
+function isChoiceInput(target: EventTarget | null) {
+    return (
+        target instanceof HTMLInputElement &&
+        (target.type === 'checkbox' || target.type === 'radio')
+    );
 }

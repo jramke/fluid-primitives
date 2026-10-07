@@ -95,20 +95,6 @@ export function connect<T extends PropTypes>(
             'aria-invalid': fieldState.invalid || undefined,
             'aria-describedby': ariaDescribedby,
             ...getDataAttrs(fieldState),
-            onFocus() {
-                send({ type: 'CONTROL.FOCUS' });
-            },
-            onBlur(event: { currentTarget: EventTarget | null }) {
-                send({ type: 'CONTROL.BLUR', value: getEventValue(event) });
-            },
-            onChange(event: { currentTarget: EventTarget | null }) {
-                send({ type: 'CONTROL.CHANGE', value: getEventValue(event) });
-            },
-            onInvalid(event: { preventDefault: VoidFunction; currentTarget: EventTarget | null }) {
-                // suppress the native browser bubble; the field surfaces the error itself
-                event.preventDefault();
-                send({ type: 'SUBMIT.INVALID', value: getEventValue(event) });
-            },
         };
     }
 
@@ -226,11 +212,6 @@ export function connect<T extends PropTypes>(
     };
 
     return api;
-}
-
-function getEventValue(event: { currentTarget: EventTarget | null }) {
-    const target = event.currentTarget;
-    return target && 'value' in target && typeof target.value === 'string' ? target.value : '';
 }
 
 function getDataAttrs(state: FieldState) {

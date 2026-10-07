@@ -26,3 +26,32 @@ export const getVisibleErrorTextIds = (rootEl: HTMLElement) =>
     Array.from(rootEl.querySelectorAll<HTMLElement>(`[${parts.errorText.attr}]`))
         .filter(el => !el.hidden && el.id)
         .map(el => el.id);
+
+const componentRootAttribute = /^(data-.+-)root$/;
+
+/**
+ * Whether `target` belongs to the field: inside its root, or a portaled part (a popup, say) of a
+ * component rendered inside it. Those parts sit outside the root but carry
+ * `data-<component>-<part>="<id of that component's root>"`, like the root itself.
+ */
+export function isInsideField(rootEl: HTMLElement, target: EventTarget | null) {
+    if (!(target instanceof Element)) return false;
+    if (rootEl.contains(target)) return true;
+
+    const prefixById = new Map<string, string>();
+    for (const el of rootEl.querySelectorAll('*')) {
+        for (const { name, value } of Array.from(el.attributes)) {
+            const match = componentRootAttribute.exec(name);
+            if (match && value) prefixById.set(value, match[1]);
+        }
+    }
+    if (prefixById.size === 0) return false;
+
+    for (let el: Element | null = target; el; el = el.parentElement) {
+        for (const { name, value } of Array.from(el.attributes)) {
+            const prefix = prefixById.get(value);
+            if (prefix && name.startsWith(prefix)) return true;
+        }
+    }
+    return false;
+}
