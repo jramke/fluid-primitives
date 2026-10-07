@@ -56,6 +56,7 @@ export const machine = createMachine({
             markedDirty: false,
             initialValue: null,
             seq: 0,
+            rootEl: null,
         };
     },
 
@@ -84,7 +85,7 @@ export const machine = createMachine({
         });
     },
 
-    effects: ['trackControlState', 'trackTextParts'],
+    effects: ['trackRoot', 'trackControlState', 'trackTextParts'],
 
     on: {
         'CONTROL.FOCUS': {
@@ -133,6 +134,10 @@ export const machine = createMachine({
         },
 
         effects: {
+            trackRoot({ refs, scope }) {
+                refs.set('rootEl', dom.queryRootEl(scope));
+            },
+
             trackControlState({ context, refs, scope, send, prop }) {
                 const controlEl = getTrackedControlEl({ scope, prop });
                 if (!controlEl) return;
@@ -150,16 +155,18 @@ export const machine = createMachine({
                 });
             },
 
-            trackTextParts({ context, scope }) {
+            trackTextParts({ context, refs }) {
+                const rootEl = refs.get('rootEl');
+                if (!rootEl) return;
                 const sync = () => {
-                    const errorTextIds = dom.getVisibleErrorTextIds(scope);
+                    const errorTextIds = dom.getVisibleErrorTextIds(rootEl);
                     if (!isEqual(context.get('errorTextIds'), errorTextIds)) {
                         context.set('errorTextIds', errorTextIds);
                     }
-                    context.set('hasHelperText', !!scope.getById(dom.getHelperTextId(scope)));
+                    context.set('hasHelperText', dom.hasHelperText(rootEl));
                 };
                 sync();
-                return observeChildren(() => dom.getRootEl(scope), {
+                return observeChildren(rootEl, {
                     defer: true,
                     callback: sync,
                     attributes: true,

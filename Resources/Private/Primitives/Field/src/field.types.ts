@@ -172,6 +172,10 @@ export interface FieldSchema {
          * Async validation sequence — stale resolutions are discarded.
          */
         seq: number;
+        /**
+         * The field root, resolved once when the machine starts.
+         */
+        rootEl: HTMLElement | null;
     };
     event: EventObject;
     action: string;
