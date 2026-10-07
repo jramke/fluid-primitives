@@ -3,6 +3,7 @@ import { createSplitProps } from '@zag-js/utils';
 import type { FieldProps } from './field.types';
 
 export const props = createProps<FieldProps>()([
+    'defaultValue',
     'dir',
     'dirty',
     'disabled',
@@ -10,6 +11,8 @@ export const props = createProps<FieldProps>()([
     'id',
     'ids',
     'invalid',
+    'listenTo',
+    'name',
     'onValidityChange',
     'readOnly',
     'required',

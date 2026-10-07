@@ -70,6 +70,18 @@ export type ElementIds = Partial<{
 
 export interface FieldProps extends DirectionProperty, CommonProperties {
     /**
+     * The name of the field. It keys the field in its form and is what the field's value is read by.
+     */
+    name: string;
+    /**
+     * The initial value, used while the DOM holds no control for this name yet.
+     */
+    defaultValue?: unknown;
+    /**
+     * Names of sibling fields in the same form whose value changes this field reacts to.
+     */
+    listenTo?: string[] | undefined;
+    /**
      * The ids of the elements. Useful for composition.
      */
     ids?: ElementIds | undefined;

@@ -145,6 +145,7 @@ export function connect<T extends PropTypes>(
             return normalize.element({
                 ...parts.root.attrs(scope.id),
                 dir: prop('dir'),
+                'data-name': prop('name'),
                 ...getDataAttrs(getFieldState()),
             });
         },
