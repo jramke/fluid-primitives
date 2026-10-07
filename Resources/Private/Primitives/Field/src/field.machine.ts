@@ -1,351 +1,366 @@
-import { createMachine } from '@zag-js/core';
-import { debounce } from '@zag-js/utils';
-import { trimArraySuffix } from '../../Form/src/form.path';
-import {
-    getFieldMachinesFor,
-    getFormMachineFor,
-    type FormMachine,
-} from '../../Form/src/form.registry';
-import { createFormValues } from '../../Form/src/form.values';
-import * as dom from './field.dom';
-import type { FieldDependencyChangeDetail } from './field.handle';
-import type { FieldSchema } from './field.types';
-import {
-    getCurrentFieldValue,
-    getDefaultFieldValue,
-    isFieldValueEqual,
-    type FieldValue,
-} from './field.value';
+import { setup } from "@zag-js/core"
+import { observeChildren, raf, trackFormControl } from "@zag-js/dom-query"
+import { isEqual } from "@zag-js/utils"
+import * as dom from "./field.dom"
+import type { FieldParams, FieldSchema, ValidateResult, ValiditySnapshot } from "./field.types"
+import { getValiditySnapshot, resolveValidation, shouldCommit, suppressValueMissing, toErrorArray } from "./field.utils"
 
-/**
- * Dispatched by `handleValueChange`/`handleBlur` at the exact point they each decide *this* field
- * needs to revalidate itself (blur while dirty, or a change while already invalid) - the signal
- * `listenTo` on a *different* field subscribes to, so a dependent field's own revalidation fires
- * under the same conditions the field it depends on already validates under, rather than on every
- * raw value change (e.g. `passwordConfirm` only re-checks when `password` itself would - on blur,
- * or on change once `password` already has an error - not on every keystroke).
- */
-const FIELD_VALIDATED_EVENT = 'fluid-primitives:field:validated';
+const { createMachine } = setup<FieldSchema>()
 
-function notifyFieldValidated(rootEl: HTMLElement | null) {
-    rootEl?.dispatchEvent(new CustomEvent(FIELD_VALIDATED_EVENT, { bubbles: true }));
+export const machine = createMachine({
+  props({ props }) {
+    return {
+      dir: "ltr",
+      disabled: false,
+      readOnly: false,
+      required: false,
+      validationMode: "onSubmit",
+      ...props,
+    }
+  },
+
+  initialState() {
+    return "idle"
+  },
+
+  context({ prop, bindable }) {
+    return {
+      touched: bindable<boolean>(() => ({
+        defaultValue: false,
+        value: prop("touched"),
+      })),
+      dirty: bindable<boolean>(() => ({
+        defaultValue: false,
+        value: prop("dirty"),
+      })),
+      filled: bindable<boolean>(() => ({ defaultValue: false })),
+      focused: bindable<boolean>(() => ({ defaultValue: false })),
+      validating: bindable<boolean>(() => ({ defaultValue: false })),
+      errors: bindable<string[]>(() => ({ defaultValue: [] })),
+      validity: bindable<ValiditySnapshot | null>(() => ({ defaultValue: null })),
+      errorTextIds: bindable<string[]>(() => ({ defaultValue: [] })),
+      hasHelperText: bindable<boolean>(() => ({ defaultValue: false })),
+      fieldsetDisabled: bindable<boolean>(() => ({ defaultValue: false })),
+      submitAttempted: bindable<boolean>(() => ({ defaultValue: false })),
+    }
+  },
+
+  refs() {
+    return {
+      markedDirty: false,
+      initialValue: null,
+      seq: 0,
+    }
+  },
+
+  computed: {
+    disabled: ({ prop, context }) => !!prop("disabled") || context.get("fieldsetDisabled"),
+    valid: ({ prop, context }) => {
+      if (prop("invalid")) return false
+      if (prop("disabled") || context.get("fieldsetDisabled")) return null
+      return context.get("validity")?.valid ?? null
+    },
+    invalid: ({ prop, context }) => {
+      if (prop("invalid")) return true
+      if (prop("disabled") || context.get("fieldsetDisabled")) return false
+      return context.get("validity")?.valid === false
+    },
+  },
+
+  watch({ track, prop, context, refs }) {
+    track([() => prop("disabled")], () => {
+      if (prop("disabled") && context.get("focused")) {
+        context.set("focused", false)
+      }
+    })
+    track([() => context.get("dirty")], () => {
+      if (context.get("dirty")) refs.set("markedDirty", true)
+    })
+  },
+
+  effects: ["trackControlState", "trackTextParts"],
+
+  on: {
+    "CONTROL.FOCUS": {
+      actions: ["setFocused"],
+    },
+    "CONTROL.BLUR": [
+      { guard: "shouldCommit", actions: ["setBlurred", "commitValidation"] },
+      { actions: ["setBlurred"] },
+    ],
+    "CONTROL.CHANGE": [
+      { guard: "shouldCommit", actions: ["trackValueState", "commitValidation"] },
+      { actions: ["trackValueState", "silentValidate", "recoverValueMissing"] },
+    ],
+    // Native `invalid` event fired at submit time (bubble suppressed in connect)
+    "SUBMIT.INVALID": {
+      actions: ["markSubmitAttempted", "commitValidation"],
+    },
+    VALIDATE: {
+      actions: ["forceDirty", "commitValidation"],
+    },
+    "VALIDATE.RESOLVE": {
+      guard: "isCurrentValidation",
+      actions: ["applyAsyncValidation"],
+    },
+    "ERRORS.CLEAR": {
+      actions: ["clearValidation"],
+    },
+    RESET: {
+      actions: ["resetField"],
+    },
+  },
+
+  states: {
+    idle: {},
+  },
+
+  implementations: {
+    guards: {
+      isCurrentValidation: ({ refs, event }) => event.seq === refs.get("seq"),
+      shouldCommit: ({ prop, context, event }) =>
+        shouldCommit({
+          mode: prop("validationMode"),
+          submitAttempted: context.get("submitAttempted"),
+          eventType: event.type,
+        }),
+    },
+
+    effects: {
+      trackControlState({ context, refs, scope, send, prop }) {
+        const controlEl = getTrackedControlEl({ scope, prop })
+        if (!controlEl) return
+        if (refs.get("initialValue") == null) {
+          refs.set("initialValue", controlEl.value)
+          context.set("filled", controlEl.value.length > 0)
+        }
+        return trackFormControl(controlEl, {
+          onFieldsetDisabledChange(disabled) {
+            context.set("fieldsetDisabled", disabled)
+          },
+          onFormReset() {
+            send({ type: "RESET" })
+          },
+        })
+      },
+
+      trackTextParts({ context, scope }) {
+        const sync = () => {
+          const errorTextIds = dom.getVisibleErrorTextIds(scope)
+          if (!isEqual(context.get("errorTextIds"), errorTextIds)) {
+            context.set("errorTextIds", errorTextIds)
+          }
+          context.set("hasHelperText", !!scope.getById(dom.getHelperTextId(scope)))
+        }
+        sync()
+        return observeChildren(() => dom.getRootEl(scope), {
+          defer: true,
+          callback: sync,
+          attributes: true,
+          attributeFilter: ["hidden"],
+        })
+      },
+    },
+
+    actions: {
+      setFocused({ context }) {
+        context.set("focused", true)
+      },
+
+      setBlurred({ context }) {
+        context.set("focused", false)
+        context.set("touched", true)
+      },
+
+      trackValueState({ context, refs, event }) {
+        const value: string = event.value
+        const dirty = value !== (refs.get("initialValue") ?? "")
+        context.set("dirty", dirty)
+        if (dirty) refs.set("markedDirty", true)
+        context.set("filled", value.length > 0)
+      },
+
+      silentValidate(params) {
+        silentValidate(params, params.event.value)
+      },
+
+      recoverValueMissing(params) {
+        const { context, event } = params
+        const validity = context.get("validity")
+        if (!validity || validity.valid || !validity.valueMissing) return
+
+        const controlEl = getTrackedControlEl(params)
+        if (!controlEl) return
+
+        const nextValidity = getValiditySnapshot(controlEl)
+        if (!nextValidity.valid) return
+
+        applyValidation(params, { customErrors: [], validity: nextValidity, value: event.value, nativeMessage: "" })
+      },
+
+      markSubmitAttempted({ context, refs }) {
+        context.set("submitAttempted", true)
+        refs.set("markedDirty", true)
+      },
+
+      forceDirty({ refs }) {
+        refs.set("markedDirty", true)
+      },
+
+      commitValidation(params) {
+        commitValidation(params, { value: params.event.value })
+      },
+
+      applyAsyncValidation(params) {
+        const { event } = params
+        applyValidation(params, {
+          customErrors: toErrorArray(event.result),
+          validity: event.validity,
+          value: event.value,
+          nativeMessage: event.nativeMessage,
+        })
+      },
+
+      clearValidation(params) {
+        clearValidation(params)
+      },
+
+      resetField(params) {
+        const { context, refs } = params
+        clearValidation(params)
+        context.set("touched", false)
+        context.set("dirty", false)
+        context.set("focused", false)
+        context.set("submitAttempted", false)
+        refs.set("markedDirty", false)
+        // form values are restored after the reset event's default action, so measure later
+        raf(() => {
+          const controlEl = getTrackedControlEl(params)
+          if (!controlEl) return
+          refs.set("initialValue", controlEl.value)
+          context.set("filled", controlEl.value.length > 0)
+        })
+      },
+    },
+  },
+})
+
+interface CommitOptions {
+  value?: string | undefined
 }
 
-export const machine = createMachine<FieldSchema>({
-    initialState() {
-        return 'ready';
-    },
-    context({ bindable, prop }) {
-        return {
-            invalid: bindable(() => ({ defaultValue: prop('invalid') ?? false })),
-            required: bindable(() => ({ defaultValue: prop('required') ?? false })),
-            disabled: bindable(() => ({ defaultValue: prop('disabled') ?? false })),
-            readOnly: bindable(() => ({ defaultValue: prop('readOnly') ?? false })),
-            formMachine: bindable(() => ({
-                defaultValue: null as FormMachine | null,
-            })),
-            describeIds: bindable<string | undefined>(() => ({ defaultValue: undefined })),
-            hasDescription: bindable(() => ({ defaultValue: false })),
-            value: bindable(() => ({ defaultValue: getDefaultFieldValue(prop('defaultValue')) })),
-            initialValue: bindable(() => ({
-                defaultValue: getDefaultFieldValue(prop('defaultValue')),
-            })),
-            errors: bindable(() => ({ defaultValue: [] as string[] })),
-            touched: bindable(() => ({ defaultValue: false })),
-            dirty: bindable(() => ({ defaultValue: false })),
-            blurred: bindable(() => ({ defaultValue: false })),
-        };
-    },
-    entry: [
-        'getFormMachine',
-        'checkForDescription',
-        'syncInitialValueFromDom',
-        'determineDescribeIds',
-        'updateInvalid',
-        'setupFieldListeners',
-        'setupDependencyListeners',
-    ],
-    states: {
-        ready: {},
-    },
-    on: {
-        VALUE_CHANGE: { actions: ['handleValueChange'] },
-        FIELD_BLUR: { actions: ['handleBlur'] },
-        SET_ERRORS: { actions: ['setErrors', 'updateInvalid', 'determineDescribeIds'] },
-        CLEAR_ERRORS: { actions: ['clearErrors', 'updateInvalid', 'determineDescribeIds'] },
-        RESET: {
-            actions: ['resetField', 'updateInvalid', 'determineDescribeIds'],
-        },
-        SYNC_FROM_DOM: { actions: ['syncValueFromDom'] },
-    },
-    watch({ track, context, action }) {
-        track([() => context.get('invalid'), () => context.get('hasDescription')], () => {
-            action(['determineDescribeIds']);
-        });
-    },
-    implementations: {
-        actions: {
-            getFormMachine({ context, scope }) {
-                if (context.get('formMachine')) return;
+function commitValidation(params: FieldParams, options: CommitOptions = {}) {
+  const { prop, context, refs, send } = params
 
-                const fieldRootEl = dom.getRootEl(scope);
-                if (!fieldRootEl) return;
+  const controlEl = getTrackedControlEl(params)
+  if (!controlEl) return
 
-                const formMachine = getFormMachineFor(fieldRootEl) ?? null;
+  // clear the previous custom error so the native snapshot is untainted
+  controlEl.setCustomValidity("")
 
-                if (formMachine) {
-                    context.set('formMachine', formMachine);
-                } else {
-                    const closestForm = fieldRootEl.closest('form');
-                    if (!closestForm) return;
+  let validity = getValiditySnapshot(controlEl)
+  if (!refs.get("markedDirty") && !context.get("dirty")) {
+    validity = suppressValueMissing(validity)
+  }
 
-                    const handler = () => {
-                        const fs = getFormMachineFor(fieldRootEl) ?? null;
-                        context.set('formMachine', fs);
-                        closestForm.removeEventListener(
-                            'fluid-primitives:form:registered',
-                            handler
-                        );
-                    };
-                    closestForm.addEventListener('fluid-primitives:form:registered', handler);
-                }
-            },
-            checkForDescription({ context, scope }) {
-                const descriptionEl = dom.getDescriptionEl(scope);
-                context.set('hasDescription', !!descriptionEl);
-            },
-            syncInitialValueFromDom({ context, scope, prop }) {
-                const currentValue = getCurrentFieldValue(
-                    scope,
-                    prop('name'),
-                    prop('defaultValue')
-                );
-                context.set('value', currentValue);
-                context.set('initialValue', currentValue);
-            },
-            syncValueFromDom({ context, scope, prop }) {
-                context.set(
-                    'value',
-                    getCurrentFieldValue(scope, prop('name'), prop('defaultValue'))
-                );
-            },
-            determineDescribeIds({ context, scope }) {
-                const ids: string[] = [];
-                if (context.get('hasDescription')) {
-                    ids.push(dom.getDescriptionId(scope));
-                }
-                if (context.get('invalid')) {
-                    ids.push(dom.getErrorId(scope));
-                }
-                const idsStr = ids.join(' ') || undefined;
-                context.set('describeIds', idsStr);
-            },
-            updateInvalid({ context, prop }) {
-                context.set(
-                    'invalid',
-                    context.get('errors').length > 0 || (prop('invalid') ?? false)
-                );
-            },
-            setErrors({ context, event }) {
-                context.set('errors', [...(event.detail?.errors ?? [])]);
-            },
-            clearErrors({ context }) {
-                context.set('errors', []);
-            },
-            handleValueChange({ context, prop, action, scope }) {
-                action(['syncValueFromDom']);
+  const value = options.value ?? controlEl.value
+  const nativeMessage = validity.valid ? "" : controlEl.validationMessage
 
-                context.set('touched', true);
-                context.set('dirty', true);
+  const seq = refs.get("seq") + 1
+  refs.set("seq", seq)
 
-                if (context.get('errors').length > 0) {
-                    context.get('formMachine')?.send({
-                        type: 'VALIDATE_FIELD',
-                        detail: { fieldName: prop('name') },
-                    });
-                    notifyFieldValidated(dom.getRootEl(scope));
-                }
-            },
-            handleBlur({ context, prop, event, action, scope }) {
-                const target = event.detail?.target as Element | null;
-                const relatedTarget = event.detail?.relatedTarget ?? null;
+  const result = prop("validate")?.({ value, validity })
 
-                if (dom.isFocusMovingWithinSameField(target, relatedTarget)) {
-                    return;
-                }
+  if (isPromise(result)) {
+    context.set("validating", true)
+    result.then(
+      (resolved) => send({ type: "VALIDATE.RESOLVE", seq, result: resolved, validity, value, nativeMessage }),
+      (error) => {
+        send({ type: "VALIDATE.RESOLVE", seq, result: null, validity, value, nativeMessage })
+        queueMicrotask(() => {
+          throw error
+        })
+      },
+    )
+    return
+  }
 
-                context.set('touched', true);
-                context.set('blurred', true);
-                action(['syncValueFromDom']);
+  applyValidation(params, { customErrors: toErrorArray(result), validity, value, nativeMessage })
+}
 
-                if (context.get('dirty')) {
-                    context.get('formMachine')?.send({
-                        type: 'VALIDATE_FIELD',
-                        detail: { fieldName: prop('name') },
-                    });
-                    notifyFieldValidated(dom.getRootEl(scope));
-                }
-            },
-            resetField({ context, scope, prop }) {
-                const value = getCurrentFieldValue(scope, prop('name'), prop('defaultValue'));
-                context.set('value', value);
-                context.set('errors', []);
-                context.set('touched', false);
-                context.set('dirty', false);
-                context.set('blurred', false);
-            },
-            setupFieldListeners({ scope, context, send }) {
-                const rootEl = dom.getRootEl(scope);
-                if (!rootEl) return;
+interface ApplyOptions {
+  customErrors: string[]
+  validity: ValiditySnapshot
+  value: string
+  nativeMessage: string
+}
 
-                const debounceMs = context.get('formMachine')?.prop('inputDebounceMs') ?? 100;
-                const debouncedValueChange =
-                    debounceMs > 0
-                        ? debounce((target: EventTarget | null) => {
-                              send({ type: 'VALUE_CHANGE', detail: { target } });
-                          }, debounceMs)
-                        : (target: EventTarget | null) => {
-                              send({ type: 'VALUE_CHANGE', detail: { target } });
-                          };
+function applyValidation(params: FieldParams, options: ApplyOptions) {
+  const { context, prop } = params
+  const { errors, validity } = resolveValidation(options)
 
-                rootEl.addEventListener(
-                    'input',
-                    event => {
-                        debouncedValueChange(event.target);
-                    },
-                    true
-                );
+  // mirror custom errors so native `:invalid` and submit gating agree
+  if (options.customErrors.length > 0) {
+    getTrackedControlEl(params)?.setCustomValidity(options.customErrors.join(" "))
+  }
 
-                rootEl.addEventListener(
-                    'change',
-                    event => {
-                        send({ type: 'VALUE_CHANGE', detail: { target: event.target } });
-                    },
-                    true
-                );
+  const changed = context.get("validity")?.valid !== validity.valid || !isEqual(context.get("errors"), errors)
 
-                rootEl.addEventListener(
-                    'focusout',
-                    event => {
-                        send({
-                            type: 'FIELD_BLUR',
-                            detail: {
-                                target: event.target,
-                                relatedTarget: event.relatedTarget,
-                            },
-                        });
-                    },
-                    true
-                );
-            },
-            /**
-             * `listenTo` support - subscribes this field to each named sibling field within the
-             * same form, so this field can react when a *different* field changes (e.g. a
-             * `password`/`passwordConfirm` pair, or a field whose visibility depends on another).
-             * Two independent things happen, on two independent triggers:
-             *
-             * - `fluid-primitives:field:dependencychange` (for consumer DOM reactions, e.g.
-             *   toggling another field's visibility) dispatches on *every* value change of a
-             *   listened-to sibling, via `siblingMachine.subscribe(...)` - immediate feedback is
-             *   the point there, so this stays unconditional.
-             * - This field's own `VALIDATE_FIELD` only fires when a listened-to sibling dispatches
-             *   its own `FIELD_VALIDATED_EVENT` (see above) - i.e. under the exact same conditions
-             *   that sibling would revalidate itself (blur while dirty, or a change once it
-             *   already has an error) - not on every keystroke. This is what keeps
-             *   `passwordConfirm` from re-validating on every character typed into `password`: it
-             *   only re-checks when `password` itself would have re-checked.
-             *
-             * A sibling field's *form-scoped* registration may not exist yet when this field
-             * mounts - every field's own `Field` instance constructs in one early, synchronous
-             * `mountAll('field', ...)` pass (triggered by whichever `ui:field.root` usage happens
-             * to appear first on the page), which can easily run before the enclosing `Form`
-             * instance itself has been constructed elsewhere (e.g. a form with its own dedicated
-             * entry file, loaded via a `<vite:asset>` tag further down the page) - and
-             * `getFieldMachinesFor` only returns anything once the form has registered. Mirrors
-             * `getFormMachine`'s own retry-via-bubbling-CustomEvent pattern, listening for
-             * `fluid-primitives:form:registered` (not `field:registered` - every field has
-             * already registered itself by the time this runs; it's specifically the form's own,
-             * later registration this needs to wait for) until every named sibling is found.
-             */
-            setupDependencyListeners({ context, scope, prop }) {
-                const listenTo = prop('listenTo');
-                if (!listenTo || listenTo.length === 0) return;
+  context.set("validating", false)
+  context.set("validity", validity)
+  context.set("errors", errors)
 
-                const rootEl = dom.getRootEl(scope);
-                if (!rootEl) return;
+  if (changed) {
+    prop("onValidityChange")?.({ valid: validity.valid, errors, validity, value: options.value })
+  }
+}
 
-                const formEl = rootEl.closest('form');
-                if (!formEl) return;
+/**
+ * Runs custom validation and mirrors the result into `setCustomValidity` without
+ * committing it to context. Keeps native `:invalid` and submit gating in sync
+ * while the error stays hidden until the mode's commit point.
+ */
+function silentValidate(params: FieldParams, value: string) {
+  const { prop, refs } = params
+  const validate = prop("validate")
+  if (!validate) return
 
-                const normalizedNames = listenTo.map(trimArraySuffix);
-                const lastValues = new Map<string, FieldValue>();
-                const pending = new Set(normalizedNames);
+  const controlEl = getTrackedControlEl(params)
+  if (!controlEl) return
 
-                const dispatchDependencyChange = () => {
-                    const dependencies: Record<string, FieldValue> = {};
-                    listenTo.forEach((name, index) => {
-                        const siblingMachine = getFieldMachinesFor(rootEl).get(
-                            normalizedNames[index]
-                        );
-                        dependencies[name] = siblingMachine
-                            ? siblingMachine.context.get('value')
-                            : null;
-                    });
+  controlEl.setCustomValidity("")
+  const validity = getValiditySnapshot(controlEl)
 
-                    const detail: FieldDependencyChangeDetail = {
-                        name: prop('name'),
-                        dependencies,
-                        values: createFormValues(new FormData(formEl as HTMLFormElement)),
-                    };
-                    rootEl.dispatchEvent(
-                        new CustomEvent('fluid-primitives:field:dependencychange', {
-                            bubbles: true,
-                            detail,
-                        })
-                    );
-                };
+  const seq = refs.get("seq") + 1
+  refs.set("seq", seq)
 
-                const revalidateSelf = () => {
-                    context.get('formMachine')?.send({
-                        type: 'VALIDATE_FIELD',
-                        detail: { fieldName: prop('name') },
-                    });
-                };
+  const apply = (result: ValidateResult) => {
+    if (refs.get("seq") !== seq) return
+    controlEl.setCustomValidity(toErrorArray(result).join(" "))
+  }
 
-                const trySubscribe = () => {
-                    for (const name of Array.from(pending)) {
-                        const siblingMachine = getFieldMachinesFor(rootEl).get(name);
-                        if (!siblingMachine) continue;
+  const result = validate({ value, validity })
+  if (isPromise(result)) {
+    result.then(apply, () => apply(null))
+  } else {
+    apply(result)
+  }
+}
 
-                        lastValues.set(name, siblingMachine.context.get('value'));
-                        siblingMachine.subscribe(() => {
-                            const newValue = siblingMachine.context.get('value');
-                            if (isFieldValueEqual(newValue, lastValues.get(name) ?? null)) return;
-                            lastValues.set(name, newValue);
-                            dispatchDependencyChange();
-                        });
+function clearValidation(params: FieldParams) {
+  const { context, refs } = params
+  // invalidate any in-flight async validation
+  refs.set("seq", refs.get("seq") + 1)
+  context.set("validating", false)
+  context.set("errors", [])
+  context.set("validity", null)
+  getTrackedControlEl(params)?.setCustomValidity("")
+}
 
-                        dom.getRootEl(siblingMachine.scope)?.addEventListener(
-                            FIELD_VALIDATED_EVENT,
-                            revalidateSelf
-                        );
+function getTrackedControlEl(params: Pick<FieldParams, "scope" | "prop">) {
+  return dom.getControlEl(params.scope, params.prop("target"))
+}
 
-                        pending.delete(name);
-                    }
-
-                    if (pending.size === 0) {
-                        formEl.removeEventListener(
-                            'fluid-primitives:form:registered',
-                            trySubscribe
-                        );
-                    }
-                };
-
-                trySubscribe();
-                if (pending.size > 0) {
-                    formEl.addEventListener('fluid-primitives:form:registered', trySubscribe);
-                }
-            },
-        },
-    },
-});
+function isPromise(value: unknown): value is Promise<ValidateResult> {
+  return typeof value === "object" && value !== null && "then" in value
+}

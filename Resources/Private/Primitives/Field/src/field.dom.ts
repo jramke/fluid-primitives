@@ -1,37 +1,26 @@
-import type { Scope } from '@zag-js/core';
-import { parts } from './field.anatomy';
+import type { Scope } from "@zag-js/core"
+import { parts } from "./field.anatomy"
+import type { ValidityMatch } from "./field.types"
 
-// Only the parts other elements point at (`for`, `aria-describedby`, a child's `aria-labelledby`) have ids.
-export const getLabelId = (scope: Scope) => scope.ids?.label ?? `field:${scope.id}:label`;
-export const getControlId = (scope: Scope) => scope.ids?.control ?? `field:${scope.id}:control`;
-export const getErrorId = (scope: Scope) => scope.ids?.error ?? `field:${scope.id}:error`;
-export const getDescriptionId = (scope: Scope) =>
-    scope.ids?.description ?? `field:${scope.id}:description`;
-export const getRootEl = (scope: Scope) => scope.query(scope.selector(parts.root));
-export const getDescriptionEl = (scope: Scope) => scope.query(scope.selector(parts.description));
+export type FieldControlElement = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
 
-export const getClosestFieldRoot = (target: Element | null) => {
-    return target?.closest('[data-field-root]') ?? null;
-};
+export const getRootId = (ctx: Scope) => ctx.ids?.root ?? ctx.id
+export const getItemControlId = (ctx: Scope, item: string) => `${ctx.id}:item:${item}`
+export const getControlId = (ctx: Scope, target?: string) =>
+  ctx.ids?.control ?? (target ? getItemControlId(ctx, target) : `${ctx.id}:control`)
+export const getLabelId = (ctx: Scope) => ctx.ids?.label ?? `${ctx.id}:label`
+export const getErrorTextId = (ctx: Scope, match?: ValidityMatch | boolean, id?: string) => {
+  if (id) return id
+  if (typeof match === "string") return `${ctx.id}:error-text:${match}`
+  return ctx.ids?.errorText ?? `${ctx.id}:error-text`
+}
+export const getHelperTextId = (ctx: Scope) => ctx.ids?.helperText ?? `${ctx.id}:helper-text`
 
-export const getClosestFieldName = (target: Element | null): string | undefined => {
-    if (!target) return;
+export const getRootEl = (ctx: Scope) => ctx.getById(getRootId(ctx))
+export const getControlEl = (ctx: Scope, target?: string) => ctx.getById<FieldControlElement>(getControlId(ctx, target))
 
-    if ('name' in target && typeof target.name === 'string' && target.name) {
-        return target.name;
-    }
-
-    return getClosestFieldRoot(target)?.getAttribute('data-name') || undefined;
-};
-
-export const isFocusMovingWithinSameField = (
-    target: Element | null,
-    relatedTarget: EventTarget | null
-) => {
-    if (!(relatedTarget instanceof Element)) return false;
-
-    const currentField = getClosestFieldRoot(target);
-    const nextField = getClosestFieldRoot(relatedTarget);
-
-    return !!currentField && currentField === nextField;
-};
+export const getVisibleErrorTextIds = (ctx: Scope) =>
+  ctx
+    .queryAll<HTMLElement>(ctx.selector(parts.errorText))
+    .filter((el) => !el.hidden && el.id)
+    .map((el) => el.id)
