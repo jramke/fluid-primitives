@@ -1,0 +1,11 @@
+<f:variable name="refData">{context.dataAttributes}</f:variable>
+
+<div
+    {f:if(condition: context.errorTextHidden, then: 'hidden' )}
+    aria-live="polite"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'errorText' , data: refData )}
+    {ui:attributes()}
+    {ui:asChild()}>
+    <f:slot />
+</div>

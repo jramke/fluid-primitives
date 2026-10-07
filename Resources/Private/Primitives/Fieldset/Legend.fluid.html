@@ -1,0 +1,9 @@
+<f:variable name="refData">{context.dataAttributes}</f:variable>
+
+<legend
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'legend' , data: refData )}
+    {ui:attributes()}
+    {ui:asChild()}>
+    <f:slot />
+</legend>
