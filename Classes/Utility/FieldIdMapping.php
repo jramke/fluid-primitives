@@ -25,14 +25,13 @@ class FieldIdMapping
         'checkbox-group' => ['label' => 'label'],
     ];
 
-    private const array FIELD_ID_OVERRIDE_KEYS = ['label', 'control'];
-
-    // A component's FIELD_ID_PARTS override is suppressed while an ancestor context of this name
-    // is on the ContextService stack. Mirrors Checkbox.ts's client-side getClosestCheckboxGroup()
-    // check: a checkbox nested in a CheckboxGroup must not claim the enclosing Field's label/control
-    // id for itself - each checkbox in the group has its own, separate hidden input, so all of them
-    // doing so would produce duplicate ids. The group itself (not the individual checkbox) owns it.
-    private const array FIELD_ID_EXCLUDED_WHEN_NESTED_IN = [
+    // A component listed here takes its field state from the listed ancestor, not from the enclosing
+    // Field. Mirrors Checkbox.ts's client-side getClosestField(): a checkbox nested in a CheckboxGroup
+    // must not claim the Field's label/control id for itself (each checkbox has its own hidden input,
+    // so all of them doing so would produce duplicate ids) nor take its `required` ("all of them have
+    // to be checked", where the group means "at least one"). The group owns both and carries its name,
+    // disabled, readOnly and invalid state down to its checkboxes itself.
+    private const array FIELD_STATE_FROM_ANCESTOR = [
         'checkbox' => ['checkbox-group'],
     ];
 
@@ -42,18 +41,10 @@ class FieldIdMapping
     }
 
     /**
-     * @return string[]
+     * @return string[] The ancestor components (kebab-case) the given component takes its field state from.
      */
-    public static function shouldSkipFieldIdsInheritanceWhenNestedIn(string $nestedComponent): array
+    public static function getAncestorsProvidingFieldState(string $component): array
     {
-        return self::FIELD_ID_EXCLUDED_WHEN_NESTED_IN[$nestedComponent] ?? [];
-    }
-
-    /**
-     * @return string[]
-     */
-    public static function getFieldIdOverrideKeys(): array
-    {
-        return self::FIELD_ID_OVERRIDE_KEYS;
+        return self::FIELD_STATE_FROM_ANCESTOR[$component] ?? [];
     }
 }

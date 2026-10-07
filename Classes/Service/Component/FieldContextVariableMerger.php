@@ -36,6 +36,10 @@ final readonly class FieldContextVariableMerger
             return null;
         }
 
+        if ($this->takesFieldStateFromAncestor($baseName, $otherComponentContexts)) {
+            return null;
+        }
+
         $fieldRootId = Typed::stringOrNull($fieldContext->get('rootId'));
         $fieldVariables = $fieldContext->getChildVariables();
 
@@ -49,12 +53,7 @@ final readonly class FieldContextVariableMerger
             }
 
             if ($varName === 'ids' && is_array($varValue)) {
-                $varValue = $this->remapFieldIds(
-                    $baseName,
-                    (array)($arguments['ids'] ?? []),
-                    $varValue,
-                    $otherComponentContexts,
-                );
+                $varValue = $this->remapFieldIds($baseName, (array)($arguments['ids'] ?? []), $varValue);
             }
 
             $view->getRenderingContext()->getVariableProvider()->add($varName, $varValue);
@@ -73,17 +72,10 @@ final readonly class FieldContextVariableMerger
      * becomes "hiddenInput" for a Switch (per `FieldIdMapping::FIELD_ID_PARTS`) - so the Field's
      * `<label for="...">` (built from its own "control" id) actually reaches the component's real
      * native input.
-     *
-     * @param array<string, ComponentContextInterface> $otherComponentContexts
      */
-    private function remapFieldIds(
-        string $baseName,
-        array $userIds,
-        array $fieldIds,
-        array $otherComponentContexts,
-    ): array {
+    private function remapFieldIds(string $baseName, array $userIds, array $fieldIds): array
+    {
         $ids = array_merge($userIds, $fieldIds);
-        $ids = $this->excludeInheritedIdsWhenNested($baseName, $ids, $otherComponentContexts);
 
         $updatedIds = $ids;
         // Checked with is_string() rather than Typed::string() below - the latter would also accept
@@ -108,31 +100,22 @@ final readonly class FieldContextVariableMerger
     }
 
     /**
-     * Removes field id parts if the current component is nested in a parent component that should
-     * exclude the field id inheritance (e.g. a Checkbox nested in a CheckboxGroup).
+     * Whether the component sits inside an ancestor that provides its field state instead of the
+     * Field (e.g. a Checkbox nested in a CheckboxGroup).
      *
      * @param array<string, ComponentContextInterface> $otherComponentContexts
      */
-    private function excludeInheritedIdsWhenNested(string $baseName, array $ids, array $otherComponentContexts): array
+    private function takesFieldStateFromAncestor(string $baseName, array $otherComponentContexts): bool
     {
-        $excludeIdInheritanceForParents = FieldIdMapping::shouldSkipFieldIdsInheritanceWhenNestedIn($baseName);
-        if ($excludeIdInheritanceForParents === []) {
-            return $ids;
-        }
-
-        foreach ($excludeIdInheritanceForParents as $parentBaseName) {
+        foreach (FieldIdMapping::getAncestorsProvidingFieldState($baseName) as $ancestorBaseName) {
             // $otherComponentContexts is keyed by ContextService's camelCase context key;
-            // $parentBaseName comes from FieldIdMapping's kebab-case map.
-            $parentContextKey = ComponentNameUtility::lowerCaseDashedToCamelCase($parentBaseName);
-            if (($otherComponentContexts[$parentContextKey] ?? null) === null) {
-                continue;
-            }
-
-            foreach (FieldIdMapping::getFieldIdOverrideKeys() as $fieldIdKey) {
-                unset($ids[$fieldIdKey]);
+            // $ancestorBaseName comes from FieldIdMapping's kebab-case map.
+            $ancestorContextKey = ComponentNameUtility::lowerCaseDashedToCamelCase($ancestorBaseName);
+            if (($otherComponentContexts[$ancestorContextKey] ?? null) !== null) {
+                return true;
             }
         }
 
-        return $ids;
+        return false;
     }
 }
