@@ -120,7 +120,8 @@
         "build": "tsdown",
         "dev": "tsdown --watch",
         "version": "node scripts/version.js",
-        "bump-zag": "node scripts/bump-zag.js"
+        "bump-zag": "node scripts/bump-zag.js",
+        "test": "vitest run"
     },
     "peerDependencies": {
         "zod": "^4.0.0"
@@ -132,9 +133,11 @@
     },
     "devDependencies": {
         "@types/node": "^22.15.17",
+        "jsdom": "^30.1.2",
         "tsdown": "^0.21.7",
         "typescript": "^5.8.3",
         "valibot": "^1.1.0",
+        "vitest": "^5.0.3",
         "zod": "^4.3.6"
     },
     "dependencies": {
