@@ -1,8 +1,9 @@
 import type { Machine } from '../../../Client';
+import type { FieldMachine } from '../../Field/src/field.registry';
 import { trimArraySuffix } from './form.path';
 
 export type FormMachine = Machine<any>;
-export type FieldMachine = Machine<any>;
+export type { FieldMachine };
 
 type RegistryEntry = {
     machine: FormMachine;
@@ -53,6 +54,19 @@ export function registerFieldMachineForForm(el: Element | null, fieldMachine: Fi
         handleEntry(entry);
     } else {
         form.addEventListener('fluid-primitives:form:registered', handler);
+    }
+}
+
+/**
+ * Drops a field's entry by identity rather than by name: the entry may have been re-keyed by a
+ * rename, and a destroyed field's stopped machine must not keep counting as a field of the form.
+ */
+export function unregisterFieldMachineForForm(el: Element | null, fieldMachine: FieldMachine) {
+    const fields = registry.get(resolveElToForm(el) as HTMLFormElement)?.fields;
+    if (!fields) return;
+
+    for (const [name, registered] of fields) {
+        if (registered === fieldMachine) fields.delete(name);
     }
 }
 

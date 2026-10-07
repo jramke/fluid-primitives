@@ -8,7 +8,7 @@ import type {
 
 function form(options: { validation?: FormValidation; serverErrors?: FormErrors } = {}) {
     return {
-        scope: createScope({ id: 'f1' }),
+        scope: createScope({ id: 'f1', getRootNode: () => document }),
         prop: (key: string) => (key === 'validation' ? options.validation : undefined),
         refs: { get: () => options.serverErrors ?? {} },
     } as unknown as Parameters<typeof getFieldMessages>[0];
@@ -33,10 +33,13 @@ describe('getFieldMessages', () => {
     });
 
     test('a server error wins over validation; validation is asked for the one field', () => {
-        const validation: FormValidation = ({ values, fieldName }) =>
-            fieldName === 'email' && values.get('email') === 'a@b.c'
-                ? { email: { messages: ['from callback'] } }
-                : {};
+        const validation: FormValidation = ({ values, fieldName }) => {
+            const errors: FormErrors = {};
+            if (fieldName === 'email' && values.get('email') === 'a@b.c') {
+                errors.email = { messages: ['from callback'] };
+            }
+            return errors;
+        };
         const serverErrors = { email: { messages: ['taken'], value: 'a@b.c' } };
 
         expect(getFieldMessages(form({ validation }), 'email')).toEqual(['from callback']);

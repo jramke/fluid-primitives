@@ -1,6 +1,7 @@
 import type { Machine } from '../../../Client';
+import type { FieldSchema } from './field.types';
 
-export type FieldMachine = Machine<any>;
+export type FieldMachine = Machine<FieldSchema>;
 
 const registry = new WeakMap<HTMLElement, FieldMachine>();
 
