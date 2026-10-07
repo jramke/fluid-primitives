@@ -1,5 +1,5 @@
 import { FieldAwareComponent, Machine, mergeProps, normalizeProps } from '../../Client';
-import type { FieldMachine } from '../Field/src/field.registry';
+import type { FieldClientApi } from '../Field/src/field.handle';
 import { connect } from './src/textarea.connect';
 import * as dom from './src/textarea.dom';
 import { machine } from './src/textarea.machine';
@@ -9,14 +9,14 @@ import type { TextareaApi, TextareaProps } from './src/textarea.types';
 export class Textarea extends FieldAwareComponent<TextareaProps, TextareaApi> {
     static componentName = 'textarea';
 
-    propsWithField(props: TextareaProps, fieldMachine: FieldMachine): TextareaProps {
+    propsWithField(props: TextareaProps, field: FieldClientApi): TextareaProps {
         return {
             ...props,
-            disabled: props.disabled ?? fieldMachine.context.get('disabled'),
-            readOnly: props.readOnly ?? fieldMachine.context.get('readOnly'),
-            required: props.required ?? fieldMachine.context.get('required'),
-            invalid: props.invalid ?? fieldMachine.context.get('invalid'),
-            name: props.name ?? fieldMachine.prop('name'),
+            disabled: props.disabled ?? field.disabled,
+            readOnly: props.readOnly ?? field.readOnly,
+            required: props.required ?? field.required,
+            invalid: props.invalid ?? field.invalid,
+            name: props.name ?? field.name,
         };
     }
 
@@ -41,7 +41,7 @@ export class Textarea extends FieldAwareComponent<TextareaProps, TextareaApi> {
 
         const textareaEl = this.hydrator.query<HTMLTextAreaElement>('textarea');
         if (textareaEl) {
-            const describeIds = [this.fieldMachine?.context.get('describeIds'), wordCountId]
+            const describeIds = [this.field?.ariaDescribedby, wordCountId]
                 .filter(Boolean)
                 .join(' ');
             const mergedProps = mergeProps(this.api.getTextareaProps(), {

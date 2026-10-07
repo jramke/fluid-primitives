@@ -9,7 +9,7 @@ import {
     type ConverterMachineProps,
 } from '../../Client';
 import { getListCollectionFromHydrationData } from '../../Client/src/lib/hydration';
-import type { FieldMachine } from '../Field/src/field.registry';
+import type { FieldClientApi } from '../Field/src/field.handle';
 
 // Wire shape -> real @zag-js/collection ListCollection instance. Registered here (not in
 // transformProps) so mountAll/mount convert it before the component is even constructed - see
@@ -35,14 +35,14 @@ declare module 'fluid-primitives' {
 export class Select extends FieldAwareComponent<select.Props, select.Api> {
     static componentName = 'select';
 
-    propsWithField(props: select.Props, fieldMachine: FieldMachine): select.Props {
+    propsWithField(props: select.Props, field: FieldClientApi): select.Props {
         return {
             ...props,
-            disabled: props.disabled ?? fieldMachine.context.get('disabled'),
-            readOnly: props.readOnly ?? fieldMachine.context.get('readOnly'),
-            required: props.required ?? fieldMachine.context.get('required'),
-            invalid: props.invalid ?? fieldMachine.context.get('invalid'),
-            name: props.name ?? fieldMachine.prop('name'),
+            disabled: props.disabled ?? field.disabled,
+            readOnly: props.readOnly ?? field.readOnly,
+            required: props.required ?? field.required,
+            invalid: props.invalid ?? field.invalid,
+            name: props.name ?? field.name,
         };
     }
 
@@ -67,7 +67,7 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
         const hiddenSelectEl = this.hydrator.query('hiddenSelect');
         if (hiddenSelectEl) {
             const mergedProps = mergeProps(this.api.getHiddenSelectProps(), {
-                'aria-describedby': this.fieldMachine?.context.get('describeIds') || undefined,
+                'aria-describedby': this.field?.ariaDescribedby,
             });
             this.spreadProps(hiddenSelectEl, mergedProps);
 

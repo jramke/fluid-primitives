@@ -1,5 +1,5 @@
 import { FieldAwareComponent, Machine, mergeProps, normalizeProps } from '../../Client';
-import type { FieldMachine } from '../Form/src/form.registry';
+import type { FieldClientApi } from '../Field/src/field.handle';
 import { connect } from './src/checkbox-group.connect';
 import { machine } from './src/checkbox-group.machine';
 import { splitProps } from './src/checkbox-group.props';
@@ -9,14 +9,14 @@ import type { CheckboxGroupApi, CheckboxGroupProps } from './src/checkbox-group.
 export class CheckboxGroup extends FieldAwareComponent<CheckboxGroupProps, CheckboxGroupApi> {
     static componentName = 'checkboxGroup';
 
-    propsWithField(props: CheckboxGroupProps, fieldMachine: FieldMachine): CheckboxGroupProps {
+    propsWithField(props: CheckboxGroupProps, field: FieldClientApi): CheckboxGroupProps {
         return {
             ...props,
-            disabled: props.disabled ?? fieldMachine.context.get('disabled'),
-            readOnly: props.readOnly ?? fieldMachine.context.get('readOnly'),
-            required: props.required ?? fieldMachine.context.get('required'),
-            invalid: props.invalid ?? fieldMachine.context.get('invalid'),
-            name: props.name ?? fieldMachine.prop('name'),
+            disabled: props.disabled ?? field.disabled,
+            readOnly: props.readOnly ?? field.readOnly,
+            required: props.required ?? field.required,
+            invalid: props.invalid ?? field.invalid,
+            name: props.name ?? field.name,
         };
     }
 
@@ -38,7 +38,7 @@ export class CheckboxGroup extends FieldAwareComponent<CheckboxGroupProps, Check
         const rootEl = this.hydrator.query('root');
         if (rootEl) {
             const mergedProps = mergeProps(this.api.getRootProps(), {
-                'aria-describedby': this.fieldMachine?.context.get('describeIds') || undefined,
+                'aria-describedby': this.field?.ariaDescribedby,
             });
             this.spreadProps(rootEl, mergedProps);
         }

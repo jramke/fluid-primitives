@@ -1,5 +1,7 @@
+import { normalizeProps } from '@zag-js/vanilla';
 import { getFormMachineFor, type FormMachine } from '../../Form/src/form.registry';
 import type { FormValues } from '../../Form/src/form.types';
+import { connect } from './field.connect';
 import type { FieldMachine } from './field.registry';
 import type { FieldApi } from './field.types';
 import { getCurrentFieldValue, type FieldValue } from './field.value';
@@ -34,6 +36,13 @@ export interface FieldHandleExtras {
     addDependencyChangeListener(
         callback: (detail: FieldDependencyChangeDetail) => void
     ): () => void;
+}
+
+/** Zag's api plus the handle extras: what a `Field` instance exposes as `.api`. */
+export type FieldClientApi = FieldApi & FieldHandleExtras;
+
+export function connectField(machine: FieldMachine): FieldClientApi {
+    return { ...connect(machine.service, normalizeProps), ...createFieldHandleExtras(machine) };
 }
 
 /** What `form.api.getField(name)` returns: the field's state and actions, flat. */

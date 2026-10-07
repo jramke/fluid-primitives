@@ -12,7 +12,7 @@ import {
 } from '../../Client';
 
 import { getListCollectionFromHydrationData } from '../../Client/src/lib/hydration';
-import type { FieldMachine } from '../Field/src/field.registry';
+import type { FieldClientApi } from '../Field/src/field.handle';
 
 // Wire shape -> real @zag-js/collection ListCollection instance, registered here (not in
 // transformProps) so mountAll/mount convert it before the component is even constructed - see
@@ -44,14 +44,14 @@ export class Combobox extends FieldAwareComponent<combobox.Props, combobox.Api> 
 
     private sourceCollection?: ListCollection<any>;
 
-    propsWithField(props: combobox.Props, fieldMachine: FieldMachine): combobox.Props {
+    propsWithField(props: combobox.Props, field: FieldClientApi): combobox.Props {
         return {
             ...props,
-            disabled: props.disabled ?? fieldMachine.context.get('disabled'),
-            readOnly: props.readOnly ?? fieldMachine.context.get('readOnly'),
-            required: props.required ?? fieldMachine.context.get('required'),
-            invalid: props.invalid ?? fieldMachine.context.get('invalid'),
-            name: props.name ?? fieldMachine.prop('name'),
+            disabled: props.disabled ?? field.disabled,
+            readOnly: props.readOnly ?? field.readOnly,
+            required: props.required ?? field.required,
+            invalid: props.invalid ?? field.invalid,
+            name: props.name ?? field.name,
         };
     }
 
@@ -169,7 +169,7 @@ export class Combobox extends FieldAwareComponent<combobox.Props, combobox.Api> 
         const inputEl = this.hydrator.query('input');
         if (inputEl) {
             const mergedProps = mergeProps(inputProps, {
-                'aria-describedby': this.fieldMachine?.context.get('describeIds') || undefined,
+                'aria-describedby': this.field?.ariaDescribedby,
             });
             this.spreadProps(inputEl, mergedProps);
         }

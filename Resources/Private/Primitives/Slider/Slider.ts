@@ -8,7 +8,7 @@ import {
     type ClientPropConverterMap,
     type ConverterMachineProps,
 } from '../../Client';
-import type { FieldMachine } from '../Field/src/field.registry';
+import type { FieldClientApi } from '../Field/src/field.handle';
 
 // PHP can't distinguish a list-shaped array from an object-shaped one for a bare `type="array"`
 // prop (see WireTypeResolver), so `thumbSize` resolves to `unknown` on the wire - this converter
@@ -31,13 +31,13 @@ export class Slider extends FieldAwareComponent<slider.Props, slider.Api> {
 
     // No `required` here - @zag-js/slider has no such prop (a slider always carries some
     // value, so "required" has no meaningful unset state to enforce).
-    propsWithField(props: slider.Props, fieldMachine: FieldMachine): slider.Props {
+    propsWithField(props: slider.Props, field: FieldClientApi): slider.Props {
         return {
             ...props,
-            disabled: props.disabled ?? fieldMachine.context.get('disabled'),
-            readOnly: props.readOnly ?? fieldMachine.context.get('readOnly'),
-            invalid: props.invalid ?? fieldMachine.context.get('invalid'),
-            name: props.name ?? fieldMachine.prop('name'),
+            disabled: props.disabled ?? field.disabled,
+            readOnly: props.readOnly ?? field.readOnly,
+            invalid: props.invalid ?? field.invalid,
+            name: props.name ?? field.name,
         };
     }
 
@@ -86,8 +86,8 @@ export class Slider extends FieldAwareComponent<slider.Props, slider.Api> {
             const index = Number(thumbEl.dataset.value ?? 0);
             const name = thumbEl.dataset.name;
             const thumbProps = mergeProps(this.api.getThumbProps({ index, name }), {
-                'aria-describedby': this.fieldMachine?.context.get('describeIds') || undefined,
-                'aria-invalid': this.fieldMachine?.context.get('invalid') || undefined,
+                'aria-describedby': this.field?.ariaDescribedby,
+                'aria-invalid': this.field?.invalid || undefined,
             });
             this.spreadProps(thumbEl, thumbProps);
 

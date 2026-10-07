@@ -1,5 +1,5 @@
-import type { Service } from '@zag-js/core';
 import { Component } from '.';
+import { connectField, type FieldClientApi } from '../../../Primitives/Field/src/field.handle';
 import {
     getFieldMachineFor,
     type FieldMachine,
@@ -13,26 +13,19 @@ const booleanFieldProps = ['invalid', 'disabled', 'readOnly', 'required'] as con
 // asChild-wrapped native inputs (whose `name` attribute is already kept in
 // sync directly by Field's own control props).
 const fieldProps = [...booleanFieldProps, 'name'] as const;
-type FieldProps = (typeof fieldProps)[number];
-
-const fieldAccessors: Record<FieldProps, (s: Service<any>) => boolean | string | undefined> = {
-    disabled: s => s.context.get('disabled'),
-    readOnly: s => s.context.get('readOnly'),
-    required: s => s.context.get('required'),
-    invalid: s => s.context.get('invalid'),
-    name: s => s.prop('name'),
-};
-
-function isBooleanFieldProp(prop: FieldProps): prop is (typeof booleanFieldProps)[number] {
-    return (booleanFieldProps as readonly string[]).includes(prop);
-}
+type FieldProp = (typeof fieldProps)[number];
 
 export abstract class FieldAwareComponent<Props, Api> extends Component<Props, Api> {
     protected subscribedToField = false;
     protected fieldMachine: FieldMachine | undefined;
     protected closestField: HTMLElement | null = null;
 
-    protected abstract propsWithField(props: Partial<Props>, fieldMachine: FieldMachine): Props;
+    protected abstract propsWithField(props: Partial<Props>, field: FieldClientApi): Props;
+
+    /** The field's current api, for what a primitive merges into its own props when it renders. */
+    protected get field(): FieldClientApi | undefined {
+        return this.fieldMachine ? connectField(this.fieldMachine) : undefined;
+    }
 
     protected getClosestField() {
         return (
@@ -42,6 +35,11 @@ export abstract class FieldAwareComponent<Props, Api> extends Component<Props, A
         );
     }
 
+    init() {
+        super.init();
+        this.notifyFieldHydrated();
+    }
+
     protected withFieldProps(props: Props): Props {
         this.closestField = this.getClosestField();
 
@@ -49,11 +47,14 @@ export abstract class FieldAwareComponent<Props, Api> extends Component<Props, A
 
         this.fieldMachine = getFieldMachineFor(this.closestField);
         if (this.fieldMachine) {
-            return this.propsWithField(props, this.fieldMachine);
+            return this.propsWithField(props, connectField(this.fieldMachine));
         } else {
             const handler = () => {
                 this.fieldMachine = getFieldMachineFor(this.closestField);
-                this.updateProps(this.propsWithField(this.userProps, this.fieldMachine!));
+                this.updateProps(
+                    this.propsWithField(this.userProps, connectField(this.fieldMachine!))
+                );
+                this.notifyFieldHydrated();
                 this.closestField?.removeEventListener(
                     'fluid-primitives:field:registered',
                     handler
@@ -76,24 +77,16 @@ export abstract class FieldAwareComponent<Props, Api> extends Component<Props, A
         }
 
         if (this.fieldMachine) {
-            this.fieldMachine.subscribe(snapshot => {
+            const fieldMachine = this.fieldMachine;
+            fieldMachine.subscribe(() => {
                 queueMicrotask(() => {
-                    let propsToUpdate: Partial<Record<FieldProps, boolean | string | undefined>> =
-                        {};
+                    const field = connectField(fieldMachine);
+                    const propsToUpdate: Partial<Record<FieldProp, boolean | string>> = {};
 
                     for (const prop of fieldProps) {
-                        if (isBooleanFieldProp(prop)) {
-                            const newValue = !!fieldAccessors[prop](snapshot);
-                            const currentValue = !!this.machine.prop(prop);
-
-                            if (newValue !== currentValue) {
-                                propsToUpdate[prop] = newValue;
-                            }
-                            continue;
-                        }
-
-                        const newValue = fieldAccessors[prop](snapshot);
-                        const currentValue = this.machine.prop(prop);
+                        const newValue = prop === 'name' ? field.name : !!field[prop];
+                        const currentValue =
+                            prop === 'name' ? this.machine.prop(prop) : !!this.machine.prop(prop);
 
                         if (newValue !== currentValue) {
                             propsToUpdate[prop] = newValue;
@@ -103,6 +96,7 @@ export abstract class FieldAwareComponent<Props, Api> extends Component<Props, A
                     if (Object.keys(propsToUpdate).length > 0) {
                         this.updateProps(propsToUpdate as Partial<Props>);
                     } else {
+                        // the field's aria-describedby (its visible error texts) may have changed
                         // notify is marked as private but that does not prevent runtime access
                         // @ts-expect-error
                         this.machine.notify();
@@ -120,5 +114,13 @@ export abstract class FieldAwareComponent<Props, Api> extends Component<Props, A
             };
             this.closestField!.addEventListener('fluid-primitives:field:registered', handler);
         }
+    }
+
+    /**
+     * The field measured its starting value from the server HTML; a primitive may hydrate to a
+     * different state (a defaultChecked checkbox, a Select's selected option).
+     */
+    private notifyFieldHydrated() {
+        this.fieldMachine?.send({ type: 'BASELINE' });
     }
 }

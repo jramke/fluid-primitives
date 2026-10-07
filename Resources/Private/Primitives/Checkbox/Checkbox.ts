@@ -14,7 +14,7 @@ import {
     type CheckboxGroupMachine,
 } from '../CheckboxGroup/src/checkbox-group.registry';
 import type { CheckboxGroupApi } from '../CheckboxGroup/src/checkbox-group.types';
-import type { FieldMachine } from '../Field/src/field.registry';
+import type { FieldClientApi } from '../Field/src/field.handle';
 
 // `defaultChecked` is declared type="mixed" (it's `boolean | 'indeterminate'`, and PHP has no
 // closed type for that union) so it resolves to `unknown` on the wire - this converter just tells
@@ -41,14 +41,14 @@ export class Checkbox extends FieldAwareComponent<checkbox.Props, checkbox.Api> 
     private closestCheckboxGroup: HTMLElement | null = null;
     private syncingFromGroup = false; // Prevents callback loop when syncing from group
 
-    propsWithField(props: checkbox.Props, fieldMachine: FieldMachine): checkbox.Props {
+    propsWithField(props: checkbox.Props, field: FieldClientApi): checkbox.Props {
         return {
             ...props,
-            disabled: props.disabled ?? fieldMachine.context.get('disabled'),
-            readOnly: props.readOnly ?? fieldMachine.context.get('readOnly'),
-            required: props.required ?? fieldMachine.context.get('required'),
-            invalid: props.invalid ?? fieldMachine.context.get('invalid'),
-            name: props.name ?? fieldMachine.prop('name'),
+            disabled: props.disabled ?? field.disabled,
+            readOnly: props.readOnly ?? field.readOnly,
+            required: props.required ?? field.required,
+            invalid: props.invalid ?? field.invalid,
+            name: props.name ?? field.name,
         };
     }
 
@@ -168,7 +168,7 @@ export class Checkbox extends FieldAwareComponent<checkbox.Props, checkbox.Api> 
         const hiddenInputEl = this.hydrator.query('hiddenInput');
         if (hiddenInputEl) {
             const mergedProps = mergeProps(this.api.getHiddenInputProps(), {
-                'aria-describedby': this.fieldMachine?.context.get('describeIds') || undefined,
+                'aria-describedby': this.field?.ariaDescribedby,
             });
             this.spreadProps(hiddenInputEl, mergedProps);
         }

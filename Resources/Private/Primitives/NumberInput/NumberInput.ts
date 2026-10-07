@@ -8,7 +8,7 @@ import {
     type ClientPropConverterMap,
     type ConverterMachineProps,
 } from '../../Client';
-import type { FieldMachine } from '../Field/src/field.registry';
+import type { FieldClientApi } from '../Field/src/field.handle';
 
 // PHP can't distinguish a list-shaped array from an object-shaped one for a bare `type="array"`
 // prop (see WireTypeResolver), so `formatOptions` resolves to `unknown` on the wire - this converter
@@ -29,14 +29,14 @@ declare module 'fluid-primitives' {
 export class NumberInput extends FieldAwareComponent<numberInput.Props, numberInput.Api> {
     static componentName = 'numberInput';
 
-    propsWithField(props: numberInput.Props, fieldMachine: FieldMachine): numberInput.Props {
+    propsWithField(props: numberInput.Props, field: FieldClientApi): numberInput.Props {
         return {
             ...props,
-            disabled: props.disabled ?? fieldMachine.context.get('disabled'),
-            readOnly: props.readOnly ?? fieldMachine.context.get('readOnly'),
-            required: props.required ?? fieldMachine.context.get('required'),
-            invalid: props.invalid ?? fieldMachine.context.get('invalid'),
-            name: props.name ?? fieldMachine.prop('name'),
+            disabled: props.disabled ?? field.disabled,
+            readOnly: props.readOnly ?? field.readOnly,
+            required: props.required ?? field.required,
+            invalid: props.invalid ?? field.invalid,
+            name: props.name ?? field.name,
         };
     }
 
@@ -75,7 +75,7 @@ export class NumberInput extends FieldAwareComponent<numberInput.Props, numberIn
         const inputEl = this.hydrator.query('input');
         if (inputEl) {
             const mergedProps = mergeProps(this.api.getInputProps(), {
-                'aria-describedby': this.fieldMachine?.context.get('describeIds') || undefined,
+                'aria-describedby': this.field?.ariaDescribedby,
             });
             this.spreadProps(inputEl, mergedProps);
         }

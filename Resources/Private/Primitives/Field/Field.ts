@@ -1,4 +1,4 @@
-import { Component, Machine, normalizeProps } from '../../Client';
+import { Component, Machine } from '../../Client';
 import { getFieldMessages } from '../Form/src/form.fields';
 import { trimArraySuffix } from '../Form/src/form.path';
 import {
@@ -8,13 +8,12 @@ import {
     unregisterFieldMachineForForm,
 } from '../Form/src/form.registry';
 import { createFormValues } from '../Form/src/form.values';
-import { connect } from './src/field.connect';
 import { FIELD_VALUE_CHANGE_EVENT } from './src/field.dom';
 import {
     FIELD_DEPENDENCY_CHANGE_EVENT,
-    createFieldHandleExtras,
+    connectField,
+    type FieldClientApi,
     type FieldDependencyChangeDetail,
-    type FieldHandleExtras,
 } from './src/field.handle';
 import { machine } from './src/field.machine';
 import { splitProps } from './src/field.props';
@@ -24,7 +23,6 @@ import {
     type FieldMachine,
 } from './src/field.registry';
 import type {
-    FieldApi,
     FieldProps,
     IndicatorType,
     ValidateDetails,
@@ -34,11 +32,9 @@ import type {
 import { toErrorArray } from './src/field.utils';
 import { getComparableFieldValue, getCurrentFieldValue, type FieldValue } from './src/field.value';
 
-export type { FieldDependencyChangeDetail, FieldHandle } from './src/field.handle';
+export type { FieldClientApi, FieldDependencyChangeDetail, FieldHandle } from './src/field.handle';
 export type { FieldProps } from './src/field.types';
 export type { FieldValue } from './src/field.value';
-
-export type FieldClientApi = FieldApi & FieldHandleExtras;
 
 export class Field extends Component<FieldProps, FieldClientApi> {
     static componentName = 'field';
@@ -68,10 +64,7 @@ export class Field extends Component<FieldProps, FieldClientApi> {
     }
 
     initApi(): FieldClientApi {
-        return {
-            ...connect(this.machine.service, normalizeProps),
-            ...createFieldHandleExtras(this.machine),
-        };
+        return connectField(this.fieldMachine);
     }
 
     init() {
