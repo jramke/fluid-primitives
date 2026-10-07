@@ -1,0 +1,14 @@
+<ui:prop name="type" type="Jramke\FluidPrimitives\Enum\FieldIndicatorType" optional="{true}" requiredAtRuntime="{true}" description="The state the indicator reflects: `required`, `invalid`, `valid` or `validating`. It stays in the DOM and is hidden unless the state matches, so CSS transitions survive." />
+
+<f:variable name="refData" value="{context -> ui:call(method: 'getIndicatorDataAttributes', arguments: {0: type})}" />
+<f:variable name="isHidden" value="{context -> ui:call(method: 'isIndicatorHidden', arguments: {0: type})}" />
+
+<span
+    {f:if(condition: isHidden, then: 'hidden' )}
+    {f:if(condition: class, then: 'class="{class}"' )}
+    aria-hidden="true"
+    {ui:ref(name: 'indicator' , value: type, data: refData )}
+    {ui:attributes()}
+    {ui:asChild()}>
+    <f:slot />
+</span>

@@ -1,6 +1,8 @@
+<f:variable name="refData">{context.dataAttributes}</f:variable>
+
 <label
     {f:if(condition: class, then: 'class="{class}"' )}
-    {ui:ref(name: 'label' )}
+    {ui:ref(name: 'label' , data: refData )}
     {ui:attributes()}
     {ui:asChild()}>
     <f:slot />

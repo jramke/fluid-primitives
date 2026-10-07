@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Contexts;
 
+use Jramke\FluidPrimitives\Enum\FieldIndicatorType;
+use Jramke\FluidPrimitives\Enum\ValidityMatch;
 use Jramke\FluidPrimitives\Service\ContextService;
 use Jramke\FluidPrimitives\Utility\ExtbaseFormFieldNamer;
 use Jramke\FluidPrimitives\Utility\Typed;
@@ -79,6 +81,52 @@ class FieldContext extends AbstractComponentContext
             $canonicalPath = $this->extbaseFormFieldNamer->parseFieldPath((string)$this->get('name'));
             $this->set('name', $this->extbaseFormFieldNamer->stringifyFieldPathAsBrackets($canonicalPath));
         }
+    }
+
+    /**
+     * The state every part renders as data attributes on the server, so it does not flash unstyled
+     * until the client machine sets the same flags (it sets them on every part).
+     *
+     * @return array{disabled: bool, invalid: bool, required: bool, readonly: bool}
+     */
+    public function getDataAttributes(): array
+    {
+        return [
+            'disabled' => Typed::bool($this->get('disabled')),
+            'invalid' => Typed::bool($this->get('invalid')),
+            'required' => Typed::bool($this->get('required')),
+            'readonly' => Typed::bool($this->get('readOnly')),
+        ];
+    }
+
+    /**
+     * @return array{disabled: bool, invalid: bool, required: bool, readonly: bool, type: string}
+     */
+    public function getIndicatorDataAttributes(FieldIndicatorType $type): array
+    {
+        return [...$this->getDataAttributes(), 'type' => $type->value];
+    }
+
+    /**
+     * Only a field narrowed with `match` stays hidden for good on the server: which constraint
+     * failed is a result of validation, which only exists on the client.
+     */
+    public function isErrorTextHidden(?ValidityMatch $match): bool
+    {
+        return $match !== null || !Typed::bool($this->get('invalid'));
+    }
+
+    /**
+     * Only `required` and `invalid` follow from props; `valid` and `validating` are results of
+     * validation, which only exist on the client.
+     */
+    public function isIndicatorHidden(FieldIndicatorType $type): bool
+    {
+        return match ($type) {
+            FieldIndicatorType::Required => !Typed::bool($this->get('required')),
+            FieldIndicatorType::Invalid => !Typed::bool($this->get('invalid')),
+            default => true,
+        };
     }
 
     /**

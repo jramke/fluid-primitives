@@ -1,19 +1,16 @@
-<ui:prop name="name" type="string" optional="{true}" client="{true}" requiredAtRuntime="{true}" description="The unique field name used to associate labels, descriptions, errors, and form values." />
-<ui:prop name="disabled" type="boolean" optional="{true}" client="{true}" description="Whether the field is disabled." />
-<ui:prop name="invalid" type="boolean" optional="{true}" client="{true}" description="Whether the field is invalid." />
-<ui:prop name="required" type="boolean" optional="{true}" client="{true}" description="Whether the field is required." />
+<ui:prop name="name" type="string" optional="{true}" client="{true}" requiredAtRuntime="{true}" description="The unique field name used to associate labels, helper text, errors, and form values." />
+<ui:prop name="disabled" type="boolean" optional="{true}" client="{true}" description="Whether the field is disabled. A field inside a disabled `<fieldset>` is disabled as well." />
+<ui:prop name="invalid" type="boolean" optional="{true}" client="{true}" description="Whether the field is invalid, regardless of validation. Use it for errors the browser's constraint validation and the form's validation cannot compute, e.g. a pre-populated server error." />
+<ui:prop name="required" type="boolean" optional="{true}" client="{true}" description="Whether the field is required. An empty required field stays quiet until the user edits it or the form is submitted." />
 <ui:prop name="readOnly" type="boolean" optional="{true}" client="{true}" description="Whether the field is read-only." />
 <ui:prop name="defaultValue" type="mixed" optional="{true}" client="{true}" description="The initial value that child controls can use when rendered inside the field." />
-<ui:prop name="listenTo" type="string[]" optional="{true}" client="{true}" description="Names of sibling fields within the same form whose value changes this field should react to. Dispatches a `fluid-primitives:field:dependencychange` event on this field's root element (see `Field.onDependencyChange()`) on every value change of a listened-to field, and re-runs this field's own validation whenever a listened-to field validates itself (on blur, or on change once it already has an error) - not on every keystroke - e.g. a `passwordConfirm` field listening to `password`." />
+<ui:prop name="validationMode" type="Jramke\FluidPrimitives\Enum\ValidationMode" optional="{true}" client="{true}" default="{f:constant(name: 'Jramke\FluidPrimitives\Enum\ValidationMode::OnBlur')}" description="When errors become visible. `onBlur` validates on blur once the value was edited, `onSubmit` after the first submit attempt, `onChange` on every change. An error that is showing always revalidates on change, in every mode." />
+<ui:prop name="listenTo" type="string[]" optional="{true}" client="{true}" description="Names of sibling fields within the same form whose value changes this field should react to. Dispatches a `fluid-primitives:field:dependencychange` event on this field's root element (see `addDependencyChangeListener()`) on every value change of a listened-to field, and treats that like a change of this field itself, so it revalidates under the same rules as when its own value changes - e.g. a `passwordConfirm` field listening to `password`." />
 
-<f:variable name="refData" value="{pristine: '{true}', default-value: '{true}'}" />
+<f:variable name="refData">{context.dataAttributes}</f:variable>
 
 <div
     data-name="{context.name}"
-    {f:if(condition: invalid, then: 'data-invalid' )}
-    {f:if(condition: disabled, then: 'data-disabled' )}
-    {f:if(condition: readOnly, then: 'data-readonly' )}
-    {f:if(condition: required, then: 'data-required' )}
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'root' , data: refData )}
     {ui:attributes()}
