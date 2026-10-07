@@ -1,3 +1,8 @@
+/**
+ * Partly ported from the tests of @zag-js/field of Zag.js (https://github.com/chakra-ui/zag), MIT License,
+ * Copyright (c) 2021 Chakra UI.
+ */
+
 import { describe, expect, test } from 'vitest';
 import type { ValiditySnapshot } from '../../../Resources/Private/Primitives/Field/src/field.types';
 import {

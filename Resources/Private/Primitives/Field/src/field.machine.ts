@@ -1,3 +1,9 @@
+/**
+ * Derived from @zag-js/field of Zag.js (https://github.com/chakra-ui/zag, packages/machines/field,
+ * commit 0ce8e3de63b571d37e438bcf28e64759466e56e9), MIT License, Copyright (c) 2021 Chakra UI.
+ * Adapted for Fluid Primitives, the git history shows what changed from the original.
+ */
+
 import { setup } from '@zag-js/core';
 import { observeChildren, trackFormControl } from '@zag-js/dom-query';
 import { isEqual } from '@zag-js/utils';

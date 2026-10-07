@@ -10,8 +10,7 @@
     },
     "author": "Joost Ramke <hey@joostramke.com>",
     "files": [
-        "./dist",
-        "./THIRD_PARTY_NOTICES.md"
+        "./dist"
     ],
     "main": "./dist/client.js",
     "types": "./dist/client.d.ts",
