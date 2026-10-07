@@ -9,7 +9,7 @@ import type {
     FieldMeta,
     FieldSchema,
 } from './field.types';
-import { isFieldValueEqual } from './field.utils';
+import { isFieldValueEqual } from './field.value';
 
 type FieldServiceLike = Pick<Service<FieldSchema>, 'prop' | 'context' | 'scope'>;
 

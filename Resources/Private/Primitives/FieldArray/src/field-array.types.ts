@@ -1,7 +1,7 @@
 import type { EventObject } from '@zag-js/core';
 import type { LiveRegion } from '@zag-js/live-region';
 import type { PropTypes } from '@zag-js/types';
-import type { FieldValue } from '../../Field/src/field.types';
+import type { FieldValue } from '../../Field/src/field.value';
 
 /**
  * Handed to a `translations.rowAdded`/`rowRemoved` callback (in place of a plain string) so it can

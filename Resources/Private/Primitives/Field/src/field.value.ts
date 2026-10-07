@@ -1,6 +1,7 @@
 import { trimArraySuffix } from '../../Form/src/form.path';
 import * as dom from './field.dom';
-import type { FieldValue } from './field.types';
+
+export type FieldValue = FormDataEntryValue | FormDataEntryValue[] | null;
 
 type AnyFormControlElement =
     HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | HTMLButtonElement;

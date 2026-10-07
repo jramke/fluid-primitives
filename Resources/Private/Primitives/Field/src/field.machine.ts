@@ -8,8 +8,13 @@ import {
 } from '../../Form/src/form.registry';
 import { createFormValues } from '../../Form/src/form.values';
 import * as dom from './field.dom';
-import type { FieldDependencyChangeDetail, FieldSchema, FieldValue } from './field.types';
-import { getCurrentFieldValue, getDefaultFieldValue, isFieldValueEqual } from './field.utils';
+import type { FieldDependencyChangeDetail, FieldSchema } from './field.types';
+import {
+    getCurrentFieldValue,
+    getDefaultFieldValue,
+    isFieldValueEqual,
+    type FieldValue,
+} from './field.value';
 
 /**
  * Dispatched by `handleValueChange`/`handleBlur` at the exact point they each decide *this* field

@@ -1,5 +1,5 @@
 import type { Scope } from '@zag-js/core';
-import { getFieldElement } from '../../Field/src/field.utils';
+import { getFieldElement } from '../../Field/src/field.value';
 import * as dom from './form.dom';
 import { getFieldMachinesFor, renameFieldMachineForForm } from './form.registry';
 import type { FormErrors } from './form.types';

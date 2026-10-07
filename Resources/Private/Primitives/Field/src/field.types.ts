@@ -2,8 +2,7 @@ import type { EventObject } from '@zag-js/core';
 import type { PropTypes } from '@zag-js/types';
 import type { FormMachine } from '../../Form/src/form.registry';
 import type { FormValues } from '../../Form/src/form.types';
-
-export type FieldValue = FormDataEntryValue | FormDataEntryValue[] | null;
+import type { FieldValue } from './field.value';
 
 export interface FieldMeta {
     isTouched: boolean;
