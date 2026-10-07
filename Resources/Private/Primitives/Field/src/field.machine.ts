@@ -121,6 +121,11 @@ export const machine = createMachine({
         RESET: {
             actions: ['resetField'],
         },
+        // A primitive inside the field finished hydrating: its state may differ from the server HTML
+        // the baseline was measured on (a defaultChecked checkbox, a Select's selected option).
+        BASELINE: {
+            actions: ['rebaseline'],
+        },
     },
 
     states: {
@@ -315,11 +320,11 @@ export const machine = createMachine({
                 context.set('submitAttempted', false);
                 refs.set('markedDirty', false);
                 // form values are restored after the reset event's default action, so measure later
-                raf(() => {
-                    const value = readValue(params);
-                    refs.set('initialValue', value);
-                    context.set('filled', value.length > 0);
-                });
+                raf(() => rebaseline(params));
+            },
+
+            rebaseline(params) {
+                rebaseline(params);
             },
         },
     },
@@ -467,6 +472,16 @@ function getHostEl({ scope, prop }: Pick<FieldParams, 'scope' | 'prop'>) {
     const controlEl = dom.getControlEl(scope);
     if (!controlEl || typeof controlEl.setCustomValidity !== 'function') return null;
     return trimArraySuffix(controlEl.name) === trimArraySuffix(prop('name')) ? controlEl : null;
+}
+
+/** Makes the current value the baseline for `dirty`, unless the user already changed it. */
+function rebaseline(params: FieldParams) {
+    const { context, refs } = params;
+    if (context.get('dirty') || refs.get('markedDirty')) return;
+
+    const value = readValue(params);
+    refs.set('initialValue', value);
+    context.set('filled', value.length > 0);
 }
 
 function readValue({ refs, prop }: Pick<FieldParams, 'refs' | 'prop'>) {

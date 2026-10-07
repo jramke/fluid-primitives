@@ -217,3 +217,28 @@ describe('field validity', () => {
         expect(field.computed('invalid')).toBe(false);
     });
 });
+
+describe('field baseline', () => {
+    test('BASELINE re-measures the starting value until the user changed the field', async () => {
+        vi.useFakeTimers();
+        const field = mountField('<input type="checkbox" name="email" value="1">');
+
+        // a primitive finishing hydration checks the box after the field already started
+        input().checked = true;
+        field.send({ type: 'BASELINE' });
+        await settle(0);
+        expect(field.context.get('filled')).toBe(true);
+
+        input().checked = false;
+        input().dispatchEvent(new Event('change', { bubbles: true }));
+        await settle();
+        expect(field.context.get('dirty')).toBe(true);
+
+        // once edited, the baseline is what the user started from and stays put
+        input().checked = true;
+        field.send({ type: 'BASELINE' });
+        input().dispatchEvent(new Event('change', { bubbles: true }));
+        await settle();
+        expect(field.context.get('dirty')).toBe(false);
+    });
+});
