@@ -47,7 +47,7 @@ export class Textarea extends FieldAwareComponent<TextareaProps, TextareaApi> {
             const mergedProps = mergeProps(this.api.getTextareaProps(), {
                 'aria-describedby': describeIds || undefined,
             });
-            this.spreadProps(textareaEl, mergedProps);
+            this.spreadTextControlProps(textareaEl, mergedProps);
         }
 
         const labelEl = this.hydrator.query('label');

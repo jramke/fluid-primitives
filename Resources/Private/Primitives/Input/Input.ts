@@ -47,7 +47,7 @@ export class Input extends FieldAwareComponent<InputProps, InputApi> {
             const mergedProps = mergeProps(this.api.getInputProps(), {
                 'aria-describedby': describeIds || undefined,
             });
-            this.spreadProps(inputEl, mergedProps);
+            this.spreadTextControlProps(inputEl, mergedProps);
         }
 
         const labelEl = this.hydrator.query('label');
