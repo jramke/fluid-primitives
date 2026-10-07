@@ -51,6 +51,20 @@ export function suppressValueMissing(validity: ValiditySnapshot): ValiditySnapsh
     return { ...validity, valueMissing: false, valid: true };
 }
 
+/**
+ * The native flags with `valueMissing` replaced. The field's own `required` and its value decide it,
+ * not the control's `required` attribute: a Combobox's visible input holds label text, a group has no
+ * control at all, and a placeholder option is always selected.
+ */
+export function withValueMissing(
+    validity: ValiditySnapshot,
+    valueMissing: boolean
+): ValiditySnapshot {
+    const next = { ...validity, valueMissing };
+    next.valid = VALIDITY_KEYS.every(key => !next[key]);
+    return next;
+}
+
 export function toErrorArray(result: ValidateResult): string[] {
     if (result == null) return [];
     const errors = Array.isArray(result) ? result : [result];

@@ -1,15 +1,19 @@
 import { setup } from '@zag-js/core';
 import { observeChildren, raf, trackFormControl } from '@zag-js/dom-query';
 import { isEqual } from '@zag-js/utils';
+import { trimArraySuffix } from '../../Form/src/form.path';
 import * as dom from './field.dom';
 import type { FieldParams, FieldSchema, ValidateResult, ValiditySnapshot } from './field.types';
 import {
+    VALID_SNAPSHOT,
     getValiditySnapshot,
     resolveValidation,
     shouldCommit,
     suppressValueMissing,
     toErrorArray,
+    withValueMissing,
 } from './field.utils';
+import { getComparableFieldValue } from './field.value';
 
 const { createMachine } = setup<FieldSchema>();
 
@@ -138,14 +142,15 @@ export const machine = createMachine({
                 refs.set('rootEl', dom.queryRootEl(scope));
             },
 
-            trackControlState({ context, refs, scope, send, prop }) {
-                const controlEl = getTrackedControlEl({ scope, prop });
-                if (!controlEl) return;
+            trackControlState({ context, refs, send, prop }) {
+                const rootEl = refs.get('rootEl');
+                if (!rootEl) return;
                 if (refs.get('initialValue') == null) {
-                    refs.set('initialValue', controlEl.value);
-                    context.set('filled', controlEl.value.length > 0);
+                    const value = readValue({ refs, prop });
+                    refs.set('initialValue', value);
+                    context.set('filled', value.length > 0);
                 }
-                return trackFormControl(controlEl, {
+                return trackFormControl(rootEl, {
                     onFieldsetDisabledChange(disabled) {
                         context.set('fieldsetDisabled', disabled);
                     },
@@ -202,10 +207,7 @@ export const machine = createMachine({
                 const validity = context.get('validity');
                 if (!validity || validity.valid || !validity.valueMissing) return;
 
-                const controlEl = getTrackedControlEl(params);
-                if (!controlEl) return;
-
-                const nextValidity = getValiditySnapshot(controlEl);
+                const nextValidity = readValidity(params, event.value);
                 if (!nextValidity.valid) return;
 
                 applyValidation(params, {
@@ -253,10 +255,9 @@ export const machine = createMachine({
                 refs.set('markedDirty', false);
                 // form values are restored after the reset event's default action, so measure later
                 raf(() => {
-                    const controlEl = getTrackedControlEl(params);
-                    if (!controlEl) return;
-                    refs.set('initialValue', controlEl.value);
-                    context.set('filled', controlEl.value.length > 0);
+                    const value = readValue(params);
+                    refs.set('initialValue', value);
+                    context.set('filled', value.length > 0);
                 });
             },
         },
@@ -270,19 +271,18 @@ interface CommitOptions {
 function commitValidation(params: FieldParams, options: CommitOptions = {}) {
     const { prop, context, refs, send } = params;
 
-    const controlEl = getTrackedControlEl(params);
-    if (!controlEl) return;
+    const hostEl = getHostEl(params);
 
     // clear the previous custom error so the native snapshot is untainted
-    controlEl.setCustomValidity('');
+    hostEl?.setCustomValidity('');
 
-    let validity = getValiditySnapshot(controlEl);
+    const value = options.value ?? readValue(params);
+    let validity = readValidity(params, value);
     if (!refs.get('markedDirty') && !context.get('dirty')) {
         validity = suppressValueMissing(validity);
     }
 
-    const value = options.value ?? controlEl.value;
-    const nativeMessage = validity.valid ? '' : controlEl.validationMessage;
+    const nativeMessage = validity.valid ? '' : getNativeMessage(params, hostEl, validity);
 
     const seq = refs.get('seq') + 1;
     refs.set('seq', seq);
@@ -334,7 +334,7 @@ function applyValidation(params: FieldParams, options: ApplyOptions) {
 
     // mirror custom errors so native `:invalid` and submit gating agree
     if (options.customErrors.length > 0) {
-        getTrackedControlEl(params)?.setCustomValidity(options.customErrors.join(' '));
+        getHostEl(params)?.setCustomValidity(options.customErrors.join(' '));
     }
 
     const changed =
@@ -365,18 +365,18 @@ function silentValidate(params: FieldParams, value: string) {
     const validate = prop('validate');
     if (!validate) return;
 
-    const controlEl = getTrackedControlEl(params);
-    if (!controlEl) return;
+    const hostEl = getHostEl(params);
+    if (!hostEl) return;
 
-    controlEl.setCustomValidity('');
-    const validity = getValiditySnapshot(controlEl);
+    hostEl.setCustomValidity('');
+    const validity = readValidity(params, value);
 
     const seq = refs.get('seq') + 1;
     refs.set('seq', seq);
 
     const apply = (result: ValidateResult) => {
         if (refs.get('seq') !== seq) return;
-        controlEl.setCustomValidity(toErrorArray(result).join(' '));
+        hostEl.setCustomValidity(toErrorArray(result).join(' '));
     };
 
     const result = validate({ value, validity });
@@ -394,11 +394,44 @@ function clearValidation(params: FieldParams) {
     context.set('validating', false);
     context.set('errors', []);
     context.set('validity', null);
-    getTrackedControlEl(params)?.setCustomValidity('');
+    getHostEl(params)?.setCustomValidity('');
 }
 
-function getTrackedControlEl(params: Pick<FieldParams, 'scope' | 'prop'>) {
-    return dom.getControlEl(params.scope);
+/**
+ * The native control that hosts constraint validation (`setCustomValidity`, `validity`), when there
+ * is one: the element the control id points at, if it is the one carrying the field's name. Looked
+ * up at call time, and absent for groups, a Slider, or a Combobox's visible input (no name).
+ */
+function getHostEl({ scope, prop }: Pick<FieldParams, 'scope' | 'prop'>) {
+    const controlEl = dom.getControlEl(scope);
+    if (!controlEl || typeof controlEl.setCustomValidity !== 'function') return null;
+    return trimArraySuffix(controlEl.name) === trimArraySuffix(prop('name')) ? controlEl : null;
+}
+
+function readValue({ refs, prop }: Pick<FieldParams, 'refs' | 'prop'>) {
+    return getComparableFieldValue(refs.get('rootEl'), prop('name'), prop('defaultValue'));
+}
+
+/** Native flags of the host, with `valueMissing` decided by the field's `required` and its value. */
+function readValidity(params: FieldParams, value: string): ValiditySnapshot {
+    const { prop } = params;
+    const hostEl = getHostEl(params);
+    const native = hostEl ? getValiditySnapshot(hostEl) : VALID_SNAPSHOT;
+    return withValueMissing(native, !!prop('required') && !prop('readOnly') && value === '');
+}
+
+function getNativeMessage(
+    params: FieldParams,
+    hostEl: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | null,
+    validity: ValiditySnapshot
+) {
+    if (hostEl?.validationMessage) return hostEl.validationMessage;
+    if (!validity.valueMissing) return '';
+
+    // no host to ask (or one that is not `required` itself): borrow the browser's localized message
+    const probe = params.scope.getDoc().createElement('input');
+    probe.required = true;
+    return probe.validationMessage;
 }
 
 function isPromise(value: unknown): value is Promise<ValidateResult> {

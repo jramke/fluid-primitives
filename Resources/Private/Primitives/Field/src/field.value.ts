@@ -1,5 +1,4 @@
 import { trimArraySuffix } from '../../Form/src/form.path';
-import * as dom from './field.dom';
 
 export type FieldValue = FormDataEntryValue | FormDataEntryValue[] | null;
 
@@ -11,16 +10,41 @@ export function isFieldValueEqual(a: FieldValue, b: FieldValue) {
 }
 
 export function getCurrentFieldValue(
-    scope: Parameters<typeof dom.getRootEl>[0],
+    rootEl: ParentNode | null,
     name: string,
     defaultValue: unknown
 ): FieldValue {
-    const rootEl = dom.getRootEl(scope);
     if (!rootEl) {
         return getDefaultFieldValue(defaultValue);
     }
 
     return getFieldValueFromContainer(rootEl, name) ?? getDefaultFieldValue(defaultValue);
+}
+
+/**
+ * The field value as one string, which is what the machine compares and tests for emptiness:
+ * `''` for nothing (`null`, `[]`, or only the `''` entries a placeholder option leaves behind), a
+ * plain string as is - not trimmed, native `valueMissing` treats whitespace as a value - and a
+ * serialization for lists and files.
+ */
+export function toComparableString(value: FieldValue): string {
+    if (value === null) return '';
+    if (typeof value === 'string') return value;
+
+    if (Array.isArray(value)) {
+        const entries = value.filter(entry => entry !== '');
+        return entries.length > 0 ? serializeFieldValue(entries) : '';
+    }
+
+    return serializeFieldValue(value);
+}
+
+export function getComparableFieldValue(
+    rootEl: ParentNode | null,
+    name: string,
+    defaultValue: unknown
+) {
+    return toComparableString(getCurrentFieldValue(rootEl, name, defaultValue));
 }
 
 export function getDefaultFieldValue(defaultValue: unknown): FieldValue {
