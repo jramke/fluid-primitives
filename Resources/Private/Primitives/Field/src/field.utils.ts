@@ -117,21 +117,6 @@ export function composeDescribedBy(options: DescribedByOptions): string | undefi
     return ids.length > 0 ? ids.join(' ') : undefined;
 }
 
-export interface ResolveErrorTextIdOptions {
-    machineId: string;
-    override?: string | undefined;
-    match?: ValidityMatch | boolean | undefined;
-    id?: string | undefined;
-}
-
-/** Default id, or `{id}:error-text:{match}` when `match` is a validity key. */
-export function resolveErrorTextId(options: ResolveErrorTextIdOptions): string {
-    if (options.id) return options.id;
-    if (typeof options.match === 'string')
-        return `${options.machineId}:error-text:${options.match}`;
-    return options.override ?? `${options.machineId}:error-text`;
-}
-
 export interface ErrorMatchOptions {
     validity: ValiditySnapshot | null;
     invalid: boolean;

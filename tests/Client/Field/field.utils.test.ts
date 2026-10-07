@@ -4,7 +4,6 @@ import {
     composeDescribedBy,
     getValiditySnapshot,
     isErrorMatch,
-    resolveErrorTextId,
     resolveValidation,
     shouldCommit,
     suppressValueMissing,
@@ -207,25 +206,6 @@ describe('shouldCommit', () => {
                 eventType: 'CONTROL.BLUR',
             })
         ).toBe(false);
-    });
-});
-
-describe('resolveErrorTextId', () => {
-    test('uses the default id, or a validity-key suffix', () => {
-        expect(resolveErrorTextId({ machineId: 'f1' })).toBe('f1:error-text');
-        expect(resolveErrorTextId({ machineId: 'f1', override: 'custom' })).toBe('custom');
-        expect(resolveErrorTextId({ machineId: 'f1', match: 'valueMissing' })).toBe(
-            'f1:error-text:valueMissing'
-        );
-        expect(resolveErrorTextId({ machineId: 'f1', match: true, override: 'custom' })).toBe(
-            'custom'
-        );
-    });
-
-    test('an explicit id wins', () => {
-        expect(resolveErrorTextId({ machineId: 'f1', match: 'valueMissing', id: 'mine' })).toBe(
-            'mine'
-        );
     });
 });
 
