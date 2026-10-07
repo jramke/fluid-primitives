@@ -13,7 +13,6 @@ export const props = createProps<FieldProps>()([
     'onValidityChange',
     'readOnly',
     'required',
-    'target',
     'touched',
     'validate',
     'validationMode',

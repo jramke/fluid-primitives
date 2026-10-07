@@ -104,12 +104,6 @@ export interface FieldProps extends DirectionProperty, CommonProperties {
      */
     required?: boolean | undefined;
     /**
-     * The item whose control the field tracks, for fields composed of multiple controls.
-     * The tracked control id (and the root label's `htmlFor`) become `{id}:item:{target}`.
-     * `ids.control` overrides this.
-     */
-    target?: string | undefined;
-    /**
      * Custom validation, run against the value and the native validity snapshot.
      * May return a promise; a newer validation run supersedes an in-flight one.
      */
@@ -182,14 +176,6 @@ export type FieldMachine = Machine<FieldSchema>;
 /* -----------------------------------------------------------------------------
  * Component API
  * -----------------------------------------------------------------------------*/
-
-export interface ItemProps {
-    /**
-     * Identifies this control among siblings in a multi-control field.
-     * The id becomes `{id}:item:{item}`. The field tracks the item that matches `target`.
-     */
-    item?: string | undefined;
-}
 
 export interface ErrorTextProps {
     /**
@@ -369,10 +355,6 @@ export interface FieldApi<T extends PropTypes = PropTypes> {
      */
     reset: VoidFunction;
     /**
-     * The control id for a field item (`{id}:item:{item}`).
-     */
-    getItemControlId: (item: string) => string;
-    /**
      * Returns the state of the root.
      */
     getRootState: () => RootState;
@@ -381,15 +363,15 @@ export interface FieldApi<T extends PropTypes = PropTypes> {
      * Returns the state of the label.
      */
     getLabelState: () => LabelState;
-    getLabelProps: (props?: ItemProps) => T['label'];
+    getLabelProps: () => T['label'];
     /**
      * Returns the state of the control (input, textarea, select, or a custom host).
      */
     getControlState: () => ControlState;
-    getControlProps: (props?: ItemProps) => T['element'];
-    getInputProps: (props?: ItemProps) => T['input'];
-    getTextareaProps: (props?: ItemProps) => T['textarea'];
-    getSelectProps: (props?: ItemProps) => T['select'];
+    getControlProps: () => T['element'];
+    getInputProps: () => T['input'];
+    getTextareaProps: () => T['textarea'];
+    getSelectProps: () => T['select'];
     /**
      * Returns the state of the helper text.
      */

@@ -10,7 +10,6 @@ import type {
     FieldSchema,
     FieldState,
     IndicatorProps,
-    ItemProps,
 } from './field.types';
 import { composeDescribedBy, isErrorMatch } from './field.utils';
 
@@ -34,7 +33,7 @@ export function connect<T extends PropTypes>(
 
     const ids = {
         root: dom.getRootId(scope),
-        control: dom.getControlId(scope, prop('target')),
+        control: dom.getControlId(scope),
         label: dom.getLabelId(scope),
         errorText: dom.getErrorTextId(scope),
         helperText: dom.getHelperTextId(scope),
@@ -85,48 +84,31 @@ export function connect<T extends PropTypes>(
         return { ...fieldState, type: props.type, hidden: !shown };
     }
 
-    function getItemControlId(item: string) {
-        return dom.getItemControlId(scope, item);
-    }
-
-    function resolveControlId(item?: string) {
-        return item ? getItemControlId(item) : ids.control;
-    }
-
-    function getControlBaseProps(props: ItemProps = {}) {
+    function getControlBaseProps() {
         const fieldState = getFieldState();
-        const controlId = resolveControlId(props.item);
-        const tracked = controlId === ids.control;
         return {
             ...parts.control.attrs(scope.id),
-            id: controlId,
+            id: ids.control,
             dir: prop('dir'),
             disabled: fieldState.disabled,
             required: fieldState.required,
             'aria-invalid': fieldState.invalid || undefined,
             'aria-describedby': ariaDescribedby,
             ...getDataAttrs(fieldState),
-            ...(tracked
-                ? {
-                      onFocus() {
-                          send({ type: 'CONTROL.FOCUS' });
-                      },
-                      onBlur(event: { currentTarget: EventTarget | null }) {
-                          send({ type: 'CONTROL.BLUR', value: getEventValue(event) });
-                      },
-                      onChange(event: { currentTarget: EventTarget | null }) {
-                          send({ type: 'CONTROL.CHANGE', value: getEventValue(event) });
-                      },
-                      onInvalid(event: {
-                          preventDefault: VoidFunction;
-                          currentTarget: EventTarget | null;
-                      }) {
-                          // suppress the native browser bubble; the field surfaces the error itself
-                          event.preventDefault();
-                          send({ type: 'SUBMIT.INVALID', value: getEventValue(event) });
-                      },
-                  }
-                : {}),
+            onFocus() {
+                send({ type: 'CONTROL.FOCUS' });
+            },
+            onBlur(event: { currentTarget: EventTarget | null }) {
+                send({ type: 'CONTROL.BLUR', value: getEventValue(event) });
+            },
+            onChange(event: { currentTarget: EventTarget | null }) {
+                send({ type: 'CONTROL.CHANGE', value: getEventValue(event) });
+            },
+            onInvalid(event: { preventDefault: VoidFunction; currentTarget: EventTarget | null }) {
+                // suppress the native browser bubble; the field surfaces the error itself
+                event.preventDefault();
+                send({ type: 'SUBMIT.INVALID', value: getEventValue(event) });
+            },
         };
     }
 
@@ -158,54 +140,50 @@ export function connect<T extends PropTypes>(
             send({ type: 'RESET' });
         },
 
-        getItemControlId,
-
         getRootState: getFieldState,
         getRootProps() {
             return normalize.element({
                 ...parts.root.attrs(scope.id),
-                id: ids.root,
                 dir: prop('dir'),
-                role: 'group',
                 ...getDataAttrs(getFieldState()),
             });
         },
 
         getLabelState: getFieldState,
-        getLabelProps(props: ItemProps = {}) {
+        getLabelProps() {
             return normalize.label({
                 ...parts.label.attrs(scope.id),
                 id: ids.label,
                 dir: prop('dir'),
-                htmlFor: resolveControlId(props.item),
+                htmlFor: ids.control,
                 ...getDataAttrs(getFieldState()),
             });
         },
 
         getControlState: getFieldState,
-        getControlProps(props: ItemProps = {}) {
+        getControlProps() {
             return normalize.element({
-                ...getControlBaseProps(props),
+                ...getControlBaseProps(),
             });
         },
 
-        getInputProps(props: ItemProps = {}) {
+        getInputProps() {
             return normalize.input({
-                ...getControlBaseProps(props),
+                ...getControlBaseProps(),
                 readOnly: getFieldState().readOnly,
             });
         },
 
-        getTextareaProps(props: ItemProps = {}) {
+        getTextareaProps() {
             return normalize.textarea({
-                ...getControlBaseProps(props),
+                ...getControlBaseProps(),
                 readOnly: getFieldState().readOnly,
             });
         },
 
-        getSelectProps(props: ItemProps = {}) {
+        getSelectProps() {
             return normalize.select({
-                ...getControlBaseProps(props),
+                ...getControlBaseProps(),
             });
         },
 

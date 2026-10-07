@@ -391,7 +391,7 @@ function clearValidation(params: FieldParams) {
 }
 
 function getTrackedControlEl(params: Pick<FieldParams, 'scope' | 'prop'>) {
-    return dom.getControlEl(params.scope, params.prop('target'));
+    return dom.getControlEl(params.scope);
 }
 
 function isPromise(value: unknown): value is Promise<ValidateResult> {
