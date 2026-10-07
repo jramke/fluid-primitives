@@ -15,6 +15,10 @@ use TYPO3\CMS\Extbase\Reflection\ObjectAccess;
 #[Autoconfigure(public: true)]
 class FieldContext extends AbstractComponentContext
 {
+    // Only what this render outputs follows from it: the machine reads an enclosing fieldset from
+    // the DOM itself, so the hydrated `disabled` prop must stay as written (it may be enabled later).
+    private bool $inDisabledFieldset = false;
+
     public function __construct(
         private readonly ExtbaseFormFieldNamer $extbaseFormFieldNamer,
     ) {}
@@ -22,6 +26,10 @@ class FieldContext extends AbstractComponentContext
     public function beforeRendering(): void
     {
         $parentRenderingContext = $this->getParentRenderingContext();
+
+        $fieldsetContext = ContextService::getFromRenderingContext($parentRenderingContext, 'fieldset');
+        $this->inDisabledFieldset =
+            $fieldsetContext instanceof ComponentContextInterface && Typed::bool($fieldsetContext->get('disabled'));
 
         $variableContainer = $parentRenderingContext->getViewHelperVariableContainer();
         $variableContainer->add(self::class, Typed::string($this->get('rootId')), ['name' => $this->get('name')]);
@@ -92,7 +100,7 @@ class FieldContext extends AbstractComponentContext
     public function getDataAttributes(): array
     {
         return [
-            'disabled' => Typed::bool($this->get('disabled')),
+            'disabled' => $this->inDisabledFieldset || Typed::bool($this->get('disabled')),
             'invalid' => Typed::bool($this->get('invalid')),
             'required' => Typed::bool($this->get('required')),
             'readonly' => Typed::bool($this->get('readOnly')),
@@ -145,7 +153,7 @@ class FieldContext extends AbstractComponentContext
 
         return [
             'name' => Typed::stringOrNull($this->get('name')),
-            'disabled' => Typed::boolOrNull($this->get('disabled')),
+            'disabled' => $this->inDisabledFieldset ? true : Typed::boolOrNull($this->get('disabled')),
             'readOnly' => Typed::boolOrNull($this->get('readOnly')),
             'required' => Typed::boolOrNull($this->get('required')),
             'invalid' => Typed::boolOrNull($this->get('invalid')),

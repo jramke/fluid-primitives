@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Tests\Functional\Components;
 
+use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -57,6 +58,38 @@ final class FieldsetRenderingTest extends FunctionalTestCase
         foreach ([$validTag, $invalidTag] as $tag) {
             $this->assertStringContainsString('aria-live="polite"', $tag);
         }
+    }
+
+    #[Test]
+    public function rendersAFieldInsideADisabledFieldsetDisabledWithoutHydratingItAsDisabled(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:fieldset.root disabled="{true}">
+                <primitives:field.root name="street" rootId="in-disabled">
+                    <primitives:input.root><primitives:input.input /></primitives:input.root>
+                </primitives:field.root>
+            </primitives:fieldset.root>
+            <primitives:fieldset.root>
+                <primitives:field.root name="city" rootId="in-enabled">
+                    <primitives:input.root><primitives:input.input /></primitives:input.root>
+                </primitives:field.root>
+            </primitives:fieldset.root>
+        ');
+
+        $disabledField = $this->extractTag($html, 'data-field-root="in-disabled"');
+        $enabledField = $this->extractTag($html, 'data-field-root="in-enabled"');
+        $this->assertTrue($this->hasAttribute($disabledField, 'data-disabled'));
+        $this->assertFalse($this->hasAttribute($enabledField, 'data-disabled'));
+
+        $this->assertTrue($this->hasAttribute($this->extractTag($html, 'name="street"', 'input'), 'disabled'));
+        $this->assertFalse($this->hasAttribute($this->extractTag($html, 'name="city"', 'input'), 'disabled'));
+
+        // what the machine hydrates with is what was written: it learns about a fieldset from the DOM,
+        // so enabling the fieldset later would otherwise leave this field disabled
+        $this->assertArrayNotHasKey(
+            'disabled',
+            HydrationRegistry::getInstance()->get('primitives', 'field', 'in-disabled')['props'] ?? [],
+        );
     }
 
     private function hasAttribute(string $tag, string $attribute): bool
