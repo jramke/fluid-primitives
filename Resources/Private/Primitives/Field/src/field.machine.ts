@@ -1,5 +1,5 @@
 import { setup } from '@zag-js/core';
-import { observeChildren, raf, trackFormControl } from '@zag-js/dom-query';
+import { observeChildren, trackFormControl } from '@zag-js/dom-query';
 import { isEqual } from '@zag-js/utils';
 import { trimArraySuffix } from '../../Form/src/form.path';
 import { getFormMachineFor } from '../../Form/src/form.registry';
@@ -337,8 +337,9 @@ export const machine = createMachine({
                 context.set('focused', false);
                 context.set('submitAttempted', false);
                 refs.set('markedDirty', false);
-                // form values are restored after the reset event's default action, so measure later
-                raf(() => rebaseline(params));
+                // A form restores the markup's defaults, which the baseline was measured from. Measuring
+                // again would race the primitives: some write their restored value a few frames later.
+                context.set('filled', (refs.get('initialValue') ?? '').length > 0);
             },
 
             rebaseline(params) {

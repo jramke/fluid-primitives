@@ -244,6 +244,32 @@ describe('field baseline', () => {
     });
 });
 
+describe('field reset', () => {
+    test('a form reset is pristine again against the starting value, however late the control restores it', async () => {
+        vi.useFakeTimers();
+        const field = mountField('<input name="email" value="start">');
+
+        type(input(), 'edited');
+        input().setAttribute('value', 'edited');
+        await settle();
+        expect(field.context.get('dirty')).toBe(true);
+
+        // like NumberInput: the native reset restores the stale attribute, then the primitive
+        // announces its reset and only a few frames later writes the real value back
+        document.querySelector('form')!.addEventListener('reset', () => {
+            setTimeout(() => input().dispatchEvent(new Event('input', { bubbles: true })), 20);
+            setTimeout(() => (input().value = 'start'), 40);
+        });
+        document.querySelector('form')!.reset();
+        await settle();
+
+        expect(input().value).toBe('start');
+        expect(field.context.get('dirty')).toBe(false);
+        expect(field.context.get('touched')).toBe(false);
+        expect(field.context.get('filled')).toBe(true);
+    });
+});
+
 describe('field value announcements', () => {
     test('the root announces a settled value change once, not for events that change nothing', async () => {
         vi.useFakeTimers();
