@@ -1,4 +1,5 @@
 import { MachineStatus, type Params, type Scope } from '@zag-js/core';
+import { isInsideField } from '../../Field/src/field.dom';
 import { getFieldElement } from '../../Field/src/field.value';
 import * as dom from './form.dom';
 import { trimArraySuffix } from './form.path';
@@ -92,10 +93,37 @@ export function hasInvalidFieldMachines(scope: Scope) {
     );
 }
 
-export function getFirstInvalidFieldMachine(scope: Scope) {
+export function getFirstInvalidField(scope: Scope) {
     return Array.from(getRegisteredFieldMachines(scope)).find(([, fieldMachine]) =>
         fieldMachine.computed('invalid')
-    )?.[0];
+    );
+}
+
+const FOCUSABLE = [
+    'button:not([disabled])',
+    'input:not([disabled]):not([type="hidden"]):not([aria-hidden="true"])',
+    'select:not([disabled]):not([aria-hidden="true"])',
+    'textarea:not([disabled])',
+    '[tabindex]:not([tabindex="-1"])',
+].join(', ');
+
+/**
+ * Moves the focus into an invalid field: to the control carrying its name (the hidden select of a
+ * Select and the hidden input of a Combobox hand it on to their visible control) and, when that
+ * cannot take focus (a Slider's input is `display: none`), to the first thing inside the field that can.
+ */
+export function focusField(form: HTMLFormElement, name: string, fieldMachine: FieldMachine) {
+    const rootEl = fieldMachine.refs.get('rootEl');
+    const target = getFieldElement(form, name);
+
+    target?.focus();
+    if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
+        target.select();
+    }
+
+    if (rootEl && !isInsideField(rootEl, rootEl.ownerDocument.activeElement)) {
+        rootEl.querySelector<HTMLElement>(FOCUSABLE)?.focus();
+    }
 }
 
 /** Errors for names no registered field owns (a hidden input, say) still make the form invalid. */

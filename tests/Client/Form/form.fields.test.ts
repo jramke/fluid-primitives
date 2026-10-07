@@ -1,6 +1,9 @@
 import { createScope } from '@zag-js/core';
 import { beforeEach, describe, expect, test } from 'vitest';
-import { getFieldMessages } from '../../../Resources/Private/Primitives/Form/src/form.fields';
+import {
+    focusField,
+    getFieldMessages,
+} from '../../../Resources/Private/Primitives/Form/src/form.fields';
 import type {
     FormErrors,
     FormValidation,
@@ -64,5 +67,44 @@ describe('getFieldMessages', () => {
             'required',
         ]);
         expect(getFieldMessages(form(), 'email')).toEqual([]);
+    });
+});
+
+describe('focusField', () => {
+    function mountField(html: string) {
+        document.body.innerHTML = `<form><div data-field-root="f1">${html}</div></form>`;
+        const rootEl = document.querySelector<HTMLElement>('[data-field-root]')!;
+        const fieldMachine = { refs: { get: () => rootEl } } as unknown as Parameters<
+            typeof focusField
+        >[2];
+        return { form: document.querySelector('form')!, fieldMachine };
+    }
+
+    test('focuses the control with the name, or wherever that control hands the focus on to', () => {
+        const { form, fieldMachine } = mountField(
+            '<input name="email" value="a@b.c"><input name="fruit" aria-hidden="true" tabindex="-1"><input id="visible">'
+        );
+
+        focusField(form, 'email', fieldMachine);
+        const email = document.querySelector<HTMLInputElement>('[name="email"]')!;
+        expect(document.activeElement).toBe(email);
+        expect([email.selectionStart, email.selectionEnd]).toEqual([0, 5]);
+
+        // like the hidden input of a Combobox: it redirects to the visible control
+        document
+            .querySelector('[name="fruit"]')!
+            .addEventListener('focus', () => document.getElementById('visible')!.focus());
+        focusField(form, 'fruit', fieldMachine);
+        expect(document.activeElement).toBe(document.getElementById('visible'));
+    });
+
+    test('falls back to the first thing in the field that takes focus when the control cannot', () => {
+        const { form, fieldMachine } = mountField(
+            '<input type="hidden" name="volume"><div aria-hidden="true"></div><div id="thumb" tabindex="0"></div>'
+        );
+
+        focusField(form, 'volume', fieldMachine);
+
+        expect(document.activeElement).toBe(document.getElementById('thumb'));
     });
 });

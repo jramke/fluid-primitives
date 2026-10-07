@@ -2,8 +2,8 @@ import { createMachine } from '@zag-js/core';
 import { nextTick } from '@zag-js/dom-query';
 import * as dom from './form.dom';
 import {
-    getFieldElement,
-    getFirstInvalidFieldMachine,
+    focusField,
+    getFirstInvalidField,
     getFormData,
     hasInvalidFieldMachines,
     hasUnownedErrors,
@@ -244,20 +244,11 @@ export const machine = createMachine<FormSchema>({
 
             focusFirstInvalid({ scope }) {
                 nextTick(() => {
-                    const firstInvalidField = getFirstInvalidFieldMachine(scope);
-                    if (!firstInvalidField) return;
-
+                    const firstInvalidField = getFirstInvalidField(scope);
                     const form = dom.getFormEl(scope);
-                    if (!form) return;
+                    if (!firstInvalidField || !form) return;
 
-                    const invalidEl = getFieldElement(form, firstInvalidField);
-                    invalidEl?.focus();
-                    if (
-                        invalidEl instanceof HTMLInputElement ||
-                        invalidEl instanceof HTMLTextAreaElement
-                    ) {
-                        invalidEl.select();
-                    }
+                    focusField(form, ...firstInvalidField);
                 });
             },
 
