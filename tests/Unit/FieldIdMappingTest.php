@@ -18,9 +18,9 @@ final class FieldIdMappingTest extends TestCase
     }
 
     #[Test]
-    public function shouldSkipFieldIdsInheritanceWhenNestedInReturnsExclusionsForCheckbox(): void
+    public function getAncestorsProvidingFieldStateNamesTheGroupForCheckboxOnly(): void
     {
-        $this->assertSame(['checkbox-group'], FieldIdMapping::shouldSkipFieldIdsInheritanceWhenNestedIn('checkbox'));
-        $this->assertSame([], FieldIdMapping::shouldSkipFieldIdsInheritanceWhenNestedIn('switch'));
+        $this->assertSame(['checkbox-group'], FieldIdMapping::getAncestorsProvidingFieldState('checkbox'));
+        $this->assertSame([], FieldIdMapping::getAncestorsProvidingFieldState('switch'));
     }
 }

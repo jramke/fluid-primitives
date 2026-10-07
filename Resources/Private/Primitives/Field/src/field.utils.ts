@@ -1,147 +1,163 @@
-import { trimArraySuffix } from '../../Form/src/form.path';
-import * as dom from './field.dom';
-import type { FieldValue } from './field.types';
+import type {
+    ValidateResult,
+    ValidationMode,
+    ValidityMatch,
+    ValiditySnapshot,
+} from './field.types';
 
-type AnyFormControlElement =
-    HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | HTMLButtonElement;
+const VALIDITY_KEYS = [
+    'badInput',
+    'customError',
+    'patternMismatch',
+    'rangeOverflow',
+    'rangeUnderflow',
+    'stepMismatch',
+    'tooLong',
+    'tooShort',
+    'typeMismatch',
+    'valueMissing',
+] as const satisfies readonly ValidityMatch[];
 
-export function isFieldValueEqual(a: FieldValue, b: FieldValue) {
-    return serializeFieldValue(a) === serializeFieldValue(b);
+export const VALID_SNAPSHOT: ValiditySnapshot = Object.freeze({
+    badInput: false,
+    customError: false,
+    patternMismatch: false,
+    rangeOverflow: false,
+    rangeUnderflow: false,
+    stepMismatch: false,
+    tooLong: false,
+    tooShort: false,
+    typeMismatch: false,
+    valueMissing: false,
+    valid: true,
+});
+
+/** Copy the live `ValidityState` — its getters are recomputed on every read. */
+export function getValiditySnapshot(el: { validity: ValidityState }): ValiditySnapshot {
+    const snapshot = {} as ValiditySnapshot;
+    for (const key of VALIDITY_KEYS) snapshot[key] = el.validity[key];
+    snapshot.valid = el.validity.valid;
+    return snapshot;
 }
 
-export function getCurrentFieldValue(
-    scope: Parameters<typeof dom.getRootEl>[0],
-    name: string,
-    defaultValue: unknown
-): FieldValue {
-    const rootEl = dom.getRootEl(scope);
-    if (!rootEl) {
-        return getDefaultFieldValue(defaultValue);
-    }
-
-    return getFieldValueFromContainer(rootEl, name) ?? getDefaultFieldValue(defaultValue);
+/**
+ * A pristine empty required field is not an error yet. When `valueMissing` is the
+ * only failure, report the field as valid until the user interacts or a submit forces it.
+ */
+export function suppressValueMissing(validity: ValiditySnapshot): ValiditySnapshot {
+    if (!validity.valueMissing) return validity;
+    const onlyValueMissing = VALIDITY_KEYS.every(key => key === 'valueMissing' || !validity[key]);
+    if (!onlyValueMissing) return validity;
+    return { ...validity, valueMissing: false, valid: true };
 }
 
-export function getDefaultFieldValue(defaultValue: unknown): FieldValue {
-    if (defaultValue === null || defaultValue === undefined || defaultValue === false) {
-        return null;
-    }
-
-    if (defaultValue instanceof File) {
-        return defaultValue;
-    }
-
-    if (Array.isArray(defaultValue)) {
-        return defaultValue.filter(
-            (value): value is string | File => value instanceof File || typeof value === 'string'
-        );
-    }
-
-    if (typeof defaultValue === 'string') {
-        return defaultValue;
-    }
-
-    return null;
+/**
+ * The native flags with `valueMissing` replaced. The field's own `required` and its value decide it,
+ * not the control's `required` attribute: a Combobox's visible input holds label text, a group has no
+ * control at all, and a placeholder option is always selected.
+ */
+export function withValueMissing(
+    validity: ValiditySnapshot,
+    valueMissing: boolean
+): ValiditySnapshot {
+    const next = { ...validity, valueMissing };
+    next.valid = VALIDITY_KEYS.every(key => !next[key]);
+    return next;
 }
 
-export function getFieldValueFromContainer(container: ParentNode, fieldName: string) {
-    const normalizedFieldName = trimArraySuffix(fieldName);
-    const selector = [
-        `input[name="${CSS.escape(normalizedFieldName)}"]`,
-        `input[name="${CSS.escape(normalizedFieldName)}[]"]`,
-        `select[name="${CSS.escape(normalizedFieldName)}"]`,
-        `select[name="${CSS.escape(normalizedFieldName)}[]"]`,
-        `textarea[name="${CSS.escape(normalizedFieldName)}"]`,
-        `textarea[name="${CSS.escape(normalizedFieldName)}[]"]`,
-    ].join(', ');
-    const elements = Array.from(container.querySelectorAll(selector)) as Array<
-        HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >;
-
-    if (elements.length === 0) {
-        return null;
-    }
-
-    if (elements.every(el => el instanceof HTMLInputElement && el.type === 'checkbox')) {
-        const checkboxes = elements as HTMLInputElement[];
-        const checkedValues = checkboxes
-            .filter(input => input.checked)
-            .map(input => input.value || 'on');
-        const isArrayValue =
-            fieldName.endsWith('[]') ||
-            elements.some(el => el.name.endsWith('[]')) ||
-            checkboxes.length > 1;
-
-        if (isArrayValue) {
-            return checkedValues;
-        }
-
-        return checkedValues[0] ?? null;
-    }
-
-    if (elements.every(el => el instanceof HTMLInputElement && el.type === 'radio')) {
-        const checkedInput = (elements as HTMLInputElement[]).find(input => input.checked);
-        return checkedInput?.value ?? null;
-    }
-
-    if (elements.length === 1) {
-        const [element] = elements;
-
-        if (element instanceof HTMLInputElement && element.type === 'file') {
-            const files = element.files ? Array.from(element.files) : [];
-            return element.multiple ? files : (files[0] ?? null);
-        }
-
-        if (element instanceof HTMLSelectElement && element.multiple) {
-            return Array.from(element.selectedOptions).map(option => option.value);
-        }
-
-        return element.value ?? null;
-    }
-
-    return elements
-        .map(element => {
-            if (element instanceof HTMLInputElement && element.type === 'file') {
-                return element.files?.[0];
-            }
-
-            return element.value;
-        })
-        .filter((value): value is FormDataEntryValue => value !== undefined);
+export function toErrorArray(result: ValidateResult): string[] {
+    if (result == null) return [];
+    const errors = Array.isArray(result) ? result : [result];
+    return errors.filter(error => typeof error === 'string' && error.length > 0);
 }
 
-export function getFieldElement(form: HTMLFormElement, fieldName: string) {
-    return form.querySelector(
-        [
-            `input[name="${CSS.escape(fieldName)}"]`,
-            `input[name="${CSS.escape(fieldName)}[]"]`,
-            `select[name="${CSS.escape(fieldName)}"]`,
-            `select[name="${CSS.escape(fieldName)}[]"]`,
-            `textarea[name="${CSS.escape(fieldName)}"]`,
-            `textarea[name="${CSS.escape(fieldName)}[]"]`,
-        ].join(', ')
-    ) as AnyFormControlElement | null;
+export interface ResolveErrorsOptions {
+    customErrors: string[];
+    validity: ValiditySnapshot;
+    nativeMessage: string;
 }
 
-export function serializeFieldValue(value: FormDataEntryValue | FormDataEntryValue[] | null) {
-    return JSON.stringify(toSerializableFieldValue(value));
+export interface ResolvedValidation {
+    errors: string[];
+    validity: ValiditySnapshot;
 }
 
-function toSerializableFieldValue(
-    value: FormDataEntryValue | FormDataEntryValue[] | null
-): unknown {
-    if (Array.isArray(value)) {
-        return value.map(toSerializableFieldValue);
-    }
-
-    if (value instanceof File) {
+/**
+ * Priority: custom `validate` errors outrank native constraint errors.
+ * (The controlled `invalid` prop outranks both, at the computed level.)
+ */
+export function resolveValidation(options: ResolveErrorsOptions): ResolvedValidation {
+    const { customErrors, validity, nativeMessage } = options;
+    if (customErrors.length > 0) {
         return {
-            name: value.name,
-            size: value.size,
-            type: value.type,
-            lastModified: value.lastModified,
+            errors: customErrors,
+            validity: { ...validity, customError: true, valid: false },
         };
     }
+    if (!validity.valid) {
+        return { errors: nativeMessage ? [nativeMessage] : [], validity };
+    }
+    return { errors: [], validity };
+}
 
-    return value;
+export interface DescribedByOptions {
+    helperTextId: string;
+    hasHelperText: boolean;
+    errorTextIds: string[];
+}
+
+/**
+ * Description first, then visible error ids in DOM order.
+ * Hidden error texts must not be referenced — screen readers still announce them.
+ */
+export function composeDescribedBy(options: DescribedByOptions): string | undefined {
+    const ids: string[] = [];
+    if (options.hasHelperText) ids.push(options.helperTextId);
+    ids.push(...options.errorTextIds);
+    return ids.length > 0 ? ids.join(' ') : undefined;
+}
+
+export interface ErrorMatchOptions {
+    validity: ValiditySnapshot | null;
+    invalid: boolean;
+    disabled: boolean;
+}
+
+export interface ShouldCommitOptions {
+    mode: ValidationMode;
+    submitAttempted: boolean;
+    eventType: string;
+    /** The value was changed at least once; sticky, reverting it does not undo it. */
+    edited: boolean;
+    /** The field currently shows committed errors. */
+    showingErrors: boolean;
+}
+
+/**
+ * Whether this event should commit validation (make it visible).
+ * `VALIDATE` / `SUBMIT.INVALID` always commit and do not go through this.
+ *
+ * Two rules go beyond the modes: an error that is showing revalidates on every change in every
+ * mode, so it clears the moment it is fixed; and a blur only commits once the value was edited or a
+ * submit was attempted, so tabbing through a pristine field, or a popup taking focus from its
+ * trigger, shows nothing.
+ */
+export function shouldCommit(options: ShouldCommitOptions): boolean {
+    const { mode, submitAttempted, eventType, edited, showingErrors } = options;
+    if (eventType === 'CONTROL.BLUR') return mode === 'onBlur' && (edited || submitAttempted);
+    if (eventType === 'CONTROL.CHANGE')
+        return mode === 'onChange' || (mode === 'onSubmit' && submitAttempted) || showingErrors;
+    return false;
+}
+
+/** Whether the error text should show for the given `match`. */
+export function isErrorMatch(
+    match: ValidityMatch | boolean | undefined,
+    options: ErrorMatchOptions
+): boolean {
+    const { validity, invalid, disabled } = options;
+    if (match === true) return true;
+    if (match === false || disabled) return false;
+    if (typeof match === 'string') return validity?.[match] === true;
+    return invalid;
 }

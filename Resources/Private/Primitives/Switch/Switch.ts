@@ -1,18 +1,18 @@
 import * as zagSwitch from '@zag-js/switch';
 import { FieldAwareComponent, Machine, mergeProps, normalizeProps } from '../../Client';
-import type { FieldMachine } from '../Field/src/field.registry';
+import type { FieldClientApi } from '../Field/src/field.handle';
 
 export class Switch extends FieldAwareComponent<zagSwitch.Props, zagSwitch.Api> {
     static componentName = 'switch';
 
-    propsWithField(props: zagSwitch.Props, fieldMachine: FieldMachine): zagSwitch.Props {
+    propsWithField(props: zagSwitch.Props, field: FieldClientApi): zagSwitch.Props {
         return {
             ...props,
-            disabled: props.disabled ?? fieldMachine.context.get('disabled'),
-            readOnly: props.readOnly ?? fieldMachine.context.get('readOnly'),
-            required: props.required ?? fieldMachine.context.get('required'),
-            invalid: props.invalid ?? fieldMachine.context.get('invalid'),
-            name: props.name ?? fieldMachine.prop('name'),
+            disabled: props.disabled ?? field.disabled,
+            readOnly: props.readOnly ?? field.readOnly,
+            required: props.required ?? field.required,
+            invalid: props.invalid ?? field.invalid,
+            name: props.name ?? field.name,
         };
     }
 
@@ -44,7 +44,7 @@ export class Switch extends FieldAwareComponent<zagSwitch.Props, zagSwitch.Api> 
         const hiddenInputEl = this.hydrator.query('hiddenInput');
         if (hiddenInputEl) {
             const mergedProps = mergeProps(this.api.getHiddenInputProps(), {
-                'aria-describedby': this.fieldMachine?.context.get('describeIds') || undefined,
+                'aria-describedby': this.field?.ariaDescribedby,
             });
             this.spreadProps(hiddenInputEl, mergedProps);
         }

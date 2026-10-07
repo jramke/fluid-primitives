@@ -344,19 +344,19 @@ final class ComboboxRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
-    public function rendersNoHiddenInputWhenNothingIsSelected(): void
+    public function rendersOneEmptyHiddenInputWhenNothingIsSelected(): void
     {
-        // Regression test: no `defaultValue` at all must not crash (ComboboxContext::getDefaultValue()
-        // returning null) and must render zero hidden inputs - unlike a native `<select>`, there's no
-        // "first option gets auto-selected" quirk to work around here.
+        // No `defaultValue` at all must not crash (ComboboxContext::getDefaultValue() returning null).
+        // The empty input keeps the name submitted, and gives a field's focus something to land on.
         $html = $this->renderTemplate('
-            <primitives:combobox.root>
+            <primitives:combobox.root name="country">
                 <primitives:combobox.hiddenInput />
             </primitives:combobox.root>
         ');
 
         $this->assertStringContainsString('data-combobox-root="', $html);
-        $this->assertStringNotContainsString('data-combobox-hidden-input="', $html);
+        $this->assertSame(1, substr_count($html, 'data-combobox-hidden-input="'));
+        $this->assertMatchesRegularExpression('/<input[^>]*name="country"[^>]*value=""/', $html);
     }
 
     #[Test]

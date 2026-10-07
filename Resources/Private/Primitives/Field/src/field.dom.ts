@@ -1,37 +1,60 @@
 import type { Scope } from '@zag-js/core';
 import { parts } from './field.anatomy';
+import type { ValidityMatch } from './field.types';
 
-// Only the parts other elements point at (`for`, `aria-describedby`, a child's `aria-labelledby`) have ids.
-export const getLabelId = (scope: Scope) => scope.ids?.label ?? `field:${scope.id}:label`;
-export const getControlId = (scope: Scope) => scope.ids?.control ?? `field:${scope.id}:control`;
-export const getErrorId = (scope: Scope) => scope.ids?.error ?? `field:${scope.id}:error`;
-export const getDescriptionId = (scope: Scope) =>
-    scope.ids?.description ?? `field:${scope.id}:description`;
-export const getRootEl = (scope: Scope) => scope.query(scope.selector(parts.root));
-export const getDescriptionEl = (scope: Scope) => scope.query(scope.selector(parts.description));
+/** Dispatched on the field root once its settled value differs from the last one it announced. */
+export const FIELD_VALUE_CHANGE_EVENT = 'fluid-primitives:field:valuechange';
 
-export const getClosestFieldRoot = (target: Element | null) => {
-    return target?.closest('[data-field-root]') ?? null;
+export type FieldControlElement = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
+
+export const getRootId = (ctx: Scope) => ctx.ids?.root ?? ctx.id;
+export const getControlId = (ctx: Scope) => ctx.ids?.control ?? `field:${ctx.id}:control`;
+export const getLabelId = (ctx: Scope) => ctx.ids?.label ?? `field:${ctx.id}:label`;
+export const getErrorTextId = (ctx: Scope, match?: ValidityMatch | boolean, id?: string) => {
+    if (id) return id;
+    if (typeof match === 'string') return `field:${ctx.id}:error-text:${match}`;
+    return ctx.ids?.errorText ?? `field:${ctx.id}:error-text`;
 };
+export const getHelperTextId = (ctx: Scope) => ctx.ids?.helperText ?? `field:${ctx.id}:helper-text`;
 
-export const getClosestFieldName = (target: Element | null): string | undefined => {
-    if (!target) return;
+// Looked up once when the machine starts and kept: a FieldArray row rename re-stamps the root
+// marker's value but the scope id is fixed at construction, so a later `scope.selector()` finds nothing.
+export const queryRootEl = (ctx: Scope) => ctx.query(ctx.selector(parts.root));
+export const getControlEl = (ctx: Scope) => ctx.getById<FieldControlElement>(getControlId(ctx));
 
-    if ('name' in target && typeof target.name === 'string' && target.name) {
-        return target.name;
+export const hasHelperText = (rootEl: HTMLElement) =>
+    rootEl.querySelector(`[${parts.helperText.attr}]`) !== null;
+
+export const getVisibleErrorTextIds = (rootEl: HTMLElement) =>
+    Array.from(rootEl.querySelectorAll<HTMLElement>(`[${parts.errorText.attr}]`))
+        .filter(el => !el.hidden && el.id)
+        .map(el => el.id);
+
+const componentRootAttribute = /^(data-.+-)root$/;
+
+/**
+ * Whether `target` belongs to the field: inside its root, or a portaled part (a popup, say) of a
+ * component rendered inside it. Those parts sit outside the root but carry
+ * `data-<component>-<part>="<id of that component's root>"`, like the root itself.
+ */
+export function isInsideField(rootEl: HTMLElement, target: EventTarget | null) {
+    if (!(target instanceof Element)) return false;
+    if (rootEl.contains(target)) return true;
+
+    const prefixById = new Map<string, string>();
+    for (const el of rootEl.querySelectorAll('*')) {
+        for (const { name, value } of Array.from(el.attributes)) {
+            const match = componentRootAttribute.exec(name);
+            if (match && value) prefixById.set(value, match[1]);
+        }
     }
+    if (prefixById.size === 0) return false;
 
-    return getClosestFieldRoot(target)?.getAttribute('data-name') || undefined;
-};
-
-export const isFocusMovingWithinSameField = (
-    target: Element | null,
-    relatedTarget: EventTarget | null
-) => {
-    if (!(relatedTarget instanceof Element)) return false;
-
-    const currentField = getClosestFieldRoot(target);
-    const nextField = getClosestFieldRoot(relatedTarget);
-
-    return !!currentField && currentField === nextField;
-};
+    for (let el: Element | null = target; el; el = el.parentElement) {
+        for (const { name, value } of Array.from(el.attributes)) {
+            const prefix = prefixById.get(value);
+            if (prefix && name.startsWith(prefix)) return true;
+        }
+    }
+    return false;
+}

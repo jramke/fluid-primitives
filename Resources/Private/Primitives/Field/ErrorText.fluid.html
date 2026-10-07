@@ -1,0 +1,13 @@
+<ui:prop name="match" type="Jramke\FluidPrimitives\Enum\ValidityMatch" optional="{true}" description="Narrows the error text to one failed native constraint, e.g. `valueMissing` or `typeMismatch`. Without it the text shows whenever the field is invalid and displays the error messages; with it the slotted text is shown as is." />
+
+<f:variable name="refData">{context.dataAttributes}</f:variable>
+<f:variable name="isHidden" value="{context -> ui:call(method: 'isErrorTextHidden', arguments: {0: match})}" />
+
+<div
+    {f:if(condition: isHidden, then: 'hidden' )}
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'errorText' , value: match, data: refData )}
+    {ui:attributes()}
+    {ui:asChild()}>
+    <f:slot />
+</div>

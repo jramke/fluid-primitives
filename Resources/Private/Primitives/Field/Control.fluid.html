@@ -1,9 +1,14 @@
 <ui:error when="!{asChild}" message="The 'asChild' prop is required for 'Field.Control' to function properly." />
 
+<f:variable name="refData">{context.dataAttributes}</f:variable>
+
 <div
     {f:if(condition: class, then: 'class="{class}"' )}
     {f:if(condition: context.defaultValue, then: 'value="{context.defaultValue}"' )}
-    {ui:ref(name: 'control' )}
+    {f:if(condition: refData.disabled, then: 'disabled' )}
+    {f:if(condition: refData.required, then: 'required' )}
+    {f:if(condition: refData.invalid, then: 'aria-invalid="true"' )}
+    {ui:ref(name: 'control' , data: refData )}
     name="{context.name}"
     {ui:attributes()}
     {ui:asChild()}>

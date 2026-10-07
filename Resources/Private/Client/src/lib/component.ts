@@ -1,5 +1,12 @@
 import type { Attrs } from '@zag-js/vanilla';
-import { ComponentHydrator, getComponentInstance, Machine, spreadProps, toKebabCase } from '.';
+import {
+    ComponentHydrator,
+    getComponentInstance,
+    Machine,
+    spreadProps,
+    spreadTextControlProps,
+    toKebabCase,
+} from '.';
 import type { ComponentInterface } from '../types';
 
 export abstract class Component<Props, Api> implements ComponentInterface<Api> {
@@ -154,6 +161,11 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
 
     spreadProps(node: HTMLElement, attrs: Attrs) {
         spreadProps(node, attrs, this.machine.scope.id);
+    }
+
+    /** {@see spreadTextControlProps}: for a text control that mirrors what the user typed. */
+    spreadTextControlProps(node: HTMLInputElement | HTMLTextAreaElement, attrs: Attrs) {
+        spreadTextControlProps(node, attrs, this.machine.scope.id);
     }
 
     /**

@@ -11,7 +11,7 @@ import {
     type ClientPropConverterMap,
     type ConverterMachineProps,
 } from '../../Client';
-import type { FieldMachine } from '../Field/src/field.registry';
+import type { FieldClientApi } from '../Field/src/field.handle';
 
 // `accept` is declared type="mixed" (it's a MIME type, a list of them, or an per-extension accept
 // map, and PHP has no closed type for that union) so it resolves to `unknown` on the wire - this
@@ -127,15 +127,15 @@ export class FileUpload extends FieldAwareComponent<FileUploadPrimitiveProps, fi
 
     propsWithField(
         props: FileUploadPrimitiveProps,
-        fieldMachine: FieldMachine
+        field: FieldClientApi
     ): FileUploadPrimitiveProps {
         return {
             ...props,
-            disabled: props.disabled ?? fieldMachine.context.get('disabled'),
-            readOnly: props.readOnly ?? fieldMachine.context.get('readOnly'),
-            required: props.required ?? fieldMachine.context.get('required'),
-            invalid: props.invalid ?? fieldMachine.context.get('invalid'),
-            name: props.name ?? fieldMachine.prop('name'),
+            disabled: props.disabled ?? field.disabled,
+            readOnly: props.readOnly ?? field.readOnly,
+            required: props.required ?? field.required,
+            invalid: props.invalid ?? field.invalid,
+            name: props.name ?? field.name,
         };
     }
 
@@ -163,19 +163,22 @@ export class FileUpload extends FieldAwareComponent<FileUploadPrimitiveProps, fi
         const labelEl = this.hydrator.query('label');
         if (labelEl) this.spreadProps(labelEl, this.api.getLabelProps());
 
+        // The dropzone and the trigger receive focus, the hidden input is aria-hidden: the field's
+        // helper and error texts have to be described from them to be announced at all.
+        const fieldDescribedBy = { 'aria-describedby': this.field?.ariaDescribedby };
+
         const dropzoneEl = this.hydrator.query('dropzone');
-        if (dropzoneEl) this.spreadProps(dropzoneEl, this.api.getDropzoneProps());
+        if (dropzoneEl) {
+            this.spreadProps(dropzoneEl, mergeProps(this.api.getDropzoneProps(), fieldDescribedBy));
+        }
 
         const triggerEl = this.hydrator.query('trigger');
-        if (triggerEl) this.spreadProps(triggerEl, this.api.getTriggerProps());
+        if (triggerEl) {
+            this.spreadProps(triggerEl, mergeProps(this.api.getTriggerProps(), fieldDescribedBy));
+        }
 
         const hiddenInputEl = this.hydrator.query<HTMLInputElement>('hiddenInput');
-        if (hiddenInputEl) {
-            const mergedProps = mergeProps(this.api.getHiddenInputProps(), {
-                'aria-describedby': this.fieldMachine?.context.get('describeIds') || undefined,
-            });
-            this.spreadProps(hiddenInputEl, mergedProps);
-        }
+        if (hiddenInputEl) this.spreadProps(hiddenInputEl, this.api.getHiddenInputProps());
 
         const clearTriggerEl = this.hydrator.query('clearTrigger');
         if (clearTriggerEl) this.spreadProps(clearTriggerEl, this.api.getClearTriggerProps());

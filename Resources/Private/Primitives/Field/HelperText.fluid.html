@@ -1,7 +1,8 @@
+<f:variable name="refData">{context.dataAttributes}</f:variable>
+
 <div
-    {f:if(condition: '!{context.invalid}', then: 'hidden' )}
     {f:if(condition: class, then: 'class="{class}"' )}
-    {ui:ref(name: 'error' )}
+    {ui:ref(name: 'helperText' , data: refData )}
     {ui:attributes()}
     {ui:asChild()}>
     <f:slot />

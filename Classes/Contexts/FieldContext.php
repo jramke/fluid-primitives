@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Contexts;
 
+use Jramke\FluidPrimitives\Enum\FieldIndicatorType;
+use Jramke\FluidPrimitives\Enum\ValidityMatch;
 use Jramke\FluidPrimitives\Service\ContextService;
 use Jramke\FluidPrimitives\Utility\ExtbaseFormFieldNamer;
 use Jramke\FluidPrimitives\Utility\Typed;
@@ -13,6 +15,10 @@ use TYPO3\CMS\Extbase\Reflection\ObjectAccess;
 #[Autoconfigure(public: true)]
 class FieldContext extends AbstractComponentContext
 {
+    // Only what this render outputs follows from it: the machine reads an enclosing fieldset from
+    // the DOM itself, so the hydrated `disabled` prop must stay as written (it may be enabled later).
+    private bool $inDisabledFieldset = false;
+
     public function __construct(
         private readonly ExtbaseFormFieldNamer $extbaseFormFieldNamer,
     ) {}
@@ -20,6 +26,10 @@ class FieldContext extends AbstractComponentContext
     public function beforeRendering(): void
     {
         $parentRenderingContext = $this->getParentRenderingContext();
+
+        $fieldsetContext = ContextService::getFromRenderingContext($parentRenderingContext, 'fieldset');
+        $this->inDisabledFieldset =
+            $fieldsetContext instanceof ComponentContextInterface && Typed::bool($fieldsetContext->get('disabled'));
 
         $variableContainer = $parentRenderingContext->getViewHelperVariableContainer();
         $variableContainer->add(self::class, Typed::string($this->get('rootId')), ['name' => $this->get('name')]);
@@ -82,6 +92,52 @@ class FieldContext extends AbstractComponentContext
     }
 
     /**
+     * The state every part renders as data attributes on the server, so it does not flash unstyled
+     * until the client machine sets the same flags (it sets them on every part).
+     *
+     * @return array{disabled: bool, invalid: bool, required: bool, readonly: bool}
+     */
+    public function getDataAttributes(): array
+    {
+        return [
+            'disabled' => $this->inDisabledFieldset || Typed::bool($this->get('disabled')),
+            'invalid' => Typed::bool($this->get('invalid')),
+            'required' => Typed::bool($this->get('required')),
+            'readonly' => Typed::bool($this->get('readOnly')),
+        ];
+    }
+
+    /**
+     * @return array{disabled: bool, invalid: bool, required: bool, readonly: bool, type: string}
+     */
+    public function getIndicatorDataAttributes(FieldIndicatorType $type): array
+    {
+        return [...$this->getDataAttributes(), 'type' => $type->value];
+    }
+
+    /**
+     * Only a field narrowed with `match` stays hidden for good on the server: which constraint
+     * failed is a result of validation, which only exists on the client.
+     */
+    public function isErrorTextHidden(?ValidityMatch $match): bool
+    {
+        return $match instanceof ValidityMatch || !Typed::bool($this->get('invalid'));
+    }
+
+    /**
+     * Only `required` and `invalid` follow from props; `valid` and `validating` are results of
+     * validation, which only exist on the client.
+     */
+    public function isIndicatorHidden(FieldIndicatorType $type): bool
+    {
+        return match ($type) {
+            FieldIndicatorType::Required => !Typed::bool($this->get('required')),
+            FieldIndicatorType::Invalid => !Typed::bool($this->get('invalid')),
+            default => true,
+        };
+    }
+
+    /**
      * @return array{name: ?string, disabled: ?bool, readOnly: ?bool, required: ?bool, invalid: ?bool, defaultValue: mixed, ids: array<string, string>}
      */
     public function getChildVariables(): array
@@ -97,7 +153,7 @@ class FieldContext extends AbstractComponentContext
 
         return [
             'name' => Typed::stringOrNull($this->get('name')),
-            'disabled' => Typed::boolOrNull($this->get('disabled')),
+            'disabled' => $this->inDisabledFieldset ? true : Typed::boolOrNull($this->get('disabled')),
             'readOnly' => Typed::boolOrNull($this->get('readOnly')),
             'required' => Typed::boolOrNull($this->get('required')),
             'invalid' => Typed::boolOrNull($this->get('invalid')),

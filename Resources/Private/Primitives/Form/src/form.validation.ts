@@ -1,4 +1,4 @@
-import { serializeFieldValue } from '../../Field/src/field.utils';
+import { serializeFieldValue } from '../../Field/src/field.value';
 import {
     type FieldPathSegment,
     stringifyFieldPathAsBrackets,

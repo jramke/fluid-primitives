@@ -10,7 +10,8 @@
     },
     "author": "Joost Ramke <hey@joostramke.com>",
     "files": [
-        "./dist"
+        "./dist",
+        "./THIRD_PARTY_NOTICES.md"
     ],
     "main": "./dist/client.js",
     "types": "./dist/client.d.ts",
@@ -54,6 +55,10 @@
         "./field-array": {
             "import": "./dist/field-array.js",
             "types": "./dist/field-array.d.ts"
+        },
+        "./fieldset": {
+            "import": "./dist/fieldset.js",
+            "types": "./dist/fieldset.d.ts"
         },
         "./file-upload": {
             "import": "./dist/file-upload.js",
@@ -120,7 +125,8 @@
         "build": "tsdown",
         "dev": "tsdown --watch",
         "version": "node scripts/version.js",
-        "bump-zag": "node scripts/bump-zag.js"
+        "bump-zag": "node scripts/bump-zag.js",
+        "test": "vitest run"
     },
     "peerDependencies": {
         "zod": "^4.0.0"
@@ -132,9 +138,11 @@
     },
     "devDependencies": {
         "@types/node": "^22.15.17",
+        "jsdom": "^30.1.2",
         "tsdown": "^0.21.7",
         "typescript": "^5.8.3",
         "valibot": "^1.1.0",
+        "vitest": "^5.0.3",
         "zod": "^4.3.6"
     },
     "dependencies": {
@@ -149,6 +157,7 @@
         "@zag-js/core": "^2.0.0-next.3",
         "@zag-js/dialog": "^2.0.0-next.3",
         "@zag-js/dom-query": "^2.0.0-next.3",
+        "@zag-js/fieldset": "^2.0.0-next.3",
         "@zag-js/file-upload": "^2.0.0-next.3",
         "@zag-js/file-utils": "^2.0.0-next.3",
         "@zag-js/i18n-utils": "^2.0.0-next.3",

@@ -1,138 +1,229 @@
 import type { Service } from '@zag-js/core';
+import { dataAttr } from '@zag-js/dom-query';
 import type { NormalizeProps, PropTypes } from '@zag-js/types';
+import { match } from '@zag-js/utils';
 import { parts } from './field.anatomy';
 import * as dom from './field.dom';
 import type {
+    ErrorTextProps,
     FieldApi,
-    FieldDependencyChangeDetail,
-    FieldHandle,
-    FieldMeta,
     FieldSchema,
+    FieldState,
+    IndicatorProps,
 } from './field.types';
-import { isFieldValueEqual } from './field.utils';
-
-type FieldServiceLike = Pick<Service<FieldSchema>, 'prop' | 'context' | 'scope'>;
-
-export function createFieldHandle(service: FieldServiceLike): FieldHandle {
-    const { prop, context, scope } = service;
-
-    const invalid = context.get('invalid');
-    const disabled = context.get('disabled');
-    const required = context.get('required');
-    const readOnly = context.get('readOnly');
-    const errors = context.get('errors');
-    const value = context.get('value');
-    const initialValue = context.get('initialValue');
-
-    const meta: FieldMeta = {
-        isTouched: context.get('touched'),
-        isDirty: context.get('dirty'),
-        isPristine: !context.get('dirty'),
-        isBlurred: context.get('blurred'),
-        isDefaultValue: isFieldValueEqual(value, initialValue),
-    };
-
-    // TODO: is it possible that we can expose the fields child control machine (if any and not a native input) here
-    // so the user can acces its machine api to do more custom stuff
-    return {
-        getFormMachine: () => context.get('formMachine'),
-        getRootEl: () => dom.getRootEl(scope),
-        name: prop('name'),
-        value,
-        meta,
-        disabled,
-        setDisabled: disabled => context.set('disabled', disabled),
-        required,
-        setRequired: required => context.set('required', required),
-        readOnly,
-        setReadOnly: readOnly => context.set('readOnly', readOnly),
-        invalid,
-        errors,
-        getErrorText() {
-            return errors.length > 0 ? errors.join(' ') : null;
-        },
-        addDependencyChangeListener(callback: (detail: FieldDependencyChangeDetail) => void) {
-            const rootEl = dom.getRootEl(scope);
-            if (!rootEl) return () => {};
-
-            const handler = (event: Event) => {
-                callback((event as CustomEvent<FieldDependencyChangeDetail>).detail);
-            };
-
-            rootEl.addEventListener('fluid-primitives:field:dependencychange', handler);
-            return () =>
-                rootEl.removeEventListener('fluid-primitives:field:dependencychange', handler);
-        },
-    };
-}
+import { composeDescribedBy, isErrorMatch } from './field.utils';
 
 export function connect<T extends PropTypes>(
     service: Service<FieldSchema>,
     normalize: NormalizeProps<T>
-): FieldApi {
-    const { scope } = service;
-    const handle = createFieldHandle(service);
+): FieldApi<T> {
+    const { send, context, prop, computed, scope } = service;
 
-    return {
-        ...handle,
+    const disabled = computed('disabled');
+    const invalid = computed('invalid');
+    const valid = computed('valid');
+    const required = !!prop('required');
+    const readOnly = !!prop('readOnly');
 
+    const focused = !disabled && context.get('focused');
+    const touched = context.get('touched');
+    const dirty = context.get('dirty');
+    const filled = context.get('filled');
+    const validating = context.get('validating');
+
+    const ids = {
+        root: dom.getRootId(scope),
+        control: dom.getControlId(scope),
+        label: dom.getLabelId(scope),
+        errorText: dom.getErrorTextId(scope),
+        helperText: dom.getHelperTextId(scope),
+    };
+
+    const ariaDescribedby = composeDescribedBy({
+        helperTextId: ids.helperText,
+        hasHelperText: context.get('hasHelperText'),
+        errorTextIds: context.get('errorTextIds'),
+    });
+
+    // -----------------------------------------------------------------------------
+    // State getters: pure, serializable per-part state, independent of `normalize`
+    // -----------------------------------------------------------------------------
+
+    function getFieldState(): FieldState {
+        return {
+            disabled,
+            invalid,
+            valid,
+            required,
+            readOnly,
+            touched,
+            dirty,
+            filled,
+            focused,
+            validating,
+        };
+    }
+
+    function getErrorTextState(props: ErrorTextProps = {}) {
+        const shown = isErrorMatch(props.match, {
+            validity: context.get('validity'),
+            invalid,
+            disabled,
+        });
+        return { ...getFieldState(), hidden: !shown };
+    }
+
+    function getIndicatorState(props: IndicatorProps) {
+        const fieldState = getFieldState();
+        const shown = match(props.type, {
+            required: () => fieldState.required,
+            invalid: () => fieldState.invalid,
+            valid: () => fieldState.valid === true,
+            validating: () => fieldState.validating,
+        });
+        return { ...fieldState, type: props.type, hidden: !shown };
+    }
+
+    function getControlBaseProps() {
+        const fieldState = getFieldState();
+        return {
+            ...parts.control.attrs(scope.id),
+            id: ids.control,
+            dir: prop('dir'),
+            disabled: fieldState.disabled,
+            required: fieldState.required,
+            'aria-invalid': fieldState.invalid || undefined,
+            'aria-describedby': ariaDescribedby,
+            ...getDataAttrs(fieldState),
+        };
+    }
+
+    const api: FieldApi<T> = {
+        ids,
+        disabled,
+        invalid,
+        valid,
+        required,
+        readOnly,
+        focused,
+        touched,
+        dirty,
+        filled,
+        validating,
+        errors: context.get('errors'),
+        validity: context.get('validity'),
+        ariaDescribedby,
+
+        validate() {
+            send({ type: 'VALIDATE' });
+        },
+
+        clearErrors() {
+            send({ type: 'ERRORS.CLEAR' });
+        },
+
+        reset() {
+            send({ type: 'RESET' });
+        },
+
+        getRootState: getFieldState,
         getRootProps() {
             return normalize.element({
                 ...parts.root.attrs(scope.id),
-                'data-invalid': handle.invalid ? '' : undefined,
-                'data-disabled': handle.disabled ? '' : undefined,
-                'data-readonly': handle.readOnly ? '' : undefined,
-                'data-required': handle.required ? '' : undefined,
-                'data-touched': handle.meta.isTouched ? '' : undefined,
-                'data-dirty': handle.meta.isDirty ? '' : undefined,
-                'data-pristine': handle.meta.isPristine ? '' : undefined,
-                'data-blurred': handle.meta.isBlurred ? '' : undefined,
-                'data-default-value': handle.meta.isDefaultValue ? '' : undefined,
-                'data-name': handle.name,
+                dir: prop('dir'),
+                'data-name': prop('name'),
+                ...getDataAttrs(getFieldState()),
             });
         },
 
+        getLabelState: getFieldState,
         getLabelProps() {
             return normalize.label({
                 ...parts.label.attrs(scope.id),
-                id: dom.getLabelId(scope),
-                htmlFor: dom.getControlId(scope),
-                'data-invalid': handle.invalid ? '' : undefined,
-                'data-disabled': handle.disabled ? '' : undefined,
-                'data-required': handle.required ? '' : undefined,
+                id: ids.label,
+                dir: prop('dir'),
+                htmlFor: ids.control,
+                ...getDataAttrs(getFieldState()),
             });
         },
 
+        getControlState: getFieldState,
         getControlProps() {
             return normalize.element({
-                ...parts.control.attrs(scope.id),
-                id: dom.getControlId(scope),
-                name: handle.name,
-                disabled: handle.disabled || undefined,
-                readOnly: handle.readOnly || undefined,
-                required: handle.required || undefined,
-                'aria-invalid': handle.invalid ? 'true' : undefined,
-                'aria-describedby': service.context.get('describeIds') || undefined,
-                'aria-required': handle.required ? 'true' : undefined,
-                'data-invalid': handle.invalid ? '' : undefined,
-                'data-disabled': handle.disabled ? '' : undefined,
-                'data-readonly': handle.readOnly ? '' : undefined,
+                ...getControlBaseProps(),
             });
         },
 
-        getErrorProps() {
-            return normalize.element({
-                ...parts.error.attrs(scope.id),
-                id: dom.getErrorId(scope),
-                hidden: !handle.invalid,
+        getInputProps() {
+            return normalize.input({
+                ...getControlBaseProps(),
+                readOnly: getFieldState().readOnly,
             });
         },
 
-        getDescriptionProps() {
-            return normalize.element({
-                ...parts.description.attrs(scope.id),
-                id: dom.getDescriptionId(scope),
+        getTextareaProps() {
+            return normalize.textarea({
+                ...getControlBaseProps(),
+                readOnly: getFieldState().readOnly,
             });
         },
+
+        getSelectProps() {
+            return normalize.select({
+                ...getControlBaseProps(),
+            });
+        },
+
+        getHelperTextState: getFieldState,
+        getHelperTextProps() {
+            return normalize.element({
+                ...parts.helperText.attrs(scope.id),
+                id: ids.helperText,
+                dir: prop('dir'),
+                ...getDataAttrs(getFieldState()),
+            });
+        },
+
+        getErrorTextState,
+        getErrorTextProps(props: ErrorTextProps = {}) {
+            const errorTextState = getErrorTextState(props);
+            return normalize.element({
+                ...parts.errorText.attrs(scope.id),
+                id: dom.getErrorTextId(scope, props.match, props.id),
+                dir: prop('dir'),
+                hidden: errorTextState.hidden,
+                'aria-live': 'polite',
+                ...getDataAttrs(errorTextState),
+            });
+        },
+
+        getIndicatorState,
+        getIndicatorProps(props) {
+            const indicatorState = getIndicatorState(props);
+            return normalize.element({
+                ...parts.indicator.attrs(scope.id),
+                dir: prop('dir'),
+                'data-type': indicatorState.type,
+                'aria-hidden': true,
+                hidden: indicatorState.hidden,
+                ...getDataAttrs(indicatorState),
+            });
+        },
+    };
+
+    return api;
+}
+
+function getDataAttrs(state: FieldState) {
+    return {
+        'data-disabled': dataAttr(state.disabled),
+        'data-invalid': dataAttr(state.invalid),
+        'data-valid': dataAttr(state.valid === true),
+        'data-required': dataAttr(state.required),
+        'data-readonly': dataAttr(state.readOnly),
+        'data-touched': dataAttr(state.touched),
+        'data-dirty': dataAttr(state.dirty),
+        'data-filled': dataAttr(state.filled),
+        'data-focus': dataAttr(state.focused),
     };
 }

@@ -23,9 +23,8 @@ declare global {
             globals?: FluidPrimitivesGlobals;
             /**
              * Every component instance `mountAll`/`mount` has created, nested the same way as
-             * `hydrationData` above - populated by both (not just `mountAll`, as the older
-             * `uncontrolledInstances` name implied), so `getComponentInstance` can find a `mount`-ed
-             * controlled component too.
+             * `hydrationData` above - populated by both, so `getComponentInstance` can find a
+             * component that was mounted by hand with `mount` too.
              */
             componentInstances: {
                 [namespace: string]: {
@@ -71,7 +70,7 @@ export interface ComponentInterface<Api> {
 }
 
 export interface ComponentHydrationData {
-    controlled: boolean;
+    autoMount: boolean;
     props: {
         id: string;
         ids: { [key: string]: string };

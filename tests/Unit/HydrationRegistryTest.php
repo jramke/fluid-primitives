@@ -100,7 +100,7 @@ final class HydrationRegistryTest extends TestCase
     public function addsInlineJavaScriptWithComponentData(): void
     {
         $this->registry->add('ui', 'accordion', '«f1»', [
-            'controlled' => false,
+            'autoMount' => true,
             'props' => ['multiple' => true],
         ]);
 

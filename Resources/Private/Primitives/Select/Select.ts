@@ -9,7 +9,7 @@ import {
     type ConverterMachineProps,
 } from '../../Client';
 import { getListCollectionFromHydrationData } from '../../Client/src/lib/hydration';
-import type { FieldMachine } from '../Field/src/field.registry';
+import type { FieldClientApi } from '../Field/src/field.handle';
 
 // Wire shape -> real @zag-js/collection ListCollection instance. Registered here (not in
 // transformProps) so mountAll/mount convert it before the component is even constructed - see
@@ -35,14 +35,14 @@ declare module 'fluid-primitives' {
 export class Select extends FieldAwareComponent<select.Props, select.Api> {
     static componentName = 'select';
 
-    propsWithField(props: select.Props, fieldMachine: FieldMachine): select.Props {
+    propsWithField(props: select.Props, field: FieldClientApi): select.Props {
         return {
             ...props,
-            disabled: props.disabled ?? fieldMachine.context.get('disabled'),
-            readOnly: props.readOnly ?? fieldMachine.context.get('readOnly'),
-            required: props.required ?? fieldMachine.context.get('required'),
-            invalid: props.invalid ?? fieldMachine.context.get('invalid'),
-            name: props.name ?? fieldMachine.prop('name'),
+            disabled: props.disabled ?? field.disabled,
+            readOnly: props.readOnly ?? field.readOnly,
+            required: props.required ?? field.required,
+            invalid: props.invalid ?? field.invalid,
+            name: props.name ?? field.name,
         };
     }
 
@@ -66,10 +66,7 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
 
         const hiddenSelectEl = this.hydrator.query('hiddenSelect');
         if (hiddenSelectEl) {
-            const mergedProps = mergeProps(this.api.getHiddenSelectProps(), {
-                'aria-describedby': this.fieldMachine?.context.get('describeIds') || undefined,
-            });
-            this.spreadProps(hiddenSelectEl, mergedProps);
+            this.spreadProps(hiddenSelectEl, this.api.getHiddenSelectProps());
 
             // We need to handle this client side so the select can default to an empty string
             // Setting the select attribute server side has no effect
@@ -82,8 +79,15 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
         const labelEl = this.hydrator.query('label');
         if (labelEl) this.spreadProps(labelEl, this.api.getLabelProps());
 
+        // The trigger is what receives focus, the hidden select is aria-hidden: the field's helper
+        // and error texts have to be described from the trigger to be announced at all.
         const triggerEl = this.hydrator.query('trigger');
-        if (triggerEl) this.spreadProps(triggerEl, this.api.getTriggerProps());
+        if (triggerEl) {
+            const mergedProps = mergeProps(this.api.getTriggerProps(), {
+                'aria-describedby': this.field?.ariaDescribedby,
+            });
+            this.spreadProps(triggerEl, mergedProps);
+        }
 
         const positionerEl = this.hydrator.query('positioner');
         if (positionerEl) this.spreadProps(positionerEl, this.api.getPositionerProps());
