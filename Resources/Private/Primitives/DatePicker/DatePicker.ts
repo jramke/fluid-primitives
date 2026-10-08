@@ -1,35 +1,44 @@
 import * as datePicker from '@zag-js/date-picker';
+import type { Attrs } from '@zag-js/vanilla';
 import {
     FieldAwareComponent,
     Machine,
+    mergeProps,
     normalizeProps,
     registerClientPropConverters,
     type ClientPropConverterMap,
     type ConverterMachineProps,
 } from '../../Client';
-import type { FieldMachine } from '../Field/src/field.registry';
+import type { FieldClientApi } from '../Field/src/field.handle';
 
-// PHP normalizes `defaultValue` to an array (or omits it) before it reaches the client - see
-// DatePickerContext::getDefaultValue(), mirroring SelectContext. `min`/`max`/`defaultFocusedValue`
-// pass through Root's plain `ui:prop`s as raw ISO strings instead. Registered as converters (not in
-// transformProps) so mountAll/mount convert them before the component is even constructed - see
-// Select.ts's own `collection` converter for the same reasoning.
-const parseDateValue = (value?: unknown) => (value ? datePicker.parse(value as string) : undefined);
-const parseDateValues = (values?: unknown) =>
-    values ? datePicker.parse(values as string[]) : undefined;
+const parseDate = (date?: string) => (date ? datePicker.parse(date) : undefined);
 
+// Zag asks for the id of a label and of an input by index (range mode has two of each), but PHP can
+// only send a single string, e.g. the id of the surrounding Field: it names the first one, the
+// others derive from it.
+const indexedId = (id: string) => (index: number) => (index === 0 ? id : `${id}:${index}`);
+
+// Wire shape -> what the machine takes, see client-prop-converters.ts. The override type below is
+// derived from this const via `typeof`, so the two can't drift.
 const datePickerPropConverters = {
-    min: parseDateValue,
-    max: parseDateValue,
-    defaultFocusedValue: parseDateValue,
-    defaultValue: parseDateValues,
-    // DatePickerContext::getTranslations() returns a plain array - the generated wire type has no
-    // way to know it matches @zag-js/date-picker's own IntlTranslations shape, so this just tells
-    // TS what it actually is rather than transforming the value itself (same as positioning below).
-    translations: (translations: datePicker.Props['translations']) => translations,
+    // PHP sends ISO date strings (`defaultValue` always as a list), the machine wants DateValues.
+    min: parseDate,
+    max: parseDate,
+    defaultFocusedValue: parseDate,
+    defaultValue: (dates?: string[]) => (dates ? datePicker.parse(dates) : undefined),
+    // A calendar highlights "today" for the person looking at it, which Zag's own UTC default gets
+    // wrong for part of the day.
+    timeZone: (timeZone?: string) => timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
+    ids: ({ label, input, ...ids }: Record<string, string> = {}) =>
+        ({
+            ...ids,
+            ...(label && { label: indexedId(label) }),
+            ...(input && { input: indexedId(input) }),
+        }) as datePicker.ElementIds,
     // PHP can't distinguish a list-shaped array from an object-shaped one for a bare `type="array"`
-    // prop (see WireTypeResolver), so `positioning` resolves to `unknown` on the wire - this just
-    // tells TS what it actually is (a real @zag-js/popper PositioningOptions object).
+    // prop (see WireTypeResolver), so these resolve to `unknown` on the wire - these just tell TS
+    // what they actually are (real @zag-js/popper PositioningOptions and Zag's IntlTranslations).
+    translations: (translations: datePicker.Props['translations']) => translations,
     positioning: (positioning: datePicker.Props['positioning']) => positioning,
 } satisfies ClientPropConverterMap;
 
@@ -44,20 +53,32 @@ declare module 'fluid-primitives' {
 export class DatePicker extends FieldAwareComponent<datePicker.Props, datePicker.Api> {
     static componentName = 'datePicker';
 
-    propsWithField(props: datePicker.Props, fieldMachine: FieldMachine): datePicker.Props {
+    propsWithField(props: datePicker.Props, field: FieldClientApi): datePicker.Props {
         return {
             ...props,
-            disabled: props.disabled ?? fieldMachine.context.get('disabled'),
-            readOnly: props.readOnly ?? fieldMachine.context.get('readOnly'),
-            required: props.required ?? fieldMachine.context.get('required'),
-            invalid: props.invalid ?? fieldMachine.context.get('invalid'),
-            name: props.name ?? fieldMachine.prop('name'),
+            disabled: props.disabled ?? field.disabled,
+            readOnly: props.readOnly ?? field.readOnly,
+            required: props.required ?? field.required,
+            invalid: props.invalid ?? field.invalid,
+            name: props.name ?? field.name,
+        };
+    }
+
+    transformProps(props: datePicker.Props): datePicker.Props {
+        return {
+            ...props,
+            // Zag writes a date picked in the calendar into the input without an event, but a Field
+            // and a Form only learn of a change from one (and read the value once it has settled).
+            onValueChange: details => {
+                this.hydrator.query('input')?.dispatchEvent(new Event('change', { bubbles: true }));
+                props.onValueChange?.(details);
+            },
         };
     }
 
     initMachine(props: datePicker.Props): Machine<any> {
-        props = this.withFieldProps(props);
-        return new Machine(datePicker.machine, props);
+        const [machineProps] = datePicker.splitProps(this.withFieldProps(props));
+        return new Machine(datePicker.machine, machineProps);
     }
 
     initApi() {
@@ -67,117 +88,107 @@ export class DatePicker extends FieldAwareComponent<datePicker.Props, datePicker
     render() {
         this.subscribeToFieldService();
 
-        const rootEl = this.getElement('root');
+        const rootEl = this.hydrator.query('root');
         if (rootEl) this.spreadProps(rootEl, this.api.getRootProps());
 
         this.spreadPropsByOptionalValue('label', ({ value }) =>
             this.api.getLabelProps({ index: Number(value ?? 0) })
         );
 
-        const controlEl = this.getElement('control');
+        const controlEl = this.hydrator.query('control');
         if (controlEl) this.spreadProps(controlEl, this.api.getControlProps());
 
         this.spreadPropsByOptionalValue('input', ({ value }) =>
-            this.api.getInputProps({ index: Number(value ?? 0) })
+            mergeProps(this.api.getInputProps({ index: Number(value ?? 0) }), {
+                'aria-describedby': this.field?.ariaDescribedby,
+            })
         );
 
-        const clearTriggerEl = this.getElement('clearTrigger');
+        const clearTriggerEl = this.hydrator.query('clearTrigger');
         if (clearTriggerEl) this.spreadProps(clearTriggerEl, this.api.getClearTriggerProps());
 
-        const triggerEl = this.getElement('trigger');
+        const triggerEl = this.hydrator.query('trigger');
         if (triggerEl) this.spreadProps(triggerEl, this.api.getTriggerProps());
 
-        const rangeTextEl = this.getElement('rangeText');
-        if (rangeTextEl) this.spreadProps(rangeTextEl, this.api.getRangeTextProps());
-
-        const positionerEl = this.getElement('positioner');
+        const positionerEl = this.hydrator.query('positioner');
         if (positionerEl) {
             const positionerProps = this.api.getPositionerProps();
-            // `getPositionerProps()` always returns @zag-js/popper's floating styles, even for
-            // `inline` - with no trigger to anchor to, no placement ever gets computed, and an
-            // un-placed floating element gets `transform: translate3d(0, -100vh, 0)` from
-            // @zag-js/popper's own default (shoved a full viewport-height off-screen). `inline`
-            // wants normal document flow instead, so drop the style and let it sit static.
+            // An `inline` calendar has no trigger to anchor to, so it never gets placed - and the
+            // floating styles of an un-placed positioner push it a viewport-height off-screen.
             if (this.api.inline) delete positionerProps.style;
             this.spreadProps(positionerEl, positionerProps);
         }
 
-        const contentEl = this.getElement('content');
+        const contentEl = this.hydrator.query('content');
         if (contentEl) this.spreadProps(contentEl, this.api.getContentProps());
 
-        // Every part below lives inside `content`, which `ui:portal` may have moved out from under
-        // `root` entirely (the default for a popup - only `inline` leaves it in place) - `getElements`
-        // defaults to searching within `root` when no `parent` is given, so without this, none of
-        // these would ever be found once portaled, and `buildTable()` would always bail out early on
-        // a missing `theadEl`/`tbodyEl`. Mirrors Select.ts/Combobox.ts's own item/itemGroup lookups,
-        // which need the same `{ parent: this.doc }` for the same reason.
-        (['day', 'month', 'year'] as const).forEach(view => {
-            this.spreadPropsByValue(
-                'view',
-                ({ value }) => (value === view ? this.api.getViewProps({ view }) : null),
-                { parent: this.doc }
-            );
-            this.spreadPropsByValue(
-                'viewControl',
-                ({ value }) => (value === view ? this.api.getViewControlProps({ view }) : null),
-                { parent: this.doc }
-            );
-            this.spreadPropsByValue(
-                'viewTrigger',
-                ({ el, value }) => {
-                    if (value !== view) return null;
-                    el.textContent = this.api.visibleRangeText.formatted;
-                    return this.api.getViewTriggerProps({ view });
-                },
-                { parent: this.doc }
-            );
-            this.spreadPropsByValue(
-                'prevTrigger',
-                ({ value }) => (value === view ? this.api.getPrevTriggerProps({ view }) : null),
-                { parent: this.doc }
-            );
-            this.spreadPropsByValue(
-                'nextTrigger',
-                ({ value }) => (value === view ? this.api.getNextTriggerProps({ view }) : null),
-                { parent: this.doc }
-            );
-            this.spreadPropsByValue(
-                'table',
-                ({ value }) => (value === view ? this.api.getTableProps({ view }) : null),
-                { parent: this.doc }
-            );
+        this.spreadPropsByValue('view', ({ value }) =>
+            this.api.getViewProps({ view: value as datePicker.DateView })
+        );
+        this.spreadPropsByValue('viewControl', ({ value }) =>
+            this.api.getViewControlProps({ view: value as datePicker.DateView })
+        );
+        this.spreadPropsByValue('viewTrigger', ({ value }) =>
+            this.api.getViewTriggerProps({ view: value as datePicker.DateView })
+        );
+        this.spreadPropsByValue('prevTrigger', ({ value }) =>
+            this.api.getPrevTriggerProps({ view: value as datePicker.DateView })
+        );
+        this.spreadPropsByValue('nextTrigger', ({ value }) =>
+            this.api.getNextTriggerProps({ view: value as datePicker.DateView })
+        );
+        this.spreadPropsByValue('presetTrigger', ({ value }) =>
+            this.api.getPresetTriggerProps({ value: value as datePicker.DateRangePreset })
+        );
 
-            this.buildTable(view);
+        // In range mode Zag always joins the first and last visible month, also when it is one.
+        const { start, end, formatted } = this.api.visibleRangeText;
+        const rangeText = start === end ? start : formatted;
+        this.hydrator.queryAll('rangeText').forEach(rangeTextEl => {
+            this.spreadProps(rangeTextEl, this.api.getRangeTextProps());
+            if (rangeTextEl.textContent !== rangeText) rangeTextEl.textContent = rangeText;
         });
 
-        this.spreadPropsByValue(
-            'presetTrigger',
-            ({ value }) =>
-                this.api.getPresetTriggerProps({ value: value as datePicker.DateRangePreset }),
-            { parent: this.doc }
-        );
+        this.hydrator.queryAll('table').forEach(tableEl => {
+            const view = tableEl.dataset.value as datePicker.DateView;
+            this.spreadProps(tableEl, this.api.getTableProps({ view }));
 
-        const monthSelectEl = this.getElement<HTMLSelectElement>('monthSelect');
-        if (monthSelectEl) this.buildMonthSelect(monthSelectEl);
+            const headerEl = this.findByView('tableHeader', view);
+            const bodyEl = this.findByView('tableBody', view);
+            if (headerEl && bodyEl) this.renderTable(view, headerEl, bodyEl);
+        });
 
-        const yearSelectEl = this.getElement<HTMLSelectElement>('yearSelect');
-        if (yearSelectEl) this.buildYearSelect(yearSelectEl);
+        const monthSelectEl = this.hydrator.query<HTMLSelectElement>('monthSelect');
+        if (monthSelectEl) {
+            this.renderSelect(
+                monthSelectEl,
+                this.api.getMonthSelectProps(),
+                this.api.getMonths(),
+                this.api.visibleRange.start.month
+            );
+        }
+
+        const yearSelectEl = this.hydrator.query<HTMLSelectElement>('yearSelect');
+        if (yearSelectEl) {
+            this.renderSelect(
+                yearSelectEl,
+                this.api.getYearSelectProps(),
+                this.api.getYears(),
+                this.api.visibleRange.start.year
+            );
+        }
     }
 
-    private buildTable(view: 'day' | 'month' | 'year') {
-        const theadEl = this.getElements('tableHeader', this.doc).find(
-            el => el.dataset.value === view
-        );
-        const tbodyEl = this.getElements('tableBody', this.doc).find(
-            el => el.dataset.value === view
-        );
-        if (!theadEl || !tbodyEl) return;
+    private findByView(part: string, view: datePicker.DateView) {
+        return this.hydrator.queryAll(part).find(el => el.dataset.value === view);
+    }
 
-        theadEl.replaceChildren();
-        tbodyEl.replaceChildren();
-
+    // The grid is not part of the server markup: its size depends on the locale, the calendar and
+    // the month shown. It is built from what is there instead of from scratch on every render, so
+    // the focused cell and the hover state survive the machine's own updates.
+    private renderTable(view: datePicker.DateView, headerEl: Element, bodyEl: Element) {
         if (view === 'day') {
-            this.buildDayTable(theadEl, tbodyEl, view);
+            this.renderDayTable(headerEl, bodyEl);
             return;
         }
 
@@ -186,96 +197,140 @@ export class DatePicker extends FieldAwareComponent<datePicker.Props, datePicker
                 ? this.api.getMonthsGrid({ columns: 4, format: 'short' })
                 : this.api.getYearsGrid({ columns: 4 });
 
-        grid.forEach(row => {
-            const trEl = this.doc.createElement('tr');
-            row.forEach(cell => {
-                const tdEl = this.doc.createElement('td');
-                const props =
-                    view === 'month'
-                        ? this.api.getMonthTableCellProps(cell)
-                        : this.api.getYearTableCellProps(cell);
-                this.spreadProps(tdEl, props);
-
-                const triggerEl = this.doc.createElement('div');
-                const triggerProps =
-                    view === 'month'
-                        ? this.api.getMonthTableCellTriggerProps(cell)
-                        : this.api.getYearTableCellTriggerProps(cell);
-                this.spreadProps(triggerEl, triggerProps);
-                triggerEl.textContent = cell.label;
-                tdEl.appendChild(triggerEl);
-                trEl.appendChild(tdEl);
-            });
-            tbodyEl.appendChild(trEl);
+        headerEl.replaceChildren();
+        this.renderRows(bodyEl, grid, rowEl => {
+            this.spreadProps(rowEl, this.api.getTableRowProps({ view }));
+        }).forEach(([rowEl, cells]) => {
+            this.fitChildren<HTMLTableCellElement>(rowEl, 'td', cells.length).forEach(
+                (cellEl, i) => {
+                    const cell = cells[i];
+                    this.renderCell(
+                        cellEl,
+                        view === 'month'
+                            ? this.api.getMonthTableCellProps(cell)
+                            : this.api.getYearTableCellProps(cell),
+                        view === 'month'
+                            ? this.api.getMonthTableCellTriggerProps(cell)
+                            : this.api.getYearTableCellTriggerProps(cell),
+                        cell.label
+                    );
+                }
+            );
         });
     }
 
-    private buildDayTable(theadEl: Element, tbodyEl: Element, view: 'day') {
-        const headerRowEl = this.doc.createElement('tr');
+    private renderDayTable(headerEl: Element, bodyEl: Element) {
+        const view = 'day';
+        const weekNumbers = this.api.showWeekNumbers;
+
+        const [headerRowEl] = this.fitChildren<HTMLTableRowElement>(headerEl, 'tr', 1);
         this.spreadProps(headerRowEl, this.api.getTableRowProps({ view }));
 
-        if (this.api.showWeekNumbers) {
-            const thEl = this.doc.createElement('th');
-            this.spreadProps(thEl, this.api.getWeekNumberHeaderCellProps({ view }));
-            headerRowEl.appendChild(thEl);
+        const headEls = this.fitChildren<HTMLTableCellElement>(
+            headerRowEl,
+            'th',
+            this.api.weekDays.length + (weekNumbers ? 1 : 0)
+        );
+        if (weekNumbers) {
+            const weekNumberHeaderEl = headEls.shift()!;
+            this.spreadProps(weekNumberHeaderEl, this.api.getWeekNumberHeaderCellProps({ view }));
+            weekNumberHeaderEl.textContent = '';
         }
-
-        this.api.weekDays.forEach(day => {
-            const thEl = this.doc.createElement('th');
-            thEl.scope = 'col';
-            thEl.ariaLabel = day.long;
-            this.spreadProps(thEl, this.api.getTableHeadProps({ view }));
-            thEl.textContent = day.narrow;
-            headerRowEl.appendChild(thEl);
+        this.api.weekDays.forEach((day, i) => {
+            this.spreadProps(
+                headEls[i],
+                mergeProps(this.api.getTableHeadProps({ view }), {
+                    scope: 'col',
+                    'aria-label': day.long,
+                })
+            );
+            if (headEls[i].textContent !== day.narrow) headEls[i].textContent = day.narrow;
         });
-        theadEl.appendChild(headerRowEl);
 
-        this.api.weeks.forEach((week, weekIndex) => {
-            const trEl = this.doc.createElement('tr');
-            this.spreadProps(trEl, this.api.getTableRowProps({ view }));
-
-            if (this.api.showWeekNumbers) {
-                const tdEl = this.doc.createElement('td');
-                this.spreadProps(tdEl, this.api.getWeekNumberCellProps({ weekIndex, week }));
-                tdEl.textContent = String(this.api.getWeekNumber(week));
-                trEl.appendChild(tdEl);
+        this.renderRows(bodyEl, this.api.weeks, rowEl => {
+            this.spreadProps(rowEl, this.api.getTableRowProps({ view }));
+        }).forEach(([rowEl, week], weekIndex) => {
+            const cellEls = this.fitChildren<HTMLTableCellElement>(
+                rowEl,
+                'td',
+                week.length + (weekNumbers ? 1 : 0)
+            );
+            if (weekNumbers) {
+                const weekNumberEl = cellEls.shift()!;
+                this.spreadProps(
+                    weekNumberEl,
+                    this.api.getWeekNumberCellProps({ weekIndex, week })
+                );
+                weekNumberEl.textContent = String(this.api.getWeekNumber(week));
             }
-
-            week.forEach(value => {
-                const tdEl = this.doc.createElement('td');
-                this.spreadProps(tdEl, this.api.getDayTableCellProps({ value }));
-
-                const triggerEl = this.doc.createElement('div');
-                this.spreadProps(triggerEl, this.api.getDayTableCellTriggerProps({ value }));
-                triggerEl.textContent = String(value.day);
-                tdEl.appendChild(triggerEl);
-                trEl.appendChild(tdEl);
+            week.forEach((value, i) => {
+                this.renderCell(
+                    cellEls[i],
+                    this.api.getDayTableCellProps({ value }),
+                    this.api.getDayTableCellTriggerProps({ value }),
+                    String(value.day)
+                );
             });
-            tbodyEl.appendChild(trEl);
         });
     }
 
-    private buildMonthSelect(selectEl: HTMLSelectElement) {
-        this.spreadProps(selectEl, this.api.getMonthSelectProps());
-        selectEl.replaceChildren(
-            ...this.api.getMonths().map(month => {
-                const optionEl = this.doc.createElement('option');
-                optionEl.value = String(month.value);
-                optionEl.textContent = month.label;
-                return optionEl;
-            })
+    /** One `<tr>` per entry of `rows`, paired with the entry it renders. */
+    private renderRows<T>(
+        parentEl: Element,
+        rows: T[],
+        spreadRow: (rowEl: HTMLTableRowElement) => void
+    ): [HTMLTableRowElement, T][] {
+        return this.fitChildren<HTMLTableRowElement>(parentEl, 'tr', rows.length).map(
+            (rowEl, i) => {
+                spreadRow(rowEl);
+                return [rowEl, rows[i]];
+            }
         );
     }
 
-    private buildYearSelect(selectEl: HTMLSelectElement) {
-        this.spreadProps(selectEl, this.api.getYearSelectProps());
-        selectEl.replaceChildren(
-            ...this.api.getYears().map(year => {
-                const optionEl = this.doc.createElement('option');
-                optionEl.value = String(year.value);
-                optionEl.textContent = year.label;
-                return optionEl;
-            })
+    private renderCell(cellEl: HTMLElement, cellProps: Attrs, triggerProps: Attrs, text: string) {
+        this.spreadProps(cellEl, cellProps);
+        const [triggerEl] = this.fitChildren<HTMLDivElement>(cellEl, 'div', 1);
+        this.spreadProps(triggerEl, triggerProps);
+        if (triggerEl.textContent !== text) triggerEl.textContent = text;
+    }
+
+    private renderSelect(
+        selectEl: HTMLSelectElement,
+        selectProps: Attrs,
+        options: datePicker.Cell[],
+        selected: number
+    ) {
+        this.spreadProps(selectEl, selectProps);
+        this.fitChildren<HTMLOptionElement>(selectEl, 'option', options.length).forEach(
+            (optionEl, i) => {
+                const { label, value, disabled } = options[i];
+                if (optionEl.value !== String(value)) optionEl.value = String(value);
+                if (optionEl.textContent !== label) optionEl.textContent = label;
+                if (optionEl.disabled !== !!disabled) optionEl.disabled = !!disabled;
+            }
         );
+        // The options may be new, which resets the selection without Zag's `value` prop changing.
+        selectEl.value = String(selected);
+    }
+
+    /**
+     * Makes `parentEl` hold exactly `count` children of `tag`: it keeps the ones already there,
+     * adds the missing ones and removes the extra ones. A child of another tag (the placeholder
+     * rows of a skeleton) is replaced.
+     */
+    private fitChildren<T extends HTMLElement>(parentEl: Element, tag: string, count: number): T[] {
+        const children = Array.from(parentEl.children);
+        children.slice(count).forEach(child => child.remove());
+
+        return Array.from({ length: count }, (_, i) => {
+            const child = children[i];
+            if (child?.localName === tag) return child as T;
+
+            const el = this.doc.createElement(tag) as T;
+            if (child) child.replaceWith(el);
+            else parentEl.append(el);
+            return el;
+        });
     }
 }
