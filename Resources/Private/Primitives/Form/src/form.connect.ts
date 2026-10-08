@@ -171,7 +171,9 @@ export function connect<T extends PropTypes>(
             return normalize.element({
                 ...parts.root.attrs(scope.id),
                 noValidate: true,
+                /** The state of the form. */
                 'data-state': stateValue,
+                /** Present while the form is being submitted. */
                 'data-submitting': isSubmitting ? '' : undefined,
                 'data-invalid': isInvalid ? '' : undefined,
                 'data-dirty': isDirty ? '' : undefined,

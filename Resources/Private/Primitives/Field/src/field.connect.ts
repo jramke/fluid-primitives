@@ -137,6 +137,7 @@ export function connect<T extends PropTypes>(
             return normalize.element({
                 ...parts.root.attrs(scope.id),
                 dir: prop('dir'),
+                /** The name of the field. */
                 'data-name': prop('name'),
                 ...getDataAttrs(getFieldState()),
             });
@@ -209,6 +210,7 @@ export function connect<T extends PropTypes>(
             return normalize.element({
                 ...parts.indicator.attrs(scope.id),
                 dir: prop('dir'),
+                /** The state the indicator reflects. */
                 'data-type': indicatorState.type,
                 'aria-hidden': true,
                 hidden: indicatorState.hidden,
@@ -222,14 +224,23 @@ export function connect<T extends PropTypes>(
 
 function getDataAttrs(state: FieldState) {
     return {
+        /** Present when the field is disabled, or it is inside a disabled fieldset. */
         'data-disabled': dataAttr(state.disabled),
+        /** Present when the field is invalid: a native constraint failed, or `validate`, the form or the server reported an error. */
         'data-invalid': dataAttr(state.invalid),
+        /** Present when the field has been validated and passed. */
         'data-valid': dataAttr(state.valid === true),
+        /** Present when the field is required. */
         'data-required': dataAttr(state.required),
+        /** Present when the field is read-only. */
         'data-readonly': dataAttr(state.readOnly),
+        /** Present once the user has left the field at least once. */
         'data-touched': dataAttr(state.touched),
+        /** Present when the value differs from the one the field started with. It goes away again when the user reverts the edit. */
         'data-dirty': dataAttr(state.dirty),
+        /** Present when the field has a value. */
         'data-filled': dataAttr(state.filled),
+        /** Present when focus is inside the field. */
         'data-focus': dataAttr(state.focused),
     };
 }

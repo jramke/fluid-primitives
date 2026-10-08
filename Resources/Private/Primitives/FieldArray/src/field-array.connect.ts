@@ -48,6 +48,7 @@ export function connect<T extends PropTypes>(
                 onClick: () => actions.remove(index),
                 'aria-disabled': disabled ? true : undefined,
                 'data-disabled': disabled ? true : undefined,
+                /** The index of the row the trigger removes. */
                 'data-value': index,
             });
         },
