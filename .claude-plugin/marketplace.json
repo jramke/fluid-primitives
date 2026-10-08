@@ -1,0 +1,14 @@
+{
+    "name": "fluid-primitives",
+    "owner": {
+        "name": "Joost Ramke"
+    },
+    "description": "Claude Code plugins for Fluid Primitives, the headless component library for TYPO3 Fluid.",
+    "plugins": [
+        {
+            "name": "fluid-primitives",
+            "source": "./",
+            "description": "Teaches your coding agent Fluid Primitives, the headless component library for TYPO3 Fluid: usage and the live docs endpoints."
+        }
+    ]
+}

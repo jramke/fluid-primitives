@@ -110,6 +110,19 @@ try {
     process.exit(1);
 }
 
+// Update the Claude Code plugin manifest
+console.log('Updating .claude-plugin/plugin.json...');
+const pluginJsonPath = join(rootDir, '.claude-plugin/plugin.json');
+try {
+    const pluginJson = JSON.parse(readFileSync(pluginJsonPath, 'utf8'));
+    pluginJson.version = newVersion;
+    writeFileSync(pluginJsonPath, JSON.stringify(pluginJson, null, 4) + '\n');
+    console.log('✓ plugin.json updated');
+} catch (error) {
+    console.error(`Error updating plugin.json: ${error.message}`);
+    process.exit(1);
+}
+
 // Update ext_emconf.php
 console.log('Updating ext_emconf.php...');
 const extEmconfPath = join(rootDir, 'ext_emconf.php');
