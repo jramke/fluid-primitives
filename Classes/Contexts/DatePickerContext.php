@@ -94,6 +94,17 @@ class DatePickerContext extends AbstractComponentContext
         return $dates === [] ? null : $dates;
     }
 
+    /**
+     * What the hidden inputs submit, one entry per date and at least one: an empty date picker
+     * still submits its name.
+     *
+     * @return list<string>
+     */
+    public function getHiddenInputValues(): array
+    {
+        return $this->getDefaultValue() ?? [''];
+    }
+
     #[ExposeToClient]
     /**
      * Only the plain-string translations: Zag builds the others (day cells, previous/next, ...) as

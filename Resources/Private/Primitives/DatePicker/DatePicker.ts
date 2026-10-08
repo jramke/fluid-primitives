@@ -98,11 +98,12 @@ export class DatePicker extends FieldAwareComponent<datePicker.Props, datePicker
         const controlEl = this.hydrator.query('control');
         if (controlEl) this.spreadProps(controlEl, this.api.getControlProps());
 
-        this.spreadPropsByOptionalValue('input', ({ value }) =>
-            mergeProps(this.api.getInputProps({ index: Number(value ?? 0) }), {
-                'aria-describedby': this.field?.ariaDescribedby,
-            })
-        );
+        // The visible input holds the text as typed, the hidden inputs submit the ISO dates.
+        this.spreadPropsByOptionalValue('input', ({ value }) => {
+            const { name, ...inputProps } = this.api.getInputProps({ index: Number(value ?? 0) });
+            return mergeProps(inputProps, { 'aria-describedby': this.field?.ariaDescribedby });
+        });
+        this.renderHiddenInputs();
 
         const clearTriggerEl = this.hydrator.query('clearTrigger');
         if (clearTriggerEl) this.spreadProps(clearTriggerEl, this.api.getClearTriggerProps());
@@ -177,6 +178,35 @@ export class DatePicker extends FieldAwareComponent<datePicker.Props, datePicker
                 this.api.visibleRange.start.year
             );
         }
+    }
+
+    // One hidden input per selected date, and one empty one when there is none: the name is always
+    // submitted. A date's string is its ISO form in its own calendar, gregorian unless the entry
+    // file passed a `createCalendar`.
+    private renderHiddenInputs() {
+        const values = this.api.value.length > 0 ? this.api.value.map(date => date.toString()) : [''];
+        const inputEls = this.hydrator.queryAll<HTMLInputElement>('hiddenInput');
+        inputEls.slice(values.length).forEach(inputEl => inputEl.remove());
+
+        values.forEach((value, i) => {
+            let inputEl = inputEls[i];
+            if (!inputEl) {
+                inputEl = this.doc.createElement('input');
+                this.hydrator.stamp(inputEl, 'hiddenInput');
+                if (i > 0) inputEls[i - 1].after(inputEl);
+                else this.hydrator.query('root')?.append(inputEl);
+                inputEls[i] = inputEl;
+            }
+            this.spreadProps(
+                inputEl,
+                normalizeProps.input({
+                    type: 'hidden',
+                    name: this.machine.prop('name'),
+                    value,
+                    disabled: this.api.disabled,
+                })
+            );
+        });
     }
 
     private findByView(part: string, view: datePicker.DateView) {

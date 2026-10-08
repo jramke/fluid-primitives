@@ -137,6 +137,39 @@ final class DatePickerRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function submitsIsoDatesThroughHiddenInputsNotTheVisibleInput(): void
+    {
+        $expectations = [
+            // An empty date picker still submits its name.
+            'no date' => ['', ['']],
+            'one date' => ['defaultValue="2024-01-15"', ['2024-01-15']],
+            'several dates' => ['defaultValue="{0: \'2024-01-15\', 1: \'2024-01-20\'}"', ['2024-01-15', '2024-01-20']],
+        ];
+
+        foreach ($expectations as $case => [$attributes, $expectedValues]) {
+            $html = $this->renderTemplate('
+                <primitives:datePicker.root name="dates[]" ' . $attributes . '>
+                    <primitives:datePicker.control>
+                        <primitives:datePicker.input />
+                    </primitives:datePicker.control>
+                    <primitives:datePicker.hiddenInput />
+                </primitives:datePicker.root>
+            ');
+
+            // The visible input holds the date as typed, in the format of the locale.
+            $this->assertStringNotContainsString(' name=', $this->extractTag($html, 'data-date-picker-input'), $case);
+
+            preg_match_all('/<input[^>]*data-date-picker-hidden-input="[^"]*"[^>]*>/', $html, $matches);
+            $this->assertCount(count($expectedValues), $matches[0], $case);
+            foreach ($matches[0] as $i => $hiddenInputTag) {
+                $this->assertStringContainsString('type="hidden"', $hiddenInputTag, $case);
+                $this->assertStringContainsString('name="dates[]"', $hiddenInputTag, $case);
+                $this->assertStringContainsString('value="' . $expectedValues[$i] . '"', $hiddenInputTag, $case);
+            }
+        }
+    }
+
+    #[Test]
     public function startsInTheDefaultViewKeptBetweenMinViewAndMaxView(): void
     {
         $view = static fn(string $case): string => (
@@ -272,14 +305,17 @@ final class DatePickerRenderingTest extends FunctionalTestCase
                     <primitives:datePicker.control>
                         <primitives:datePicker.input />
                     </primitives:datePicker.control>
+                    <primitives:datePicker.hiddenInput />
                 </primitives:datePicker.root>
             </primitives:field.root>
         ');
 
         $inputTag = $this->extractTag($html, 'data-date-picker-input');
-        $this->assertStringContainsString('name="birthDate"', $inputTag);
         $this->assertStringContainsString('required', $inputTag);
         $this->assertStringContainsString('disabled', $inputTag);
+        $hiddenInputTag = $this->extractTag($html, 'data-date-picker-hidden-input');
+        $this->assertStringContainsString('name="birthDate"', $hiddenInputTag);
+        $this->assertStringContainsString('disabled', $hiddenInputTag);
 
         // The Field's label and control ids have to land on the label and input part, which Zag
         // reads from `ids` - FieldIdMapping names them.

@@ -1,0 +1,9 @@
+<f:for each="{context.hiddenInputValues}" as="value">
+    <input
+        type="hidden"
+        {f:if(condition: context.name, then: 'name="{context.name}"' )}
+        {f:if(condition: context.disabled, then: 'disabled' )}
+        value="{value}"
+        {ui:ref(name: 'hiddenInput' )}
+        {ui:attributes()} />
+</f:for>
