@@ -1,4 +1,4 @@
-<ui:prop name="view" type="string" optional="{true}" requiredAtRuntime="{true}" description="The view this element toggles from: `day`, `month`, or `year`." />
+<ui:prop name="view" type="string" optional="{true}" requiredAtRuntime="{true}" description="The view this element switches away from: `day`, `month`, or `year`." />
 
 <f:variable name="refData" value="{view: view}" />
 
@@ -6,6 +6,7 @@
     type="button"
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'viewTrigger' , value: view, data: refData )}
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
     <f:slot />
 </button>

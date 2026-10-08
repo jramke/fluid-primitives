@@ -1,12 +1,13 @@
 <ui:prop name="view" type="string" optional="{true}" requiredAtRuntime="{true}" description="The view this element renders: `day`, `month`, or `year`." />
 
-<f:variable name="matches">{f:if(condition: '{view}=={context.defaultView}', then: '{true}', else: '{false}')}</f:variable>
+<f:variable name="hidden">{f:if(condition: '{view} == {context.initialView}', then: '{false}', else: '{true}')}</f:variable>
 <f:variable name="refData" value="{view: view}" />
 
 <div
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'view' , value: view, data: refData )}
     {ui:attributes(skip: 'hidden' )}
-    {f:if(condition: '!{matches}' , then: 'hidden' )}>
+    {ui:asChild()}
+    {f:if(condition: hidden, then: 'hidden="{hidden}"' )}>
     <f:slot />
 </div>

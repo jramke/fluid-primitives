@@ -3,8 +3,10 @@
 <f:variable name="refData" value="{view: view}" />
 
 <table
+    role="grid"
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'table' , value: view, data: refData )}
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
     <f:slot />
 </table>

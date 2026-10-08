@@ -1,7 +1,8 @@
 <select
-    {f:if(condition: context.translations.yearSelectLabel, then: 'aria-label="{context.translations.yearSelectLabel}"' )}
+    {f:if(condition: context.translations.yearSelect, then: 'aria-label="{context.translations.yearSelect}"' )}
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'yearSelect' )}
     {f:if(condition: context.disabled, then: 'disabled' )}
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
 </select>

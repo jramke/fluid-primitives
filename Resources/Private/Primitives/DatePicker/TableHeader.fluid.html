@@ -1,7 +1,11 @@
 <ui:prop name="view" type="string" optional="{true}" default="day" description="The view this table header belongs to: `day`, `month`, or `year`." />
 
+<f:variable name="refData" value="{view: view, disabled: context.disabled}" />
+
 <thead
-    {ui:ref(name: 'tableHeader' , value: view )}
-    {ui:attributes()}>
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'tableHeader' , value: view, data: refData )}
+    {ui:attributes()}
+    {ui:asChild()}>
     <f:slot />
 </thead>

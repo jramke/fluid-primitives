@@ -1,15 +1,15 @@
-<f:variable name="state">{context -> ui:call(method: 'getState')}</f:variable>
-<f:variable name="hidden">{f:if(condition: '{state}==\'open\'', then: '{false}', else: '{true}')}</f:variable>
-<f:variable name="refData" value="{state: state, inline: context.inline}" />
+<f:variable name="hidden">{f:if(condition: context.open, then: '{false}', else: '{true}')}</f:variable>
+<f:variable name="refData" value="{state: context.state, inline: context.inline}" />
 
 <div
     tabindex="-1"
     role="application"
     aria-roledescription="datepicker"
-    {f:if(condition: context.translations.contentLabel, then: 'aria-label="{context.translations.contentLabel}"' )}
+    {f:if(condition: context.translations.content, then: 'aria-label="{context.translations.content}"' )}
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'content' , data: refData )}
     {ui:attributes(skip: 'hidden' )}
+    {ui:asChild()}
     {f:if(condition: hidden, then: 'hidden="{hidden}"' )}>
     <f:slot />
 </div>
