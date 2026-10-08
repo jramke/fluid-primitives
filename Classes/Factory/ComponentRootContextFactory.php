@@ -35,14 +35,16 @@ final readonly class ComponentRootContextFactory
         RenderingContextInterface $parentRenderingContext,
         ComponentCollectionInterface $componentResolver,
     ): void {
-        $baseName = ComponentNameUtility::getComponentBaseNameFromViewHelperName($viewHelperName);
+        // This factory only ever creates a root component's own context (see its own docblock), so
+        // $viewHelperName here is always a declared root.
+        $baseName = ComponentNameUtility::getComponentBaseNameFromViewHelperName($viewHelperName, isDeclaredRoot: true);
 
         $contextVariables = $this->buildContextVariables(
             $argumentDefinitions,
             $view->getRenderingContext()->getVariableProvider(),
         );
         $contextClassName = ComponentUtility::getContextClassNameFromViewHelperName(
-            $viewHelperName,
+            $componentResolver->resolveTemplateName($viewHelperName),
             $componentResolver->getContextNamespaces(),
         );
         $context = $this->contextFactory->create(

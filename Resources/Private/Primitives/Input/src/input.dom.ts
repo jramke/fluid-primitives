@@ -1,12 +1,10 @@
 import type { Scope } from '@zag-js/core';
+import { parts } from './input.anatomy';
 
-export const getRootId = (scope: Scope) => scope.ids?.root ?? `input:${scope.id}`;
-export const getLabelId = (scope: Scope) => scope.ids?.label ?? `input:${scope.id}:label`;
+// Only the parts other elements point at (`for`, `aria-describedby`) have ids.
 export const getInputId = (scope: Scope) => scope.ids?.input ?? `input:${scope.id}:input`;
 export const getWordCountId = (scope: Scope) =>
     scope.ids?.wordCount ?? `input:${scope.id}:wordCount`;
-export const getLiveRegionId = (scope: Scope) =>
-    scope.ids?.liveRegion ?? `input:${scope.id}:liveRegion`;
 
-export const getInputEl = (scope: Scope) => scope.getById<HTMLInputElement>(getInputId(scope));
-export const getLiveRegionEl = (scope: Scope) => scope.getById(getLiveRegionId(scope));
+export const getInputEl = (scope: Scope) =>
+    scope.query<HTMLInputElement>(scope.selector(parts.input));

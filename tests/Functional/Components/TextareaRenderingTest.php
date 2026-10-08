@@ -25,9 +25,8 @@ final class TextareaRenderingTest extends FunctionalTestCase
             </primitives:textarea.root>
         ');
 
-        $this->assertStringContainsString('data-scope="textarea"', $html);
-        $this->assertStringContainsString('data-part="root"', $html);
-        $this->assertStringContainsString('data-part="textarea"', $html);
+        $this->assertStringContainsString('data-textarea-root="', $html);
+        $this->assertStringContainsString('data-textarea-textarea="', $html);
         $this->assertStringContainsString('rows="6"', $html);
         $this->assertStringContainsString('>hello world</textarea>', $html);
     }
@@ -133,7 +132,7 @@ final class TextareaRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
-    public function includesAnnounceDebounceDefaultInHydrationData(): void
+    public function includesAnnounceDefaultsInHydrationData(): void
     {
         $this->renderTemplate('
             <primitives:textarea.root>
@@ -145,6 +144,7 @@ final class TextareaRenderingTest extends FunctionalTestCase
         $textareaData = array_values($hydrationData['textarea'])[0];
 
         $this->assertSame(600, $textareaData['props']['announceDebounce']);
+        $this->assertTrue($textareaData['props']['announce']);
     }
 
     #[Test]
@@ -159,22 +159,19 @@ final class TextareaRenderingTest extends FunctionalTestCase
             </primitives:field.root>
         ');
 
-        // Field.Label generates its own id independently of the nested Textarea.
-        $this->assertStringContainsString('id="field:my-field:label"', $html);
+        // Field.Label is marked with the Field's root id, independently of the nested Textarea.
+        $this->assertStringContainsString('data-field-label="my-field"', $html);
 
         // Textarea inherits the Field's name/disabled/invalid state...
         $this->assertStringContainsString('name="comment"', $html);
         $this->assertStringContainsString('data-disabled', $html);
         $this->assertStringContainsString('aria-invalid="true"', $html);
 
-        // ...and its textarea id is overridden to the Field's generated "control" id (per
-        // ComponentPartIdUtility::FIELD_ID_PARTS['textarea']['control'] = 'textarea'), rather than
-        // generating its own "textarea:...:textarea" id - this is what lets a <label for="..."> pointing
-        // at the Field's control id reach the actual native textarea. The wrapping root div still gets
-        // its own generated id - only the field-aware control part is overridden.
-        $textareaTag = $this->extractTag($html, 'textarea');
+        // ...and its textarea carries the Field's generated "control" id (per
+        // FieldIdMapping::FIELD_ID_PARTS['textarea']['control'] = 'textarea') - this is what lets a
+        // <label for="..."> pointing at the Field's control id reach the actual native textarea.
+        $textareaTag = $this->extractTag($html, 'data-textarea-textarea');
         $this->assertStringContainsString('id="field:my-field:control"', $textareaTag);
-        $this->assertStringNotContainsString('id="textarea:', $textareaTag);
     }
 
     #[Test]
@@ -191,18 +188,17 @@ final class TextareaRenderingTest extends FunctionalTestCase
             </primitives:field.root>
         ');
 
-        $labelTag = $this->extractTag($html, 'label');
+        $labelTag = $this->extractTag($html, 'data-textarea-label');
         $this->assertStringContainsString('id="field:my-field:label"', $labelTag);
-        $this->assertStringNotContainsString('id="textarea:', $labelTag);
 
-        $textareaTag = $this->extractTag($html, 'textarea');
+        $textareaTag = $this->extractTag($html, 'data-textarea-textarea');
         $this->assertStringContainsString('id="field:my-field:control"', $textareaTag);
     }
 
-    private function extractTag(string $html, string $part): string
+    private function extractTag(string $html, string $attribute): string
     {
-        $matched = preg_match('/<[a-z]+[^>]*data-part="' . preg_quote($part, '/') . '"[^>]*>/', $html, $matches);
-        $this->assertSame(1, $matched, sprintf('Expected exactly one element with data-part="%s".', $part));
+        $matched = preg_match('/<[a-z]+[^>]*' . preg_quote($attribute, '/') . '="[^"]*"[^>]*>/', $html, $matches);
+        $this->assertSame(1, $matched, sprintf('Expected exactly one element with %s.', $attribute));
 
         return $matches[0];
     }

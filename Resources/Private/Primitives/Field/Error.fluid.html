@@ -1,7 +1,0 @@
-<div
-    {f:if(condition: '!{context.invalid}', then: 'hidden' )}
-    {f:if(condition: class, then: 'class="{class}"' )}
-    {ui:ref(name: 'error' )}
-    {ui:attributes()}>
-    <f:slot />
-</div>

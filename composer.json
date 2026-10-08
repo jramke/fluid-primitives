@@ -39,6 +39,8 @@
         "test:fromdocs": "php ../../vendor/bin/phpunit -c phpunit.xml --testdox --colors=always --display-notices",
         "prepare-release": [
             "rm -rf .github",
+            "rm -rf .claude-plugin",
+            "rm -rf skills",
             "rm -f .gitignore",
             "rm -f .gitattributes",
             "rm -rf scripts",

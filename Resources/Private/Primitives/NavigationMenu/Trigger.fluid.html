@@ -7,13 +7,13 @@
 <f:variable name="refData" value="{disabled: itemState.disabled, state: state}" />
 
 <button
-    data-uid="{context.rootId}"
     type="button"
     aria-expanded="{f:if(condition: itemState.open, then: 'true', else: 'false')}"
     aria-haspopup="menu"
     {f:if(condition: itemState.disabled, then: 'disabled' )}
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'trigger' , value: value, data: refData)}
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
     <f:slot />
 </button>

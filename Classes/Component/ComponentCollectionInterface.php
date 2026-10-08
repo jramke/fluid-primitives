@@ -24,6 +24,13 @@ interface ComponentCollectionInterface extends
     public function getComponentDefinition(string $viewHelperName): ComponentDefinition;
 
     /**
+     * Whether $viewHelperName's own declared shape (folder-shape default included) is root - see
+     * {@see \Jramke\FluidPrimitives\Utility\ComponentRootUtility::isDeclaredRootFromViewHelperName()}
+     * for the underlying rule this reads back from an already-parsed {@see getComponentDefinition()}.
+     */
+    public function isDeclaredRoot(string $viewHelperName): bool;
+
+    /**
      * @return array<string>
      */
     public function getContextNamespaces(): array;

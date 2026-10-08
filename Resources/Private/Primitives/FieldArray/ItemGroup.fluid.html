@@ -1,6 +1,7 @@
 <div
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'itemGroup' )}
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
     <f:slot />
 </div>

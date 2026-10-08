@@ -4,6 +4,7 @@
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'control' , data: refData )}
     {ui:attributes()}
+    {ui:asChild()}
     style="touch-action: none; user-select: none; position: relative;">
     <f:slot />
 </div>

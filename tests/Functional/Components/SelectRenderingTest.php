@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Tests\Functional\Components;
 
 use Jramke\FluidPrimitives\Domain\Dto\ListCollection;
+use Jramke\FluidPrimitives\Enum\PopupType;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Registry\PortalRegistry;
 use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
@@ -24,7 +25,7 @@ final class SelectRenderingTest extends FunctionalTestCase
             </primitives:select.root>
         ');
 
-        $this->assertStringContainsString('data-scope="select"', $html);
+        $this->assertStringContainsString('data-select-hidden-select="', $html);
     }
 
     #[Test]
@@ -67,8 +68,7 @@ final class SelectRenderingTest extends FunctionalTestCase
             </primitives:select.root>
         ', ['collection' => $collection]);
 
-        $this->assertStringContainsString('data-scope="select"', $html);
-        $this->assertStringContainsString('data-part="root"', $html);
+        $this->assertStringContainsString('data-select-root="', $html);
     }
 
     #[Test]
@@ -90,6 +90,71 @@ final class SelectRenderingTest extends FunctionalTestCase
         $this->assertStringContainsString('type="button"', $html);
         $this->assertStringContainsString('role="combobox"', $html);
         $this->assertStringContainsString('aria-haspopup="listbox"', $html);
+    }
+
+    #[Test]
+    public function rendersTheListboxOnTheListPartInsideAPresentationalContent(): void
+    {
+        $collection = new ListCollection([['value' => 'opt-1', 'label' => 'Option 1']]);
+
+        $html = $this->renderTemplate('
+            <primitives:select.root collection="{collection}" multiple="{true}">
+                <primitives:select.positioner>
+                    <primitives:select.content>
+                        <primitives:select.list>
+                            <primitives:select.item item="{collection.items.0}">Option 1</primitives:select.item>
+                        </primitives:select.list>
+                    </primitives:select.content>
+                </primitives:select.positioner>
+            </primitives:select.root>
+        ', ['collection' => $collection]);
+
+        preg_match('/<div[^>]*data-select-content="[^"]+"[^>]*>/', $html, $content);
+        preg_match('/<div[^>]*data-select-list="[^"]+"[^>]*>/', $html, $list);
+
+        $this->assertStringContainsString('role="presentation"', $content[0]);
+        $this->assertStringNotContainsString('tabindex', $content[0]);
+        $this->assertStringContainsString('role="listbox"', $list[0]);
+        $this->assertStringContainsString('tabindex="0"', $list[0]);
+        $this->assertStringContainsString('aria-multiselectable="true"', $list[0]);
+    }
+
+    #[Test]
+    public function shipsThePopupTypeToTheClientDefaultingToListbox(): void
+    {
+        $this->renderTemplate('
+            <primitives:select.root>
+                <primitives:select.hiddenSelect />
+            </primitives:select.root>
+        ');
+
+        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
+        $selectData = array_values($hydrationData['select'])[0];
+
+        $this->assertSame(PopupType::Listbox->value, $selectData['props']['popupType']);
+    }
+
+    #[Test]
+    public function rendersTheTriggerAndContentForThePopupType(): void
+    {
+        $render = fn(string $attributes): string => $this->renderTemplate('
+            <primitives:select.root ' .
+        $attributes .
+        '>
+                <primitives:select.trigger>Open</primitives:select.trigger>
+                <primitives:select.positioner>
+                    <primitives:select.content><primitives:select.list>List</primitives:select.list></primitives:select.content>
+                </primitives:select.positioner>
+            </primitives:select.root>
+        ');
+
+        $listbox = $render('');
+        $dialog = $render('popupType="{f:constant(name: \'Jramke\FluidPrimitives\Enum\PopupType::Dialog\')}"');
+
+        $this->assertStringContainsString('aria-haspopup="listbox"', $listbox);
+        $this->assertMatchesRegularExpression('/<div[^>]*role="presentation"[^>]*data-select-content="/', $listbox);
+        $this->assertStringContainsString('aria-haspopup="dialog"', $dialog);
+        $this->assertMatchesRegularExpression('/<div[^>]*role="dialog"[^>]*data-select-content="/', $dialog);
     }
 
     #[Test]
@@ -187,10 +252,10 @@ final class SelectRenderingTest extends FunctionalTestCase
             </primitives:select.root>
         ', ['collection' => $collection]);
 
-        $this->assertStringNotContainsString('data-part="content"', $html);
+        $this->assertStringNotContainsString('data-select-content="', $html);
 
         $portaled = implode('', PortalRegistry::getInstance()->getAllByName('default'));
-        $this->assertStringContainsString('data-part="content"', $portaled);
+        $this->assertStringContainsString('data-select-content="portaled-select"', $portaled);
 
         $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
         $this->assertArrayHasKey('portaled-select', $hydrationData['select'] ?? []);

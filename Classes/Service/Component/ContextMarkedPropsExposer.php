@@ -39,7 +39,12 @@ final readonly class ContextMarkedPropsExposer
         RenderingContextInterface $parentRenderingContext,
         string $viewHelperName,
     ): ?\Closure {
-        $baseName = ComponentNameUtility::getComponentBaseNameFromViewHelperName($viewHelperName);
+        // $viewHelperName here is always a composable (non-root) component's own name - it's always
+        // looking for its root ancestor's already-created context, never creating its own.
+        $baseName = ComponentNameUtility::getComponentBaseNameFromViewHelperName(
+            $viewHelperName,
+            isDeclaredRoot: false,
+        );
 
         $context = ContextService::getFromRenderingContext($parentRenderingContext, $baseName);
         if (!$context instanceof ComponentContextInterface) {

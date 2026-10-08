@@ -19,5 +19,5 @@
         "verbatimModuleSyntax": true,
         "skipLibCheck": true
     },
-    "include": ["Resources/Private/**/*.ts"]
+    "include": ["Resources/Private/**/*.ts", "tests/Client/**/*.ts"]
 }

@@ -9,7 +9,7 @@ import {
     type ConverterMachineProps,
 } from '../../Client';
 import { getListCollectionFromHydrationData } from '../../Client/src/lib/hydration';
-import type { FieldMachine } from '../Field/src/field.registry';
+import type { FieldClientApi } from '../Field/src/field.handle';
 
 // Wire shape -> real @zag-js/collection ListCollection instance. Registered here (not in
 // transformProps) so mountAll/mount convert it before the component is even constructed - see
@@ -35,19 +35,20 @@ declare module 'fluid-primitives' {
 export class Select extends FieldAwareComponent<select.Props, select.Api> {
     static componentName = 'select';
 
-    propsWithField(props: select.Props, fieldMachine: FieldMachine): select.Props {
+    propsWithField(props: select.Props, field: FieldClientApi): select.Props {
         return {
             ...props,
-            disabled: props.disabled ?? fieldMachine.context.get('disabled'),
-            readOnly: props.readOnly ?? fieldMachine.context.get('readOnly'),
-            required: props.required ?? fieldMachine.context.get('required'),
-            invalid: props.invalid ?? fieldMachine.context.get('invalid'),
-            name: props.name ?? fieldMachine.prop('name'),
+            disabled: props.disabled ?? field.disabled,
+            readOnly: props.readOnly ?? field.readOnly,
+            required: props.required ?? field.required,
+            invalid: props.invalid ?? field.invalid,
+            name: props.name ?? field.name,
         };
     }
 
     initMachine(props: select.Props): Machine<any> {
-        return new Machine(select.machine, this.withFieldProps(props));
+        const [machineProps] = select.splitProps(this.withFieldProps(props));
+        return new Machine(select.machine, machineProps);
     }
 
     initApi() {
@@ -57,18 +58,15 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
     render = () => {
         this.subscribeToFieldService();
 
-        const rootEl = this.getElement('root');
+        const rootEl = this.hydrator.query('root');
         if (rootEl) this.spreadProps(rootEl, this.api.getRootProps());
 
-        const controlEl = this.getElement('control');
+        const controlEl = this.hydrator.query('control');
         if (controlEl) this.spreadProps(controlEl, this.api.getControlProps());
 
-        const hiddenSelectEl = this.getElement('hiddenSelect');
+        const hiddenSelectEl = this.hydrator.query('hiddenSelect');
         if (hiddenSelectEl) {
-            const mergedProps = mergeProps(this.api.getHiddenSelectProps(), {
-                'aria-describedby': this.fieldMachine?.context.get('describeIds') || undefined,
-            });
-            this.spreadProps(hiddenSelectEl, mergedProps);
+            this.spreadProps(hiddenSelectEl, this.api.getHiddenSelectProps());
 
             // We need to handle this client side so the select can default to an empty string
             // Setting the select attribute server side has no effect
@@ -78,22 +76,32 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
             if (defaultOption) defaultOption.selected = isValueEmpty;
         }
 
-        const labelEl = this.getElement('label');
+        const labelEl = this.hydrator.query('label');
         if (labelEl) this.spreadProps(labelEl, this.api.getLabelProps());
 
-        const triggerEl = this.getElement('trigger');
-        if (triggerEl) this.spreadProps(triggerEl, this.api.getTriggerProps());
+        // The trigger is what receives focus, the hidden select is aria-hidden: the field's helper
+        // and error texts have to be described from the trigger to be announced at all.
+        const triggerEl = this.hydrator.query('trigger');
+        if (triggerEl) {
+            const mergedProps = mergeProps(this.api.getTriggerProps(), {
+                'aria-describedby': this.field?.ariaDescribedby,
+            });
+            this.spreadProps(triggerEl, mergedProps);
+        }
 
-        const positionerEl = this.getElement('positioner');
+        const positionerEl = this.hydrator.query('positioner');
         if (positionerEl) this.spreadProps(positionerEl, this.api.getPositionerProps());
 
-        const contentEl = this.getElement('content');
+        const contentEl = this.hydrator.query('content');
         if (contentEl) this.spreadProps(contentEl, this.api.getContentProps());
+
+        const listEl = this.hydrator.query('list');
+        if (listEl) this.spreadProps(listEl, this.api.getListProps());
 
         // We need to make sure the element is rerendered because otherwise safari doesnt update the spans value in the a11y tree
         // and the button would announce an old value when it receives focus.
         // see: https://github.com/chakra-ui/zag/issues/3099
-        const valueTextEl = this.getElement('valueText');
+        const valueTextEl = this.hydrator.query('valueText');
         if (valueTextEl) {
             const currentText = valueTextEl.textContent || valueTextEl.dataset.placeholder || '';
             const nextValue = this.api.valueAsString || valueTextEl.dataset.placeholder || '';
@@ -107,7 +115,7 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
 
             if (nextValue !== currentText) {
                 queueMicrotask(() => {
-                    const el = this.getElement('valueText');
+                    const el = this.hydrator.query('valueText');
                     if (el?.isConnected) {
                         const next = el.cloneNode(true) as HTMLElement;
                         el.replaceWith(next);
@@ -117,53 +125,33 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
             }
         }
 
-        this.spreadPropsByValue(
-            'itemGroup',
-            ({ value }) => {
-                return this.api.getItemGroupProps({ id: value });
-            },
-            { parent: this.doc }
-        );
+        this.spreadPropsByValue('itemGroup', ({ value }) => {
+            return this.api.getItemGroupProps({ id: value });
+        });
 
-        this.spreadPropsByValue(
-            'itemGroupLabel',
-            ({ value }) => {
-                return this.api.getItemGroupLabelProps({ htmlFor: value });
-            },
-            { parent: this.doc }
-        );
+        this.spreadPropsByValue('itemGroupLabel', ({ value }) => {
+            return this.api.getItemGroupLabelProps({ htmlFor: value });
+        });
 
-        this.spreadPropsByValue(
-            'item',
-            ({ value }) => {
-                const item = this.api.collection.find(value);
-                return item ? this.api.getItemProps({ item }) : null;
-            },
-            { parent: this.doc }
-        );
+        this.spreadPropsByValue('item', ({ value }) => {
+            const item = this.api.collection.find(value);
+            return item ? this.api.getItemProps({ item }) : null;
+        });
 
-        this.spreadPropsByValue(
-            'itemText',
-            ({ value }) => {
-                const item = this.api.collection.find(value);
-                return item ? this.api.getItemTextProps({ item }) : null;
-            },
-            { parent: this.doc }
-        );
+        this.spreadPropsByValue('itemText', ({ value }) => {
+            const item = this.api.collection.find(value);
+            return item ? this.api.getItemTextProps({ item }) : null;
+        });
 
-        this.spreadPropsByValue(
-            'itemIndicator',
-            ({ value }) => {
-                const item = this.api.collection.find(value);
-                return item ? this.api.getItemIndicatorProps({ item }) : null;
-            },
-            { parent: this.doc }
-        );
+        this.spreadPropsByValue('itemIndicator', ({ value }) => {
+            const item = this.api.collection.find(value);
+            return item ? this.api.getItemIndicatorProps({ item }) : null;
+        });
 
-        const clearTriggerEl = this.getElement('clearTrigger');
+        const clearTriggerEl = this.hydrator.query('clearTrigger');
         if (clearTriggerEl) this.spreadProps(clearTriggerEl, this.api.getClearTriggerProps());
 
-        const indicatorEl = this.getElement('indicator');
+        const indicatorEl = this.hydrator.query('indicator');
         if (indicatorEl) this.spreadProps(indicatorEl, this.api.getIndicatorProps());
     };
 }

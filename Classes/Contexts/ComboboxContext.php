@@ -9,6 +9,7 @@ use Jramke\FluidPrimitives\Domain\Dto\ListCollection;
 use Jramke\FluidPrimitives\Domain\Dto\ListCollectionItem;
 use Jramke\FluidPrimitives\Service\TranslatorService;
 use Jramke\FluidPrimitives\Traits\HasListCollectionTrait;
+use Jramke\FluidPrimitives\Traits\HasPopupTypeTrait;
 use Jramke\FluidPrimitives\Traits\HasTranslationsTrait;
 use Jramke\FluidPrimitives\Utility\Typed;
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
@@ -17,6 +18,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 class ComboboxContext extends AbstractComponentContext
 {
     use HasListCollectionTrait;
+    use HasPopupTypeTrait;
     use HasTranslationsTrait;
 
     public function __construct(
@@ -47,6 +49,27 @@ class ComboboxContext extends AbstractComponentContext
         }
 
         return is_array($defaultValue) ? array_map(Typed::string(...), $defaultValue) : null;
+    }
+
+    /**
+     * What the hidden inputs submit. Nothing selected still renders one empty input, like a native
+     * input does, so the name is always submitted and a field has an input to put its focus on.
+     *
+     * @return array<string>
+     */
+    public function getHiddenInputValues(): array
+    {
+        return $this->getDefaultValue() ?? [''];
+    }
+
+    /**
+     * Whether the trigger can receive focus: what the trigger part's own `focusable` prop says, and
+     * otherwise whatever Zag does by default - only a dialog popup has a focusable trigger, since its
+     * input moved into the content and the trigger is what opens it.
+     */
+    public function isTriggerFocusable(?bool $focusable = null): bool
+    {
+        return $focusable ?? $this->isDialogPopup();
     }
 
     public function getInitialInputValue(): string

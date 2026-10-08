@@ -21,8 +21,7 @@ final class TabsRenderingTest extends FunctionalTestCase
             </primitives:tabs.root>
         ');
 
-        $this->assertStringContainsString('data-scope="tabs"', $html);
-        $this->assertStringContainsString('data-part="root"', $html);
+        $this->assertStringContainsString('data-tabs-root="', $html);
     }
 
     #[Test]
@@ -38,7 +37,7 @@ final class TabsRenderingTest extends FunctionalTestCase
         ');
 
         $this->assertStringContainsString('role="tablist"', $html);
-        $this->assertStringContainsString('data-part="list"', $html);
+        $this->assertStringContainsString('data-tabs-list="', $html);
     }
 
     #[Test]
@@ -56,7 +55,7 @@ final class TabsRenderingTest extends FunctionalTestCase
         $this->assertStringContainsString('<button', $html);
         $this->assertStringContainsString('role="tab"', $html);
         $this->assertStringContainsString('type="button"', $html);
-        $this->assertStringContainsString('data-part="trigger"', $html);
+        $this->assertStringContainsString('data-tabs-trigger="', $html);
     }
 
     #[Test]
@@ -93,5 +92,28 @@ final class TabsRenderingTest extends FunctionalTestCase
 
         $this->assertStringContainsString('disabled', $html);
         $this->assertStringContainsString('data-disabled', $html);
+    }
+
+    #[Test]
+    public function keepsTriggersAndPanelsOutOfTheTabOrderWithVirtualFocus(): void
+    {
+        $render = fn(string $attributes): string => $this->renderTemplate(
+            '
+            <primitives:tabs.root defaultValue="tab-1" ' . $attributes . '>
+                <primitives:tabs.list>
+                    <primitives:tabs.trigger value="tab-1">Tab 1</primitives:tabs.trigger>
+                </primitives:tabs.list>
+                <primitives:tabs.content value="tab-1">Content 1</primitives:tabs.content>
+            </primitives:tabs.root>
+        ',
+        );
+
+        $roving = $render('');
+        $this->assertMatchesRegularExpression('/role="tab"[^>]*tabindex="0"/', $roving);
+        $this->assertMatchesRegularExpression('/role="tabpanel"[^>]*tabindex="0"/', $roving);
+
+        $virtual = $render('virtualFocus="{true}"');
+        $this->assertMatchesRegularExpression('/role="tab"[^>]*tabindex="-1"/', $virtual);
+        $this->assertMatchesRegularExpression('/role="tabpanel"[^>]*tabindex="-1"/', $virtual);
     }
 }

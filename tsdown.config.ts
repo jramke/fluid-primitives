@@ -13,6 +13,7 @@ export default defineConfig({
         'date-picker': './Resources/Private/Primitives/DatePicker/DatePicker.ts',
         field: './Resources/Private/Primitives/Field/Field.ts',
         'field-array': './Resources/Private/Primitives/FieldArray/FieldArray.ts',
+        fieldset: './Resources/Private/Primitives/Fieldset/Fieldset.ts',
         'file-upload': './Resources/Private/Primitives/FileUpload/FileUpload.ts',
         form: './Resources/Private/Primitives/Form/Form.ts',
         textarea: './Resources/Private/Primitives/Textarea/Textarea.ts',

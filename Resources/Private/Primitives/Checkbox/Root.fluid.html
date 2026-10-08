@@ -8,13 +8,14 @@
 <f:comment>HTML/zag default is 'on' but we use '1' for easier boolean conversion with extbase</f:comment>
 <ui:prop name="value" type="string" optional="{true}" client="{true}" default="1" description="The value of checkbox input. Useful for form submission." />
 
-<ui:error when="!{context -> ui:call(method: 'isValueValid')}" message="The defaultChecked value '{defaultChecked}' is invalid. It must be a boolean or 'indeterminate'." />
+<ui:error when="!{context.valueValid}" message="The defaultChecked value '{defaultChecked}' is invalid. It must be a boolean or 'indeterminate'." />
 
-<f:variable name="refData">{context -> ui:call(method: 'getDataAttributes')}</f:variable>
+<f:variable name="refData">{context.dataAttributes}</f:variable>
 
 <label
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'root' , data: refData )}
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
     <f:slot />
 </label>

@@ -8,10 +8,7 @@ class Constants
 {
     public const PROP_ROOT_ID = 'rootId';
 
-    public const PROPS_MARKED_FOR_CLIENT_KEY = '#__propsMarkedForClient';
-    public const PROPS_MARKED_FOR_CONTEXT_KEY = '#__propsMarkedForContext';
-
-    public const GLOBAL_PROPS = ['ids', 'attributes', 'asChild', 'rootId', 'controlled', 'spreadProps', 'class'];
+    public const GLOBAL_PROPS = ['ids', 'attributes', 'asChild', 'rootId', 'autoMount', 'spreadProps', 'class'];
 
     public const RESERVED_PROPS = [
         self::PROP_ROOT_ID, // reserved as we declare it manually
@@ -20,6 +17,7 @@ class Constants
         'settings', // reserved for the component settings
         'class', // reserved for the component class and added automatically for every component
         'asChild',
+        'spreadProps', // reserved and added automatically for every component, see AbstractComponentCollection::getComponentDefinition()
         'isRenderStencil', // reserved for ui:template's own stencil-detection flag on the context
     ];
 
@@ -47,4 +45,12 @@ class Constants
     ];
 
     public const MANUALLY_EXPOSED_TO_CLIENT_MARKER = '<!-- FLUID_PRIMITIVES_COMPONENT_MANUALLY_EXPOSED_TO_CLIENT -->';
+
+    /**
+     * Reserved boolean attribute {@see \Jramke\FluidPrimitives\ViewHelpers\AsChildViewHelper} renders
+     * onto whichever tag it's placed on, so {@see \Jramke\FluidPrimitives\Service\Component\AsChildAttributeSpreader}
+     * can find that exact tag in the rendered component HTML instead of assuming it's the first one.
+     * Stripped before the merged attributes reach the final output.
+     */
+    public const AS_CHILD_TARGET_MARKER = 'data-fluid-primitives-aschild-target';
 }

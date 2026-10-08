@@ -9,125 +9,15 @@ import type {
 import { applyClientPropConverters } from './client-prop-converters';
 import { Component } from './component';
 
-// Keep in sync with: Classes/Utility/ComponentUtility.php
-const ID_NAMESPACE_OVERRIDES: Record<string, string> = {
-    'navigation-menu': 'nav-menu',
-    clipboard: 'clip',
-    'file-upload': 'file',
-    'date-picker': 'datepicker',
-};
-
-// Keep in sync with: Classes/Utility/ComponentUtility.php
-type PartSegmentOverride =
-    | string
-    | {
-          segment: string;
-          valueSeparator?: string;
-          rootIdSeparator?: string;
-          segmentSeparator?: string;
-          namespace?: string;
-      };
-
-const PART_SEGMENT_OVERRIDES: Record<string, Record<string, PartSegmentOverride>> = {
-    // TODO: Revisit this override map after upgrading to zag-js v2.
-    'radio-group': {
-        item: 'radio',
-        itemHiddenInput: 'radio:input',
-        itemControl: 'radio:control',
-        itemText: 'radio:label',
-    },
-    accordion: {
-        itemTrigger: 'trigger',
-        itemContent: 'content',
-    },
-    select: {
-        hiddenSelect: 'select',
-        itemGroup: 'optgroup',
-        itemGroupLabel: 'optgroup-label',
-        item: 'option',
-    },
-    combobox: {
-        positioner: 'popper',
-        trigger: 'toggle-btn',
-        clearTrigger: 'clear-btn',
-        itemGroup: 'optgroup',
-        itemGroupLabel: 'optgroup-label',
-        item: 'option',
-    },
-    tabs: {
-        trigger: { segment: 'trigger', valueSeparator: '-' },
-        content: { segment: 'content', valueSeparator: '-' },
-    },
-    'number-input': {
-        incrementTrigger: 'inc',
-        decrementTrigger: 'dec',
-    },
-    popover: {
-        positioner: 'popper',
-        description: 'desc',
-        closeTrigger: 'close',
-    },
-    switch: {
-        hiddenInput: 'input',
-    },
-    'file-upload': {
-        hiddenInput: 'input',
-        itemSizeText: 'item-size',
-        itemDeleteTrigger: 'item-delete',
-    },
-    tooltip: {
-        positioner: 'popper',
-    },
-    dialog: {
-        closeTrigger: 'close',
-    },
-    menu: {
-        contextTrigger: 'ctx-trigger',
-        positioner: 'popper',
-        itemGroup: 'group',
-        itemGroupLabel: 'group-label',
-        item: {
-            namespace: '',
-            segment: '',
-            rootIdSeparator: '',
-            segmentSeparator: '',
-            valueSeparator: '/',
-        },
-    },
-    slider: {
-        valueText: 'value-text',
-        hiddenInput: 'input',
-    },
-    'scroll-area': {
-        root: { segment: 'root', rootIdSeparator: '-' },
-        viewport: { segment: 'viewport', rootIdSeparator: '-' },
-        content: { segment: 'content', rootIdSeparator: '-' },
-    },
-    'date-picker': {
-        clearTrigger: 'clear',
-        nextTrigger: 'next',
-        prevTrigger: 'prev',
-        viewTrigger: 'view',
-        // Zag has no id for the `view` wrapper itself, only for `viewTrigger` (which must keep the
-        // 'view' segment above to match what `getViewTriggerProps()` stamps onto it on hydration) -
-        // without this override both parts would default to the same 'view' segment and collide on
-        // one id for the same `value`.
-        view: 'view-panel',
-        monthSelect: 'month-select',
-        yearSelect: 'year-select',
-    },
-};
-
-// A part's own name is lowerCamelCase (mirroring zag-js's own `ids` prop keys, so overriding a
-// part's id reads the same way it does in zag itself), but `data-part` always renders lower-kebab
-// for CSS/selector consistency. Keep in sync with: Classes/Utility/ComponentUtility.php's
-// camelCaseToLowerCaseDashed()/lowerCaseDashedToCamelCase().
+/**
+ * @internal
+ *
+ * A part's own name is lowerCamelCase (mirroring zag-js's own `ids` prop keys), but its attribute
+ * always renders lower-kebab. Keep in sync with: Classes/Utility/ComponentNameUtility.php's
+ * camelCaseToLowerCaseDashed().
+ */
 export function toKebabCase(part: string): string {
     return part.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
-}
-
-function toCamelCase(part: string): string {
-    return part.replace(/-([a-z0-9])/g, (_match, char: string) => char.toUpperCase());
 }
 
 /**
@@ -154,6 +44,7 @@ function parseNamespacedComponentName(componentName: string): {
     };
 }
 
+/** @internal */
 export function getHydrationData(component: string): Record<string, ComponentHydrationData> | null;
 export function getHydrationData(component: string, id: string): ComponentHydrationData | null;
 export function getHydrationData(component?: string, id?: string) {
@@ -171,10 +62,18 @@ export function getHydrationData(component?: string, id?: string) {
     // Hydration data itself is always registered under the kebab-case clientBaseName (mirrors
     // PHP's HydrationRegistry) - converting here means every caller, direct or via
     // mount()/mountAll(), can consistently pass the same camelCase name used everywhere else
-    // (static componentName, getElement() part names).
+    // (static componentName, query() part names). A multi-segment name (e.g.
+    // "molecules.checkboxGroup") walks one nested level per dot-segment, mirroring how PHP's
+    // HydrationRegistry.add() builds the tree - toKebabCase() is dot-agnostic, so it can run on
+    // the whole string before splitting.
     const clientBaseName = toKebabCase(baseName);
-
-    const instances = hydrationData[namespace]?.[clientBaseName];
+    let instances: unknown = hydrationData[namespace];
+    for (const segment of clientBaseName.split('.')) {
+        if (!instances || typeof instances !== 'object') {
+            return null;
+        }
+        instances = (instances as Record<string, unknown>)[segment];
+    }
     if (!instances) {
         return null;
     }
@@ -183,7 +82,7 @@ export function getHydrationData(component?: string, id?: string) {
         return instances;
     }
 
-    return instances[id] || null;
+    return (instances as Record<string, unknown>)[id] || null;
 }
 
 /**
@@ -198,10 +97,14 @@ function getNestedComponents(scopeId: string): NestedComponentEntry[] {
 }
 
 /**
- * Looks up another already-mounted component instance (from either `mountAll` or `mount`) by its
- * namespaced component name and hydration id (the `id` prop it was rendered with). For primitives
- * that compose two independent instances of themselves at runtime (e.g. Menu submenus linking a
- * parent/child pair via their own `id`s) rather than through props alone.
+ * Finds a component instance that is already mounted, by the namespaced name it was mounted with and
+ * its hydration id (the `id` prop it was rendered with). Works for instances from `mountAll()` and
+ * `mount()` alike. It is for primitives that compose two independent instances of themselves at
+ * runtime, e.g. the submenus of a Menu.
+ *
+ * @param componentName - The namespaced name, e.g. `ui:menu`.
+ * @param id - The hydration id of the instance.
+ * @returns The instance, or `undefined` if none is mounted under that id.
  */
 export function getComponentInstance<
     T extends Component<unknown, unknown> = Component<unknown, unknown>,
@@ -212,6 +115,7 @@ export function getComponentInstance<
     ] as T | undefined;
 }
 
+/** @internal */
 export function getGlobals(): FluidPrimitivesGlobals | null {
     const globals = window.FluidPrimitives?.globals;
 
@@ -222,6 +126,7 @@ export function getGlobals(): FluidPrimitivesGlobals | null {
     return globals;
 }
 
+/** @internal */
 export function getGlobal<T = unknown>(key: string): T | undefined {
     const globals = getGlobals();
     if (!globals || !(key in globals)) {
@@ -232,77 +137,29 @@ export function getGlobal<T = unknown>(key: string): T | undefined {
 }
 
 /**
- * Dev-only safety net for a footgun inherent to `ui:ref`: a part rendered without a `value`
- * discriminator gets the same `id` every time it renders, which is correct for a true singleton
- * part (root, trigger, content, ...) but silently produces duplicate ids if the same value-less
- * part is placed more than once per component instance (e.g. a decorative separator between
- * groups) - duplicate DOM ids don't throw, they just make `getElementById`/`querySelector`-based
- * lookups (including this library's own `getElement`) silently resolve to whichever element
- * happens to match first.
+ * Mounts every instance of a component that is not mounted yet and was not rendered with
+ * `autoMount="{false}"`. It is safe to call more than once, e.g. after lazily inserted DOM adds new
+ * instances: mounted ones are skipped.
  *
- * Scoped to `[data-scope][id]` so it only ever flags fluid-primitives-managed elements, never
- * unrelated ids elsewhere on the consumer's page. Gated by `window.FluidPrimitives.globals.debug`
- * (see {@see getGlobal}) - set automatically to whether TYPO3's own Application Context is
- * development ({@see \Jramke\FluidPrimitives\Registry\HydrationRegistry}), nothing for a consumer
- * to configure. Never runs unless that's true, so it costs nothing in production and never needs
- * stripping from the bundle.
- */
-export function warnAboutDuplicateIds(root: Document | Element = document): void {
-    if (!getGlobal<boolean>('debug')) return;
-
-    const elementsById = new Map<string, Element[]>();
-    root.querySelectorAll('[data-scope][id]').forEach(el => {
-        const matches = elementsById.get(el.id) ?? [];
-        matches.push(el);
-        elementsById.set(el.id, matches);
-    });
-
-    for (const [id, elements] of elementsById) {
-        if (elements.length <= 1) continue;
-
-        console.warn(
-            `[fluid-primitives] Duplicate id "${id}" found on ${elements.length} elements. ` +
-                'A part rendered without a `value` discriminator was likely used more than once ' +
-                'in the same component instance - see the "Marking Elements for Hydration" section ' +
-                'of the Hydration docs.',
-            elements
-        );
-    }
-}
-
-let duplicateIdCheckScheduled = false;
-
-/**
- * Coalesces {@see warnAboutDuplicateIds} calls into one scan per burst of hydration, rather than
- * one per `ComponentHydrator` constructed (a page can construct dozens in one synchronous burst
- * during initial hydration). Scheduled via a microtask so it runs once, right after the current
- * burst finishes, regardless of how many hydrators triggered it.
- */
-function scheduleDuplicateIdCheck(): void {
-    if (!getGlobal<boolean>('debug')) return;
-    if (duplicateIdCheckScheduled) return;
-
-    duplicateIdCheckScheduled = true;
-    queueMicrotask(() => {
-        duplicateIdCheckScheduled = false;
-        warnAboutDuplicateIds();
-    });
-}
-
-/**
- * Mounts every not-yet-mounted, uncontrolled hydration instance of `componentName` (a required
- * `"namespace:name"` string, e.g. `"ui:select"`). Safe to call more than once (e.g. after
- * lazily-inserted DOM adds new instances) - already mounted instances are skipped rather than
- * re-instantiated.
+ * The `props` in the callback are typed from `componentName` via `HydrationPropsFor`. A component
+ * without generated types gets an untyped bag.
  *
- * `props` in the callback is inferred from `componentName` itself via {@see HydrationPropsFor} -
- * no explicit generic needed at the call site. A component name a project hasn't generated types
- * for yet (or ever) falls back to the untyped bag, same as today.
+ * @param componentName - The namespaced name, e.g. `ui:select`.
+ * @param callback - Creates the instance of one hydration entry and returns it.
+ *
+ * @example
+ * ```typescript
+ * mountAll('ui:accordion', ({ props }) => {
+ *     const accordion = new Accordion(props);
+ *     accordion.init();
+ *     return accordion;
+ * });
+ * ```
  */
 export function mountAll<K extends KnownComponentName | (string & {})>(
     componentName: K,
     callback: (data: {
-        controlled: boolean;
+        autoMount: boolean;
         props: HydrationPropsFor<Extract<K, string>>;
         createHydrator: () => ComponentHydrator;
     }) => Component<unknown, unknown> | void
@@ -317,7 +174,7 @@ export function mountAll<K extends KnownComponentName | (string & {})>(
     const mountedInstances = window.FluidPrimitives.componentInstances[namespace][clientBaseName];
 
     Object.keys(hydrationInstances).forEach(id => {
-        if (hydrationInstances[id].controlled) return;
+        if (hydrationInstances[id].autoMount === false) return;
         if (mountedInstances[id]) return;
 
         const instance = callback({
@@ -326,26 +183,23 @@ export function mountAll<K extends KnownComponentName | (string & {})>(
                 baseName,
                 hydrationInstances[id].props
             ) as HydrationPropsFor<Extract<K, string>>,
-            createHydrator: () =>
-                new ComponentHydrator(baseName, id, hydrationInstances[id].props.ids),
+            createHydrator: () => new ComponentHydrator(baseName, id),
         });
         if (!instance) return;
 
+        instance.namespace = namespace;
         mountedInstances[id] = instance;
     });
 }
 
 /**
- * Destroys every mounted component instance (from either `mountAll` or `mount`) whose root element
- * is `root` itself or a descendant of it, and drops them from the tracked instance registry.
- * Intended for cleaning up before removing a subtree from the DOM (e.g. a lazily-mounted recurring-
- * field row).
+ * Destroys every mounted instance whose root element is `root` or inside it, and forgets it. Call it
+ * before you remove a subtree from the DOM, e.g. a row of a FieldArray.
  *
- * Matches only on the instance's own `[data-part="root"]` element, not a bare id-prefix - a
- * prefix-only match would also catch that instance's *own* repeated sub-parts (e.g. a
- * `FieldArray`'s own `removeTrigger`/`item` ids all start with the same `field-array:{rootId}`
- * prefix as the `FieldArray` instance itself), which would destroy the very component whose row
- * is merely being removed, rather than only what's actually nested inside that row.
+ * Only the `root` part of an instance counts. A component without one, such as Dialog, is never
+ * matched.
+ *
+ * @param root - The element that is about to be removed.
  */
 export function destroyComponentsWithin(root: Element | Document) {
     if (!window.FluidPrimitives) return;
@@ -353,15 +207,14 @@ export function destroyComponentsWithin(root: Element | Document) {
     for (const namespaceBucket of Object.values(window.FluidPrimitives.componentInstances)) {
         for (const instances of Object.values(namespaceBucket)) {
             for (const [id, instance] of Object.entries(instances)) {
-                // Ids are always generated from the kebab clientComponentName, not the canonical
-                // componentName instance.getName() itself returns - see Component.getClientName().
-                const clientComponentName = instance.getClientName();
-                const rootPartSelector = `[id^="${clientComponentName}:${id}"][data-part="root"]`;
+                const rootPartSelector = instance.hydrator.selector('root');
+                if (!rootPartSelector) continue;
+
                 const isRootItself = root instanceof Element && root.matches(rootPartSelector);
-                const hasRootPartInNode = root.querySelectorAll(rootPartSelector).length > 0;
+                const hasRootPartInNode = root.querySelector(rootPartSelector) !== null;
 
                 if (isRootItself || hasRootPartInNode) {
-                    console.log(`Destroying component instance: ${clientComponentName}:${id}`);
+                    console.log(`Destroying component instance: ${instance.getClientName()}:${id}`);
                     instance.destroy();
                     delete instances[id];
                 }
@@ -371,14 +224,16 @@ export function destroyComponentsWithin(root: Element | Document) {
 }
 
 /**
- * Gets one specific hydration instance of `componentName` (a required `"namespace:name"` string)
- * by its `rootId` and hands it to `callback`, regardless of whether it was rendered with
- * `controlled="{true}"`. Unlike {@see mountAll}, calling it twice for the same `rootId` re-invokes
- * `callback` and constructs a new instance each time - but the resulting instance is still tracked
- * (overwriting whichever one a previous call tracked), so {@see getComponentInstance} and
- * {@see destroyComponentsWithin} can find it, the same way a `mountAll`-created instance can.
+ * Mounts one instance by its `rootId`, also one that was rendered with `autoMount="{false}"`. Unlike
+ * `mountAll()`, it creates a new instance on every call, which then replaces the one tracked before.
+ * `getComponentInstance()` and `destroyComponentsWithin()` find it like any other.
  *
- * `props` in the callback is inferred from `componentName` the same way {@see mountAll}'s is.
+ * The `props` in the callback are typed like those of `mountAll()`.
+ *
+ * @param componentName - The namespaced name, e.g. `ui:dialog`.
+ * @param rootId - The `rootId` the component was rendered with.
+ * @param callback - Creates the instance and returns it.
+ * @returns The instance, or `undefined` if there is no hydration entry for `rootId`.
  */
 export function mount<
     K extends KnownComponentName | (string & {}),
@@ -387,7 +242,7 @@ export function mount<
     componentName: K,
     rootId: string,
     callback: (data: {
-        controlled: boolean;
+        autoMount: boolean;
         props: HydrationPropsFor<Extract<K, string>>;
         createHydrator: () => ComponentHydrator;
     }) => T | void
@@ -401,10 +256,11 @@ export function mount<
         props: applyClientPropConverters(baseName, hydrationData.props) as HydrationPropsFor<
             Extract<K, string>
         >,
-        createHydrator: () => new ComponentHydrator(baseName, rootId, hydrationData.props.ids),
+        createHydrator: () => new ComponentHydrator(baseName, rootId),
     });
     if (!instance) return undefined;
 
+    instance.namespace = namespace;
     const clientBaseName = toKebabCase(baseName);
     window.FluidPrimitives.componentInstances[namespace] ??= {};
     window.FluidPrimitives.componentInstances[namespace][clientBaseName] ??= {};
@@ -413,23 +269,27 @@ export function mount<
     return instance;
 }
 
+/**
+ * Finds the parts of one component instance. Every part that `ui:ref` renders carries a
+ * `data-<component>-<part>="<rootId>"` attribute, so a lookup needs no id and searches the whole
+ * document by default. That is also what finds content that was portaled away from the root.
+ */
 export class ComponentHydrator {
+    /** The name of the component, in camelCase. */
     componentName: string;
-    // Kebab form of componentName - what actually appears in data-scope, hydration ids, and the
-    // ID_NAMESPACE_OVERRIDES/PART_SEGMENT_OVERRIDES maps below (kept in sync with
-    // ComponentPartIdUtility's own kebab maps). Derived once here so nothing downstream converts
-    // repeatedly.
+    /** The kebab-case form of `componentName`, as it appears in attribute names. */
     clientComponentName: string;
+    /** The document the parts are searched in. */
     doc: Document;
+    /** The `rootId` the component was rendered with. */
     rootId: string;
-    ids: { [key: string]: string };
 
-    constructor(
-        componentName: string,
-        rootId: string | undefined,
-        ids: { [key: string]: string } = {},
-        doc: Document = document
-    ) {
+    /**
+     * @param componentName - The name of the component, in camelCase.
+     * @param rootId - The `rootId` the component was rendered with. Throws if it is missing.
+     * @param doc - The document the parts are searched in.
+     */
+    constructor(componentName: string, rootId: string | undefined, doc: Document = document) {
         this.componentName = componentName;
         this.clientComponentName = toKebabCase(componentName);
         this.doc = doc;
@@ -437,129 +297,85 @@ export class ComponentHydrator {
             throw new Error(`Root ID is required for component hydration: ${componentName}`);
         }
         this.rootId = rootId;
-        this.ids = ids;
-        scheduleDuplicateIdCheck();
     }
 
-    private getIdNamespace(): string {
-        return ID_NAMESPACE_OVERRIDES[this.clientComponentName] ?? this.clientComponentName;
+    private get attrPrefix(): string {
+        return `data-${this.clientComponentName.replaceAll('.', '-')}-`;
     }
 
-    private getPartConfig(part: string): {
-        segment: string;
-        valueSeparator: string;
-        rootIdSeparator: string;
-        segmentSeparator: string;
-        namespace?: string;
-    } {
-        const override = PART_SEGMENT_OVERRIDES[this.clientComponentName]?.[part];
-        if (!override) {
-            return {
-                segment: part,
-                valueSeparator: ':',
-                rootIdSeparator: ':',
-                segmentSeparator: ':',
-            };
-        }
-        if (typeof override === 'string') {
-            return {
-                segment: override,
-                valueSeparator: ':',
-                rootIdSeparator: ':',
-                segmentSeparator: ':',
-            };
-        }
-
-        return {
-            segment: override.segment,
-            valueSeparator: override.valueSeparator ?? ':',
-            rootIdSeparator: override.rootIdSeparator ?? ':',
-            segmentSeparator: override.segmentSeparator ?? ':',
-            namespace: override.namespace ?? undefined,
-        };
+    // Keep in sync with: Classes/Utility/ComponentRefUtility.php getAttributeName()
+    /** The name of the attribute that marks `part`, e.g. `data-accordion-item-trigger`. */
+    attr(part: string): string {
+        return this.attrPrefix + toKebabCase(part);
     }
 
-    private computePartId(part: string, value?: string): string {
-        if (this.ids[part]) {
-            return this.ids[part];
-        }
-
-        const idNamespace = this.getIdNamespace();
-        const {
-            segment: partSegment,
-            valueSeparator,
-            rootIdSeparator,
-            segmentSeparator,
-            namespace,
-        } = this.getPartConfig(part);
-
-        const resolvedIdNamespace = namespace ?? idNamespace;
-
-        if (part === 'root') {
-            return `${resolvedIdNamespace}${rootIdSeparator}${this.rootId}`;
-        }
-
-        if (value !== undefined && value !== '') {
-            return `${resolvedIdNamespace}${rootIdSeparator}${this.rootId}${segmentSeparator}${partSegment}${valueSeparator}${value}`;
-        }
-
-        return `${resolvedIdNamespace}${rootIdSeparator}${this.rootId}${segmentSeparator}${partSegment}`;
+    /** The CSS selector of every element of `part` that belongs to this instance. */
+    selector(part: string): string {
+        return `[${this.attr(part)}="${this.rootId}"]`;
     }
 
-    private getValueSeparatorForPart(part: string): string {
-        const { valueSeparator } = this.getPartConfig(part);
-        return valueSeparator;
+    // Keep in sync with: Classes/Utility/ComponentRefUtility.php getScopeKey()
+    /** The key that identifies `part`, and optionally one `value` of it, across this instance. */
+    scopeKey(part: string, value?: string): string {
+        const key = `${this.clientComponentName}:${this.rootId}:${toKebabCase(part)}`;
+        return value ? `${key}:${value}` : key;
     }
 
-    getElement<T extends Element>(part: string, parent: Element | Document = this.doc): T | null {
-        const isDoc = parent === this.doc;
-        const partId = this.computePartId(part);
-
-        if (isDoc) {
-            // Use getElementById (no CSS-escaping needed; IDs may contain colons)
-            return this.doc.getElementById(partId) as T | null;
-        }
-
-        const dataPart = toKebabCase(part);
-        const escapedPartId = CSS.escape(partId);
-
-        return (parent as Element).querySelector<T>(
-            `[id="${escapedPartId}"][data-part="${dataPart}"],[id^="${escapedPartId}"][data-part="${dataPart}"]`
-        );
+    /**
+     * Finds the first element of `part`.
+     *
+     * @param part - The name of the part, in camelCase.
+     * @param parent - Where to search, the whole document by default.
+     * @returns The element, or `null` if there is none.
+     */
+    query<T extends Element = HTMLElement>(
+        part: string,
+        parent: Element | Document = this.doc
+    ): T | null {
+        return parent.querySelector<T>(this.selector(part));
     }
 
-    getElements<T extends Element>(part: string, parent?: Element | Document): T[] {
-        const searchScope: Element | Document =
-            parent !== undefined ? parent : this.getElement('root') || this.doc;
-
-        const dataPart = toKebabCase(part);
-        const escapedPartId = CSS.escape(this.computePartId(part));
-        const escapedValueSeparator = CSS.escape(this.getValueSeparatorForPart(part));
-
-        return Array.from(
-            searchScope.querySelectorAll<T>(
-                `[id="${escapedPartId}"][data-part="${dataPart}"],[id^="${escapedPartId + escapedValueSeparator}"][data-part="${dataPart}"]`
-            )
-        );
+    /**
+     * Finds every element of `part`.
+     *
+     * @param part - The name of the part, in camelCase.
+     * @param parent - Where to search, the whole document by default.
+     */
+    queryAll<T extends Element = HTMLElement>(
+        part: string,
+        parent: Element | Document = this.doc
+    ): T[] {
+        return Array.from(parent.querySelectorAll<T>(this.selector(part)));
     }
 
-    generateRefAttributesString(part: string, value?: string): string {
-        const id = this.computePartId(part, value);
-        return `id="${id}" data-scope="${this.clientComponentName}" data-part="${toKebabCase(part)}"${value !== undefined ? ` data-value="${value}"` : ''}`;
-    }
-
-    setRefAttributes(element: Element, part: string, value?: string): void {
-        element.setAttribute('id', this.computePartId(part, value));
-        element.setAttribute('data-scope', this.clientComponentName);
-        element.setAttribute('data-part', toKebabCase(part));
+    /**
+     * Marks an element as `part` of this instance, like `ui:ref` does on the server. For elements
+     * you create after hydration.
+     *
+     * @param element - The element to mark.
+     * @param part - The name of the part, in camelCase.
+     * @param value - Sets `data-value`, for a part that exists once per item.
+     */
+    stamp(element: Element, part: string, value?: string): void {
+        element.setAttribute(this.attr(part), this.rootId);
         if (value !== undefined) {
             element.setAttribute('data-value', value);
         }
     }
 
+    /** The part this component's own scope marks `el` as (kebab-case), if any. */
+    private getOwnPart(el: Element): string | null {
+        for (const { name, value } of el.attributes) {
+            if (value === this.rootId && name.startsWith(this.attrPrefix)) {
+                return name.slice(this.attrPrefix.length);
+            }
+        }
+        return null;
+    }
+
     /**
-     * Re-stamps every element within `root` (root included) that belongs to *this* component's own
-     * scope (`data-scope` === this hydrator's) for a new, real `value` - the shared half of
+     * Sets `data-value` on every element within `root` (root included) that is a part of *this*
+     * component's own scope, for a new, real `value` - the shared half of
      * {@see restampValue}/{@see renameValue}, which differ only in what they each then do about any
      * nested, independent root component `root` happens to compose (a fresh copy vs. an in-place
      * rename - see `restampValue`'s own docblock for why the two are never auto-detected from one
@@ -577,10 +393,8 @@ export class ComponentHydrator {
         attributes?: Record<string, boolean | string>
     ): void {
         const restamp = (el: Element) => {
-            const rawPart = el.getAttribute('data-part');
-            if (!rawPart) return;
-            const part = toCamelCase(rawPart);
-            this.setRefAttributes(el, part, value);
+            if (this.getOwnPart(el) === null) return;
+            el.setAttribute('data-value', value);
             for (const [name, attributeValue] of Object.entries(attributes ?? {})) {
                 if (typeof attributeValue === 'string') {
                     el.setAttribute(`data-${name}`, attributeValue);
@@ -590,25 +404,22 @@ export class ComponentHydrator {
             }
         };
 
-        if (
-            root.getAttribute('data-scope') === this.clientComponentName &&
-            root.hasAttribute('id')
-        ) {
-            restamp(root);
-        }
-        root.querySelectorAll(`[data-scope="${this.clientComponentName}"][id]`).forEach(restamp);
+        restamp(root);
+        root.querySelectorAll('*').forEach(restamp);
     }
 
     /**
+     * @internal
+     *
      * Re-stamps `root` for a new, real `value` (via {@see restampOwnScope}) and prepares any
      * nested, *independent* root component found inside it (e.g. a `Field`+`Input` composed inside
      * a `FieldArray` row, or any other primitive that composes another one inside its own per-item
      * markup) as a brand-new instance copied from its own pristine stencil data, via
      * {@see prepareNestedRootComponents}. Use after cloning a `<template>` (see `Template`) to make
-     * the clone represent one real item/row in a single call, instead of manually recomputing
-     * `id`/`data-scope`/`data-part`/`data-value` for the root and separately for every nested
-     * value-scoped part (e.g. a combobox item's own `item-text`/`item-indicator`) *and* separately
-     * preparing whatever independent components that item happens to compose. Fully generic - not
+     * the clone represent one real item/row in a single call, instead of manually setting
+     * `data-value` on the root and separately on every nested value-scoped part (e.g. a combobox
+     * item's own `item-text`/`item-indicator`) *and* separately preparing whatever independent
+     * components that item happens to compose. Fully generic - not
      * tied to any one primitive - so a `<template>` item "just works" regardless of what it
      * contains, without the calling primitive needing to know or handle that itself.
      *
@@ -623,16 +434,16 @@ export class ComponentHydrator {
      * can't actually tell a never-touched, already-live server-rendered row apart from a
      * never-touched template clone; both look identical. That silently mis-classified an
      * already-mounted row as "fresh" the first time an earlier row's removal caused it to be
-     * reindexed: its DOM id moved out from under it (via `restampIdReferences`, which both paths
-     * run) without its `ComponentHydrator.rootId`/`componentInstances` entry following along -
+     * reindexed: its DOM references moved out from under it (via `restampIdReferences`, which both
+     * paths run) without its `ComponentHydrator.rootId`/`componentInstances` entry following along -
      * only {@see renameValue}'s path updates those - leaving its already-mounted `Field`/`Input`
      * instances silently unable to find their own elements again. The caller already knows
      * unambiguously which case it's in (a fresh `Template` clone vs. an element already in the
      * document), so it now says so by calling the matching method instead of leaving it to a guess.
      *
-     * `stencilId` is the `<template>` element's own id (see `Template`'s constructor, its only
+     * `stencilKey` is the stencil's own {@see scopeKey} (see `Template`'s constructor, its only
      * caller) - what nested root components `root` composes is looked up from
-     * `window.FluidPrimitives.nestedComponents[stencilId]` (PHP-recorded, see
+     * `window.FluidPrimitives.nestedComponents[stencilKey]` (PHP-recorded, see
      * `HydrationRegistry::recordNestedComponent()`), not found by scanning `root` itself. That's
      * what lets this find a nested component regardless of what DOM shape it renders - including
      * one that renders no identifiable wrapper of its own at all (e.g. `Dialog`'s `Root`, which is
@@ -648,18 +459,26 @@ export class ComponentHydrator {
     restampValue(
         root: Element,
         value: string,
-        stencilId: string,
+        stencilKey: string,
         attributes?: Record<string, boolean | string>
     ): string[] {
         this.restampOwnScope(root, value, attributes);
-        return prepareNestedRootComponents(stencilId, root, value);
+        const ownPart = this.getOwnPart(root);
+        return prepareNestedRootComponents(
+            stencilKey,
+            root,
+            value,
+            ownPart ? this.scopeKey(ownPart, value) : null
+        );
     }
 
     /**
+     * @internal
+     *
      * Re-stamps `root` for a new, real `value` (via {@see restampOwnScope}) and re-keys every
      * nested, independent root component found inside it (e.g. a `FieldArray` row's own
      * `Field`+`Input`) to reference `value` instead of whatever position it previously held - both
-     * their DOM ids (via {@see restampIdReferences}) and, for ones that are already live/mounted,
+     * their DOM references (via {@see restampIdReferences}) and, for ones that are already live/mounted,
      * their own `ComponentHydrator.rootId` and their entry in
      * `window.FluidPrimitives.componentInstances`/`hydrationData` (via
      * {@see renameNestedComponentEntry}), so their future re-renders keep resolving their own
@@ -671,12 +490,12 @@ export class ComponentHydrator {
      * re-key in the first place; use {@see restampValue} for that. See that method's own docblock
      * for why the two are never auto-detected from one another.
      *
-     * Looks up what `root` composes from `window.FluidPrimitives.nestedComponents[root.id]` - i.e.
-     * `root`'s id *before* this call restamps it, which is why that's read first, before
-     * {@see restampOwnScope} changes it. That's a correct lookup key both for a row rendered for
-     * real (PHP records it there too - see `ComponentHydrationCollector`'s FieldArray-ambient-
-     * context check) and for one `restampValue` prepared earlier (which migrates the same entry to
-     * the row's new id as its own last step, for exactly this reason).
+     * Looks up what `root` composes from `window.FluidPrimitives.nestedComponents[<scopeKey>]`,
+     * keyed by `root`'s own part and `data-value` *before* this call restamps it, which is why
+     * that's read first, before {@see restampOwnScope} changes it. That's a correct lookup key both
+     * for a row rendered for real (PHP records it there too - see `ComponentHydrationCollector`'s
+     * FieldArray-ambient-context check) and for one `restampValue` prepared earlier (which migrates
+     * the same entry to the row's new key as its own last step, for exactly this reason).
      *
      * Restamps id *references* (via {@see restampIdReferences}) across the whole document, not just
      * `root`'s own subtree - unlike {@see restampValue}, where a fresh clone can't yet have anything
@@ -687,8 +506,12 @@ export class ComponentHydrator {
      * trigger in place but silently miss its portaled content, leaving it referencing a now-stale id.
      */
     renameValue(root: Element, value: string): void {
-        const previousScopeKey = root.id;
+        const ownPart = this.getOwnPart(root);
+        const previousScopeKey = ownPart
+            ? this.scopeKey(ownPart, root.getAttribute('data-value') ?? undefined)
+            : null;
         this.restampOwnScope(root, value);
+        if (!ownPart || !previousScopeKey) return;
 
         const remaps = nestedRootRemapsFromMetadata(previousScopeKey, value);
         if (remaps.length === 0) return;
@@ -699,9 +522,10 @@ export class ComponentHydrator {
             renameNestedComponentEntry(componentName, oldRootId, newRootId, remaps);
         }
 
-        migrateNestedComponentsScope(previousScopeKey, root.id, remaps);
+        migrateNestedComponentsScope(previousScopeKey, this.scopeKey(ownPart, value), remaps);
     }
 
+    /** Nothing to release yet, it exists so every instance can be destroyed alike. */
     destroy() {
         // No-op for now; if we ever need to clean up anything, do it here.
     }
@@ -729,18 +553,13 @@ function referencesRootId(id: string, rootId: string): boolean {
 }
 
 /**
- * Restamps every `[id]` element in `root` (root itself included) whose id references one of
- * `remaps`' `oldRootId` to reference the matching `newRootId` instead - via plain string
- * substitution, not by recomputing each part's id from its own component's default formula. A
- * from-scratch regeneration would only ever reproduce *this* component's own default id
- * namespace, silently dropping an id a part was given that reuses a *different* nested
- * component's own namespace instead - e.g. an Input's `label`/`input` parts are server-stamped to
- * reuse their enclosing Field's own `label`/`control` ids (so Field's own `getElement('label')`
- * resolves to Input's actual label element, and so Input's own `render()` - which looks its label/
- * input elements up by that same id via `getElementById` - can find them at all), not Input's own
- * default `input:{id}:label`/`input:{id}:input`. A from-scratch regeneration silently breaks that
- * link on every clone, which is why a newly-added row's fields lose their label association and
- * their `<input>` never gets hydrated in the first place. Scoped to `root` (the whole cloned item,
+ * Rewrites, on every element in `root` (root itself included), whatever references one of
+ * `remaps`' `oldRootId` so it references the matching `newRootId` instead: every part attribute of
+ * that nested component (`data-<nested>-<part>="oldRootId"`), and any real `id` that embeds it (a
+ * part given an explicit id through `ids`, see `ui:ref`). The id is rewritten via plain string
+ * substitution, not recomputed from a formula - an Input's `label`/`input` parts are server-stamped
+ * with their enclosing Field's own `label`/`control` ids (see `FieldIdMapping`), which an id
+ * derived from Input's own root id would silently lose. Scoped to `root` (the whole cloned item,
  * not just one nested component's own subtree) since an override can reference a sibling
  * component's id, not just an ancestor's - or, from {@see ComponentHydrator.renameValue}, to the
  * whole document, when a nested component's content may already live outside `root` entirely (see
@@ -748,14 +567,19 @@ function referencesRootId(id: string, rootId: string): boolean {
  */
 function restampIdReferences(root: Element | Document, remaps: RootIdRemap[]): void {
     const restamp = (el: Element) => {
-        const id = el.getAttribute('id');
-        if (!id) return;
-        const match = remaps.find(({ oldRootId }) => referencesRootId(id, oldRootId));
-        if (match) el.setAttribute('id', id.replace(match.oldRootId, match.newRootId));
+        for (const { name, value } of Array.from(el.attributes)) {
+            if (name === 'id') {
+                const match = remaps.find(({ oldRootId }) => referencesRootId(value, oldRootId));
+                if (match) el.setAttribute(name, value.replace(match.oldRootId, match.newRootId));
+            } else if (name.startsWith('data-')) {
+                const match = remaps.find(({ oldRootId }) => oldRootId === value);
+                if (match) el.setAttribute(name, match.newRootId);
+            }
+        }
     };
 
-    if (root instanceof HTMLElement) restamp(root);
-    root.querySelectorAll<HTMLElement>('[id]').forEach(restamp);
+    if (root instanceof Element) restamp(root);
+    root.querySelectorAll('*').forEach(restamp);
 }
 
 /**
@@ -842,9 +666,7 @@ function renameNestedComponentEntry(
     if (instance) {
         delete instances[oldRootId];
         instances[newRootId] = instance;
-        if (instance.hydrator) {
-            instance.hydrator.rootId = newRootId;
-        }
+        instance.hydrator.rootId = newRootId;
     }
 
     const hydrationInstances = window.FluidPrimitives?.hydrationData?.[namespace]?.[clientBaseName];
@@ -894,48 +716,56 @@ function nestedRootRemapsFromMetadata(scopeKey: string, value: string): RootIdRe
 }
 
 /**
- * Moves `window.FluidPrimitives.nestedComponents[oldScopeKey]` (if present) to `newScopeKey`,
- * rewriting each entry's own `id` through the same `remaps` {@see nestedRootRemapsFromMetadata}
- * just computed from it - so a *later* {@see ComponentHydrator.renameValue} on this same item (a
- * second reindex) still finds it under the id the item actually has by then, rather than the one
- * it was first recorded under. Called by both {@see ComponentHydrator.restampValue} (a fresh
- * clone's new row-level key) and {@see ComponentHydrator.renameValue} (an existing row's new key) -
- * skipped by neither, since `FileUpload`'s item clones have no row-level key anything ever reads
- * back, so migrating a never-consulted entry for them is harmless.
+ * Records a copy of `window.FluidPrimitives.nestedComponents[oldScopeKey]` (if present) under
+ * `newScopeKey`, rewriting each entry's own `id` through the same `remaps`
+ * {@see nestedRootRemapsFromMetadata} just computed from it - so a *later*
+ * {@see ComponentHydrator.renameValue} on this same item (a second reindex) still finds it under
+ * the id the item actually has by then, rather than the one it was first recorded under. Leaves
+ * `oldScopeKey` in place: for a fresh clone that is the stencil, which the *next* clone needs too.
+ * Returns whether there was anything to copy.
  */
-function migrateNestedComponentsScope(
+function copyNestedComponentsScope(
     oldScopeKey: string,
     newScopeKey: string,
     remaps: RootIdRemap[]
-): void {
+): boolean {
     const entries = window.FluidPrimitives?.nestedComponents?.[oldScopeKey];
-    if (!entries || oldScopeKey === newScopeKey) return;
+    if (!entries || oldScopeKey === newScopeKey) return false;
 
-    if (!window.FluidPrimitives.nestedComponents) {
-        window.FluidPrimitives.nestedComponents = {};
-    }
-
-    delete window.FluidPrimitives.nestedComponents[oldScopeKey];
+    window.FluidPrimitives.nestedComponents ??= {};
     window.FluidPrimitives.nestedComponents[newScopeKey] = entries.map(entry => {
         const match = remaps.find(
             remap => remap.componentName === entry.name && remap.oldRootId === entry.id
         );
         return match ? { name: entry.name, id: match.newRootId } : entry;
     });
+    return true;
+}
+
+/**
+ * {@see copyNestedComponentsScope}, then drops `oldScopeKey` - for an existing item whose own key
+ * is changing (see {@see ComponentHydrator.renameValue}), as opposed to a fresh clone.
+ */
+function migrateNestedComponentsScope(
+    oldScopeKey: string,
+    newScopeKey: string,
+    remaps: RootIdRemap[]
+): void {
+    if (copyNestedComponentsScope(oldScopeKey, newScopeKey, remaps)) {
+        delete window.FluidPrimitives.nestedComponents?.[oldScopeKey];
+    }
 }
 
 /**
  * Prepares every nested, independent root component inside a freshly cloned `<template>` item for
  * `value` - the fresh-clone half of {@see ComponentHydrator.restampValue}, which this backs. Every
- * `[id]` element that *references* one of those root ids - not just the root element itself - is
+ * element that *references* one of those root ids - not just the root element itself - is
  * re-stamped too, via {@see restampIdReferences} (which also fixes up any part whose id references
  * a *different* nested component's own id, e.g. Input's label/input reusing Field's), plus the
  * same substitution applied to each one's own `ids` prop override map via {@see remapIdsProp}.
- * Without this, a nested component's non-root parts would keep their prior ids baked in and
- * collide across every clone, since they're outside `restampValue`'s own `data-scope` (which only
- * covers the *outer* component's own parts) - and a part whose id was server-stamped to reuse a
- * *different* component's own id would silently lose that link if its id were instead regenerated
- * from its own component's default formula.
+ * Without this, a nested component's parts would keep the root id of the stencil they were cloned
+ * from and stay attached to it, since they're outside `restampValue`'s own scope (which only
+ * covers the *outer* component's own parts).
  *
  * Copies each one's stencil hydration data (registered once at server-render time, when that one
  * stencil instance rendered) to the new id via {@see copyNestedComponentEntry}, so a subsequent
@@ -945,11 +775,16 @@ function migrateNestedComponentsScope(
  * per-consumer in their own entry.ts) - see {@see ComponentHydrator.restampValue}'s own docblock
  * for what to do with the client component names this returns instead.
  */
-function prepareNestedRootComponents(stencilId: string, root: Element, value: string): string[] {
-    const remaps = nestedRootRemapsFromMetadata(stencilId, value);
+function prepareNestedRootComponents(
+    stencilKey: string,
+    root: Element,
+    value: string,
+    newScopeKey: string | null
+): string[] {
+    const remaps = nestedRootRemapsFromMetadata(stencilKey, value);
     if (remaps.length === 0) return [];
 
-    // Restamp DOM ids for every nested root component found before rewriting any hydration
+    // Restamp DOM references for every nested root component found before rewriting any hydration
     // props/instance state below - a part's `ids` override (see restampIdReferences) may
     // reference a *different* nested component's own id, so every mapping in the item needs to be
     // known up front rather than resolved one component at a time.
@@ -963,11 +798,13 @@ function prepareNestedRootComponents(stencilId: string, root: Element, value: st
         }
     }
 
-    // root.id (already restamped to `value` by restampOwnScope, just before this runs) becomes the
-    // new scope key for anything migrated here - meaningful for a FieldArray row (renameValue's own
-    // later lookup depends on it); for FileUpload's own item clones nothing ever reads this key
-    // back, so migrating it is harmless, unused bookkeeping rather than a no-op.
-    migrateNestedComponentsScope(stencilId, root.id, remaps);
+    // `newScopeKey` (the clone root's own part, keyed by `value`) is where this row's own entry is
+    // recorded - meaningful for a FieldArray row (renameValue's own later lookup depends on it); for
+    // FileUpload's own item clones nothing ever reads this key back, so it's harmless, unused
+    // bookkeeping. The stencil's own entry stays put for the next clone.
+    if (newScopeKey) {
+        copyNestedComponentsScope(stencilKey, newScopeKey, remaps);
+    }
 
     return Array.from(componentNames);
 }

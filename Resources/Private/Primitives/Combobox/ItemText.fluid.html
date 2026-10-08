@@ -10,6 +10,7 @@
     {f:if(condition: itemState.highlighted, then: 'data-highlighted="true"' )}
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'itemText' , value: itemState.value, data: refData )}
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
     <f:slot />
 </div>

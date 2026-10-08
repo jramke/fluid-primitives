@@ -1,7 +1,6 @@
 import type { Service } from '@zag-js/core';
 import type { NormalizeProps, PropTypes } from '@zag-js/types';
-import { createFieldHandle } from '../../Field/src/field.connect';
-import type { FieldHandle } from '../../Field/src/field.types';
+import { createFieldHandle, type FieldHandle } from '../../Field/src/field.handle';
 import { parts } from './form.anatomy';
 import * as dom from './form.dom';
 import { getRegisteredFieldMachines, renameFieldMachine } from './form.fields';
@@ -37,7 +36,7 @@ export function connect<T extends PropTypes>(
             if (field.errors.length === 0) continue;
             errors[name] = {
                 messages: [...field.errors],
-                value: field.value,
+                value: field.getValue(),
             };
         }
 
@@ -48,7 +47,7 @@ export function connect<T extends PropTypes>(
         const dirty: FormDirty = {};
 
         for (const [name, field] of getFieldHandles()) {
-            if (field.meta.isDirty) {
+            if (field.dirty) {
                 dirty[name] = true;
             }
         }
@@ -60,7 +59,7 @@ export function connect<T extends PropTypes>(
         const touched: FormTouched = {};
 
         for (const [name, field] of getFieldHandles()) {
-            if (field.meta.isTouched) {
+            if (field.touched) {
                 touched[name] = true;
             }
         }
@@ -78,11 +77,11 @@ export function connect<T extends PropTypes>(
 
     const fieldHandles = getFieldHandles();
     const isSubmitting = state.matches('submitting');
-    const isDirty = Array.from(fieldHandles.values()).some(field => field.meta.isDirty);
+    const isDirty = Array.from(fieldHandles.values()).some(field => field.dirty);
     const isInvalid = Array.from(fieldHandles.values()).some(field => field.invalid);
     const isSuccessful = state.matches('success');
     const isError = state.matches('error');
-    const isTouched = Array.from(fieldHandles.values()).some(field => field.meta.isTouched);
+    const isTouched = Array.from(fieldHandles.values()).some(field => field.touched);
     const stateValue = state.get();
 
     return {
@@ -139,21 +138,21 @@ export function connect<T extends PropTypes>(
 
         getContentProps() {
             return normalize.element({
-                ...parts.content.attrs,
+                ...parts.content.attrs(scope.id),
                 hidden: isError || isSuccessful,
             });
         },
 
         getIndicatorProps(indicatorState) {
             return normalize.element({
-                ...parts.indicator.attrs,
+                ...parts.indicator.attrs(scope.id),
                 hidden: stateValue !== indicatorState,
             });
         },
 
         getErrorTextProps() {
             return normalize.element({
-                ...parts['errorText'].attrs,
+                ...parts['errorText'].attrs(scope.id),
                 hidden: !isError,
                 role: 'alert',
             });
@@ -161,7 +160,7 @@ export function connect<T extends PropTypes>(
 
         getSuccessTextProps() {
             return normalize.element({
-                ...parts['successText'].attrs,
+                ...parts['successText'].attrs(scope.id),
                 hidden: !isSuccessful,
                 role: 'status',
                 'aria-live': 'polite',
@@ -170,10 +169,11 @@ export function connect<T extends PropTypes>(
 
         getFormProps() {
             return normalize.element({
-                ...parts.form.attrs,
+                ...parts.root.attrs(scope.id),
                 noValidate: true,
-                id: dom.getFormId(scope),
+                /** The state of the form. */
                 'data-state': stateValue,
+                /** Present while the form is being submitted. */
                 'data-submitting': isSubmitting ? '' : undefined,
                 'data-invalid': isInvalid ? '' : undefined,
                 'data-dirty': isDirty ? '' : undefined,

@@ -34,8 +34,7 @@ export function connect<T extends PropTypes>(
 
         getRootProps() {
             return normalize.element({
-                ...parts.root.attrs,
-                id: dom.getRootId(scope),
+                ...parts.root.attrs(scope.id),
                 'data-invalid': handle.invalid ? '' : undefined,
                 'data-disabled': handle.disabled ? '' : undefined,
                 'data-readonly': handle.readOnly ? '' : undefined,
@@ -44,7 +43,7 @@ export function connect<T extends PropTypes>(
 
         getTextareaProps() {
             return normalize.textarea({
-                ...parts.textarea.attrs,
+                ...parts.textarea.attrs(scope.id),
                 id: dom.getTextareaId(scope),
                 name: handle.name,
                 disabled: handle.disabled || undefined,
@@ -102,8 +101,7 @@ export function connect<T extends PropTypes>(
 
         getLabelProps() {
             return normalize.label({
-                ...parts.label.attrs,
-                id: dom.getLabelId(scope),
+                ...parts.label.attrs(scope.id),
                 htmlFor: dom.getTextareaId(scope),
                 'data-invalid': handle.invalid ? '' : undefined,
                 'data-disabled': handle.disabled ? '' : undefined,
@@ -111,21 +109,14 @@ export function connect<T extends PropTypes>(
             });
         },
 
-        // Visually shows the same count a screen reader hears from the live region - hidden from
-        // AT so its text-content mutations on every keystroke aren't redundantly picked up by
+        // Visually shows the same count a screen reader hears through the announcements - hidden
+        // from AT so its text-content mutations on every keystroke aren't redundantly picked up by
         // whichever assistive tech already monitors generic DOM changes.
         getWordCountProps() {
             return normalize.element({
-                ...parts.wordCount.attrs,
+                ...parts.wordCount.attrs(scope.id),
                 id: dom.getWordCountId(scope),
                 'aria-hidden': 'true',
-            });
-        },
-
-        getLiveRegionProps() {
-            return normalize.element({
-                ...parts.liveRegion.attrs,
-                id: dom.getLiveRegionId(scope),
             });
         },
     };

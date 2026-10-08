@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\ViewHelpers;
 
 use Jramke\FluidPrimitives\Constants;
-use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
+use Jramke\FluidPrimitives\Utility\ComponentRootUtility;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
@@ -40,11 +40,17 @@ class ExposeToClientViewHelper extends AbstractViewHelper
             );
         }
 
-        if (!ComponentNameUtility::isRootComponent($renderingContext)) {
+        if (!ComponentRootUtility::isDeclaredRootFromContext($renderingContext)) {
             throw new \RuntimeException(
                 'The exposeToClient ViewHelper can only be used in a root component.',
                 1754253447,
             );
+        }
+
+        if (!ComponentRootUtility::isRenderedAsRootFromContext($renderingContext)) {
+            // Declared root, but this call delegates via spreadProps - whichever ancestor it's
+            // rendered as root through is responsible for its own hydration bookkeeping.
+            return '';
         }
 
         return Constants::MANUALLY_EXPOSED_TO_CLIENT_MARKER;

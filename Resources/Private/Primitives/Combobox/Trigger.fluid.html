@@ -1,4 +1,8 @@
+<ui:prop name="focusable" type="boolean" optional="{true}" description="Whether the trigger can receive focus. By default only the trigger of a combobox with `popupType` `dialog` can - otherwise the input is the focus target and the trigger stays out of the tab order." />
+
 <f:variable name="state">{context.defaultOpen ? 'open' : 'closed'}</f:variable>
+<f:variable name="isDialogPopup" value="{context.dialogPopup}" />
+<f:variable name="isFocusable" value="{context -> ui:call(method: 'isTriggerFocusable', arguments: {0: focusable})}" />
 <f:variable name="refData" value="{
     disabled: context.disabled,
     invalid: context.invalid,
@@ -9,12 +13,14 @@
 <button
     type="button"
     aria-label="{context.translations.triggerLabel}"
-    aria-haspopup="listbox"
+    aria-haspopup="{f:if(condition: isDialogPopup, then: 'dialog', else: 'listbox')}"
     aria-expanded="{f:if(condition: context.defaultOpen, then: 'true', else: 'false')}"
     data-state="{state}"
+    {f:if(condition: isFocusable, then: 'data-focusable', else: 'tabindex="-1"' )}
     {f:if(condition: class, then: 'class="{class}"' )}
     {f:if(condition: context.disabled, then: 'disabled' )}
     {ui:ref(name: 'trigger' , data: refData )}
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
     <f:slot />
 </button>

@@ -1,27 +1,29 @@
 import { FieldAwareComponent, Machine, mergeProps, normalizeProps } from '../../Client';
-import type { FieldMachine } from '../Field/src/field.registry';
+import type { FieldClientApi } from '../Field/src/field.handle';
 import { connect } from './src/textarea.connect';
 import * as dom from './src/textarea.dom';
 import { machine } from './src/textarea.machine';
+import { splitProps } from './src/textarea.props';
 import type { TextareaApi, TextareaProps } from './src/textarea.types';
 
 export class Textarea extends FieldAwareComponent<TextareaProps, TextareaApi> {
     static componentName = 'textarea';
 
-    propsWithField(props: TextareaProps, fieldMachine: FieldMachine): TextareaProps {
+    propsWithField(props: TextareaProps, field: FieldClientApi): TextareaProps {
         return {
             ...props,
-            disabled: props.disabled ?? fieldMachine.context.get('disabled'),
-            readOnly: props.readOnly ?? fieldMachine.context.get('readOnly'),
-            required: props.required ?? fieldMachine.context.get('required'),
-            invalid: props.invalid ?? fieldMachine.context.get('invalid'),
-            name: props.name ?? fieldMachine.prop('name'),
+            disabled: props.disabled ?? field.disabled,
+            readOnly: props.readOnly ?? field.readOnly,
+            required: props.required ?? field.required,
+            invalid: props.invalid ?? field.invalid,
+            name: props.name ?? field.name,
         };
     }
 
     initMachine(props: TextareaProps): Machine<any> {
         props = this.withFieldProps(props);
-        return new Machine(machine, props);
+        const [machineProps] = splitProps(props);
+        return new Machine(machine, machineProps);
     }
 
     initApi() {
@@ -31,32 +33,29 @@ export class Textarea extends FieldAwareComponent<TextareaProps, TextareaApi> {
     render() {
         this.subscribeToFieldService();
 
-        const rootEl = this.getElement('root');
+        const rootEl = this.hydrator.query('root');
         if (rootEl) this.spreadProps(rootEl, this.api.getRootProps());
 
-        const wordCountEl = this.getElement('wordCount');
+        const wordCountEl = this.hydrator.query('wordCount');
         const wordCountId = wordCountEl ? dom.getWordCountId(this.machine.scope) : undefined;
 
-        const textareaEl = this.getElement<HTMLTextAreaElement>('textarea');
+        const textareaEl = this.hydrator.query<HTMLTextAreaElement>('textarea');
         if (textareaEl) {
-            const describeIds = [this.fieldMachine?.context.get('describeIds'), wordCountId]
+            const describeIds = [this.field?.ariaDescribedby, wordCountId]
                 .filter(Boolean)
                 .join(' ');
             const mergedProps = mergeProps(this.api.getTextareaProps(), {
                 'aria-describedby': describeIds || undefined,
             });
-            this.spreadProps(textareaEl, mergedProps);
+            this.spreadTextControlProps(textareaEl, mergedProps);
         }
 
-        const labelEl = this.getElement('label');
+        const labelEl = this.hydrator.query('label');
         if (labelEl) this.spreadProps(labelEl, this.api.getLabelProps());
 
         if (wordCountEl) {
             this.spreadProps(wordCountEl, this.api.getWordCountProps());
             wordCountEl.textContent = this.api.countText ?? '';
         }
-
-        const liveRegionEl = this.getElement<HTMLElement>('liveRegion');
-        if (liveRegionEl) this.spreadProps(liveRegionEl, this.api.getLiveRegionProps());
     }
 }

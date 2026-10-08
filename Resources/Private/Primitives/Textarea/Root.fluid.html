@@ -9,14 +9,16 @@
 <ui:prop name="maxLength" type="integer" optional="{true}" client="{true}" description="The maximum number of characters allowed. Also drives the wordCount part, e.g. '42 / 250 characters'." />
 <ui:prop name="rows" type="integer" optional="{true}" description="The number of visible text lines." />
 <ui:prop name="submitOn" type="Jramke\FluidPrimitives\Enum\TextareaSubmitOn" optional="{true}" client="{true}" description="Submits the nearest form on a keypress instead of inserting a newline: Enter submits on plain Enter (Shift+Enter still inserts a newline), ModEnter submits on Cmd/Ctrl+Enter (plain Enter always inserts a newline). Unset (the default) never intercepts Enter." />
-<ui:prop name="translations" type="array" optional="{true}" client="{true}" description="Specifies the localized word count string. Set the wordCount entry to false to disable the wordCount part and live-region announcements entirely. Use `f:translate` for per-template localization overrides when needed." />
-<ui:prop name="announceDebounce" type="integer" optional="{true}" client="{true}" default="600" description="Milliseconds to debounce word count live-region announcements by, so rapid typing doesn't spam assistive tech. Set to 0 to announce every change immediately." />
+<ui:prop name="translations" type="array" optional="{true}" client="{true}" description="Specifies the localized word count string. Set the wordCount entry to false to disable the wordCount part and its announcements entirely. Use `f:translate` for per-template localization overrides when needed." />
+<ui:prop name="announce" type="boolean" optional="{true}" client="{true}" default="{true}" description="Whether the word count is announced to assistive tech as the user types. Set to false to stay silent." />
+<ui:prop name="announceDebounce" type="integer" optional="{true}" client="{true}" default="600" description="Milliseconds to debounce word count announcements by, so rapid typing doesn't spam assistive tech. Set to 0 to announce every change immediately." />
 
 <f:variable name="refData" value="{disabled: context.disabled, invalid: context.invalid}" />
 
 <div
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'root' , data: refData )}
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
     <f:slot />
 </div>

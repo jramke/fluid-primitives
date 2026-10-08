@@ -5,9 +5,8 @@ export class Accordion extends Component<accordion.Props, accordion.Api> {
     static componentName = 'accordion';
 
     initMachine(props: accordion.Props): Machine<any> {
-        return new Machine(accordion.machine, {
-            ...props,
-        });
+        const [machineProps] = accordion.splitProps(props);
+        return new Machine(accordion.machine, machineProps);
     }
 
     initApi() {
@@ -15,7 +14,7 @@ export class Accordion extends Component<accordion.Props, accordion.Api> {
     }
 
     render() {
-        const rootEl = this.getElement('root');
+        const rootEl = this.hydrator.query('root');
         if (rootEl) {
             this.spreadProps(rootEl, this.api.getRootProps());
         }
@@ -36,7 +35,8 @@ export class Accordion extends Component<accordion.Props, accordion.Api> {
             this.api.getItemIndicatorProps({ value, disabled: el.hasAttribute('data-disabled') })
         );
 
-        // just so they are hydrated (data-attributes removed)
-        this.getElements('itemHeader');
+        this.spreadPropsByValue('itemHeader', ({ el, value }) =>
+            this.api.getItemHeaderProps({ value, disabled: el.hasAttribute('data-disabled') })
+        );
     }
 }

@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Component;
 
+use Jramke\FluidPrimitives\Annotations\AdditionalArgumentsAllowedAnnotation;
 use Jramke\FluidPrimitives\Factory\ComponentRendererFactory;
-use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
+use Jramke\FluidPrimitives\Utility\ComponentRootUtility;
 use Jramke\FluidPrimitives\Utility\PropsUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3Fluid\Fluid\Core\Component\ComponentAdapter;
@@ -107,7 +108,7 @@ abstract class AbstractComponentCollection implements ComponentCollectionInterfa
                 $this->getTemplatePaths()->getTemplateIdentifier('Default', $templateName),
             );
 
-            $isRootComponent = ComponentNameUtility::isRootComponent($viewHelperName);
+            $isDeclaredRoot = ComponentRootUtility::isDeclaredRootFromViewHelperName($viewHelperName, $this);
             $argumentDefinitions = $parsedTemplate->getArgumentDefinitions();
 
             // No reserved-prop collision check here: a template can only ever end up with a reserved
@@ -119,29 +120,13 @@ abstract class AbstractComponentCollection implements ComponentCollectionInterfa
 
             $templateString = $this->getTemplatePaths()->getTemplateSource('Default', $templateName);
 
-            // only add the asChild argument if the template has some bare HTML tag to merge
-            // asChild's attributes onto - not only a hydratable element declared via ui:ref, but
-            // any plain HTML element too (e.g. a userland `<div>`/`<a>` wrapper with no client
-            // hydration at all, like a plain Card component). AsChildAttributeSpreader works
-            // purely off the rendered HTML's own root tag, so it never needed ui:ref specifically -
-            // only *some* opening tag to spread onto. A template that renders only its slot content
-            // (`<f:slot />` alone) has no tag at all, so asChild would be a silent no-op there.
-            // `<[a-zA-Z][a-zA-Z0-9-]*(?=[\s\/>])` matches a bare tag name immediately followed by
-            // whitespace/`/`/`>`; a Fluid ViewHelper tag (`ui:ref`, `f:if`, `primitives:combobox.root`, ...)
-            // always has `:` or `.` there instead, so this doesn't false-positive on those. A
-            // template that only delegates via `ui:useProps` already has asChild merged in above
-            // when the component it imports from supports it - see UsePropsViewHelper.
-            if (preg_match('/<[a-zA-Z][a-zA-Z0-9-]*(?=[\s\/>])/', $templateString) === 1) {
-                $argumentDefinitions['asChild'] = new ArgumentDefinition(
-                    'asChild',
-                    'boolean',
-                    'If true the component uses its child only without the component template. Like Radix UI asChild or Base UI render props.',
-                    false,
-                    null,
-                );
-            }
+            // asChild itself is opt-in now - a template registers it explicitly by using
+            // {ui:asChild()} inline on whichever tag should receive the merged attributes (see
+            // AsChildViewHelper::nodeInitializedEvent()), which already ran during the parse above
+            // and already populated $argumentDefinitions, exactly like any ui:prop-declared or
+            // ui:useProps-imported argument. Nothing to detect here.
 
-            if ($isRootComponent) {
+            if ($isDeclaredRoot) {
                 $argumentDefinitions['rootId'] = new ArgumentDefinition(
                     'rootId',
                     'string',
@@ -158,12 +143,12 @@ abstract class AbstractComponentCollection implements ComponentCollectionInterfa
                     [],
                 );
 
-                $argumentDefinitions['controlled'] = new ArgumentDefinition(
-                    'controlled',
+                $argumentDefinitions['autoMount'] = new ArgumentDefinition(
+                    'autoMount',
                     'boolean',
-                    'If true, the component is meant to be initialized manually inside another component',
+                    'Whether the client initializes the component on its own. Set it to false to mount it yourself with `mount()`',
                     false,
-                    false,
+                    true,
                 );
             }
 
@@ -180,35 +165,27 @@ abstract class AbstractComponentCollection implements ComponentCollectionInterfa
                 );
             }
 
+            // additionalArgumentsAllowed is fully structural now: AttributesViewHelper (for a
+            // template's own ui:attributes() usage) and UsePropsViewHelper (for a genuine as=
+            // delegation import, see its nodeInitializedEvent()) are the only two producers, both
+            // attaching AdditionalArgumentsAllowedAnnotation to whichever real argument definition
+            // is the reason - no text scanning, nothing to strip afterward.
             $additionalArgumentsAllowed = false;
-            if (str_contains($templateString, 'ui:attributes(')) {
-                // if the user used the ui:attributes viewhelper in the component template,
-                // we want to allow tag attributes (additionalArguments) for this component
-                $additionalArgumentsAllowed = true;
-
-                $argumentDefinitions['attributes'] = new ArgumentDefinition(
-                    'attributes',
-                    'array',
-                    'Additional attributes that should be rendered on the component where ui:attributes is used.',
-                    false,
-                    [],
-                );
+            foreach ($argumentDefinitions as $argumentDefinition) {
+                foreach ($argumentDefinition->getAnnotations() as $annotation) {
+                    if (!$annotation instanceof AdditionalArgumentsAllowedAnnotation) {
+                        continue;
+                    }
+                    $additionalArgumentsAllowed = true;
+                    break 2;
+                }
             }
 
-            // for now we just allow additional arguments if a primitive is used with the spreadProps pattern
-            // because all primitives support additional arguments/attributes
-            if (
-                str_contains($templateString, 'spreadProps') &&
-                str_contains($templateString, '<ui:useProps name="primitives:')
-            ) {
-                $additionalArgumentsAllowed = true;
-            }
-
-            // If the ui:spreadProps viewhelper did not already initialized the spreadProps
-            // with an array of the keys as default value, declare it here
-            if (!array_key_exists('spreadProps', $argumentDefinitions)) {
-                $argumentDefinitions['spreadProps'] = PropsUtility::createSpreadPropsArgumentDefinition();
-            }
+            // Every component gets a spreadProps argument, the same way rootId/class do - not
+            // conditionally patched in only when missing, since UsePropsViewHelper no longer ever
+            // declares one itself (it binds the forwardable prop names under the author-chosen
+            // `as=` name instead).
+            $argumentDefinitions['spreadProps'] = PropsUtility::createSpreadPropsArgumentDefinition();
 
             $this->componentDefinitionsCache[$viewHelperName] = new ComponentDefinition(
                 $viewHelperName,
@@ -218,6 +195,18 @@ abstract class AbstractComponentCollection implements ComponentCollectionInterfa
             );
         }
         return $this->componentDefinitionsCache[$viewHelperName];
+    }
+
+    /**
+     * Whether $viewHelperName's own declared shape (folder-shape default included) is root - see
+     * {@see \Jramke\FluidPrimitives\Utility\ComponentRootUtility::isDeclaredRootFromViewHelperName()}
+     * for the underlying rule. A plain lookup on `getComponentDefinition()`'s own (already memoized)
+     * result, not a second cache: `rootId` is only ever added to a root component's own argument
+     * definitions, so its presence is exactly this fact.
+     */
+    final public function isDeclaredRoot(string $viewHelperName): bool
+    {
+        return array_key_exists('rootId', $this->getComponentDefinition($viewHelperName)->getArgumentDefinitions());
     }
 
     final public function getComponentRenderer(): ComponentRendererInterface

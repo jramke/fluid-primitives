@@ -1,16 +1,21 @@
 import { toKebabCase } from './hydration';
 
+/**
+ * Converts a prop from the shape it has on the wire (JSON) to the one the component needs. It gets
+ * the wire value and all props of the component.
+ */
 export type ClientPropConverter<TWire = unknown, TMachine = unknown> = (
     wireValue: TWire,
     props: Record<string, unknown>
 ) => TMachine;
 
+/** The converters of one component, by prop name. */
 export type ClientPropConverterMap = Record<string, ClientPropConverter<any, any>>;
 
 /**
- * The post-conversion ("machine") shape a converters object actually produces per prop - what a
- * primitive's own `HydrationPropsOverrides` augmentation should declare, derived from the real
- * converters `const` via `typeof` instead of hand-typed a second time next to it. See `Select.ts`.
+ * The shape each prop of a converters object has after conversion. Use it for the
+ * `HydrationPropsOverrides` of a component, derived from the converters with `typeof` instead of
+ * typed a second time.
  */
 export type ConverterMachineProps<T extends ClientPropConverterMap> = {
     [K in keyof T]: T[K] extends ClientPropConverter<any, infer TMachine> ? TMachine : never;
@@ -19,10 +24,12 @@ export type ConverterMachineProps<T extends ClientPropConverterMap> = {
 const converters = new Map<string, ClientPropConverterMap>();
 
 /**
- * Registers, per component, which wire props need converting before a `mountAll`/`mount` callback
- * receives them (e.g. Select's `collection`: JSON on the wire, a real `ListCollection` instance
- * once converted) - always shipped as part of the primitive itself, independent of whether any
- * project ever generates hydration types for it.
+ * Registers which props of a component need converting before a `mountAll()` or `mount()` callback
+ * receives them, e.g. the `collection` of a Select: JSON on the wire, a `ListCollection` once
+ * converted.
+ *
+ * @param componentName - The component, e.g. `select`.
+ * @param propConverters - The converters, by prop name.
  */
 export function registerClientPropConverters<T extends ClientPropConverterMap>(
     componentName: string,
@@ -32,6 +39,8 @@ export function registerClientPropConverters<T extends ClientPropConverterMap>(
 }
 
 /**
+ * @internal
+ *
  * Runs every registered converter for `componentName` against `props`, called for every
  * registered key regardless of whether it's actually present on `props` - a converter is
  * registered per prop *name*, not per wire value, so it can supply a default for a prop the wire

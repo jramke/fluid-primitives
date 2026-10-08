@@ -1,6 +1,7 @@
 import { Component, Machine, normalizeProps } from '../../Client';
 import { connect } from './src/form.connect';
 import { machine } from './src/form.machine';
+import { splitProps } from './src/form.props';
 import { getFieldMachinesFor, registerFormMachine, type FieldMachine } from './src/form.registry';
 import type { FormApi, FormProps, FormState } from './src/form.types';
 export type {
@@ -21,8 +22,9 @@ export class Form extends Component<FormProps, FormApi> {
     private fieldSubscriptions = new Map<FieldMachine, () => void>();
 
     initMachine(props: FormProps) {
-        const createdMachine = new Machine(machine, props);
-        registerFormMachine(this.getElement('root'), createdMachine);
+        const [machineProps] = splitProps(props);
+        const createdMachine = new Machine(machine, machineProps);
+        registerFormMachine(this.hydrator.query('root'), createdMachine);
         return createdMachine;
     }
 
@@ -35,6 +37,7 @@ export class Form extends Component<FormProps, FormApi> {
             if (this.fieldSubscriptions.has(fieldMachine)) continue;
 
             const unsubscribe = fieldMachine.subscribe(() => {
+                this.machine.send({ type: 'FIELDS_CHANGED' });
                 this.api = this.initApi();
                 this.render();
             });
@@ -44,14 +47,14 @@ export class Form extends Component<FormProps, FormApi> {
     }
 
     render() {
-        const formEl = this.getElement('root') as HTMLFormElement | null;
+        const formEl = this.hydrator.query('root') as HTMLFormElement | null;
         if (!formEl) return;
 
         this.subscribeToFieldMachines(formEl);
 
         this.spreadProps(formEl, this.api.getFormProps());
 
-        this.getElements('content').forEach(contentEl => {
+        this.hydrator.queryAll('content').forEach(contentEl => {
             this.spreadProps(contentEl, this.api.getContentProps());
         });
 
@@ -59,12 +62,12 @@ export class Form extends Component<FormProps, FormApi> {
             this.api.getIndicatorProps(value as FormState)
         );
 
-        this.getElements('errorText').forEach(errorTextEl => {
+        this.hydrator.queryAll('errorText').forEach(errorTextEl => {
             this.spreadProps(errorTextEl, this.api.getErrorTextProps());
             syncStatusText(errorTextEl, this.api.getErrorText());
         });
 
-        this.getElements('successText').forEach(successTextEl => {
+        this.hydrator.queryAll('successText').forEach(successTextEl => {
             this.spreadProps(successTextEl, this.api.getSuccessTextProps());
             syncStatusText(successTextEl, this.api.getSuccessText());
         });

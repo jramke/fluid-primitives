@@ -23,9 +23,8 @@ declare global {
             globals?: FluidPrimitivesGlobals;
             /**
              * Every component instance `mountAll`/`mount` has created, nested the same way as
-             * `hydrationData` above - populated by both (not just `mountAll`, as the older
-             * `uncontrolledInstances` name implied), so `getComponentInstance` can find a `mount`-ed
-             * controlled component too.
+             * `hydrationData` above - populated by both, so `getComponentInstance` can find a
+             * component that was mounted by hand with `mount` too.
              */
             componentInstances: {
                 [namespace: string]: {
@@ -48,6 +47,7 @@ declare global {
     }
 }
 
+/** @internal */
 export interface NestedComponentEntry {
     /**
      * The nested component's own hydration registry key, "namespace:clientBaseName" (e.g.
@@ -59,19 +59,23 @@ export interface NestedComponentEntry {
     id: string;
 }
 
+/** @internal */
 export interface ComponentInterface<Api> {
     document: Document;
     machine: Machine<any>;
     api: Api;
-    hydrator: ComponentHydrator | null;
+    hydrator: ComponentHydrator;
 
     init(): void;
     destroy(): void;
     render(): void;
 }
 
+/** The hydration entry of one component instance, as PHP renders it for `mountAll()` and `mount()`. */
 export interface ComponentHydrationData {
-    controlled: boolean;
+    /** Whether the instance mounts on its own: `false` when it was rendered with `autoMount="{false}"`. */
+    autoMount: boolean;
+    /** The props of the instance. Typed per component by `HydrationPropsRegistry`. */
     props: {
         id: string;
         ids: { [key: string]: string };
@@ -80,26 +84,30 @@ export interface ComponentHydrationData {
 }
 
 /**
- * Keyed by the exact namespaced string a `mountAll`/`mount` call site uses (e.g. `"ui:select"`),
- * extended per-namespace by a project's own generated hydration types via `declare module
- * 'fluid-primitives' { interface HydrationPropsRegistry { "ui:select": SelectHydrationProps } }` -
- * empty here by design, fluid-primitives itself never populates this. A key absent from this
- * registry (not yet generated, or a project that never runs the generator) falls back to
- * {@see ComponentHydrationData}'s own untyped `props` shape - graceful degradation, not an error.
+ * Types the `props` of `mountAll()` and `mount()` per component. It is empty on purpose: a project
+ * fills it with its own generated types, keyed by the namespaced name used at the call site.
+ * A component that is not in it gets the untyped `props` of `ComponentHydrationData`.
+ *
+ * @example
+ * ```typescript
+ * declare module 'fluid-primitives' {
+ *     interface HydrationPropsRegistry {
+ *         'ui:select': SelectHydrationProps;
+ *     }
+ * }
+ * ```
  */
 export interface HydrationPropsRegistry {}
 
 /**
- * Per-component overrides for props whose wire (JSON) shape differs from what the constructor
- * actually needs after a registered client prop converter runs (see `client-prop-converters.ts`) -
- * e.g. Select's `collection`: a plain JSON shape on the wire, a real `@zag-js/collection`
- * `ListCollection` instance once converted. Populated by the primitive itself (co-located with its
- * own `registerClientPropConverters` call, always shipped - see `Select.ts`), not by generated
- * code, and derived from the converter function's own signature via `ConverterMachineProps`
- * rather than hand-typed a second time.
+ * Overrides the type of the props whose shape changes through a registered client prop converter,
+ * for example the `collection` of a Select: JSON on the wire, a `ListCollection` once converted.
+ * It is keyed by the bare component name. Derive each entry from the converters with
+ * `ConverterMachineProps` instead of typing it by hand.
  */
 export interface HydrationPropsOverrides {}
 
+/** @internal */
 export type KnownComponentName = Extract<keyof HydrationPropsRegistry, string>;
 
 /**
@@ -116,19 +124,19 @@ type PickOverride<K extends string> =
         : object;
 
 /**
- * The typed `props` shape for `mountAll`/`mount`'s callback, keyed off the exact namespaced string
- * literal passed at the call site - registry entry minus whatever keys have a registered converter
- * override, plus that override. Falls back to the generic untyped bag for a key not present in
- * {@see HydrationPropsRegistry} at all.
+ * The `props` type of the callback of `mountAll()` and `mount()` for the component name `K`: its
+ * entry in `HydrationPropsRegistry`, with the props that have a converter replaced by their
+ * `HydrationPropsOverrides`. A name that is not in the registry gets the untyped props.
  */
 export type HydrationPropsFor<K extends string> = K extends keyof HydrationPropsRegistry
     ? Omit<HydrationPropsRegistry[K], keyof PickOverride<K>> & PickOverride<K>
     : ComponentHydrationData['props'];
 
+/** @internal */
 export interface FluidPrimitivesGlobals {
     locale?: string;
     /**
-     * Enables dev-only checks like {@see warnAboutDuplicateIds}. Set automatically to whether
+     * Enables dev-only checks. Set automatically to whether
      * TYPO3's own Application Context is development (see `HydrationRegistry::resolveGlobals()`),
      * nothing for a consumer to configure. These checks aren't gated by a bundler env variable, so
      * nothing is stripped from the production bundle either way - they simply never run unless

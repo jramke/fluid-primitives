@@ -28,11 +28,12 @@ export class Popover extends Component<popover.Props, popover.Api> {
     static componentName = 'popover';
 
     initMachine(props: popover.Props): Machine<any> {
+        const [machineProps] = popover.splitProps(props);
         return new Machine(popover.machine, {
-            ...props,
+            ...machineProps,
             positioning: {
                 gutter: 6,
-                ...props.positioning,
+                ...machineProps.positioning,
             },
         });
     }
@@ -46,28 +47,29 @@ export class Popover extends Component<popover.Props, popover.Api> {
             this.api.getTriggerProps({ value })
         );
 
-        const positionerEl = this.getElement('positioner');
+        const positionerEl = this.hydrator.query('positioner');
         if (positionerEl) this.spreadProps(positionerEl, this.api.getPositionerProps());
 
-        const arrowEl = this.getElement('arrow');
+        const arrowEl = this.hydrator.query('arrow');
         if (arrowEl) this.spreadProps(arrowEl, this.api.getArrowProps());
 
-        const arrowTipEl = this.getElement('arrowTip');
+        const arrowTipEl = this.hydrator.query('arrowTip');
         if (arrowTipEl) this.spreadProps(arrowTipEl, this.api.getArrowTipProps());
 
-        const contentEl = this.getElement('content');
+        const contentEl = this.hydrator.query('content');
         if (contentEl) this.spreadProps(contentEl, this.api.getContentProps());
 
-        const titleEl = this.getElement('title');
+        const titleEl = this.hydrator.query('title');
         if (titleEl) this.spreadProps(titleEl, this.api.getTitleProps());
 
-        const descriptionEl = this.getElement('description');
+        const descriptionEl = this.hydrator.query('description');
         if (descriptionEl) this.spreadProps(descriptionEl, this.api.getDescriptionProps());
 
-        const closeTriggerEl = this.getElement('closeTrigger');
-        if (closeTriggerEl) this.spreadProps(closeTriggerEl, this.api.getCloseTriggerProps());
+        this.hydrator.queryAll('closeTrigger').forEach(closeTriggerEl => {
+            this.spreadProps(closeTriggerEl, this.api.getCloseTriggerProps());
+        });
 
-        const indicatorEl = this.getElement('indicator');
+        const indicatorEl = this.hydrator.query('indicator');
         if (indicatorEl) this.spreadProps(indicatorEl, this.api.getIndicatorProps());
     }
 }

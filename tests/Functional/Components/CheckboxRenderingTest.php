@@ -23,8 +23,7 @@ final class CheckboxRenderingTest extends FunctionalTestCase
         ');
 
         $this->assertStringContainsString('<label', $html);
-        $this->assertStringContainsString('data-scope="checkbox"', $html);
-        $this->assertStringContainsString('data-part="root"', $html);
+        $this->assertStringContainsString('data-checkbox-root="', $html);
     }
 
     #[Test]
@@ -39,7 +38,10 @@ final class CheckboxRenderingTest extends FunctionalTestCase
         ');
 
         $this->assertStringContainsString('data-state="unchecked"', $html);
-        $this->assertMatchesRegularExpression('/data-part="indicator".*hidden|hidden.*data-part="indicator"/s', $html);
+        $this->assertMatchesRegularExpression(
+            '/data-checkbox-indicator="[^"]*"[^>]*hidden|hidden[^>]*data-checkbox-indicator="/',
+            $html,
+        );
     }
 
     #[Test]
@@ -54,7 +56,10 @@ final class CheckboxRenderingTest extends FunctionalTestCase
         ');
 
         $this->assertStringContainsString('data-state="checked"', $html);
-        $this->assertDoesNotMatchRegularExpression('/data-part="indicator"[^>]*hidden/', $html);
+        $this->assertDoesNotMatchRegularExpression(
+            '/data-checkbox-indicator="[^"]*"[^>]*hidden|hidden[^>]*data-checkbox-indicator="/',
+            $html,
+        );
     }
 
     #[Test]
@@ -69,7 +74,10 @@ final class CheckboxRenderingTest extends FunctionalTestCase
         ');
 
         $this->assertStringContainsString('data-state="indeterminate"', $html);
-        $this->assertDoesNotMatchRegularExpression('/data-part="indicator"[^>]*hidden/', $html);
+        $this->assertDoesNotMatchRegularExpression(
+            '/data-checkbox-indicator="[^"]*"[^>]*hidden|hidden[^>]*data-checkbox-indicator="/',
+            $html,
+        );
     }
 
     #[Test]

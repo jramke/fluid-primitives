@@ -19,8 +19,7 @@ final class CollapsibleRenderingTest extends FunctionalTestCase
             </primitives:collapsible.root>
         ');
 
-        $this->assertStringContainsString('data-scope="collapsible"', $html);
-        $this->assertStringContainsString('data-part="root"', $html);
+        $this->assertStringContainsString('data-collapsible-root="', $html);
     }
 
     #[Test]
@@ -35,8 +34,23 @@ final class CollapsibleRenderingTest extends FunctionalTestCase
 
         $this->assertStringContainsString('<button', $html);
         $this->assertStringContainsString('type="button"', $html);
-        $this->assertStringContainsString('data-part="trigger"', $html);
+        $this->assertStringContainsString('data-collapsible-trigger="', $html);
         $this->assertStringContainsString('aria-expanded="false"', $html);
+    }
+
+    #[Test]
+    public function marksEveryTriggerOfOneCollapsibleWithItsRootIdAndNoIds(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:collapsible.root rootId="my-collapsible">
+                <primitives:collapsible.trigger>Toggle</primitives:collapsible.trigger>
+                <primitives:collapsible.content>Content</primitives:collapsible.content>
+                <primitives:collapsible.trigger>Toggle again</primitives:collapsible.trigger>
+            </primitives:collapsible.root>
+        ');
+
+        $this->assertSame(2, substr_count($html, 'data-collapsible-trigger="my-collapsible"'));
+        $this->assertStringNotContainsString(' id=', $html);
     }
 
     #[Test]
@@ -63,8 +77,8 @@ final class CollapsibleRenderingTest extends FunctionalTestCase
             </primitives:collapsible.root>
         ');
 
-        $this->assertStringContainsString('data-part="content"', $html);
-        $this->assertMatchesRegularExpression('/data-part="content"[^>]*hidden/', $html);
+        $this->assertStringContainsString('data-collapsible-content="', $html);
+        $this->assertMatchesRegularExpression('/data-collapsible-content="[^"]*"[^>]*hidden/', $html);
     }
 
     #[Test]
@@ -78,6 +92,6 @@ final class CollapsibleRenderingTest extends FunctionalTestCase
         ');
 
         $this->assertStringContainsString('Visible content', $html);
-        $this->assertDoesNotMatchRegularExpression('/data-part="content"[^>]*hidden/', $html);
+        $this->assertDoesNotMatchRegularExpression('/data-collapsible-content="[^"]*"[^>]*hidden/', $html);
     }
 }

@@ -2,23 +2,21 @@ import { nextTick } from '@zag-js/dom-query';
 import type { NormalizeProps, PropTypes } from '@zag-js/types';
 import { destroyComponentsWithin } from '../../../Client/src/lib/hydration';
 import { Template } from '../../../Client/src/lib/template';
-import type { FieldValue } from '../../Field/src/field.types';
-import { getFieldValueFromContainer } from '../../Field/src/field.utils';
+import { getFieldValueFromContainer, type FieldValue } from '../../Field/src/field.value';
 import { parseFieldPath, stringifyFieldPathAsBrackets } from '../../Form/src/form.path';
 import { renameFieldMachineForForm } from '../../Form/src/form.registry';
 import type { FieldArray } from '../FieldArray';
 import { parts } from './field-array.anatomy';
-import * as dom from './field-array.dom';
 import type { FieldArrayApi, FieldArrayApiActions, FieldArrayApiProps } from './field-array.types';
 
 /**
  * Builds `FieldArray`'s API. Deliberately takes the `Component` instance itself, not a Zag
  * `service` the way `Field`/`Form`'s own `connect()` do - their API is "read context, return a
  * plain object", but `append`/`remove` here are DOM mutations over an open-ended row collection,
- * which needs `Component`-level helpers (`getElement`/`getElements`/`hydrator`/`refresh`) that a
+ * which needs `Component`-level helpers (`hydrator`/`refresh`) that a
  * Zag service's `context`/`scope` alone don't provide. Still takes `normalize` like every other
  * `connect()` though, so `getAddTriggerProps`/`getRemoveTriggerProps` stay framework-portable and
- * carry the same `data-scope`/`data-part` anatomy attrs every other primitive's parts do.
+ * carry the same anatomy attrs every other primitive's parts do.
  */
 export function connect<T extends PropTypes>(
     component: FieldArray,
@@ -36,27 +34,21 @@ export function connect<T extends PropTypes>(
         getAddTriggerProps: () => {
             const disabled = !actions.canAppend();
             return normalize.button({
-                ...parts.addTrigger.attrs,
-                id: dom.getAddTriggerId(component.machine.scope),
+                ...parts.addTrigger.attrs(component.machine.scope.id),
                 onClick: () => actions.append(),
                 'aria-disabled': disabled ? true : undefined,
                 'data-disabled': disabled ? true : undefined,
             });
         },
-        // No `id` here, unlike every other part's `getXProps()` (including `getAddTriggerProps`
-        // above) - `removeTrigger`'s `id` is a *multi-instance*, per-row one, and its ownership
-        // already belongs entirely to `ComponentHydrator.restampValue` (see `Client/src/lib/
-        // hydration.ts`), which re-keys it whenever a row is cloned or reindexed. Recomputing it
-        // here from `index` too would create a second, independent source of truth for the same
-        // id, and this one has no way to even agree with the other - it has no access to the
-        // stencil-rootId part that restamping works from.
+        // No `id`: `removeTrigger` is a per-row part, identified by its `data-value` (the row index).
         getRemoveTriggerProps: (index: number) => {
             const disabled = !actions.canRemove();
             return normalize.button({
-                ...parts.removeTrigger.attrs,
+                ...parts.removeTrigger.attrs(component.machine.scope.id),
                 onClick: () => actions.remove(index),
                 'aria-disabled': disabled ? true : undefined,
                 'data-disabled': disabled ? true : undefined,
+                /** The index of the row the trigger removes. */
                 'data-value': index,
             });
         },
@@ -69,8 +61,8 @@ export function connect<T extends PropTypes>(
 }
 
 function getRows(component: FieldArray): { index: number }[] {
-    return component
-        .getElements<HTMLElement>('item')
+    return component.hydrator
+        .queryAll<HTMLElement>('item')
         .map(el => ({ index: Number(el.dataset.value) }))
         .filter(({ index }) => !Number.isNaN(index))
         .sort((a, b) => a.index - b.index);
@@ -94,10 +86,9 @@ function canRemove(component: FieldArray): boolean {
  * so consumer code can call `mountAll()` again for each of them.
  */
 function append(component: FieldArray): void {
-    if (!component.hydrator) return;
     if (!canAppend(component)) return;
 
-    const itemGroupEl = component.getElement('itemGroup');
+    const itemGroupEl = component.hydrator.query('itemGroup');
     if (!itemGroupEl) return;
 
     const index = nextIndex(component);
@@ -120,8 +111,8 @@ function append(component: FieldArray): void {
 function remove(component: FieldArray, index: number): void {
     if (!canRemove(component)) return;
 
-    const rowEl = component
-        .getElements<HTMLElement>('item')
+    const rowEl = component.hydrator
+        .queryAll<HTMLElement>('item')
         .find(el => el.dataset.value === String(index));
     if (!rowEl) return;
 
@@ -148,20 +139,20 @@ function remove(component: FieldArray, index: number): void {
  * `removeTrigger`) disappears: the next row's `removeTrigger`, or the previous row's if the
  * removed row was last, or `addTrigger` if no rows remain. Resolved to a real element
  * *before* removal, so the reference stays valid through the DOM mutation and reindexing that
- * follow - `getElements('item')` already reflects visual/DOM order, so this doesn't need to
+ * follow - `queryAll('item')` already reflects visual/DOM order, so this doesn't need to
  * reason about numeric row indices at all.
  */
 function findFocusTargetAfterRemoval(
     component: FieldArray,
     rowEl: HTMLElement
 ): HTMLElement | null {
-    const rows = component.getElements<HTMLElement>('item');
+    const rows = component.hydrator.queryAll<HTMLElement>('item');
     const removedPosition = rows.indexOf(rowEl);
     const siblingRowEl = rows[removedPosition + 1] ?? rows[removedPosition - 1];
 
     return (
-        siblingRowEl?.querySelector<HTMLElement>('[data-part="remove-trigger"]') ??
-        component.getElement<HTMLElement>('addTrigger')
+        (siblingRowEl && component.hydrator.query<HTMLElement>('removeTrigger', siblingRowEl)) ||
+        component.hydrator.query<HTMLElement>('addTrigger')
     );
 }
 
@@ -171,31 +162,27 @@ function nextIndex(component: FieldArray): number {
 }
 
 function reindexRowsAfter(component: FieldArray, removedIndex: number): void {
-    if (!component.hydrator) return;
-
     const rowsToShift = getRows(component).filter(({ index }) => index > removedIndex);
 
     for (const { index } of rowsToShift) {
-        const rowEl = component
-            .getElements<HTMLElement>('item')
+        const rowEl = component.hydrator
+            .queryAll<HTMLElement>('item')
             .find(el => el.dataset.value === String(index));
         if (!rowEl) continue;
 
         const newIndex = index - 1;
 
-        rowEl
-            .querySelectorAll<HTMLElement>('[data-scope="field"][data-part="root"]')
-            .forEach(fieldRootEl => {
-                const oldName = fieldRootEl.dataset.name;
-                if (!oldName) return;
-                const newName = oldName.replace(`[${index}]`, `[${newIndex}]`);
-                renameFieldMachineForForm(fieldRootEl, oldName, newName);
-            });
+        rowEl.querySelectorAll<HTMLElement>('[data-field-root]').forEach(fieldRootEl => {
+            const oldName = fieldRootEl.dataset.name;
+            if (!oldName) return;
+            const newName = oldName.replace(`[${index}]`, `[${newIndex}]`);
+            renameFieldMachineForForm(fieldRootEl, oldName, newName);
+        });
 
         // renameFieldMachineForForm (above) only updates each nested field's `name` prop for
-        // submission purposes - it never touches DOM ids. Without also re-keying those here, a
+        // submission purposes - it never touches their root ids. Without also re-keying those here, a
         // later row appended at this now-freed-up index would clone the same stencil and collide
-        // with these nested Field/Input's still-stale ids (see `ComponentHydrator.renameValue`'s
+        // with these nested Field/Input's still-stale root ids (see `ComponentHydrator.renameValue`'s
         // own docblock for the full mechanism - `rowEl` is an existing, possibly already-mounted
         // item, never a fresh `<template>` clone, so this must be `renameValue`, not
         // `restampValue`).

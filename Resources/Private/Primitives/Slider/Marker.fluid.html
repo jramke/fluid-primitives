@@ -10,6 +10,7 @@
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'marker' , value: value, data: refData )}
     {ui:attributes()}
+    {ui:asChild()}
     style="{f:if(condition: context.isUnmeasured, then: 'visibility: hidden;')}">
     <f:slot />
 </div>

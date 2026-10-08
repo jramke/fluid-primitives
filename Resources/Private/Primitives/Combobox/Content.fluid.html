@@ -1,15 +1,15 @@
 <f:variable name="state">{context.defaultOpen ? 'open' : 'closed'}</f:variable>
 <f:variable name="isEmpty">{f:if(condition: context.collection.size, then: '{false}', else: '{true}')}</f:variable>
 <f:variable name="refData" value="{state: state, empty: isEmpty}" />
+<f:variable name="isDialogPopup" value="{context.dialogPopup}" />
 
 <div
-    role="listbox"
-    tabindex="-1"
+    role="{f:if(condition: isDialogPopup, then: 'dialog', else: 'presentation')}"
     {f:if(condition: context.defaultOpen, then: '' , else: 'hidden="true"' )}
     {f:if(condition: isEmpty, then: 'data-empty="true"' )}
-    {f:if(condition: context.multiple, then: 'aria-multiselectable="true"' )}
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'content' , data: refData )}
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
     <f:slot />
 </div>

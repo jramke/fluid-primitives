@@ -25,9 +25,8 @@ final class InputRenderingTest extends FunctionalTestCase
             </primitives:input.root>
         ');
 
-        $this->assertStringContainsString('data-scope="input"', $html);
-        $this->assertStringContainsString('data-part="root"', $html);
-        $this->assertStringContainsString('data-part="input"', $html);
+        $this->assertStringContainsString('data-input-root="', $html);
+        $this->assertStringContainsString('data-input-input="', $html);
         $this->assertStringContainsString('type="email"', $html);
         $this->assertStringContainsString('value="joost@example.com"', $html);
     }
@@ -39,7 +38,7 @@ final class InputRenderingTest extends FunctionalTestCase
         // containing `{3}`/`{4}` would be misparsed by Fluid as embedded object-accessor
         // expressions, same as any other string argument value with literal curly braces.
         $html = $this->renderTemplate('
-            <primitives:input.root type="tel" pattern="{pattern}" inputMode="numeric">
+            <primitives:input.root type="tel" pattern="{pattern}" inputMode="{f:constant(name: \'Jramke\FluidPrimitives\Enum\InputMode::Numeric\')}">
                 <primitives:input.input />
             </primitives:input.root>
         ', ['pattern' => '[0-9]{3}-[0-9]{4}']);
@@ -132,7 +131,7 @@ final class InputRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
-    public function includesAnnounceDebounceDefaultInHydrationData(): void
+    public function includesAnnounceDefaultsInHydrationData(): void
     {
         $this->renderTemplate('
             <primitives:input.root>
@@ -144,6 +143,7 @@ final class InputRenderingTest extends FunctionalTestCase
         $inputData = array_values($hydrationData['input'])[0];
 
         $this->assertSame(600, $inputData['props']['announceDebounce']);
+        $this->assertTrue($inputData['props']['announce']);
     }
 
     #[Test]
@@ -158,22 +158,19 @@ final class InputRenderingTest extends FunctionalTestCase
             </primitives:field.root>
         ');
 
-        // Field.Label generates its own id independently of the nested Input.
-        $this->assertStringContainsString('id="field:my-field:label"', $html);
+        // Field.Label is marked with the Field's root id, independently of the nested Input.
+        $this->assertStringContainsString('data-field-label="my-field"', $html);
 
         // Input inherits the Field's name/disabled/invalid state...
         $this->assertStringContainsString('name="email"', $html);
         $this->assertStringContainsString('data-disabled', $html);
         $this->assertStringContainsString('aria-invalid="true"', $html);
 
-        // ...and its input id is overridden to the Field's generated "control" id (per
-        // ComponentPartIdUtility::FIELD_ID_PARTS['input']['control'] = 'input'), rather than
-        // generating its own "input:...:input" id - this is what lets a <label for="..."> pointing
-        // at the Field's control id reach the actual native input. The wrapping root div still gets
-        // its own generated id - only the field-aware control part is overridden.
-        $inputTag = $this->extractTag($html, 'input');
+        // ...and its input carries the Field's generated "control" id (per
+        // FieldIdMapping::FIELD_ID_PARTS['input']['control'] = 'input') - this is what lets a
+        // <label for="..."> pointing at the Field's control id reach the actual native input.
+        $inputTag = $this->extractTag($html, 'data-input-input');
         $this->assertStringContainsString('id="field:my-field:control"', $inputTag);
-        $this->assertStringNotContainsString('id="input:', $inputTag);
     }
 
     #[Test]
@@ -190,18 +187,17 @@ final class InputRenderingTest extends FunctionalTestCase
             </primitives:field.root>
         ');
 
-        $labelTag = $this->extractTag($html, 'label');
+        $labelTag = $this->extractTag($html, 'data-input-label');
         $this->assertStringContainsString('id="field:my-field:label"', $labelTag);
-        $this->assertStringNotContainsString('id="input:', $labelTag);
 
-        $inputTag = $this->extractTag($html, 'input');
+        $inputTag = $this->extractTag($html, 'data-input-input');
         $this->assertStringContainsString('id="field:my-field:control"', $inputTag);
     }
 
-    private function extractTag(string $html, string $part): string
+    private function extractTag(string $html, string $attribute): string
     {
-        $matched = preg_match('/<[a-z]+[^>]*data-part="' . preg_quote($part, '/') . '"[^>]*>/', $html, $matches);
-        $this->assertSame(1, $matched, sprintf('Expected exactly one element with data-part="%s".', $part));
+        $matched = preg_match('/<[a-z]+[^>]*' . preg_quote($attribute, '/') . '="[^"]*"[^>]*>/', $html, $matches);
+        $this->assertSame(1, $matched, sprintf('Expected exactly one element with %s.', $attribute));
 
         return $matches[0];
     }

@@ -1,0 +1,14 @@
+<ui:prop name="disabled" type="boolean" optional="{true}" client="{true}" description="Whether the fieldset is disabled. Native `<fieldset disabled>` semantics carry the disabled state to every control inside, and to every `Field` inside it." />
+<ui:prop name="invalid" type="boolean" optional="{true}" client="{true}" description="Whether the fieldset is invalid. Not inherited by the fields inside it." />
+
+<f:variable name="refData">{context.dataAttributes}</f:variable>
+
+<fieldset
+    {f:if(condition: refData.disabled, then: 'disabled' )}
+    {f:if(condition: refData.invalid, then: 'aria-invalid="true"' )}
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'root' , data: refData )}
+    {ui:attributes()}
+    {ui:asChild()}>
+    <f:slot />
+</fieldset>

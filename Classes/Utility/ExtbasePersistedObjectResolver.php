@@ -33,9 +33,10 @@ final readonly class ExtbasePersistedObjectResolver
     }
 
     /**
-     * The given value, if it's a persisted domain object with a real uid - either not new, or a
-     * clone of a previously-persisted one (e.g. the same instance re-rendered after a validation
-     * error).
+     * The given value (unwrapped if it's a lazy proxy), if it's a domain object with a real uid.
+     * Deliberately mirrors the checks of core's `AbstractFormViewHelper::renderHiddenIdentityField()`,
+     * including its new/clone guard:
+     * https://github.com/TYPO3/typo3/blob/07f4dc8267d1824a3021c00cd36c5ad8ee7f84a1/typo3/sysext/fluid/Classes/ViewHelpers/Form/AbstractFormViewHelper.php#L77
      */
     // This method is already a minimal, guard-clause chain of type-narrowing checks (proxy unwrap,
     // instanceof, new/clone state, uid presence) - the operator variety relative to its short length

@@ -7,6 +7,7 @@
     {f:if(condition: isHidden, then: 'hidden' )}
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'indicator' , value: state.value, data: refData )}
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
     <f:slot />
 </span>

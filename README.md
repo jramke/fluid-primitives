@@ -10,6 +10,15 @@ Fluid Primitives brings modern component patterns to TYPO3. Build accessible, co
 
 Full documentation can be found at [fluid-primitives.com](https://fluid-primitives.com).
 
+## Claude Code Skill
+
+Give your coding agent the usage model and the live docs endpoints:
+
+```bash
+/plugin marketplace add jramke/fluid-primitives
+/plugin install fluid-primitives@fluid-primitives
+```
+
 ## What You Get
 
 **Accessible by default.** Every interactive component handles keyboard navigation, focus management, and ARIA attributes automatically via [Zag.js](https://zagjs.com/) state machines.

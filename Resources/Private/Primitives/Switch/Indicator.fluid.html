@@ -9,6 +9,7 @@
     {f:if(condition: context.checked, then: '' , else: '' )}
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'indicator' , value: state.value, data: refData )}
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
     <f:slot />
 </span>

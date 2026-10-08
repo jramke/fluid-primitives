@@ -2,7 +2,9 @@ import type { EventObject } from '@zag-js/core';
 import type { PropTypes } from '@zag-js/types';
 
 export interface CheckboxGroupProps {
+    /** The unique identifier of the checkbox group. */
     id: string;
+    /** The ids of the elements in the checkbox group. Useful for composition. */
     ids?: Record<string, string>;
     /** The initial value of the checkbox group (uncontrolled) */
     defaultValue?: string[];

@@ -9,6 +9,7 @@
     {f:if(condition: itemState.disabled, then: 'aria-disabled="true"')}
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'item' , value: item.value, data: refData )}
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
     <f:slot />
 </div>

@@ -10,6 +10,7 @@
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'content' , data: refData )}
     {ui:attributes(skip: 'hidden' )}
+    {ui:asChild()}
     {f:if(condition: hidden, then: 'hidden="{hidden}"' )}>
     <f:slot />
 </div>

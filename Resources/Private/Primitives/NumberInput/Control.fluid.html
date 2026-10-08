@@ -6,6 +6,7 @@
     aria-invalid="{f:if(condition: context.invalid, then: 'true', else: 'false')}"
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'control' , data: refData )}
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
     <f:slot />
 </div>

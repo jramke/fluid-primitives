@@ -4,12 +4,69 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Tests\Unit;
 
+use Jramke\FluidPrimitives\Contexts\AccordionContext;
+use Jramke\FluidPrimitives\Contexts\BaseContext;
+use Jramke\FluidPrimitives\Contexts\CollapsibleContext;
 use Jramke\FluidPrimitives\Tests\TestCase;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use PHPUnit\Framework\Attributes\Test;
 
 final class ComponentUtilityTest extends TestCase
 {
+    private const string FIXTURE_CONTEXTS_NAMESPACE = 'Jramke\\FluidPrimitives\\Tests\\Fixtures\\Contexts';
+
+    #[Test]
+    public function resolvesClassicShapeContextClassesUnchanged(): void
+    {
+        // Single-file component: own name doubles as both path segments.
+        $collapsible = ComponentUtility::getContextClassNameFromViewHelperName('Collapsible/Collapsible', []);
+        $this->assertSame(CollapsibleContext::class, $collapsible);
+
+        // Root.html + parts: the folder's own name owns the context, "Root" itself is discarded.
+        $accordion = ComponentUtility::getContextClassNameFromViewHelperName('Accordion/Root', []);
+        $this->assertSame(AccordionContext::class, $accordion);
+    }
+
+    #[Test]
+    public function mirrorsFolderStructureAsNamespaceForTieredAndNestedRootComponents(): void
+    {
+        $namespaces = [self::FIXTURE_CONTEXTS_NAMESPACE];
+
+        // A tiered classic root (e.g. atomic-design "molecules.checkboxGroup.root") still uses the
+        // folder's own name as the class name, but namespaced under its tier segment rather than
+        // flat.
+        $tieredClassicRoot = ComponentUtility::getContextClassNameFromViewHelperName(
+            'Molecules/CheckboxGroup/Root',
+            $namespaces,
+        );
+        $this->assertSame(self::FIXTURE_CONTEXTS_NAMESPACE . '\\Molecules\\CheckboxGroupContext', $tieredClassicRoot);
+
+        // A component that's root only via the folder-shape default (e.g. a nested example/demo
+        // file) uses its own file name as the class name, namespaced under its full containing path.
+        $nestedFolderShapeRoot = ComponentUtility::getContextClassNameFromViewHelperName(
+            'CheckboxGroup/Examples/SelectAll',
+            $namespaces,
+        );
+        $this->assertSame(
+            self::FIXTURE_CONTEXTS_NAMESPACE . '\\CheckboxGroup\\Examples\\SelectAllContext',
+            $nestedFolderShapeRoot,
+        );
+    }
+
+    #[Test]
+    public function neverFallsThroughToAnUnrelatedClassSharingTheSameLastSegment(): void
+    {
+        // Regression test: a naive "just use the last segment as the class name in the flat
+        // namespace" scheme would make "Icon/Menu" wrongly resolve to the real, unrelated
+        // `MenuContext` (a fixture stand-in for it exists flat in this namespace, proving it's
+        // reachable) instead of falling back to BaseContext, because the two components merely
+        // happen to share a last-segment name.
+        $resolved = ComponentUtility::getContextClassNameFromViewHelperName('Icon/Menu', [
+            self::FIXTURE_CONTEXTS_NAMESPACE,
+        ]);
+        $this->assertSame(BaseContext::class, $resolved);
+    }
+
     #[Test]
     public function generatesUniqueIdsWithPrefix(): void
     {

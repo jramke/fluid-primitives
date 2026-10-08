@@ -5,7 +5,8 @@ export class NavigationMenu extends Component<navigationMenu.Props, navigationMe
     static componentName = 'navigationMenu';
 
     initMachine(props: navigationMenu.Props): Machine<any> {
-        return new Machine(navigationMenu.machine, props);
+        const [machineProps] = navigationMenu.splitProps(props);
+        return new Machine(navigationMenu.machine, machineProps);
     }
 
     initApi() {
@@ -13,14 +14,11 @@ export class NavigationMenu extends Component<navigationMenu.Props, navigationMe
     }
 
     render() {
-        const rootEl = this.getElement('root');
+        const rootEl = this.hydrator.query('root');
         if (rootEl) this.spreadProps(rootEl, this.api.getRootProps());
 
-        const listEl = this.getElement('list');
+        const listEl = this.hydrator.query('list');
         if (listEl) this.spreadProps(listEl, this.api.getListProps());
-
-        // hydrate indicator-track wrapper (no specific Zag API)
-        this.getElement('indicatorTrack');
 
         this.spreadPropsByValue('item', ({ el, value }) =>
             this.api.getItemProps({ value, disabled: el.hasAttribute('data-disabled') })
@@ -44,20 +42,20 @@ export class NavigationMenu extends Component<navigationMenu.Props, navigationMe
             this.api.getLinkProps({ value, current: el.hasAttribute('data-current') })
         );
 
-        const indicatorEl = this.getElement('indicator');
+        const indicatorEl = this.hydrator.query('indicator');
         if (indicatorEl) this.spreadProps(indicatorEl, this.api.getIndicatorProps());
 
-        const arrowEl = this.getElement('arrow');
+        const arrowEl = this.hydrator.query('arrow');
         if (arrowEl) this.spreadProps(arrowEl, this.api.getArrowProps());
 
-        const viewportPositionerEl = this.getElement('viewportPositioner');
+        const viewportPositionerEl = this.hydrator.query('viewportPositioner');
         if (viewportPositionerEl) {
             const align = (viewportPositionerEl.dataset.align ||
                 undefined) as navigationMenu.ViewportProps['align'];
             this.spreadProps(viewportPositionerEl, this.api.getViewportPositionerProps({ align }));
         }
 
-        const viewportEl = this.getElement('viewport');
+        const viewportEl = this.hydrator.query('viewport');
         if (viewportEl) {
             const align = (viewportEl.dataset.align ||
                 undefined) as navigationMenu.ViewportProps['align'];

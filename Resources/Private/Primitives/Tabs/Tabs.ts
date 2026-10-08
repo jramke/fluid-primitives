@@ -5,7 +5,8 @@ export class Tabs extends Component<tabs.Props, tabs.Api> {
     static componentName = 'tabs';
 
     initMachine(props: tabs.Props): Machine<any> {
-        return new Machine(tabs.machine, props);
+        const [machineProps] = tabs.splitProps(props);
+        return new Machine(tabs.machine, machineProps);
     }
 
     initApi() {
@@ -13,10 +14,10 @@ export class Tabs extends Component<tabs.Props, tabs.Api> {
     }
 
     render = () => {
-        const rootEl = this.getElement('root');
+        const rootEl = this.hydrator.query('root');
         if (rootEl) this.spreadProps(rootEl, this.api.getRootProps());
 
-        const listEl = this.getElement('list');
+        const listEl = this.hydrator.query('list');
         if (listEl) this.spreadProps(listEl, this.api.getListProps());
 
         this.spreadPropsByValue('trigger', ({ el, value }) =>
@@ -25,7 +26,7 @@ export class Tabs extends Component<tabs.Props, tabs.Api> {
 
         this.spreadPropsByValue('content', ({ value }) => this.api.getContentProps({ value }));
 
-        const indicatorEl = this.getElement('indicator');
+        const indicatorEl = this.hydrator.query('indicator');
         if (indicatorEl) {
             this.spreadProps(indicatorEl, this.api.getIndicatorProps());
         }

@@ -11,6 +11,7 @@
     {f:if(condition: '!{itemState.expanded}' , then: 'hidden' )}
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'itemContent' , value: value, data: refData )}
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
     <f:slot />
 </div>

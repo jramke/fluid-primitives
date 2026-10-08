@@ -1,7 +1,6 @@
 import * as menu from '@zag-js/menu';
 import {
     Component,
-    getComponentInstance,
     Machine,
     normalizeProps,
     registerClientPropConverters,
@@ -29,21 +28,15 @@ export class Menu extends Component<menu.Props, menu.Api> {
     static componentName = 'menu';
 
     /**
-     * `menu.triggerItem` elements found so far, keyed by `childId`. `getTriggerItemProps()` always
-     * rewrites an element's `id` to the child's own trigger id, so after the first spread it no
-     * longer matches `getElements('triggerItem')`'s lookup - caching it here keeps it updatable.
+     * Submenus that linked themselves to this menu (see {@see linkToParent}). Zag composes a
+     * `menu.triggerItem` from this menu's item props and the *child's* trigger props, and marks it
+     * with the child's own scope id - so each one is found through its child, not through this menu.
      */
-    private triggerItemEls = new Map<string, HTMLElement>();
+    private submenus = new Set<Menu>();
 
     initMachine(props: menu.Props): Machine<any> {
-        const { parentId: _parentId, ...menuProps } = props as menu.Props & { parentId?: string };
-
-        return new Machine(menu.machine, {
-            // navigate({ href }) {
-            //     window.location.href = href;
-            // },
-            ...menuProps,
-        });
+        const [menuProps] = menu.splitProps(props);
+        return new Machine(menu.machine, menuProps);
     }
 
     initApi() {
@@ -55,13 +48,13 @@ export class Menu extends Component<menu.Props, menu.Api> {
         this.linkToParent();
     }
 
-    private getParentId(): string | undefined {
-        return (this.userProps as { parentId?: string } | undefined)?.parentId;
+    // Not a machine prop (`splitProps` drops it), so it's read from the props the instance was created with.
+    private get parentId(): string | undefined {
+        return (this.userProps as menu.Props & { parentId?: string }).parentId;
     }
 
     private getParentInstance(): Menu | null {
-        const parentId = this.getParentId();
-        return parentId ? (getComponentInstance<Menu>('menu', parentId) ?? null) : null;
+        return this.parentId ? (this.getPeerInstance<Menu>(this.parentId) ?? null) : null;
     }
 
     /**
@@ -72,12 +65,13 @@ export class Menu extends Component<menu.Props, menu.Api> {
      * between the two) rather than as a machine prop.
      */
     private linkToParent() {
-        if (!this.getParentId()) return;
+        if (!this.parentId) return;
 
         setTimeout(() => {
             const parent = this.getParentInstance();
             if (!parent) return;
 
+            parent.submenus.add(this);
             parent.api.setChild(this.machine.service);
             this.api.setParent(parent.machine.service);
             parent.refresh();
@@ -89,6 +83,11 @@ export class Menu extends Component<menu.Props, menu.Api> {
         });
     }
 
+    destroy() {
+        this.getParentInstance()?.submenus.delete(this);
+        super.destroy();
+    }
+
     render() {
         this.spreadPropsByOptionalValue('trigger', ({ value }) =>
             this.api.getTriggerProps({ value })
@@ -97,19 +96,19 @@ export class Menu extends Component<menu.Props, menu.Api> {
             this.api.getContextTriggerProps({ value })
         );
 
-        const indicatorEl = this.getElement('indicator');
+        const indicatorEl = this.hydrator.query('indicator');
         if (indicatorEl) this.spreadProps(indicatorEl, this.api.getIndicatorProps());
 
-        const positionerEl = this.getElement('positioner');
+        const positionerEl = this.hydrator.query('positioner');
         if (positionerEl) this.spreadProps(positionerEl, this.api.getPositionerProps());
 
-        const arrowEl = this.getElement('arrow');
+        const arrowEl = this.hydrator.query('arrow');
         if (arrowEl) this.spreadProps(arrowEl, this.api.getArrowProps());
 
-        const arrowTipEl = this.getElement('arrowTip');
+        const arrowTipEl = this.hydrator.query('arrowTip');
         if (arrowTipEl) this.spreadProps(arrowTipEl, this.api.getArrowTipProps());
 
-        const contentEl = this.getElement('content');
+        const contentEl = this.hydrator.query('content');
         if (contentEl) this.spreadProps(contentEl, this.api.getContentProps());
 
         this.spreadPropsByValue('itemGroup', ({ value }) =>
@@ -119,9 +118,14 @@ export class Menu extends Component<menu.Props, menu.Api> {
             this.api.getItemGroupLabelProps({ htmlFor: value })
         );
 
-        this.spreadPropsByValue('separator', () => this.api.getSeparatorProps());
+        this.spreadPropsByOptionalValue('separator', () => this.api.getSeparatorProps());
 
         this.spreadPropsByValue('item', ({ value, el }) => {
+            // A submenu's trigger item also carries this menu's `data-menu-item` once linked (zag
+            // merges this menu's item props into it) - it's spread in renderTriggerItems(), and
+            // spreading plain item props over it here would strip what that spread added.
+            if (el.hasAttribute('data-menu-trigger-item')) return;
+
             if (el.dataset.type) {
                 this.renderOptionItem(el);
                 return;
@@ -138,29 +142,22 @@ export class Menu extends Component<menu.Props, menu.Api> {
     }
 
     /**
-     * Spreads `getTriggerItemProps(childApi)` onto each of this menu's own `menu.triggerItem`
-     * elements - each one opens a *different* submenu, discriminated by its `childId` (`data-value`).
-     * See {@see triggerItemEls} for why found elements are cached instead of re-discovered by id on
-     * every render.
+     * Spreads `getTriggerItemProps(childApi)` onto the `menu.triggerItem` element of each linked
+     * submenu - it carries that submenu's own root id, so the child finds it with its own
+     * `query('triggerItem')`.
      */
     private renderTriggerItems() {
-        this.getElements<HTMLElement>('triggerItem').forEach(el => {
-            const childId = el.dataset.value;
-            if (childId && !this.triggerItemEls.has(childId)) this.triggerItemEls.set(childId, el);
-        });
-
-        this.triggerItemEls.forEach((el, childId) => {
-            const child = getComponentInstance<Menu>('menu', childId);
-            if (!child) return;
-
+        this.submenus.forEach(child => {
             // Until a child's own isSubmenu flag flips true (its setParent() call resolves
             // asynchronously - see linkToParent()), getTriggerItemProps() computes
-            // data-part="trigger" instead of "trigger-item", which collides with that child's own,
-            // unrelated menu.trigger rendering and permanently mangles this element's id. Waiting
-            // here guarantees data-part is always right from this element's very first spread.
+            // data-menu-trigger instead of data-menu-trigger-item, which collides with that child's
+            // own, unrelated menu.trigger rendering and permanently mangles this element's id.
+            // Waiting here guarantees the part attribute is always right from this element's very
+            // first spread.
             if (!child.machine.context.get('isSubmenu')) return;
 
-            this.spreadProps(el, this.api.getTriggerItemProps(child.api));
+            const el = child.hydrator.query('triggerItem');
+            if (el) this.spreadProps(el, this.api.getTriggerItemProps(child.api));
         });
     }
 
@@ -189,7 +186,7 @@ export class Menu extends Component<menu.Props, menu.Api> {
             valueText,
             onCheckedChange: nextChecked => {
                 if (type === 'radio' && name) {
-                    this.getElements<HTMLElement>('item').forEach(sibling => {
+                    this.hydrator.queryAll<HTMLElement>('item').forEach(sibling => {
                         if (sibling.dataset.name === name) {
                             sibling.dataset.state = sibling === el ? 'checked' : 'unchecked';
                         }
@@ -202,7 +199,7 @@ export class Menu extends Component<menu.Props, menu.Api> {
         });
         this.spreadProps(el, optionProps);
 
-        const indicatorEl = this.getElement('itemIndicator', el);
+        const indicatorEl = this.hydrator.query('itemIndicator', el);
         if (indicatorEl) {
             this.spreadProps(
                 indicatorEl,
@@ -210,7 +207,7 @@ export class Menu extends Component<menu.Props, menu.Api> {
             );
         }
 
-        const textEl = this.getElement('itemText', el);
+        const textEl = this.hydrator.query('itemText', el);
         if (textEl) {
             this.spreadProps(
                 textEl,

@@ -1,4 +1,5 @@
 export { AsyncList } from './async-list';
+export type { AsyncListOptions } from './async-list';
 export { applyClientPropConverters, registerClientPropConverters } from './client-prop-converters';
 export type {
     ClientPropConverter,
@@ -20,12 +21,11 @@ export {
     mount,
     mountAll,
     toKebabCase,
-    warnAboutDuplicateIds,
 } from './hydration';
 export { Machine } from './machine';
 export { mergeProps } from './merge-props';
 export { normalizeProps } from './normalize-props';
-export { spreadProps } from './spread-props';
+export { spreadProps, spreadTextControlProps } from './spread-props';
 export { Template } from './template';
 export type { TemplateOptions } from './template';
 export { uid } from './uid';

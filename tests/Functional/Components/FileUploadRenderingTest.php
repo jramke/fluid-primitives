@@ -25,8 +25,7 @@ final class FileUploadRenderingTest extends FunctionalTestCase
             </primitives:fileUpload.root>
         ');
 
-        $this->assertStringContainsString('data-scope="file-upload"', $html);
-        $this->assertStringContainsString('data-part="root"', $html);
+        $this->assertStringContainsString('data-file-upload-root="', $html);
         $this->assertStringContainsString('data-disabled', $html);
         $this->assertStringContainsString('data-readonly', $html);
     }
@@ -201,10 +200,10 @@ final class FileUploadRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
-    public function rendersEachDirectlyAuthoredItemAndItsNestedPartsWithAUniqueId(): void
+    public function rendersEachDirectlyAuthoredItemAndItsNestedPartsWithItsOwnValueDiscriminator(): void
     {
         $html = $this->renderTemplate('
-            <primitives:fileUpload.root>
+            <primitives:fileUpload.root rootId="upload-root">
                 <primitives:fileUpload.itemGroup>
                     <primitives:fileUpload.item type="existing" value="1">
                         <primitives:fileUpload.itemName>First</primitives:fileUpload.itemName>
@@ -216,13 +215,16 @@ final class FileUploadRenderingTest extends FunctionalTestCase
             </primitives:fileUpload.root>
         ');
 
-        preg_match_all('/id="([^"]+)"[^>]*data-part="item"/', $html, $itemMatches);
-        $this->assertCount(2, $itemMatches[1]);
-        $this->assertCount(2, array_unique($itemMatches[1]));
-
-        preg_match_all('/id="([^"]+)"[^>]*data-part="item-name"/', $html, $nameMatches);
-        $this->assertCount(2, $nameMatches[1]);
-        $this->assertCount(2, array_unique($nameMatches[1]));
+        // No ids are generated - repeated parts share the root id and differ by `data-value` only.
+        foreach (['item', 'item-name'] as $part) {
+            preg_match_all(
+                '/<[^>]*data-file-upload-' . $part . '="upload-root"[^>]*data-value="([^"]+)"[^>]*>/',
+                $html,
+                $matches,
+            );
+            $this->assertSame(['1', '2'], $matches[1], "Expected one `{$part}` per item, told apart by data-value.");
+            $this->assertDoesNotMatchRegularExpression('/\sid=/', implode('', $matches[0]));
+        }
     }
 
     #[Test]
@@ -238,9 +240,9 @@ final class FileUploadRenderingTest extends FunctionalTestCase
             </primitives:fileUpload.root>
         ');
 
-        $this->assertStringContainsString('data-part="item-error"', $html);
+        $this->assertStringContainsString('data-file-upload-item-error="', $html);
         $this->assertMatchesRegularExpression(
-            '/data-part="item-error"[^>]*hidden|hidden[^>]*data-part="item-error"/s',
+            '/data-file-upload-item-error="[^"]*"[^>]*hidden|hidden[^>]*data-file-upload-item-error="/s',
             $html,
         );
     }
@@ -260,7 +262,7 @@ final class FileUploadRenderingTest extends FunctionalTestCase
             </primitives:fileUpload.root>
         ');
 
-        $this->assertStringContainsString('data-part="item-preview-fallback"', $html);
+        $this->assertStringContainsString('data-file-upload-item-preview-fallback="', $html);
     }
 
     #[Test]
@@ -274,8 +276,8 @@ final class FileUploadRenderingTest extends FunctionalTestCase
             </primitives:fileUpload.root>
         ');
 
-        $this->assertStringContainsString('data-part="item-template"', $html);
-        $this->assertStringContainsString('data-part="item"', $html);
+        $this->assertStringContainsString('<template data-file-upload-item-template="', $html);
+        $this->assertStringContainsString('data-file-upload-item="', $html);
     }
 
     #[Test]
@@ -289,7 +291,7 @@ final class FileUploadRenderingTest extends FunctionalTestCase
             </primitives:fileUpload.root>
         ');
 
-        $this->assertStringContainsString('data-part="rejected-item-template"', $html);
+        $this->assertStringContainsString('<template data-file-upload-rejected-item-template="', $html);
     }
 
     /**
@@ -338,7 +340,7 @@ final class FileUploadRenderingTest extends FunctionalTestCase
             </primitives:fileUpload.root>
         ');
 
-        $this->assertStringContainsString('data-part="diag-field"', $html);
+        $this->assertStringContainsString('data-file-upload-diag-field="diag-root-2"', $html);
     }
 
     #[Test]
@@ -366,7 +368,7 @@ final class FileUploadRenderingTest extends FunctionalTestCase
         ');
 
         $this->assertMatchesRegularExpression(
-            '/data-part="clear-trigger"[^>]*hidden|hidden[^>]*data-part="clear-trigger"/s',
+            '/data-file-upload-clear-trigger="[^"]*"[^>]*hidden|hidden[^>]*data-file-upload-clear-trigger="/s',
             $html,
         );
     }

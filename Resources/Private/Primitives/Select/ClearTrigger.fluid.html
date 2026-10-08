@@ -5,6 +5,7 @@
     {ui:ref(name: 'clearTrigger' )}
     {f:if(condition: context.disabled, then: 'disabled' )}
     {f:if(condition: context.defaultValue, then: '' , else: 'hidden="true"' )}
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
     <f:slot />
 </button>

@@ -3,6 +3,7 @@
 <span
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'valueText' , data: refData )}
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
     {context.valueText}
 </span>

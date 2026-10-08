@@ -20,22 +20,17 @@ final class DialogRenderingTest extends FunctionalTestCase
             </primitives:dialog.root>
         ');
 
-        $this->assertStringContainsString('data-scope="dialog"', $html);
-        $this->assertStringContainsString('data-part="trigger"', $html);
-        $this->assertStringContainsString('data-part="content"', $html);
+        $this->assertStringContainsString('data-dialog-trigger="', $html);
+        $this->assertStringContainsString('data-dialog-content="', $html);
     }
 
     /**
-     * `ComponentRenderer` registers a root component for hydration when its own rendered output
-     * contains a `data-scope="{component}"` ref (`ui:ref` always emits one, that's the detection
-     * signal) - but `ui:portal` renders empty at its own position and buffers the real markup
-     * elsewhere for `ui:portalContainer` to flush, so a dialog whose every ref'd part
-     * (content/title/...) is portaled, and which has no `trigger` (the one part that's never
-     * portaled), has nothing inline to detect. This is exactly the shape of a dialog meant to be
-     * opened only programmatically (e.g. a delete confirmation triggered from another component's
-     * click handler, see the FileUpload "Confirm File Deletion" docs example) - so
-     * `ComponentRenderer` also checks whatever this render pass portaled away, not just its own
-     * directly-rendered output.
+     * A root component is registered for hydration once a `ui:ref` was rendered for it (recorded in
+     * `ReferencedRootRegistry`, not found by scanning the output) - which must also hold when
+     * `ui:portal` buffered every ref'd part (content/title/...) away and there is no `trigger` (the one
+     * part that's never portaled). This is exactly the shape of a dialog meant to be opened only
+     * programmatically (e.g. a delete confirmation triggered from another component's click handler,
+     * see the FileUpload "Confirm File Deletion" docs example).
      */
     #[Test]
     public function registersForHydrationWhenEveryRefIsPortaledAndThereIsNoTrigger(): void
@@ -64,7 +59,11 @@ final class DialogRenderingTest extends FunctionalTestCase
             </primitives:dialog.root>
         ');
 
-        $this->assertMatchesRegularExpression('/id="dialog:[^"]+"/', $html);
+        preg_match('/data-dialog-trigger="([^"]+)"/', $html, $trigger);
+        preg_match('/data-dialog-content="([^"]+)"/', $html, $content);
+
+        $this->assertNotEmpty($trigger[1]);
+        $this->assertSame($trigger[1], $content[1]);
     }
 
     #[Test]
@@ -77,8 +76,8 @@ final class DialogRenderingTest extends FunctionalTestCase
             </primitives:dialog.root>
         ');
 
-        $this->assertStringContainsString('id="dialog:my-custom-dialog:trigger"', $html);
-        $this->assertStringContainsString('id="dialog:my-custom-dialog:content"', $html);
+        $this->assertStringContainsString('data-dialog-trigger="my-custom-dialog"', $html);
+        $this->assertStringContainsString('data-dialog-content="my-custom-dialog"', $html);
     }
 
     #[Test]
@@ -92,7 +91,7 @@ final class DialogRenderingTest extends FunctionalTestCase
         ');
 
         $this->assertStringContainsString('<button', $html);
-        $this->assertStringContainsString('data-part="trigger"', $html);
+        $this->assertStringContainsString('data-dialog-trigger="', $html);
         $this->assertStringContainsString('Click me', $html);
     }
 
@@ -106,7 +105,7 @@ final class DialogRenderingTest extends FunctionalTestCase
             </primitives:dialog.root>
         ');
 
-        $this->assertStringContainsString('data-part="trigger"', $html);
+        $this->assertStringContainsString('data-dialog-trigger="', $html);
     }
 
     #[Test]
@@ -145,7 +144,7 @@ final class DialogRenderingTest extends FunctionalTestCase
             </primitives:dialog.root>
         ');
 
-        $this->assertStringContainsString('data-part="content"', $html);
+        $this->assertStringContainsString('data-dialog-content="', $html);
         $this->assertStringContainsString('My Dialog Content', $html);
     }
 
@@ -162,7 +161,29 @@ final class DialogRenderingTest extends FunctionalTestCase
             </primitives:dialog.root>
         ');
 
-        $this->assertStringContainsString('data-part="close-trigger"', $html);
+        $this->assertStringContainsString('data-dialog-close-trigger="', $html);
+    }
+
+    #[Test]
+    public function marksEveryCloseTriggerOfADialogWithoutIdsSoTheyCannotCollide(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:dialog.root rootId="my-dialog">
+                <primitives:dialog.trigger>Open</primitives:dialog.trigger>
+                <primitives:dialog.content>
+                    <primitives:dialog.closeTrigger>X</primitives:dialog.closeTrigger>
+                    Content
+                    <primitives:dialog.closeTrigger>Cancel</primitives:dialog.closeTrigger>
+                </primitives:dialog.content>
+            </primitives:dialog.root>
+        ');
+
+        preg_match_all('/<button[^>]*data-dialog-close-trigger="my-dialog"[^>]*>/', $html, $matches);
+
+        $this->assertCount(2, $matches[0]);
+        foreach ($matches[0] as $closeTriggerTag) {
+            $this->assertStringNotContainsString(' id=', $closeTriggerTag);
+        }
     }
 
     #[Test]
@@ -201,16 +222,15 @@ final class DialogRenderingTest extends FunctionalTestCase
             </primitives:dialog.root>
         ');
 
-        $this->assertStringContainsString('data-part="close-trigger"', $html);
+        $this->assertStringContainsString('data-dialog-trigger="parent-dialog"', $html);
+        $this->assertStringContainsString('data-dialog-content="parent-dialog"', $html);
 
-        $this->assertStringContainsString('id="dialog:parent-dialog:trigger"', $html);
-        $this->assertStringContainsString('id="dialog:parent-dialog:content"', $html);
+        $this->assertStringContainsString('data-dialog-trigger="child-dialog"', $html);
+        $this->assertStringContainsString('data-dialog-content="child-dialog"', $html);
 
-        $this->assertStringContainsString('id="dialog:child-dialog:trigger"', $html);
-        $this->assertStringContainsString('id="dialog:child-dialog:content"', $html);
-
-        preg_match_all('/data-part="close-trigger"/', $html, $closeMatches);
-        $this->assertCount(2, $closeMatches[0]);
+        $this->assertStringContainsString('data-dialog-close-trigger="parent-dialog"', $html);
+        $this->assertStringContainsString('data-dialog-close-trigger="child-dialog"', $html);
+        $this->assertSame(2, substr_count($html, 'data-dialog-close-trigger="'));
     }
 
     #[Test]
@@ -272,5 +292,19 @@ final class DialogRenderingTest extends FunctionalTestCase
 
         $this->assertArrayHasKey('role', $dialogData['props']);
         $this->assertSame('alertdialog', $dialogData['props']['role']);
+    }
+
+    /**
+     * The rootId is the value of every part attribute and lands unescaped inside zag's attribute selectors.
+     */
+    #[Test]
+    public function rejectsARootIdThatWouldBreakThePartSelectors(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('must not contain quotes or backslashes');
+
+        $this->renderTemplate(
+            '<primitives:dialog.root rootId=\'my"dialog\'><primitives:dialog.trigger>Open</primitives:dialog.trigger></primitives:dialog.root>',
+        );
     }
 }

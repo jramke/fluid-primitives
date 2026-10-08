@@ -2,24 +2,21 @@ import { createMachine } from '@zag-js/core';
 import { nextTick } from '@zag-js/dom-query';
 import * as dom from './form.dom';
 import {
-    distributeFieldErrors,
-    getFieldElement,
-    getFirstInvalidFieldMachine,
+    focusField,
+    getFirstInvalidField,
     getFormData,
-    getRegisteredFieldMachines,
     hasInvalidFieldMachines,
+    hasUnownedErrors,
     pruneStaleFieldMachines,
-    resetFieldMachines,
-    setFieldMachineErrors,
-    syncAllFieldMachines,
+    sendToFieldMachines,
+    settleFieldMachines,
 } from './form.fields';
-import { prefixFieldName, trimArraySuffix } from './form.path';
+import { prefixFieldName } from './form.path';
 import type { FormErrors, FormSchema } from './form.types';
 import { FormError, ValidationError } from './form.types';
 import {
     attachErrorValues,
     filterErrorsForCurrentValues,
-    getCurrentErrorForField,
     getFormErrorMessages,
     mapServerErrors,
     validateWithValidation,
@@ -55,8 +52,8 @@ export const machine = createMachine<FormSchema>({
     on: {
         SUBMIT: { target: 'submitting', actions: ['clearStatusText', 'validateAll'] },
         VALIDATE: { actions: ['validateAll'] },
-        VALIDATE_FIELD: { actions: ['validateField'] },
         SYNC_FIELDS: { actions: ['syncFields'] },
+        FIELDS_CHANGED: { actions: ['syncState'] },
         INVALID: { target: 'invalid' },
         RESET: { target: 'ready', actions: ['resetForm'] },
         ERROR: { target: 'error' },
@@ -71,7 +68,7 @@ export const machine = createMachine<FormSchema>({
             validateAll({ send, prop, state, action, event, scope, refs }) {
                 const submitting = state.matches('submitting');
                 const validation = prop('validation');
-                syncAllFieldMachines(scope);
+                pruneStaleFieldMachines(scope);
 
                 const submittedFormData = getFormData(scope);
                 const submittedValues = createFormValues(submittedFormData);
@@ -89,32 +86,38 @@ export const machine = createMachine<FormSchema>({
                     };
                 }
 
-                distributeFieldErrors(scope, errors);
-
-                if (Object.keys(errors).length > 0) {
-                    send({ type: 'INVALID' });
-                    if (submitting) {
-                        action(['focusFirstInvalid']);
-                    }
-                    return;
-                }
-
-                if (!submitting) {
-                    state.set('ready');
-                    return;
-                }
-
-                const onSubmit = prop('onSubmit');
-                if (!onSubmit) {
-                    send({ type: 'SUCCESS' });
-                    return;
-                }
+                // Every field commits its own validity: its native constraints, this form's messages
+                // for it (getFieldMessages) and its own validate. A submit is the submit-time invalid
+                // notification of every field - the valid ones too, so they all latch the attempt and
+                // revalidate as the user types from here on (upstream only does so for natively invalid ones).
+                sendToFieldMachines(scope, submitting ? 'SUBMIT.INVALID' : 'VALIDATE');
 
                 (async () => {
+                    await settleFieldMachines(scope);
+
+                    if (hasInvalidFieldMachines(scope) || hasUnownedErrors(scope, errors)) {
+                        send({ type: 'INVALID' });
+                        if (submitting) {
+                            action(['focusFirstInvalid']);
+                        }
+                        return;
+                    }
+
+                    if (!submitting) {
+                        state.set('ready');
+                        return;
+                    }
+
+                    const onSubmit = prop('onSubmit');
+                    if (!onSubmit) {
+                        send({ type: 'SUCCESS' });
+                        return;
+                    }
+
                     const invalidateWithErrors = (nextErrors: FormErrors) => {
                         const currentErrors = attachErrorValues(nextErrors, submittedValues);
                         refs.set('serverErrors', { ...refs.get('serverErrors'), ...currentErrors });
-                        distributeFieldErrors(scope, currentErrors);
+                        sendToFieldMachines(scope, 'VALIDATE');
                         send({ type: 'INVALID' });
                         action(['focusFirstInvalid']);
                     };
@@ -207,37 +210,11 @@ export const machine = createMachine<FormSchema>({
                 })();
             },
 
-            validateField({ event, prop, refs, scope, state }) {
-                const fieldName = event.detail?.fieldName;
-                if (!fieldName) return;
-
-                const normalizedFieldName = trimArraySuffix(fieldName);
-                const formData = getFormData(scope);
-                const values = createFormValues(formData);
-                const serverError = getCurrentErrorForField(
-                    refs.get('serverErrors'),
-                    normalizedFieldName,
-                    values
-                );
-
-                let fieldErrors: string[] = serverError?.messages ?? [];
-                if (!serverError) {
-                    const validation = prop('validation');
-                    if (validation) {
-                        fieldErrors =
-                            validateWithValidation(validation, values, normalizedFieldName)[
-                                normalizedFieldName
-                            ]?.messages ?? [];
-                    }
-                }
-
-                setFieldMachineErrors(scope, normalizedFieldName, fieldErrors);
-
-                if (hasInvalidFieldMachines(scope)) {
-                    state.set('invalid');
-                } else if (!state.matches('submitting')) {
-                    state.set('ready');
-                }
+            // The form is `invalid` while a field is, `ready` once none is; a submission, a success
+            // or an error decides its state itself (and hides the content, so nothing changes under it).
+            syncState({ scope, state }) {
+                if (!state.matches('ready', 'invalid')) return;
+                state.set(hasInvalidFieldMachines(scope) ? 'invalid' : 'ready');
             },
 
             resetForm({ context, scope, event, refs }) {
@@ -250,7 +227,6 @@ export const machine = createMachine<FormSchema>({
                 context.set('errorText', null);
                 context.set('successText', null);
                 refs.set('serverErrors', {});
-                resetFieldMachines(scope);
             },
 
             setErrorText({ context, event }) {
@@ -268,33 +244,21 @@ export const machine = createMachine<FormSchema>({
 
             focusFirstInvalid({ scope }) {
                 nextTick(() => {
-                    const firstInvalidField = getFirstInvalidFieldMachine(scope);
-                    if (!firstInvalidField) return;
-
+                    const firstInvalidField = getFirstInvalidField(scope);
                     const form = dom.getFormEl(scope);
-                    if (!form) return;
+                    if (!firstInvalidField || !form) return;
 
-                    const invalidEl = getFieldElement(form, firstInvalidField);
-                    invalidEl?.focus();
-                    if (
-                        invalidEl instanceof HTMLInputElement ||
-                        invalidEl instanceof HTMLTextAreaElement
-                    ) {
-                        invalidEl.select();
-                    }
+                    focusField(form, ...firstInvalidField);
                 });
             },
 
             clearErrors({ scope, refs }) {
                 refs.set('serverErrors', {});
-                for (const [, fieldMachine] of getRegisteredFieldMachines(scope)) {
-                    fieldMachine.send({ type: 'CLEAR_ERRORS' });
-                }
+                sendToFieldMachines(scope, 'ERRORS.CLEAR');
             },
 
             syncFields({ scope }) {
                 pruneStaleFieldMachines(scope);
-                syncAllFieldMachines(scope);
             },
         },
     },

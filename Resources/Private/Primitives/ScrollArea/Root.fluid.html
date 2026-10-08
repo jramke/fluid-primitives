@@ -3,12 +3,13 @@
     {ui:ref(name: 'root' )}
     role="presentation"
     style="{context.rootStyles}"
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
     <f:slot />
 </div>
 
 <f:asset.css identifier="scroll-area-hide-scrollbar">
-    [data-scope="scroll-area"][data-part="viewport"] {
+    [data-scroll-area-viewport] {
     width: 100%;
     height: 100%;
     scrollbar-width: none;

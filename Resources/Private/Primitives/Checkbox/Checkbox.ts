@@ -14,7 +14,7 @@ import {
     type CheckboxGroupMachine,
 } from '../CheckboxGroup/src/checkbox-group.registry';
 import type { CheckboxGroupApi } from '../CheckboxGroup/src/checkbox-group.types';
-import type { FieldMachine } from '../Field/src/field.registry';
+import type { FieldClientApi } from '../Field/src/field.handle';
 
 // `defaultChecked` is declared type="mixed" (it's `boolean | 'indeterminate'`, and PHP has no
 // closed type for that union) so it resolves to `unknown` on the wire - this converter just tells
@@ -41,23 +41,32 @@ export class Checkbox extends FieldAwareComponent<checkbox.Props, checkbox.Api> 
     private closestCheckboxGroup: HTMLElement | null = null;
     private syncingFromGroup = false; // Prevents callback loop when syncing from group
 
-    propsWithField(props: checkbox.Props, fieldMachine: FieldMachine): checkbox.Props {
+    propsWithField(props: checkbox.Props, field: FieldClientApi): checkbox.Props {
         return {
             ...props,
-            disabled: props.disabled ?? fieldMachine.context.get('disabled'),
-            readOnly: props.readOnly ?? fieldMachine.context.get('readOnly'),
-            required: props.required ?? fieldMachine.context.get('required'),
-            invalid: props.invalid ?? fieldMachine.context.get('invalid'),
-            name: props.name ?? fieldMachine.prop('name'),
+            disabled: props.disabled ?? field.disabled,
+            readOnly: props.readOnly ?? field.readOnly,
+            required: props.required ?? field.required,
+            invalid: props.invalid ?? field.invalid,
+            name: props.name ?? field.name,
         };
+    }
+
+    /**
+     * A checkbox in a group takes its field state from the group, which carries it to its
+     * checkboxes: the Field's `required` would otherwise mean "every one of them has to be checked".
+     * Mirrors FieldContextVariableMerger's server-side rule.
+     */
+    protected getClosestField(): HTMLElement | null {
+        return this.getClosestCheckboxGroup() ? null : super.getClosestField();
     }
 
     private getClosestCheckboxGroup(): HTMLElement | null {
         return (
             this.closestCheckboxGroup ||
-            (this.getElement('root')?.closest(
-                '[data-scope="checkbox-group"][data-part="root"]'
-            ) as HTMLElement | null)
+            (this.hydrator
+                .query('root')
+                ?.closest('[data-checkbox-group-root]') as HTMLElement | null)
         );
     }
 
@@ -122,7 +131,7 @@ export class Checkbox extends FieldAwareComponent<checkbox.Props, checkbox.Api> 
                     this.getClosestCheckboxGroup()
                 );
                 if (this.checkboxGroupMachine) {
-                    this.updateProps(this.buildGroupProps(this.userProps as checkbox.Props));
+                    this.updateProps(this.buildGroupProps(this.userProps));
                 }
                 this.closestCheckboxGroup?.removeEventListener(
                     'fluid-primitives:checkbox-group:registered',
@@ -141,7 +150,8 @@ export class Checkbox extends FieldAwareComponent<checkbox.Props, checkbox.Api> 
     initMachine(props: checkbox.Props): Machine<any> {
         props = this.withFieldProps(props);
         props = this.withGroupProps(props);
-        return new Machine(checkbox.machine, props);
+        const [machineProps] = checkbox.splitProps(props);
+        return new Machine(checkbox.machine, machineProps);
     }
 
     initApi() {
@@ -152,22 +162,22 @@ export class Checkbox extends FieldAwareComponent<checkbox.Props, checkbox.Api> 
         this.subscribeToFieldService();
         this.subscribeToCheckboxGroup();
 
-        const rootEl = this.getElement('root');
+        const rootEl = this.hydrator.query('root');
         if (rootEl) this.spreadProps(rootEl, this.api.getRootProps());
 
-        const labelEl = this.getElement('label');
+        const labelEl = this.hydrator.query('label');
         if (labelEl) this.spreadProps(labelEl, this.api.getLabelProps());
 
-        const controlEl = this.getElement('control');
+        const controlEl = this.hydrator.query('control');
         if (controlEl) this.spreadProps(controlEl, this.api.getControlProps());
 
-        const indicatorEl = this.getElement('indicator');
+        const indicatorEl = this.hydrator.query('indicator');
         if (indicatorEl) this.spreadProps(indicatorEl, this.api.getIndicatorProps());
 
-        const hiddenInputEl = this.getElement('hiddenInput');
+        const hiddenInputEl = this.hydrator.query('hiddenInput');
         if (hiddenInputEl) {
             const mergedProps = mergeProps(this.api.getHiddenInputProps(), {
-                'aria-describedby': this.fieldMachine?.context.get('describeIds') || undefined,
+                'aria-describedby': this.field?.ariaDescribedby,
             });
             this.spreadProps(hiddenInputEl, mergedProps);
         }
@@ -187,8 +197,8 @@ export class Checkbox extends FieldAwareComponent<checkbox.Props, checkbox.Api> 
             this.checkboxGroupMachine = getCheckboxGroupMachineFor(this.closestCheckboxGroup);
         }
 
-        if (this.checkboxGroupMachine && this.userProps?.value) {
-            const value = this.userProps.value;
+        if (this.checkboxGroupMachine && this.machine.prop('value')) {
+            const value = this.machine.prop('value');
 
             this.groupUnsubscribe = this.checkboxGroupMachine.subscribe(() => {
                 queueMicrotask(() => {
@@ -213,7 +223,7 @@ export class Checkbox extends FieldAwareComponent<checkbox.Props, checkbox.Api> 
 
                     // Always update disabled/invalid props
                     this.machine.updateProps({
-                        disabled: this.userProps?.disabled || groupItemProps.disabled,
+                        disabled: this.machine.prop('disabled') || groupItemProps.disabled,
                         invalid: groupItemProps.invalid,
                     });
                 });

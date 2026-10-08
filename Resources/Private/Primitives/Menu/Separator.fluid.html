@@ -2,6 +2,7 @@
     role="separator"
     aria-orientation="horizontal"
     {f:if(condition: class, then: 'class="{class}"' )}
-    {ui:ref(name: 'separator' , value: '{ui:id()}' )}
-    {ui:attributes()}>
+    {ui:ref(name: 'separator' )}
+    {ui:attributes()}
+    {ui:asChild()}>
 </div>

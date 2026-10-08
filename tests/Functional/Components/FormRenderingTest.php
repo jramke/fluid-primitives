@@ -102,9 +102,10 @@ final class FormRenderingTest extends FunctionalTestCase
             </primitives:form.root>
         ');
 
-        $this->assertDoesNotMatchRegularExpression('/data-part="content"[^>]*hidden/', $html);
-        $this->assertMatchesRegularExpression('/hidden[^>]*data-part="success-text"/', $html);
-        $this->assertMatchesRegularExpression('/hidden[^>]*data-part="error-text"/', $html);
+        $this->assertStringContainsString('data-form-content="', $html);
+        $this->assertDoesNotMatchRegularExpression('/hidden[^>]*data-form-content="/', $html);
+        $this->assertMatchesRegularExpression('/hidden[^>]*data-form-success-text="/', $html);
+        $this->assertMatchesRegularExpression('/hidden[^>]*data-form-error-text="/', $html);
     }
 
     #[Test]
@@ -175,7 +176,7 @@ final class FormRenderingTest extends FunctionalTestCase
             </primitives:form.root>
         ', ['entity' => $entity]);
 
-        preg_match('/id="field:([^"]*)" data-scope="field" data-part="root"/', $html, $fieldMatches);
+        preg_match('/data-field-root="([^"]*)"/', $html, $fieldMatches);
         $fieldRootId = $fieldMatches[1] ?? null;
         $this->assertNotNull($fieldRootId);
 

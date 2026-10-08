@@ -21,9 +21,7 @@ export function getCheckboxGroupMachineFor(
     el: HTMLElement | null
 ): CheckboxGroupMachine | undefined {
     if (!el) return undefined;
-    const root = el.closest(
-        '[data-scope="checkbox-group"][data-part="root"]'
-    ) as HTMLElement | null;
+    const root = el.closest('[data-checkbox-group-root]') as HTMLElement | null;
     if (!root) return undefined;
     return registry.get(root);
 }

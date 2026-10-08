@@ -28,6 +28,8 @@ final class TemplateStructureViewHelperResolver extends ViewHelperResolver
         'slot',
         'useProps',
         'constant',
+        'asChild',
+        'attributes',
     ];
 
     #[\Override]

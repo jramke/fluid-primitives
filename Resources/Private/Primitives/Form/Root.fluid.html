@@ -17,6 +17,7 @@
     {f:if(condition: context.resolvedAction, then: 'action="{context.resolvedAction}"' )}
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'root' , data: refData )}
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
     <f:slot />
 </form>

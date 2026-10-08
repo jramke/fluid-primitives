@@ -8,7 +8,7 @@
     data-name="{name}"
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'root' )}
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
     <f:slot />
-    <div {ui:ref(name: 'liveRegion')}></div>
 </div>

@@ -12,7 +12,7 @@ import {
 } from '../../Client';
 
 import { getListCollectionFromHydrationData } from '../../Client/src/lib/hydration';
-import type { FieldMachine } from '../Field/src/field.registry';
+import type { FieldClientApi } from '../Field/src/field.handle';
 
 // Wire shape -> real @zag-js/collection ListCollection instance, registered here (not in
 // transformProps) so mountAll/mount convert it before the component is even constructed - see
@@ -44,25 +44,25 @@ export class Combobox extends FieldAwareComponent<combobox.Props, combobox.Api> 
 
     private sourceCollection?: ListCollection<any>;
 
-    propsWithField(props: combobox.Props, fieldMachine: FieldMachine): combobox.Props {
+    propsWithField(props: combobox.Props, field: FieldClientApi): combobox.Props {
         return {
             ...props,
-            disabled: props.disabled ?? fieldMachine.context.get('disabled'),
-            readOnly: props.readOnly ?? fieldMachine.context.get('readOnly'),
-            required: props.required ?? fieldMachine.context.get('required'),
-            invalid: props.invalid ?? fieldMachine.context.get('invalid'),
-            name: props.name ?? fieldMachine.prop('name'),
+            disabled: props.disabled ?? field.disabled,
+            readOnly: props.readOnly ?? field.readOnly,
+            required: props.required ?? field.required,
+            invalid: props.invalid ?? field.invalid,
+            name: props.name ?? field.name,
         };
     }
 
-    transformProps(props: combobox.Props) {
+    transformProps(props: combobox.Props): combobox.Props {
         return {
             ...props,
             // when selecting an item for example when the suggestions list is opened by the toggle there is no input/change event dispatched,
             // but thats needed for our form to update the formdata and validation
             // we use the change event because the input event opens the suggestions list again
             onSelect: details => {
-                this.getElement('input')?.dispatchEvent(new Event('change', { bubbles: true }));
+                this.hydrator.query('input')?.dispatchEvent(new Event('change', { bubbles: true }));
                 props?.onSelect?.(details);
             },
         };
@@ -79,13 +79,13 @@ export class Combobox extends FieldAwareComponent<combobox.Props, combobox.Api> 
             return this.sourceCollection;
         }
 
-        const initialCollection = this.userProps?.collection;
+        const initialCollection = this.machine.prop('collection');
         if (!initialCollection) {
             throw new Error('Combobox source collection is not available.');
         }
 
         this.sourceCollection = initialCollection;
-        return this.sourceCollection;
+        return initialCollection;
     }
 
     private getHiddenInputProps(
@@ -103,7 +103,7 @@ export class Combobox extends FieldAwareComponent<combobox.Props, combobox.Api> 
             value,
             // mirrors `@zag-js/select`'s own `getHiddenSelectProps()`.
             onFocus: () => {
-                this.getElement<HTMLInputElement>('input')?.focus({ preventScroll: true });
+                this.hydrator.query<HTMLInputElement>('input')?.focus({ preventScroll: true });
             },
         });
     }
@@ -112,10 +112,10 @@ export class Combobox extends FieldAwareComponent<combobox.Props, combobox.Api> 
     // Ensures the FormData gets the real value of the collection item(s) rather than the visible input's label.
     // See https://github.com/chakra-ui/zag/discussions/3333
     private syncHiddenInput(attrs: { name?: string; form?: string; disabled?: boolean }) {
-        const rootEl = this.getElement('root');
+        const rootEl = this.hydrator.query('root');
         if (!rootEl) return;
 
-        this.getElements<HTMLInputElement>('hiddenInput').forEach(el => el.remove());
+        this.hydrator.queryAll<HTMLInputElement>('hiddenInput').forEach(el => el.remove());
 
         const values = this.api.value;
 
@@ -125,15 +125,15 @@ export class Combobox extends FieldAwareComponent<combobox.Props, combobox.Api> 
         // computation: the input's text no longer matches what the current selection stringifies to.
         const inputValue = this.api.inputValue;
         const isCustomValue =
-            !!this.userProps?.allowCustomValue &&
+            !!this.machine.prop('allowCustomValue') &&
             inputValue.trim() !== '' &&
             inputValue !== this.api.valueAsString;
 
-        const resolvedValues = values.length > 0 ? values : isCustomValue ? [inputValue] : [];
+        const resolvedValues = values.length > 0 ? values : isCustomValue ? [inputValue] : [''];
 
         resolvedValues.forEach(value => {
             const inputEl = this.doc.createElement('input');
-            this.hydrator?.setRefAttributes(inputEl, 'hiddenInput', value);
+            this.hydrator.stamp(inputEl, 'hiddenInput', value);
             this.spreadProps(inputEl, this.getHiddenInputProps(value, attrs));
             rootEl.appendChild(inputEl);
         });
@@ -141,9 +141,8 @@ export class Combobox extends FieldAwareComponent<combobox.Props, combobox.Api> 
 
     initMachine(props: combobox.Props): Machine<any> {
         props = this.withFieldProps(props);
-        const transformedProps = this.transformProps(props);
-
-        return new Machine(combobox.machine, transformedProps);
+        const [machineProps] = combobox.splitProps(props);
+        return new Machine(combobox.machine, machineProps);
     }
 
     initApi() {
@@ -153,13 +152,13 @@ export class Combobox extends FieldAwareComponent<combobox.Props, combobox.Api> 
     render() {
         this.subscribeToFieldService();
 
-        const rootEl = this.getElement('root');
+        const rootEl = this.hydrator.query('root');
         if (rootEl) this.spreadProps(rootEl, this.api.getRootProps());
 
-        const labelEl = this.getElement('label');
+        const labelEl = this.hydrator.query('label');
         if (labelEl) this.spreadProps(labelEl, this.api.getLabelProps());
 
-        const controlEl = this.getElement('control');
+        const controlEl = this.hydrator.query('control');
         if (controlEl) this.spreadProps(controlEl, this.api.getControlProps());
 
         // `name`/`form` are stripped from the visible input's props before spreading - it holds the
@@ -167,10 +166,10 @@ export class Combobox extends FieldAwareComponent<combobox.Props, combobox.Api> 
         // value the form should submit. `hiddenInput` carries the real value(s) instead, see below.
         const { name, form, ...inputProps } = this.api.getInputProps() as Record<string, unknown>;
 
-        const inputEl = this.getElement('input');
+        const inputEl = this.hydrator.query('input');
         if (inputEl) {
             const mergedProps = mergeProps(inputProps, {
-                'aria-describedby': this.fieldMachine?.context.get('describeIds') || undefined,
+                'aria-describedby': this.field?.ariaDescribedby,
             });
             this.spreadProps(inputEl, mergedProps);
         }
@@ -181,36 +180,35 @@ export class Combobox extends FieldAwareComponent<combobox.Props, combobox.Api> 
             disabled: inputProps.disabled as boolean | undefined,
         });
 
-        const triggerEl = this.getElement('trigger');
-        if (triggerEl) this.spreadProps(triggerEl, this.api.getTriggerProps());
+        // The server already resolved the trigger's `focusable` (its own prop, else the popup type's
+        // default) into `data-focusable`; handing it back keeps that decision across re-renders.
+        const triggerEl = this.hydrator.query('trigger');
+        if (triggerEl) {
+            this.spreadProps(
+                triggerEl,
+                this.api.getTriggerProps({ focusable: triggerEl.hasAttribute('data-focusable') })
+            );
+        }
 
-        const clearTriggerEl = this.getElement('clearTrigger');
+        const clearTriggerEl = this.hydrator.query('clearTrigger');
         if (clearTriggerEl) this.spreadProps(clearTriggerEl, this.api.getClearTriggerProps());
 
-        const positionerEl = this.getElement('positioner');
+        const positionerEl = this.hydrator.query('positioner');
         if (positionerEl) this.spreadProps(positionerEl, this.api.getPositionerProps());
 
-        const contentEl = this.getElement('content');
+        const contentEl = this.hydrator.query('content');
         if (contentEl) this.spreadProps(contentEl, this.api.getContentProps());
 
-        const listEl = this.getElement('list');
+        const listEl = this.hydrator.query('list');
         if (listEl) this.spreadProps(listEl, this.api.getListProps());
 
-        this.spreadPropsByValue(
-            'itemGroup',
-            ({ value }) => {
-                return this.api.getItemGroupProps({ id: value });
-            },
-            { parent: this.doc }
-        );
+        this.spreadPropsByValue('itemGroup', ({ value }) => {
+            return this.api.getItemGroupProps({ id: value });
+        });
 
-        this.spreadPropsByValue(
-            'itemGroupLabel',
-            ({ value }) => {
-                return this.api.getItemGroupLabelProps({ htmlFor: value });
-            },
-            { parent: this.doc }
-        );
+        this.spreadPropsByValue('itemGroupLabel', ({ value }) => {
+            return this.api.getItemGroupLabelProps({ htmlFor: value });
+        });
 
         const sourceCollection = this.getSourceCollection();
         // Returns both the resolved item and whether it came from sourceCollection specifically -
@@ -221,47 +219,35 @@ export class Combobox extends FieldAwareComponent<combobox.Props, combobox.Api> 
             return { sourceItem, item: sourceItem ?? this.api.collection.find(value) };
         };
 
-        this.spreadPropsByValue(
-            'item',
-            ({ el, value }) => {
-                const { sourceItem, item } = resolveItem(value);
-                if (!item) return null;
-                // Static/server-rendered items keep the existing sync-filter hide/show behavior.
-                // Dynamically-inserted (async) items are only ever in the DOM because they're a
-                // current result - never auto-hidden here.
-                el.hidden = sourceItem ? !this.api.collection.has(item.value) : false;
-                return this.api.getItemProps({ item });
-            },
-            { parent: this.doc }
-        );
+        this.spreadPropsByValue('item', ({ el, value }) => {
+            const { sourceItem, item } = resolveItem(value);
+            if (!item) return null;
+            // Static/server-rendered items keep the existing sync-filter hide/show behavior.
+            // Dynamically-inserted (async) items are only ever in the DOM because they're a
+            // current result - never auto-hidden here.
+            el.hidden = sourceItem ? !this.api.collection.has(item.value) : false;
+            return this.api.getItemProps({ item });
+        });
 
-        this.spreadPropsByValue(
-            'itemText',
-            ({ value }) => {
-                const { item } = resolveItem(value);
-                return item ? this.api.getItemTextProps({ item }) : null;
-            },
-            { parent: this.doc }
-        );
+        this.spreadPropsByValue('itemText', ({ value }) => {
+            const { item } = resolveItem(value);
+            return item ? this.api.getItemTextProps({ item }) : null;
+        });
 
-        this.spreadPropsByValue(
-            'itemIndicator',
-            ({ value }) => {
-                const { item } = resolveItem(value);
-                return item ? this.api.getItemIndicatorProps({ item }) : null;
-            },
-            { parent: this.doc }
-        );
+        this.spreadPropsByValue('itemIndicator', ({ value }) => {
+            const { item } = resolveItem(value);
+            return item ? this.api.getItemIndicatorProps({ item }) : null;
+        });
 
-        const itemGroupEls = this.getElements('itemGroup', this.doc);
+        const itemGroupEls = this.hydrator.queryAll('itemGroup');
         itemGroupEls.forEach(itemGroupEl => {
-            const hasVisibleItems = this.getElements('item', itemGroupEl).some(
-                itemEl => !itemEl.hidden
-            );
+            const hasVisibleItems = this.hydrator
+                .queryAll('item', itemGroupEl)
+                .some(itemEl => !itemEl.hidden);
             itemGroupEl.hidden = !hasVisibleItems;
         });
 
-        const itemEls = this.getElements('item', this.doc);
+        const itemEls = this.hydrator.queryAll('item');
         const hasVisibleItems = itemEls.some(itemEl => !itemEl.hidden);
 
         if (contentEl) {
@@ -272,7 +258,7 @@ export class Combobox extends FieldAwareComponent<combobox.Props, combobox.Api> 
             listEl.toggleAttribute('data-empty', !hasVisibleItems);
         }
 
-        const emptyEl = this.getElement('empty');
+        const emptyEl = this.hydrator.query('empty');
         if (emptyEl) emptyEl.hidden = hasVisibleItems;
     }
 }

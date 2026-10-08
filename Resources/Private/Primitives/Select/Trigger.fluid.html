@@ -1,3 +1,4 @@
+<f:variable name="isDialogPopup" value="{context.dialogPopup}" />
 <f:variable name="hasDefaultItemsAttr">{f:if(condition: context.defaultValue, then: '{true}', else: '{null}')}</f:variable>
 <f:variable name="state">{context.defaultOpen ? 'open' : 'closed'}</f:variable>
 <f:variable name="refData" value="{
@@ -12,11 +13,12 @@
 <button
     type="button"
     role="combobox"
-    aria-haspopup="listbox"
+    aria-haspopup="{f:if(condition: isDialogPopup, then: 'dialog', else: 'listbox')}"
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'trigger' , data: refData )}
     {f:if(condition: context.disabled, then: 'disabled' )}
     aria-invalid="{context.invalid}"
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
     <f:slot />
 </button>

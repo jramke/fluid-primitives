@@ -1,52 +1,144 @@
 import type { Attrs } from '@zag-js/vanilla';
-import { ComponentHydrator, Machine, spreadProps, toKebabCase } from '.';
+import {
+    ComponentHydrator,
+    getComponentInstance,
+    Machine,
+    spreadProps,
+    spreadTextControlProps,
+    toKebabCase,
+} from '.';
 import type { ComponentInterface } from '../types';
 
+/**
+ * Base class of every primitive. A subclass builds its machine in `initMachine()`, connects it in
+ * `initApi()` and spreads the props of its parts onto the DOM in `render()`. Call `init()` once to
+ * start it.
+ *
+ * @example
+ * ```typescript
+ * class Counter extends Component<CounterProps, CounterApi> {
+ *     static componentName = 'counter';
+ *
+ *     initMachine(props: CounterProps) {
+ *         return new Machine(counter.machine, props);
+ *     }
+ *
+ *     initApi() {
+ *         return counter.connect(this.machine.service, normalizeProps);
+ *     }
+ *
+ *     render() {
+ *         const rootEl = this.hydrator.query('root');
+ *         if (rootEl) this.spreadProps(rootEl, this.api.getRootProps());
+ *     }
+ * }
+ * ```
+ */
 export abstract class Component<Props, Api> implements ComponentInterface<Api> {
+    /** The document the component renders into. */
     document: Document;
-    machine: Machine<any>;
-    api: Api;
-    hydrator: ComponentHydrator | null = null;
-    userProps?: Partial<Props>;
+    #machine?: Machine<any>;
+    #api?: Api;
+    #hydrator?: ComponentHydrator;
+    #userProps?: Props;
+    /**
+     * The Fluid namespace identifier (e.g. "ui") this instance was mounted under - assigned by
+     * `mountAll`/`mount` right after their callback returns, so not yet available while it runs
+     * (`init()` included).
+     */
+    namespace?: string;
+    /** The name of the component, in camelCase. Every subclass has to set it. */
     static componentName: string;
 
+    /** Alias of `document`. */
     get doc(): Document {
         return this.document;
     }
 
-    constructor(props: Props, userDocument: Document = document) {
+    constructor(
+        private readonly initialProps: Props,
+        userDocument: Document = document
+    ) {
         this.document = userDocument;
-        this.userProps = this.transformProps(props);
-        // TODO: should we pass the transformed props to initHydrator and initMachine? Or should we pass the original props?
-        this.hydrator = this.initHydrator(props);
-        this.machine = this.initMachine(props);
-        this.api = this.initApi();
     }
 
-    abstract initMachine(props: Props): Machine<any>;
-    abstract initApi(): Api;
-
-    initHydrator(props: Props) {
-        const id = (props as any).id;
-        if (!id) throw new Error('ComponentHydrator requires an id prop to initialize.');
-        return new ComponentHydrator(this.getName(), id, (props as any).ids, this.doc);
+    /** Created by {@see init} - reading it earlier throws. */
+    get machine(): Machine<any> {
+        return this.#requireInit(this.#machine, 'machine');
     }
 
-    init() {
-        this.render();
-        this.machine.subscribe(() => {
-            this.api = this.initApi();
-            this.render();
-        });
-        this.machine.start();
+    /** Created by {@see init} - reading it earlier throws. */
+    get api(): Api {
+        return this.#requireInit(this.#api, 'api');
+    }
+
+    protected set api(api: Api) {
+        this.#api = api;
     }
 
     /**
-     * Forces a fresh render() pass with no prop change behind it - use after mutating the DOM
-     * directly (e.g. inserting a new `Template` instance) for a primitive with no prop that
-     * naturally triggers a re-render on its own (unlike Combobox/Select, where updateProps({
-     * collection }) already causes one). Reaches past `machine.notify`'s type-only privacy the
-     * same way FieldAwareComponent's own field-sync logic already does internally.
+     * Finds the component's parts by name, see {@see ComponentHydrator.query}. Created by
+     * {@see init} - reading it earlier throws.
+     */
+    get hydrator(): ComponentHydrator {
+        return this.#requireInit(this.#hydrator, 'hydrator');
+    }
+
+    /**
+     * The props the instance runs on - what {@see transformProps} made of the ones it was created
+     * with. Created by {@see init} - reading it earlier throws.
+     */
+    get userProps(): Props {
+        return this.#requireInit(this.#userProps, 'userProps');
+    }
+
+    #requireInit<T>(value: T | undefined, member: string): T {
+        if (value === undefined) {
+            throw new Error(
+                `${this.getName()}: \`${member}\` was accessed before init(). It only exists once init() has run - call init() first.`
+            );
+        }
+        return value;
+    }
+
+    /** Creates the machine from the props. Called once by `init()`. */
+    abstract initMachine(props: Props): Machine<any>;
+    /** Connects the machine to its api. Called by `init()` and again after every state change. */
+    abstract initApi(): Api;
+
+    /** Creates the hydrator that finds the parts of the component. It needs the `id` prop. */
+    initHydrator(props: Props) {
+        const id = (props as any).id;
+        if (!id) throw new Error('ComponentHydrator requires an id prop to initialize.');
+        return new ComponentHydrator(this.getName(), id, this.doc);
+    }
+
+    /**
+     * Builds everything the instance runs on - `userProps`, hydrator, machine and api - then renders
+     * once and starts the machine. Call it once after constructing.
+     */
+    // None of it happens in the constructor on purpose: `transformProps`, `initMachine` and
+    // `initApi` are overridden by subclasses, and a subclass' own field initializers only run after
+    // `super()` returns. A hook called from the base constructor would see those fields unset, and
+    // whatever it assigned to one would be reset right afterwards.
+    init() {
+        this.#userProps = this.transformProps(this.initialProps);
+        this.#hydrator = this.initHydrator(this.#userProps);
+        this.#machine = this.initMachine(this.#userProps);
+        this.#api = this.initApi();
+
+        this.render();
+        this.#machine.subscribe(() => {
+            this.#api = this.initApi();
+            this.render();
+        });
+        this.#machine.start();
+    }
+
+    /**
+     * Renders again with no prop change behind it. Use it after changing the DOM directly, e.g.
+     * after inserting a new `Template` instance, for a primitive with no prop that causes a render on
+     * its own. Combobox and Select don't need it: `updateProps({ collection })` already renders.
      */
     refresh(): void {
         // notify is marked as private but that does not prevent runtime access
@@ -54,45 +146,58 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
         this.machine.notify();
     }
 
+    /** The `componentName` of the class. */
     getName() {
         return (this.constructor as typeof Component).componentName;
     }
 
     /**
-     * Kebab form of {@see getName} - what actually appears in DOM-facing identifiers (data-scope,
-     * hydration ids). See {@see ComponentHydrator.clientComponentName}.
+     * Kebab form of {@see getName} - what actually appears in DOM-facing identifiers (part attribute
+     * names, hydration keys). See {@see ComponentHydrator.clientComponentName}.
      */
     getClientName() {
         return toKebabCase(this.getName());
     }
 
     /**
-     * Override in consumer for example when a getter is used for collection
-     * Needs to be used manually inside the initMachine method
+     * Override to adjust the props before anything else sees them, e.g. to wrap a callback prop.
+     * Runs once, first in {@see init}: the result becomes `userProps`, which `initHydrator()` and
+     * `initMachine()` receive.
      */
-    transformProps(props: Partial<Props>): Partial<Props> {
+    transformProps(props: Props): Props {
         return props;
     }
 
+    /**
+     * Another already-mounted instance of this same component, by root id - for a primitive that
+     * composes two independent instances of itself (Menu submenus). Only resolves once
+     * `mountAll`/`mount` assigned {@see namespace}.
+     */
+    protected getPeerInstance<T extends Component<any, any>>(rootId: string): T | undefined {
+        return this.namespace
+            ? getComponentInstance<T>(`${this.namespace}:${this.getName()}`, rootId)
+            : undefined;
+    }
+
+    /** Changes props at runtime. Only the ones you pass change, the others stay. */
     updateProps(newProps: Partial<Props>) {
         this.machine.updateProps(newProps);
     }
 
+    /** Stops the machine and releases the hydrator. */
     destroy() {
         this.machine.stop();
-        this.hydrator?.destroy();
+        this.hydrator.destroy();
     }
 
+    /** Applies the attributes and event handlers of a part's props to its element. */
     spreadProps(node: HTMLElement, attrs: Attrs) {
         spreadProps(node, attrs, this.machine.scope.id);
     }
 
-    getElement<T extends HTMLElement>(part: string, parent?: HTMLElement | Document): T | null {
-        return this.hydrator?.getElement<T>(part, parent) || null;
-    }
-
-    getElements<T extends HTMLElement>(part: string, parent?: HTMLElement | Document): T[] {
-        return this.hydrator?.getElements<T>(part, parent) || [];
+    /** {@see spreadTextControlProps}: for a text control that mirrors what the user typed. */
+    spreadTextControlProps(node: HTMLInputElement | HTMLTextAreaElement, attrs: Attrs) {
+        spreadTextControlProps(node, attrs, this.machine.scope.id);
     }
 
     /**
@@ -108,7 +213,7 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
         getProps: (ctx: { el: HTMLElement; value: string }) => Attrs | null | undefined,
         options?: { parent?: HTMLElement | Document }
     ): void {
-        this.getElements<HTMLElement>(part, options?.parent).forEach(el => {
+        this.hydrator.queryAll<HTMLElement>(part, options?.parent).forEach(el => {
             const value = el.dataset.value;
             if (value === undefined) return;
             const props = getProps({ el, value });
@@ -121,12 +226,13 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
         getProps: (ctx: { el: HTMLElement; value?: string }) => Attrs | null | undefined,
         options?: { parent?: HTMLElement | Document }
     ): void {
-        this.getElements<HTMLElement>(part, options?.parent).forEach(el => {
+        this.hydrator.queryAll<HTMLElement>(part, options?.parent).forEach(el => {
             const value = el.dataset.value;
             const props = getProps({ el, value });
             if (props) this.spreadProps(el, props);
         });
     }
 
+    /** Spreads the props of every part onto its element. Called after every state change. */
     abstract render(): void;
 }

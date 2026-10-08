@@ -1,6 +1,7 @@
 <div
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'itemSizeText' , value: context.item.value )}
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
     <f:slot />
 </div>

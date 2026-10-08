@@ -1,24 +1,25 @@
 import * as radioGroup from '@zag-js/radio-group';
 import { FieldAwareComponent, Machine, mergeProps, normalizeProps } from '../../Client';
-import type { FieldMachine } from '../Field/src/field.registry';
+import type { FieldClientApi } from '../Field/src/field.handle';
 
 export class RadioGroup extends FieldAwareComponent<radioGroup.Props, radioGroup.Api> {
     static componentName = 'radioGroup';
 
-    propsWithField(props: radioGroup.Props, fieldMachine: FieldMachine): radioGroup.Props {
+    propsWithField(props: radioGroup.Props, field: FieldClientApi): radioGroup.Props {
         return {
             ...props,
-            disabled: props.disabled ?? fieldMachine.context.get('disabled'),
-            readOnly: props.readOnly ?? fieldMachine.context.get('readOnly'),
-            required: props.required ?? fieldMachine.context.get('required'),
-            invalid: props.invalid ?? fieldMachine.context.get('invalid'),
-            name: props.name ?? fieldMachine.prop('name'),
+            disabled: props.disabled ?? field.disabled,
+            readOnly: props.readOnly ?? field.readOnly,
+            required: props.required ?? field.required,
+            invalid: props.invalid ?? field.invalid,
+            name: props.name ?? field.name,
         };
     }
 
     initMachine(props: radioGroup.Props): Machine<any> {
         props = this.withFieldProps(props);
-        return new Machine(radioGroup.machine, props);
+        const [machineProps] = radioGroup.splitProps(props);
+        return new Machine(radioGroup.machine, machineProps);
     }
 
     initApi() {
@@ -28,17 +29,17 @@ export class RadioGroup extends FieldAwareComponent<radioGroup.Props, radioGroup
     render() {
         this.subscribeToFieldService();
 
-        const rootEl = this.getElement('root');
+        const rootEl = this.hydrator.query('root');
         if (rootEl)
             this.spreadProps(
                 rootEl,
                 mergeProps(this.api.getRootProps(), {
-                    'aria-invalid': this.fieldMachine?.context.get('invalid') || undefined,
-                    'aria-describedby': this.fieldMachine?.context.get('describeIds') || undefined,
+                    'aria-invalid': this.field?.invalid || undefined,
+                    'aria-describedby': this.field?.ariaDescribedby,
                 })
             );
 
-        const labelEl = this.getElement('label');
+        const labelEl = this.hydrator.query('label');
         if (labelEl) this.spreadProps(labelEl, this.api.getLabelProps());
 
         // Note: previously read `getAttribute('data-disabled'/'data-invalid') === 'true'`, which
@@ -76,7 +77,7 @@ export class RadioGroup extends FieldAwareComponent<radioGroup.Props, radioGroup
             })
         );
 
-        const indicatorEl = this.getElement('indicator');
+        const indicatorEl = this.hydrator.query('indicator');
         if (indicatorEl) this.spreadProps(indicatorEl, this.api.getIndicatorProps());
     }
 }

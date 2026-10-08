@@ -23,8 +23,7 @@ final class SliderRenderingTest extends FunctionalTestCase
             </primitives:slider.root>
         ');
 
-        $this->assertStringContainsString('data-scope="slider"', $html);
-        $this->assertStringContainsString('data-part="root"', $html);
+        $this->assertStringContainsString('data-slider-root="', $html);
     }
 
     #[Test]
@@ -53,7 +52,7 @@ final class SliderRenderingTest extends FunctionalTestCase
         ');
 
         $this->assertStringContainsString('aria-valuenow="30"', $html);
-        $this->assertMatchesRegularExpression('/data-part="value-text"[^>]*>\s*30\s*</', $html);
+        $this->assertMatchesRegularExpression('/data-slider-value-text="[^"]*"[^>]*>\s*30\s*</', $html);
     }
 
     #[Test]
@@ -119,13 +118,13 @@ final class SliderRenderingTest extends FunctionalTestCase
             </primitives:slider.root>
         ');
 
-        $this->assertStringContainsString('data-part="hidden-input"', $html);
+        $this->assertStringContainsString('data-slider-hidden-input="', $html);
         $this->assertStringContainsString('value="42"', $html);
         $this->assertStringContainsString('name="price"', $html);
 
         preg_match('/<input\s+type="text".*?\/>/s', $html, $matches);
         $this->assertStringContainsString('hidden', $matches[0]);
-        $this->assertStringContainsString('data-part="hidden-input"', $matches[0]);
+        $this->assertStringContainsString('data-slider-hidden-input="', $matches[0]);
     }
 
     #[Test]
@@ -156,14 +155,14 @@ final class SliderRenderingTest extends FunctionalTestCase
                 <primitives:slider.valueText />
             </primitives:slider.root>
         ');
-        $this->assertMatchesRegularExpression('/data-part="value-text"[^>]*>\s*40\s*</', $singleHtml);
+        $this->assertMatchesRegularExpression('/data-slider-value-text="[^"]*"[^>]*>\s*40\s*</', $singleHtml);
 
         $rangeHtml = $this->renderTemplate('
             <primitives:slider.root defaultValue="{0: 25, 1: 75}">
                 <primitives:slider.valueText />
             </primitives:slider.root>
         ');
-        $this->assertMatchesRegularExpression('/data-part="value-text"[^>]*>\s*25 - 75\s*</', $rangeHtml);
+        $this->assertMatchesRegularExpression('/data-slider-value-text="[^"]*"[^>]*>\s*25 - 75\s*</', $rangeHtml);
     }
 
     #[Test]
@@ -185,8 +184,7 @@ final class SliderRenderingTest extends FunctionalTestCase
 
         $this->assertStringContainsString('name="price"', $html);
 
-        // Field.Label generates its own id independently of the nested Slider - the primitive's
-        // own `slider.label` part inherits it directly since its ref name already matches.
+        // The Field's label id reaches `slider.label` through `ids` as-is - the part names already match.
         $labelTag = $this->extractTag($html, 'label');
         $this->assertStringContainsString('id="field:my-field:label"', $labelTag);
     }
@@ -205,13 +203,13 @@ final class SliderRenderingTest extends FunctionalTestCase
         preg_match('/<div\s+role="presentation".*?>\s*40\s*<\/div>/s', $html, $matches);
         $this->assertNotEmpty($matches, 'Expected the dragging indicator div to contain the thumb value.');
         $this->assertStringContainsString('hidden', $matches[0]);
-        $this->assertStringContainsString('data-part="dragging-indicator"', $matches[0]);
+        $this->assertStringContainsString('data-slider-dragging-indicator="', $matches[0]);
     }
 
     private function extractTag(string $html, string $part): string
     {
-        $matched = preg_match('/<[a-z]+[^>]*data-part="' . preg_quote($part, '/') . '"[^>]*>/', $html, $matches);
-        $this->assertSame(1, $matched, sprintf('Expected exactly one element with data-part="%s".', $part));
+        $matched = preg_match('/<[a-z]+[^>]*data-slider-' . preg_quote($part, '/') . '="[^>]*>/', $html, $matches);
+        $this->assertSame(1, $matched, sprintf('Expected exactly one element with data-slider-%s.', $part));
 
         return $matches[0];
     }

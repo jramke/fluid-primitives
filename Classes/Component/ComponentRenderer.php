@@ -10,7 +10,6 @@ use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
 use Jramke\FluidPrimitives\Domain\Dto\ComponentHydrationCandidate;
 use Jramke\FluidPrimitives\Domain\Dto\ComponentIdentity;
 use Jramke\FluidPrimitives\Factory\ComponentRootContextFactory;
-use Jramke\FluidPrimitives\Registry\PortalRegistry;
 use Jramke\FluidPrimitives\Service\Component\AsChildAttributeSpreader;
 use Jramke\FluidPrimitives\Service\Component\CheckboxGroupContextVariableMerger;
 use Jramke\FluidPrimitives\Service\Component\ComponentArgumentResolver;
@@ -31,12 +30,6 @@ use TYPO3Fluid\Fluid\ViewHelpers\SlotViewHelper;
  * binds the component-collection-specific componentResolver at construction time - a fresh instance
  * per caller, never container-managed itself, so nothing here ever needs a post-construction write.
  */
-// Cyclomatic complexity is summed across the whole class, not per method - renderComponent() is
-// already split as far as the 5-parameter guideline on extracted methods allows (see its own
-// docblock), so this doesn't indicate an actual decomposition opportunity, just an inherently
-// branchy rendering pipeline (mirrors the existing @mago-expect lint:halstead on renderComponent()
-// itself, for the same reason).
-// @mago-expect lint:cyclomatic-complexity
 final readonly class ComponentRenderer implements ComponentRendererInterface
 {
     public function __construct(
@@ -86,7 +79,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
             $renderingContext,
             $this->componentResolver,
         );
-        $isRootComponent = $identity->isRootComponent;
+        $isRenderedAsRoot = $identity->isRenderedAsRoot;
 
         $argumentDefinitions = $this->componentResolver
             ->getComponentDefinition($viewHelperName)
@@ -122,7 +115,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         $view->assignMultiple($this->componentResolver->getAdditionalVariables($viewHelperName));
 
         // Expose variables as context so it can be picked up in other components rendered inside this component.
-        if ($isRootComponent) {
+        if ($isRenderedAsRoot) {
             $this->rootContextFactory->create(
                 $argumentDefinitions,
                 $view,
@@ -133,7 +126,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         }
 
         $restoreExposedContext = null;
-        if ($propsMarkedForContext !== [] && !$isRootComponent) {
+        if ($propsMarkedForContext !== [] && !$isRenderedAsRoot) {
             $restoreExposedContext = $this->contextMarkedPropsExposer->expose(
                 $propsMarkedForContext,
                 $arguments,
@@ -154,7 +147,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
             $restoreExposedContext,
         );
 
-        if ($isRootComponent) {
+        if ($isRenderedAsRoot) {
             // cleanup the context variable from the parent rendering context
             ContextService::removeFromRenderingContext($parentRenderingContext, $identity->baseName);
 
@@ -181,7 +174,6 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
                         ],
                         static fn(?string $rootId): bool => $rootId !== null,
                     ),
-                    $renderState['portalSnapshot'],
                 ),
             );
         }
@@ -191,12 +183,12 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
 
     /**
      * Merges Field/CheckboxGroup ancestor variables into this component (if applicable), resolves its
-     * active context, exposes it to the view, runs its `beforeRendering` hook, and snapshots the portal
-     * registry - everything the post-render step (afterRendering + hydration collection) needs to know
-     * about this component's ambient rendering state.
+     * active context, exposes it to the view and runs its `beforeRendering` hook - everything the
+     * post-render step (afterRendering + hydration collection) needs to know about this component's
+     * ambient rendering state.
      *
      * @param array<string, mixed> $arguments
-     * @return array{ctx: ?AbstractComponentContext, fieldRootId: ?string, checkboxGroupRootId: ?string, portalSnapshot: array<string, string[]>}
+     * @return array{ctx: ?AbstractComponentContext, fieldRootId: ?string, checkboxGroupRootId: ?string}
      */
     private function prepareRenderState(
         RenderingContextInterface $parentRenderingContext,
@@ -205,7 +197,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         array &$arguments,
     ): array {
         $baseName = $identity->baseName;
-        $isRootComponent = $identity->isRootComponent;
+        $isRenderedAsRoot = $identity->isRenderedAsRoot;
 
         // Expose other component contexts to allow deep nesting of composable components
         $otherComponentContexts = $this->getOtherComponentContexts($parentRenderingContext, $baseName);
@@ -214,7 +206,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         $ctx = $this->getRootComponentContext($parentRenderingContext, $baseName);
 
         $fieldRootId = null;
-        if ($isRootComponent && $this->componentSupportsField($identity->clientBaseName)) {
+        if ($isRenderedAsRoot && $this->componentSupportsField($identity->clientBaseName)) {
             $fieldRootId = $this->fieldContextVariableMerger->apply(
                 $otherComponentContexts,
                 $identity->clientBaseName,
@@ -225,7 +217,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         }
 
         $checkboxGroupRootId = null;
-        if ($isRootComponent && $baseName === 'checkbox') {
+        if ($isRenderedAsRoot && $baseName === 'checkbox') {
             $checkboxGroupRootId = $this->checkboxGroupContextVariableMerger->apply(
                 $otherComponentContexts,
                 $view,
@@ -240,22 +232,14 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         }
 
         // Call beforeRendering lifecycle method only for root or closed components
-        if ($ctx && $isRootComponent && method_exists($ctx, 'beforeRendering')) {
+        if ($ctx && $isRenderedAsRoot && method_exists($ctx, 'beforeRendering')) {
             $ctx->beforeRendering();
         }
-
-        // ui:portal renders empty at its own position and buffers its real markup in PortalRegistry
-        // for ui:portalContainer to flush elsewhere, so a root component whose every ref'd part sits
-        // behind a portal (e.g. a triggerless Dialog/Popover - everything portaled, nothing rendered
-        // inline) would otherwise never contain the data-scope="..." string ComponentHydrationCollector
-        // looks for. Snapshotting the registry lets it also search whatever this render pass portaled away.
-        $portalRegistrySnapshotBeforeRender = $isRootComponent ? PortalRegistry::getInstance()->getAll() : [];
 
         return [
             'ctx' => $ctx,
             'fieldRootId' => $fieldRootId,
             'checkboxGroupRootId' => $checkboxGroupRootId,
-            'portalSnapshot' => $portalRegistrySnapshotBeforeRender,
         ];
     }
 
@@ -319,12 +303,20 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         $view->getRenderingContext()->getVariableProvider()->remove('settings');
         $view->assign('settings', ComponentUtility::getSettings());
 
-        $view->assign('component', [
-            'fullName' => $viewHelperName,
-            'baseName' => $identity->baseName,
-            'isRoot' => $identity->isRootComponent,
-            'isComposable' => $identity->isComposableComponent,
-        ]);
+        // Two deliberately separate channels: `component` is the small, public, template-facing
+        // subset (see ComponentIdentity::forView()) - readable via `{component.fullName}` etc., and
+        // therefore never safe to add internal bookkeeping to without risking a breaking change for
+        // whoever already reads it. The full $identity - including isDeclaredRoot/isRenderedAsRoot,
+        // which only PropViewHelper/ExposeToClientViewHelper/ComponentUtility::getRootIdFromContext()
+        // ever need - goes on the ViewHelperVariableContainer instead
+        // ({@see \Jramke\FluidPrimitives\Utility\ComponentRootUtility}), unreachable from a template
+        // expression.
+        $view->assign('component', $identity->forView($viewHelperName));
+        $renderingContext->getViewHelperVariableContainer()->add(
+            ComponentIdentity::class,
+            ComponentIdentity::VHVC_KEY,
+            $identity,
+        );
 
         return $view;
     }

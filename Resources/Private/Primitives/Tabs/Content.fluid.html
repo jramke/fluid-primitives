@@ -6,10 +6,11 @@
 
 <div
     role="tabpanel"
-    tabindex="{f:if(condition: context.composite, then: '0', else: '-1')}"
+    tabindex="{f:if(condition: context.virtualFocus, then: '-1', else: '0')}"
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'content' , value: value, data: refData )}
     {ui:attributes(skip: 'hidden' )}
+    {ui:asChild()}
     {f:if(condition: '!{selected}' , then: 'hidden' )}>
     <f:slot />
 </div>

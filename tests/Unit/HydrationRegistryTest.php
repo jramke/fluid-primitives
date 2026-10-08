@@ -62,6 +62,23 @@ final class HydrationRegistryTest extends TestCase
     }
 
     #[Test]
+    public function nestsMultiSegmentComponentTypesByDottedPathSegment(): void
+    {
+        // A dot-joined componentType (e.g. a tiered component's own identity, see
+        // ComponentNameUtility::getComponentBaseNameFromViewHelperName()) builds one nested array
+        // level per segment, rather than being stored under one flat "molecules.checkboxGroup" key -
+        // this is what the client's own getHydrationData() walks to find it.
+        $this->registry->add('ui', 'molecules.checkboxGroup', '«f1»', ['type' => 'checkbox-group']);
+        $this->registry->add('ui', 'molecules.tooltip', '«f2»', ['type' => 'tooltip']);
+
+        $all = $this->registry->getAll();
+
+        $this->assertSame(['type' => 'checkbox-group'], $all['ui']['molecules']['checkboxGroup']['«f1»']);
+        $this->assertSame(['type' => 'tooltip'], $all['ui']['molecules']['tooltip']['«f2»']);
+        $this->assertSame(['type' => 'checkbox-group'], $this->registry->get('ui', 'molecules.checkboxGroup', '«f1»'));
+    }
+
+    #[Test]
     public function clearsTheRegistry(): void
     {
         $this->registry->add('ui', 'accordion', '«f1»', ['props' => []]);
@@ -83,7 +100,7 @@ final class HydrationRegistryTest extends TestCase
     public function addsInlineJavaScriptWithComponentData(): void
     {
         $this->registry->add('ui', 'accordion', '«f1»', [
-            'controlled' => false,
+            'autoMount' => true,
             'props' => ['multiple' => true],
         ]);
 

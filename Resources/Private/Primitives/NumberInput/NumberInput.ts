@@ -8,7 +8,7 @@ import {
     type ClientPropConverterMap,
     type ConverterMachineProps,
 } from '../../Client';
-import type { FieldMachine } from '../Field/src/field.registry';
+import type { FieldClientApi } from '../Field/src/field.handle';
 
 // PHP can't distinguish a list-shaped array from an object-shaped one for a bare `type="array"`
 // prop (see WireTypeResolver), so `formatOptions` resolves to `unknown` on the wire - this converter
@@ -29,14 +29,14 @@ declare module 'fluid-primitives' {
 export class NumberInput extends FieldAwareComponent<numberInput.Props, numberInput.Api> {
     static componentName = 'numberInput';
 
-    propsWithField(props: numberInput.Props, fieldMachine: FieldMachine): numberInput.Props {
+    propsWithField(props: numberInput.Props, field: FieldClientApi): numberInput.Props {
         return {
             ...props,
-            disabled: props.disabled ?? fieldMachine.context.get('disabled'),
-            readOnly: props.readOnly ?? fieldMachine.context.get('readOnly'),
-            required: props.required ?? fieldMachine.context.get('required'),
-            invalid: props.invalid ?? fieldMachine.context.get('invalid'),
-            name: props.name ?? fieldMachine.prop('name'),
+            disabled: props.disabled ?? field.disabled,
+            readOnly: props.readOnly ?? field.readOnly,
+            required: props.required ?? field.required,
+            invalid: props.invalid ?? field.invalid,
+            name: props.name ?? field.name,
         };
     }
 
@@ -44,7 +44,7 @@ export class NumberInput extends FieldAwareComponent<numberInput.Props, numberIn
         return {
             ...props,
             onValueChange: details => {
-                this.getElement('input')?.dispatchEvent(new Event('input', { bubbles: true }));
+                this.hydrator.query('input')?.dispatchEvent(new Event('input', { bubbles: true }));
                 props?.onValueChange?.(details);
             },
         };
@@ -52,7 +52,8 @@ export class NumberInput extends FieldAwareComponent<numberInput.Props, numberIn
 
     initMachine(props: numberInput.Props): Machine<any> {
         props = this.withFieldProps(props);
-        return new Machine(numberInput.machine, this.transformProps(props));
+        const [machineProps] = numberInput.splitProps(props);
+        return new Machine(numberInput.machine, machineProps);
     }
 
     initApi() {
@@ -62,35 +63,35 @@ export class NumberInput extends FieldAwareComponent<numberInput.Props, numberIn
     render() {
         this.subscribeToFieldService();
 
-        const rootEl = this.getElement('root');
+        const rootEl = this.hydrator.query('root');
         if (rootEl) this.spreadProps(rootEl, this.api.getRootProps());
 
-        const labelEl = this.getElement('label');
+        const labelEl = this.hydrator.query('label');
         if (labelEl) this.spreadProps(labelEl, this.api.getLabelProps());
 
-        const controlEl = this.getElement('control');
+        const controlEl = this.hydrator.query('control');
         if (controlEl) this.spreadProps(controlEl, this.api.getControlProps());
 
-        const inputEl = this.getElement('input');
+        const inputEl = this.hydrator.query('input');
         if (inputEl) {
             const mergedProps = mergeProps(this.api.getInputProps(), {
-                'aria-describedby': this.fieldMachine?.context.get('describeIds') || undefined,
+                'aria-describedby': this.field?.ariaDescribedby,
             });
             this.spreadProps(inputEl, mergedProps);
         }
 
-        const incrementTriggerEl = this.getElement('incrementTrigger');
+        const incrementTriggerEl = this.hydrator.query('incrementTrigger');
         if (incrementTriggerEl)
             this.spreadProps(incrementTriggerEl, this.api.getIncrementTriggerProps());
 
-        const decrementTriggerEl = this.getElement('decrementTrigger');
+        const decrementTriggerEl = this.hydrator.query('decrementTrigger');
         if (decrementTriggerEl)
             this.spreadProps(decrementTriggerEl, this.api.getDecrementTriggerProps());
 
-        const valueTextEl = this.getElement('valueText');
+        const valueTextEl = this.hydrator.query('valueText');
         if (valueTextEl) this.spreadProps(valueTextEl, this.api.getValueTextProps());
 
-        const scrubberEl = this.getElement('scrubber');
+        const scrubberEl = this.hydrator.query('scrubber');
         if (scrubberEl) this.spreadProps(scrubberEl, this.api.getScrubberProps());
     }
 }

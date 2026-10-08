@@ -7,6 +7,7 @@
     {f:if(condition: optionState.disabled, then: 'data-disabled=""' )}
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'itemText' , value: optionState.value, data: {state: optionState.state} )}
-    {ui:attributes()}>
+    {ui:attributes()}
+    {ui:asChild()}>
     <f:slot />
 </span>

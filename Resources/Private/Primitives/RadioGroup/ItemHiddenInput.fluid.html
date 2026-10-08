@@ -15,4 +15,5 @@
     {f:if(condition: itemState.checked, then: 'checked' )}
     {ui:ref(name: 'itemHiddenInput' , value: itemState.value, data: refData )}
     style="{settings.visuallyHiddenStyles}"
-    {ui:attributes(skip: 'style' )} />
+    {ui:attributes(skip: 'style' )}
+    {ui:asChild()} />

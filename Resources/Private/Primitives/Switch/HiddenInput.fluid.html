@@ -10,4 +10,5 @@
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'hiddenInput' )}
     style="{settings.visuallyHiddenStyles}"
-    {ui:attributes(skip: 'style' )} />
+    {ui:attributes(skip: 'style' )}
+    {ui:asChild()} />
