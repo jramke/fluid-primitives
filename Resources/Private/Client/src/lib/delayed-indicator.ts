@@ -10,44 +10,41 @@ function assertFiniteNonNegative(value: number, name: string): number {
     return value;
 }
 
+/** The options of a {@link DelayedIndicator}. */
 export interface DelayedIndicatorOptions<T> {
-    /** How long a transient value must persist before it's actually shown. Must be finite and >= 0. */
+    /**
+     * How long a transient value must persist before it is shown at all. Must be finite and >= 0.
+     * @default 150
+     */
     showDelayMs?: number;
     /**
-     * Once shown, the minimum time a transient value stays current before a later value replaces
-     * it. Must be finite and >= 0.
+     * Once shown, how long a transient value stays current before a settled value can replace it.
+     * Must be finite and >= 0.
+     * @default 300
      */
     minVisibleMs?: number;
     /**
-     * Marks which values are transient (e.g. a loading state) and so need the show-delay/
-     * min-visible guarding below. Every other value is treated as settled and passes through
-     * immediately once no transient value is being held.
+     * Marks which values are transient, e.g. a loading state. Every other value is treated as settled
+     * and passes through immediately once no transient value is held.
      */
     isTransient: (value: T) => boolean;
+    /** Called with each value once it is ready to be shown. */
     onChange: (value: T) => void;
 }
 
 /**
- * Feed it every new value (typically straight from a subscribe callback) via set() and it
- * forwards them to onChange with flicker protection applied to "transient" values only (per
- * isTransient): a transient value is held back for showDelayMs before onChange ever sees it, so a
- * fast operation never flashes it - and once shown, it's guaranteed to stay current for at least
- * minVisibleMs before a later, settled value is allowed through, so it can't flicker off again
- * the instant it appeared. Settled values that arrive with nothing transient/shown are forwarded
- * immediately. set() does not deduplicate - an unchanged value passed again may still result in
- * another onChange call, since this is a temporal filter on state, not a distinctUntilChanged.
+ * Delays showing a transient value long enough to avoid flicker, and keeps it visible for a minimum
+ * duration once shown. Feed it every new value through `set()`, typically straight from a subscribe
+ * callback, and it forwards them to `onChange`. The values `isTransient` marks are held back for
+ * `showDelayMs`, so a fast operation never flashes them. Once shown they stay for at least
+ * `minVisibleMs`, so they can't vanish the instant they appeared.
  *
- * onChange is user-provided code that may itself call set() synchronously (e.g. to chain a
- * follow-up state change) - every branch below updates this instance's own state (phase/timer/
- * shownAt) before invoking onChange, so a reentrant set() call always sees consistent state.
- *
- * Call destroy() when the indicator is no longer needed (e.g. on component teardown) to cancel
- * any in-flight timer - otherwise a scheduled show/commit can still fire onChange afterward.
- *
- * Generalizes a plain boolean "is this spinner visible" (`isTransient: value => value === true`)
- * to any value - e.g. a small status union - so multiple pieces of UI (a spinner AND status text)
- * can be driven off one flicker-protected source and never disagree with each other.
+ * It works on any value, not only a boolean: one instance can drive a spinner and a status text
+ * from the same source, so they never disagree.
  */
+// `onChange` is user-provided code that may itself call `set()` synchronously (e.g. to chain a
+// follow-up state change) - every branch below updates this instance's own state (phase/timer/
+// shownAt) before invoking `onChange`, so a reentrant `set()` call always sees consistent state.
 export class DelayedIndicator<T> {
     private readonly showDelayMs: number;
     private readonly minVisibleMs: number;
@@ -74,6 +71,13 @@ export class DelayedIndicator<T> {
         this.onChange = options.onChange;
     }
 
+    /**
+     * Passes a new value on, delayed as described above. It does not deduplicate: the same value
+     * again can still call `onChange` again, as this filters state over time, it is not a
+     * `distinctUntilChanged()`.
+     *
+     * @param value - The new value.
+     */
     set(value: T): void {
         this.latestValue = value;
         const transient = this.isTransient(value);
@@ -134,7 +138,11 @@ export class DelayedIndicator<T> {
         }
     }
 
-    /** Cancels any in-flight timer. Safe to call even if nothing is transient/shown. */
+    /**
+     * Cancels any timer that is running. Call it when the indicator is no longer needed, e.g. on
+     * teardown: otherwise a scheduled value can still reach `onChange` afterwards. It is safe to call
+     * when nothing is transient or shown.
+     */
     destroy(): void {
         if (this.timer !== null) {
             clearTimeout(this.timer);

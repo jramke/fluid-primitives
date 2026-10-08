@@ -1,6 +1,7 @@
 import * as asyncList from '@zag-js/async-list';
 import { Machine } from './machine';
 
+/** The options of an {@link AsyncList}: the props of the `@zag-js/async-list` machine. */
 export type AsyncListOptions<
     T,
     Filter = string,
@@ -9,16 +10,12 @@ export type AsyncListOptions<
 > = asyncList.Props<T, Filter, Sorting, Cursor>;
 
 /**
- * Wraps @zag-js/async-list's machine lifecycle (construct -> init -> subscribe -> destroy),
- * matching this library's "class initialization" pattern (e.g. `new Combobox(props); combobox.init();`)
- * - but with no DOM/hydration ties, since async-list has no rendering concerns of its own.
- * Consumers own their own DOM updates from inside subscribe().
+ * Wraps the machine of `@zag-js/async-list` for use without any DOM or hydration: construct it, call
+ * `init()`, `subscribe()` to state changes and `destroy()` when done. Rendering is yours, do it from
+ * inside `subscribe()`.
  *
- * Debouncing/throttling setFilter() is left to the caller - wrap the call site with
- * @zag-js/utils's own debounce/throttle (already a dependency of this library), the same way
- * you'd debounce any other callback. Keeping that out of this class means it's not tied to one
- * fixed shape or default, and callers who don't need it (e.g. dependencies-driven autoReload
- * only) don't pay for it either.
+ * Debouncing or throttling `setFilter()` is left to the caller, wrap the call site with the
+ * `debounce` or `throttle` of `@zag-js/utils`, which this library already depends on.
  */
 export class AsyncList<T, Filter = string, Sorting = asyncList.SortDescriptor<T>, Cursor = string> {
     private machine: Machine<any>;
@@ -27,15 +24,17 @@ export class AsyncList<T, Filter = string, Sorting = asyncList.SortDescriptor<T>
         this.machine = new Machine(asyncList.machine, options);
     }
 
-    /** The connected API for the machine's current snapshot - recomputed fresh on every access. */
+    /** The api of the current state of the list. It is read fresh on every access, don't hold on to it. */
     get api(): asyncList.Api<T, Filter, Sorting, Cursor> {
         return asyncList.connect<T, Filter, Sorting, Cursor>(this.machine.service);
     }
 
     /**
-     * Subscribes to every future state change, handing the listener a freshly-connected `Api`
-     * (not the raw zag `Service`). Does not fire immediately with the current snapshot - read
-     * `.api` directly beforehand if you need it.
+     * Calls `fn` with the api on every future state change. It does not fire for the current state,
+     * read `api` first if you need it.
+     *
+     * @param fn - The listener.
+     * @returns A function that removes the listener.
      */
     subscribe(fn: (api: asyncList.Api<T, Filter, Sorting, Cursor>) => void): () => void {
         return this.machine.subscribe(service =>
@@ -43,14 +42,14 @@ export class AsyncList<T, Filter = string, Sorting = asyncList.SortDescriptor<T>
         );
     }
 
+    /** Sets the filter and reloads the list with it. */
     setFilter(filter: Filter): void {
         this.api.setFilter(filter);
     }
 
     /**
-     * Passthrough to the underlying machine's `updateProps`, for changing e.g. `dependencies` at
-     * runtime to trigger an `autoReload`. `load` is fixed at construction time and can't be
-     * swapped here.
+     * Changes options at runtime, e.g. `dependencies` to trigger an `autoReload`. `load` is fixed
+     * when the list is constructed and can't be swapped here.
      */
     updateProps(
         newProps: Partial<Omit<asyncList.Props<T, Filter, Sorting, Cursor>, 'load'>>
@@ -58,10 +57,12 @@ export class AsyncList<T, Filter = string, Sorting = asyncList.SortDescriptor<T>
         this.machine.updateProps(newProps);
     }
 
+    /** Starts the machine, which loads the list for the first time. Call it once, after constructing. */
     init(): void {
         this.machine.start();
     }
 
+    /** Stops the machine and cancels a load that is in flight. */
     destroy(): void {
         this.machine.stop();
     }

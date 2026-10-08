@@ -2,15 +2,18 @@ import type { InputProps, Machine as MachineDefinition, MachineSchema } from '@z
 import { VanillaMachine } from '@zag-js/vanilla';
 
 /**
- * zag v2 requires `id` in a machine's props, but every caller passes what `splitProps()` returns,
- * typed `Partial` - `Component.initHydrator` is what actually guarantees the id at runtime.
- * `updateProps` is typed the same way: it merges, so callers only pass what changed.
+ * The Zag machine runtime that components run on. It takes `Partial` props: the `id` that Zag
+ * requires is guaranteed at runtime by `Component.initHydrator()`.
  */
+// every caller passes what `splitProps()` returns, typed `Partial`, and `updateProps` is typed the
+// same way: it merges, so callers only pass what changed.
+
 export class Machine<T extends MachineSchema> extends VanillaMachine<T> {
     constructor(machine: MachineDefinition<T>, userProps?: Partial<NonNullable<T['props']>>) {
         super(machine, userProps as InputProps<T>);
     }
 
+    /** Changes props at runtime. Only the ones you pass change, the others stay. */
     updateProps(
         newProps: Partial<NonNullable<T['props']>> | InputProps<T> | (() => InputProps<T>)
     ) {

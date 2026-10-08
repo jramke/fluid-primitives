@@ -9,9 +9,13 @@ import type {
 import { applyClientPropConverters } from './client-prop-converters';
 import { Component } from './component';
 
-// A part's own name is lowerCamelCase (mirroring zag-js's own `ids` prop keys), but its attribute
-// always renders lower-kebab. Keep in sync with: Classes/Utility/ComponentNameUtility.php's
-// camelCaseToLowerCaseDashed().
+/**
+ * @internal
+ *
+ * A part's own name is lowerCamelCase (mirroring zag-js's own `ids` prop keys), but its attribute
+ * always renders lower-kebab. Keep in sync with: Classes/Utility/ComponentNameUtility.php's
+ * camelCaseToLowerCaseDashed().
+ */
 export function toKebabCase(part: string): string {
     return part.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
 }
@@ -40,6 +44,7 @@ function parseNamespacedComponentName(componentName: string): {
     };
 }
 
+/** @internal */
 export function getHydrationData(component: string): Record<string, ComponentHydrationData> | null;
 export function getHydrationData(component: string, id: string): ComponentHydrationData | null;
 export function getHydrationData(component?: string, id?: string) {
@@ -92,10 +97,14 @@ function getNestedComponents(scopeId: string): NestedComponentEntry[] {
 }
 
 /**
- * Looks up another already-mounted component instance (from either `mountAll` or `mount`) by its
- * namespaced component name and hydration id (the `id` prop it was rendered with). For primitives
- * that compose two independent instances of themselves at runtime (e.g. Menu submenus linking a
- * parent/child pair via their own `id`s) rather than through props alone.
+ * Finds a component instance that is already mounted, by the namespaced name it was mounted with and
+ * its hydration id (the `id` prop it was rendered with). Works for instances from `mountAll()` and
+ * `mount()` alike. It is for primitives that compose two independent instances of themselves at
+ * runtime, e.g. the submenus of a Menu.
+ *
+ * @param componentName - The namespaced name, e.g. `ui:menu`.
+ * @param id - The hydration id of the instance.
+ * @returns The instance, or `undefined` if none is mounted under that id.
  */
 export function getComponentInstance<
     T extends Component<unknown, unknown> = Component<unknown, unknown>,
@@ -106,6 +115,7 @@ export function getComponentInstance<
     ] as T | undefined;
 }
 
+/** @internal */
 export function getGlobals(): FluidPrimitivesGlobals | null {
     const globals = window.FluidPrimitives?.globals;
 
@@ -116,6 +126,7 @@ export function getGlobals(): FluidPrimitivesGlobals | null {
     return globals;
 }
 
+/** @internal */
 export function getGlobal<T = unknown>(key: string): T | undefined {
     const globals = getGlobals();
     if (!globals || !(key in globals)) {
@@ -126,14 +137,24 @@ export function getGlobal<T = unknown>(key: string): T | undefined {
 }
 
 /**
- * Mounts every not-yet-mounted hydration instance of `componentName` (a required
- * `"namespace:name"` string, e.g. `"ui:select"`) that was not rendered with `autoMount="{false}"`.
- * Safe to call more than once (e.g. after lazily-inserted DOM adds new instances) - already
- * mounted instances are skipped rather than re-instantiated.
+ * Mounts every instance of a component that is not mounted yet and was not rendered with
+ * `autoMount="{false}"`. It is safe to call more than once, e.g. after lazily inserted DOM adds new
+ * instances: mounted ones are skipped.
  *
- * `props` in the callback is inferred from `componentName` itself via {@see HydrationPropsFor} -
- * no explicit generic needed at the call site. A component name a project hasn't generated types
- * for yet (or ever) falls back to the untyped bag, same as today.
+ * The `props` in the callback are typed from `componentName` via `HydrationPropsFor`. A component
+ * without generated types gets an untyped bag.
+ *
+ * @param componentName - The namespaced name, e.g. `ui:select`.
+ * @param callback - Creates the instance of one hydration entry and returns it.
+ *
+ * @example
+ * ```typescript
+ * mountAll('ui:accordion', ({ props }) => {
+ *     const accordion = new Accordion(props);
+ *     accordion.init();
+ *     return accordion;
+ * });
+ * ```
  */
 export function mountAll<K extends KnownComponentName | (string & {})>(
     componentName: K,
@@ -172,15 +193,13 @@ export function mountAll<K extends KnownComponentName | (string & {})>(
 }
 
 /**
- * Destroys every mounted component instance (from either `mountAll` or `mount`) whose root element
- * is `root` itself or a descendant of it, and drops them from the tracked instance registry.
- * Intended for cleaning up before removing a subtree from the DOM (e.g. a lazily-mounted recurring-
- * field row).
+ * Destroys every mounted instance whose root element is `root` or inside it, and forgets it. Call it
+ * before you remove a subtree from the DOM, e.g. a row of a FieldArray.
  *
- * Matches only on the instance's own `root` part, not on any of its other parts - a `FieldArray`'s
- * own `removeTrigger`/`item` parts also live inside the row that is merely being removed, and
- * matching those would destroy the very component whose row it is, rather than only what's actually
- * nested inside that row. A component with no `root` part (e.g. `Dialog`) is never matched.
+ * Only the `root` part of an instance counts. A component without one, such as Dialog, is never
+ * matched.
+ *
+ * @param root - The element that is about to be removed.
  */
 export function destroyComponentsWithin(root: Element | Document) {
     if (!window.FluidPrimitives) return;
@@ -205,14 +224,16 @@ export function destroyComponentsWithin(root: Element | Document) {
 }
 
 /**
- * Gets one specific hydration instance of `componentName` (a required `"namespace:name"` string)
- * by its `rootId` and hands it to `callback`, regardless of whether it was rendered with
- * `autoMount="{false}"`. Unlike {@see mountAll}, calling it twice for the same `rootId` re-invokes
- * `callback` and constructs a new instance each time - but the resulting instance is still tracked
- * (overwriting whichever one a previous call tracked), so {@see getComponentInstance} and
- * {@see destroyComponentsWithin} can find it, the same way a `mountAll`-created instance can.
+ * Mounts one instance by its `rootId`, also one that was rendered with `autoMount="{false}"`. Unlike
+ * `mountAll()`, it creates a new instance on every call, which then replaces the one tracked before.
+ * `getComponentInstance()` and `destroyComponentsWithin()` find it like any other.
  *
- * `props` in the callback is inferred from `componentName` the same way {@see mountAll}'s is.
+ * The `props` in the callback are typed like those of `mountAll()`.
+ *
+ * @param componentName - The namespaced name, e.g. `ui:dialog`.
+ * @param rootId - The `rootId` the component was rendered with.
+ * @param callback - Creates the instance and returns it.
+ * @returns The instance, or `undefined` if there is no hydration entry for `rootId`.
  */
 export function mount<
     K extends KnownComponentName | (string & {}),
@@ -249,19 +270,25 @@ export function mount<
 }
 
 /**
- * Locates one component instance's parts. Every part `ui:ref` renders carries a single
- * `data-<component>-<part>="<rootId>"` attribute (zag's own part convention), so a lookup never
- * depends on an id and is document-wide by default - which is also what finds content that was
- * portaled away from the component's root.
+ * Finds the parts of one component instance. Every part that `ui:ref` renders carries a
+ * `data-<component>-<part>="<rootId>"` attribute, so a lookup needs no id and searches the whole
+ * document by default. That is also what finds content that was portaled away from the root.
  */
 export class ComponentHydrator {
+    /** The name of the component, in camelCase. */
     componentName: string;
-    // Kebab form of componentName - what appears in the part attribute names and hydration keys.
-    // Derived once here so nothing downstream converts repeatedly.
+    /** The kebab-case form of `componentName`, as it appears in attribute names. */
     clientComponentName: string;
+    /** The document the parts are searched in. */
     doc: Document;
+    /** The `rootId` the component was rendered with. */
     rootId: string;
 
+    /**
+     * @param componentName - The name of the component, in camelCase.
+     * @param rootId - The `rootId` the component was rendered with. Throws if it is missing.
+     * @param doc - The document the parts are searched in.
+     */
     constructor(componentName: string, rootId: string | undefined, doc: Document = document) {
         this.componentName = componentName;
         this.clientComponentName = toKebabCase(componentName);
@@ -277,20 +304,30 @@ export class ComponentHydrator {
     }
 
     // Keep in sync with: Classes/Utility/ComponentRefUtility.php getAttributeName()
+    /** The name of the attribute that marks `part`, e.g. `data-accordion-item-trigger`. */
     attr(part: string): string {
         return this.attrPrefix + toKebabCase(part);
     }
 
+    /** The CSS selector of every element of `part` that belongs to this instance. */
     selector(part: string): string {
         return `[${this.attr(part)}="${this.rootId}"]`;
     }
 
     // Keep in sync with: Classes/Utility/ComponentRefUtility.php getScopeKey()
+    /** The key that identifies `part`, and optionally one `value` of it, across this instance. */
     scopeKey(part: string, value?: string): string {
         const key = `${this.clientComponentName}:${this.rootId}:${toKebabCase(part)}`;
         return value ? `${key}:${value}` : key;
     }
 
+    /**
+     * Finds the first element of `part`.
+     *
+     * @param part - The name of the part, in camelCase.
+     * @param parent - Where to search, the whole document by default.
+     * @returns The element, or `null` if there is none.
+     */
     query<T extends Element = HTMLElement>(
         part: string,
         parent: Element | Document = this.doc
@@ -298,6 +335,12 @@ export class ComponentHydrator {
         return parent.querySelector<T>(this.selector(part));
     }
 
+    /**
+     * Finds every element of `part`.
+     *
+     * @param part - The name of the part, in camelCase.
+     * @param parent - Where to search, the whole document by default.
+     */
     queryAll<T extends Element = HTMLElement>(
         part: string,
         parent: Element | Document = this.doc
@@ -305,7 +348,14 @@ export class ComponentHydrator {
         return Array.from(parent.querySelectorAll<T>(this.selector(part)));
     }
 
-    /** Client-side counterpart of `ui:ref`, for elements created after hydration. */
+    /**
+     * Marks an element as `part` of this instance, like `ui:ref` does on the server. For elements
+     * you create after hydration.
+     *
+     * @param element - The element to mark.
+     * @param part - The name of the part, in camelCase.
+     * @param value - Sets `data-value`, for a part that exists once per item.
+     */
     stamp(element: Element, part: string, value?: string): void {
         element.setAttribute(this.attr(part), this.rootId);
         if (value !== undefined) {
@@ -359,6 +409,8 @@ export class ComponentHydrator {
     }
 
     /**
+     * @internal
+     *
      * Re-stamps `root` for a new, real `value` (via {@see restampOwnScope}) and prepares any
      * nested, *independent* root component found inside it (e.g. a `Field`+`Input` composed inside
      * a `FieldArray` row, or any other primitive that composes another one inside its own per-item
@@ -421,6 +473,8 @@ export class ComponentHydrator {
     }
 
     /**
+     * @internal
+     *
      * Re-stamps `root` for a new, real `value` (via {@see restampOwnScope}) and re-keys every
      * nested, independent root component found inside it (e.g. a `FieldArray` row's own
      * `Field`+`Input`) to reference `value` instead of whatever position it previously held - both
@@ -471,6 +525,7 @@ export class ComponentHydrator {
         migrateNestedComponentsScope(previousScopeKey, this.scopeKey(ownPart, value), remaps);
     }
 
+    /** Nothing to release yet, it exists so every instance can be destroyed alike. */
     destroy() {
         // No-op for now; if we ever need to clean up anything, do it here.
     }

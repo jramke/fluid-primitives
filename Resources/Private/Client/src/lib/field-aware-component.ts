@@ -15,6 +15,11 @@ const booleanFieldProps = ['invalid', 'disabled', 'readOnly', 'required'] as con
 const fieldProps = [...booleanFieldProps, 'name'] as const;
 type FieldProp = (typeof fieldProps)[number];
 
+/**
+ * Base class of a primitive that can sit inside a Field. It takes `name`, `disabled`, `readOnly`,
+ * `required` and `invalid` from the closest Field and follows its changes, and it tells the field
+ * once it has hydrated.
+ */
 export abstract class FieldAwareComponent<Props, Api> extends Component<Props, Api> {
     protected subscribedToField = false;
     protected fieldMachine: FieldMachine | undefined;
@@ -35,6 +40,7 @@ export abstract class FieldAwareComponent<Props, Api> extends Component<Props, A
         );
     }
 
+    /** Builds the component like `Component.init()`, then tells the field that it is hydrated. */
     init() {
         super.init();
         this.notifyFieldHydrated();
@@ -66,6 +72,10 @@ export abstract class FieldAwareComponent<Props, Api> extends Component<Props, A
         return props;
     }
 
+    /**
+     * Applies every later change of the field to the machine props. It waits for the field if that
+     * has not registered yet, and does nothing when there is no field around.
+     */
     subscribeToFieldService() {
         if (this.subscribedToField) return;
 

@@ -9,7 +9,33 @@ import {
 } from '.';
 import type { ComponentInterface } from '../types';
 
+/**
+ * Base class of every primitive. A subclass builds its machine in `initMachine()`, connects it in
+ * `initApi()` and spreads the props of its parts onto the DOM in `render()`. Call `init()` once to
+ * start it.
+ *
+ * @example
+ * ```typescript
+ * class Counter extends Component<CounterProps, CounterApi> {
+ *     static componentName = 'counter';
+ *
+ *     initMachine(props: CounterProps) {
+ *         return new Machine(counter.machine, props);
+ *     }
+ *
+ *     initApi() {
+ *         return counter.connect(this.machine.service, normalizeProps);
+ *     }
+ *
+ *     render() {
+ *         const rootEl = this.hydrator.query('root');
+ *         if (rootEl) this.spreadProps(rootEl, this.api.getRootProps());
+ *     }
+ * }
+ * ```
+ */
 export abstract class Component<Props, Api> implements ComponentInterface<Api> {
+    /** The document the component renders into. */
     document: Document;
     #machine?: Machine<any>;
     #api?: Api;
@@ -21,8 +47,10 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
      * (`init()` included).
      */
     namespace?: string;
+    /** The name of the component, in camelCase. Every subclass has to set it. */
     static componentName: string;
 
+    /** Alias of `document`. */
     get doc(): Document {
         return this.document;
     }
@@ -73,9 +101,12 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
         return value;
     }
 
+    /** Creates the machine from the props. Called once by `init()`. */
     abstract initMachine(props: Props): Machine<any>;
+    /** Connects the machine to its api. Called by `init()` and again after every state change. */
     abstract initApi(): Api;
 
+    /** Creates the hydrator that finds the parts of the component. It needs the `id` prop. */
     initHydrator(props: Props) {
         const id = (props as any).id;
         if (!id) throw new Error('ComponentHydrator requires an id prop to initialize.');
@@ -84,13 +115,12 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
 
     /**
      * Builds everything the instance runs on - `userProps`, hydrator, machine and api - then renders
-     * once and starts the machine.
-     *
-     * None of it happens in the constructor on purpose: `transformProps`, `initMachine` and
-     * `initApi` are overridden by subclasses, and a subclass' own field initializers only run after
-     * `super()` returns. A hook called from the base constructor would see those fields unset, and
-     * whatever it assigned to one would be reset right afterwards.
+     * once and starts the machine. Call it once after constructing.
      */
+    // None of it happens in the constructor on purpose: `transformProps`, `initMachine` and
+    // `initApi` are overridden by subclasses, and a subclass' own field initializers only run after
+    // `super()` returns. A hook called from the base constructor would see those fields unset, and
+    // whatever it assigned to one would be reset right afterwards.
     init() {
         this.#userProps = this.transformProps(this.initialProps);
         this.#hydrator = this.initHydrator(this.#userProps);
@@ -106,11 +136,9 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
     }
 
     /**
-     * Forces a fresh render() pass with no prop change behind it - use after mutating the DOM
-     * directly (e.g. inserting a new `Template` instance) for a primitive with no prop that
-     * naturally triggers a re-render on its own (unlike Combobox/Select, where updateProps({
-     * collection }) already causes one). Reaches past `machine.notify`'s type-only privacy the
-     * same way FieldAwareComponent's own field-sync logic already does internally.
+     * Renders again with no prop change behind it. Use it after changing the DOM directly, e.g.
+     * after inserting a new `Template` instance, for a primitive with no prop that causes a render on
+     * its own. Combobox and Select don't need it: `updateProps({ collection })` already renders.
      */
     refresh(): void {
         // notify is marked as private but that does not prevent runtime access
@@ -118,6 +146,7 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
         this.machine.notify();
     }
 
+    /** The `componentName` of the class. */
     getName() {
         return (this.constructor as typeof Component).componentName;
     }
@@ -150,15 +179,18 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
             : undefined;
     }
 
+    /** Changes props at runtime. Only the ones you pass change, the others stay. */
     updateProps(newProps: Partial<Props>) {
         this.machine.updateProps(newProps);
     }
 
+    /** Stops the machine and releases the hydrator. */
     destroy() {
         this.machine.stop();
         this.hydrator.destroy();
     }
 
+    /** Applies the attributes and event handlers of a part's props to its element. */
     spreadProps(node: HTMLElement, attrs: Attrs) {
         spreadProps(node, attrs, this.machine.scope.id);
     }
@@ -201,5 +233,6 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
         });
     }
 
+    /** Spreads the props of every part onto its element. Called after every state change. */
     abstract render(): void;
 }
