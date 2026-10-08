@@ -131,7 +131,7 @@ final class InputRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
-    public function includesAnnounceDebounceDefaultInHydrationData(): void
+    public function includesAnnounceDefaultsInHydrationData(): void
     {
         $this->renderTemplate('
             <primitives:input.root>
@@ -143,6 +143,7 @@ final class InputRenderingTest extends FunctionalTestCase
         $inputData = array_values($hydrationData['input'])[0];
 
         $this->assertSame(600, $inputData['props']['announceDebounce']);
+        $this->assertTrue($inputData['props']['announce']);
     }
 
     #[Test]

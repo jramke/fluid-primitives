@@ -96,20 +96,14 @@ export function connect<T extends PropTypes>(
             });
         },
 
-        // Visually shows the same count a screen reader hears from the live region - hidden from
-        // AT so its text-content mutations on every keystroke aren't redundantly picked up by
+        // Visually shows the same count a screen reader hears through the announcements - hidden
+        // from AT so its text-content mutations on every keystroke aren't redundantly picked up by
         // whichever assistive tech already monitors generic DOM changes.
         getWordCountProps() {
             return normalize.element({
                 ...parts.wordCount.attrs(scope.id),
                 id: dom.getWordCountId(scope),
                 'aria-hidden': 'true',
-            });
-        },
-
-        getLiveRegionProps() {
-            return normalize.element({
-                ...parts.liveRegion.attrs(scope.id),
             });
         },
     };

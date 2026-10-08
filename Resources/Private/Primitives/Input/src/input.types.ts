@@ -1,9 +1,8 @@
 import type { EventObject } from '@zag-js/core';
-import type { LiveRegion } from '@zag-js/live-region';
 import type { JSX, PropTypes } from '@zag-js/types';
 
 export interface InputTranslations {
-    /** Set to `false` to omit the word count part's text and skip live-region announcements. */
+    /** Set to `false` to omit the word count part's text and skip the announcements. */
     wordCount?: string | false;
 }
 
@@ -22,7 +21,12 @@ export interface InputProps {
     inputMode?: JSX.HTMLAttributes<HTMLInputElement>['inputMode'];
     translations?: InputTranslations;
     /**
-     * Milliseconds to debounce word count live-region announcements by, so rapid typing doesn't
+     * Whether the word count is announced to assistive tech. Set to `false` to stay silent.
+     * @default true
+     */
+    announce?: boolean;
+    /**
+     * Milliseconds to debounce word count announcements by, so rapid typing doesn't
      * spam assistive tech on every keystroke. Set to 0 to announce every change immediately.
      * @default 600
      */
@@ -43,7 +47,6 @@ export interface InputSchema {
         value: string;
     };
     refs: {
-        liveRegion: LiveRegion | null;
         announce: ((text: string) => void) | null;
     };
     computed: {
@@ -74,5 +77,4 @@ export interface InputApi extends InputHandle {
     getInputProps(): PropTypes['input'];
     getLabelProps(): PropTypes['label'];
     getWordCountProps(): PropTypes['element'];
-    getLiveRegionProps(): PropTypes['element'];
 }

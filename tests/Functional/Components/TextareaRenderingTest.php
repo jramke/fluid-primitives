@@ -132,7 +132,7 @@ final class TextareaRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
-    public function includesAnnounceDebounceDefaultInHydrationData(): void
+    public function includesAnnounceDefaultsInHydrationData(): void
     {
         $this->renderTemplate('
             <primitives:textarea.root>
@@ -144,6 +144,7 @@ final class TextareaRenderingTest extends FunctionalTestCase
         $textareaData = array_values($hydrationData['textarea'])[0];
 
         $this->assertSame(600, $textareaData['props']['announceDebounce']);
+        $this->assertTrue($textareaData['props']['announce']);
     }
 
     #[Test]

@@ -15,6 +15,7 @@ export const props = createProps<InputProps>()([
     'pattern',
     'inputMode',
     'translations',
+    'announce',
     'announceDebounce',
     'transform',
     'onValueChange',

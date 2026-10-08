@@ -8,4 +8,3 @@ export const getWordCountId = (scope: Scope) =>
 
 export const getInputEl = (scope: Scope) =>
     scope.query<HTMLInputElement>(scope.selector(parts.input));
-export const getLiveRegionEl = (scope: Scope) => scope.query(scope.selector(parts.liveRegion));

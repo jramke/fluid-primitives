@@ -15,6 +15,7 @@ export const props = createProps<TextareaProps>()([
     'rows',
     'submitOn',
     'translations',
+    'announce',
     'announceDebounce',
     'transform',
     'onValueChange',

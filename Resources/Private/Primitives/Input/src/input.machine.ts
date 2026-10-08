@@ -15,7 +15,6 @@ export const machine = createMachine<InputSchema>({
     },
     refs() {
         return {
-            liveRegion: null,
             announce: null,
         };
     },
@@ -60,18 +59,16 @@ export const machine = createMachine<InputSchema>({
             },
         },
         effects: {
-            manageLiveRegion({ scope, refs, prop }) {
-                const liveRegionEl = dom.getLiveRegionEl(scope);
-                if (!liveRegionEl) return undefined;
+            manageLiveRegion({ refs, prop, computed }) {
+                if (prop('announce') === false || computed('countText') === null) return undefined;
 
-                const liveRegion = createLiveRegion({ level: 'polite', root: liveRegionEl });
+                const liveRegion = createLiveRegion({ level: 'polite' });
                 const debounceMs = prop('announceDebounce') ?? 600;
                 const announce =
                     debounceMs > 0
                         ? debounce((text: string) => liveRegion.announce(text), debounceMs)
                         : (text: string) => liveRegion.announce(text);
 
-                refs.set('liveRegion', liveRegion);
                 refs.set('announce', announce);
 
                 return () => {
