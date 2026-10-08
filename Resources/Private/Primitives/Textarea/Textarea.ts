@@ -57,8 +57,5 @@ export class Textarea extends FieldAwareComponent<TextareaProps, TextareaApi> {
             this.spreadProps(wordCountEl, this.api.getWordCountProps());
             wordCountEl.textContent = this.api.countText ?? '';
         }
-
-        const liveRegionEl = this.hydrator.query<HTMLElement>('liveRegion');
-        if (liveRegionEl) this.spreadProps(liveRegionEl, this.api.getLiveRegionProps());
     }
 }

@@ -1,4 +1,4 @@
 import { createAnatomy } from '@zag-js/anatomy';
 
-const anatomy = createAnatomy('input').parts('root', 'label', 'input', 'wordCount', 'liveRegion');
+const anatomy = createAnatomy('input').parts('root', 'label', 'input', 'wordCount');
 export const parts = anatomy.build();

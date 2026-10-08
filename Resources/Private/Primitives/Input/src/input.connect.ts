@@ -1,5 +1,5 @@
 import type { Service } from '@zag-js/core';
-import type { NormalizeProps, PropTypes } from '@zag-js/types';
+import type { JSX, NormalizeProps, PropTypes } from '@zag-js/types';
 import { parts } from './input.anatomy';
 import * as dom from './input.dom';
 import type { InputApi, InputHandle, InputSchema } from './input.types';
@@ -55,7 +55,8 @@ export function connect<T extends PropTypes>(
                 required: handle.required || undefined,
                 maxLength: handle.maxLength,
                 pattern: prop('pattern'),
-                inputMode: prop('inputMode'),
+                // `inputMode` arrives as a plain string from the `ui:prop`; the browser ignores unknown values.
+                inputMode: prop('inputMode') as JSX.HTMLAttributes<HTMLInputElement>['inputMode'],
                 value: handle.value,
                 'aria-invalid': handle.invalid ? 'true' : undefined,
                 'data-invalid': handle.invalid ? '' : undefined,
@@ -96,20 +97,14 @@ export function connect<T extends PropTypes>(
             });
         },
 
-        // Visually shows the same count a screen reader hears from the live region - hidden from
-        // AT so its text-content mutations on every keystroke aren't redundantly picked up by
+        // Visually shows the same count a screen reader hears through the announcements - hidden
+        // from AT so its text-content mutations on every keystroke aren't redundantly picked up by
         // whichever assistive tech already monitors generic DOM changes.
         getWordCountProps() {
             return normalize.element({
                 ...parts.wordCount.attrs(scope.id),
                 id: dom.getWordCountId(scope),
                 'aria-hidden': 'true',
-            });
-        },
-
-        getLiveRegionProps() {
-            return normalize.element({
-                ...parts.liveRegion.attrs(scope.id),
             });
         },
     };

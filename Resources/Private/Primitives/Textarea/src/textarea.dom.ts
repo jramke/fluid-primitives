@@ -9,4 +9,3 @@ export const getWordCountId = (scope: Scope) =>
 
 export const getTextareaEl = (scope: Scope) =>
     scope.query<HTMLTextAreaElement>(scope.selector(parts.textarea));
-export const getLiveRegionEl = (scope: Scope) => scope.query(scope.selector(parts.liveRegion));
