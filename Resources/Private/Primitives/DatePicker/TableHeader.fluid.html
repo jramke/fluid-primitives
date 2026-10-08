@@ -1,10 +1,8 @@
-<ui:prop name="view" type="string" optional="{true}" default="day" description="The view this table header belongs to: `day`, `month`, or `year`." />
-
-<f:variable name="refData" value="{view: view, disabled: context.disabled}" />
+<f:variable name="refData" value="{disabled: context.disabled}" />
 
 <thead
     {f:if(condition: class, then: 'class="{class}"' )}
-    {ui:ref(name: 'tableHeader' , value: view, data: refData )}
+    {ui:ref(name: 'tableHeader' , data: refData )}
     {ui:attributes()}
     {ui:asChild()}>
     <f:slot />

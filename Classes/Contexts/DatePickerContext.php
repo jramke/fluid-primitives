@@ -8,6 +8,7 @@ use Jramke\FluidPrimitives\Attributes\ExposeToClient;
 use Jramke\FluidPrimitives\Enum\DatePickerView;
 use Jramke\FluidPrimitives\Service\TranslatorService;
 use Jramke\FluidPrimitives\Traits\HasTranslationsTrait;
+use Jramke\FluidPrimitives\Utility\DateUtility;
 use Jramke\FluidPrimitives\Utility\Typed;
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 
@@ -49,13 +50,26 @@ class DatePickerContext extends AbstractComponentContext
     public function getInitialView(): string
     {
         $views = array_map(static fn(DatePickerView $view): string => $view->value, DatePickerView::cases());
+        $indexOf = function (string $prop, int $fallback) use ($views): int {
+            $index = array_search(Typed::stringOrNull($this->get($prop)), $views, strict: true);
 
-        $initialIndex = min(
-            max($this->getViewIndex('defaultView', $views), $this->getViewIndex('minView', $views)),
-            $this->getViewIndex('maxView', $views, fallback: count($views) - 1),
-        );
+            return $index === false ? $fallback : $index;
+        };
 
-        return $views[$initialIndex];
+        return $views[min(
+            max($indexOf('defaultView', fallback: 0), $indexOf('minView', fallback: 0)),
+            $indexOf('maxView', fallback: count($views) - 1),
+        )];
+    }
+
+    /**
+     * One entry per month the day view shows next to each other, counted from `0`.
+     *
+     * @return list<int>
+     */
+    public function getMonthOffsets(): array
+    {
+        return range(0, max(Typed::int($this->get('numOfMonths')), 1) - 1);
     }
 
     // excludeIfNull: without an own locale the site language applies, and without one of those
@@ -85,7 +99,7 @@ class DatePickerContext extends AbstractComponentContext
         $dates = [];
         // @mago-expect analysis:mixed-assignment
         foreach (is_array($defaultValue) ? $defaultValue : [$defaultValue] as $date) {
-            $isoDate = $this->toIsoDate($date);
+            $isoDate = DateUtility::toIsoDate($date);
             if ($isoDate !== null) {
                 $dates[] = $isoDate;
             }
@@ -102,7 +116,10 @@ class DatePickerContext extends AbstractComponentContext
      */
     public function getHiddenInputValues(): array
     {
-        return $this->getDefaultValue() ?? [''];
+        /** @var list<string>|null $dates */
+        $dates = $this->getDefaultValue();
+
+        return $dates ?? [''];
     }
 
     #[ExposeToClient]
@@ -121,28 +138,5 @@ class DatePickerContext extends AbstractComponentContext
             'content' => 'datePicker.content',
             'weekColumnHeader' => 'datePicker.weekColumnHeader',
         ]);
-    }
-
-    /**
-     * @param list<string> $views
-     */
-    private function getViewIndex(string $prop, array $views, int $fallback = 0): int
-    {
-        $index = array_search(Typed::stringOrNull($this->get($prop)), $views, strict: true);
-
-        return $index === false ? $fallback : $index;
-    }
-
-    private function toIsoDate(mixed $date): ?string
-    {
-        if ($date instanceof \DateTimeInterface) {
-            return $date->format('Y-m-d');
-        }
-
-        // A date-time string keeps just its date: the calendar has no time.
-        $dateString = Typed::stringOrNull($date) ?? '';
-        $matches = [];
-
-        return preg_match('/^\d{4}-\d{2}-\d{2}/', $dateString, $matches) === 1 ? $matches[0] : null;
     }
 }

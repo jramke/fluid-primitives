@@ -148,7 +148,9 @@ final class DatePickerRenderingTest extends FunctionalTestCase
 
         foreach ($expectations as $case => [$attributes, $expectedValues]) {
             $html = $this->renderTemplate('
-                <primitives:datePicker.root name="dates[]" ' . $attributes . '>
+                <primitives:datePicker.root name="dates[]" ' .
+            $attributes .
+            '>
                     <primitives:datePicker.control>
                         <primitives:datePicker.input />
                     </primitives:datePicker.control>
@@ -180,6 +182,10 @@ final class DatePickerRenderingTest extends FunctionalTestCase
             'defaults' => ['', 'day'],
             'default view' => ['defaultView="' . $view('Month') . '"', 'month'],
             'below the min view' => ['minView="' . $view('Month') . '"', 'month'],
+            'above a max view of day' => [
+                'defaultView="' . $view('Month') . '" maxView="' . $view('Day') . '"',
+                'day',
+            ],
             'above the max view' => ['defaultView="' . $view('Year') . '" maxView="' . $view('Month') . '"', 'month'],
         ];
 
@@ -206,40 +212,37 @@ final class DatePickerRenderingTest extends FunctionalTestCase
     #[Test]
     public function marksViewPartsWithTheirViewForTheClient(): void
     {
-        // The client finds the part of a view by its `data-value`.
+        // The client finds the part of a view by its `data-value`, and the months of a day view by
+        // their `data-offset`.
         $html = $this->renderTemplate('
             <primitives:datePicker.root>
-                <primitives:datePicker.view view="month">
-                    <primitives:datePicker.viewControl view="month">
-                        <primitives:datePicker.prevTrigger view="month" />
-                        <primitives:datePicker.viewTrigger view="month" />
-                        <primitives:datePicker.nextTrigger view="month" />
+                <primitives:datePicker.view view="day">
+                    <primitives:datePicker.viewControl view="day">
+                        <primitives:datePicker.prevTrigger view="day" />
+                        <primitives:datePicker.viewTrigger view="day" />
+                        <primitives:datePicker.nextTrigger view="day" />
                     </primitives:datePicker.viewControl>
-                    <primitives:datePicker.table view="month">
-                        <primitives:datePicker.tableHeader view="month" />
-                        <primitives:datePicker.tableBody view="month" />
+                    <primitives:datePicker.table view="day">
+                        <primitives:datePicker.tableHeader />
+                        <primitives:datePicker.tableBody />
                     </primitives:datePicker.table>
+                    <primitives:datePicker.table view="day" offset="1" />
                 </primitives:datePicker.view>
                 <primitives:datePicker.presetTrigger value="last7Days">Last 7 days</primitives:datePicker.presetTrigger>
             </primitives:datePicker.root>
         ');
 
-        foreach ([
-            'view',
-            'view-control',
-            'prev-trigger',
-            'view-trigger',
-            'next-trigger',
-            'table',
-            'table-header',
-            'table-body',
-        ] as $part) {
+        foreach (['view', 'view-control', 'prev-trigger', 'view-trigger', 'next-trigger'] as $part) {
             $this->assertStringContainsString(
-                'data-value="month"',
+                'data-value="day"',
                 $this->extractTag($html, 'data-date-picker-' . $part),
                 $part,
             );
         }
+        preg_match_all('/<table[^>]*>/', $html, $tables);
+        $this->assertCount(2, $tables[0]);
+        $this->assertStringContainsString('data-offset="0"', $tables[0][0]);
+        $this->assertStringContainsString('data-offset="1"', $tables[0][1]);
         $this->assertStringContainsString('data-value="last7Days"', $this->extractTag(
             $html,
             'data-date-picker-preset-trigger',

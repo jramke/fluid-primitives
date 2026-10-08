@@ -142,9 +142,9 @@ export class DatePicker extends FieldAwareComponent<datePicker.Props, datePicker
             this.api.getPresetTriggerProps({ value: value as datePicker.DateRangePreset })
         );
 
-        // In range mode Zag always joins the first and last visible month, also when it is one.
-        const { start, end, formatted } = this.api.visibleRangeText;
-        const rangeText = start === end ? start : formatted;
+        // Zag only joins the first and last visible month in range mode, and then also when it is one.
+        const { start, end } = this.api.visibleRangeText;
+        const rangeText = start === end ? start : `${start} - ${end}`;
         this.hydrator.queryAll('rangeText').forEach(rangeTextEl => {
             this.spreadProps(rangeTextEl, this.api.getRangeTextProps());
             if (rangeTextEl.textContent !== rangeText) rangeTextEl.textContent = rangeText;
@@ -152,11 +152,25 @@ export class DatePicker extends FieldAwareComponent<datePicker.Props, datePicker
 
         this.hydrator.queryAll('table').forEach(tableEl => {
             const view = tableEl.dataset.value as datePicker.DateView;
-            this.spreadProps(tableEl, this.api.getTableProps({ view }));
+            const offset = Number(tableEl.dataset.offset ?? 0);
 
-            const headerEl = this.findByView('tableHeader', view);
-            const bodyEl = this.findByView('tableBody', view);
-            if (headerEl && bodyEl) this.renderTable(view, headerEl, bodyEl);
+            // The months of a day view look alike: each gets its own id and is named after its month.
+            this.spreadProps(
+                tableEl,
+                mergeProps(
+                    this.api.getTableProps({ view, id: offset ? String(offset) : undefined }),
+                    view === 'day'
+                        ? {
+                              'aria-label': this.api.getOffset({ months: offset }).visibleRangeText
+                                  .start,
+                          }
+                        : {}
+                )
+            );
+
+            const headerEl = this.hydrator.query('tableHeader', tableEl);
+            const bodyEl = this.hydrator.query('tableBody', tableEl);
+            if (headerEl && bodyEl) this.renderTable(view, offset, headerEl, bodyEl);
         });
 
         const monthSelectEl = this.hydrator.query<HTMLSelectElement>('monthSelect');
@@ -184,7 +198,8 @@ export class DatePicker extends FieldAwareComponent<datePicker.Props, datePicker
     // submitted. A date's string is its ISO form in its own calendar, gregorian unless the entry
     // file passed a `createCalendar`.
     private renderHiddenInputs() {
-        const values = this.api.value.length > 0 ? this.api.value.map(date => date.toString()) : [''];
+        const values =
+            this.api.value.length > 0 ? this.api.value.map(date => date.toString()) : [''];
         const inputEls = this.hydrator.queryAll<HTMLInputElement>('hiddenInput');
         inputEls.slice(values.length).forEach(inputEl => inputEl.remove());
 
@@ -209,16 +224,17 @@ export class DatePicker extends FieldAwareComponent<datePicker.Props, datePicker
         });
     }
 
-    private findByView(part: string, view: datePicker.DateView) {
-        return this.hydrator.queryAll(part).find(el => el.dataset.value === view);
-    }
-
     // The grid is not part of the server markup: its size depends on the locale, the calendar and
     // the month shown. It is built from what is there instead of from scratch on every render, so
     // the focused cell and the hover state survive the machine's own updates.
-    private renderTable(view: datePicker.DateView, headerEl: Element, bodyEl: Element) {
+    private renderTable(
+        view: datePicker.DateView,
+        offset: number,
+        headerEl: Element,
+        bodyEl: Element
+    ) {
         if (view === 'day') {
-            this.renderDayTable(headerEl, bodyEl);
+            this.renderDayTable(offset, headerEl, bodyEl);
             return;
         }
 
@@ -249,9 +265,11 @@ export class DatePicker extends FieldAwareComponent<datePicker.Props, datePicker
         });
     }
 
-    private renderDayTable(headerEl: Element, bodyEl: Element) {
+    private renderDayTable(offset: number, headerEl: Element, bodyEl: Element) {
         const view = 'day';
         const weekNumbers = this.api.showWeekNumbers;
+        // A cell is outside the range of its own month, not of the whole visible range.
+        const { weeks, visibleRange } = this.api.getOffset({ months: offset });
 
         const [headerRowEl] = this.fitChildren<HTMLTableRowElement>(headerEl, 'tr', 1);
         this.spreadProps(headerRowEl, this.api.getTableRowProps({ view }));
@@ -277,7 +295,7 @@ export class DatePicker extends FieldAwareComponent<datePicker.Props, datePicker
             if (headEls[i].textContent !== day.narrow) headEls[i].textContent = day.narrow;
         });
 
-        this.renderRows(bodyEl, this.api.weeks, rowEl => {
+        this.renderRows(bodyEl, weeks, rowEl => {
             this.spreadProps(rowEl, this.api.getTableRowProps({ view }));
         }).forEach(([rowEl, week], weekIndex) => {
             const cellEls = this.fitChildren<HTMLTableCellElement>(
@@ -296,8 +314,8 @@ export class DatePicker extends FieldAwareComponent<datePicker.Props, datePicker
             week.forEach((value, i) => {
                 this.renderCell(
                     cellEls[i],
-                    this.api.getDayTableCellProps({ value }),
-                    this.api.getDayTableCellTriggerProps({ value }),
+                    this.api.getDayTableCellProps({ value, visibleRange }),
+                    this.api.getDayTableCellTriggerProps({ value, visibleRange }),
                     String(value.day)
                 );
             });

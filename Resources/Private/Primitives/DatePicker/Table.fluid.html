@@ -1,6 +1,7 @@
 <ui:prop name="view" type="string" optional="{true}" default="day" description="The view this table renders: `day`, `month`, or `year`." />
+<ui:prop name="offset" type="integer" optional="{true}" default="0" description="Which month of the day view this table shows, counted from the first visible month: `0` for the first, `1` for the next. Only used with `numOfMonths` above `1`." />
 
-<f:variable name="refData" value="{view: view}" />
+<f:variable name="refData" value="{view: view, offset: offset}" />
 
 <table
     role="grid"
