@@ -38,7 +38,7 @@ final class InputRenderingTest extends FunctionalTestCase
         // containing `{3}`/`{4}` would be misparsed by Fluid as embedded object-accessor
         // expressions, same as any other string argument value with literal curly braces.
         $html = $this->renderTemplate('
-            <primitives:input.root type="tel" pattern="{pattern}" inputMode="numeric">
+            <primitives:input.root type="tel" pattern="{pattern}" inputMode="{f:constant(name: \'Jramke\FluidPrimitives\Enum\InputMode::Numeric\')}">
                 <primitives:input.input />
             </primitives:input.root>
         ', ['pattern' => '[0-9]{3}-[0-9]{4}']);

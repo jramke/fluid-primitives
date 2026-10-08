@@ -1,5 +1,5 @@
 import type { EventObject } from '@zag-js/core';
-import type { PropTypes } from '@zag-js/types';
+import type { JSX, PropTypes } from '@zag-js/types';
 
 export interface InputTranslations {
     /** Set to `false` to omit the word count part's text and skip the announcements. */
@@ -18,7 +18,7 @@ export interface InputProps {
     defaultValue?: string;
     maxLength?: number;
     pattern?: string;
-    inputMode?: string;
+    inputMode?: JSX.HTMLAttributes<HTMLInputElement>['inputMode'];
     translations?: InputTranslations;
     /**
      * Whether the word count is announced to assistive tech. Set to `false` to stay silent.
