@@ -256,6 +256,7 @@ final class DatePickerRenderingTest extends FunctionalTestCase
 
         $template = '
             <primitives:datePicker.root translations="{content: \'Kalender\'}">
+                <primitives:datePicker.trigger />
                 <primitives:datePicker.clearTrigger />
                 <primitives:datePicker.positioner>
                     <primitives:datePicker.content>Calendar</primitives:datePicker.content>
@@ -278,15 +279,21 @@ final class DatePickerRenderingTest extends FunctionalTestCase
             $html,
             'data-date-picker-year-select',
         ));
-        // The per-instance override wins over the language file.
-        $this->assertStringContainsString('aria-label="Kalender"', $this->extractTag(
+        $this->assertStringContainsString('aria-label="Kalender öffnen"', $this->extractTag(
             $html,
-            'data-date-picker-content',
+            'data-date-picker-trigger',
         ));
+        $contentTag = $this->extractTag($html, 'data-date-picker-content');
+        // The per-instance override wins over the language file.
+        $this->assertStringContainsString('aria-label="Kalender"', $contentTag);
+        $this->assertStringContainsString('aria-roledescription="Datumsauswahl"', $contentTag);
 
+        // The client builds Zag's function labels from these texts and fills in the placeholders.
         $props = $this->firstHydrationProps();
         $this->assertSame('Wert löschen', $props['translations']['clearTrigger']);
         $this->assertSame('Kalender', $props['translations']['content']);
+        $this->assertSame('Zum vorherigen Monat wechseln', $props['translations']['prevTriggerDay']);
+        $this->assertSame('%date% auswählen', $props['translations']['dayCell']);
     }
 
     #[Test]

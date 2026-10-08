@@ -62,6 +62,93 @@
             <trans-unit id="datePicker.weekColumnHeader" approved="yes">
                 <target>Woche</target>
             </trans-unit>
+            <trans-unit id="datePicker.triggerOpen" approved="yes">
+                <target>Kalender öffnen</target>
+            </trans-unit>
+            <trans-unit id="datePicker.triggerClose" approved="yes">
+                <target>Kalender schließen</target>
+            </trans-unit>
+            <trans-unit id="datePicker.prevTriggerDay" approved="yes">
+                <target>Zum vorherigen Monat wechseln</target>
+            </trans-unit>
+            <trans-unit id="datePicker.prevTriggerMonth" approved="yes">
+                <target>Zum vorherigen Jahr wechseln</target>
+            </trans-unit>
+            <trans-unit id="datePicker.prevTriggerYear" approved="yes">
+                <target>Zum vorherigen Jahrzehnt wechseln</target>
+            </trans-unit>
+            <trans-unit id="datePicker.nextTriggerDay" approved="yes">
+                <target>Zum nächsten Monat wechseln</target>
+            </trans-unit>
+            <trans-unit id="datePicker.nextTriggerMonth" approved="yes">
+                <target>Zum nächsten Jahr wechseln</target>
+            </trans-unit>
+            <trans-unit id="datePicker.nextTriggerYear" approved="yes">
+                <target>Zum nächsten Jahrzehnt wechseln</target>
+            </trans-unit>
+            <trans-unit id="datePicker.viewTriggerToDay" approved="yes">
+                <target>Zur Tagesansicht wechseln</target>
+            </trans-unit>
+            <trans-unit id="datePicker.viewTriggerToMonth" approved="yes">
+                <target>Zur Monatsansicht wechseln</target>
+            </trans-unit>
+            <trans-unit id="datePicker.viewTriggerToYear" approved="yes">
+                <target>Zur Jahresansicht wechseln</target>
+            </trans-unit>
+            <trans-unit id="datePicker.viewTriggerDay" approved="yes">
+                <target>Tagesansicht</target>
+            </trans-unit>
+            <trans-unit id="datePicker.viewTriggerMonth" approved="yes">
+                <target>Monatsansicht</target>
+            </trans-unit>
+            <trans-unit id="datePicker.viewTriggerYear" approved="yes">
+                <target>Jahresansicht</target>
+            </trans-unit>
+            <trans-unit id="datePicker.presetTrigger" approved="yes">
+                <target>%start% bis %end% auswählen</target>
+            </trans-unit>
+            <trans-unit id="datePicker.weekNumberCell" approved="yes">
+                <target>Woche %number%</target>
+            </trans-unit>
+            <trans-unit id="datePicker.dayCell" approved="yes">
+                <target>%date% auswählen</target>
+            </trans-unit>
+            <trans-unit id="datePicker.dayCellSelected" approved="yes">
+                <target>Ausgewähltes Datum: %date%</target>
+            </trans-unit>
+            <trans-unit id="datePicker.dayCellRangeStart" approved="yes">
+                <target>Zeitraum beginnt am %date%</target>
+            </trans-unit>
+            <trans-unit id="datePicker.dayCellRangeEnd" approved="yes">
+                <target>Zeitraum endet am %date%</target>
+            </trans-unit>
+            <trans-unit id="datePicker.dayCellInRange" approved="yes">
+                <target>Im Zeitraum: %date%</target>
+            </trans-unit>
+            <trans-unit id="datePicker.dayCellUnavailable" approved="yes">
+                <target>Nicht verfügbar: %date%</target>
+            </trans-unit>
+            <trans-unit id="datePicker.contentRoleDescription" approved="yes">
+                <target>Datumsauswahl</target>
+            </trans-unit>
+            <trans-unit id="datePicker.tableRoleDescriptionDay" approved="yes">
+                <target>Kalendermonat</target>
+            </trans-unit>
+            <trans-unit id="datePicker.tableRoleDescriptionMonth" approved="yes">
+                <target>Kalenderjahr</target>
+            </trans-unit>
+            <trans-unit id="datePicker.tableRoleDescriptionYear" approved="yes">
+                <target>Kalenderjahrzehnt</target>
+            </trans-unit>
+            <trans-unit id="datePicker.placeholderDay" approved="yes">
+                <target>TT</target>
+            </trans-unit>
+            <trans-unit id="datePicker.placeholderMonth" approved="yes">
+                <target>MM</target>
+            </trans-unit>
+            <trans-unit id="datePicker.placeholderYear" approved="yes">
+                <target>JJJJ</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

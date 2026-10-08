@@ -25,7 +25,7 @@
 <ui:prop name="positioning" type="array" optional="{true}" client="{true}" default="{ placement: 'bottom-start', gutter: 8 }" description="The positioning options of the calendar content." />
 <ui:prop name="defaultOpen" type="boolean" optional="{true}" client="{true}" default="{false}" description="The initial open state of the date picker when rendered. Use when you don't need to control the open state of the date picker." />
 <ui:prop name="inline" type="boolean" optional="{true}" client="{true}" default="{false}" description="Whether to render the calendar in the page, without a popup. It is always open and has no trigger." />
-<ui:prop name="translations" type="array" optional="{true}" client="{true}" description="Localized date picker labels. Set entries to `{false}` to omit the corresponding `aria-label`. Use `f:translate` for per-template localization overrides when needed." />
+<ui:prop name="translations" type="array" optional="{true}" client="{true}" description="Localized date picker labels, by the id of the `datePicker.*` units of the language file. Set entries to `{false}` to omit the corresponding `aria-label`. Use `f:translate` for per-template localization overrides when needed." />
 
 <f:variable name="refData" value="{state: context.state, disabled: context.disabled, readonly: context.readOnly, empty: context.empty}" />
 

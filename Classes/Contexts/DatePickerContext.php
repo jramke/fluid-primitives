@@ -17,6 +17,47 @@ class DatePickerContext extends AbstractComponentContext
 {
     use HasTranslationsTrait;
 
+    /**
+     * The ids of the labels in the language file, which are the keys the client builds its
+     * translations from.
+     */
+    private const array TRANSLATIONS = [
+        'clearTrigger',
+        'monthSelect',
+        'yearSelect',
+        'content',
+        'weekColumnHeader',
+        'triggerOpen',
+        'triggerClose',
+        'prevTriggerDay',
+        'prevTriggerMonth',
+        'prevTriggerYear',
+        'nextTriggerDay',
+        'nextTriggerMonth',
+        'nextTriggerYear',
+        'viewTriggerToDay',
+        'viewTriggerToMonth',
+        'viewTriggerToYear',
+        'viewTriggerDay',
+        'viewTriggerMonth',
+        'viewTriggerYear',
+        'presetTrigger',
+        'weekNumberCell',
+        'dayCell',
+        'dayCellSelected',
+        'dayCellRangeStart',
+        'dayCellRangeEnd',
+        'dayCellInRange',
+        'dayCellUnavailable',
+        'contentRoleDescription',
+        'tableRoleDescriptionDay',
+        'tableRoleDescriptionMonth',
+        'tableRoleDescriptionYear',
+        'placeholderDay',
+        'placeholderMonth',
+        'placeholderYear',
+    ];
+
     public function __construct(
         private readonly TranslatorService $translator,
     ) {}
@@ -124,19 +165,52 @@ class DatePickerContext extends AbstractComponentContext
 
     #[ExposeToClient]
     /**
-     * Only the plain-string translations: Zag builds the others (day cells, previous/next, ...) as
-     * functions of the date and view, which can't be sent to the client.
+     * Every label as a text, with `%placeholders%` for what only the client knows (the date of a day
+     * cell, ...): Zag builds most of its labels as functions of the date or the view, which can't
+     * be sent to the client as they are.
      *
-     * @return array{clearTrigger: string, monthSelect: string, yearSelect: string, content: string, weekColumnHeader: string}
+     * @return array{
+     *     clearTrigger: string,
+     *     monthSelect: string,
+     *     yearSelect: string,
+     *     content: string,
+     *     weekColumnHeader: string,
+     *     triggerOpen: string,
+     *     triggerClose: string,
+     *     prevTriggerDay: string,
+     *     prevTriggerMonth: string,
+     *     prevTriggerYear: string,
+     *     nextTriggerDay: string,
+     *     nextTriggerMonth: string,
+     *     nextTriggerYear: string,
+     *     viewTriggerToDay: string,
+     *     viewTriggerToMonth: string,
+     *     viewTriggerToYear: string,
+     *     viewTriggerDay: string,
+     *     viewTriggerMonth: string,
+     *     viewTriggerYear: string,
+     *     presetTrigger: string,
+     *     weekNumberCell: string,
+     *     dayCell: string,
+     *     dayCellSelected: string,
+     *     dayCellRangeStart: string,
+     *     dayCellRangeEnd: string,
+     *     dayCellInRange: string,
+     *     dayCellUnavailable: string,
+     *     contentRoleDescription: string,
+     *     tableRoleDescriptionDay: string,
+     *     tableRoleDescriptionMonth: string,
+     *     tableRoleDescriptionYear: string,
+     *     placeholderDay: string,
+     *     placeholderMonth: string,
+     *     placeholderYear: string,
+     * }
      */
     public function getTranslations(): array
     {
-        return $this->translationsWithDefaults([
-            'clearTrigger' => 'datePicker.clearTrigger',
-            'monthSelect' => 'datePicker.monthSelect',
-            'yearSelect' => 'datePicker.yearSelect',
-            'content' => 'datePicker.content',
-            'weekColumnHeader' => 'datePicker.weekColumnHeader',
-        ]);
+        return $this->translationsWithDefaults(array_combine(self::TRANSLATIONS, array_map(
+            static fn(string $key): string => 'datePicker.' . $key,
+            self::TRANSLATIONS,
+        )));
     }
 }

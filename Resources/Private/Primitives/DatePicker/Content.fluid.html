@@ -4,7 +4,7 @@
 <div
     tabindex="-1"
     role="application"
-    aria-roledescription="datepicker"
+    {f:if(condition: context.translations.contentRoleDescription, then: 'aria-roledescription="{context.translations.contentRoleDescription}"' )}
     {f:if(condition: context.translations.content, then: 'aria-label="{context.translations.content}"' )}
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'content' , data: refData )}

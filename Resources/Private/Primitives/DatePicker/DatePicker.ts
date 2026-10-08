@@ -10,6 +10,12 @@ import {
     type ConverterMachineProps,
 } from '../../Client';
 import type { FieldClientApi } from '../Field/src/field.handle';
+import {
+    buildTranslations,
+    getPlaceholder,
+    type DatePickerTranslations,
+    type TranslationTexts,
+} from './src/date-picker.translations';
 
 const parseDate = (date?: string) => (date ? datePicker.parse(date) : undefined);
 
@@ -35,10 +41,12 @@ const datePickerPropConverters = {
             ...(label && { label: indexedId(label) }),
             ...(input && { input: indexedId(input) }),
         }) as datePicker.ElementIds,
+    // The labels are texts on the wire, Zag wants functions of the date and the view for most.
+    translations: (texts: TranslationTexts | undefined, props: Record<string, unknown>) =>
+        buildTranslations(texts, props.locale as string | undefined),
     // PHP can't distinguish a list-shaped array from an object-shaped one for a bare `type="array"`
-    // prop (see WireTypeResolver), so these resolve to `unknown` on the wire - these just tell TS
-    // what they actually are (real @zag-js/popper PositioningOptions and Zag's IntlTranslations).
-    translations: (translations: datePicker.Props['translations']) => translations,
+    // prop (see WireTypeResolver), so this resolves to `unknown` on the wire - this just tells TS
+    // what it actually is (a real @zag-js/popper PositioningOptions object).
     positioning: (positioning: datePicker.Props['positioning']) => positioning,
 } satisfies ClientPropConverterMap;
 
@@ -67,6 +75,12 @@ export class DatePicker extends FieldAwareComponent<datePicker.Props, datePicker
     transformProps(props: datePicker.Props): datePicker.Props {
         return {
             ...props,
+            placeholder:
+                props.placeholder ??
+                getPlaceholder(
+                    props.translations as DatePickerTranslations | undefined,
+                    props.locale
+                ),
             // Zag writes a date picked in the calendar into the input without an event, but a Field
             // and a Form only learn of a change from one (and read the value once it has settled).
             onValueChange: details => {
@@ -120,8 +134,19 @@ export class DatePicker extends FieldAwareComponent<datePicker.Props, datePicker
             this.spreadProps(positionerEl, positionerProps);
         }
 
+        // Zag hard-codes English role descriptions for the content and the tables.
+        const roleDescription = (this.userProps.translations as DatePickerTranslations | undefined)
+            ?.roleDescription;
+
         const contentEl = this.hydrator.query('content');
-        if (contentEl) this.spreadProps(contentEl, this.api.getContentProps());
+        if (contentEl) {
+            this.spreadProps(
+                contentEl,
+                mergeProps(this.api.getContentProps(), {
+                    'aria-roledescription': roleDescription?.content,
+                })
+            );
+        }
 
         this.spreadPropsByValue('view', ({ value }) =>
             this.api.getViewProps({ view: value as datePicker.DateView })
@@ -159,12 +184,13 @@ export class DatePicker extends FieldAwareComponent<datePicker.Props, datePicker
                 tableEl,
                 mergeProps(
                     this.api.getTableProps({ view, id: offset ? String(offset) : undefined }),
-                    view === 'day'
-                        ? {
-                              'aria-label': this.api.getOffset({ months: offset }).visibleRangeText
-                                  .start,
-                          }
-                        : {}
+                    {
+                        'aria-roledescription': roleDescription?.table?.[view],
+                        ...(view === 'day' && {
+                            'aria-label': this.api.getOffset({ months: offset }).visibleRangeText
+                                .start,
+                        }),
+                    }
                 )
             );
 

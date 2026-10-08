@@ -1,8 +1,10 @@
 <f:variable name="refData" value="{state: context.state, placeholder-shown: context.empty}" />
+<f:variable name="label" value="{f:if(condition: context.open, then: context.translations.triggerClose, else: context.translations.triggerOpen)}" />
 
 <button
     type="button"
     aria-haspopup="grid"
+    {f:if(condition: label, then: 'aria-label="{label}"' )}
     aria-expanded="{f:if(condition: context.open, then: 'true', else: 'false')}"
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'trigger' , data: refData )}
