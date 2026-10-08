@@ -17,21 +17,26 @@ export interface FieldDependencyChangeDetail {
 
 /** What a field offers on top of Zag's api: its name, its value, its form and its `listenTo` event. */
 export interface FieldHandleExtras {
+    /** The name of the field. */
     name: string;
+    /** The current value of the field. */
     getValue(): FieldValue;
+    /** The first error message of the field, `null` if there is none. */
     getErrorText(): string | null;
+    /** The root element of the field. */
     getRootEl(): HTMLElement | null;
+    /** The machine of the form the field sits in, `undefined` outside of a form. */
     getFormMachine(): FormMachine | undefined;
+    /** Disables or enables the field. */
     setDisabled(disabled: boolean): void;
+    /** Marks the field as required or optional. */
     setRequired(required: boolean): void;
+    /** Makes the field read-only or editable. */
     setReadOnly(readOnly: boolean): void;
     /**
-     * Registers `callback` for `fluid-primitives:field:dependencychange` (dispatched whenever a
-     * field named in this field's own `listenTo` prop changes value) and returns a function that
-     * removes it again, mirroring the native `addEventListener`/cleanup-function idiom rather than
-     * a config-style `onX` prop - this is something you call to start listening, not a value you
-     * set once at construction. A no-op subscription (immediately-inert callback, still-callable
-     * unsubscribe) for a field with no `listenTo`, since the event never fires for one.
+     * Calls `callback` whenever the value of a field named in the `listenTo` prop of this field
+     * changes. Returns a function that removes the listener again. For a field without `listenTo` it
+     * never fires, but the returned function is still safe to call.
      */
     addDependencyChangeListener(
         callback: (detail: FieldDependencyChangeDetail) => void

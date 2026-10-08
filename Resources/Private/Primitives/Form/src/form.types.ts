@@ -92,15 +92,27 @@ export class FormError extends Error {
 }
 
 export interface FormProps {
+    /** The unique identifier of the form. */
     id: string;
+    /**
+     * Validates the values of the form on the client: a Standard Schema validator such as Zod, or a
+     * synchronous callback that gets the `values` and returns the errors by field name. It cannot be
+     * set from a Fluid template, only by constructing `Form` in your own entry file.
+     */
     validation?: FormValidation;
+    /** The object name that prefixes the names of nested form fields. */
     objectName?: string;
     /**
-     * How long the fields of the form wait after the last change before they read their value, 100
-     * by default and never less than 50: some primitives update their inputs a few frames after they
-     * announce a change, and a `validate` that sends a request should not fire on every keystroke.
+     * How long the fields wait after the last change before they read their value, never less than
+     * 50. A `validate` that sends a request should not fire on every keystroke.
+     * @default 100
      */
     inputDebounceMs?: number;
+    /**
+     * Called with the values once the form is valid and submitted. Return `true` for success,
+     * `false` for an error, or field errors to mark the form invalid. `post(url)` submits the form
+     * as `FormData` and maps a 422 JSON response to field errors for you.
+     */
     onSubmit?: ({
         values,
         api,
@@ -112,6 +124,7 @@ export interface FormProps {
         event: JSX.FormEvent<HTMLElement>;
         post: (url: string) => Promise<Response>;
     }) => Promise<FormSubmitResult> | FormSubmitResult;
+    /** Called every time the form state changes. Use it to update UI the form does not wire itself. */
     render?: (form: Form) => void;
 }
 
@@ -131,37 +144,56 @@ export interface FormSchema {
 }
 
 export interface FormApi {
+    /** Whether the form is being submitted. */
     isSubmitting: boolean;
+    /** Whether the value of any field differs from the one it started with. */
     isDirty: boolean;
+    /** Whether any field is invalid. */
     isInvalid: boolean;
+    /** Whether the last submit succeeded. */
     isSuccessful: boolean;
+    /** Whether the last submit ended in an error. */
     isError: boolean;
     getFormProps(): PropTypes['element'];
     getContentProps(): PropTypes['element'];
     getIndicatorProps(state: FormState): PropTypes['element'];
     getErrorTextProps(): PropTypes['element'];
     getSuccessTextProps(): PropTypes['element'];
+    /** The current values of the form. */
     getValues(): FormValues;
+    /** The errors of the invalid fields, by field name. */
     getErrors(): FormErrors;
+    /** The dirty fields, by field name. */
     getDirty(): FormDirty;
+    /** The touched fields, by field name. */
     getTouched(): FormTouched;
+    /** The text of the error status of the form, `null` if there is none. */
     getErrorText(): string | null;
+    /** Sets the text of the error status. Pass `null` to remove it. */
     setErrorText(text: string | null): void;
+    /** The text of the success status of the form, `null` if there is none. */
     getSuccessText(): string | null;
+    /** Sets the text of the success status. Pass `null` to remove it. */
     setSuccessText(text: string | null): void;
+    /** Removes the error and the success text. */
     clearStatusText(): void;
+    /** @internal */
     _userRenderFn: FormProps['render'];
+    /** Every field of the form, by name. */
     getAllFields(): Map<string, FieldHandle>;
+    /** The field with this name, `undefined` if the form has none. */
     getField(name: string): FieldHandle | undefined;
+    /** The `<form>` element. */
     getFormEl(): HTMLFormElement | null;
+    /** The `action` of the form, an empty string if it has none. */
     getAction(): string;
+    /** Resets the form to its initial state. */
     reset(): void;
+    /** Picks up fields that were added or removed after the form was hydrated. */
     syncFields(): void;
     /**
-     * Renames a registered field, updating its `name` prop and re-keying the
-     * Form's internal field registry, without touching its value/touched/
-     * dirty/error state. Useful for keeping recurring-field rows contiguously
-     * indexed after removing a row from the middle of the list.
+     * Renames a field, keeping its value, touched, dirty and error state. Useful to keep the rows of
+     * a FieldArray contiguously indexed after one in the middle was removed.
      */
     renameField(oldName: string, newName: string): void;
 }

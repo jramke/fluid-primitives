@@ -4,77 +4,78 @@ import type { PropTypes } from '@zag-js/types';
 import type { FieldValue } from '../../Field/src/field.value';
 
 /**
- * Handed to a `translations.rowAdded`/`rowRemoved` callback (in place of a plain string) so it can
- * build an announcement from the row's own data, e.g. "Person Ada Lovelace was removed" instead of
- * the generic default - `getFieldValue` resolves a *bare* field name (`'firstName'`, not the full
- * `people[2][firstName]`) scoped to this one row. `rowEl` is handed over as an escape hatch for
- * anything `getFieldValue` doesn't cover; for `rowRemoved` it's already detached from the document
- * (removal happens first) but still fully readable, since `.remove()` only unlinks a node, it
- * doesn't clear it.
+ * What a `translations.rowAdded` or `rowRemoved` callback receives, to build an announcement from the
+ * data of the row, e.g. "Person Ada Lovelace was removed" instead of the generic default.
  */
 export interface FieldArrayAnnounceInfo {
+    /** The index of the row. */
     index: number;
+    /**
+     * The element of the row, for anything `getFieldValue` doesn't cover. For `rowRemoved` it is
+     * already detached from the document, but still readable.
+     */
     rowEl: HTMLElement;
+    /** Reads the value of a field in this row by its bare name, `'firstName'` and not `people[2][firstName]`. */
     getFieldValue: (name: string) => FieldValue;
 }
 
+/** A screen reader announcement: a string, `false` to stay silent, or a callback that builds one from the row. */
 export type FieldArrayAnnounceTranslation =
     string | false | ((info: FieldArrayAnnounceInfo) => string | false);
 
 export interface FieldArrayProps {
+    /** The unique identifier of the field array. */
     id: string;
+    /** The name the rows are nested under, e.g. `people` for `people[0][firstName]`. */
     name: string;
     /**
-     * Number of rows rendered server-side - only used by `Root.fluid.html`/`FieldArrayContext` to
-     * get `emptyState`/`addTrigger`/`removeTrigger` right before hydration; the client machine
-     * itself always derives `canAppend`/`canRemove`/row count from the live DOM instead (see
-     * `field-array.connect.ts`), so this is inert once JS takes over.
+     * The number of rows the server rendered. It sets the state of the triggers before hydration,
+     * once the client runs it counts the rows in the DOM instead.
      */
     itemCount?: number;
     /**
-     * Minimum number of rows required - once exactly this many remain, `remove()` (and a click on
-     * any row's `removeTrigger`) is a no-op, and every `removeTrigger` element is disabled.
+     * The fewest rows allowed. At this many, `remove()` and the remove triggers do nothing and the
+     * remove triggers are disabled.
      * @default 0
      */
     minItems?: number;
     /**
-     * Maximum number of rows allowed - once this many exist, `append()` (and a click on
-     * `addTrigger`) is a no-op, and `addTrigger` is disabled.
+     * The most rows allowed. At this many, `append()` and the add trigger do nothing and the add
+     * trigger is disabled.
      */
     maxItems?: number;
     /**
-     * A `%number%` placeholder in a plain string is replaced with the row's 1-based position (see
-     * `Root.fluid.html`'s own prop for the localized defaults, e.g. "Row %number% removed."). Pass
-     * a callback instead to build the message from the row's own field values via
-     * `FieldArrayAnnounceInfo.getFieldValue` - `%number%` is still substituted in whatever string a
-     * callback returns, so it can rely on the same placeholder rather than interpolating it by hand.
+     * The screen reader announcements of an added and a removed row. In a string, `%number%` is
+     * replaced with the 1-based position of the row, e.g. `Row %number% removed.`. A callback builds
+     * the message from the data of the row, and may use `%number%` in what it returns.
      */
     translations?: {
         rowAdded?: FieldArrayAnnounceTranslation;
         rowRemoved?: FieldArrayAnnounceTranslation;
     };
     /**
-     * Called after a new row is appended (from a click on `addTrigger`) with its index and the
-     * client component names `ComponentHydrator.restampValue` found nested inside it (e.g.
-     * `['field', 'input']`) - call the matching `mountAll()`s here, since `FieldArray` itself
-     * doesn't know which primitives a row's own `itemTemplate` contains.
+     * Called after a row was added by the add trigger, with its index and the client names of the
+     * components inside it, e.g. `['field', 'input']`. Call their `mountAll()` here: the field
+     * array doesn't know what the template of a row contains.
      */
     onItemAdded?: (detail: { index: number; componentNames: string[] }) => void;
     /**
-     * Called after a row (from a click on that row's own `removeTrigger`) has been torn down and
-     * removed, with the index it was removed from (later rows have already been reindexed by this
-     * point). Mirrors `onItemAdded`.
+     * Called after a row was removed by its remove trigger, with the index it had. The later rows
+     * have already moved up by then.
      */
     onItemRemoved?: (detail: { index: number }) => void;
 }
 
 export interface FieldArrayApiActions {
+    /** The rows that currently exist, by index. */
     getRows(): { index: number }[];
     /** Whether `append()` would currently add a row, i.e. `maxItems` hasn't been reached. */
     canAppend(): boolean;
     /** Whether `remove()` would currently remove a row, i.e. more than `minItems` remain. */
     canRemove(): boolean;
+    /** Adds a row, if `maxItems` allows it. */
     append(): void;
+    /** Removes the row at `index`, if `minItems` allows it. */
     remove(index: number): void;
 }
 
