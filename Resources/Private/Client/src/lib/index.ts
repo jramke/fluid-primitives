@@ -1,4 +1,5 @@
 export { AsyncList } from './async-list';
+export type { AsyncListOptions } from './async-list';
 export { applyClientPropConverters, registerClientPropConverters } from './client-prop-converters';
 export type {
     ClientPropConverter,
