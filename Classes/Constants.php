@@ -34,6 +34,7 @@ class Constants
         'checkbox',
         'checkbox-group',
         'combobox',
+        'date-picker',
         'file-upload',
         'select',
         'input',
