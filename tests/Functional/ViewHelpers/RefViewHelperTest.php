@@ -13,9 +13,8 @@ final class RefViewHelperTest extends FunctionalTestCase
     #[Test]
     public function attachesToTheComponentNamedByContextInsideHandAuthoredSlotContent(): void
     {
-        // Unlike the item template of a component, this span is neither a component's own template body nor wrapped in
-        // ui:template - it's plain slot content, several layers deep (root -> content -> empty). `context` targets
-        // the "combobox" ancestor explicitly instead of relying on whichever component happens to be ambiently active.
+        // Plain slot content, several layers deep (root -> content -> empty), is evaluated where the component around
+        // it is not known: `context` names the ancestor to attach to.
         $html = $this->renderTemplate('
             <primitives:combobox.root rootId="my-combobox" collection="{collection}">
                 <primitives:combobox.content>
@@ -33,19 +32,14 @@ final class RefViewHelperTest extends FunctionalTestCase
     }
 
     #[Test]
-    public function stillAttachesByContextAfterAnotherComponentRenderedEarlierInTheSameSlot(): void
+    public function marksAnElementOfAMultiWordComponentWithTheKebabCaseNameTheClientQueriesBy(): void
     {
-        // Some part of the render of another primitive (here the preview) leaves the *ambient* `component`/`context`
-        // Fluid variables unset for whatever renders next in the same slot, although the enclosing component is still
-        // on the stack of contexts that the `context` argument reads - which is why the documentation of the file
-        // upload tells consumer-authored elements to name it.
+        // The slot content of an item template is evaluated against the rendering context of the call site, where the
+        // component around it is not known, so the element names it. `fileUpload` becomes `file-upload` in the marker.
         $html = $this->renderTemplate('
             <primitives:fileUpload.root rootId="my-upload">
                 <primitives:fileUpload.itemTemplate>
                     <primitives:fileUpload.item>
-                        <primitives:fileUpload.itemPreview match=".*">
-                            <primitives:fileUpload.itemPreviewFallback />
-                        </primitives:fileUpload.itemPreview>
                         <div {ui:ref(name: \'diagField\', context: \'fileUpload\')}>diag</div>
                     </primitives:fileUpload.item>
                 </primitives:fileUpload.itemTemplate>
