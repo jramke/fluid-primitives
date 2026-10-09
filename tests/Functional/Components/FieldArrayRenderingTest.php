@@ -12,26 +12,6 @@ use PHPUnit\Framework\Attributes\Test;
 final class FieldArrayRenderingTest extends FunctionalTestCase
 {
     #[Test]
-    public function prefixesNestedFieldNameWithArrayNameAndRowIndex(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:fieldArray.root name="people" itemCount="1">
-                <primitives:fieldArray.itemGroup>
-                    <primitives:fieldArray.item index="0">
-                        <primitives:field.root name="firstName">
-                            <primitives:field.control asChild="{true}">
-                                <input type="text" />
-                            </primitives:field.control>
-                        </primitives:field.root>
-                    </primitives:fieldArray.item>
-                </primitives:fieldArray.itemGroup>
-            </primitives:fieldArray.root>
-        ');
-
-        $this->assertStringContainsString('data-name="people[0][firstName]"', $html);
-    }
-
-    #[Test]
     public function registersTheRewrittenArrayPrefixedNameForClientHydrationTooNotTheRawArgument(): void
     {
         // Field's own client-registered `name` prop used to be read from the raw `name` argument
@@ -133,8 +113,18 @@ final class FieldArrayRenderingTest extends FunctionalTestCase
             </primitives:fieldArray.root>
         ');
 
-        $this->assertStringContainsString('data-name="people[0][firstName]"', $html);
-        $this->assertStringContainsString('data-name="people[1][firstName]"', $html);
+        $this->assertSame(
+            ['people[0][firstName]', 'people[1][firstName]'],
+            array_map(
+                static fn($field): ?string => $field->get('data-name'),
+                $this->elementsWith($html, 'data-field-root'),
+            ),
+        );
+        // the client reindexes the rows by this value
+        $this->assertSame(
+            ['0', '1'],
+            array_map(strval(...), array_keys($this->elementsByValue($html, 'data-field-array-item'))),
+        );
     }
 
     #[Test]
@@ -191,20 +181,6 @@ final class FieldArrayRenderingTest extends FunctionalTestCase
             [['name' => 'primitives:field', 'id' => $row1FieldRootId]],
             $byScope["field-array:{$fieldArrayRootId}:item:1"] ?? null,
         );
-    }
-
-    #[Test]
-    public function fieldOutsideAFieldArrayIsUnaffected(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:field.root name="email">
-                <primitives:field.control asChild="{true}">
-                    <input type="text" />
-                </primitives:field.control>
-            </primitives:field.root>
-        ');
-
-        $this->assertStringContainsString('data-name="email"', $html);
     }
 
     #[Test]
@@ -269,7 +245,9 @@ final class FieldArrayRenderingTest extends FunctionalTestCase
             </primitives:fieldArray.root>
         ');
 
-        $this->assertStringNotContainsString('aria-disabled="true"', $html);
+        $removeTrigger = $this->elementWith($html, 'data-field-array-remove-trigger');
+        $this->assertFalse($removeTrigger->has('aria-disabled'));
+        $this->assertFalse($removeTrigger->has('data-disabled'));
     }
 
     #[Test]

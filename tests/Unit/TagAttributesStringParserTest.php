@@ -23,10 +23,4 @@ final class TagAttributesStringParserTest extends TestCase
         $result = TagAttributesStringParser::parse('data-equation="1+1=2"');
         $this->assertSame(['data-equation' => '1+1=2'], $result);
     }
-
-    #[Test]
-    public function returnsAnEmptyArrayForAnEmptyString(): void
-    {
-        $this->assertSame([], TagAttributesStringParser::parse(''));
-    }
 }

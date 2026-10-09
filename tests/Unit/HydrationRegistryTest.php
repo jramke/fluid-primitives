@@ -9,7 +9,10 @@ use Jramke\FluidPrimitives\Registry\NestedComponentRegistry;
 use Jramke\FluidPrimitives\Tests\TestCase;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\Test;
+use TYPO3\CMS\Core\Http\ServerRequest;
+use TYPO3\CMS\Core\Http\Uri;
 use TYPO3\CMS\Core\Page\AssetCollector;
+use TYPO3\CMS\Core\Site\Entity\SiteLanguage;
 
 #[AllowMockObjectsWithoutExpectations]
 final class HydrationRegistryTest extends TestCase
@@ -38,15 +41,17 @@ final class HydrationRegistryTest extends TestCase
     }
 
     #[Test]
-    public function storesAndRetrievesMultipleComponentTypes(): void
+    public function keepsEveryInstanceOfEveryComponentTypeOfANamespace(): void
     {
-        $this->registry->add('ui', 'accordion', '«f1»', ['type' => 'accordion']);
-        $this->registry->add('ui', 'dialog', '«f2»', ['type' => 'dialog']);
+        $this->registry->add('ui', 'accordion', '«f1»', ['type' => 'first-accordion']);
+        $this->registry->add('ui', 'accordion', '«f2»', ['type' => 'second-accordion']);
+        $this->registry->add('ui', 'dialog', '«f3»', ['type' => 'dialog']);
 
         $all = $this->registry->getAll();
 
-        $this->assertSame(['type' => 'accordion'], $all['ui']['accordion']['«f1»']);
-        $this->assertSame(['type' => 'dialog'], $all['ui']['dialog']['«f2»']);
+        $this->assertSame(['type' => 'first-accordion'], $all['ui']['accordion']['«f1»']);
+        $this->assertSame(['type' => 'second-accordion'], $all['ui']['accordion']['«f2»']);
+        $this->assertSame(['type' => 'dialog'], $all['ui']['dialog']['«f3»']);
     }
 
     #[Test]
@@ -79,21 +84,25 @@ final class HydrationRegistryTest extends TestCase
     }
 
     #[Test]
-    public function clearsTheRegistry(): void
+    public function exposesTheLanguageOfTheRequestAsALocaleTheClientCanUseWithIntl(): void
     {
-        $this->registry->add('ui', 'accordion', '«f1»', ['props' => []]);
-        $this->registry->clear();
+        // What the docs pass on as `getGlobal('locale')` to `Intl`, which wants a BCP 47 tag, not `de_DE`.
+        $language = new SiteLanguage(0, 'de_DE', new Uri('https://example.com/'), []);
+        $GLOBALS['TYPO3_REQUEST'] = (new ServerRequest())->withAttribute('language', $language);
 
-        $this->assertSame([], $this->registry->getAll());
+        $globals = $this->registry->getGlobals();
+
+        $this->assertSame('de-DE', $globals['locale']);
+        // no Environment is initialized in a unit test, which counts as production
+        $this->assertFalse($globals['debug']);
     }
 
     #[Test]
-    public function exposesDebugGlobalRegardlessOfApplicationContext(): void
+    public function exposesNoLocaleWithoutARequest(): void
     {
-        // No request is bootstrapped in this unit test, so resolveGlobals() returns before the
-        // locale lookup - 'debug' is set unconditionally before that, so it should be there either way.
-        $this->assertArrayHasKey('debug', $this->registry->getGlobals());
-        $this->assertIsBool($this->registry->getGlobals()['debug']);
+        unset($GLOBALS['TYPO3_REQUEST']);
+
+        $this->assertArrayNotHasKey('locale', $this->registry->getGlobals());
     }
 
     #[Test]

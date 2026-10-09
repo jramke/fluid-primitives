@@ -11,59 +11,33 @@ use PHPUnit\Framework\Attributes\Test;
 final class HydrationScriptBuilderTest extends TestCase
 {
     #[Test]
-    public function pettyPrintsAndKeepsWhitespaceInDevelopment(): void
+    public function prettyPrintsInDevelopmentAndMinifiesToASingleLineOtherwise(): void
     {
-        $js = (new HydrationScriptBuilder())->build(
-            ['accordion' => ['«f1»' => ['multiple' => true]]],
-            ['locale' => 'en_US'],
-            [],
-            development: true,
-        );
+        $builder = new HydrationScriptBuilder();
+        $registry = ['accordion' => ['«f1»' => ['multiple' => true]]];
 
-        $this->assertStringContainsString("\n", $js);
-        $this->assertStringContainsString('window.FluidPrimitives', $js);
-        $this->assertStringContainsString('"locale": "en_US"', $js);
+        $development = $builder->build($registry, ['locale' => 'en_US'], [], development: true);
+        $this->assertStringContainsString("\n", $development);
+        $this->assertStringContainsString('window.FluidPrimitives', $development);
+        $this->assertStringContainsString('"locale": "en_US"', $development);
+
+        $production = $builder->build($registry, ['locale' => 'en_US'], [], development: false);
+        $this->assertStringNotContainsString("\n", $production);
+        $this->assertStringContainsString('window.FluidPrimitives', $production);
+        $this->assertStringContainsString('"locale":"en_US"', $production);
     }
 
     #[Test]
-    public function minifiesToASingleLineOutsideOfDevelopment(): void
+    public function escapesScriptTagBreakoutInBothModes(): void
     {
-        $js = (new HydrationScriptBuilder())->build(
-            ['accordion' => ['«f1»' => ['multiple' => true]]],
-            ['locale' => 'en_US'],
-            [],
-            development: false,
-        );
+        $builder = new HydrationScriptBuilder();
+        $registry = ['accordion' => ['«f1»' => ['label' => '</script><script>alert(1)</script>']]];
 
-        $this->assertStringNotContainsString("\n", $js);
-        $this->assertStringContainsString('window.FluidPrimitives', $js);
-        $this->assertStringContainsString('"locale":"en_US"', $js);
-    }
+        foreach ([true, false] as $development) {
+            $js = $builder->build($registry, ['locale' => 'en_US'], [], development: $development);
 
-    #[Test]
-    public function escapesScriptTagBreakoutInDevelopment(): void
-    {
-        $js = (new HydrationScriptBuilder())->build(
-            ['accordion' => ['«f1»' => ['label' => '</script><script>alert(1)</script>']]],
-            ['locale' => 'en_US'],
-            [],
-            development: true,
-        );
-
-        $this->assertStringNotContainsString('</script>', $js);
-    }
-
-    #[Test]
-    public function escapesScriptTagBreakoutOutsideOfDevelopment(): void
-    {
-        $js = (new HydrationScriptBuilder())->build(
-            ['accordion' => ['«f1»' => ['label' => '</script><script>alert(1)</script>']]],
-            ['locale' => 'en_US'],
-            [],
-            development: false,
-        );
-
-        $this->assertStringNotContainsString('</script>', $js);
+            $this->assertStringNotContainsString('</script>', $js, $development ? 'development' : 'production');
+        }
     }
 
     #[Test]

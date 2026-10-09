@@ -5,39 +5,48 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Tests\Unit;
 
 use Jramke\FluidPrimitives\Tests\TestCase;
+use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
 use Jramke\FluidPrimitives\Utility\ComponentRefUtility;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 
 final class ComponentRefUtilityTest extends TestCase
 {
-    #[Test]
-    public function derivesTheAttributeNameFromComponentAndPartMirroringZagsPartAttributes(): void
+    /**
+     * The vectors are shared with the client: tests/Client/hydration.test.ts feeds the same file to
+     * `ComponentHydrator`, so what the server renders and what the client looks for cannot drift apart.
+     *
+     * @return iterable<string, array{0: array<string, string>}>
+     */
+    public static function partNamingVectors(): iterable
     {
-        $this->assertSame('data-dialog-close-trigger', ComponentRefUtility::getAttributeName('dialog', 'closeTrigger'));
-        $this->assertSame('data-file-upload-item-delete-trigger', ComponentRefUtility::getAttributeName(
-            'file-upload',
-            'itemDeleteTrigger',
-        ));
-        // A dot of a tiered/example component identity isn't valid in a CSS attribute selector.
-        $this->assertSame('data-molecules-checkbox-group-root', ComponentRefUtility::getAttributeName(
-            'molecules.checkbox-group',
-            'root',
-        ));
+        $json = file_get_contents(__DIR__ . '/../Fixtures/part-naming.json');
+        $vectors = json_decode($json === false ? '[]' : $json, true, flags: JSON_THROW_ON_ERROR);
+
+        foreach ($vectors as $vector) {
+            yield $vector['componentName'] . '.' . $vector['part'] => [$vector];
+        }
     }
 
+    /**
+     * @param array<string, string> $vector
+     */
     #[Test]
-    public function buildsScopeKeysFromComponentRootPartAndOptionalValue(): void
+    #[DataProvider('partNamingVectors')]
+    public function namesPartsTheWayTheClientHydratorDoes(array $vector): void
     {
-        $this->assertSame('combobox:«f1»:item-template', ComponentRefUtility::getScopeKey(
-            'combobox',
-            '«f1»',
-            'itemTemplate',
+        $clientBaseName = ComponentNameUtility::camelCaseToLowerCaseDashed($vector['componentName']);
+
+        $this->assertSame($vector['clientBaseName'], $clientBaseName);
+        $this->assertSame($vector['attribute'], ComponentRefUtility::getAttributeName(
+            $clientBaseName,
+            $vector['part'],
         ));
-        $this->assertSame('field-array:«f1»:item:2', ComponentRefUtility::getScopeKey(
-            'field-array',
-            '«f1»',
-            'item',
-            '2',
+        $this->assertSame($vector['scopeKey'], ComponentRefUtility::getScopeKey(
+            $clientBaseName,
+            $vector['rootId'],
+            $vector['part'],
+            $vector['value'] ?? null,
         ));
     }
 }

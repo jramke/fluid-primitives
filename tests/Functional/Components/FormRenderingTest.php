@@ -7,13 +7,17 @@ namespace Jramke\FluidPrimitives\Tests\Functional\Components;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
 use Jramke\FluidPrimitives\Tests\Helper\TestEntity;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use RuntimeException;
+use TYPO3\CMS\Core\Crypto\HashAlgo;
+use TYPO3\CMS\Core\Crypto\HashService;
+use TYPO3\CMS\Extbase\Security\HashScope;
 
 final class FormRenderingTest extends FunctionalTestCase
 {
     #[Test]
-    public function rendersFormElementWithMethodAndAction(): void
+    public function rendersAFormElementWithMethodActionAndTheReadyState(): void
     {
         $html = $this->renderTemplate('
             <primitives:form.root actionUri="/submit" method="get">
@@ -21,10 +25,14 @@ final class FormRenderingTest extends FunctionalTestCase
             </primitives:form.root>
         ');
 
-        $this->assertStringContainsString('<form', $html);
-        $this->assertStringContainsString('method="get"', $html);
-        $this->assertStringContainsString('action="/submit"', $html);
-        $this->assertStringContainsString('novalidate', $html);
+        $form = $this->elementWith($html, 'data-form-root');
+        $this->assertSame('form', $form->tag);
+        $this->assertSame('get', $form->get('method'));
+        $this->assertSame('/submit', $form->get('action'));
+        // the library validates itself
+        $this->assertTrue($form->has('novalidate'));
+        // form state is driven client-side after hydration; the server always renders the initial one
+        $this->assertSame('ready', $form->get('data-state'));
     }
 
     #[Test]
@@ -61,10 +69,48 @@ final class FormRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
-    public function appendsIdentityFieldForAPersistedBoundObject(): void
+    public function signsTheFieldNamesAndTheIdentitiesOfTheBoundObjectsIntoTheTrustedProperties(): void
     {
+        $nested = new TestEntity();
+        $nested->setTestUid(7);
         $entity = new TestEntity();
         $entity->setTestUid(42);
+        $entity->setNested($nested);
+
+        $html = $this->renderTemplate('
+            <primitives:form.root actionUri="/submit" objectName="conference" object="{entity}">
+                <primitives:field.root name="title">
+                    <primitives:field.control asChild="{true}"><input type="text" /></primitives:field.control>
+                </primitives:field.root>
+                <primitives:field.root name="nested.title">
+                    <primitives:field.control asChild="{true}"><input type="text" /></primitives:field.control>
+                </primitives:field.root>
+            </primitives:form.root>
+        ', ['entity' => $entity]);
+
+        // what Extbase's property mapper accepts back: the names of the fields and, for a bound
+        // object that already exists, its identity - the nested one too
+        $this->assertEquals(
+            ['conference' => ['__identity' => 1, 'title' => 1, 'nested' => ['__identity' => 1, 'title' => 1]]],
+            $this->trustedProperties($html),
+        );
+    }
+
+    /**
+     * @return iterable<string, array{0: ?int}>
+     */
+    public static function boundObjects(): iterable
+    {
+        yield 'a persisted object' => [42];
+        yield 'a new object' => [null];
+    }
+
+    #[Test]
+    #[DataProvider('boundObjects')]
+    public function appendsAnIdentityFieldOnlyForAnObjectThatIsPersisted(?int $uid): void
+    {
+        $entity = new TestEntity();
+        $entity->setTestUid($uid);
 
         $html = $this->renderTemplate('
             <primitives:form.root actionUri="/submit" objectName="conference" object="{entity}">
@@ -72,45 +118,58 @@ final class FormRenderingTest extends FunctionalTestCase
             </primitives:form.root>
         ', ['entity' => $entity]);
 
-        $this->assertStringContainsString('name="conference[__identity]" value="42"', $html);
+        $identityFields = array_filter(
+            $this->elementsWith($html, 'name'),
+            static fn($element): bool => $element->get('name') === 'conference[__identity]',
+        );
+
+        if ($uid === null) {
+            $this->assertSame([], $identityFields);
+            // nor is it signed into the trusted properties: Extbase would expect it back
+            $this->assertArrayNotHasKey('__identity', $this->trustedProperties($html)['conference'] ?? []);
+
+            return;
+        }
+
+        $this->assertCount(1, $identityFields);
+        $this->assertSame((string)$uid, array_values($identityFields)[0]->get('value'));
     }
 
     #[Test]
-    public function omitsIdentityFieldForANewUnpersistedObject(): void
+    public function rendersTheContentAndTheReadyIndicatorVisibleAndEveryStatusPartHidden(): void
     {
-        $html = $this->renderTemplate('
-            <primitives:form.root actionUri="/submit" objectName="conference" object="{entity}">
-                <button type="submit">Send</button>
-            </primitives:form.root>
-        ', ['entity' => new TestEntity()]);
-
-        $this->assertStringNotContainsString('__identity', $html);
-    }
-
-    #[Test]
-    public function rendersReadyStateWithContentVisibleAndIndicatorsHidden(): void
-    {
-        // Form state (submitting/error/success) is driven client-side after hydration; the server
-        // always renders the initial "ready" state.
         $html = $this->renderTemplate('
             <primitives:form.root actionUri="/submit">
                 <primitives:form.content>
                     <button type="submit">Send</button>
                 </primitives:form.content>
+                <primitives:form.indicator state="{f:constant(name: \'Jramke\FluidPrimitives\Enum\FormState::Ready\')}">Ready</primitives:form.indicator>
+                <primitives:form.indicator state="{f:constant(name: \'Jramke\FluidPrimitives\Enum\FormState::Submitting\')}">Sending</primitives:form.indicator>
                 <primitives:form.successText>Saved!</primitives:form.successText>
                 <primitives:form.errorText>Something went wrong.</primitives:form.errorText>
             </primitives:form.root>
         ');
 
-        $this->assertStringContainsString('data-form-content="', $html);
-        $this->assertDoesNotMatchRegularExpression('/hidden[^>]*data-form-content="/', $html);
-        $this->assertMatchesRegularExpression('/hidden[^>]*data-form-success-text="/', $html);
-        $this->assertMatchesRegularExpression('/hidden[^>]*data-form-error-text="/', $html);
+        $this->assertFalse($this->elementWith($html, 'data-form-content')->has('hidden'));
+        $this->assertTrue($this->elementWith($html, 'data-form-success-text')->has('hidden'));
+        $this->assertTrue($this->elementWith($html, 'data-form-error-text')->has('hidden'));
+
+        // Form.ts takes over from this ready state, and finds the indicators by their state as value
+        $indicators = $this->elementsByValue($html, 'data-form-indicator');
+        $this->assertSame(['ready', 'submitting'], array_keys($indicators));
+        $this->assertFalse($indicators['ready']->has('hidden'));
+        $this->assertTrue($indicators['submitting']->has('hidden'));
     }
 
     #[Test]
-    public function populatesNestedFieldDefaultValueFromTheBoundObjectsPropertyPath(): void
+    public function populatesAFieldFromThePropertyPathOfTheBoundObjectInTheMarkupAndForTheClient(): void
     {
+        // ComponentHydrationCollector used to register a root component's client-facing props from
+        // the raw arguments as literally passed to its tag - frozen at that call site - rather than
+        // from its own context, which FieldContext::beforeRendering() mutates via
+        // ObjectAccess::getPropertyPath() for exactly this bound-object case. No `defaultValue`
+        // argument is ever given here (it is meant to auto-resolve), so client hydration used to
+        // register it as entirely absent regardless of what the server-rendered HTML showed.
         $entity = new TestEntity();
         $entity->setTitle('Existing title');
 
@@ -124,7 +183,11 @@ final class FormRenderingTest extends FunctionalTestCase
             </primitives:form.root>
         ', ['entity' => $entity]);
 
-        $this->assertStringContainsString('value="Existing title"', $html);
+        $this->assertSame('Existing title', $this->elementWith($html, 'data-field-control')->get('value'));
+
+        $fieldRootId = $this->elementWith($html, 'data-field-root')->get('data-field-root');
+        $registeredProps = HydrationRegistry::getInstance()->get('primitives', 'field', (string)$fieldRootId);
+        $this->assertSame('Existing title', $registeredProps['props']['defaultValue'] ?? null);
     }
 
     #[Test]
@@ -150,25 +213,21 @@ final class FormRenderingTest extends FunctionalTestCase
             </primitives:form.root>
         ', ['entity' => $entity]);
 
-        $this->assertStringContainsString('data-name="nested[title]"', $html);
-        $this->assertStringContainsString('value="Nested title"', $html);
+        $this->assertSame('nested[title]', $this->elementWith($html, 'data-field-root')->get('data-name'));
+        $this->assertSame('Nested title', $this->elementWith($html, 'data-field-control')->get('value'));
     }
 
     #[Test]
-    public function registersTheBoundObjectsResolvedDefaultValueForClientHydrationTooNotJustTheServerRenderedHtml(): void
+    public function readsTheDefaultValueOfAFieldNamedWithAnArraySuffixFromThePropertyWithoutTheSuffix(): void
     {
-        // ComponentHydrationCollector used to register a root component's client-facing props from
-        // the raw arguments as literally passed to its tag - frozen at that call site - rather than
-        // from its own context, which FieldContext::beforeRendering() (above) mutates via
-        // ObjectAccess::getPropertyPath() for exactly this bound-object case. No `defaultValue`
-        // argument is ever given here (it's meant to auto-resolve), so client hydration used to
-        // register it as entirely absent regardless of what the server-rendered HTML showed.
+        // `name="title[]"` is the manual-bracket convention for a field that submits several values;
+        // ObjectAccess has no concept of it and throws when it is left in the property path
         $entity = new TestEntity();
         $entity->setTitle('Existing title');
 
         $html = $this->renderTemplate('
             <primitives:form.root actionUri="/submit" objectName="conference" object="{entity}">
-                <primitives:field.root name="title">
+                <primitives:field.root name="title[]">
                     <primitives:field.control asChild="{true}">
                         <input type="text" />
                     </primitives:field.control>
@@ -176,17 +235,12 @@ final class FormRenderingTest extends FunctionalTestCase
             </primitives:form.root>
         ', ['entity' => $entity]);
 
-        preg_match('/data-field-root="([^"]*)"/', $html, $fieldMatches);
-        $fieldRootId = $fieldMatches[1] ?? null;
-        $this->assertNotNull($fieldRootId);
-
-        $registeredProps = HydrationRegistry::getInstance()->get('primitives', 'field', $fieldRootId);
-
-        $this->assertSame('Existing title', $registeredProps['props']['defaultValue'] ?? null);
+        $this->assertSame('title[]', $this->elementWith($html, 'data-field-root')->get('data-name'));
+        $this->assertSame('Existing title', $this->elementWith($html, 'data-field-control')->get('value'));
     }
 
     #[Test]
-    public function prefixesNestedFieldAwareComponentNameWithTheFormsObjectName(): void
+    public function leavesTheNameOfAFieldAwareComponentUnprefixedBecauseTheClientPrefixesItOnPost(): void
     {
         $html = $this->renderTemplate('
             <primitives:form.root actionUri="/submit" objectName="conference">
@@ -201,9 +255,33 @@ final class FormRenderingTest extends FunctionalTestCase
             </primitives:form.root>
         ');
 
-        // The Form does not rewrite field names itself (name-prefixing for actual Extbase argument
-        // mapping only happens for `__trustedProperties`/`__identity`), so the Switch keeps using
-        // whatever plain `name` the Field passed through unprefixed.
-        $this->assertStringContainsString('name="marketing"', $html);
+        // The Form does not rewrite field names itself: `form.machine.ts` prefixes the plugin namespace and the
+        // object name to every key it posts, so a name prefixed here as well would be prefixed twice.
+        $this->assertSame('marketing', $this->elementWith($html, 'data-switch-hidden-input')->get('name'));
+    }
+
+    /**
+     * What Extbase reads back from the signed `__trustedProperties` field: the field names and identities
+     * the form was rendered with.
+     *
+     * @return array<string, mixed>
+     */
+    private function trustedProperties(string $html): array
+    {
+        $token = null;
+        foreach ($this->elementsWith($html, 'name') as $element) {
+            if ($element->get('name') === '__trustedProperties') {
+                $token = $element->get('value');
+            }
+        }
+        $this->assertNotNull($token, 'Expected a __trustedProperties field.');
+
+        $json = $this->get(HashService::class)->validateAndStripHmac(
+            $token,
+            HashScope::TrustedProperties->prefix(),
+            HashAlgo::SHA3_256,
+        );
+
+        return json_decode($json, true, flags: JSON_THROW_ON_ERROR);
     }
 }

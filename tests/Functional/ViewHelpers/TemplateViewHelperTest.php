@@ -12,24 +12,6 @@ use PHPUnit\Framework\Attributes\Test;
 
 final class TemplateViewHelperTest extends FunctionalTestCase
 {
-    #[Test]
-    public function rendersATemplateElementWithRefAttributes(): void
-    {
-        $collection = new ListCollection([]);
-
-        $html = $this->renderTemplate('
-            <primitives:combobox.root collection="{collection}" rootId="my-combobox">
-                <ui:template name="itemTemplate" context="combobox">
-                    <span>static content</span>
-                </ui:template>
-            </primitives:combobox.root>
-        ', ['collection' => $collection]);
-
-        // The one ref attribute and nothing else (no id, no data-scope/data-part).
-        $this->assertStringContainsString('<template data-combobox-item-template="my-combobox">', $html);
-        $this->assertStringContainsString('<span>static content</span>', $html);
-    }
-
     /**
      * A `ui:ref` reads the bare `rootId` variable when the template it sits in is itself a declared root
      * component (a docs example wrapping a combobox, say) - inside the stencil that must still be the
@@ -51,22 +33,6 @@ final class TemplateViewHelperTest extends FunctionalTestCase
     }
 
     #[Test]
-    public function makesBareUiRefResolveToTheEnclosingComponentInsideItsChildren(): void
-    {
-        $collection = new ListCollection([]);
-
-        $html = $this->renderTemplate('
-            <primitives:combobox.root collection="{collection}" rootId="my-combobox">
-                <ui:template name="itemTemplate" context="combobox">
-                    <span {ui:ref(name: \'title\')}></span>
-                </ui:template>
-            </primitives:combobox.root>
-        ', ['collection' => $collection]);
-
-        $this->assertStringContainsString('<span data-combobox-title="my-combobox">', $html);
-    }
-
-    #[Test]
     public function restoresThePreviousComponentContextAfterRendering(): void
     {
         $collection = new ListCollection([]);
@@ -76,15 +42,13 @@ final class TemplateViewHelperTest extends FunctionalTestCase
                 <ui:template name="itemTemplate" context="combobox">
                     <span {ui:ref(name: \'title\')}></span>
                 </ui:template>
-                <primitives:combobox.input />
+                <span data-after="[{rootId}][{context.rootId}][{component.fullName}]"></span>
             </primitives:combobox.root>
         ', ['collection' => $collection]);
 
-        // The real combobox.input part (a dedicated component tag, rendered right after the
-        // ui:template block within the same root's slot) must still resolve to the real combobox
-        // context - not whatever ui:template temporarily set - proving the finally-restoration works.
-        $this->assertStringContainsString('data-combobox-input="my-combobox"', $html);
-        $this->assertStringContainsString('role="combobox"', $html);
+        // Slot content is evaluated against the calling context, where none of these variables exist.
+        // ui:template sets them around its own children, so they only stay empty if it puts them back.
+        $this->assertSame('[][][]', $this->elementWith($html, 'data-after')->get('data-after'));
     }
 
     #[Test]

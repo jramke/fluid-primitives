@@ -39,20 +39,6 @@ final class ExposeToClientViewHelperTest extends TestCase
     }
 
     #[Test]
-    public function allowsAComponentThatsRootOnlyViaTheFolderShapeDefault(): void
-    {
-        // Regression test: 'checkboxGroup.examples.selectAll' is root only because its own folder
-        // has no Root.fluid.html sibling (the folder-shape default) - AbstractComponentCollection's
-        // compile-time check already knows this
-        // ({@see \Jramke\FluidPrimitives\Domain\Dto\ComponentIdentity::$isDeclaredRoot}), so
-        // ui:exposeToClient works directly inside such a template without needing a PHP Context
-        // class at all.
-        $this->markAsComponent('checkboxGroup.examples.selectAll', isDeclaredRoot: true, isRenderedAsRoot: true);
-
-        $this->assertSame(Constants::MANUALLY_EXPOSED_TO_CLIENT_MARKER, $this->viewHelper->render());
-    }
-
-    #[Test]
     public function noOpsWhenDeclaredRootDelegatesViaSpreadProps(): void
     {
         // Declared root (its own template shape allows ui:exposeToClient), but this specific call

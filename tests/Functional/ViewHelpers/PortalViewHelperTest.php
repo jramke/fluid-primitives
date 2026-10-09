@@ -15,8 +15,6 @@ final class PortalViewHelperTest extends FunctionalTestCase
     #[Test]
     public function rendersDefaultNamedPortalContentViaPageRendererFooterWithoutAContainer(): void
     {
-        PortalRegistry::getInstance()->clearAll();
-
         $html = $this->renderTemplate('
             <ui:portal>
                 <div data-testid="portaled">Portaled content</div>
@@ -30,42 +28,27 @@ final class PortalViewHelperTest extends FunctionalTestCase
     }
 
     #[Test]
-    public function onlyPushesTheDefaultNamedBucketIntoPageRendererFooter(): void
+    public function rendersANamedPortalOnlyWhereItsContainerIsAndNeverInThePageFooter(): void
     {
-        PortalRegistry::getInstance()->clearAll();
-
-        $this->renderTemplate('
-            <ui:portal name="sidebar">
-                <div data-testid="sidebar-portaled">Sidebar content</div>
-            </ui:portal>
-        ');
-
-        $this->assertStringNotContainsString('data-testid="sidebar-portaled"', $this->readFooterData());
-
-        $sidebarPortaled = implode('', PortalRegistry::getInstance()->getAllByName('sidebar'));
-        $this->assertStringContainsString('data-testid="sidebar-portaled"', $sidebarPortaled);
-    }
-
-    #[Test]
-    public function portalContainerStillRendersNamedPortalsInPlace(): void
-    {
-        PortalRegistry::getInstance()->clearAll();
-
         $html = $this->renderTemplate('
             <ui:portal name="sidebar">
                 <div data-testid="sidebar-portaled">Sidebar content</div>
             </ui:portal>
             <div id="target"><ui:portalContainer name="sidebar" /></div>
+            <div id="again"><ui:portalContainer name="sidebar" /></div>
         ');
 
         $this->assertStringContainsString('<div id="target"><div data-testid="sidebar-portaled">', $html);
-        $this->assertSame([], PortalRegistry::getInstance()->getAllByName('sidebar'));
+        // a container empties its portal: another one of the same name would otherwise repeat the markup
+        $this->assertStringContainsString('<div id="again"></div>', $html);
+        $this->assertSame(1, substr_count($html, 'data-testid="sidebar-portaled"'));
+        // only the default portal goes to the footer, which core renders at the end of <body> on its own
+        $this->assertStringNotContainsString('data-testid="sidebar-portaled"', $this->readFooterData());
     }
 
     #[Test]
     public function rendersInPlaceInsideAUiTemplateStencilInsteadOfPortaling(): void
     {
-        PortalRegistry::getInstance()->clearAll();
         $collection = new ListCollection([]);
 
         $html = $this->renderTemplate('

@@ -9,111 +9,73 @@ use PHPUnit\Framework\Attributes\Test;
 
 final class TabsRenderingTest extends FunctionalTestCase
 {
-    #[Test]
-    public function rendersTabsRootWithDataAttributes(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:tabs.root defaultValue="tab-1">
-                <primitives:tabs.list>
-                    <primitives:tabs.trigger value="tab-1">Tab 1</primitives:tabs.trigger>
-                </primitives:tabs.list>
-                <primitives:tabs.content value="tab-1">Content 1</primitives:tabs.content>
-            </primitives:tabs.root>
-        ');
+    private const string TABS = '
+        <primitives:tabs.root rootId="my-tabs" defaultValue="tab-2" %s>
+            <primitives:tabs.list>
+                <primitives:tabs.trigger value="tab-1">Tab 1</primitives:tabs.trigger>
+                <primitives:tabs.trigger value="tab-2">Tab 2</primitives:tabs.trigger>
+                <primitives:tabs.trigger value="tab-3" disabled="{true}">Tab 3</primitives:tabs.trigger>
+            </primitives:tabs.list>
+            <primitives:tabs.content value="tab-1">Content 1</primitives:tabs.content>
+            <primitives:tabs.content value="tab-2">Content 2</primitives:tabs.content>
+            <primitives:tabs.content value="tab-3">Content 3</primitives:tabs.content>
+        </primitives:tabs.root>
+    ';
 
-        $this->assertStringContainsString('data-tabs-root="', $html);
+    #[Test]
+    public function marksEveryPartAndSelectsTheTriggerAndPanelOfTheDefaultValue(): void
+    {
+        $html = $this->renderTemplate(sprintf(self::TABS, ''));
+
+        $this->assertSame(['my-tabs'], $this->valuesOf($html, 'data-tabs-root'));
+        $list = $this->elementWith($html, 'data-tabs-list');
+        $this->assertSame('tablist', $list->get('role'));
+        $this->assertSame('my-tabs', $list->get('data-tabs-list'));
+
+        $triggers = $this->elementsByValue($html, 'data-tabs-trigger');
+        $panels = $this->elementsByValue($html, 'data-tabs-content');
+        $this->assertSame(['tab-1', 'tab-2', 'tab-3'], array_keys($triggers));
+        $this->assertSame(['tab-1', 'tab-2', 'tab-3'], array_keys($panels));
+
+        foreach ($triggers as $value => $trigger) {
+            $this->assertSame('button', $trigger->tag);
+            $this->assertSame('tab', $trigger->get('role'));
+            $this->assertSame('button', $trigger->get('type'));
+            $this->assertSame($value === 'tab-2' ? 'true' : 'false', $trigger->get('aria-selected'), $value);
+        }
+        foreach ($panels as $value => $panel) {
+            $this->assertSame('tabpanel', $panel->get('role'));
+            $this->assertSame($value !== 'tab-2', $panel->has('hidden'), $value);
+        }
     }
 
     #[Test]
-    public function rendersListWithTablistRole(): void
+    public function rendersADisabledTriggerNatively(): void
     {
-        $html = $this->renderTemplate('
-            <primitives:tabs.root defaultValue="tab-1">
-                <primitives:tabs.list>
-                    <primitives:tabs.trigger value="tab-1">Tab 1</primitives:tabs.trigger>
-                </primitives:tabs.list>
-                <primitives:tabs.content value="tab-1">Content 1</primitives:tabs.content>
-            </primitives:tabs.root>
-        ');
+        $triggers = $this->elementsByValue($this->renderTemplate(sprintf(self::TABS, '')), 'data-tabs-trigger');
 
-        $this->assertStringContainsString('role="tablist"', $html);
-        $this->assertStringContainsString('data-tabs-list="', $html);
-    }
+        $disabled = $triggers['tab-3'];
+        $this->assertTrue($disabled->has('disabled'));
+        $this->assertSame('true', $disabled->get('aria-disabled'));
+        $this->assertTrue($disabled->has('data-disabled'));
+        $this->assertSame('-1', $disabled->get('tabindex'));
 
-    #[Test]
-    public function rendersAsButtonWithTabRoleAndAria(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:tabs.root defaultValue="tab-1">
-                <primitives:tabs.list>
-                    <primitives:tabs.trigger value="tab-1">Tab 1</primitives:tabs.trigger>
-                </primitives:tabs.list>
-                <primitives:tabs.content value="tab-1">Content 1</primitives:tabs.content>
-            </primitives:tabs.root>
-        ');
-
-        $this->assertStringContainsString('<button', $html);
-        $this->assertStringContainsString('role="tab"', $html);
-        $this->assertStringContainsString('type="button"', $html);
-        $this->assertStringContainsString('data-tabs-trigger="', $html);
-    }
-
-    #[Test]
-    public function rendersSelectedStateCorrectlyBasedOnDefaultValue(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:tabs.root defaultValue="tab-2">
-                <primitives:tabs.list>
-                    <primitives:tabs.trigger value="tab-1">Tab 1</primitives:tabs.trigger>
-                    <primitives:tabs.trigger value="tab-2">Tab 2</primitives:tabs.trigger>
-                </primitives:tabs.list>
-                <primitives:tabs.content value="tab-1">Content 1</primitives:tabs.content>
-                <primitives:tabs.content value="tab-2">Content 2</primitives:tabs.content>
-            </primitives:tabs.root>
-        ');
-
-        $this->assertMatchesRegularExpression('/aria-selected="true"[^>]*data-value="tab-2"/', $html);
-        $this->assertMatchesRegularExpression('/aria-selected="false"[^>]*data-value="tab-1"/', $html);
-    }
-
-    #[Test]
-    public function rendersDisabledTriggerCorrectly(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:tabs.root defaultValue="tab-1">
-                <primitives:tabs.list>
-                    <primitives:tabs.trigger value="tab-1">Tab 1</primitives:tabs.trigger>
-                    <primitives:tabs.trigger value="tab-2" disabled="{true}">Tab 2 (Disabled)</primitives:tabs.trigger>
-                </primitives:tabs.list>
-                <primitives:tabs.content value="tab-1">Content 1</primitives:tabs.content>
-                <primitives:tabs.content value="tab-2">Content 2</primitives:tabs.content>
-            </primitives:tabs.root>
-        ');
-
-        $this->assertStringContainsString('disabled', $html);
-        $this->assertStringContainsString('data-disabled', $html);
+        $enabled = $triggers['tab-1'];
+        $this->assertFalse($enabled->has('disabled'));
+        $this->assertSame('false', $enabled->get('aria-disabled'));
+        $this->assertFalse($enabled->has('data-disabled'));
     }
 
     #[Test]
     public function keepsTriggersAndPanelsOutOfTheTabOrderWithVirtualFocus(): void
     {
-        $render = fn(string $attributes): string => $this->renderTemplate(
-            '
-            <primitives:tabs.root defaultValue="tab-1" ' . $attributes . '>
-                <primitives:tabs.list>
-                    <primitives:tabs.trigger value="tab-1">Tab 1</primitives:tabs.trigger>
-                </primitives:tabs.list>
-                <primitives:tabs.content value="tab-1">Content 1</primitives:tabs.content>
-            </primitives:tabs.root>
-        ',
-        );
+        $roving = $this->renderTemplate(sprintf(self::TABS, ''));
+        $this->assertSame('0', $this->elementsByValue($roving, 'data-tabs-trigger')['tab-2']->get('tabindex'));
+        $this->assertSame('-1', $this->elementsByValue($roving, 'data-tabs-trigger')['tab-1']->get('tabindex'));
+        $this->assertSame('0', $this->elementsByValue($roving, 'data-tabs-content')['tab-2']->get('tabindex'));
 
-        $roving = $render('');
-        $this->assertMatchesRegularExpression('/role="tab"[^>]*tabindex="0"/', $roving);
-        $this->assertMatchesRegularExpression('/role="tabpanel"[^>]*tabindex="0"/', $roving);
-
-        $virtual = $render('virtualFocus="{true}"');
-        $this->assertMatchesRegularExpression('/role="tab"[^>]*tabindex="-1"/', $virtual);
-        $this->assertMatchesRegularExpression('/role="tabpanel"[^>]*tabindex="-1"/', $virtual);
+        $virtual = $this->renderTemplate(sprintf(self::TABS, 'virtualFocus="{true}"'));
+        $this->assertSame('-1', $this->elementsByValue($virtual, 'data-tabs-trigger')['tab-2']->get('tabindex'));
+        $this->assertSame('-1', $this->elementsByValue($virtual, 'data-tabs-content')['tab-2']->get('tabindex'));
     }
 }

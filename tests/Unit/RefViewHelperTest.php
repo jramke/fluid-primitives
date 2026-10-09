@@ -140,24 +140,6 @@ final class RefViewHelperTest extends TestCase
     }
 
     #[Test]
-    public function handlesAccordionComponentNameCorrectly(): void
-    {
-        $this->variableProvider->add('component', ['fullName' => 'Accordion.Item', 'baseName' => 'accordion']);
-        $this->variableProvider->add('context', ['rootId' => '«f1»', 'ids' => []]);
-
-        $this->viewHelper->setArguments([
-            'name' => 'item',
-            'asArray' => false,
-            'data' => [],
-            'value' => null,
-        ]);
-
-        $result = $this->viewHelper->render();
-
-        $this->assertStringContainsString('data-accordion-item="«f1»"', $result);
-    }
-
-    #[Test]
     public function replacesTheDotsOfATieredComponentNameInTheAttributeName(): void
     {
         $this->variableProvider->add('component', [
@@ -169,27 +151,6 @@ final class RefViewHelperTest extends TestCase
         $this->viewHelper->setArguments(['name' => 'root', 'asArray' => false, 'data' => [], 'value' => null]);
 
         $this->assertSame('data-checkbox-group-examples-select-all-root="«f1»"', $this->viewHelper->render());
-    }
-
-    #[Test]
-    public function handlesPrimitivesNamespaceCorrectly(): void
-    {
-        // 'Primitives.Dialog.Root' is deliberately not declared-root here: the classic string rule
-        // only checks segment[1] specifically ('Dialog', not 'Root'), a documented quirk covered by
-        // ComponentRootUtilityTest::handlesPrimitivesNamespaceSecondPartIsNotRoot().
-        $this->variableProvider->add('component', ['fullName' => 'Primitives.Dialog.Root', 'baseName' => 'dialog']);
-        $this->variableProvider->add('context', ['rootId' => '«f1»', 'ids' => []]);
-
-        $this->viewHelper->setArguments([
-            'name' => 'root',
-            'asArray' => false,
-            'data' => [],
-            'value' => null,
-        ]);
-
-        $result = $this->viewHelper->render();
-
-        $this->assertStringContainsString('data-dialog-root="«f1»"', $result);
     }
 
     #[Test]

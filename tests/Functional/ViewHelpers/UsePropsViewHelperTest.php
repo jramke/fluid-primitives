@@ -24,6 +24,11 @@ final class UsePropsViewHelperTest extends FunctionalTestCase
         $GLOBALS['TYPO3_CONF_VARS']['SYS']['fluid']['namespaces']['wrapper'] = [
             UsePropsForwardingComponentCollection::class,
         ];
+        $this
+            ->getView()
+            ->getRenderingContext()
+            ->getViewHelperResolver()
+            ->addNamespace('wrapper', new UsePropsForwardingComponentCollection());
     }
 
     protected function tearDown(): void
@@ -43,12 +48,6 @@ final class UsePropsViewHelperTest extends FunctionalTestCase
         // template text never mentions ui:ref/class itself. This isn't specific to `primitives:`
         // components - the fixture collection registered below stands in for any userland collection
         // built the same way.
-        $view = $this->getView();
-        $view
-            ->getRenderingContext()
-            ->getViewHelperResolver()
-            ->addNamespace('wrapper', new UsePropsForwardingComponentCollection());
-
         $html = $this->renderTemplate('
             <wrapper:field.root rootId="test-root" name="username">
                 <wrapper:field.control asChild="{true}" class="extra-class">
@@ -58,13 +57,12 @@ final class UsePropsViewHelperTest extends FunctionalTestCase
         ');
 
         // asChild worked: the primitive rendered the consumer's own <input> instead of throwing its
-        // "asChild is required" error, and merged its own ref/data attributes onto it.
-        $this->assertStringContainsString('<input', $html);
-        $this->assertStringContainsString('data-field-control="test-root"', $html);
-        $this->assertStringContainsString('name="username"', $html);
-
-        // class was forwarded and merged onto the same element too.
-        $this->assertStringContainsString('extra-class', $html);
+        // "asChild is required" error, merged its own ref attribute onto it, and the class that was
+        // forwarded lands on the same element.
+        $input = $this->elementWith($html, 'data-field-control');
+        $this->assertSame('input', $input->tag);
+        $this->assertSame('test-root', $input->get('data-field-control'));
+        $this->assertSame('extra-class', $input->get('class'));
     }
 
     #[Test]
@@ -79,12 +77,6 @@ final class UsePropsViewHelperTest extends FunctionalTestCase
         // menu.checkboxItem's `checked` prop (default false), that pre-filled `false` was
         // indistinguishable from "not passed", so `??=` refused to overwrite it with the wrapper's
         // own `checked="{true}"` - silently rendering an explicitly-checked item as unchecked.
-        $view = $this->getView();
-        $view
-            ->getRenderingContext()
-            ->getViewHelperResolver()
-            ->addNamespace('wrapper', new UsePropsForwardingComponentCollection());
-
         $html = $this->renderTemplate('
             <primitives:menu.root>
                 <primitives:menu.positioner>
@@ -95,22 +87,9 @@ final class UsePropsViewHelperTest extends FunctionalTestCase
             </primitives:menu.root>
         ');
 
-        $this->assertStringContainsString('aria-checked="true"', $html);
-        $this->assertStringContainsString('data-state="checked"', $html);
-    }
-
-    #[Test]
-    public function componentDefinitionReflectsAdditionalArgumentsAllowedDirectly(): void
-    {
-        $collection = new UsePropsForwardingComponentCollection();
-
-        $this->assertTrue($collection->getComponentDefinition('allowsExtra.root')->additionalArgumentsAllowed());
-        $this->assertTrue(
-            $collection->getComponentDefinition('delegatesToAllowsExtra.root')->additionalArgumentsAllowed(),
-        );
-        $this->assertFalse(
-            $collection->getComponentDefinition('importsOnlyFromAllowsExtra.root')->additionalArgumentsAllowed(),
-        );
+        $item = $this->elementsByValue($html, 'data-menu-item')['bold'];
+        $this->assertSame('true', $item->get('aria-checked'));
+        $this->assertSame('checked', $item->get('data-state'));
     }
 
     #[Test]
@@ -119,12 +98,6 @@ final class UsePropsViewHelperTest extends FunctionalTestCase
         // DelegatesToAllowsExtra.root genuinely delegates (ui:useProps ... as="rootProps" paired
         // with spreadProps="{rootProps}") to AllowsExtra.root, which calls ui:attributes() itself -
         // an unknown argument passed to the wrapper should reach all the way through to it.
-        $view = $this->getView();
-        $view
-            ->getRenderingContext()
-            ->getViewHelperResolver()
-            ->addNamespace('wrapper', new UsePropsForwardingComponentCollection());
-
         $html = $this->renderTemplate('
             <wrapper:delegatesToAllowsExtra.root data-testid="passthrough">Content</wrapper:delegatesToAllowsExtra.root>
         ');
@@ -143,13 +116,8 @@ final class UsePropsViewHelperTest extends FunctionalTestCase
         // imports AllowsExtra.root's prop shape (which allows additional arguments) but never
         // delegates rendering to it - no `as=`, no spreadProps anywhere. An unknown argument must
         // still be rejected, exactly like Dialog/Header.fluid.html/Footer.fluid.html.
-        $view = $this->getView();
-        $view
-            ->getRenderingContext()
-            ->getViewHelperResolver()
-            ->addNamespace('wrapper', new UsePropsForwardingComponentCollection());
-
         $this->expectException(InvalidArgumentValueException::class);
+        $this->expectExceptionMessage('Invalid arguments supplied to component');
 
         $this->renderTemplate('
             <wrapper:importsOnlyFromAllowsExtra.root data-testid="should-not-be-allowed">Content</wrapper:importsOnlyFromAllowsExtra.root>
@@ -163,12 +131,6 @@ final class UsePropsViewHelperTest extends FunctionalTestCase
         // which itself delegates to AllowsExtra.root - additionalArgumentsAllowed must propagate
         // through both hops, not just the first, proving the generalization beyond primitives:-only
         // imports actually composes.
-        $view = $this->getView();
-        $view
-            ->getRenderingContext()
-            ->getViewHelperResolver()
-            ->addNamespace('wrapper', new UsePropsForwardingComponentCollection());
-
         $html = $this->renderTemplate('
             <wrapper:delegatesToDelegatesToAllowsExtra.root data-testid="passthrough">Content</wrapper:delegatesToDelegatesToAllowsExtra.root>
         ');
@@ -184,13 +146,8 @@ final class UsePropsViewHelperTest extends FunctionalTestCase
         // used as= internally to delegate. Without InternalBindingAnnotation excluding that internal
         // "rootProps" binding from PropsUtility::cleanupNonForwardableProps(), it would leak through
         // as if it were a real, forwardable prop and incorrectly grant additionalArgumentsAllowed here.
-        $view = $this->getView();
-        $view
-            ->getRenderingContext()
-            ->getViewHelperResolver()
-            ->addNamespace('wrapper', new UsePropsForwardingComponentCollection());
-
         $this->expectException(InvalidArgumentValueException::class);
+        $this->expectExceptionMessage('Invalid arguments supplied to component');
 
         $this->renderTemplate('
             <wrapper:importsOnlyFromDelegatesToAllowsExtra.root data-testid="should-not-be-allowed">Content</wrapper:importsOnlyFromDelegatesToAllowsExtra.root>
@@ -205,12 +162,6 @@ final class UsePropsViewHelperTest extends FunctionalTestCase
         // the delegated render from becoming its own competing root. Field.Control delegates to
         // primitives:field.control the same as=-bound way - exactly one rootId should ever be
         // registered for it, not a second one generated by the inner delegated render.
-        $view = $this->getView();
-        $view
-            ->getRenderingContext()
-            ->getViewHelperResolver()
-            ->addNamespace('wrapper', new UsePropsForwardingComponentCollection());
-
         $this->renderTemplate('
             <wrapper:field.root rootId="as-binding-root" name="username">
                 <wrapper:field.control asChild="{true}">
@@ -219,9 +170,10 @@ final class UsePropsViewHelperTest extends FunctionalTestCase
             </wrapper:field.root>
         ');
 
-        $hydrationData = HydrationRegistry::getInstance()->getAll()['wrapper'] ?? [];
-        $this->assertArrayHasKey('field', $hydrationData);
-        $this->assertCount(1, $hydrationData['field']);
-        $this->assertArrayHasKey('as-binding-root', $hydrationData['field']);
+        // a spurious inner root would register under the namespace of the inner collection (`primitives`)
+        $hydrationData = HydrationRegistry::getInstance()->getAll();
+        $this->assertSame(['wrapper'], array_keys($hydrationData));
+        $this->assertSame(['field'], array_keys($hydrationData['wrapper']));
+        $this->assertSame(['as-binding-root'], array_keys($hydrationData['wrapper']['field']));
     }
 }
