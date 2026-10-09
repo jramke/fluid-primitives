@@ -79,6 +79,7 @@ final class CnViewHelperTest extends ViewHelperTestCase
         yield 'the string undefined' => ['undefined', false];
         yield 'one' => [1, true];
         yield 'zero' => [0, false];
+        yield 'a float zero' => [0.0, false];
         yield 'null' => [null, false];
         yield 'a non-empty array' => [['x'], true];
         yield 'an empty array' => [[], false];

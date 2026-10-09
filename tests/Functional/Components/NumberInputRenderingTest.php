@@ -132,4 +132,16 @@ final class NumberInputRenderingTest extends FunctionalTestCase
             $this->elementWith($html, 'data-number-input-decrement-trigger')->has('disabled'),
         );
     }
+
+    #[Test]
+    public function marksTheControlDisabledAndInvalidButNotFocusedBeforeTheClientKnows(): void
+    {
+        $html = $this->renderTemplate(sprintf(self::NUMBER_INPUT, 'disabled="{true}" invalid="{true}"'));
+
+        $control = $this->elementWith($html, 'data-number-input-control');
+        $this->assertTrue($control->has('data-disabled'));
+        $this->assertTrue($control->has('data-invalid'));
+        // Zag sets it only while the control has focus
+        $this->assertFalse($control->has('data-focus'));
+    }
 }

@@ -8,11 +8,9 @@ use Jramke\FluidPrimitives\Component\ComponentCollectionInterface;
 use Jramke\FluidPrimitives\Factory\ComponentContextFactory;
 use Jramke\FluidPrimitives\Tests\Helper\ConcreteTestContext;
 use Jramke\FluidPrimitives\Tests\TestCase;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\Test;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 
-#[AllowMockObjectsWithoutExpectations]
 final class AbstractComponentContextTest extends TestCase
 {
     private RenderingContextInterface $renderingContext;
@@ -23,9 +21,9 @@ final class AbstractComponentContextTest extends TestCase
     {
         parent::setUp();
 
-        $this->renderingContext = $this->createMock(RenderingContextInterface::class);
-        $this->parentRenderingContext = $this->createMock(RenderingContextInterface::class);
-        $this->componentResolver = $this->createMock(ComponentCollectionInterface::class);
+        $this->renderingContext = $this->createStub(RenderingContextInterface::class);
+        $this->parentRenderingContext = $this->createStub(RenderingContextInterface::class);
+        $this->componentResolver = $this->createStub(ComponentCollectionInterface::class);
     }
 
     private function createContext(array $contextVariables = []): ConcreteTestContext

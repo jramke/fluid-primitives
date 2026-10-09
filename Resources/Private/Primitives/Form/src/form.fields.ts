@@ -1,5 +1,6 @@
 import { MachineStatus, type Params, type Scope } from '@zag-js/core';
 import { isInsideField } from '../../Field/src/field.dom';
+import type { FieldMachine } from '../../Field/src/field.registry';
 import { getFieldElement } from '../../Field/src/field.value';
 import * as dom from './form.dom';
 import { trimArraySuffix } from './form.path';

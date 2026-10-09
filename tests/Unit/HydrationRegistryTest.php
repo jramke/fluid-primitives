@@ -7,14 +7,12 @@ namespace Jramke\FluidPrimitives\Tests\Unit;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Registry\NestedComponentRegistry;
 use Jramke\FluidPrimitives\Tests\TestCase;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\Test;
 use TYPO3\CMS\Core\Http\ServerRequest;
 use TYPO3\CMS\Core\Http\Uri;
 use TYPO3\CMS\Core\Page\AssetCollector;
 use TYPO3\CMS\Core\Site\Entity\SiteLanguage;
 
-#[AllowMockObjectsWithoutExpectations]
 final class HydrationRegistryTest extends TestCase
 {
     private ?string $capturedJs = null;
@@ -28,7 +26,7 @@ final class HydrationRegistryTest extends TestCase
         $this->capturedJs = null;
         $this->capturedAttributes = null;
 
-        $this->assetCollector = $this->createMock(AssetCollector::class);
+        $this->assetCollector = $this->createStub(AssetCollector::class);
         $this->assetCollector
             ->method('addInlineJavaScript')
             ->willReturnCallback(function ($id, $js, $attributes, $options) {

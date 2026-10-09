@@ -151,7 +151,7 @@ class CnViewHelper extends AbstractViewHelper
         }
 
         if (is_numeric($value)) {
-            return $value !== 0;
+            return (float)$value !== 0.0;
         }
 
         if (is_array($value)) {

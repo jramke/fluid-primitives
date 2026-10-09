@@ -16,7 +16,7 @@ const lastValues = new WeakMap<HTMLElement, unknown>();
 export function spreadTextControlProps(
     node: HTMLInputElement | HTMLTextAreaElement,
     attrs: Attrs,
-    scopeKey: string
+    scopeKey?: string
 ) {
     const { value, ...rest } = attrs;
     const cleanup = spreadProps(node, rest, scopeKey);

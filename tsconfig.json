@@ -17,7 +17,8 @@
         "esModuleInterop": true,
         "isolatedModules": true,
         "verbatimModuleSyntax": true,
-        "skipLibCheck": true
+        "skipLibCheck": true,
+        "paths": { "fluid-primitives": ["./Resources/Private/Client/index.ts"] }
     },
     "include": ["Resources/Private/**/*.ts", "tests/Client/**/*.ts"]
 }

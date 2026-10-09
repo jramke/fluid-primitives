@@ -120,9 +120,7 @@ class DatePickerContext extends AbstractComponentContext
     #[ExposeToClient(excludeIfNull: true)]
     public function getLocale(): ?string
     {
-        $locale = Typed::stringOrNull($this->get('locale')) ?? $this->translator->getLocale($this->getRequest());
-
-        return $locale === null || $locale === '' ? null : $locale;
+        return Typed::stringOrNull($this->get('locale')) ?: $this->translator->getLocale($this->getRequest());
     }
 
     #[ExposeToClient(excludeIfNull: true)]

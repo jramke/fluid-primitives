@@ -10,12 +10,10 @@ use Jramke\FluidPrimitives\Service\Component\ContextMarkedPropsExposer;
 use Jramke\FluidPrimitives\Service\ContextService;
 use Jramke\FluidPrimitives\Tests\Helper\ConcreteTestContext;
 use Jramke\FluidPrimitives\Tests\TestCase;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\Test;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContext;
 use TYPO3Fluid\Fluid\Core\ViewHelper\ArgumentDefinition;
 
-#[AllowMockObjectsWithoutExpectations]
 final class ContextMarkedPropsExposerTest extends TestCase
 {
     #[Test]
@@ -32,7 +30,7 @@ final class ContextMarkedPropsExposerTest extends TestCase
             ConcreteTestContext::class,
             $renderingContext,
             $renderingContext,
-            $this->createMock(ComponentCollectionInterface::class),
+            $this->createStub(ComponentCollectionInterface::class),
         );
         ContextService::addToRenderingContext($renderingContext, 'select', $context);
 
