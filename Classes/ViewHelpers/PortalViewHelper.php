@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\ViewHelpers;
 
-use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
+use Jramke\FluidPrimitives\Registry\NestedComponentRegistry;
 use Jramke\FluidPrimitives\Registry\PortalRegistry;
 use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
@@ -56,11 +56,13 @@ class PortalViewHelper extends AbstractViewHelper
         // itemTemplate) would leak it into the live page immediately on load, before any row even
         // exists, and with placeholder ids that were never meant to be shown. Rendering in place
         // instead keeps it part of the stencil's own clonable content, exactly like `disabled`
-        // already does for a consumer who opts out of portalling by hand - `context.isRenderStencil`
-        // is `ui:template`'s own marker for "opt out of it for me automatically" (see
-        // TemplateViewHelper's own docblock), not something a template author needs to know to ask
+        // already does for a consumer who opts out of portalling by hand - the open tracking scope
+        // of `ui:template` (it is open however deep the nested component sits) is its own marker for
+        // "opt out of it for me automatically", not something a template author needs to know to ask
         // for explicitly.
-        if (Typed::bool($this->arguments['disabled']) || $this->isRenderingInsideAStencil()) {
+        if (
+            Typed::bool($this->arguments['disabled']) || NestedComponentRegistry::getInstance()->isTrackingScopeOpen()
+        ) {
             return $rendered;
         }
 
@@ -70,20 +72,5 @@ class PortalViewHelper extends AbstractViewHelper
 
         PortalRegistry::getInstance()->add(Typed::string($this->arguments['name']), $rendered);
         return '';
-    }
-
-    private function isRenderingInsideAStencil(): bool
-    {
-        $renderingContext = $this->renderingContext ?? throw new \RuntimeException(
-            'Portal ViewHelper is missing its rendering context.',
-            1_789_900_001,
-        );
-        $variableProvider = $renderingContext->getVariableProvider();
-
-        // Narrowed immediately below via instanceof - there's no Typed:: equivalent for objects.
-        // @mago-expect analysis:mixed-assignment
-        $context = $variableProvider->exists('context') ? $variableProvider->get('context') : null;
-
-        return $context instanceof ComponentContextInterface && Typed::bool($context->get('isRenderStencil'));
     }
 }

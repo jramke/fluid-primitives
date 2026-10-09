@@ -70,6 +70,47 @@ final class PortalViewHelperTest extends FunctionalTestCase
         $this->assertStringNotContainsString('data-testid="stencil-portaled"', $this->readFooterData());
     }
 
+    #[Test]
+    public function rendersInPlaceInsideTheStencilOfAFieldArrayRowOnlyForTheRowsTheClientClones(): void
+    {
+        // A popover nested in the row: its portal sits in the template of the popover, not in the one of the stencil's
+        // owner, so only the open tracking scope of the stencil tells it apart from the rendered row below.
+        $popover = '
+            <primitives:popover.root>
+                <primitives:popover.trigger>Open</primitives:popover.trigger>
+                <ui:portal>
+                    <primitives:popover.positioner>
+                        <primitives:popover.content>%s</primitives:popover.content>
+                    </primitives:popover.positioner>
+                </ui:portal>
+            </primitives:popover.root>
+        ';
+
+        $html = $this->renderTemplate(
+            '
+            <primitives:fieldArray.root name="people" itemCount="1">
+                <primitives:fieldArray.itemTemplate>
+                    <primitives:fieldArray.item>' .
+            sprintf($popover, 'Stencil popover') .
+            '</primitives:fieldArray.item>
+                </primitives:fieldArray.itemTemplate>
+                <primitives:fieldArray.itemGroup>
+                    <primitives:fieldArray.item index="0">' .
+            sprintf($popover, 'Row popover') .
+            '</primitives:fieldArray.item>
+                </primitives:fieldArray.itemGroup>
+            </primitives:fieldArray.root>
+        ',
+        );
+
+        $this->assertMatchesRegularExpression('/<template [^>]*>.*Stencil popover.*<\/template>/s', $html);
+        $footer = $this->readFooterData();
+        $this->assertStringNotContainsString('Stencil popover', $footer);
+        // the row that is rendered for real still portals: the positive control that the footer is read right
+        $this->assertStringContainsString('Row popover', $footer);
+        $this->assertStringNotContainsString('Row popover', $html);
+    }
+
     private function readFooterData(): string
     {
         // Read the footer off the exact PageRenderer instance PortalRegistry was constructed with,
