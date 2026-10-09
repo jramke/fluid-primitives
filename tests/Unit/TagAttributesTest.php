@@ -18,10 +18,10 @@ final class TagAttributesTest extends TestCase
     }
 
     #[Test]
-    public function rendersAriaAttributesWithBooleanValuesAsStrings(): void
+    public function rendersAriaAttributesWithBooleanValuesAsTrueAndFalse(): void
     {
         $attrs = new TagAttributes(['aria-expanded' => true, 'aria-hidden' => false]);
-        $this->assertSame('aria-expanded="1" aria-hidden', (string)$attrs);
+        $this->assertSame('aria-expanded="true" aria-hidden="false"', (string)$attrs);
     }
 
     #[Test]

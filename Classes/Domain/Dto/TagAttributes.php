@@ -112,10 +112,13 @@ class TagAttributes implements \Countable, \Stringable
             // @mago-expect analysis:mixed-assignment
             $value = EnumUtility::normalize($value);
 
-            // convert boolean values to html boolean attributes unless they are aria- attributes
-            if (!str_starts_with($key, 'aria-') && is_bool($value)) {
-                $value = $value ? '' : null;
-                if ($value === null) {
+            // a boolean is an html boolean attribute, except for aria-* where it is the token true/false
+            if (is_bool($value)) {
+                if (str_starts_with($key, 'aria-')) {
+                    $value = $value ? 'true' : 'false';
+                } elseif ($value) {
+                    $value = '';
+                } else {
                     continue;
                 }
             }
