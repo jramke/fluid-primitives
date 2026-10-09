@@ -2,9 +2,9 @@ import type { DateView, IntlTranslations } from '@zag-js/date-picker';
 
 /**
  * The labels as PHP ships them: texts, with `%placeholders%` for what is only known when the
- * label renders. `false` leaves a label out.
+ * label renders.
  */
-export type TranslationTexts = Record<string, string | false | undefined>;
+export type TranslationTexts = Record<string, string | undefined>;
 
 /**
  * Zag's translations, plus the role descriptions it hard-codes in English.
@@ -19,7 +19,7 @@ export interface DatePickerTranslations extends IntlTranslations {
 
 const capitalize = (word: string) => word.charAt(0).toUpperCase() + word.slice(1);
 
-const fill = (text: string | false | undefined, values: Record<string, string | number>) =>
+const fill = (text: string | undefined, values: Record<string, string | number>) =>
     text ? text.replace(/%(\w+)%/g, (_, key: string) => String(values[key] ?? '')) : undefined;
 
 /** `Date.toDateString()`, which is what Zag hands over for a preset, in the language of the locale. */
@@ -38,7 +38,7 @@ export function buildTranslations(
     texts: TranslationTexts = {},
     locale = 'en-US'
 ): DatePickerTranslations {
-    // An omitted label (`false`) is `undefined` for Zag, which leaves the attribute out.
+    // An empty text is `undefined` for Zag, which leaves the attribute out.
     const label = (key: string, values: Record<string, string | number> = {}) =>
         fill(texts[key], values) as string;
 

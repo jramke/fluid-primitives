@@ -45,8 +45,8 @@ describe.each([
         ['announce is false', { maxLength: 250, translations, announce: false }],
         ['there is no maxLength', { translations }],
         [
-            'the word count translation is disabled',
-            { maxLength: 250, translations: { wordCount: false } },
+            'the word count translation is empty',
+            { maxLength: 250, translations: { wordCount: '' } },
         ],
     ])('creates no live region when %s', async (_case, props) => {
         vi.useFakeTimers();

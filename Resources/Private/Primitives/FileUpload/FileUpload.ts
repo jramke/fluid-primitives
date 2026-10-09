@@ -12,6 +12,10 @@ import {
     type ConverterMachineProps,
 } from '../../Client';
 import type { FieldClientApi } from '../Field/src/field.handle';
+import {
+    resolveTranslations,
+    type FileUploadTranslationTexts,
+} from './src/file-upload.translations';
 
 // `accept` is declared type="mixed" (it's a MIME type, a list of them, or an per-extension accept
 // map, and PHP has no closed type for that union) so it resolves to `unknown` on the wire - this
@@ -46,10 +50,10 @@ interface ItemEntry {
  */
 // Zag's own `itemPreview`/`deleteFile` translations are functions (`(file: File) => string`) -
 // Fluid can't author a callback, so `FileUploadContext::getTranslations()` sends plain strings
-// (with a `%fileName%` placeholder) instead, converted by `resolveTranslations()` below.
+// (with a `%fileName%` placeholder) instead, converted by `resolveTranslations()`.
 type FileUploadPrimitiveProps = Omit<fileUpload.Props, 'translations'> & {
     existingFilesCount?: number;
-    translations?: { dropzone?: string; itemPreview?: string; deleteFile?: string };
+    translations?: FileUploadTranslationTexts;
 };
 
 function resolveMaxFiles(props: FileUploadPrimitiveProps): number | undefined {
@@ -88,34 +92,6 @@ function matchesFileType(pattern: string | undefined, file: File): boolean {
 function fileExtension(fileName: string): string {
     const dotIndex = fileName.lastIndexOf('.');
     return dotIndex === -1 ? '' : fileName.slice(dotIndex + 1).toUpperCase();
-}
-
-const FILE_NAME_PLACEHOLDER = '%fileName%';
-
-/**
- * zag-js's `itemPreview`/`deleteFile` translations are functions (`(file: File) => string`) that
- * interpolate the file's name - but Fluid has no callbacks to hand over, and the actual `File` only
- * ever exists in the browser anyway. `FileUploadContext::getTranslations()` therefore translates
- * them as plain strings containing a literal `%fileName%` placeholder (not `{fileName}` - Fluid's
- * own inline array/object syntax already treats a bare `{...}` inside a string as a nested variable
- * expression, so a curly-brace placeholder breaks the moment someone overrides `translations` from a
- * template); this wraps such a string into the function zag-js actually expects, substituting the
- * placeholder per file.
- */
-function resolveTranslations(
-    translations: FileUploadPrimitiveProps['translations']
-): fileUpload.Props['translations'] {
-    if (!translations) return undefined;
-
-    const resolved: Record<string, unknown> = { ...translations };
-    for (const key of ['itemPreview', 'deleteFile'] as const) {
-        const template = resolved[key];
-        if (typeof template === 'string') {
-            resolved[key] = (file: File) => template.replaceAll(FILE_NAME_PLACEHOLDER, file.name);
-        }
-    }
-
-    return resolved as fileUpload.Props['translations'];
 }
 
 export class FileUpload extends FieldAwareComponent<FileUploadPrimitiveProps, fileUpload.Api> {

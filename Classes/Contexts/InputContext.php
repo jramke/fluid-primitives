@@ -26,7 +26,7 @@ class InputContext extends AbstractComponentContext
 
     #[ExposeToClient]
     /**
-     * @return array{wordCount: string|false}
+     * @return array{wordCount: string}
      */
     public function getTranslations(): array
     {
@@ -37,7 +37,7 @@ class InputContext extends AbstractComponentContext
 
     /**
      * Server-rendered so the word count part isn't empty before hydration. `null` when there's no
-     * `maxLength` to count against, or the translation was explicitly disabled via `translations.wordCount: false`.
+     * `maxLength` to count against, or the translation is empty.
      */
     public function getWordCountText(): ?string
     {

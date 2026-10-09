@@ -4,10 +4,9 @@ import type { PropTypes } from '@zag-js/types';
 export interface TextareaTranslations {
     /**
      * The text of the word count part. `%count%` is replaced with the number of characters, `%max%`
-     * with `maxLength`, e.g. `%count% / %max% characters`. Set it to `false` to omit the text and
-     * skip the announcements.
+     * with `maxLength`, e.g. `%count% / %max% characters`.
      */
-    wordCount?: string | false;
+    wordCount?: string;
 }
 
 export type TextareaSubmitOn = 'enter' | 'mod+enter';

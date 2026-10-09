@@ -43,9 +43,9 @@ final class InputRenderingTest extends FunctionalTestCase
     {
         yield 'the length against the maximum' => [null, 'defaultValue="hello" maxLength="10"', '5 / 10 characters'];
         yield 'nothing without a maximum' => [null, 'defaultValue="hello"', ''];
-        yield 'nothing when the translation is switched off' => [
+        yield 'nothing when the translation is empty' => [
             null,
-            'defaultValue="hello" maxLength="10" translations="{wordCount: false}"',
+            'defaultValue="hello" maxLength="10" translations="{wordCount: \'\'}"',
             '',
         ];
         yield 'German for a German request' => ['de_DE', 'defaultValue="hallo" maxLength="10"', '5 / 10 Zeichen'];

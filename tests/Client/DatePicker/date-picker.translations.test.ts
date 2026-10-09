@@ -77,8 +77,8 @@ describe('date picker translations', () => {
         ).toBe('5. Oktober 2026 bis 11. Oktober 2026');
     });
 
-    test('leaves a label out that is set to false', () => {
-        const t = buildTranslations({ ...texts, clearTrigger: false, prevTriggerDay: false });
+    test('leaves a label out whose text is empty', () => {
+        const t = buildTranslations({ ...texts, clearTrigger: '', prevTriggerDay: '' });
 
         expect(t.clearTrigger).toBeUndefined();
         expect(t.prevTrigger!('day')).toBeUndefined();
