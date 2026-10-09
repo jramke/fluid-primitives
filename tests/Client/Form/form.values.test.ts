@@ -20,6 +20,8 @@ describe('createFormValues', () => {
                 ['people[1][firstName]', 'Alan'],
                 ['tags[]', 'a'],
                 ['tags[]', 'b'],
+                ['needs', 'x'],
+                ['needs', 'y'],
             ])
         );
 
@@ -28,6 +30,7 @@ describe('createFormValues', () => {
             address: { city: 'Berlin' },
             people: [{ firstName: 'Grace' }, { firstName: 'Alan' }],
             tags: ['a', 'b'],
+            needs: ['x', 'y'],
         });
         expect(values.get('address[city]')).toBe('Berlin');
         expect(values.pick('address.city')).toBe('Berlin');

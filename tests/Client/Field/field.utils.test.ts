@@ -225,7 +225,7 @@ describe('composeDescribedBy', () => {
         ).toBe('helper err-a err-b');
     });
 
-    test('hidden or unrendered errors are excluded', () => {
+    test('leaves out a helper text that is not rendered, and has nothing when nothing is left', () => {
         expect(
             composeDescribedBy({ helperTextId: 'helper', hasHelperText: true, errorTextIds: [] })
         ).toBe('helper');

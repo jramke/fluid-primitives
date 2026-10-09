@@ -28,6 +28,7 @@ test('post sends flattened data as FormData under the URL namespace, unprefixed 
     });
     await extbase.post('https://example.com/api', { q: 'x' });
 
+    expect(calls.map(call => call.init.method)).toEqual(['POST', 'POST']);
     const body = calls[0].init.body as FormData;
     expect([...body.keys()]).toEqual([
         'tx_docs_docs[q]',
@@ -44,6 +45,7 @@ test('get appends data under the namespace and keeps the URL query', async () =>
     const calls = stubFetch(() => new Response('{}'));
     await extbase.get(ACTION_URL, { q: 'x' });
 
+    expect(calls[0].init.method).toBe('GET');
     const { searchParams } = new URL(calls[0].url);
     expect(searchParams.get('tx_docs_docs[q]')).toBe('x');
     expect(searchParams.get('cHash')).toBe('abc');
