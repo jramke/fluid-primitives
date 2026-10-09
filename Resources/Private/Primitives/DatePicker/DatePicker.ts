@@ -1,3 +1,4 @@
+import { toZoned } from '@internationalized/date';
 import * as datePicker from '@zag-js/date-picker';
 import type { Attrs } from '@zag-js/vanilla';
 import {
@@ -112,7 +113,7 @@ export class DatePicker extends FieldAwareComponent<datePicker.Props, datePicker
         const controlEl = this.hydrator.query('control');
         if (controlEl) this.spreadProps(controlEl, this.api.getControlProps());
 
-        // The visible input holds the text as typed, the hidden inputs submit the ISO dates.
+        // The visible input holds the text as typed, the hidden inputs submit the dates.
         this.spreadPropsByOptionalValue('input', ({ value }) => {
             const { name, ...inputProps } = this.api.getInputProps({ index: Number(value ?? 0) });
             return mergeProps(inputProps, { 'aria-describedby': this.field?.ariaDescribedby });
@@ -221,11 +222,18 @@ export class DatePicker extends FieldAwareComponent<datePicker.Props, datePicker
     }
 
     // One hidden input per selected date, and one empty one when there is none: the name is always
-    // submitted. A date's string is its ISO form in its own calendar, gregorian unless the entry
-    // file passed a `createCalendar`.
+    // submitted. A date goes as the W3C date-time of its midnight in the server's time zone, the
+    // format Extbase maps to a DateTime as it is, see DatePickerContext::getHiddenInputValues().
     private renderHiddenInputs() {
+        const { serverTimeZone } = this.userProps as datePicker.Props & { serverTimeZone: string };
         const values =
-            this.api.value.length > 0 ? this.api.value.map(date => date.toString()) : [''];
+            this.api.value.length > 0
+                ? this.api.value.map(date =>
+                      toZoned(date, serverTimeZone)
+                          .toString()
+                          .replace(/\[.*\]$/, '')
+                  )
+                : [''];
         const inputEls = this.hydrator.queryAll<HTMLInputElement>('hiddenInput');
         inputEls.slice(values.length).forEach(inputEl => inputEl.remove());
 

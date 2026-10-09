@@ -183,7 +183,14 @@ class DatePickerContext extends AbstractComponentContext
         /** @var list<string>|null $dates */
         $dates = $this->getDefaultValue();
 
-        return $dates ?? [''];
+        return $dates === null ? [''] : array_map(DateUtility::toW3cMidnight(...), $dates);
+    }
+
+    // The client builds the same W3C date-time for a date picked later, see `getHiddenInputValues()`.
+    #[ExposeToClient]
+    public function getServerTimeZone(): string
+    {
+        return date_default_timezone_get();
     }
 
     #[ExposeToClient]

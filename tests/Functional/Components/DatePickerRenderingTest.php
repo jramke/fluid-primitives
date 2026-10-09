@@ -6,7 +6,9 @@ namespace Jramke\FluidPrimitives\Tests\Functional\Components;
 
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
+use Jramke\FluidPrimitives\Utility\DateUtility;
 use PHPUnit\Framework\Attributes\Test;
+use TYPO3\CMS\Extbase\Property\PropertyMapper;
 
 final class DatePickerRenderingTest extends FunctionalTestCase
 {
@@ -160,37 +162,75 @@ final class DatePickerRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
-    public function submitsIsoDatesThroughHiddenInputsNotTheVisibleInput(): void
+    public function submitsMidnightInTheServerTimeZoneThroughHiddenInputsNotTheVisibleInput(): void
     {
-        $expectations = [
-            // An empty date picker still submits its name.
-            'no date' => ['', ['']],
-            'one date' => ['defaultValue="2024-01-15"', ['2024-01-15']],
-            'several dates' => ['defaultValue="{0: \'2024-01-15\', 1: \'2024-01-20\'}"', ['2024-01-15', '2024-01-20']],
-        ];
+        $timeZone = date_default_timezone_get();
+        date_default_timezone_set('Europe/Berlin');
 
-        foreach ($expectations as $case => [$attributes, $expectedValues]) {
-            $html = $this->renderTemplate('
-                <primitives:datePicker.root name="dates[]" ' .
-            $attributes .
-            '>
-                    <primitives:datePicker.control>
-                        <primitives:datePicker.input />
-                    </primitives:datePicker.control>
-                    <primitives:datePicker.hiddenInput />
-                </primitives:datePicker.root>
-            ');
+        try {
+            $expectations = [
+                // An empty date picker still submits its name.
+                'no date' => ['', ['']],
+                'one date' => ['defaultValue="2024-01-15"', ['2024-01-15T00:00:00+01:00']],
+                // Summer and winter time, as the offset follows the date.
+                'several dates' => [
+                    'defaultValue="{0: \'2024-07-15\', 1: \'2024-01-20\'}"',
+                    ['2024-07-15T00:00:00+02:00', '2024-01-20T00:00:00+01:00'],
+                ],
+            ];
 
-            // The visible input holds the date as typed, in the format of the locale.
-            $this->assertStringNotContainsString(' name=', $this->extractTag($html, 'data-date-picker-input'), $case);
+            foreach ($expectations as $case => [$attributes, $expectedValues]) {
+                $html = $this->renderTemplate('
+                    <primitives:datePicker.root name="dates[]" ' .
+                $attributes .
+                '>
+                        <primitives:datePicker.control>
+                            <primitives:datePicker.input />
+                        </primitives:datePicker.control>
+                        <primitives:datePicker.hiddenInput />
+                    </primitives:datePicker.root>
+                ');
 
-            preg_match_all('/<input[^>]*data-date-picker-hidden-input="[^"]*"[^>]*>/', $html, $matches);
-            $this->assertCount(count($expectedValues), $matches[0], $case);
-            foreach ($matches[0] as $i => $hiddenInputTag) {
-                $this->assertStringContainsString('type="hidden"', $hiddenInputTag, $case);
-                $this->assertStringContainsString('name="dates[]"', $hiddenInputTag, $case);
-                $this->assertStringContainsString('value="' . $expectedValues[$i] . '"', $hiddenInputTag, $case);
+                // The visible input holds the date as typed, in the format of the locale.
+                $this->assertStringNotContainsString(
+                    ' name=',
+                    $this->extractTag($html, 'data-date-picker-input'),
+                    $case,
+                );
+
+                preg_match_all('/<input[^>]*data-date-picker-hidden-input="[^"]*"[^>]*>/', $html, $matches);
+                $this->assertCount(count($expectedValues), $matches[0], $case);
+                foreach ($matches[0] as $i => $hiddenInputTag) {
+                    $this->assertStringContainsString('type="hidden"', $hiddenInputTag, $case);
+                    $this->assertStringContainsString('name="dates[]"', $hiddenInputTag, $case);
+                    $this->assertStringContainsString('value="' . $expectedValues[$i] . '"', $hiddenInputTag, $case);
+                }
             }
+
+            // The client builds the value of a date picked later in this time zone.
+            $this->assertSame('Europe/Berlin', $this->renderHydrationProps('')['serverTimeZone']);
+        } finally {
+            date_default_timezone_set($timeZone);
+        }
+    }
+
+    #[Test]
+    public function mapsTheSubmittedValueToTheDateWithoutConfiguration(): void
+    {
+        $timeZone = date_default_timezone_get();
+        date_default_timezone_set('Europe/Berlin');
+
+        try {
+            $mapper = $this->get(PropertyMapper::class);
+
+            foreach (['2024-07-15', '2024-12-15'] as $isoDate) {
+                $date = $mapper->convert(DateUtility::toW3cMidnight($isoDate), \DateTime::class);
+
+                $this->assertInstanceOf(\DateTime::class, $date);
+                $this->assertSame($isoDate . ' 00:00:00', $date->format('Y-m-d H:i:s'), $isoDate);
+            }
+        } finally {
+            date_default_timezone_set($timeZone);
         }
     }
 

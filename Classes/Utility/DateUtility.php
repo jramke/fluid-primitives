@@ -23,4 +23,14 @@ class DateUtility
             ? $matches[0]
             : null;
     }
+
+    /**
+     * The midnight of an ISO date in the time zone PHP runs in, as the W3C date-time
+     * (`2025-06-15T00:00:00+02:00`) Extbase maps to a `DateTime` without any configuration. It has to be
+     * the server's offset: Extbase converts any other to the server's time zone, which can move the date.
+     */
+    public static function toW3cMidnight(string $isoDate): string
+    {
+        return (new \DateTimeImmutable($isoDate))->format(\DateTimeInterface::W3C);
+    }
 }

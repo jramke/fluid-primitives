@@ -14,14 +14,3 @@ services:
   Jramke\FluidPrimitives\Registry\PortalRegistry:
     shared: true
     public: true
-
-  Jramke\FluidPrimitives\TypeConverter\IsoDateConverter:
-    tags:
-      - name: extbase.type_converter
-        priority: 15
-        target: DateTime
-        sources: string
-      - name: extbase.type_converter
-        priority: 15
-        target: DateTimeImmutable
-        sources: string
