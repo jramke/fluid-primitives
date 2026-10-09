@@ -7,7 +7,9 @@ namespace Jramke\FluidPrimitives\Tests\Functional;
 use Jramke\FluidPrimitives\Component\ComponentPrimitivesCollection;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Registry\NestedComponentRegistry;
+use Jramke\FluidPrimitives\Registry\PortalRegistry;
 use Jramke\FluidPrimitives\Registry\ReferencedRootRegistry;
+use Jramke\FluidPrimitives\Tests\Helper\HtmlElement;
 use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Core\Core\SystemEnvironmentBuilder;
 use TYPO3\CMS\Core\Http\NormalizedParams;
@@ -100,6 +102,58 @@ abstract class FunctionalTestCase extends TYPO3FunctionalTestCase
         return $this->view;
     }
 
+    /**
+     * The elements of `$html` that carry `$attribute` (`data-accordion-item-trigger`), in document order.
+     *
+     * @return list<HtmlElement>
+     */
+    protected function elementsWith(string $html, string $attribute): array
+    {
+        return array_values(array_filter(
+            HtmlElement::parseAll($html),
+            static fn(HtmlElement $element): bool => $element->has($attribute),
+        ));
+    }
+
+    /**
+     * The value of `$attribute` on every element of `$html` that carries it, in document order.
+     *
+     * @return list<string>
+     */
+    protected function valuesOf(string $html, string $attribute): array
+    {
+        return array_map(
+            static fn(HtmlElement $element): string => $element->get($attribute) ?? '',
+            $this->elementsWith($html, $attribute),
+        );
+    }
+
+    /**
+     * The elements of `$html` that carry `$attribute`, by their `data-value`: the parts rendered once per item.
+     *
+     * @return array<string, HtmlElement>
+     */
+    protected function elementsByValue(string $html, string $attribute): array
+    {
+        $elements = [];
+        foreach ($this->elementsWith($html, $attribute) as $element) {
+            $elements[$element->get('data-value') ?? ''] = $element;
+        }
+
+        return $elements;
+    }
+
+    /**
+     * The one element of `$html` that carries `$attribute`.
+     */
+    protected function elementWith(string $html, string $attribute): HtmlElement
+    {
+        $elements = $this->elementsWith($html, $attribute);
+        $this->assertCount(1, $elements, sprintf('Expected exactly one element with %s.', $attribute));
+
+        return $elements[0];
+    }
+
     protected function setRequestLocale(string $locale): void
     {
         $baseUri = new Uri('https://example.com/');
@@ -185,10 +239,11 @@ abstract class FunctionalTestCase extends TYPO3FunctionalTestCase
             ->getViewHelperResolver()
             ->addNamespace('ui', 'Jramke\\FluidPrimitives\\ViewHelpers');
 
-        // Clear the hydration registry
+        // The registries outlive a test, so each one starts from nothing
         HydrationRegistry::getInstance()->clear();
         NestedComponentRegistry::getInstance()->clear();
         ReferencedRootRegistry::clear();
+        PortalRegistry::getInstance()->clearAll();
 
         return $view;
     }

@@ -1,0 +1,257 @@
+[
+    {
+        "name": "the default keys",
+        "wire": {
+            "items": [
+                {
+                    "value": "a",
+                    "label": "Apple"
+                },
+                {
+                    "value": "b",
+                    "label": "Banana",
+                    "disabled": true
+                },
+                {
+                    "value": "c"
+                }
+            ],
+            "size": 3,
+            "first": "a",
+            "last": "c",
+            "itemToValueKey": null,
+            "itemToStringKey": null,
+            "isItemDisabledKey": null,
+            "groupByKey": null,
+            "groupSort": null
+        },
+        "expected": {
+            "values": ["a", "b", "c"],
+            "labels": ["Apple", "Banana", "c"],
+            "disabled": [false, true, false],
+            "groups": [["", ["a", "b", "c"]]]
+        }
+    },
+    {
+        "name": "the keys of the items",
+        "wire": {
+            "items": [
+                {
+                    "id": "usr-1",
+                    "name": "John",
+                    "isInactive": true,
+                    "team": "red"
+                },
+                {
+                    "id": "usr-2",
+                    "name": "Jane",
+                    "isInactive": false,
+                    "team": "blue"
+                },
+                {
+                    "id": "usr-3",
+                    "name": "Jim",
+                    "isInactive": false,
+                    "team": "red"
+                }
+            ],
+            "size": 3,
+            "first": "usr-2",
+            "last": "usr-3",
+            "itemToValueKey": "id",
+            "itemToStringKey": "name",
+            "isItemDisabledKey": "isInactive",
+            "groupByKey": "team",
+            "groupSort": null
+        },
+        "expected": {
+            "values": ["usr-1", "usr-2", "usr-3"],
+            "labels": ["John", "Jane", "Jim"],
+            "disabled": [true, false, false],
+            "groups": [
+                ["red", ["usr-1", "usr-3"]],
+                ["blue", ["usr-2"]]
+            ]
+        }
+    },
+    {
+        "name": "keys with dots into nested items, groups in the order of a list",
+        "wire": {
+            "items": [
+                {
+                    "meta": {
+                        "id": "n-1",
+                        "region": "south"
+                    },
+                    "display": {
+                        "title": "Nested One"
+                    },
+                    "state": {
+                        "locked": false
+                    }
+                },
+                {
+                    "meta": {
+                        "id": "n-2",
+                        "region": "north"
+                    },
+                    "display": {
+                        "title": "Nested Two"
+                    },
+                    "state": {
+                        "locked": true
+                    }
+                },
+                {
+                    "meta": {
+                        "id": "n-3",
+                        "region": "south"
+                    },
+                    "display": {
+                        "title": "Nested Three"
+                    },
+                    "state": {
+                        "locked": false
+                    }
+                }
+            ],
+            "size": 3,
+            "first": "n-1",
+            "last": "n-3",
+            "itemToValueKey": "meta.id",
+            "itemToStringKey": "display.title",
+            "isItemDisabledKey": "state.locked",
+            "groupByKey": "meta.region",
+            "groupSort": ["north", "south"]
+        },
+        "expected": {
+            "values": ["n-1", "n-2", "n-3"],
+            "labels": ["Nested One", "Nested Two", "Nested Three"],
+            "disabled": [false, true, false],
+            "groups": [
+                ["north", ["n-2"]],
+                ["south", ["n-1", "n-3"]]
+            ]
+        }
+    },
+    {
+        "name": "groups sorted ascending",
+        "wire": {
+            "items": [
+                {
+                    "value": "c",
+                    "label": "C",
+                    "cat": "Zebra"
+                },
+                {
+                    "value": "a",
+                    "label": "A",
+                    "cat": "Apple"
+                },
+                {
+                    "value": "b",
+                    "label": "B",
+                    "cat": "Mango"
+                }
+            ],
+            "size": 3,
+            "first": "c",
+            "last": "b",
+            "itemToValueKey": null,
+            "itemToStringKey": null,
+            "isItemDisabledKey": null,
+            "groupByKey": "cat",
+            "groupSort": "asc"
+        },
+        "expected": {
+            "values": ["c", "a", "b"],
+            "labels": ["C", "A", "B"],
+            "disabled": [false, false, false],
+            "groups": [
+                ["Apple", ["a"]],
+                ["Mango", ["b"]],
+                ["Zebra", ["c"]]
+            ]
+        }
+    },
+    {
+        "name": "groups sorted descending",
+        "wire": {
+            "items": [
+                {
+                    "value": "c",
+                    "label": "C",
+                    "cat": "Zebra"
+                },
+                {
+                    "value": "a",
+                    "label": "A",
+                    "cat": "Apple"
+                },
+                {
+                    "value": "b",
+                    "label": "B",
+                    "cat": "Mango"
+                }
+            ],
+            "size": 3,
+            "first": "c",
+            "last": "b",
+            "itemToValueKey": null,
+            "itemToStringKey": null,
+            "isItemDisabledKey": null,
+            "groupByKey": "cat",
+            "groupSort": "desc"
+        },
+        "expected": {
+            "values": ["c", "a", "b"],
+            "labels": ["C", "A", "B"],
+            "disabled": [false, false, false],
+            "groups": [
+                ["Zebra", ["c"]],
+                ["Mango", ["b"]],
+                ["Apple", ["a"]]
+            ]
+        }
+    },
+    {
+        "name": "groups the list does not name come last",
+        "wire": {
+            "items": [
+                {
+                    "value": "e",
+                    "label": "E",
+                    "region": "east"
+                },
+                {
+                    "value": "n",
+                    "label": "N",
+                    "region": "north"
+                },
+                {
+                    "value": "s",
+                    "label": "S",
+                    "region": "south"
+                }
+            ],
+            "size": 3,
+            "first": "e",
+            "last": "s",
+            "itemToValueKey": null,
+            "itemToStringKey": null,
+            "isItemDisabledKey": null,
+            "groupByKey": "region",
+            "groupSort": ["south", "north"]
+        },
+        "expected": {
+            "values": ["e", "n", "s"],
+            "labels": ["E", "N", "S"],
+            "disabled": [false, false, false],
+            "groups": [
+                ["south", ["s"]],
+                ["north", ["n"]],
+                ["east", ["e"]]
+            ]
+        }
+    }
+]

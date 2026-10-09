@@ -48,6 +48,7 @@
             "rm -f phpunit.xml",
             "rm -f tsconfig.json",
             "rm -f tsdown.config.ts",
+            "rm -f vitest.config.ts",
             "rm -f package.json",
             "rm -f package-lock.json"
         ]
