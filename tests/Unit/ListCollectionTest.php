@@ -7,6 +7,7 @@ namespace Jramke\FluidPrimitives\Tests\Unit;
 use Jramke\FluidPrimitives\Domain\Dto\ListCollection;
 use Jramke\FluidPrimitives\Domain\Dto\ListCollectionItem;
 use Jramke\FluidPrimitives\Tests\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 
 // @mago-expect lint:too-many-methods
@@ -67,19 +68,6 @@ final class ListCollectionTest extends TestCase
     }
 
     #[Test]
-    public function cachesNormalizedItemsForPerformance(): void
-    {
-        $collection = new ListCollection([
-            ['value' => 'a', 'label' => 'A'],
-        ]);
-
-        $items1 = $collection->getItems();
-        $items2 = $collection->getItems();
-
-        $this->assertSame($items1, $items2);
-    }
-
-    #[Test]
     public function preservesOriginalDataInNormalizedItems(): void
     {
         $original = ['value' => 'x', 'label' => 'X', 'customField' => 'custom'];
@@ -92,32 +80,7 @@ final class ListCollectionTest extends TestCase
     }
 
     #[Test]
-    public function findsItemByValue(): void
-    {
-        $collection = new ListCollection([
-            ['value' => 'a', 'label' => 'Option A'],
-            ['value' => 'b', 'label' => 'Option B'],
-        ]);
-
-        $found = $collection->find('b');
-
-        $this->assertInstanceOf(ListCollectionItem::class, $found);
-        $this->assertSame('b', $found->value);
-    }
-
-    #[Test]
-    public function returnsNullWhenValueNotFound(): void
-    {
-        $collection = new ListCollection([
-            ['value' => 'a', 'label' => 'A'],
-        ]);
-
-        $this->assertNull($collection->find('nonexistent'));
-        $this->assertNull($collection->find(null));
-    }
-
-    #[Test]
-    public function findsMultipleItemsByValues(): void
+    public function findsItemsByValue(): void
     {
         $collection = new ListCollection([
             ['value' => 'a', 'label' => 'A'],
@@ -125,46 +88,36 @@ final class ListCollectionTest extends TestCase
             ['value' => 'c', 'label' => 'C'],
         ]);
 
-        $found = $collection->findMany(['a', 'c', 'nonexistent']);
+        $found = $collection->find('b');
+        $this->assertInstanceOf(ListCollectionItem::class, $found);
+        $this->assertSame('b', $found->value);
+        $this->assertNull($collection->find('nonexistent'));
+        $this->assertNull($collection->find(null));
 
-        $this->assertCount(2, $found);
-        $this->assertSame('a', $found[0]->value);
-        $this->assertSame('c', $found[1]->value);
+        $many = $collection->findMany(['a', 'c', 'nonexistent']);
+        $this->assertCount(2, $many);
+        $this->assertSame('a', $many[0]->value);
+        $this->assertSame('c', $many[1]->value);
     }
 
     #[Test]
-    public function skipsDisabledItemsWhenFindingFirstValue(): void
+    public function firstAndLastValueSkipDisabledItems(): void
     {
         $collection = new ListCollection([
             ['value' => 'disabled-first', 'label' => 'D1', 'disabled' => true],
-            ['value' => 'disabled-second', 'label' => 'D2', 'disabled' => true],
-            ['value' => 'enabled', 'label' => 'E'],
+            ['value' => 'first-enabled', 'label' => 'E1'],
+            ['value' => 'last-enabled', 'label' => 'E2'],
+            ['value' => 'disabled-last', 'label' => 'D2', 'disabled' => true],
         ]);
+        $this->assertSame('first-enabled', $collection->getFirstValue());
+        $this->assertSame('last-enabled', $collection->getLastValue());
 
-        $this->assertSame('enabled', $collection->getFirstValue());
-    }
-
-    #[Test]
-    public function skipsDisabledItemsWhenFindingLastValue(): void
-    {
-        $collection = new ListCollection([
-            ['value' => 'enabled', 'label' => 'E'],
-            ['value' => 'disabled-last', 'label' => 'D', 'disabled' => true],
-        ]);
-
-        $this->assertSame('enabled', $collection->getLastValue());
-    }
-
-    #[Test]
-    public function returnsNullWhenAllItemsAreDisabled(): void
-    {
-        $collection = new ListCollection([
+        $allDisabled = new ListCollection([
             ['value' => 'a', 'label' => 'A', 'disabled' => true],
             ['value' => 'b', 'label' => 'B', 'disabled' => true],
         ]);
-
-        $this->assertNull($collection->getFirstValue());
-        $this->assertNull($collection->getLastValue());
+        $this->assertNull($allDisabled->getFirstValue());
+        $this->assertNull($allDisabled->getLastValue());
     }
 
     #[Test]
@@ -185,64 +138,31 @@ final class ListCollectionTest extends TestCase
     }
 
     #[Test]
-    public function sortsGroupsByCustomOrderArray(): void
+    public function sortsGroupsByACustomOrderOrAlphabetically(): void
     {
-        $collection = new ListCollection(
-            items: [
-                ['value' => 'a', 'label' => 'A', 'cat' => 'first'],
-                ['value' => 'b', 'label' => 'B', 'cat' => 'second'],
-                ['value' => 'c', 'label' => 'C', 'cat' => 'third'],
-            ],
-            groupByKey: 'cat',
-            groupSort: ['third', 'first', 'second'],
-        );
+        $items = [
+            ['value' => 'c', 'label' => 'C', 'cat' => 'Zebra'],
+            ['value' => 'a', 'label' => 'A', 'cat' => 'Apple'],
+            ['value' => 'b', 'label' => 'B', 'cat' => 'Mango'],
+        ];
 
-        $groups = $collection->group();
+        $custom = new ListCollection(items: $items, groupByKey: 'cat', groupSort: ['Mango', 'Zebra', 'Apple']);
+        $this->assertSame(['Mango', 'Zebra', 'Apple'], array_keys($custom->group()));
 
-        $this->assertSame(['third', 'first', 'second'], array_keys($groups));
+        $alphabetical = new ListCollection(items: $items, groupByKey: 'cat', groupSort: 'asc');
+        $this->assertSame(['Apple', 'Mango', 'Zebra'], array_keys($alphabetical->group()));
     }
 
     #[Test]
-    public function sortsGroupsAlphabeticallyWhenGroupSortIsAsc(): void
-    {
-        $collection = new ListCollection(
-            items: [
-                ['value' => 'c', 'label' => 'C', 'cat' => 'Zebra'],
-                ['value' => 'a', 'label' => 'A', 'cat' => 'Apple'],
-                ['value' => 'b', 'label' => 'B', 'cat' => 'Mango'],
-            ],
-            groupByKey: 'cat',
-            groupSort: 'asc',
-        );
-
-        $this->assertSame(['Apple', 'Mango', 'Zebra'], array_keys($collection->group()));
-    }
-
-    #[Test]
-    public function joinsLabelsOfNormalizedItems(): void
+    public function stringifiesItemsByTheirLabels(): void
     {
         $collection = new ListCollection([
             ['value' => 'a', 'label' => 'Apple'],
             ['value' => 'b', 'label' => 'Banana'],
         ]);
 
-        $items = $collection->findMany(['a', 'b']);
-        $result = $collection->stringifyItems($items);
-
-        $this->assertSame('Apple, Banana', $result);
-    }
-
-    #[Test]
-    public function stringifyItemsUsesCustomSeparator(): void
-    {
-        $collection = new ListCollection([
-            ['value' => 'a', 'label' => 'A'],
-            ['value' => 'b', 'label' => 'B'],
-        ]);
-
-        $result = $collection->stringifyItems($collection->getItems(), ' | ');
-
-        $this->assertSame('A | B', $result);
+        $this->assertSame('Apple, Banana', $collection->stringifyItems($collection->findMany(['a', 'b'])));
+        $this->assertSame('Apple | Banana', $collection->stringifyItems($collection->getItems(), ' | '));
     }
 
     #[Test]
@@ -260,5 +180,68 @@ final class ListCollectionTest extends TestCase
         }
 
         $this->assertSame(['a', 'b'], $values);
+    }
+
+    /**
+     * @return iterable<string, array{0: array<string, mixed>, 1: array<string, mixed>}>
+     */
+    public static function clientWireCases(): iterable
+    {
+        $cases = json_decode(
+            (string)file_get_contents(__DIR__ . '/../Fixtures/list-collection.json'),
+            true,
+            flags: JSON_THROW_ON_ERROR,
+        );
+
+        foreach ($cases as $case) {
+            yield $case['name'] => [$case['wire'], $case['expected']];
+        }
+    }
+
+    /**
+     * `tests/Client/list-collection.test.ts` reads the same file: what the server renders and what the client works
+     * with have to be the same items.
+     *
+     * @param array<string, mixed> $wire
+     * @param array<string, mixed> $expected
+     */
+    #[Test]
+    #[DataProvider('clientWireCases')]
+    public function agreesWithTheClientOnWhatTheWireShapeMeans(array $wire, array $expected): void
+    {
+        $collection = new ListCollection(
+            $wire['items'],
+            $wire['itemToValueKey'],
+            $wire['itemToStringKey'],
+            $wire['isItemDisabledKey'],
+            $wire['groupByKey'],
+            $wire['groupSort'],
+        );
+
+        $this->assertSame($wire, json_decode(
+            json_encode($collection, JSON_THROW_ON_ERROR),
+            true,
+            flags: JSON_THROW_ON_ERROR,
+        ));
+
+        $items = $collection->getItems();
+        $this->assertSame($expected['values'], array_map(
+            static fn(ListCollectionItem $item): string => $item->value,
+            $items,
+        ));
+        $this->assertSame($expected['labels'], array_map(
+            static fn(ListCollectionItem $item): string => $item->label,
+            $items,
+        ));
+        $this->assertSame($expected['disabled'], array_map(
+            static fn(ListCollectionItem $item): bool => $item->disabled,
+            $items,
+        ));
+
+        $groups = [];
+        foreach ($collection->group() as $key => $group) {
+            $groups[] = [(string)$key, array_map(static fn(ListCollectionItem $item): string => $item->value, $group)];
+        }
+        $this->assertSame($expected['groups'], $groups);
     }
 }

@@ -809,42 +809,35 @@ function prepareNestedRootComponents(
     return Array.from(componentNames);
 }
 
+// A key names a property of the item, or a path of them joined by dots (`meta.id`).
+// Keep in sync with: ListCollection::getFromKey() of PHP, which renders the same collection on the server.
+function getByPath(item: unknown, path: string): any {
+    return path.split('.').reduce<any>((value, key) => value?.[key], item);
+}
+
 export function getListCollectionFromHydrationData<T extends CollectionItem>(hydrationCollection: {
     items: T[];
-    itemToValueKey?: string;
-    itemToStringKey?: string;
-    isItemDisabledKey?: string;
-    groupByKey?: string;
-    groupSort?: 'asc' | 'desc' | Array<string>;
+    itemToValueKey?: string | null;
+    itemToStringKey?: string | null;
+    isItemDisabledKey?: string | null;
+    groupByKey?: string | null;
+    groupSort?: 'asc' | 'desc' | Array<string> | null;
 }): ListCollection<T> {
     if (hydrationCollection instanceof ListCollection) {
         return hydrationCollection;
     }
 
-    const collection = new ListCollection<T>({
+    const { itemToValueKey, itemToStringKey, isItemDisabledKey, groupByKey, groupSort } =
+        hydrationCollection;
+
+    return new ListCollection<T>({
         items: hydrationCollection.items,
-        itemToValue: hydrationCollection.itemToValueKey
-            ? (item: any) => item?.[hydrationCollection.itemToValueKey!]
+        itemToValue: itemToValueKey ? (item: any) => getByPath(item, itemToValueKey) : undefined,
+        itemToString: itemToStringKey ? (item: any) => getByPath(item, itemToStringKey) : undefined,
+        isItemDisabled: isItemDisabledKey
+            ? (item: any) => getByPath(item, isItemDisabledKey)
             : undefined,
-        itemToString: hydrationCollection.itemToStringKey
-            ? (item: any) => item?.[hydrationCollection.itemToStringKey!]
-            : undefined,
-        isItemDisabled: hydrationCollection.isItemDisabledKey
-            ? (item: any) => item?.[hydrationCollection.isItemDisabledKey!]
-            : undefined,
-        groupBy: hydrationCollection.groupByKey
-            ? (item: any) => {
-                  const key = hydrationCollection.groupByKey;
-                  if (!key) return undefined;
-
-                  if (key.includes('.')) {
-                      return key.split('.').reduce((obj, k) => (obj ? obj[k] : undefined), item);
-                  }
-
-                  return item?.[key];
-              }
-            : undefined,
-        groupSort: hydrationCollection.groupSort,
+        groupBy: groupByKey ? (item: any) => getByPath(item, groupByKey) : undefined,
+        groupSort: groupSort ?? undefined,
     });
-    return collection;
 }

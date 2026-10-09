@@ -95,6 +95,8 @@ export function connect<T extends PropTypes>(
         return {
             ...parts.control.attrs(scope.id),
             id: ids.control,
+            // what the server rendered, kept in sync when the field is renamed (a FieldArray row that moved up)
+            name: prop('name'),
             dir: prop('dir'),
             disabled: fieldState.disabled,
             required: fieldState.required,
