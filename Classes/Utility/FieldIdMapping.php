@@ -16,6 +16,7 @@ class FieldIdMapping
     private const array FIELD_ID_PARTS = [
         'select' => ['label' => 'label', 'control' => 'hiddenSelect'],
         'combobox' => ['label' => 'label', 'control' => 'input'],
+        'date-picker' => ['label' => 'label', 'control' => 'input'],
         'input' => ['label' => 'label', 'control' => 'input'],
         'number-input' => ['label' => 'label', 'control' => 'input'],
         'textarea' => ['label' => 'label', 'control' => 'textarea'],

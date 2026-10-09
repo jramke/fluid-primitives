@@ -1,0 +1,18 @@
+<ui:prop name="index" type="integer" optional="{true}" default="0" description="The index of this input, in range mode (`0` or `1`)." />
+
+<f:variable name="refData" value="{state: context.state, invalid: context.invalid, placeholder-shown: context.empty}" />
+
+<input
+    type="text"
+    autocomplete="off"
+    autocorrect="off"
+    spellcheck="false"
+    {f:if(condition: context.placeholder, then: 'placeholder="{context.placeholder}"' )}
+    {f:if(condition: context.disabled, then: 'disabled' )}
+    {f:if(condition: context.required, then: 'required' )}
+    {f:if(condition: context.readOnly, then: 'readonly' )}
+    {f:if(condition: context.invalid, then: 'aria-invalid="true"' )}
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'input' , value: index, data: refData )}
+    {ui:attributes()}
+    {ui:asChild()} />

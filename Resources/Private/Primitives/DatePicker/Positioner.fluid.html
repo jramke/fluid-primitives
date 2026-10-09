@@ -1,0 +1,8 @@
+<div
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'positioner' )}
+    {ui:attributes()}
+    {ui:asChild()}
+    {f:if(condition: context.inline, then: '' , else: 'style="{settings.defaultFloatingStyles}"' )}>
+    <f:slot />
+</div>

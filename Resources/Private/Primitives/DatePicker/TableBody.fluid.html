@@ -1,0 +1,9 @@
+<f:variable name="refData" value="{disabled: context.disabled}" />
+
+<tbody
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'tableBody' , data: refData )}
+    {ui:attributes()}
+    {ui:asChild()}>
+    <f:slot />
+</tbody>

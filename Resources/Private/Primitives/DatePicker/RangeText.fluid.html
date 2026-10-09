@@ -1,0 +1,7 @@
+<span
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'rangeText' )}
+    {ui:attributes()}
+    {ui:asChild()}>
+    <f:slot />
+</span>

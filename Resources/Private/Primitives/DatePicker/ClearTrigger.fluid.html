@@ -1,0 +1,10 @@
+<button
+    type="button"
+    {f:if(condition: context.translations.clearTrigger, then: 'aria-label="{context.translations.clearTrigger}"' )}
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'clearTrigger' )}
+    {f:if(condition: context.empty, then: 'hidden="true"' )}
+    {ui:attributes()}
+    {ui:asChild()}>
+    <f:slot />
+</button>

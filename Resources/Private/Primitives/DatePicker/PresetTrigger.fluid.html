@@ -1,0 +1,10 @@
+<ui:prop name="value" type="Jramke\FluidPrimitives\Enum\DatePickerRangePreset" optional="{true}" requiredAtRuntime="{true}" description="The range the preset selects, like `DatePickerRangePreset::Last7Days`." />
+
+<button
+    type="button"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'presetTrigger' , value: value )}
+    {ui:attributes()}
+    {ui:asChild()}>
+    <f:slot />
+</button>

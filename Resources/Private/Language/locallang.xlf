@@ -47,6 +47,108 @@
             <trans-unit id="fieldArray.rowRemoved" approved="yes">
                 <source>Row %number% removed.</source>
             </trans-unit>
+            <trans-unit id="datePicker.clearTrigger" approved="yes">
+                <source>Clear value</source>
+            </trans-unit>
+            <trans-unit id="datePicker.monthSelect" approved="yes">
+                <source>Select month</source>
+            </trans-unit>
+            <trans-unit id="datePicker.yearSelect" approved="yes">
+                <source>Select year</source>
+            </trans-unit>
+            <trans-unit id="datePicker.content" approved="yes">
+                <source>Choose date</source>
+            </trans-unit>
+            <trans-unit id="datePicker.weekColumnHeader" approved="yes">
+                <source>Week</source>
+            </trans-unit>
+            <trans-unit id="datePicker.triggerOpen" approved="yes">
+                <source>Open calendar</source>
+            </trans-unit>
+            <trans-unit id="datePicker.triggerClose" approved="yes">
+                <source>Close calendar</source>
+            </trans-unit>
+            <trans-unit id="datePicker.prevTriggerDay" approved="yes">
+                <source>Switch to previous month</source>
+            </trans-unit>
+            <trans-unit id="datePicker.prevTriggerMonth" approved="yes">
+                <source>Switch to previous year</source>
+            </trans-unit>
+            <trans-unit id="datePicker.prevTriggerYear" approved="yes">
+                <source>Switch to previous decade</source>
+            </trans-unit>
+            <trans-unit id="datePicker.nextTriggerDay" approved="yes">
+                <source>Switch to next month</source>
+            </trans-unit>
+            <trans-unit id="datePicker.nextTriggerMonth" approved="yes">
+                <source>Switch to next year</source>
+            </trans-unit>
+            <trans-unit id="datePicker.nextTriggerYear" approved="yes">
+                <source>Switch to next decade</source>
+            </trans-unit>
+            <trans-unit id="datePicker.viewTriggerToDay" approved="yes">
+                <source>Switch to day view</source>
+            </trans-unit>
+            <trans-unit id="datePicker.viewTriggerToMonth" approved="yes">
+                <source>Switch to month view</source>
+            </trans-unit>
+            <trans-unit id="datePicker.viewTriggerToYear" approved="yes">
+                <source>Switch to year view</source>
+            </trans-unit>
+            <trans-unit id="datePicker.viewTriggerDay" approved="yes">
+                <source>Day view</source>
+            </trans-unit>
+            <trans-unit id="datePicker.viewTriggerMonth" approved="yes">
+                <source>Month view</source>
+            </trans-unit>
+            <trans-unit id="datePicker.viewTriggerYear" approved="yes">
+                <source>Year view</source>
+            </trans-unit>
+            <trans-unit id="datePicker.presetTrigger" approved="yes">
+                <source>Select %start% to %end%</source>
+            </trans-unit>
+            <trans-unit id="datePicker.weekNumberCell" approved="yes">
+                <source>Week %number%</source>
+            </trans-unit>
+            <trans-unit id="datePicker.dayCell" approved="yes">
+                <source>Choose %date%</source>
+            </trans-unit>
+            <trans-unit id="datePicker.dayCellSelected" approved="yes">
+                <source>Selected date. %date%</source>
+            </trans-unit>
+            <trans-unit id="datePicker.dayCellRangeStart" approved="yes">
+                <source>Starting range from %date%</source>
+            </trans-unit>
+            <trans-unit id="datePicker.dayCellRangeEnd" approved="yes">
+                <source>Range ending at %date%</source>
+            </trans-unit>
+            <trans-unit id="datePicker.dayCellInRange" approved="yes">
+                <source>In range. %date%</source>
+            </trans-unit>
+            <trans-unit id="datePicker.dayCellUnavailable" approved="yes">
+                <source>Not available. %date%</source>
+            </trans-unit>
+            <trans-unit id="datePicker.contentRoleDescription" approved="yes">
+                <source>datepicker</source>
+            </trans-unit>
+            <trans-unit id="datePicker.tableRoleDescriptionDay" approved="yes">
+                <source>calendar month</source>
+            </trans-unit>
+            <trans-unit id="datePicker.tableRoleDescriptionMonth" approved="yes">
+                <source>calendar year</source>
+            </trans-unit>
+            <trans-unit id="datePicker.tableRoleDescriptionYear" approved="yes">
+                <source>calendar decade</source>
+            </trans-unit>
+            <trans-unit id="datePicker.placeholderDay" approved="yes">
+                <source>dd</source>
+            </trans-unit>
+            <trans-unit id="datePicker.placeholderMonth" approved="yes">
+                <source>mm</source>
+            </trans-unit>
+            <trans-unit id="datePicker.placeholderYear" approved="yes">
+                <source>yyyy</source>
+            </trans-unit>
         </body>
     </file>
 </xliff>
