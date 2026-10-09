@@ -87,7 +87,31 @@ abstract class FunctionalTestCase extends TYPO3FunctionalTestCase
 
         $view->getRenderingContext()->getTemplatePaths()->setTemplateSource($template);
 
-        return $view->render();
+        $html = $view->render();
+        $this->assertNoRepeatedAttributes($html);
+
+        return $html;
+    }
+
+    /**
+     * A tag that writes an attribute twice is invalid HTML, and the browser keeps only the first, which hides
+     * a difference between the markup of the server and the one the client spreads.
+     */
+    protected function assertNoRepeatedAttributes(string $html): void
+    {
+        $repeated = [];
+        foreach (HtmlElement::parseAll($html) as $element) {
+            if ($element->repeatedAttributes !== []) {
+                $repeated[] = sprintf(
+                    '<%s %s> repeats %s',
+                    $element->tag,
+                    implode(' ', array_keys($element->attributes)),
+                    implode(', ', $element->repeatedAttributes),
+                );
+            }
+        }
+
+        $this->assertSame([], $repeated, 'A rendered tag repeats an attribute.');
     }
 
     /**

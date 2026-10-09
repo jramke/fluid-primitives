@@ -6,7 +6,6 @@
 <div
     role="{f:if(condition: isDialogPopup, then: 'dialog', else: 'presentation')}"
     {f:if(condition: context.defaultOpen, then: '' , else: 'hidden="true"' )}
-    {f:if(condition: isEmpty, then: 'data-empty="true"' )}
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'content' , data: refData )}
     {ui:attributes()}
