@@ -16,9 +16,9 @@ final readonly class ExtbaseFormFieldNamer
 
     /**
      * Parses `$fieldName` (dot or bracket notation) and rebuilds it fully bracketed, with
-     * `$fieldNamePrefix` and `$objectName` unshifted onto the front in that order.
+     * `$fieldNamePrefix` and `$objectName` unshifted onto the front in the order of the arguments.
      */
-    public function prefixFieldName(string $fieldName, ?string $objectName, string $fieldNamePrefix): string
+    public function prefixFieldName(string $fieldName, string $fieldNamePrefix, ?string $objectName = null): string
     {
         if ($fieldName === '') {
             return '';

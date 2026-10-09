@@ -260,6 +260,95 @@ final class FormRenderingTest extends FunctionalTestCase
         $this->assertSame('marketing', $this->elementWith($html, 'data-switch-hidden-input')->get('name'));
     }
 
+    #[Test]
+    public function signsTheRenamedPathOfAFieldInAFieldArrayRowNotItsRawName(): void
+    {
+        $entity = new TestEntity();
+        $entity->setTestUid(42);
+
+        $html = $this->renderTemplate('
+            <primitives:form.root actionUri="/submit" objectName="conference" object="{entity}">
+                <primitives:fieldArray.root name="people" itemCount="2">
+                    <primitives:fieldArray.itemGroup>
+                        <f:for each="{0: 0, 1: 1}" as="index">
+                            <primitives:fieldArray.item index="{index}">
+                                <primitives:field.root name="firstName">
+                                    <primitives:field.control asChild="{true}"><input type="text" /></primitives:field.control>
+                                </primitives:field.root>
+                            </primitives:fieldArray.item>
+                        </f:for>
+                    </primitives:fieldArray.itemGroup>
+                    <primitives:fieldArray.itemTemplate>
+                        <primitives:fieldArray.item>
+                            <primitives:field.root name="firstName">
+                                <primitives:field.control asChild="{true}"><input type="text" /></primitives:field.control>
+                            </primitives:field.root>
+                        </primitives:fieldArray.item>
+                    </primitives:fieldArray.itemTemplate>
+                </primitives:fieldArray.root>
+            </primitives:form.root>
+        ', ['entity' => $entity]);
+
+        // The stencil of a row the client adds has no index to sign, and Extbase refuses an empty segment in the
+        // middle of a name, so it is left out.
+        $this->assertEquals(
+            ['conference' => ['__identity' => 1, 'people' => [['firstName' => 1], ['firstName' => 1]]]],
+            $this->trustedProperties($html),
+        );
+    }
+
+    /**
+     * @return iterable<string, array{0: string, 1: string}>
+     */
+    public static function pluginNamespaces(): iterable
+    {
+        yield 'the plugin of the request' => ['', 'tx_docsext_registration'];
+        yield 'an extension and plugin of the form' => [
+            'extensionName="Other" pluginName="Search"',
+            'tx_other_search',
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('pluginNamespaces')]
+    public function prefixesWhatExtbaseReadsBackWithTheNamespaceOfThePlugin(string $arguments, string $namespace): void
+    {
+        $this->setExtbasePlugin('DocsExt', 'Registration');
+        $entity = new TestEntity();
+        $entity->setTestUid(42);
+
+        $html = $this->renderTemplate(
+            '
+            <primitives:form.root actionUri="/submit" objectName="conference" object="{entity}" ' .
+            $arguments .
+            '>
+                <primitives:field.root name="title">
+                    <primitives:field.control asChild="{true}"><input type="text" /></primitives:field.control>
+                </primitives:field.root>
+            </primitives:form.root>
+        ',
+            ['entity' => $entity],
+        );
+
+        // what the client prefixes every posted key with, and the object it posts them under
+        $form = $this->elementWith($html, 'data-form-root');
+        $this->assertSame($namespace, $form->get('data-field-name-prefix'));
+        $this->assertSame('conference', $form->get('data-object-name'));
+
+        $hiddenFields = [];
+        foreach ($this->elementsWith($html, 'type') as $element) {
+            if ($element->get('type') === 'hidden') {
+                $hiddenFields[$element->get('name')] = $element->get('value');
+            }
+        }
+        $this->assertSame($namespace . '[conference][__identity]', array_keys($hiddenFields)[0]);
+        $this->assertSame('42', $hiddenFields[$namespace . '[conference][__identity]']);
+        $this->assertArrayHasKey($namespace . '[__trustedProperties]', $hiddenFields);
+
+        // signed below the namespace: Extbase looks the token up by the name of the argument
+        $this->assertEquals(['conference' => ['__identity' => 1, 'title' => 1]], $this->trustedProperties($html));
+    }
+
     /**
      * What Extbase reads back from the signed `__trustedProperties` field: the field names and identities
      * the form was rendered with.
@@ -270,7 +359,7 @@ final class FormRenderingTest extends FunctionalTestCase
     {
         $token = null;
         foreach ($this->elementsWith($html, 'name') as $element) {
-            if ($element->get('name') === '__trustedProperties') {
+            if (preg_match('/(^|\[)__trustedProperties\]?$/', $element->get('name') ?? '') === 1) {
                 $token = $element->get('value');
             }
         }

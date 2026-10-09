@@ -60,6 +60,22 @@ final class FileUploadDeleteCheckboxViewHelperTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function namesTheCheckboxBelowTheNamespaceOfThePluginWhereExtbaseReadsItBack(): void
+    {
+        $this->setExtbasePlugin('DocsExt', 'Registration');
+
+        $html = $this->renderTemplate('
+            <primitives:form.root actionUri="/submit" objectName="conference">
+                <primitives:field.root name="logo">
+                    <ui:fileUploadDeleteCheckbox fileReference="{fileReference}" />
+                </primitives:field.root>
+            </primitives:form.root>
+        ', ['fileReference' => $this->createFileReference(42)]);
+
+        $this->assertStringContainsString('name="tx_docsext_registration[@delete][conference][]"', $html);
+    }
+
+    #[Test]
     public function explicitPropertyOverridesTheEnclosingFieldsName(): void
     {
         $html = $this->renderTemplate('
