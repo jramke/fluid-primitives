@@ -7,18 +7,33 @@ namespace Jramke\FluidPrimitives\Tests\Functional\Components;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
 use Jramke\FluidPrimitives\Utility\DateUtility;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use TYPO3\CMS\Extbase\Property\PropertyMapper;
 
 final class DatePickerRenderingTest extends FunctionalTestCase
 {
-    #[Test]
-    public function derivesTheOpenStateFromDefaultOpenAndInline(): void
+    private const string VIEW_DAY = "{f:constant(name: 'Jramke\\FluidPrimitives\\Enum\\DatePickerView::Day')}";
+    private const string VIEW_MONTH = "{f:constant(name: 'Jramke\\FluidPrimitives\\Enum\\DatePickerView::Month')}";
+    private const string VIEW_YEAR = "{f:constant(name: 'Jramke\\FluidPrimitives\\Enum\\DatePickerView::Year')}";
+
+    /**
+     * @return iterable<string, array{0: string, 1: string, 2: bool}>
+     */
+    public static function openStates(): iterable
     {
-        $render = fn(string $attributes): string => $this->renderTemplate('
-            <primitives:datePicker.root ' .
-        $attributes .
-        '>
+        yield 'closed by default' => ['', 'closed', false];
+        yield 'open by default' => ['defaultOpen="{true}"', 'open', true];
+        // The machine opens an inline date picker whatever `defaultOpen` says.
+        yield 'inline' => ['inline="{true}"', 'open', true];
+    }
+
+    #[Test]
+    #[DataProvider('openStates')]
+    public function derivesTheOpenStateFromDefaultOpenAndInline(string $attributes, string $state, bool $open): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:datePicker.root ' . $attributes . '>
                 <primitives:datePicker.control>
                     <primitives:datePicker.input />
                     <primitives:datePicker.trigger>Open</primitives:datePicker.trigger>
@@ -29,25 +44,14 @@ final class DatePickerRenderingTest extends FunctionalTestCase
             </primitives:datePicker.root>
         ');
 
-        $closed = $render('');
-        $this->assertStringContainsString('data-date-picker-root="', $closed);
-        $this->assertStringContainsString('data-state="closed"', $closed);
-        $this->assertStringNotContainsString('data-state="open"', $closed);
-        $this->assertStringContainsString('aria-expanded="false"', $closed);
-        $this->assertMatchesRegularExpression('/data-date-picker-content="[^"]*"[^>]*hidden/', $closed);
-
-        // The machine opens an inline date picker whatever `defaultOpen` says.
-        foreach (['defaultOpen="{true}"', 'inline="{true}"'] as $attributes) {
-            $open = $render($attributes);
-            $this->assertStringContainsString('data-state="open"', $open, $attributes);
-            $this->assertStringNotContainsString('data-state="closed"', $open, $attributes);
-            $this->assertStringContainsString('aria-expanded="true"', $open, $attributes);
-            $this->assertDoesNotMatchRegularExpression(
-                '/data-date-picker-content="[^"]*"[^>]*hidden/',
-                $open,
-                $attributes,
-            );
+        foreach (['root', 'input', 'trigger', 'content'] as $part) {
+            $this->assertSame($state, $this->elementWith($html, 'data-date-picker-' . $part)->get('data-state'), $part);
         }
+        $this->assertSame(
+            $open ? 'true' : 'false',
+            $this->elementWith($html, 'data-date-picker-trigger')->get('aria-expanded'),
+        );
+        $this->assertSame(!$open, $this->elementWith($html, 'data-date-picker-content')->has('hidden'));
     }
 
     #[Test]
@@ -65,20 +69,25 @@ final class DatePickerRenderingTest extends FunctionalTestCase
 
         // Without a trigger to anchor to nothing ever places an inline calendar, so floating
         // styles (absolute, top/left 0) would pin it to the corner of the page until hydration.
-        $this->assertStringContainsString('style=', $this->extractTag($render(''), 'data-date-picker-positioner'));
-        $this->assertStringNotContainsString('style=', $this->extractTag(
-            $render('inline="{true}"'),
-            'data-date-picker-positioner',
-        ));
+        $this->assertTrue($this->elementWith($render(''), 'data-date-picker-positioner')->has('style'));
+        $this->assertFalse($this->elementWith($render('inline="{true}"'), 'data-date-picker-positioner')->has('style'));
+    }
+
+    /**
+     * @return iterable<string, array{0: string, 1: bool}>
+     */
+    public static function emptyStates(): iterable
+    {
+        yield 'no date' => ['', true];
+        yield 'a date' => ['defaultValue="2024-01-15"', false];
     }
 
     #[Test]
-    public function derivesTheEmptyStateFromDefaultValue(): void
+    #[DataProvider('emptyStates')]
+    public function derivesTheEmptyStateFromDefaultValue(string $attributes, bool $empty): void
     {
-        $render = fn(string $attributes): string => $this->renderTemplate('
-            <primitives:datePicker.root ' .
-        $attributes .
-        '>
+        $html = $this->renderTemplate('
+            <primitives:datePicker.root ' . $attributes . '>
                 <primitives:datePicker.control>
                     <primitives:datePicker.input />
                     <primitives:datePicker.clearTrigger>Clear</primitives:datePicker.clearTrigger>
@@ -86,79 +95,59 @@ final class DatePickerRenderingTest extends FunctionalTestCase
             </primitives:datePicker.root>
         ');
 
-        $empty = $render('');
-        $this->assertStringContainsString('data-empty', $this->extractTag($empty, 'data-date-picker-root'));
-        $this->assertStringContainsString('data-placeholder-shown', $this->extractTag(
-            $empty,
-            'data-date-picker-control',
-        ));
-        $this->assertStringContainsString('hidden', $this->extractTag($empty, 'data-date-picker-clear-trigger'));
-
-        $filled = $render('defaultValue="2024-01-15"');
-        $this->assertStringNotContainsString('data-empty', $this->extractTag($filled, 'data-date-picker-root'));
-        $this->assertStringNotContainsString('data-placeholder-shown', $this->extractTag(
-            $filled,
-            'data-date-picker-control',
-        ));
-        $this->assertStringNotContainsString('hidden', $this->extractTag($filled, 'data-date-picker-clear-trigger'));
+        $this->assertSame($empty, $this->elementWith($html, 'data-date-picker-root')->has('data-empty'));
+        $this->assertSame($empty, $this->elementWith($html, 'data-date-picker-control')->has('data-placeholder-shown'));
+        // there is nothing to clear
+        $this->assertSame($empty, $this->elementWith($html, 'data-date-picker-clear-trigger')->has('hidden'));
     }
 
-    #[Test]
-    public function shipsDefaultValueToTheClientAsAListOfIsoDates(): void
+    /**
+     * @return iterable<string, array{0: string, 1: mixed, 2: string|list<string>|null}>
+     */
+    public static function datesForTheClient(): iterable
     {
-        $dateTime = new \DateTime('2024-03-05 23:30:00', new \DateTimeZone('Europe/Berlin'));
+        // 00:30 in Tokyo is still the day before in Berlin (the time zone of the server) and in UTC: the date that is
+        // shipped is the one the object itself is on, whatever time zone that is.
+        $tokyo = new \DateTime('2024-03-06 00:30:00', new \DateTimeZone('Asia/Tokyo'));
         $immutable = new \DateTimeImmutable('2024-03-07 08:00:00');
 
-        $expectations = [
-            'string' => ['2024-01-15', ['2024-01-15']],
-            'list' => [
-                ['2024-01-15', '2024-01-20'],
-                ['2024-01-15', '2024-01-20'],
-            ],
-            // What a Field bound to an object property hands over.
-            'DateTime' => [$dateTime, ['2024-03-05']],
-            'list of DateTimeInterface' => [
-                [$dateTime,    $immutable],
-                ['2024-03-05', '2024-03-07'],
-            ],
-            'date-time string' => ['2024-01-15T10:30:00+01:00', ['2024-01-15']],
-            'not a date' => ['tomorrow', null],
-            'empty list' => [[], null],
-            'null' => [null, null],
+        yield 'defaultValue: a string' => ['defaultValue', '2024-01-15', ['2024-01-15']];
+        yield 'defaultValue: a list' => ['defaultValue', ['2024-01-15', '2024-01-20'], ['2024-01-15', '2024-01-20']];
+        // What a Field bound to an object property hands over.
+        yield 'defaultValue: a DateTime' => ['defaultValue', $tokyo, ['2024-03-06']];
+        yield 'defaultValue: a list of DateTimeInterface' => [
+            'defaultValue',
+            [$tokyo, $immutable],
+            ['2024-03-06', '2024-03-07'],
         ];
+        yield 'defaultValue: a date-time string' => ['defaultValue', '2024-01-15T10:30:00+01:00', ['2024-01-15']];
+        yield 'defaultValue: not a date' => ['defaultValue', 'tomorrow', null];
+        yield 'defaultValue: an empty list' => ['defaultValue', [], null];
+        yield 'defaultValue: nothing' => ['defaultValue', null, null];
 
-        foreach ($expectations as $case => [$value, $expected]) {
-            $props = $this->renderHydrationProps('defaultValue="{value}"', ['value' => $value]);
-
-            if ($expected === null) {
-                $this->assertArrayNotHasKey('defaultValue', $props, $case);
-            } else {
-                $this->assertSame($expected, $props['defaultValue'], $case);
-            }
+        // each of them has its own getter
+        foreach (['min', 'max', 'defaultFocusedValue'] as $prop) {
+            yield $prop . ': a DateTime' => [$prop, $tokyo, '2024-03-06'];
+            yield $prop . ': not a date' => [$prop, 'tomorrow', null];
         }
     }
 
+    /**
+     * @param string|list<string>|null $expected
+     */
     #[Test]
-    public function shipsMinMaxAndDefaultFocusedValueToTheClientAsIsoDates(): void
+    #[DataProvider('datesForTheClient')]
+    public function shipsTheDatesToTheClientAsIsoDates(string $prop, mixed $value, string|array|null $expected): void
     {
-        $dates = [
-            'string' => ['2024-01-15', '2024-01-15'],
-            'DateTime' => [new \DateTime('2024-03-05 23:30:00', new \DateTimeZone('Europe/Berlin')), '2024-03-05'],
-            'DateTimeImmutable' => [new \DateTimeImmutable('2024-03-07 08:00:00'), '2024-03-07'],
-            'not a date' => ['tomorrow', null],
-        ];
+        $props = $this->renderHydrationProps($prop . '="{value}"', ['value' => $value]);
 
-        foreach (['min', 'max', 'defaultFocusedValue'] as $prop) {
-            foreach ($dates as $case => [$value, $expected]) {
-                $props = $this->renderHydrationProps($prop . '="{value}"', ['value' => $value]);
+        if ($expected === null) {
+            $this->assertArrayNotHasKey($prop, $props);
 
-                if ($expected === null) {
-                    $this->assertArrayNotHasKey($prop, $props, $prop . ' / ' . $case);
-                } else {
-                    $this->assertSame($expected, $props[$prop], $prop . ' / ' . $case);
-                }
-            }
+            return;
         }
+
+        $this->assertSame($expected, $props[$prop]);
     }
 
     #[Test]
@@ -192,18 +181,17 @@ final class DatePickerRenderingTest extends FunctionalTestCase
                 ');
 
                 // The visible input holds the date as typed, in the format of the locale.
-                $this->assertStringNotContainsString(
-                    ' name=',
-                    $this->extractTag($html, 'data-date-picker-input'),
+                $this->assertFalse($this->elementWith($html, 'data-date-picker-input')->has('name'), $case);
+
+                $hiddenInputs = $this->elementsWith($html, 'data-date-picker-hidden-input');
+                $this->assertSame(
+                    $expectedValues,
+                    array_map(static fn($input): ?string => $input->get('value'), $hiddenInputs),
                     $case,
                 );
-
-                preg_match_all('/<input[^>]*data-date-picker-hidden-input="[^"]*"[^>]*>/', $html, $matches);
-                $this->assertCount(count($expectedValues), $matches[0], $case);
-                foreach ($matches[0] as $i => $hiddenInputTag) {
-                    $this->assertStringContainsString('type="hidden"', $hiddenInputTag, $case);
-                    $this->assertStringContainsString('name="dates[]"', $hiddenInputTag, $case);
-                    $this->assertStringContainsString('value="' . $expectedValues[$i] . '"', $hiddenInputTag, $case);
+                foreach ($hiddenInputs as $input) {
+                    $this->assertSame('hidden', $input->get('type'), $case);
+                    $this->assertSame('dates[]', $input->get('name'), $case);
                 }
             }
 
@@ -234,42 +222,42 @@ final class DatePickerRenderingTest extends FunctionalTestCase
         }
     }
 
-    #[Test]
-    public function startsInTheDefaultViewKeptBetweenMinViewAndMaxView(): void
+    /**
+     * @return iterable<string, array{0: string, 1: string}>
+     */
+    public static function initialViews(): iterable
     {
-        $view = static fn(string $case): string => (
-            '{f:constant(name: \'Jramke\FluidPrimitives\Enum\DatePickerView::' . $case . '\')}'
-        );
-
-        $expectations = [
-            'defaults' => ['', 'day'],
-            'default view' => ['defaultView="' . $view('Month') . '"', 'month'],
-            'below the min view' => ['minView="' . $view('Month') . '"', 'month'],
-            'above a max view of day' => [
-                'defaultView="' . $view('Month') . '" maxView="' . $view('Day') . '"',
-                'day',
-            ],
-            'above the max view' => ['defaultView="' . $view('Year') . '" maxView="' . $view('Month') . '"', 'month'],
+        yield 'defaults' => ['', 'day'];
+        yield 'default view' => ['defaultView="' . self::VIEW_MONTH . '"', 'month'];
+        yield 'below the min view' => ['minView="' . self::VIEW_MONTH . '"', 'month'];
+        yield 'above a max view of day' => [
+            'defaultView="' . self::VIEW_MONTH . '" maxView="' . self::VIEW_DAY . '"',
+            'day',
         ];
+        yield 'above the max view' => [
+            'defaultView="' . self::VIEW_YEAR . '" maxView="' . self::VIEW_MONTH . '"',
+            'month',
+        ];
+    }
 
-        foreach ($expectations as $case => [$attributes, $expectedView]) {
-            $html = $this->renderTemplate('
-                <primitives:datePicker.root ' . $attributes . '>
-                    <primitives:datePicker.view view="day">Day</primitives:datePicker.view>
-                    <primitives:datePicker.view view="month">Month</primitives:datePicker.view>
-                    <primitives:datePicker.view view="year">Year</primitives:datePicker.view>
-                </primitives:datePicker.root>
-            ');
+    #[Test]
+    #[DataProvider('initialViews')]
+    public function startsInTheDefaultViewKeptBetweenMinViewAndMaxView(string $attributes, string $expectedView): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:datePicker.root ' . $attributes . '>
+                <primitives:datePicker.view view="day">Day</primitives:datePicker.view>
+                <primitives:datePicker.view view="month">Month</primitives:datePicker.view>
+                <primitives:datePicker.view view="year">Year</primitives:datePicker.view>
+            </primitives:datePicker.root>
+        ');
 
-            foreach (['day', 'month', 'year'] as $candidate) {
-                $viewTag = $this->extractTag($html, 'data-date-picker-view', 'data-value="' . $candidate . '"');
-                if ($candidate === $expectedView) {
-                    $this->assertStringNotContainsString('hidden', $viewTag, $case);
-                } else {
-                    $this->assertStringContainsString('hidden', $viewTag, $case . ' / ' . $candidate);
-                }
-            }
-        }
+        $views = $this->elementsByValue($html, 'data-date-picker-view');
+        $this->assertSame(['day', 'month', 'year'], array_keys($views));
+        $this->assertSame(
+            array_map(static fn(string $view): bool => $view !== $expectedView, array_keys($views)),
+            array_values(array_map(static fn($view): bool => $view->has('hidden'), $views)),
+        );
     }
 
     #[Test]
@@ -296,20 +284,11 @@ final class DatePickerRenderingTest extends FunctionalTestCase
         ');
 
         foreach (['view', 'view-control', 'prev-trigger', 'view-trigger', 'next-trigger'] as $part) {
-            $this->assertStringContainsString(
-                'data-value="day"',
-                $this->extractTag($html, 'data-date-picker-' . $part),
-                $part,
-            );
+            $this->assertSame('day', $this->elementWith($html, 'data-date-picker-' . $part)->get('data-value'), $part);
         }
-        preg_match_all('/<table[^>]*>/', $html, $tables);
-        $this->assertCount(2, $tables[0]);
-        $this->assertStringContainsString('data-offset="0"', $tables[0][0]);
-        $this->assertStringContainsString('data-offset="1"', $tables[0][1]);
-        $this->assertStringContainsString('data-value="last7Days"', $this->extractTag(
-            $html,
-            'data-date-picker-preset-trigger',
-        ));
+        $tables = $this->elementsWith($html, 'data-date-picker-table');
+        $this->assertSame(['0', '1'], array_map(static fn($table): ?string => $table->get('data-offset'), $tables));
+        $this->assertSame('last7Days', $this->elementWith($html, 'data-date-picker-preset-trigger')->get('data-value'));
     }
 
     #[Test]
@@ -317,7 +296,7 @@ final class DatePickerRenderingTest extends FunctionalTestCase
     {
         $this->setRequestLocale('de_DE');
 
-        $template = '
+        $html = $this->renderTemplate('
             <primitives:datePicker.root translations="{content: \'Kalender\'}">
                 <primitives:datePicker.trigger />
                 <primitives:datePicker.clearTrigger />
@@ -327,29 +306,25 @@ final class DatePickerRenderingTest extends FunctionalTestCase
                 <primitives:datePicker.monthSelect />
                 <primitives:datePicker.yearSelect />
             </primitives:datePicker.root>
-        ';
-        $html = $this->renderTemplate($template);
+        ');
 
-        $this->assertStringContainsString('aria-label="Wert löschen"', $this->extractTag(
-            $html,
-            'data-date-picker-clear-trigger',
-        ));
-        $this->assertStringContainsString('aria-label="Monat auswählen"', $this->extractTag(
-            $html,
-            'data-date-picker-month-select',
-        ));
-        $this->assertStringContainsString('aria-label="Jahr auswählen"', $this->extractTag(
-            $html,
-            'data-date-picker-year-select',
-        ));
-        $this->assertStringContainsString('aria-label="Kalender öffnen"', $this->extractTag(
-            $html,
-            'data-date-picker-trigger',
-        ));
-        $contentTag = $this->extractTag($html, 'data-date-picker-content');
+        $this->assertSame(
+            'Wert löschen',
+            $this->elementWith($html, 'data-date-picker-clear-trigger')->get('aria-label'),
+        );
+        $this->assertSame(
+            'Monat auswählen',
+            $this->elementWith($html, 'data-date-picker-month-select')->get('aria-label'),
+        );
+        $this->assertSame(
+            'Jahr auswählen',
+            $this->elementWith($html, 'data-date-picker-year-select')->get('aria-label'),
+        );
+        $this->assertSame('Kalender öffnen', $this->elementWith($html, 'data-date-picker-trigger')->get('aria-label'));
+        $content = $this->elementWith($html, 'data-date-picker-content');
         // The per-instance override wins over the language file.
-        $this->assertStringContainsString('aria-label="Kalender"', $contentTag);
-        $this->assertStringContainsString('aria-roledescription="Datumsauswahl"', $contentTag);
+        $this->assertSame('Kalender', $content->get('aria-label'));
+        $this->assertSame('Datumsauswahl', $content->get('aria-roledescription'));
 
         // The client builds Zag's function labels from these texts and fills in the placeholders.
         $props = $this->firstHydrationProps();
@@ -383,12 +358,12 @@ final class DatePickerRenderingTest extends FunctionalTestCase
             </primitives:field.root>
         ');
 
-        $inputTag = $this->extractTag($html, 'data-date-picker-input');
-        $this->assertStringContainsString('required', $inputTag);
-        $this->assertStringContainsString('disabled', $inputTag);
-        $hiddenInputTag = $this->extractTag($html, 'data-date-picker-hidden-input');
-        $this->assertStringContainsString('name="birthDate"', $hiddenInputTag);
-        $this->assertStringContainsString('disabled', $hiddenInputTag);
+        $input = $this->elementWith($html, 'data-date-picker-input');
+        $this->assertTrue($input->has('required'));
+        $this->assertTrue($input->has('disabled'));
+        $hiddenInput = $this->elementWith($html, 'data-date-picker-hidden-input');
+        $this->assertSame('birthDate', $hiddenInput->get('name'));
+        $this->assertTrue($hiddenInput->has('disabled'));
 
         // The Field's label and control ids have to land on the label and input part, which Zag
         // reads from `ids` - FieldIdMapping names them.
@@ -427,20 +402,5 @@ final class DatePickerRenderingTest extends FunctionalTestCase
         $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
 
         return array_values($hydrationData['date-picker'])[0]['props'];
-    }
-
-    /**
-     * The opening tag of the element carrying `$attribute`, and `$alsoContaining` if given.
-     */
-    private function extractTag(string $html, string $attribute, string $alsoContaining = ''): string
-    {
-        preg_match_all('/<[a-z]+[^>]*' . preg_quote($attribute, '/') . '="[^"]*"[^>]*>/', $html, $matches);
-        $tags = array_values(array_filter(
-            $matches[0],
-            static fn(string $tag): bool => $alsoContaining === '' || str_contains($tag, $alsoContaining),
-        ));
-        $this->assertCount(1, $tags, sprintf('Expected exactly one element with %s %s.', $attribute, $alsoContaining));
-
-        return $tags[0];
     }
 }

@@ -52,6 +52,22 @@ class NumberInputContext extends AbstractComponentContext
         ]);
     }
 
+    // `f:if` treats a `0` as false, so the template cannot ask for the value, `min` or `max` itself
+    public function getHasDefaultValue(): bool
+    {
+        return $this->getDefaultValue() !== '';
+    }
+
+    public function getHasMin(): bool
+    {
+        return Typed::floatOrNull($this->get('min')) !== null;
+    }
+
+    public function getHasMax(): bool
+    {
+        return Typed::floatOrNull($this->get('max')) !== null;
+    }
+
     public function getFormattedValue(): string
     {
         // For server-side rendering, we just return the raw value

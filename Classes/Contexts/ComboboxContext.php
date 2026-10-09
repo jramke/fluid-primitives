@@ -59,7 +59,7 @@ class ComboboxContext extends AbstractComponentContext
      */
     public function getHiddenInputValues(): array
     {
-        return $this->getDefaultValue() ?? [''];
+        return $this->getDefaultValue() ?: [''];
     }
 
     /**

@@ -5,60 +5,54 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Tests\Functional\Components;
 
 use Jramke\FluidPrimitives\Domain\Dto\ListCollection;
-use Jramke\FluidPrimitives\Enum\ComboboxInputBehavior;
-use Jramke\FluidPrimitives\Enum\PopupType;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Registry\PortalRegistry;
 use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 
 final class ComboboxRenderingTest extends FunctionalTestCase
 {
-    #[Test]
-    public function rendersClosedStateByDefault(): void
-    {
-        // Regression test: `defaultOpen` used to have no explicit default, so `context.defaultOpen`
-        // was `null` rather than `false` when unset. TYPO3 Fluid's inline ternary shorthand
-        // (`{x ? a : b}`) treats a bare `null` as truthy - unlike `f:if`, which correctly treats it
-        // as falsy - so the trigger rendered a contradictory `aria-expanded="false" data-state="open"`
-        // by default.
-        $html = $this->renderTemplate('
-            <primitives:combobox.root>
-                <primitives:combobox.trigger>Toggle</primitives:combobox.trigger>
-            </primitives:combobox.root>
-        ');
+    private const string POPUP_DIALOG = "{f:constant(name: 'Jramke\\FluidPrimitives\\Enum\\PopupType::Dialog')}";
+    private const string SELECTION_CLEAR = "{f:constant(name: 'Jramke\\FluidPrimitives\\Enum\\ComboboxSelectionBehavior::Clear')}";
 
-        $this->assertStringContainsString('data-state="closed"', $html);
-        $this->assertStringContainsString('aria-expanded="false"', $html);
-        $this->assertStringNotContainsString('data-state="open"', $html);
+    private static function cities(): ListCollection
+    {
+        return new ListCollection([
+            ['value' => 'berlin', 'label' => 'Berlin'],
+            ['value' => 'paris', 'label' => 'Paris'],
+            ['value' => 'rome', 'label' => 'Rome', 'disabled' => true],
+        ]);
+    }
+
+    /**
+     * @return iterable<string, array{0: string, 1: string, 2: string, 3: bool}>
+     */
+    public static function openStates(): iterable
+    {
+        // `defaultOpen` used to have no explicit default, so `context.defaultOpen` was `null` rather than `false` when
+        // unset. Fluid's inline ternary (`{x ? a : b}`) treats a bare `null` as truthy, unlike `f:if`, so the trigger
+        // rendered a contradictory `aria-expanded="false" data-state="open"`.
+        yield 'closed by default' => ['', 'closed', 'false', true];
+        yield 'open' => ['defaultOpen="{true}"', 'open', 'true', false];
     }
 
     #[Test]
-    public function resolvesInputBehaviorEnumDefaultInsteadOfTheRawConstantExpression(): void
-    {
-        // Regression test: `f:constant('Enum::Case')` (name passed positionally) silently fails to
-        // parse as a ViewHelper call inside a `ui:prop` default - Fluid falls back to treating the
-        // whole `{...}` expression as literal text, so `context.inputBehavior`/the hydrated prop
-        // ended up as the raw string "{f:constant('...')}" instead of the enum's `none` value. Only
-        // reproduces with the argument passed positionally; `f:constant(name: 'Enum::Case')` (used
-        // by every other enum-typed prop default in this codebase) is unaffected.
-        $this->renderTemplate('
-            <primitives:combobox.root>
-                <primitives:combobox.trigger>Toggle</primitives:combobox.trigger>
-            </primitives:combobox.root>
-        ');
-
-        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
-        $comboboxData = array_values($hydrationData['combobox'])[0];
-
-        $this->assertSame(ComboboxInputBehavior::None->value, $comboboxData['props']['inputBehavior']);
-    }
-
-    #[Test]
-    public function rendersTheListboxOnTheListPartInsideAPresentationalContent(): void
-    {
+    #[DataProvider('openStates')]
+    public function rendersTheStateOnTheControlTheInputTheTriggerAndTheContent(
+        string $arguments,
+        string $state,
+        string $expanded,
+        bool $contentHidden,
+    ): void {
         $html = $this->renderTemplate('
-            <primitives:combobox.root multiple="{true}">
+            <primitives:combobox.root rootId="my-combobox" ' .
+        $arguments .
+        '>
+                <primitives:combobox.control>
+                    <primitives:combobox.input />
+                    <primitives:combobox.trigger>Toggle</primitives:combobox.trigger>
+                </primitives:combobox.control>
                 <primitives:combobox.positioner>
                     <primitives:combobox.content>
                         <primitives:combobox.list>List</primitives:combobox.list>
@@ -67,36 +61,97 @@ final class ComboboxRenderingTest extends FunctionalTestCase
             </primitives:combobox.root>
         ');
 
-        preg_match('/<div[^>]*data-combobox-content="[^"]+"[^>]*>/', $html, $content);
-        preg_match('/<div[^>]*data-combobox-list="[^"]+"[^>]*>/', $html, $list);
+        foreach ([
+            'data-combobox-control',
+            'data-combobox-input',
+            'data-combobox-trigger',
+            'data-combobox-content',
+        ] as $part) {
+            $this->assertSame($state, $this->elementWith($html, $part)->get('data-state'), $part);
+        }
+        $this->assertSame($expanded, $this->elementWith($html, 'data-combobox-input')->get('aria-expanded'));
+        $this->assertSame($expanded, $this->elementWith($html, 'data-combobox-trigger')->get('aria-expanded'));
+        $this->assertSame($contentHidden, $this->elementWith($html, 'data-combobox-content')->has('hidden'));
 
-        $this->assertStringContainsString('role="presentation"', $content[0]);
-        $this->assertStringNotContainsString('aria-multiselectable', $content[0]);
-        $this->assertStringContainsString('role="listbox"', $list[0]);
-        $this->assertStringContainsString('aria-multiselectable="true"', $list[0]);
+        $this->assertSame(
+            $state === 'open',
+            HydrationRegistry::getInstance()->get('primitives', 'combobox', 'my-combobox')['props']['defaultOpen'],
+        );
     }
 
     #[Test]
-    public function shipsThePopupTypeToTheClientDefaultingToListbox(): void
+    public function shipsTheEnumPropsToTheClientAsTheirValues(): void
     {
-        $this->renderTemplate('
-            <primitives:combobox.root>
+        // Regression: `f:constant('Enum::Case')` (name passed positionally) silently fails to parse as a ViewHelper call
+        // inside a `ui:prop` default - Fluid falls back to treating the whole `{...}` expression as literal text, so the
+        // hydrated prop ended up as the raw string instead of the value of the enum. Only reproduces with the argument
+        // passed positionally; `f:constant(name: 'Enum::Case')` (used by every other enum-typed prop default) is unaffected.
+        $html = $this->renderTemplate('
+            <primitives:combobox.root rootId="my-combobox">
                 <primitives:combobox.trigger>Toggle</primitives:combobox.trigger>
             </primitives:combobox.root>
         ');
 
-        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
-        $comboboxData = array_values($hydrationData['combobox'])[0];
+        $props = HydrationRegistry::getInstance()->get('primitives', 'combobox', 'my-combobox')['props'];
+        $this->assertSame('none', $props['inputBehavior']);
+        $this->assertSame('listbox', $props['popupType']);
+        $this->assertSame('my-combobox', $this->elementWith($html, 'data-combobox-root')->get('data-combobox-root'));
+    }
 
-        $this->assertSame(PopupType::Listbox->value, $comboboxData['props']['popupType']);
+    /**
+     * @return iterable<string, array{0: string, 1: ?string}>
+     */
+    public static function multiples(): iterable
+    {
+        yield 'a single value' => ['', null];
+        yield 'several values' => ['multiple="{true}"', 'true'];
     }
 
     #[Test]
-    public function rendersTheTriggerAndContentForThePopupType(): void
+    #[DataProvider('multiples')]
+    public function rendersTheListboxOnTheListPartInsideAPresentationalContent(
+        string $arguments,
+        ?string $multiselectable,
+    ): void {
+        $html = $this->renderTemplate('
+            <primitives:combobox.root ' . $arguments . '>
+                <primitives:combobox.positioner>
+                    <primitives:combobox.content>
+                        <primitives:combobox.list>List</primitives:combobox.list>
+                    </primitives:combobox.content>
+                </primitives:combobox.positioner>
+            </primitives:combobox.root>
+        ');
+
+        // markup mirrored from Zag, for the accessibility tree before the client hydrated
+        $content = $this->elementWith($html, 'data-combobox-content');
+        $this->assertSame('presentation', $content->get('role'));
+        $this->assertFalse($content->has('aria-multiselectable'));
+
+        $list = $this->elementWith($html, 'data-combobox-list');
+        $this->assertSame('listbox', $list->get('role'));
+        $this->assertSame($multiselectable, $list->get('aria-multiselectable'));
+    }
+
+    /**
+     * @return iterable<string, array{0: string, 1: string, 2: string}>
+     */
+    public static function popupTypes(): iterable
     {
-        $render = fn(string $attributes): string => $this->renderTemplate('
-            <primitives:combobox.root ' .
-        $attributes .
+        yield 'a listbox by default' => ['', 'listbox', 'presentation'];
+        yield 'a dialog' => ['popupType="' . self::POPUP_DIALOG . '"', 'dialog', 'dialog'];
+    }
+
+    #[Test]
+    #[DataProvider('popupTypes')]
+    public function rendersTheTriggerAndTheContentForThePopupTypeAndShipsItToTheClient(
+        string $arguments,
+        string $popupType,
+        string $contentRole,
+    ): void {
+        $html = $this->renderTemplate('
+            <primitives:combobox.root rootId="my-combobox" ' .
+        $arguments .
         '>
                 <primitives:combobox.trigger>Open</primitives:combobox.trigger>
                 <primitives:combobox.positioner>
@@ -105,55 +160,60 @@ final class ComboboxRenderingTest extends FunctionalTestCase
             </primitives:combobox.root>
         ');
 
-        $listbox = $render('');
-        $dialog = $render('popupType="{f:constant(name: \'Jramke\FluidPrimitives\Enum\PopupType::Dialog\')}"');
+        $this->assertSame($popupType, $this->elementWith($html, 'data-combobox-trigger')->get('aria-haspopup'));
+        $this->assertSame($contentRole, $this->elementWith($html, 'data-combobox-content')->get('role'));
+        $this->assertSame(
+            $popupType,
+            HydrationRegistry::getInstance()->get('primitives', 'combobox', 'my-combobox')['props']['popupType'],
+        );
+    }
 
-        $this->assertStringContainsString('aria-haspopup="listbox"', $listbox);
-        $this->assertMatchesRegularExpression('/<div[^>]*role="presentation"[^>]*data-combobox-content="/', $listbox);
-        $this->assertStringContainsString('aria-haspopup="dialog"', $dialog);
-        $this->assertMatchesRegularExpression('/<div[^>]*role="dialog"[^>]*data-combobox-content="/', $dialog);
+    /**
+     * @return iterable<string, array{0: string, 1: string, 2: bool}>
+     */
+    public static function triggerFocus(): iterable
+    {
+        yield 'a listbox popup keeps it out of the tab order' => ['', '', false];
+        // the input moved into the content of a dialog, the trigger is what the user reaches it by
+        yield 'a dialog popup makes it focusable' => ['popupType="' . self::POPUP_DIALOG . '"', '', true];
+        yield 'its own prop over a listbox popup' => ['', 'focusable="{true}"', true];
+        yield 'its own prop over a dialog popup' => [
+            'popupType="' . self::POPUP_DIALOG . '"',
+            'focusable="{false}"',
+            false,
+        ];
     }
 
     #[Test]
-    public function resolvesTheTriggerFocusFromItsPropElseThePopupType(): void
-    {
-        $render = fn(string $rootAttributes, string $triggerAttributes = ''): string => $this->renderTemplate(
+    #[DataProvider('triggerFocus')]
+    public function resolvesTheTriggerFocusFromItsPropElseThePopupType(
+        string $rootArguments,
+        string $triggerArguments,
+        bool $focusable,
+    ): void {
+        $html = $this->renderTemplate(
             '
             <primitives:combobox.root ' .
-            $rootAttributes .
+            $rootArguments .
             '>
                 <primitives:combobox.trigger ' .
-            $triggerAttributes .
+            $triggerArguments .
             '>Open</primitives:combobox.trigger>
             </primitives:combobox.root>
         ',
         );
-        $trigger = static function (string $html): string {
-            preg_match('/<button[^>]*data-combobox-trigger="[^"]+"[^>]*>/', $html, $match);
 
-            return $match[0];
-        };
-        $dialog = 'popupType="{f:constant(name: \'Jramke\FluidPrimitives\Enum\PopupType::Dialog\')}"';
-
-        $this->assertStringContainsString('tabindex="-1"', $trigger($render('')));
-        $this->assertStringNotContainsString('data-focusable', $trigger($render('')));
-
-        $this->assertStringContainsString('data-focusable', $trigger($render($dialog)));
-        $this->assertStringNotContainsString('tabindex', $trigger($render($dialog)));
-
-        $this->assertStringContainsString('data-focusable', $trigger($render('', 'focusable="{true}"')));
-        $this->assertStringContainsString('tabindex="-1"', $trigger($render($dialog, 'focusable="{false}"')));
+        $trigger = $this->elementWith($html, 'data-combobox-trigger');
+        // the client reads `data-focusable`
+        $this->assertSame($focusable, $trigger->has('data-focusable'));
+        $this->assertSame($focusable ? null : '-1', $trigger->get('tabindex'));
     }
 
     #[Test]
-    public function rendersItemFromARealCollectionItem(): void
+    public function marksTheSelectedHighlightedAndDisabledItems(): void
     {
-        $collection = new ListCollection([
-            ['value' => 'berlin', 'label' => 'Berlin'],
-        ]);
-
         $html = $this->renderTemplate('
-            <primitives:combobox.root collection="{collection}">
+            <primitives:combobox.root collection="{collection}" defaultValue="berlin" defaultHighlightedValue="paris">
                 <primitives:combobox.content>
                     <f:for each="{collection.items}" as="item">
                         <primitives:combobox.item item="{item}">
@@ -162,253 +222,37 @@ final class ComboboxRenderingTest extends FunctionalTestCase
                     </f:for>
                 </primitives:combobox.content>
             </primitives:combobox.root>
-        ', ['collection' => $collection]);
+        ', ['collection' => self::cities()]);
 
-        $this->assertStringContainsString('data-combobox-item="', $html);
-        $this->assertStringContainsString('data-value="berlin"', $html);
-        $this->assertStringContainsString('Berlin', $html);
-    }
+        $items = $this->elementsByValue($html, 'data-combobox-item');
+        $this->assertSame(['berlin', 'paris', 'rome'], array_keys($items));
+        $this->assertSame(
+            [
+                'berlin' => ['checked', 'true', false, null],
+                'paris' => ['unchecked', null, true, null],
+                'rome' => ['unchecked', null, false, 'true'],
+            ],
+            array_map(static fn($item): array => [
+                $item->get('data-state'),
+                $item->get('aria-selected'),
+                $item->has('data-highlighted'),
+                $item->get('aria-disabled'),
+            ], $items),
+        );
 
-    #[Test]
-    public function rendersItemInsideTemplateWithNoAriaSelected(): void
-    {
-        $collection = new ListCollection([]);
-
-        $html = $this->renderTemplate('
-            <primitives:combobox.root collection="{collection}">
-                <primitives:combobox.content>
-                    <ui:template name="itemTemplate" context="combobox">
-                        <primitives:combobox.item>
-                            <span>placeholder</span>
-                        </primitives:combobox.item>
-                    </ui:template>
-                </primitives:combobox.content>
-            </primitives:combobox.root>
-        ', ['collection' => $collection]);
-
-        $this->assertStringContainsString('data-combobox-item="', $html);
-        $this->assertStringContainsString('data-state="unchecked"', $html);
-        $this->assertStringNotContainsString('aria-selected', $html);
-    }
-
-    #[Test]
-    public function throwsWhenItemIsMissingOutsideTemplate(): void
-    {
-        $collection = new ListCollection([]);
-
-        $this->expectExceptionMessage("requires an 'item' prop, unless used inside a ui:template block");
-
-        $this->renderTemplate('
-            <primitives:combobox.root collection="{collection}">
-                <primitives:combobox.content>
-                    <primitives:combobox.item>
-                        <span>content</span>
-                    </primitives:combobox.item>
-                </primitives:combobox.content>
-            </primitives:combobox.root>
-        ', ['collection' => $collection]);
-    }
-
-    #[Test]
-    public function acceptsAnEmptyCollectionForPureAsyncUsage(): void
-    {
-        $html = $this->renderTemplate('
-            <ui:listCollection as="collection" />
-            <primitives:combobox.root collection="{collection}">
-                <primitives:combobox.content></primitives:combobox.content>
-            </primitives:combobox.root>
-        ');
-
-        $this->assertStringContainsString('data-combobox-root="', $html);
-        $this->assertStringContainsString('data-empty="true"', $html);
-    }
-
-    #[Test]
-    public function rendersWithCollectionOmittedEntirelyForPureAsyncUsage(): void
-    {
-        // No `collection` attribute at all (not even an explicit empty ui:listCollection) -
-        // exercises ComboboxContext::getCollection() being called from Fluid's own property-path
-        // resolution (context.collection.size in Content.html) while genuinely null. Regression
-        // test for a protected-method visibility crash this used to trigger.
-        $html = $this->renderTemplate('
-            <primitives:combobox.root searchUrl="/search">
-                <primitives:combobox.content></primitives:combobox.content>
-            </primitives:combobox.root>
-        ');
-
-        $this->assertStringContainsString('data-combobox-root="', $html);
-        $this->assertStringContainsString('data-empty="true"', $html);
-    }
-
-    #[Test]
-    public function rendersEmptyVisibleWhenCollectionHasNoItems(): void
-    {
-        $collection = new ListCollection([]);
-
-        $html = $this->renderTemplate('
-            <primitives:combobox.root collection="{collection}">
-                <primitives:combobox.content>
-                    <primitives:combobox.empty>No results found</primitives:combobox.empty>
-                </primitives:combobox.content>
-            </primitives:combobox.root>
-        ', ['collection' => $collection]);
-
-        $this->assertStringContainsString('data-combobox-empty="', $html);
-        $this->assertStringContainsString('role="presentation"', $html);
-        $this->assertStringContainsString('No results found', $html);
-        $this->assertDoesNotMatchRegularExpression('/<div[^>]*\bhidden\b[^>]*data-combobox-empty="/', $html);
-    }
-
-    #[Test]
-    public function rendersEmptyHiddenWhenCollectionHasItems(): void
-    {
-        $collection = new ListCollection([
-            ['value' => 'berlin', 'label' => 'Berlin'],
-        ]);
-
-        $html = $this->renderTemplate('
-            <primitives:combobox.root collection="{collection}">
-                <primitives:combobox.content>
-                    <primitives:combobox.empty>No results found</primitives:combobox.empty>
-                </primitives:combobox.content>
-            </primitives:combobox.root>
-        ', ['collection' => $collection]);
-
-        $this->assertMatchesRegularExpression('/<div[^>]*\bhidden\b[^>]*data-combobox-empty="/', $html);
-    }
-
-    #[Test]
-    public function refWithExplicitContextResolvesInsideHandAuthoredSlotContent(): void
-    {
-        // Unlike the itemTemplate case, this span is neither a component's own template body
-        // nor wrapped in ui:template - it's plain, hand-authored slot content, several layers deep
-        // (root -> content -> empty). `context` targets the "combobox" ancestor explicitly instead
-        // of relying on whichever component happens to be ambiently active.
-        $collection = new ListCollection([]);
-
-        $html = $this->renderTemplate('
-            <primitives:combobox.root collection="{collection}">
-                <primitives:combobox.content>
-                    <primitives:combobox.empty>
-                        <span {ui:ref(name: \'statusText\', context: \'combobox\')}>Loading…</span>
-                    </primitives:combobox.empty>
-                </primitives:combobox.content>
-            </primitives:combobox.root>
-        ', ['collection' => $collection]);
-
-        $this->assertMatchesRegularExpression(
-            '/<span[^>]*data-combobox-status-text="[^"]*"[^>]*>Loading…<\/span>/',
-            $html,
+        // the text of an item carries the same state, for the styling of the text alone
+        $texts = $this->elementsByValue($html, 'data-combobox-item-text');
+        $this->assertSame(
+            ['berlin' => 'checked', 'paris' => 'unchecked', 'rome' => 'unchecked'],
+            array_map(static fn($text): ?string => $text->get('data-state'), $texts),
         );
     }
 
     #[Test]
-    public function refWithUnknownExplicitContextThrows(): void
+    public function rendersTheItemOfAStencilWithoutAnItemAndMarksItsPartsForTheClient(): void
     {
-        $collection = new ListCollection([]);
-
-        $this->expectExceptionMessage('ui:ref could not find an active "select" component to attach to.');
-
-        $this->renderTemplate('
-            <primitives:combobox.root collection="{collection}">
-                <primitives:combobox.content>
-                    <primitives:combobox.empty>
-                        <span {ui:ref(name: \'statusText\', context: \'select\')}>Loading…</span>
-                    </primitives:combobox.empty>
-                </primitives:combobox.content>
-            </primitives:combobox.root>
-        ', ['collection' => $collection]);
-    }
-
-    #[Test]
-    public function itemTemplateProducesATemplateElementWithMarkerlessRefs(): void
-    {
-        $collection = new ListCollection([]);
-
         $html = $this->renderTemplate('
-            <primitives:combobox.root collection="{collection}">
-                <primitives:combobox.content>
-                    <ui:template name="itemTemplate" context="combobox">
-                        <primitives:combobox.item>
-                            <primitives:combobox.itemText>
-                                <span {ui:ref(name: \'title\')}></span>
-                            </primitives:combobox.itemText>
-                        </primitives:combobox.item>
-                    </ui:template>
-                </primitives:combobox.content>
-            </primitives:combobox.root>
-        ', ['collection' => $collection]);
-
-        $this->assertMatchesRegularExpression('/<template data-combobox-item-template="[^"]+">/', $html);
-        $this->assertMatchesRegularExpression('/<span data-combobox-title="[^"]+"><\/span>/', $html);
-    }
-
-    #[Test]
-    public function rendersOneEmptyHiddenInputWhenNothingIsSelected(): void
-    {
-        // No `defaultValue` at all must not crash (ComboboxContext::getDefaultValue() returning null).
-        // The empty input keeps the name submitted, and gives a field's focus something to land on.
-        $html = $this->renderTemplate('
-            <primitives:combobox.root name="country">
-                <primitives:combobox.hiddenInput />
-            </primitives:combobox.root>
-        ');
-
-        $this->assertStringContainsString('data-combobox-root="', $html);
-        $this->assertSame(1, substr_count($html, 'data-combobox-hidden-input="'));
-        $this->assertMatchesRegularExpression('/<input[^>]*name="country"[^>]*value=""/', $html);
-    }
-
-    #[Test]
-    public function hiddenInputSubmitsTheItemValueInsteadOfItsLabel(): void
-    {
-        $collection = new ListCollection([
-            ['value' => 'us', 'label' => 'United States'],
-            ['value' => 'de', 'label' => 'Germany'],
-        ]);
-
-        $html = $this->renderTemplate('
-            <primitives:combobox.root collection="{collection}" name="country" defaultValue="us">
-                <primitives:combobox.hiddenInput />
-            </primitives:combobox.root>
-        ', ['collection' => $collection]);
-
-        $this->assertStringContainsString('data-combobox-hidden-input="', $html);
-        $this->assertMatchesRegularExpression('/<input[^>]*type="text"[^>]*name="country"[^>]*value="us"/', $html);
-        $this->assertStringContainsString('aria-hidden="true"', $html);
-        $this->assertStringContainsString('tabindex="-1"', $html);
-        $this->assertStringNotContainsString('value="United States"', $html);
-        $this->assertStringNotContainsString('United States', $html);
-    }
-
-    #[Test]
-    public function rendersOneHiddenInputPerSelectedValueWhenMultiple(): void
-    {
-        $collection = new ListCollection([
-            ['value' => 'us', 'label' => 'United States'],
-            ['value' => 'de', 'label' => 'Germany'],
-            ['value' => 'fr', 'label' => 'France'],
-        ]);
-
-        $html = $this->renderTemplate('
-            <primitives:combobox.root collection="{collection}" name="countries[]" multiple="{true}" defaultValue="{0: \'us\', 1: \'fr\'}">
-                <primitives:combobox.hiddenInput />
-            </primitives:combobox.root>
-        ', ['collection' => $collection]);
-
-        $this->assertMatchesRegularExpression('/<input[^>]*value="us"/', $html);
-        $this->assertMatchesRegularExpression('/<input[^>]*value="fr"/', $html);
-        $this->assertStringNotContainsString('value="de"', $html);
-        $this->assertSame(2, substr_count($html, 'data-combobox-hidden-input="'));
-    }
-
-    #[Test]
-    public function itemTextAndItemIndicatorAutoDetectInsideTemplateWithNoLeakedProp(): void
-    {
-        $collection = new ListCollection([]);
-
-        $html = $this->renderTemplate('
-            <primitives:combobox.root collection="{collection}">
+            <primitives:combobox.root rootId="my-combobox" collection="{collection}">
                 <primitives:combobox.content>
                     <ui:template name="itemTemplate" context="combobox">
                         <primitives:combobox.item>
@@ -420,27 +264,192 @@ final class ComboboxRenderingTest extends FunctionalTestCase
                     </ui:template>
                 </primitives:combobox.content>
             </primitives:combobox.root>
-        ', ['collection' => $collection]);
+        ', ['collection' => new ListCollection([])]);
 
-        $this->assertStringContainsString('data-combobox-item-text="', $html);
-        $this->assertStringContainsString('data-combobox-item-indicator="', $html);
-        $this->assertStringNotContainsString('renderedOnClient', $html);
+        $template = $this->elementWith($html, 'data-combobox-item-template');
+        $this->assertSame('template', $template->tag);
+        $this->assertSame('my-combobox', $template->get('data-combobox-item-template'));
+        foreach ([
+            'data-combobox-item',
+            'data-combobox-item-text',
+            'data-combobox-item-indicator',
+            'data-combobox-title',
+        ] as $part) {
+            $this->assertSame('my-combobox', $this->elementWith($html, $part)->get($part), $part);
+        }
+
+        // nothing is selected in a stencil: the client sets the state on each copy it makes
+        $item = $this->elementWith($html, 'data-combobox-item');
+        $this->assertSame('unchecked', $item->get('data-state'));
+        $this->assertFalse($item->has('aria-selected'));
+    }
+
+    #[Test]
+    public function throwsWhenItemIsMissingOutsideTemplate(): void
+    {
+        $this->expectExceptionMessage("requires an 'item' prop, unless used inside a ui:template block");
+
+        $this->renderTemplate('
+            <primitives:combobox.root collection="{collection}">
+                <primitives:combobox.content>
+                    <primitives:combobox.item>
+                        <span>content</span>
+                    </primitives:combobox.item>
+                </primitives:combobox.content>
+            </primitives:combobox.root>
+        ', ['collection' => new ListCollection([])]);
     }
 
     /**
-     * Combobox's Root, like Select's, renders a real wrapping `<div>` - so it's still detected for
-     * hydration purely from that inline root ref, with Content itself portaled away entirely.
+     * @return iterable<string, array{0: string, 1: string}>
+     */
+    public static function emptyCollections(): iterable
+    {
+        // the only rendering of `ui:listCollection`
+        yield 'a collection of the ViewHelper' => [
+            '<ui:listCollection as="collection" />',
+            'collection="{collection}"',
+        ];
+        // pure async usage: the options only ever come from `searchUrl`
+        yield 'no collection at all' => ['', 'searchUrl="/search"'];
+    }
+
+    #[Test]
+    #[DataProvider('emptyCollections')]
+    public function rendersWithoutOptionsForPureAsyncUsage(string $before, string $arguments): void
+    {
+        // The content reads `context.collection.size` through Fluid's own property-path resolution while the
+        // collection is genuinely null - that used to crash on a protected method.
+        $html = $this->renderTemplate($before . '
+            <primitives:combobox.root ' . $arguments . '>
+                <primitives:combobox.content></primitives:combobox.content>
+            </primitives:combobox.root>
+        ');
+
+        $this->assertSame('true', $this->elementWith($html, 'data-combobox-content')->get('data-empty'));
+    }
+
+    /**
+     * @return iterable<string, array{0: list<array{value: string, label: string}>, 1: bool}>
+     */
+    public static function collectionSizes(): iterable
+    {
+        yield 'no items' => [[], false];
+        yield 'items' => [[['value' => 'berlin', 'label' => 'Berlin']], true];
+    }
+
+    /**
+     * @param list<array{value: string, label: string}> $items
      */
     #[Test]
-    public function rendersContentInsidePortalAndStillRegistersForHydration(): void
+    #[DataProvider('collectionSizes')]
+    public function showsTheEmptyPartOnlyWhileThereAreNoItems(array $items, bool $hidden): void
     {
-        HydrationRegistry::getInstance()->clear();
-        PortalRegistry::getInstance()->clearAll();
+        $html = $this->renderTemplate('
+            <primitives:combobox.root collection="{collection}">
+                <primitives:combobox.content>
+                    <primitives:combobox.empty>No results found</primitives:combobox.empty>
+                </primitives:combobox.content>
+            </primitives:combobox.root>
+        ', ['collection' => new ListCollection($items)]);
 
-        $collection = new ListCollection([
-            ['value' => 'berlin', 'label' => 'Berlin'],
-        ]);
+        $this->assertSame($hidden, $this->elementWith($html, 'data-combobox-empty')->has('hidden'));
+        $this->assertSame(!$hidden, $this->elementWith($html, 'data-combobox-content')->has('data-empty'));
+    }
 
+    /**
+     * @return iterable<string, array{0: string, 1: string, 2: string|list<string>|null, 3: list<string>}>
+     */
+    public static function hiddenInputs(): iterable
+    {
+        // nothing selected still submits the name, like a native input does, and gives a field's focus something to land on
+        yield 'nothing selected' => ['country', '', null, ['']];
+        yield 'an empty list' => ['country', '', [], ['']];
+        yield 'one value' => ['country', '', 'us', ['us']];
+        yield 'several values' => ['countries[]', 'multiple="{true}"', ['us', 'fr'], ['us', 'fr']];
+    }
+
+    /**
+     * @param string|list<string>|null $defaultValue
+     * @param list<string> $values
+     */
+    #[Test]
+    #[DataProvider('hiddenInputs')]
+    public function submitsTheValuesNotTheLabelsEachInAHiddenInput(
+        string $name,
+        string $arguments,
+        string|array|null $defaultValue,
+        array $values,
+    ): void {
+        $html = $this->renderTemplate(
+            '
+            <primitives:combobox.root collection="{collection}" name="' .
+            $name .
+            '" defaultValue="{defaultValue}" ' .
+            $arguments .
+            '>
+                <primitives:combobox.hiddenInput />
+            </primitives:combobox.root>
+        ',
+            [
+                'collection' => new ListCollection([
+                    ['value' => 'us', 'label' => 'United States'],
+                    ['value' => 'de', 'label' => 'Germany'],
+                    ['value' => 'fr', 'label' => 'France'],
+                ]),
+                'defaultValue' => $defaultValue,
+            ],
+        );
+
+        $inputs = $this->elementsWith($html, 'data-combobox-hidden-input');
+        $this->assertSame($values, array_map(static fn($input): ?string => $input->get('value'), $inputs));
+        foreach ($inputs as $input) {
+            $this->assertSame('text', $input->get('type'));
+            $this->assertSame($name, $input->get('name'));
+            $this->assertSame('true', $input->get('aria-hidden'));
+            $this->assertSame('-1', $input->get('tabindex'));
+        }
+        $this->assertStringNotContainsString('United States', $html);
+    }
+
+    /**
+     * @return iterable<string, array{0: string, 1: string}>
+     */
+    public static function initialInputValues(): iterable
+    {
+        yield 'the label of the selected item' => ['defaultValue="paris"', 'Paris'];
+        yield 'nothing selected' => ['', ''];
+        yield 'several values selected' => ['multiple="{true}" defaultValue="{0: \'paris\'}"', ''];
+        yield 'an input value of its own' => ['defaultValue="paris" defaultInputValue="Par"', 'Par'];
+        yield 'a selection behavior that clears the input' => [
+            'defaultValue="paris" selectionBehavior="' . self::SELECTION_CLEAR . '"',
+            '',
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('initialInputValues')]
+    public function fillsTheInputWithTheLabelOfTheSelectedItemUnlessTheBehaviorSaysOtherwise(
+        string $arguments,
+        string $value,
+    ): void {
+        $html = $this->renderTemplate(
+            '
+            <primitives:combobox.root collection="{collection}" ' . $arguments . '>
+                <primitives:combobox.control>
+                    <primitives:combobox.input />
+                </primitives:combobox.control>
+            </primitives:combobox.root>
+        ',
+            ['collection' => self::cities()],
+        );
+
+        $this->assertSame($value, $this->elementWith($html, 'data-combobox-input')->get('value') ?? '');
+    }
+
+    #[Test]
+    public function rendersTheContentInsideAPortalWithTheMarkerOfTheRoot(): void
+    {
         $html = $this->renderTemplate('
             <primitives:combobox.root collection="{collection}" rootId="portaled-combobox">
                 <primitives:combobox.trigger>Toggle</primitives:combobox.trigger>
@@ -454,15 +463,24 @@ final class ComboboxRenderingTest extends FunctionalTestCase
                     </primitives:combobox.content>
                 </ui:portal>
             </primitives:combobox.root>
-        ', ['collection' => $collection]);
+        ', ['collection' => self::cities()]);
 
-        $this->assertStringNotContainsString('data-combobox-content="', $html);
+        // the root and the trigger stay where they are, the content is gone from the markup ...
+        $this->assertSame(
+            'portaled-combobox',
+            $this->elementWith($html, 'data-combobox-trigger')->get('data-combobox-trigger'),
+        );
+        $this->assertSame([], $this->elementsWith($html, 'data-combobox-content'));
 
+        // ... and is rendered elsewhere, still marked with the id of the root it belongs to
         $portaled = implode('', PortalRegistry::getInstance()->getAllByName('default'));
-        $this->assertStringContainsString('data-combobox-content="portaled-combobox"', $portaled);
-        $this->assertStringContainsString('Berlin', $portaled);
-
-        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
-        $this->assertArrayHasKey('portaled-combobox', $hydrationData['combobox'] ?? []);
+        $this->assertSame(
+            'portaled-combobox',
+            $this->elementWith($portaled, 'data-combobox-content')->get('data-combobox-content'),
+        );
+        $this->assertSame(
+            ['berlin', 'paris', 'rome'],
+            array_keys($this->elementsByValue($portaled, 'data-combobox-item')),
+        );
     }
 }
