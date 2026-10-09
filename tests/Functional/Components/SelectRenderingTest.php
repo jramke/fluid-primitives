@@ -5,259 +5,326 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Tests\Functional\Components;
 
 use Jramke\FluidPrimitives\Domain\Dto\ListCollection;
-use Jramke\FluidPrimitives\Enum\PopupType;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
-use Jramke\FluidPrimitives\Registry\PortalRegistry;
 use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 
 final class SelectRenderingTest extends FunctionalTestCase
 {
-    #[Test]
-    public function rendersWithCollectionOmittedEntirely(): void
-    {
-        // Regression test: SelectContext::getCollection() was `protected`, which crashed with a
-        // visibility error the moment Fluid's own property-path resolution (context.collection.items
-        // in HiddenSelect.html) tried to read it while genuinely null (collection not provided at all).
-        $html = $this->renderTemplate('
-            <primitives:select.root>
-                <primitives:select.hiddenSelect />
-            </primitives:select.root>
-        ');
+    private const string POPUP_DIALOG = "{f:constant(name: 'Jramke\\FluidPrimitives\\Enum\\PopupType::Dialog')}";
 
-        $this->assertStringContainsString('data-select-hidden-select="', $html);
+    private static function collection(): ListCollection
+    {
+        return new ListCollection([
+            ['value' => 'opt-1', 'label' => 'Option 1'],
+            ['value' => 'opt-2', 'label' => 'Option 2', 'disabled' => true],
+            ['value' => 'opt-3', 'label' => 'Option 3'],
+        ]);
+    }
+
+    /**
+     * @return iterable<string, array{0: string, 1: string, 2: bool}>
+     */
+    public static function openStates(): iterable
+    {
+        // `defaultOpen` used to have no explicit default, so `context.defaultOpen` was `null` rather than `false` when
+        // unset. Fluid's inline ternary (`{x ? a : b}`) treats a bare `null` as truthy, unlike `f:if`, so the parts
+        // rendered `data-state="open"` by default.
+        yield 'closed by default' => ['', 'closed', false];
+        yield 'open' => ['defaultOpen="{true}"', 'open', true];
     }
 
     #[Test]
-    public function rendersClosedStateByDefault(): void
-    {
-        // Regression test: `defaultOpen` used to have no explicit default, so `context.defaultOpen`
-        // was `null` rather than `false` when unset. TYPO3 Fluid's inline ternary shorthand
-        // (`{x ? a : b}`) treats a bare `null` as truthy - unlike `f:if`, which correctly treats it
-        // as falsy - so the content/control/indicator/trigger parts rendered `data-state="open"` by
-        // default.
-        $collection = new ListCollection([
-            ['value' => 'opt-1', 'label' => 'Option 1'],
-        ]);
-
-        $html = $this->renderTemplate('
-            <primitives:select.root collection="{collection}">
+    #[DataProvider('openStates')]
+    public function rendersTheStateOnTheControlTheTriggerAndTheContent(
+        string $arguments,
+        string $state,
+        bool $open,
+    ): void {
+        $html = $this->renderTemplate(
+            '
+            <primitives:select.root rootId="my-select" collection="{collection}" ' . $arguments . '>
                 <primitives:select.control>
                     <primitives:select.trigger>Select an option</primitives:select.trigger>
                 </primitives:select.control>
-            </primitives:select.root>
-        ', ['collection' => $collection]);
-
-        $this->assertStringContainsString('data-state="closed"', $html);
-        $this->assertStringNotContainsString('data-state="open"', $html);
-    }
-
-    #[Test]
-    public function rendersSelectRootWithDataAttributes(): void
-    {
-        $collection = new ListCollection([
-            ['value' => 'opt-1', 'label' => 'Option 1'],
-            ['value' => 'opt-2', 'label' => 'Option 2'],
-        ]);
-
-        $html = $this->renderTemplate('
-            <primitives:select.root collection="{collection}">
-                <primitives:select.control>
-                    <primitives:select.trigger>Select an option</primitives:select.trigger>
-                </primitives:select.control>
-            </primitives:select.root>
-        ', ['collection' => $collection]);
-
-        $this->assertStringContainsString('data-select-root="', $html);
-    }
-
-    #[Test]
-    public function rendersTriggerAsComboboxButton(): void
-    {
-        $collection = new ListCollection([
-            ['value' => 'opt-1', 'label' => 'Option 1'],
-        ]);
-
-        $html = $this->renderTemplate('
-            <primitives:select.root collection="{collection}">
-                <primitives:select.control>
-                    <primitives:select.trigger>Select</primitives:select.trigger>
-                </primitives:select.control>
-            </primitives:select.root>
-        ', ['collection' => $collection]);
-
-        $this->assertStringContainsString('<button', $html);
-        $this->assertStringContainsString('type="button"', $html);
-        $this->assertStringContainsString('role="combobox"', $html);
-        $this->assertStringContainsString('aria-haspopup="listbox"', $html);
-    }
-
-    #[Test]
-    public function rendersTheListboxOnTheListPartInsideAPresentationalContent(): void
-    {
-        $collection = new ListCollection([['value' => 'opt-1', 'label' => 'Option 1']]);
-
-        $html = $this->renderTemplate('
-            <primitives:select.root collection="{collection}" multiple="{true}">
                 <primitives:select.positioner>
                     <primitives:select.content>
-                        <primitives:select.list>
-                            <primitives:select.item item="{collection.items.0}">Option 1</primitives:select.item>
-                        </primitives:select.list>
+                        <primitives:select.list>List</primitives:select.list>
                     </primitives:select.content>
                 </primitives:select.positioner>
             </primitives:select.root>
-        ', ['collection' => $collection]);
+        ',
+            ['collection' => self::collection()],
+        );
 
-        preg_match('/<div[^>]*data-select-content="[^"]+"[^>]*>/', $html, $content);
-        preg_match('/<div[^>]*data-select-list="[^"]+"[^>]*>/', $html, $list);
+        // what the client queries every part by
+        $this->assertSame('my-select', $this->elementWith($html, 'data-select-root')->get('data-select-root'));
+        foreach (['data-select-control', 'data-select-trigger', 'data-select-content'] as $part) {
+            $this->assertSame($state, $this->elementWith($html, $part)->get('data-state'), $part);
+        }
 
-        $this->assertStringContainsString('role="presentation"', $content[0]);
-        $this->assertStringNotContainsString('tabindex', $content[0]);
-        $this->assertStringContainsString('role="listbox"', $list[0]);
-        $this->assertStringContainsString('tabindex="0"', $list[0]);
-        $this->assertStringContainsString('aria-multiselectable="true"', $list[0]);
+        $trigger = $this->elementWith($html, 'data-select-trigger');
+        $this->assertSame('button', $trigger->tag);
+        // a button inside a form submits it when clicked, before the client has hydrated
+        $this->assertSame('button', $trigger->get('type'));
+        $this->assertSame('combobox', $trigger->get('role'));
+        $this->assertSame($open, $trigger->has('data-expanded'));
+
+        $this->assertSame(
+            $open,
+            HydrationRegistry::getInstance()->get('primitives', 'select', 'my-select')['props']['defaultOpen'],
+        );
     }
 
     #[Test]
-    public function shipsThePopupTypeToTheClientDefaultingToListbox(): void
+    public function marksTheTriggerDisabledInvalidAndReadOnly(): void
     {
-        $this->renderTemplate('
-            <primitives:select.root>
+        $html = $this->renderTemplate('
+            <primitives:select.root collection="{collection}" disabled="{true}" invalid="{true}" readOnly="{true}">
+                <primitives:select.control>
+                    <primitives:select.trigger>Select an option</primitives:select.trigger>
+                </primitives:select.control>
+            </primitives:select.root>
+        ', ['collection' => self::collection()]);
+
+        $trigger = $this->elementWith($html, 'data-select-trigger');
+        foreach (['data-disabled', 'data-invalid', 'data-readonly', 'disabled'] as $flag) {
+            $this->assertTrue($trigger->has($flag), $flag);
+        }
+    }
+
+    /**
+     * @return iterable<string, array{0: string, 1: bool}>
+     */
+    public static function selections(): iterable
+    {
+        yield 'nothing selected' => ['', true];
+        yield 'a value selected' => ['defaultValue="opt-3"', false];
+    }
+
+    #[Test]
+    #[DataProvider('selections')]
+    public function showsThePlaceholderOnTheTriggerOnlyWhileNothingIsSelected(
+        string $arguments,
+        bool $placeholderShown,
+    ): void {
+        $html = $this->renderTemplate(
+            '
+            <primitives:select.root collection="{collection}" ' . $arguments . '>
+                <primitives:select.control>
+                    <primitives:select.trigger>Select an option</primitives:select.trigger>
+                </primitives:select.control>
+            </primitives:select.root>
+        ',
+            ['collection' => self::collection()],
+        );
+
+        $this->assertSame(
+            $placeholderShown,
+            $this->elementWith($html, 'data-select-trigger')->has('data-placeholder-shown'),
+        );
+    }
+
+    #[Test]
+    public function marksTheSelectedAndTheDisabledItemsAndSelectsTheNativeOption(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:select.root collection="{collection}" defaultValue="opt-3">
+                <primitives:select.positioner>
+                    <primitives:select.content>
+                        <primitives:select.list>
+                            <f:for each="{collection.items}" as="item">
+                                <primitives:select.item item="{item}">{item.label}</primitives:select.item>
+                            </f:for>
+                        </primitives:select.list>
+                    </primitives:select.content>
+                </primitives:select.positioner>
                 <primitives:select.hiddenSelect />
             </primitives:select.root>
-        ');
+        ', ['collection' => self::collection()]);
 
-        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
-        $selectData = array_values($hydrationData['select'])[0];
+        $items = $this->elementsByValue($html, 'data-select-item');
+        $this->assertSame(['opt-1', 'opt-2', 'opt-3'], array_keys($items));
+        $this->assertSame(
+            ['opt-1' => [null, false, false], 'opt-2' => [null, false, true], 'opt-3' => ['true', true, false]],
+            array_map(static fn($item): array => [
+                $item->get('aria-selected'),
+                $item->has('data-selected'),
+                $item->has('data-disabled'),
+            ], $items),
+        );
+        $this->assertSame('true', $items['opt-2']->get('aria-disabled'));
 
-        $this->assertSame(PopupType::Listbox->value, $selectData['props']['popupType']);
+        // what the form submits before the client has hydrated
+        preg_match_all('/<option value="([^"]*)"([^>]*)>/', $html, $options, PREG_SET_ORDER);
+        $selected = [];
+        foreach ($options as [, $value, $attributes]) {
+            $selected[$value] = str_contains($attributes, 'selected');
+        }
+        $this->assertSame(['' => false, 'opt-1' => false, 'opt-2' => false, 'opt-3' => true], $selected);
     }
 
     #[Test]
-    public function rendersTheTriggerAndContentForThePopupType(): void
+    public function rendersTheNativeSelectWithTheFormAttributesOfTheRoot(): void
     {
-        $render = fn(string $attributes): string => $this->renderTemplate('
-            <primitives:select.root ' .
-        $attributes .
-        '>
-                <primitives:select.trigger>Open</primitives:select.trigger>
+        $html = $this->renderTemplate('
+            <primitives:select.root collection="{collection}" name="country" form="signup" multiple="{true}" required="{true}">
+                <primitives:select.hiddenSelect />
+            </primitives:select.root>
+        ', ['collection' => self::collection()]);
+
+        $select = $this->elementWith($html, 'data-select-hidden-select');
+        $this->assertSame('select', $select->tag);
+        $this->assertSame('country', $select->get('name'));
+        $this->assertSame('signup', $select->get('form'));
+        $this->assertTrue($select->has('multiple'));
+        $this->assertTrue($select->has('required'));
+    }
+
+    /**
+     * @return iterable<string, array{0: string, 1: ?string}>
+     */
+    public static function multiples(): iterable
+    {
+        yield 'a single value' => ['', null];
+        yield 'several values' => ['multiple="{true}"', 'true'];
+    }
+
+    #[Test]
+    #[DataProvider('multiples')]
+    public function rendersTheListboxOnTheListPartInsideAPresentationalContent(
+        string $arguments,
+        ?string $multiselectable,
+    ): void {
+        $html = $this->renderTemplate(
+            '
+            <primitives:select.root collection="{collection}" ' . $arguments . '>
+                <primitives:select.positioner>
+                    <primitives:select.content>
+                        <primitives:select.list>List</primitives:select.list>
+                    </primitives:select.content>
+                </primitives:select.positioner>
+            </primitives:select.root>
+        ',
+            ['collection' => self::collection()],
+        );
+
+        // markup mirrored from Zag, for the accessibility tree before the client hydrated
+        $content = $this->elementWith($html, 'data-select-content');
+        $this->assertSame('presentation', $content->get('role'));
+        $this->assertFalse($content->has('tabindex'));
+
+        $list = $this->elementWith($html, 'data-select-list');
+        $this->assertSame('listbox', $list->get('role'));
+        $this->assertSame('0', $list->get('tabindex'));
+        $this->assertSame($multiselectable, $list->get('aria-multiselectable'));
+    }
+
+    /**
+     * @return iterable<string, array{0: string, 1: string, 2: string}>
+     */
+    public static function popupTypes(): iterable
+    {
+        yield 'a listbox by default' => ['', 'listbox', 'presentation'];
+        yield 'a dialog' => ['popupType="' . self::POPUP_DIALOG . '"', 'dialog', 'dialog'];
+    }
+
+    #[Test]
+    #[DataProvider('popupTypes')]
+    public function rendersTheTriggerAndTheContentForThePopupTypeAndShipsItToTheClient(
+        string $arguments,
+        string $popupType,
+        string $contentRole,
+    ): void {
+        $html = $this->renderTemplate(
+            '
+            <primitives:select.root rootId="my-select" collection="{collection}" ' . $arguments . '>
+                <primitives:select.control>
+                    <primitives:select.trigger>Open</primitives:select.trigger>
+                </primitives:select.control>
                 <primitives:select.positioner>
                     <primitives:select.content><primitives:select.list>List</primitives:select.list></primitives:select.content>
                 </primitives:select.positioner>
             </primitives:select.root>
-        ');
+        ',
+            ['collection' => self::collection()],
+        );
 
-        $listbox = $render('');
-        $dialog = $render('popupType="{f:constant(name: \'Jramke\FluidPrimitives\Enum\PopupType::Dialog\')}"');
-
-        $this->assertStringContainsString('aria-haspopup="listbox"', $listbox);
-        $this->assertMatchesRegularExpression('/<div[^>]*role="presentation"[^>]*data-select-content="/', $listbox);
-        $this->assertStringContainsString('aria-haspopup="dialog"', $dialog);
-        $this->assertMatchesRegularExpression('/<div[^>]*role="dialog"[^>]*data-select-content="/', $dialog);
-    }
-
-    #[Test]
-    public function normalizesStringDefaultValueToArrayInHydrationData(): void
-    {
-        $collection = new ListCollection([
-            ['value' => 'opt-1', 'label' => 'Option 1'],
-            ['value' => 'opt-2', 'label' => 'Option 2'],
-        ]);
-
-        $this->renderTemplate('
-            <primitives:select.root collection="{collection}" defaultValue="opt-1">
-                <primitives:select.control>
-                    <primitives:select.trigger>Select</primitives:select.trigger>
-                </primitives:select.control>
-            </primitives:select.root>
-        ', ['collection' => $collection]);
-
-        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
-        $selectData = array_values($hydrationData['select'])[0];
-
-        $this->assertSame(['opt-1'], $selectData['props']['defaultValue']);
-    }
-
-    #[Test]
-    public function passesArrayDefaultValueAsIs(): void
-    {
-        $collection = new ListCollection([
-            ['value' => 'opt-1', 'label' => 'Option 1'],
-            ['value' => 'opt-2', 'label' => 'Option 2'],
-        ]);
-
-        $this->renderTemplate('
-            <primitives:select.root collection="{collection}" defaultValue="{0: \'opt-1\', 1: \'opt-2\'}" multiple="{true}">
-                <primitives:select.control>
-                    <primitives:select.trigger>Select</primitives:select.trigger>
-                </primitives:select.control>
-            </primitives:select.root>
-        ', ['collection' => $collection]);
-
-        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
-        $selectData = array_values($hydrationData['select'])[0];
-
-        $this->assertSame(['opt-1', 'opt-2'], $selectData['props']['defaultValue']);
-    }
-
-    #[Test]
-    public function excludesDefaultValueFromHydrationWhenEmpty(): void
-    {
-        $collection = new ListCollection([
-            ['value' => 'opt-1', 'label' => 'Option 1'],
-        ]);
-
-        $this->renderTemplate('
-            <primitives:select.root collection="{collection}">
-                <primitives:select.control>
-                    <primitives:select.trigger>Select</primitives:select.trigger>
-                </primitives:select.control>
-            </primitives:select.root>
-        ', ['collection' => $collection]);
-
-        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
-        $selectData = array_values($hydrationData['select'])[0];
-
-        $this->assertArrayNotHasKey('defaultValue', $selectData['props']);
+        $this->assertSame($popupType, $this->elementWith($html, 'data-select-trigger')->get('aria-haspopup'));
+        $this->assertSame($contentRole, $this->elementWith($html, 'data-select-content')->get('role'));
+        $this->assertSame(
+            $popupType,
+            HydrationRegistry::getInstance()->get('primitives', 'select', 'my-select')['props']['popupType'],
+        );
     }
 
     /**
-     * Select's Root, unlike Popover/Dialog/Tooltip's, renders a real wrapping `<div>` (needed to
-     * group Label/Control/Content and carry invalid/readonly state) - so it's still detected for
-     * hydration purely from that inline root ref, with Content itself portaled away entirely.
+     * @return iterable<string, array{0: string|list<string>|null, 1: ?list<string>}>
+     */
+    public static function defaultValues(): iterable
+    {
+        yield 'a string' => ['opt-1', ['opt-1']];
+        yield 'a list' => [['opt-1', 'opt-3'], ['opt-1', 'opt-3']];
+        yield 'nothing' => [null, null];
+    }
+
+    /**
+     * @param string|list<string>|null $defaultValue
+     * @param ?list<string> $expected
      */
     #[Test]
-    public function rendersContentInsidePortalAndStillRegistersForHydration(): void
-    {
-        HydrationRegistry::getInstance()->clear();
-        PortalRegistry::getInstance()->clearAll();
-
-        $collection = new ListCollection([
-            ['value' => 'opt-1', 'label' => 'Option 1'],
-        ]);
-
+    #[DataProvider('defaultValues')]
+    public function shipsTheDefaultValueToTheClientAsAListUnlessThereIsNone(
+        string|array|null $defaultValue,
+        ?array $expected,
+    ): void {
         $html = $this->renderTemplate('
-            <primitives:select.root collection="{collection}" rootId="portaled-select">
-                <primitives:select.control>
-                    <primitives:select.trigger>Select</primitives:select.trigger>
-                </primitives:select.control>
-                <ui:portal>
-                    <primitives:select.content>
-                        <f:for each="{collection.items}" as="item">
-                            <primitives:select.item item="{item}">{item.label}</primitives:select.item>
-                        </f:for>
-                    </primitives:select.content>
-                </ui:portal>
+            <primitives:select.root collection="{collection}" defaultValue="{defaultValue}">
+                <primitives:select.hiddenSelect />
             </primitives:select.root>
-        ', ['collection' => $collection]);
+        ', ['collection' => self::collection(), 'defaultValue' => $defaultValue]);
 
-        $this->assertStringNotContainsString('data-select-content="', $html);
+        $rootId = (string)$this->elementWith($html, 'data-select-root')->get('data-select-root');
+        $props = HydrationRegistry::getInstance()->get('primitives', 'select', $rootId)['props'];
 
-        $portaled = implode('', PortalRegistry::getInstance()->getAllByName('default'));
-        $this->assertStringContainsString('data-select-content="portaled-select"', $portaled);
+        if ($expected === null) {
+            // excluded rather than shipped as null, which the machine would take for a value
+            $this->assertArrayNotHasKey('defaultValue', $props);
 
-        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
-        $this->assertArrayHasKey('portaled-select', $hydrationData['select'] ?? []);
+            return;
+        }
+
+        $this->assertSame($expected, $props['defaultValue']);
+    }
+
+    #[Test]
+    public function shipsTheCollectionToTheClientWithTheKeysItReadsItBy(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:select.root collection="{collection}">
+                <primitives:select.hiddenSelect />
+            </primitives:select.root>
+        ', ['collection' => self::collection()]);
+
+        $rootId = (string)$this->elementWith($html, 'data-select-root')->get('data-select-root');
+        $collection = json_decode(
+            json_encode(
+                HydrationRegistry::getInstance()->get('primitives', 'select', $rootId)['props']['collection'],
+                JSON_THROW_ON_ERROR,
+            ),
+            true,
+            flags: JSON_THROW_ON_ERROR,
+        );
+
+        $this->assertSame(
+            [
+                ['value' => 'opt-1', 'label' => 'Option 1'],
+                ['value' => 'opt-2', 'label' => 'Option 2', 'disabled' => true],
+                ['value' => 'opt-3', 'label' => 'Option 3'],
+            ],
+            $collection['items'],
+        );
+        $this->assertSame([3, 'opt-1', 'opt-3'], [$collection['size'], $collection['first'], $collection['last']]);
     }
 }

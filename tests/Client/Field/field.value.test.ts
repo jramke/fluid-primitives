@@ -51,6 +51,17 @@ describe('field value from the DOM', () => {
         expect(getComparableFieldValue(root, 'tags[]', undefined)).not.toBe('');
     });
 
+    test('reads several checkboxes under one plain name as a list, a single one as its value', () => {
+        root.innerHTML = `
+            <input type="checkbox" name="needs" value="a" checked>
+            <input type="checkbox" name="needs" value="b" checked>
+            <input type="checkbox" name="terms" value="1" checked>
+        `;
+
+        expect(getCurrentFieldValue(root, 'needs', undefined)).toEqual(['a', 'b']);
+        expect(getCurrentFieldValue(root, 'terms', undefined)).toBe('1');
+    });
+
     test('falls back to the default value only while no control exists for the name', () => {
         expect(getCurrentFieldValue(root, 'title', 'Hello')).toBe('Hello');
 

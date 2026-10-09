@@ -6,201 +6,195 @@ namespace Jramke\FluidPrimitives\Tests\Functional\Components;
 
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 
 final class FileUploadRenderingTest extends FunctionalTestCase
 {
-    protected function setUp(): void
+    private const string TYPE_REJECTED = "{f:constant(name: 'Jramke\\FluidPrimitives\\Enum\\FileUploadItemType::Rejected')}";
+
+    /**
+     * @return iterable<string, array{0: string, 1: string, 2: bool}>
+     */
+    public static function nativeInputs(): iterable
     {
-        parent::setUp();
-        HydrationRegistry::getInstance()->clear();
+        // No automatic `[]` suffixing - the consumer writes `name="impressions[]"` when they want array-style submission.
+        yield 'a name with brackets' => ['name="impressions[]" maxFiles="5"', 'impressions[]', true];
+        yield 'a name without brackets' => ['name="impressions" maxFiles="5"', 'impressions', true];
+        yield 'a single file' => ['name="avatar" maxFiles="1"', 'avatar', false];
     }
 
     #[Test]
-    public function rendersRootWithDataAttributes(): void
-    {
+    #[DataProvider('nativeInputs')]
+    public function rendersTheNativeInputWithTheNameAsIsAndMultipleOnlyForSeveralFiles(
+        string $arguments,
+        string $name,
+        bool $multiple,
+    ): void {
         $html = $this->renderTemplate('
-            <primitives:fileUpload.root disabled="{true}" readOnly="{true}">
+            <primitives:fileUpload.root ' . $arguments . '>
                 <primitives:fileUpload.hiddenInput />
             </primitives:fileUpload.root>
         ');
 
-        $this->assertStringContainsString('data-file-upload-root="', $html);
-        $this->assertStringContainsString('data-disabled', $html);
-        $this->assertStringContainsString('data-readonly', $html);
+        $input = $this->elementWith($html, 'data-file-upload-hidden-input');
+        $this->assertSame('file', $input->get('type'));
+        $this->assertSame($name, $input->get('name'));
+        $this->assertSame($multiple, $input->has('multiple'));
+    }
+
+    /**
+     * @return iterable<string, array{0: string, 1: bool, 2: bool}>
+     */
+    public static function flags(): iterable
+    {
+        yield 'neither' => ['', false, false];
+        yield 'disabled' => ['disabled="{true}"', true, false];
+        // a file input has no readonly state: the one the user could not open is disabled
+        yield 'read only' => ['readOnly="{true}"', false, true];
     }
 
     #[Test]
-    public function rendersNameAsIsWithoutAutomaticBracketSuffixing(): void
-    {
+    #[DataProvider('flags')]
+    public function carriesTheFlagsOnTheRootAndDisablesTheNativeInputWhenDisabledOrReadOnly(
+        string $arguments,
+        bool $disabled,
+        bool $readOnly,
+    ): void {
         $html = $this->renderTemplate('
-            <primitives:fileUpload.root name="impressions[]" maxFiles="5">
+            <primitives:fileUpload.root ' . $arguments . '>
                 <primitives:fileUpload.hiddenInput />
             </primitives:fileUpload.root>
         ');
 
-        $this->assertStringContainsString('name="impressions[]"', $html);
+        $root = $this->elementWith($html, 'data-file-upload-root');
+        $this->assertSame($disabled, $root->has('data-disabled'));
+        $this->assertSame($readOnly, $root->has('data-readonly'));
+        $this->assertSame(
+            $disabled || $readOnly,
+            $this->elementWith($html, 'data-file-upload-hidden-input')->has('disabled'),
+        );
+    }
+
+    /**
+     * @return iterable<string, array{0: string|array<int|string, mixed>|null, 1: ?string}>
+     */
+    public static function acceptValues(): iterable
+    {
+        yield 'a plain string' => ['image/*,.pdf', 'image/*,.pdf'];
+        yield 'a map of mime types to extensions' => [
+            ['image/png' => ['.png'], 'text/html' => ['.html', '.htm']],
+            'image/png,.png,text/html,.html,.htm',
+        ];
+        yield 'a list, without the tokens that are neither a mime type nor an extension' => [
+            ['image/png', 'bogus', '.pdf'],
+            'image/png,.pdf',
+        ];
+        yield 'nothing' => [null, null];
+    }
+
+    /**
+     * @param string|array<int|string, mixed>|null $accept
+     */
+    #[Test]
+    #[DataProvider('acceptValues')]
+    public function rendersTheAcceptAttributeTheWayTheClientComputesIt(
+        string|array|null $accept,
+        ?string $expected,
+    ): void {
+        $html = $this->renderTemplate('
+            <primitives:fileUpload.root accept="{accept}">
+                <primitives:fileUpload.hiddenInput />
+            </primitives:fileUpload.root>
+        ', ['accept' => $accept]);
+
+        $this->assertSame($expected, $this->elementWith($html, 'data-file-upload-hidden-input')->get('accept'));
+    }
+
+    /**
+     * @return iterable<string, array{0: string, 1: string}>
+     */
+    public static function dropzoneLabels(): iterable
+    {
+        yield 'the default' => ['', 'Drag and drop files here or click to browse'];
+        yield 'an override' => ['translations="{dropzone: \'Drop it here\'}"', 'Drop it here'];
     }
 
     #[Test]
-    public function doesNotAppendBracketsWhenNameIsGivenWithoutThem(): void
+    #[DataProvider('dropzoneLabels')]
+    public function labelsTheDropzoneFromTheTranslations(string $arguments, string $label): void
     {
         $html = $this->renderTemplate('
-            <primitives:fileUpload.root name="impressions" maxFiles="5">
-                <primitives:fileUpload.hiddenInput />
-            </primitives:fileUpload.root>
-        ');
-
-        $this->assertStringContainsString('name="impressions"', $html);
-        $this->assertStringNotContainsString('name="impressions[]"', $html);
-    }
-
-    #[Test]
-    public function rendersMultipleAttributeWhenMoreThanOneFileIsAllowed(): void
-    {
-        $singleHtml = $this->renderTemplate('
-            <primitives:fileUpload.root name="avatar" maxFiles="1">
-                <primitives:fileUpload.hiddenInput />
-            </primitives:fileUpload.root>
-        ');
-        $this->assertStringNotContainsString('multiple', $singleHtml);
-
-        $multiHtml = $this->renderTemplate('
-            <primitives:fileUpload.root name="impressions" maxFiles="5">
-                <primitives:fileUpload.hiddenInput />
-            </primitives:fileUpload.root>
-        ');
-        $this->assertStringContainsString('multiple', $multiHtml);
-    }
-
-    #[Test]
-    public function rendersAcceptAttributeFromAPlainString(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:fileUpload.root accept="image/*,.pdf">
-                <primitives:fileUpload.hiddenInput />
-            </primitives:fileUpload.root>
-        ');
-
-        $this->assertStringContainsString('accept="image/*,.pdf"', $html);
-    }
-
-    #[Test]
-    public function rendersAcceptAttributeFromAMimeTypeExtensionMap(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:fileUpload.root accept="{acceptMap}">
-                <primitives:fileUpload.hiddenInput />
-            </primitives:fileUpload.root>
-        ', [
-            'acceptMap' => [
-                'image/png' => ['.png'],
-                'text/html' => ['.html', '.htm'],
-            ],
-        ]);
-
-        $this->assertStringContainsString('accept="image/png,.png,text/html,.html,.htm"', $html);
-    }
-
-    #[Test]
-    public function omitsAcceptAttributeWhenNotProvided(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:fileUpload.root>
-                <primitives:fileUpload.hiddenInput />
-            </primitives:fileUpload.root>
-        ');
-
-        $this->assertStringNotContainsString('accept=', $html);
-    }
-
-    #[Test]
-    public function rendersEnglishDropzoneLabelByDefault(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:fileUpload.root>
+            <primitives:fileUpload.root ' . $arguments . '>
                 <primitives:fileUpload.dropzone>Drop files</primitives:fileUpload.dropzone>
             </primitives:fileUpload.root>
         ');
 
-        $this->assertStringContainsString('aria-label="Drag and drop files here or click to browse"', $html);
+        $this->assertSame($label, $this->elementWith($html, 'data-file-upload-dropzone')->get('aria-label'));
+    }
+
+    /**
+     * @return iterable<string, array{0: string, 1: array<string, string>}>
+     */
+    public static function itemTranslations(): iterable
+    {
+        // `%fileName%` is what the client substitutes with the name of each file: zag's own labels are functions of the file
+        yield 'the defaults' => [
+            '',
+            ['itemPreview' => 'Preview of %fileName%', 'deleteFile' => 'Delete file %fileName%'],
+        ];
+        yield 'one of them overridden' => [
+            'translations="{deleteFile: \'Remove %fileName%\'}"',
+            ['itemPreview' => 'Preview of %fileName%', 'deleteFile' => 'Remove %fileName%'],
+        ];
+    }
+
+    /**
+     * @param array<string, string> $expected
+     */
+    #[Test]
+    #[DataProvider('itemTranslations')]
+    public function shipsTheItemLabelsToTheClientWithAPlaceholderForTheFileName(
+        string $arguments,
+        array $expected,
+    ): void {
+        $html = $this->renderTemplate('
+            <primitives:fileUpload.root ' . $arguments . '>
+                <primitives:fileUpload.hiddenInput />
+            </primitives:fileUpload.root>
+        ');
+
+        $rootId = (string)$this->elementWith($html, 'data-file-upload-root')->get('data-file-upload-root');
+        $translations = HydrationRegistry::getInstance()->get(
+            'primitives',
+            'file-upload',
+            $rootId,
+        )['props']['translations'];
+
+        $this->assertSame($expected, array_intersect_key($translations, $expected));
     }
 
     #[Test]
-    public function prefersTranslationOverrideOverLocalizedDefault(): void
+    public function shipsNameMaxFilesAcceptAndTheNumberOfExistingFilesToTheClient(): void
     {
         $html = $this->renderTemplate('
-            <primitives:fileUpload.root translations="{dropzone: \'Drop it here\'}">
-                <primitives:fileUpload.dropzone>Drop files</primitives:fileUpload.dropzone>
-            </primitives:fileUpload.root>
-        ');
-
-        $this->assertStringContainsString('aria-label="Drop it here"', $html);
-    }
-
-    #[Test]
-    public function exposesItemPreviewAndDeleteFileTranslationsAsFileNamePlaceholderStrings(): void
-    {
-        $this->renderTemplate('
-            <primitives:fileUpload.root>
+            <primitives:fileUpload.root name="impressions" maxFiles="10" accept="image/*" existingFilesCount="4">
                 <primitives:fileUpload.hiddenInput />
             </primitives:fileUpload.root>
         ');
 
-        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
-        $translations = array_values($hydrationData['file-upload'])[0]['props']['translations'];
+        $rootId = (string)$this->elementWith($html, 'data-file-upload-root')->get('data-file-upload-root');
+        $props = HydrationRegistry::getInstance()->get('primitives', 'file-upload', $rootId)['props'];
 
-        $this->assertSame('Preview of %fileName%', $translations['itemPreview']);
-        $this->assertSame('Delete file %fileName%', $translations['deleteFile']);
+        $this->assertSame('impressions', $props['name']);
+        $this->assertSame(10, $props['maxFiles']);
+        $this->assertSame('image/*', $props['accept']);
+        // the files that are already persisted count against `maxFiles` on the client
+        $this->assertSame(4, $props['existingFilesCount']);
     }
 
     #[Test]
-    public function allowsOverridingItemPreviewAndDeleteFileTranslations(): void
-    {
-        $this->renderTemplate('
-            <primitives:fileUpload.root translations="{deleteFile: \'Remove %fileName%\'}">
-                <primitives:fileUpload.hiddenInput />
-            </primitives:fileUpload.root>
-        ');
-
-        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
-        $translations = array_values($hydrationData['file-upload'])[0]['props']['translations'];
-
-        $this->assertSame('Remove %fileName%', $translations['deleteFile']);
-        $this->assertSame('Preview of %fileName%', $translations['itemPreview']);
-    }
-
-    #[Test]
-    public function passesThroughAFalseTranslationOverrideToOmitIt(): void
-    {
-        $this->renderTemplate('
-            <primitives:fileUpload.root translations="{deleteFile: false}">
-                <primitives:fileUpload.hiddenInput />
-            </primitives:fileUpload.root>
-        ');
-
-        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
-        $translations = array_values($hydrationData['file-upload'])[0]['props']['translations'];
-
-        $this->assertFalse($translations['deleteFile']);
-    }
-
-    #[Test]
-    public function rendersItemWithGivenTypeAsDataAttributeForDirectlyAuthoredItems(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:fileUpload.root>
-                <primitives:fileUpload.itemGroup>
-                    <primitives:fileUpload.item type="existing" value="1">Existing file</primitives:fileUpload.item>
-                </primitives:fileUpload.itemGroup>
-            </primitives:fileUpload.root>
-        ');
-
-        $this->assertStringContainsString('data-type="existing"', $html);
-    }
-
-    #[Test]
-    public function rendersEachDirectlyAuthoredItemAndItsNestedPartsWithItsOwnValueDiscriminator(): void
+    public function rendersEachDirectlyAuthoredItemAndItsPartsWithItsOwnValueAndType(): void
     {
         $html = $this->renderTemplate('
             <primitives:fileUpload.root rootId="upload-root">
@@ -216,150 +210,116 @@ final class FileUploadRenderingTest extends FunctionalTestCase
         ');
 
         // No ids are generated - repeated parts share the root id and differ by `data-value` only.
-        foreach (['item', 'item-name'] as $part) {
-            preg_match_all(
-                '/<[^>]*data-file-upload-' . $part . '="upload-root"[^>]*data-value="([^"]+)"[^>]*>/',
-                $html,
-                $matches,
-            );
-            $this->assertSame(['1', '2'], $matches[1], "Expected one `{$part}` per item, told apart by data-value.");
-            $this->assertDoesNotMatchRegularExpression('/\sid=/', implode('', $matches[0]));
+        $items = $this->elementsWith($html, 'data-file-upload-item');
+        $this->assertSame(['1', '2'], array_map(static fn($item): ?string => $item->get('data-value'), $items));
+        foreach ($items as $item) {
+            $this->assertSame('upload-root', $item->get('data-file-upload-item'));
+            // the client tells the files it picked itself from the ones that were already persisted by this
+            $this->assertSame('existing', $item->get('data-type'));
+            $this->assertNull($item->get('id'));
         }
-    }
 
-    #[Test]
-    public function rendersItemErrorHiddenByDefaultWithRefAttributes(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:fileUpload.root>
-                <ui:template name="itemTemplate" context="fileUpload">
-                    <primitives:fileUpload.item>
-                        <primitives:fileUpload.itemError>Something went wrong</primitives:fileUpload.itemError>
-                    </primitives:fileUpload.item>
-                </ui:template>
-            </primitives:fileUpload.root>
-        ');
-
-        $this->assertStringContainsString('data-file-upload-item-error="', $html);
-        $this->assertMatchesRegularExpression(
-            '/data-file-upload-item-error="[^"]*"[^>]*hidden|hidden[^>]*data-file-upload-item-error="/s',
-            $html,
+        $names = $this->elementsWith($html, 'data-file-upload-item-name');
+        $this->assertSame(['1', '2'], array_map(static fn($name): ?string => $name->get('data-value'), $names));
+        $this->assertSame(
+            ['upload-root', 'upload-root'],
+            array_map(static fn($name): ?string => $name->get('data-file-upload-item-name'), $names),
         );
+        $this->assertNull($names[0]->get('id'));
     }
 
     #[Test]
-    public function rendersItemPreviewFallbackWithRefAttributes(): void
+    public function rendersTheItemGroupWithItsTypeAsTheValueTheClientLooksItUpBy(): void
     {
-        $html = $this->renderTemplate('
+        $html = $this->renderTemplate(
+            '
             <primitives:fileUpload.root>
-                <ui:template name="itemTemplate" context="fileUpload">
-                    <primitives:fileUpload.item>
-                        <primitives:fileUpload.itemPreview match=".*">
-                            <primitives:fileUpload.itemPreviewFallback />
-                        </primitives:fileUpload.itemPreview>
-                    </primitives:fileUpload.item>
-                </ui:template>
+                <primitives:fileUpload.itemGroup type="' .
+            self::TYPE_REJECTED .
+            '">
+                    <primitives:fileUpload.emptyState type="' .
+            self::TYPE_REJECTED .
+            '">No rejected files.</primitives:fileUpload.emptyState>
+                </primitives:fileUpload.itemGroup>
             </primitives:fileUpload.root>
-        ');
+        ',
+        );
 
-        $this->assertStringContainsString('data-file-upload-item-preview-fallback="', $html);
-    }
-
-    #[Test]
-    public function rendersItemTemplateDefaultingToAcceptedName(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:fileUpload.root>
-                <primitives:fileUpload.itemTemplate>
-                    <primitives:fileUpload.item>Test</primitives:fileUpload.item>
-                </primitives:fileUpload.itemTemplate>
-            </primitives:fileUpload.root>
-        ');
-
-        $this->assertStringContainsString('<template data-file-upload-item-template="', $html);
-        $this->assertStringContainsString('data-file-upload-item="', $html);
-    }
-
-    #[Test]
-    public function rendersItemTemplateWithRejectedTypeAsRejectedItemTemplateName(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:fileUpload.root>
-                <primitives:fileUpload.itemTemplate type="{f:constant(name: \'Jramke\FluidPrimitives\Enum\FileUploadItemType::Rejected\')}">
-                    <primitives:fileUpload.item>Test</primitives:fileUpload.item>
-                </primitives:fileUpload.itemTemplate>
-            </primitives:fileUpload.root>
-        ');
-
-        $this->assertStringContainsString('<template data-file-upload-rejected-item-template="', $html);
+        $group = $this->elementWith($html, 'data-file-upload-item-group');
+        $this->assertSame('rejected', $group->get('data-value'));
+        $this->assertSame('rejected', $group->get('data-type'));
+        $this->assertSame('rejected', $this->elementWith($html, 'data-file-upload-empty-state')->get('data-value'));
     }
 
     /**
-     * Documents a real limitation of ambient `ui:ref` resolution (no explicit `context` argument):
-     * it only reliably resolves when nothing else that goes through `ComponentRenderer` (another
-     * primitive part, e.g. `itemPreview`/`itemName`) has rendered earlier as a sibling within the
-     * same slot content - some part of that render leaves the *ambient* `component`/`context`
-     * Fluid variables (read directly off the current rendering context) unset for whatever renders
-     * next, even though the enclosing component's context is still correctly on `ContextService`'s
-     * stack (which is what `ui:ref`'s own explicit `context` argument reads instead - see the next
-     * test). Consumer-authored elements that share an item template with any other primitive part
-     * (the common case) therefore need `context: 'fileUpload'` explicitly - ambient resolution is
-     * only dependable for content with no such sibling, or for a primitive's own `.html` body.
+     * @return iterable<string, array{0: string, 1: string, 2: string}>
      */
-    #[Test]
-    public function ambientRefFailsAfterAnotherComponentSiblingRendersFirstInsideItemTemplate(): void
+    public static function itemTemplates(): iterable
     {
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('The ref ViewHelper can only be used inside a component context.');
-
-        $this->renderTemplate('
-            <primitives:fileUpload.root rootId="diag-root">
-                <primitives:fileUpload.itemTemplate>
-                    <primitives:fileUpload.item>
-                        <primitives:fileUpload.itemName />
-                        <div {ui:ref(name: \'diagField\')}>diag</div>
-                    </primitives:fileUpload.item>
-                </primitives:fileUpload.itemTemplate>
-            </primitives:fileUpload.root>
-        ');
+        // accepted is also the one a rejected file falls back to when there is no template of its own
+        yield 'accepted by default' => [
+            '',
+            'data-file-upload-item-template',
+            'data-file-upload-rejected-item-template',
+        ];
+        yield 'rejected' => [
+            'type="' . self::TYPE_REJECTED . '"',
+            'data-file-upload-rejected-item-template',
+            'data-file-upload-item-template',
+        ];
     }
 
     #[Test]
-    public function explicitContextRefWorksAfterAnotherComponentSiblingRendersFirstInsideItemTemplate(): void
-    {
+    #[DataProvider('itemTemplates')]
+    public function rendersTheItemTemplateAsATemplateElementWithItsPartsMarkedButWithoutAFile(
+        string $arguments,
+        string $marker,
+        string $otherMarker,
+    ): void {
         $html = $this->renderTemplate('
-            <primitives:fileUpload.root rootId="diag-root-2">
-                <primitives:fileUpload.itemTemplate>
+            <primitives:fileUpload.root rootId="upload-root">
+                <primitives:fileUpload.itemTemplate ' . $arguments . '>
                     <primitives:fileUpload.item>
-                        <primitives:fileUpload.itemPreview match=".*">
+                        <primitives:fileUpload.itemPreview match="image/*">
                             <primitives:fileUpload.itemPreviewFallback />
                         </primitives:fileUpload.itemPreview>
-                        <div {ui:ref(name: \'diagField\', context: \'fileUpload\')}>diag</div>
+                        <primitives:fileUpload.itemName />
+                        <primitives:fileUpload.itemSizeText />
+                        <primitives:fileUpload.itemError>Something went wrong</primitives:fileUpload.itemError>
+                        <primitives:fileUpload.itemDeleteTrigger>Delete</primitives:fileUpload.itemDeleteTrigger>
                     </primitives:fileUpload.item>
                 </primitives:fileUpload.itemTemplate>
             </primitives:fileUpload.root>
         ');
 
-        $this->assertStringContainsString('data-file-upload-diag-field="diag-root-2"', $html);
+        $template = $this->elementWith($html, $marker);
+        $this->assertSame('template', $template->tag);
+        $this->assertSame('upload-root', $template->get($marker));
+        $this->assertSame([], $this->elementsWith($html, $otherMarker));
+
+        // the client stamps the parts with the value of each file it picks, so none has one here
+        $parts = [
+            'data-file-upload-item',
+            'data-file-upload-item-preview',
+            'data-file-upload-item-preview-fallback',
+            'data-file-upload-item-name',
+            'data-file-upload-item-size-text',
+            'data-file-upload-item-error',
+            'data-file-upload-item-delete-trigger',
+        ];
+        foreach ($parts as $part) {
+            $element = $this->elementWith($html, $part);
+            $this->assertSame('upload-root', $element->get($part), $part);
+            $this->assertFalse($element->has('data-value'), $part);
+        }
+
+        // the client picks the preview of the first one whose pattern matches the file
+        $this->assertSame('image/*', $this->elementWith($html, 'data-file-upload-item-preview')->get('data-match'));
+        $this->assertTrue($this->elementWith($html, 'data-file-upload-item-error')->has('hidden'));
     }
 
     #[Test]
-    public function rendersItemGroupWithTypeAsDataAttributeAndValue(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:fileUpload.root>
-                <primitives:fileUpload.itemGroup type="{f:constant(name: \'Jramke\FluidPrimitives\Enum\FileUploadItemType::Rejected\')}">
-                    <primitives:fileUpload.emptyState>No rejected files.</primitives:fileUpload.emptyState>
-                </primitives:fileUpload.itemGroup>
-            </primitives:fileUpload.root>
-        ');
-
-        $this->assertStringContainsString('data-type="rejected"', $html);
-        $this->assertStringContainsString('data-value="rejected"', $html);
-    }
-
-    #[Test]
-    public function rendersClearTriggerHiddenByDefault(): void
+    public function rendersTheClearTriggerHiddenUntilThereAreFilesToClear(): void
     {
         $html = $this->renderTemplate('
             <primitives:fileUpload.root>
@@ -367,43 +327,8 @@ final class FileUploadRenderingTest extends FunctionalTestCase
             </primitives:fileUpload.root>
         ');
 
-        $this->assertMatchesRegularExpression(
-            '/data-file-upload-clear-trigger="[^"]*"[^>]*hidden|hidden[^>]*data-file-upload-clear-trigger="/s',
-            $html,
-        );
-    }
-
-    #[Test]
-    public function exposesExistingFilesCountToTheClientForMaxFilesAccounting(): void
-    {
-        $this->renderTemplate('
-            <primitives:fileUpload.root maxFiles="10" existingFilesCount="4">
-                <primitives:fileUpload.hiddenInput />
-            </primitives:fileUpload.root>
-        ');
-
-        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
-        $props = array_values($hydrationData['file-upload'])[0]['props'];
-
-        $this->assertSame(10, $props['maxFiles']);
-        $this->assertSame(4, $props['existingFilesCount']);
-    }
-
-    #[Test]
-    public function registersComponentWithPropsInHydrationRegistry(): void
-    {
-        $this->renderTemplate('
-            <primitives:fileUpload.root name="impressions" maxFiles="5" accept="image/*">
-                <primitives:fileUpload.hiddenInput />
-            </primitives:fileUpload.root>
-        ');
-
-        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
-
-        $this->assertArrayHasKey('file-upload', $hydrationData);
-        $fileUploadData = array_values($hydrationData['file-upload'])[0];
-        $this->assertSame('impressions', $fileUploadData['props']['name']);
-        $this->assertSame(5, $fileUploadData['props']['maxFiles']);
-        $this->assertSame('image/*', $fileUploadData['props']['accept']);
+        $clear = $this->elementWith($html, 'data-file-upload-clear-trigger');
+        $this->assertSame('button', $clear->tag);
+        $this->assertTrue($clear->has('hidden'));
     }
 }

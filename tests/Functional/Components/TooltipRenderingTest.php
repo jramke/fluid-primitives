@@ -11,57 +11,43 @@ use PHPUnit\Framework\Attributes\Test;
 final class TooltipRenderingTest extends FunctionalTestCase
 {
     #[Test]
-    public function rendersTooltipRootComponent(): void
+    public function rendersAClosedTooltipHiddenAndAnOpenOneVisible(): void
     {
-        $html = $this->renderTemplate('
-            <primitives:tooltip.root>
+        $tooltip = static fn(string $arguments): string => (
+            '
+            <primitives:tooltip.root rootId="my-tooltip" ' . $arguments . '>
                 <primitives:tooltip.trigger>Hover me</primitives:tooltip.trigger>
                 <primitives:tooltip.positioner>
                     <primitives:tooltip.content>Tooltip text</primitives:tooltip.content>
                 </primitives:tooltip.positioner>
             </primitives:tooltip.root>
-        ');
+        '
+        );
 
-        $this->assertStringContainsString('data-tooltip-trigger="', $html);
-        $this->assertStringContainsString('data-tooltip-content="', $html);
-    }
-
-    #[Test]
-    public function rendersClosedStateByDefault(): void
-    {
         // Regression test: `defaultOpen` used to have no explicit default, so `context.defaultOpen`
         // was `null` rather than `false` when unset. TYPO3 Fluid's inline ternary shorthand
         // (`{x ? a : b}`) treats a bare `null` as truthy - unlike `f:if`, which correctly treats it
         // as falsy - so the trigger/content rendered `data-state="open"` (and a stray
         // `data-expanded` on the trigger) by default.
-        $html = $this->renderTemplate('
-            <primitives:tooltip.root>
-                <primitives:tooltip.trigger>Hover me</primitives:tooltip.trigger>
-                <primitives:tooltip.positioner>
-                    <primitives:tooltip.content>Tooltip text</primitives:tooltip.content>
-                </primitives:tooltip.positioner>
-            </primitives:tooltip.root>
-        ');
+        $closed = $this->renderTemplate($tooltip(''));
+        $trigger = $this->elementWith($closed, 'data-tooltip-trigger');
+        $content = $this->elementWith($closed, 'data-tooltip-content');
+        $this->assertSame('my-tooltip', $trigger->get('data-tooltip-trigger'));
+        $this->assertSame('my-tooltip', $content->get('data-tooltip-content'));
+        $this->assertSame(
+            'my-tooltip',
+            $this->elementWith($closed, 'data-tooltip-positioner')->get('data-tooltip-positioner'),
+        );
+        $this->assertTrue($content->has('hidden'));
+        $this->assertSame('closed', $content->get('data-state'));
+        $this->assertSame('closed', $trigger->get('data-state'));
+        $this->assertFalse($trigger->has('data-expanded'));
 
-        $this->assertMatchesRegularExpression('/data-tooltip-content="[^"]*"[^>]*hidden/', $html);
-        $this->assertMatchesRegularExpression('/data-tooltip-content="[^"]*"[^>]*data-state="closed"/', $html);
-        $this->assertDoesNotMatchRegularExpression('/data-tooltip-trigger="[^"]*"[^>]*data-expanded/', $html);
-    }
-
-    #[Test]
-    public function rendersOpenStateWhenDefaultOpenIsTrue(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:tooltip.root defaultOpen="{true}">
-                <primitives:tooltip.trigger>Hover me</primitives:tooltip.trigger>
-                <primitives:tooltip.positioner>
-                    <primitives:tooltip.content>Tooltip text</primitives:tooltip.content>
-                </primitives:tooltip.positioner>
-            </primitives:tooltip.root>
-        ');
-
-        $this->assertDoesNotMatchRegularExpression('/data-tooltip-content="[^"]*"[^>]*hidden/', $html);
-        $this->assertMatchesRegularExpression('/data-tooltip-trigger="[^"]*"[^>]*data-state="open"/', $html);
+        $open = $this->renderTemplate($tooltip('defaultOpen="{true}"'));
+        $content = $this->elementWith($open, 'data-tooltip-content');
+        $this->assertFalse($content->has('hidden'));
+        $this->assertSame('open', $content->get('data-state'));
+        $this->assertSame('open', $this->elementWith($open, 'data-tooltip-trigger')->get('data-state'));
     }
 
     #[Test]

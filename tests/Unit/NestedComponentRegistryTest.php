@@ -30,7 +30,7 @@ final class NestedComponentRegistryTest extends TestCase
             $byScope['field-array:«f0»:itemTemplate'],
         );
         $this->assertSame([['name' => 'input', 'id' => '«f2»']], $byScope['field-array:«f0»:item:0']);
-        $this->assertArrayNotHasKey('field-array:«f3»', $byScope);
+        $this->assertNotContains('«f3»', array_column(array_merge(...array_values($byScope)), 'id'));
     }
 
     #[Test]

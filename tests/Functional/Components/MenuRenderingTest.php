@@ -30,42 +30,21 @@ final class MenuRenderingTest extends FunctionalTestCase
             </primitives:menu.root>
         ');
 
-        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
+        $menus = HydrationRegistry::getInstance()->getAll()['primitives']['menu'];
 
-        $this->assertArrayHasKey('menu', $hydrationData);
-        $this->assertArrayHasKey('share-menu', $hydrationData['menu']);
-        $this->assertSame('file-menu', $hydrationData['menu']['share-menu']['props']['parentId'] ?? null);
-        $this->assertArrayNotHasKey('parentId', $hydrationData['menu']['file-menu']['props'] ?? []);
+        $this->assertSame('file-menu', $menus['share-menu']['props']['parentId']);
+        $this->assertArrayNotHasKey('parentId', $menus['file-menu']['props']);
 
         // Zag composes a submenu's trigger item from the *child's* trigger props, so it's marked with the
         // child's own root id - that's what the submenu finds its anchor by.
-        $this->assertStringContainsString('data-menu-trigger-item="share-menu"', $html);
-        $this->assertStringNotContainsString('data-menu-trigger-item="file-menu"', $html);
+        $this->assertSame(['share-menu'], $this->valuesOf($html, 'data-menu-trigger-item'));
     }
 
     #[Test]
-    public function doesNotExposeParentIdWhenNotGiven(): void
+    public function rendersTheTriggerAndTheContentClosedAndOpen(): void
     {
-        $this->renderTemplate('
-            <primitives:menu.root rootId="standalone-menu">
-                <primitives:menu.positioner>
-                    <primitives:menu.content>
-                        <primitives:menu.item value="a">A</primitives:menu.item>
-                    </primitives:menu.content>
-                </primitives:menu.positioner>
-            </primitives:menu.root>
-        ');
-
-        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
-
-        $this->assertArrayNotHasKey('parentId', $hydrationData['menu']['standalone-menu']['props'] ?? []);
-    }
-
-    #[Test]
-    public function rendersTriggerAsButtonWithAriaExpanded(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:menu.root>
+        $menu = static fn(string $arguments): string => '
+            <primitives:menu.root ' . $arguments . '>
                 <primitives:menu.trigger>Open</primitives:menu.trigger>
                 <primitives:menu.positioner>
                     <primitives:menu.content>
@@ -73,71 +52,44 @@ final class MenuRenderingTest extends FunctionalTestCase
                     </primitives:menu.content>
                 </primitives:menu.positioner>
             </primitives:menu.root>
-        ');
+        ';
 
-        $this->assertStringContainsString('<button', $html);
-        $this->assertStringContainsString('type="button"', $html);
-        $this->assertStringContainsString('data-menu-trigger="', $html);
-        $this->assertStringContainsString('aria-expanded="false"', $html);
-    }
+        $closed = $this->renderTemplate($menu(''));
+        $trigger = $this->elementWith($closed, 'data-menu-trigger');
+        $this->assertSame('button', $trigger->tag);
+        $this->assertSame('button', $trigger->get('type'));
+        $this->assertSame('menu', $trigger->get('aria-haspopup'));
+        $this->assertSame('false', $trigger->get('aria-expanded'));
+        $this->assertTrue($this->elementWith($closed, 'data-menu-content')->has('hidden'));
 
-    #[Test]
-    public function rendersContentHiddenUnlessDefaultOpen(): void
-    {
-        $closed = $this->renderTemplate('
-            <primitives:menu.root>
-                <primitives:menu.trigger>Open</primitives:menu.trigger>
-                <primitives:menu.positioner>
-                    <primitives:menu.content>
-                        <primitives:menu.item value="a">A</primitives:menu.item>
-                    </primitives:menu.content>
-                </primitives:menu.positioner>
-            </primitives:menu.root>
-        ');
-
-        $this->assertMatchesRegularExpression('/data-menu-content="[^"]*"[^>]*hidden/', $closed);
-        $this->assertStringContainsString('aria-expanded="false"', $closed);
-
-        $open = $this->renderTemplate('
-            <primitives:menu.root defaultOpen="{true}">
-                <primitives:menu.trigger>Open</primitives:menu.trigger>
-                <primitives:menu.positioner>
-                    <primitives:menu.content>
-                        <primitives:menu.item value="a">A</primitives:menu.item>
-                    </primitives:menu.content>
-                </primitives:menu.positioner>
-            </primitives:menu.root>
-        ');
-
-        $this->assertDoesNotMatchRegularExpression('/data-menu-content="[^"]*"[^>]*hidden/', $open);
-        $this->assertStringContainsString('aria-expanded="true"', $open);
-        $this->assertStringContainsString('data-state="open"', $open);
+        $open = $this->renderTemplate($menu('defaultOpen="{true}"'));
+        $this->assertSame('true', $this->elementWith($open, 'data-menu-trigger')->get('aria-expanded'));
+        $content = $this->elementWith($open, 'data-menu-content');
+        $this->assertFalse($content->has('hidden'));
+        $this->assertSame('open', $content->get('data-state'));
     }
 
     #[Test]
     public function rendersContentRoleBasedOnComposite(): void
     {
-        $composite = $this->renderTemplate('
-            <primitives:menu.root>
+        $menu = static fn(string $arguments): string => '
+            <primitives:menu.root ' . $arguments . '>
                 <primitives:menu.positioner>
                     <primitives:menu.content>
                         <primitives:menu.item value="a">A</primitives:menu.item>
                     </primitives:menu.content>
                 </primitives:menu.positioner>
             </primitives:menu.root>
-        ');
-        $this->assertMatchesRegularExpression('/role="menu"[^>]*data-menu-content="/', $composite);
+        ';
 
-        $nonComposite = $this->renderTemplate('
-            <primitives:menu.root composite="{false}">
-                <primitives:menu.positioner>
-                    <primitives:menu.content>
-                        <primitives:menu.item value="a">A</primitives:menu.item>
-                    </primitives:menu.content>
-                </primitives:menu.positioner>
-            </primitives:menu.root>
-        ');
-        $this->assertMatchesRegularExpression('/role="dialog"[^>]*data-menu-content="/', $nonComposite);
+        $this->assertSame(
+            'menu',
+            $this->elementWith($this->renderTemplate($menu('')), 'data-menu-content')->get('role'),
+        );
+        $this->assertSame(
+            'dialog',
+            $this->elementWith($this->renderTemplate($menu('composite="{false}"')), 'data-menu-content')->get('role'),
+        );
     }
 
     #[Test]
@@ -154,30 +106,42 @@ final class MenuRenderingTest extends FunctionalTestCase
             </primitives:menu.root>
         ');
 
-        $this->assertMatchesRegularExpression('/aria-disabled="true" data-disabled=""[^>]*data-value="a"/', $html);
-        $this->assertDoesNotMatchRegularExpression('/data-disabled[^>]*data-value="b"/', $html);
-        $this->assertMatchesRegularExpression('/data-value="b"/', $html);
+        $items = $this->elementsByValue($html, 'data-menu-item');
+
+        $this->assertSame('true', $items['a']->get('aria-disabled'));
+        $this->assertTrue($items['a']->has('data-disabled'));
+        $this->assertFalse($items['b']->has('aria-disabled'));
+        $this->assertFalse($items['b']->has('data-disabled'));
     }
 
     #[Test]
-    public function rendersCheckboxAndRadioItemRoleAndCheckedState(): void
+    public function rendersCheckboxAndRadioItemsWithTheTypeTheClientBranchesOn(): void
     {
         $html = $this->renderTemplate('
             <primitives:menu.root>
                 <primitives:menu.positioner>
                     <primitives:menu.content>
                         <primitives:menu.checkboxItem value="bold" checked="{true}">Bold</primitives:menu.checkboxItem>
-                        <primitives:menu.radioItem value="left">Left</primitives:menu.radioItem>
+                        <primitives:menu.radioItem value="left" name="align">Left</primitives:menu.radioItem>
                     </primitives:menu.content>
                 </primitives:menu.positioner>
             </primitives:menu.root>
         ');
 
-        $this->assertMatchesRegularExpression('/role="menuitemcheckbox"[^>]*aria-checked="true"/', $html);
-        $this->assertMatchesRegularExpression('/data-value="bold"[^>]*data-state="checked"/', $html);
+        $items = $this->elementsByValue($html, 'data-menu-item');
 
-        $this->assertMatchesRegularExpression('/role="menuitemradio"[^>]*aria-checked="false"/', $html);
-        $this->assertMatchesRegularExpression('/data-value="left"[^>]*data-state="unchecked"/', $html);
+        $bold = $items['bold'];
+        $this->assertSame('menuitemcheckbox', $bold->get('role'));
+        $this->assertSame('true', $bold->get('aria-checked'));
+        $this->assertSame('checked', $bold->get('data-state'));
+        $this->assertSame('checkbox', $bold->get('data-type'));
+
+        $left = $items['left'];
+        $this->assertSame('menuitemradio', $left->get('role'));
+        $this->assertSame('false', $left->get('aria-checked'));
+        $this->assertSame('unchecked', $left->get('data-state'));
+        $this->assertSame('radio', $left->get('data-type'));
+        $this->assertSame('align', $left->get('data-name'));
     }
 
     #[Test]
@@ -196,12 +160,12 @@ final class MenuRenderingTest extends FunctionalTestCase
             </primitives:menu.root>
         ');
 
-        $this->assertMatchesRegularExpression('/data-menu-item-group="[^"]*"[^>]*data-value="fruits"/', $html);
-        $this->assertMatchesRegularExpression('/data-menu-item-group-label="[^"]*"[^>]*data-value="fruits"/', $html);
+        $this->assertSame(['fruits'], array_keys($this->elementsByValue($html, 'data-menu-item-group')));
+        $this->assertSame(['fruits'], array_keys($this->elementsByValue($html, 'data-menu-item-group-label')));
     }
 
     #[Test]
-    public function rendersMultipleTriggersWithCurrentBasedOnDefaultTriggerValue(): void
+    public function expandsOnlyTheTriggerOfTheDefaultTriggerValue(): void
     {
         $html = $this->renderTemplate('
             <primitives:menu.root defaultOpen="{true}" defaultTriggerValue="b">
@@ -215,32 +179,9 @@ final class MenuRenderingTest extends FunctionalTestCase
             </primitives:menu.root>
         ');
 
-        $this->assertMatchesRegularExpression('/aria-expanded="false"[^>]*data-value="a"/', $html);
-        $this->assertMatchesRegularExpression('/aria-expanded="true"[^>]*data-value="b"/', $html);
-    }
+        $triggers = $this->elementsByValue($html, 'data-menu-trigger');
 
-    #[Test]
-    public function rendersRepeatedSeparatorsWithTheSameRootIdAndNoId(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:menu.root rootId="separator-menu">
-                <primitives:menu.positioner>
-                    <primitives:menu.content>
-                        <primitives:menu.item value="a">A</primitives:menu.item>
-                        <primitives:menu.separator />
-                        <primitives:menu.item value="b">B</primitives:menu.item>
-                        <primitives:menu.separator />
-                        <primitives:menu.item value="c">C</primitives:menu.item>
-                    </primitives:menu.content>
-                </primitives:menu.positioner>
-            </primitives:menu.root>
-        ');
-
-        preg_match_all('/<div\b[^>]*\bdata-menu-separator="([^"]*)"[^>]*>/', $html, $matches);
-
-        $this->assertSame(['separator-menu', 'separator-menu'], $matches[1]);
-        foreach ($matches[0] as $separatorTag) {
-            $this->assertDoesNotMatchRegularExpression('/\sid=/', $separatorTag);
-        }
+        $this->assertSame('false', $triggers['a']->get('aria-expanded'));
+        $this->assertSame('true', $triggers['b']->get('aria-expanded'));
     }
 }

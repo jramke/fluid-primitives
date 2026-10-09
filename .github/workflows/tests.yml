@@ -62,3 +62,23 @@ jobs:
 
       - name: Run tests
         run: composer test
+
+  client:
+    name: Client / vitest
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run client tests
+        run: npm test

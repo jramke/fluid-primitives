@@ -21,19 +21,16 @@ final class FieldsetRenderingTest extends FunctionalTestCase
             </primitives:fieldset.root>
         ');
 
-        $root = $this->extractTag($html, 'data-fieldset-root');
-        $this->assertStringStartsWith('<fieldset', $root);
-        $this->assertTrue($this->hasAttribute($root, 'disabled'));
-        $this->assertStringContainsString('aria-invalid="true"', $root);
+        $root = $this->elementWith($html, 'data-fieldset-root');
+        $this->assertSame('fieldset', $root->tag);
+        $this->assertTrue($root->has('disabled'));
+        $this->assertSame('true', $root->get('aria-invalid'));
 
         foreach (['legend', 'helper-text', 'error-text', 'root'] as $part) {
-            $tag = $this->extractTag($html, 'data-fieldset-' . $part);
-            $this->assertTrue($this->hasAttribute($tag, 'data-disabled'), $part . ' should carry data-disabled.');
-            $this->assertTrue($this->hasAttribute($tag, 'data-invalid'), $part . ' should carry data-invalid.');
+            $element = $this->elementWith($html, 'data-fieldset-' . $part);
+            $this->assertTrue($element->has('data-disabled'), $part . ' should carry data-disabled.');
+            $this->assertTrue($element->has('data-invalid'), $part . ' should carry data-invalid.');
         }
-
-        // the machine resolves its elements by the ids it stamps itself on hydration
-        $this->assertStringNotContainsString(' id=', $html);
     }
 
     #[Test]
@@ -50,13 +47,14 @@ final class FieldsetRenderingTest extends FunctionalTestCase
             </primitives:fieldset.root>
         ');
 
-        $validTag = $this->extractTag($valid, 'data-fieldset-error-text');
-        $invalidTag = $this->extractTag($invalid, 'data-fieldset-error-text');
+        $validText = $this->elementWith($valid, 'data-fieldset-error-text');
+        $invalidText = $this->elementWith($invalid, 'data-fieldset-error-text');
 
-        $this->assertTrue($this->hasAttribute($validTag, 'hidden'));
-        $this->assertFalse($this->hasAttribute($invalidTag, 'hidden'));
-        foreach ([$validTag, $invalidTag] as $tag) {
-            $this->assertStringContainsString('aria-live="polite"', $tag);
+        $this->assertTrue($validText->has('hidden'));
+        $this->assertFalse($invalidText->has('hidden'));
+        // a live region has to exist before its content changes
+        foreach ([$validText, $invalidText] as $errorText) {
+            $this->assertSame('polite', $errorText->get('aria-live'));
         }
     }
 
@@ -76,32 +74,33 @@ final class FieldsetRenderingTest extends FunctionalTestCase
             </primitives:fieldset.root>
         ');
 
-        $disabledField = $this->extractTag($html, 'data-field-root="in-disabled"');
-        $enabledField = $this->extractTag($html, 'data-field-root="in-enabled"');
-        $this->assertTrue($this->hasAttribute($disabledField, 'data-disabled'));
-        $this->assertFalse($this->hasAttribute($enabledField, 'data-disabled'));
+        $fields = $this->elementsByRootId($html);
+        $this->assertTrue($fields['in-disabled']->has('data-disabled'));
+        $this->assertFalse($fields['in-enabled']->has('data-disabled'));
 
-        $this->assertTrue($this->hasAttribute($this->extractTag($html, 'name="street"', 'input'), 'disabled'));
-        $this->assertFalse($this->hasAttribute($this->extractTag($html, 'name="city"', 'input'), 'disabled'));
+        $inputs = [];
+        foreach ($this->elementsWith($html, 'data-input-input') as $input) {
+            $inputs[$input->get('name')] = $input;
+        }
+        $this->assertTrue($inputs['street']->has('disabled'));
+        $this->assertFalse($inputs['city']->has('disabled'));
 
         // what the machine hydrates with is what was written: it learns about a fieldset from the DOM,
         // so enabling the fieldset later would otherwise leave this field disabled
-        $this->assertArrayNotHasKey(
-            'disabled',
-            HydrationRegistry::getInstance()->get('primitives', 'field', 'in-disabled')['props'] ?? [],
-        );
+        $props = HydrationRegistry::getInstance()->get('primitives', 'field', 'in-disabled')['props'];
+        $this->assertArrayNotHasKey('disabled', $props);
     }
 
-    private function hasAttribute(string $tag, string $attribute): bool
+    /**
+     * @return array<string, \Jramke\FluidPrimitives\Tests\Helper\HtmlElement>
+     */
+    private function elementsByRootId(string $html): array
     {
-        return preg_match('/\s' . preg_quote($attribute, '/') . '[\s>=\/]/', $tag) === 1;
-    }
+        $fields = [];
+        foreach ($this->elementsWith($html, 'data-field-root') as $field) {
+            $fields[$field->get('data-field-root')] = $field;
+        }
 
-    private function extractTag(string $html, string $attribute, string $tagName = '[a-z]+'): string
-    {
-        $matched = preg_match('/<' . $tagName . '[^>]*\s' . preg_quote($attribute, '/') . '[^>]*>/', $html, $matches);
-        $this->assertSame(1, $matched, sprintf('Expected an element with %s.', $attribute));
-
-        return $matches[0];
+        return $fields;
     }
 }

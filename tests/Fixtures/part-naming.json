@@ -1,0 +1,51 @@
+[
+    {
+        "componentName": "dialog",
+        "clientBaseName": "dialog",
+        "part": "closeTrigger",
+        "rootId": "«f1»",
+        "attribute": "data-dialog-close-trigger",
+        "scopeKey": "dialog:«f1»:close-trigger"
+    },
+    {
+        "componentName": "fileUpload",
+        "clientBaseName": "file-upload",
+        "part": "itemDeleteTrigger",
+        "rootId": "«f1»",
+        "attribute": "data-file-upload-item-delete-trigger",
+        "scopeKey": "file-upload:«f1»:item-delete-trigger"
+    },
+    {
+        "componentName": "combobox",
+        "clientBaseName": "combobox",
+        "part": "itemTemplate",
+        "rootId": "«f1»",
+        "attribute": "data-combobox-item-template",
+        "scopeKey": "combobox:«f1»:item-template"
+    },
+    {
+        "componentName": "fieldArray",
+        "clientBaseName": "field-array",
+        "part": "item",
+        "value": "2",
+        "rootId": "«f1»",
+        "attribute": "data-field-array-item",
+        "scopeKey": "field-array:«f1»:item:2"
+    },
+    {
+        "componentName": "molecules.checkboxGroup",
+        "clientBaseName": "molecules.checkbox-group",
+        "part": "root",
+        "rootId": "«f1»",
+        "attribute": "data-molecules-checkbox-group-root",
+        "scopeKey": "molecules.checkbox-group:«f1»:root"
+    },
+    {
+        "componentName": "checkboxGroupExamples.selectAll",
+        "clientBaseName": "checkbox-group-examples.select-all",
+        "part": "root",
+        "rootId": "«f1»",
+        "attribute": "data-checkbox-group-examples-select-all-root",
+        "scopeKey": "checkbox-group-examples.select-all:«f1»:root"
+    }
+]

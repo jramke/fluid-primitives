@@ -134,15 +134,21 @@ describe('field events on the root', () => {
         expect(field.context.get('validity')?.valueMissing).toBe(true);
     });
 
-    test('stopping the machine removes the listeners', async () => {
+    test('stopping the machine drops its pending read and removes the listeners', async () => {
         vi.useFakeTimers();
         const field = mountField('<input name="email" value="">');
-        field.stop();
+        // the announcement is dispatched by the listeners themselves: a stopped machine ignores events
+        const announced = vi.fn();
+        document
+            .querySelector('[data-field-root]')!
+            .addEventListener(FIELD_VALUE_CHANGE_EVENT, announced);
 
         type(input(), 'x');
+        field.stop();
+        type(input(), 'xy');
         await settle();
 
-        expect(field.context.get('dirty')).toBe(false);
+        expect(announced).not.toHaveBeenCalled();
     });
 });
 

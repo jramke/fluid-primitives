@@ -42,7 +42,7 @@ final readonly class ExtbasePersistedObjectResolver
     // instanceof, new/clone state, uid presence) - the operator variety relative to its short length
     // is what trips the halstead difficulty threshold, not any real complexity a split would reduce.
     // @mago-expect lint:halstead
-    public function resolve(mixed $object): ?AbstractDomainObject
+    private function resolve(mixed $object): ?AbstractDomainObject
     {
         if ($object instanceof LazyLoadingProxy) {
             $object = $object->_loadRealInstance();
@@ -72,8 +72,10 @@ final readonly class ExtbasePersistedObjectResolver
      * @param array<string, array{name?: string}> $fieldContextInformations
      * @return array<string, AbstractDomainObject>
      */
-    public function getNestedPersistedObjects(?AbstractDomainObject $rootObject, array $fieldContextInformations): array
-    {
+    private function getNestedPersistedObjects(
+        ?AbstractDomainObject $rootObject,
+        array $fieldContextInformations,
+    ): array {
         if (!$rootObject instanceof AbstractDomainObject) {
             return [];
         }

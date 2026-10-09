@@ -6,67 +6,47 @@ namespace Jramke\FluidPrimitives\Tests\Unit;
 
 use Jramke\FluidPrimitives\Tests\TestCase;
 use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 
 final class ComponentNameUtilityTest extends TestCase
 {
-    #[Test]
-    public function handlesComplexNamesWithMultipleCapitals(): void
+    /**
+     * A tier prefix is kept, not collapsed away: "Molecules.CheckboxGroup" and "Molecules.Tooltip" are distinct,
+     * nested identities that collide with neither each other nor a same-named but untiered component. A leaf
+     * that is root only via the folder-shape default has no ".Root"/subcomponent marker to drop, so its full path
+     * is its identity, which keeps it apart from any sibling example sharing only its first segment.
+     *
+     * @return iterable<string, array{0: string, 1: bool, 2: string}>
+     */
+    public static function viewHelperNames(): iterable
     {
-        $result = ComponentNameUtility::getComponentFullNameFromViewHelperName('ScrollArea.Root');
-        $this->assertSame('scroll-area.root', $result);
-    }
-
-    #[Test]
-    public function skipsPrimitivesNamespace(): void
-    {
-        $result = ComponentNameUtility::getComponentBaseNameFromViewHelperName(
-            'Primitives.Dialog.Root',
-            isDeclaredRoot: true,
-        );
-        $this->assertSame('dialog', $result);
-    }
-
-    #[Test]
-    public function extractsBaseNameFromCompoundComponent(): void
-    {
-        $result = ComponentNameUtility::getComponentBaseNameFromViewHelperName('Accordion.Item', isDeclaredRoot: false);
-        $this->assertSame('accordion', $result);
-    }
-
-    #[Test]
-    public function tieredComponentsKeepTheirTierAsPartOfTheirOwnIdentity(): void
-    {
-        // A tier prefix is kept, not collapsed away - "Molecules.CheckboxGroup" and
-        // "Molecules.Tooltip" are distinct, nested identities, and neither collides with the
-        // other or with a same-named but untiered "checkboxGroup"/"tooltip".
-        $this->assertSame('molecules.checkboxGroup', ComponentNameUtility::getComponentBaseNameFromViewHelperName(
-            'Molecules.CheckboxGroup.Root',
-            isDeclaredRoot: true,
-        ));
-        $this->assertSame('molecules.tooltip', ComponentNameUtility::getComponentBaseNameFromViewHelperName(
-            'Molecules.Tooltip.Root',
-            isDeclaredRoot: true,
-        ));
-        // A genuine (non-root) subcomponent of a tiered component still resolves to the same
-        // identity as its own root, exactly like the classic Accordion.Root/Accordion.Item case.
-        $this->assertSame('molecules.checkboxGroup', ComponentNameUtility::getComponentBaseNameFromViewHelperName(
+        yield 'a root skips the Primitives namespace' => ['Primitives.Dialog.Root', true, 'dialog'];
+        yield 'a subcomponent shares the identity of its root' => ['Accordion.Item', false, 'accordion'];
+        yield 'a tiered root keeps its tier' => ['Molecules.CheckboxGroup.Root', true, 'molecules.checkboxGroup'];
+        yield 'another tiered root has an identity of its own' => ['Molecules.Tooltip.Root', true, 'molecules.tooltip'];
+        yield 'a tiered subcomponent shares the identity of its tiered root' => [
             'Molecules.CheckboxGroup.Label',
-            isDeclaredRoot: false,
-        ));
+            false,
+            'molecules.checkboxGroup',
+        ];
+        yield 'an independent root leaf keeps its full path' => [
+            'CheckboxGroupExamples.SelectAll',
+            true,
+            'checkboxGroupExamples.selectAll',
+        ];
     }
 
     #[Test]
-    public function independentlyRootLeafKeepsItsFullPathAsItsOwnIdentity(): void
-    {
-        // 'CheckboxGroupExamples.SelectAll' is root only via the folder-shape default (see
-        // ComponentRootUtilityTest), a sibling of - not nested inside - the real CheckboxGroup's
-        // own folder. It has no ".Root"/subcomponent marker to drop, so its own last segment is
-        // kept - the full path is its identity, distinguishing it from any sibling example (e.g.
-        // "checkboxGroupExamples.simple") sharing only its first segment.
-        $this->assertSame('checkboxGroupExamples.selectAll', ComponentNameUtility::getComponentBaseNameFromViewHelperName(
-            'CheckboxGroupExamples.SelectAll',
-            isDeclaredRoot: true,
+    #[DataProvider('viewHelperNames')]
+    public function resolvesTheIdentityAComponentIsHydratedAndItsContextStoredUnder(
+        string $viewHelperName,
+        bool $isDeclaredRoot,
+        string $expected,
+    ): void {
+        $this->assertSame($expected, ComponentNameUtility::getComponentBaseNameFromViewHelperName(
+            $viewHelperName,
+            $isDeclaredRoot,
         ));
     }
 

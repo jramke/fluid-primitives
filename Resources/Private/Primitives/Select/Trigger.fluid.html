@@ -1,11 +1,11 @@
 <f:variable name="isDialogPopup" value="{context.dialogPopup}" />
-<f:variable name="hasDefaultItemsAttr">{f:if(condition: context.defaultValue, then: '{true}', else: '{null}')}</f:variable>
+<f:variable name="placeholderShown">{f:if(condition: context.defaultValue, then: '{null}', else: '{true}')}</f:variable>
 <f:variable name="state">{context.defaultOpen ? 'open' : 'closed'}</f:variable>
 <f:variable name="refData" value="{
     disabled: context.disabled, 
     invalid: context.invalid, 
     readonly: context.readOnly, 
-    placeholder-shown: hasDefaultItemsAttr, 
+    placeholder-shown: placeholderShown,
     state: state,
     expanded: context.defaultOpen
 }" />

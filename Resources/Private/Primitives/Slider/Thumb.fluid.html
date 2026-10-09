@@ -18,6 +18,6 @@
     {ui:ref(name: 'thumb' , value: index, data: refData )}
     {ui:attributes()}
     {ui:asChild()}
-    style="{f:if(condition: context.isUnmeasured, then: 'visibility: hidden;')}">
+    style="{f:if(condition: context.unmeasured, then: 'visibility: hidden;')}">
     <f:slot />
 </div>

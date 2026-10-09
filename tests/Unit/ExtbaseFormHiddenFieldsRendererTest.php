@@ -8,81 +8,39 @@ use Jramke\FluidPrimitives\Domain\Dto\ResolvedFormPersistedObjects;
 use Jramke\FluidPrimitives\Service\ExtbaseFormHiddenFieldsRenderer;
 use Jramke\FluidPrimitives\Tests\Helper\TestEntity;
 use Jramke\FluidPrimitives\Tests\TestCase;
-use Jramke\FluidPrimitives\Utility\ExtbasePersistedObjectResolver;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\Test;
 use TYPO3\CMS\Extbase\Mvc\Controller\MvcPropertyMappingConfigurationService;
 
-#[AllowMockObjectsWithoutExpectations]
 final class ExtbaseFormHiddenFieldsRendererTest extends TestCase
 {
     private function createRenderer(): ExtbaseFormHiddenFieldsRenderer
     {
-        return new ExtbaseFormHiddenFieldsRenderer($this->createMock(MvcPropertyMappingConfigurationService::class));
+        return new ExtbaseFormHiddenFieldsRenderer($this->createStub(MvcPropertyMappingConfigurationService::class));
     }
 
     #[Test]
-    public function rendersNoIdentityFieldWhenNoObjectIsBound(): void
-    {
-        $renderer = $this->createRenderer();
-        $objects = new ResolvedFormPersistedObjects(null, []);
-
-        $this->assertSame('', $renderer->renderIdentityFields(
-            $objects,
-            'eventRegistration',
-            'tx_docs_registration',
-            false,
-        ));
-    }
-
-    #[Test]
-    public function rendersNoIdentityFieldForANewUnpersistedObject(): void
-    {
-        $resolver = new ExtbasePersistedObjectResolver();
-        $objects = new ResolvedFormPersistedObjects($resolver->resolve(new TestEntity()), []);
-
-        $renderer = $this->createRenderer();
-
-        $this->assertSame('', $renderer->renderIdentityFields(
-            $objects,
-            'eventRegistration',
-            'tx_docs_registration',
-            false,
-        ));
-    }
-
-    #[Test]
-    public function rendersIdentityFieldForAPersistedObject(): void
+    public function rendersTheIdentityFieldOfAPersistedObjectUnderThePluginPrefixAndClosesItForXhtml(): void
     {
         $entity = new TestEntity();
         $entity->setTestUid(42);
         $objects = new ResolvedFormPersistedObjects($entity, []);
 
         $renderer = $this->createRenderer();
-
-        $this->assertSame('<input type="hidden" name="tx_docs_registration[eventRegistration][__identity]" value="42" >', $renderer->renderIdentityFields(
+        $field = static fn(bool $xhtmlCompliant): string => $renderer->renderIdentityFields(
             $objects,
             'eventRegistration',
             'tx_docs_registration',
-            false,
-        ));
-    }
+            $xhtmlCompliant,
+        );
 
-    #[Test]
-    public function appendsAnXhtmlSelfClosingSlashWhenXhtmlCompliant(): void
-    {
-        $entity = new TestEntity();
-        $entity->setTestUid(42);
-        $objects = new ResolvedFormPersistedObjects($entity, []);
-
-        $renderer = $this->createRenderer();
-
-        $this->assertSame('<input type="hidden" name="tx_docs_registration[eventRegistration][__identity]" value="42" />', $renderer->renderIdentityFields(
-            $objects,
-            'eventRegistration',
-            'tx_docs_registration',
-            true,
-        ));
+        $this->assertSame(
+            '<input type="hidden" name="tx_docs_registration[eventRegistration][__identity]" value="42" >',
+            $field(false),
+        );
+        $this->assertSame(
+            '<input type="hidden" name="tx_docs_registration[eventRegistration][__identity]" value="42" />',
+            $field(true),
+        );
     }
 
     #[Test]

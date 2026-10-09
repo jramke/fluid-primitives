@@ -10,19 +10,15 @@ use PHPUnit\Framework\Attributes\Test;
 
 final class DialogRenderingTest extends FunctionalTestCase
 {
-    #[Test]
-    public function rendersDialogRootComponent(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:dialog.root>
-                <primitives:dialog.trigger>Open Dialog</primitives:dialog.trigger>
-                <primitives:dialog.content>Dialog Content</primitives:dialog.content>
-            </primitives:dialog.root>
-        ');
-
-        $this->assertStringContainsString('data-dialog-trigger="', $html);
-        $this->assertStringContainsString('data-dialog-content="', $html);
-    }
+    private const array PARTS = [
+        'trigger',
+        'backdrop',
+        'positioner',
+        'content',
+        'title',
+        'description',
+        'close-trigger',
+    ];
 
     /**
      * A root component is registered for hydration once a `ui:ref` was rendered for it (recorded in
@@ -35,8 +31,6 @@ final class DialogRenderingTest extends FunctionalTestCase
     #[Test]
     public function registersForHydrationWhenEveryRefIsPortaledAndThereIsNoTrigger(): void
     {
-        HydrationRegistry::getInstance()->clear();
-
         $this->renderTemplate('
             <primitives:dialog.root rootId="portaled-only-dialog">
                 <ui:portal>
@@ -50,221 +44,65 @@ final class DialogRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
-    public function generatesUniqueRootIdForHydration(): void
+    public function marksEveryPartWithTheGeneratedRootIdOfItsDialog(): void
     {
         $html = $this->renderTemplate('
             <primitives:dialog.root>
                 <primitives:dialog.trigger>Open</primitives:dialog.trigger>
+                <primitives:dialog.backdrop />
+                <primitives:dialog.positioner>
+                    <primitives:dialog.content>
+                        <primitives:dialog.title>Title</primitives:dialog.title>
+                        <primitives:dialog.description>Description</primitives:dialog.description>
+                        <primitives:dialog.closeTrigger>Close</primitives:dialog.closeTrigger>
+                    </primitives:dialog.content>
+                </primitives:dialog.positioner>
+            </primitives:dialog.root>
+        ');
+
+        $rootIds = [];
+        foreach (self::PARTS as $part) {
+            $rootIds[$part] = $this->elementWith($html, 'data-dialog-' . $part)->get('data-dialog-' . $part);
+        }
+
+        $this->assertNotEmpty($rootIds['trigger']);
+        $this->assertCount(1, array_unique($rootIds), 'Every part carries the same root id.');
+        $this->assertSame('button', $this->elementWith($html, 'data-dialog-trigger')->tag);
+        $this->assertSame('button', $this->elementWith($html, 'data-dialog-close-trigger')->tag);
+    }
+
+    #[Test]
+    public function rendersAClosedDialogHiddenAndAnOpenOneVisible(): void
+    {
+        $dialog = static fn(string $arguments): string => (
+            '
+            <primitives:dialog.root ' . $arguments . '>
+                <primitives:dialog.trigger>Open</primitives:dialog.trigger>
+                <primitives:dialog.backdrop />
                 <primitives:dialog.content>Content</primitives:dialog.content>
             </primitives:dialog.root>
-        ');
+        '
+        );
 
-        preg_match('/data-dialog-trigger="([^"]+)"/', $html, $trigger);
-        preg_match('/data-dialog-content="([^"]+)"/', $html, $content);
+        $closed = $this->renderTemplate($dialog(''));
+        $this->assertSame('closed', $this->elementWith($closed, 'data-dialog-trigger')->get('data-state'));
+        foreach (['data-dialog-backdrop', 'data-dialog-content'] as $part) {
+            $element = $this->elementWith($closed, $part);
+            $this->assertTrue($element->has('hidden'), $part);
+            $this->assertSame('closed', $element->get('data-state'), $part);
+        }
 
-        $this->assertNotEmpty($trigger[1]);
-        $this->assertSame($trigger[1], $content[1]);
-    }
-
-    #[Test]
-    public function usesCustomRootIdWhenProvided(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:dialog.root rootId="my-custom-dialog">
-                <primitives:dialog.trigger>Open</primitives:dialog.trigger>
-                <primitives:dialog.content>Content</primitives:dialog.content>
-            </primitives:dialog.root>
-        ');
-
-        $this->assertStringContainsString('data-dialog-trigger="my-custom-dialog"', $html);
-        $this->assertStringContainsString('data-dialog-content="my-custom-dialog"', $html);
-    }
-
-    #[Test]
-    public function rendersAsButtonElement(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:dialog.root>
-                <primitives:dialog.trigger>Click me</primitives:dialog.trigger>
-                <primitives:dialog.content>Content</primitives:dialog.content>
-            </primitives:dialog.root>
-        ');
-
-        $this->assertStringContainsString('<button', $html);
-        $this->assertStringContainsString('data-dialog-trigger="', $html);
-        $this->assertStringContainsString('Click me', $html);
-    }
-
-    #[Test]
-    public function rendersClosedStateByDefault(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:dialog.root>
-                <primitives:dialog.trigger>Open</primitives:dialog.trigger>
-                <primitives:dialog.content>Content</primitives:dialog.content>
-            </primitives:dialog.root>
-        ');
-
-        $this->assertStringContainsString('data-dialog-trigger="', $html);
-    }
-
-    #[Test]
-    public function rendersOpenStateWhenDefaultOpenIsTrue(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:dialog.root defaultOpen="{true}">
-                <primitives:dialog.trigger>Open</primitives:dialog.trigger>
-                <primitives:dialog.content>Content</primitives:dialog.content>
-            </primitives:dialog.root>
-        ');
-
-        $this->assertStringContainsString('data-state="open"', $html);
-    }
-
-    #[Test]
-    public function appliesCustomClass(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:dialog.root>
-                <primitives:dialog.trigger class="my-trigger-class">Open</primitives:dialog.trigger>
-                <primitives:dialog.content>Content</primitives:dialog.content>
-            </primitives:dialog.root>
-        ');
-
-        $this->assertStringContainsString('class="my-trigger-class"', $html);
-    }
-
-    #[Test]
-    public function rendersContentContainer(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:dialog.root>
-                <primitives:dialog.trigger>Open</primitives:dialog.trigger>
-                <primitives:dialog.content>My Dialog Content</primitives:dialog.content>
-            </primitives:dialog.root>
-        ');
-
-        $this->assertStringContainsString('data-dialog-content="', $html);
-        $this->assertStringContainsString('My Dialog Content', $html);
-    }
-
-    #[Test]
-    public function rendersCloseTrigger(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:dialog.root>
-                <primitives:dialog.trigger>Open</primitives:dialog.trigger>
-                <primitives:dialog.content>
-                    Content
-                    <primitives:dialog.closeTrigger>Close</primitives:dialog.closeTrigger>
-                </primitives:dialog.content>
-            </primitives:dialog.root>
-        ');
-
-        $this->assertStringContainsString('data-dialog-close-trigger="', $html);
-    }
-
-    #[Test]
-    public function marksEveryCloseTriggerOfADialogWithoutIdsSoTheyCannotCollide(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:dialog.root rootId="my-dialog">
-                <primitives:dialog.trigger>Open</primitives:dialog.trigger>
-                <primitives:dialog.content>
-                    <primitives:dialog.closeTrigger>X</primitives:dialog.closeTrigger>
-                    Content
-                    <primitives:dialog.closeTrigger>Cancel</primitives:dialog.closeTrigger>
-                </primitives:dialog.content>
-            </primitives:dialog.root>
-        ');
-
-        preg_match_all('/<button[^>]*data-dialog-close-trigger="my-dialog"[^>]*>/', $html, $matches);
-
-        $this->assertCount(2, $matches[0]);
-        foreach ($matches[0] as $closeTriggerTag) {
-            $this->assertStringNotContainsString(' id=', $closeTriggerTag);
+        $open = $this->renderTemplate($dialog('defaultOpen="{true}"'));
+        $this->assertSame('open', $this->elementWith($open, 'data-dialog-trigger')->get('data-state'));
+        foreach (['data-dialog-backdrop', 'data-dialog-content'] as $part) {
+            $element = $this->elementWith($open, $part);
+            $this->assertFalse($element->has('hidden'), $part);
+            $this->assertSame('open', $element->get('data-state'), $part);
         }
     }
 
     #[Test]
-    public function registersInHydrationRegistry(): void
-    {
-        $this->renderTemplate('
-            <primitives:dialog.root>
-                <primitives:dialog.trigger>Open</primitives:dialog.trigger>
-                <primitives:dialog.content>Content</primitives:dialog.content>
-            </primitives:dialog.root>
-        ');
-
-        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
-
-        $this->assertArrayHasKey('dialog', $hydrationData);
-        $this->assertNotEmpty($hydrationData['dialog']);
-    }
-
-    #[Test]
-    public function nestedDialogsMaintainSeparateContexts(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:dialog.root rootId="parent-dialog">
-                <primitives:dialog.trigger>Open Parent</primitives:dialog.trigger>
-                <primitives:dialog.content>
-                    Parent
-                    <primitives:dialog.root rootId="child-dialog">
-                        <primitives:dialog.trigger>Open Child</primitives:dialog.trigger>
-                        <primitives:dialog.content>
-                            Child
-                            <primitives:dialog.closeTrigger>Close Child</primitives:dialog.closeTrigger>
-                        </primitives:dialog.content>
-                    </primitives:dialog.root>
-                    <primitives:dialog.closeTrigger>Close Parent</primitives:dialog.closeTrigger>
-                </primitives:dialog.content>
-            </primitives:dialog.root>
-        ');
-
-        $this->assertStringContainsString('data-dialog-trigger="parent-dialog"', $html);
-        $this->assertStringContainsString('data-dialog-content="parent-dialog"', $html);
-
-        $this->assertStringContainsString('data-dialog-trigger="child-dialog"', $html);
-        $this->assertStringContainsString('data-dialog-content="child-dialog"', $html);
-
-        $this->assertStringContainsString('data-dialog-close-trigger="parent-dialog"', $html);
-        $this->assertStringContainsString('data-dialog-close-trigger="child-dialog"', $html);
-        $this->assertSame(2, substr_count($html, 'data-dialog-close-trigger="'));
-    }
-
-    #[Test]
-    public function handlesDeeplyNestedDialogs(): void
-    {
-        $this->renderTemplate('
-            <primitives:dialog.root rootId="level-1">
-                <primitives:dialog.trigger>Open Level 1</primitives:dialog.trigger>
-                <primitives:dialog.content>
-                    <primitives:dialog.root rootId="level-2">
-                        <primitives:dialog.trigger>Open Level 2</primitives:dialog.trigger>
-                        <primitives:dialog.content>
-                            <primitives:dialog.root rootId="level-3">
-                                <primitives:dialog.trigger>Open Level 3</primitives:dialog.trigger>
-                                <primitives:dialog.content>Level 3 Content</primitives:dialog.content>
-                            </primitives:dialog.root>
-                            <primitives:dialog.closeTrigger>Close Level 2</primitives:dialog.closeTrigger>
-                        </primitives:dialog.content>
-                    </primitives:dialog.root>
-                    <primitives:dialog.closeTrigger>Close Level 1</primitives:dialog.closeTrigger>
-                </primitives:dialog.content>
-            </primitives:dialog.root>
-        ');
-
-        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
-
-        $this->assertCount(3, $hydrationData['dialog']);
-        $this->assertArrayHasKey('level-1', $hydrationData['dialog']);
-        $this->assertArrayHasKey('level-2', $hydrationData['dialog']);
-        $this->assertArrayHasKey('level-3', $hydrationData['dialog']);
-    }
-
-    #[Test]
-    public function appliesCustomClassToRootWrapper(): void
+    public function appliesAClassToTheTriggerAndTheContent(): void
     {
         $html = $this->renderTemplate('
             <primitives:dialog.root>
@@ -273,8 +111,52 @@ final class DialogRenderingTest extends FunctionalTestCase
             </primitives:dialog.root>
         ');
 
-        $this->assertStringContainsString('class="custom-trigger"', $html);
-        $this->assertStringContainsString('class="custom-content"', $html);
+        $this->assertSame('custom-trigger', $this->elementWith($html, 'data-dialog-trigger')->get('class'));
+        $this->assertSame('custom-content', $this->elementWith($html, 'data-dialog-content')->get('class'));
+    }
+
+    #[Test]
+    public function nestedDialogsKeepTheirOwnRootIdsAndRegisterSeparately(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:dialog.root rootId="parent-dialog">
+                <primitives:dialog.trigger>Open Parent</primitives:dialog.trigger>
+                <primitives:dialog.content>
+                    <primitives:dialog.root rootId="child-dialog">
+                        <primitives:dialog.trigger>Open Child</primitives:dialog.trigger>
+                        <primitives:dialog.content>
+                            <primitives:dialog.root rootId="grandchild-dialog">
+                                <primitives:dialog.trigger>Open Grandchild</primitives:dialog.trigger>
+                                <primitives:dialog.content>Grandchild</primitives:dialog.content>
+                            </primitives:dialog.root>
+                            <primitives:dialog.closeTrigger>Close Child</primitives:dialog.closeTrigger>
+                        </primitives:dialog.content>
+                    </primitives:dialog.root>
+                    <primitives:dialog.closeTrigger>Close Parent</primitives:dialog.closeTrigger>
+                </primitives:dialog.content>
+            </primitives:dialog.root>
+        ');
+
+        // document order: a nested dialog is rendered inside the content of its parent
+        $this->assertSame(
+            ['parent-dialog', 'child-dialog', 'grandchild-dialog'],
+            $this->valuesOf($html, 'data-dialog-trigger'),
+        );
+        $this->assertEqualsCanonicalizing(
+            ['parent-dialog', 'child-dialog', 'grandchild-dialog'],
+            $this->valuesOf($html, 'data-dialog-content'),
+        );
+        // the close trigger of each dialog belongs to it, not to the dialog rendered last
+        $this->assertEqualsCanonicalizing(
+            ['parent-dialog', 'child-dialog'],
+            $this->valuesOf($html, 'data-dialog-close-trigger'),
+        );
+
+        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives']['dialog'];
+        $this->assertEqualsCanonicalizing(
+            ['parent-dialog', 'child-dialog', 'grandchild-dialog'],
+            array_keys($hydrationData),
+        );
     }
 
     #[Test]

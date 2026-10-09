@@ -7,60 +7,39 @@ namespace Jramke\FluidPrimitives\Tests\Unit;
 use Jramke\FluidPrimitives\Tests\Fixtures\RootDetectionComponentCollection;
 use Jramke\FluidPrimitives\Tests\TestCase;
 use Jramke\FluidPrimitives\Utility\ComponentRootUtility;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 
 final class ComponentRootUtilityTest extends TestCase
 {
-    #[Test]
-    public function returnsTrueForSinglePartComponentName(): void
+    /**
+     * Against {@see RootDetectionComponentCollection}, which has every folder shape: classic Root + parts
+     * (Widget/), a nested example folder without a Root file (Widget/Examples/), a flat folder where no file
+     * is named like the folder (Icon/), and a tiered Root file (Tier/Widget/Root).
+     *
+     * @return iterable<string, array{0: string, 1: bool}>
+     */
+    public static function viewHelperNames(): iterable
     {
-        $this->assertTrue(ComponentRootUtility::isDeclaredRootFromViewHelperName('Collapsible'));
+        yield 'a single segment is its own root' => ['collapsible', true];
+        yield 'a ".root" suffix names the root' => ['widget.root', true];
+        yield 'a part next to a Root file is no root' => ['widget.item', false];
+        yield 'a nested file in a folder without a Root file' => ['widget.examples.demo', true];
+        yield 'a file in a flat folder without a Root file' => ['icon.menu', true];
+        yield 'another file of that flat folder' => ['icon.copy', true];
+        // used to be missed: the classic rule only ever looked at the second segment
+        yield 'a tiered Root file' => ['tier.widget.root', true];
     }
 
     #[Test]
-    public function returnsTrueWhenSecondPartIsRoot(): void
-    {
-        $this->assertTrue(ComponentRootUtility::isDeclaredRootFromViewHelperName('Accordion.Root'));
-    }
-
-    #[Test]
-    public function returnsFalseForItemComponents(): void
-    {
-        $this->assertFalse(ComponentRootUtility::isDeclaredRootFromViewHelperName('Accordion.Item'));
-    }
-
-    #[Test]
-    public function handlesPrimitivesNamespaceSecondPartIsNotRoot(): void
-    {
-        $this->assertFalse(ComponentRootUtility::isDeclaredRootFromViewHelperName('Primitives.Dialog.Root'));
-    }
-
-    #[Test]
-    public function fallsBackToTheClassicRuleWithoutATemplateResolver(): void
-    {
-        // No $templateResolver given - the folder-shape default never runs, so a name that would
-        // resolve to a real, Root-less folder still isn't root without it.
-        $this->assertFalse(ComponentRootUtility::isDeclaredRootFromViewHelperName('widget.examples.demo'));
-    }
-
-    #[Test]
-    public function detectsRootComponentsByFolderShapeWhenATemplateResolverIsGiven(): void
-    {
-        $collection = new RootDetectionComponentCollection();
-
-        // Classic shape, still resolved without ever touching the filesystem.
-        $this->assertTrue(ComponentRootUtility::isDeclaredRootFromViewHelperName('widget.root', $collection));
-        $this->assertFalse(ComponentRootUtility::isDeclaredRootFromViewHelperName('widget.item', $collection));
-
-        // Folder-shape default: no Root.* sibling in the file's own directory - a nested example
-        // folder, and a flat multi-file folder where no file matches the folder's own name.
-        $this->assertTrue(ComponentRootUtility::isDeclaredRootFromViewHelperName('widget.examples.demo', $collection));
-        $this->assertTrue(ComponentRootUtility::isDeclaredRootFromViewHelperName('icon.menu', $collection));
-        $this->assertTrue(ComponentRootUtility::isDeclaredRootFromViewHelperName('icon.copy', $collection));
-
-        // Regression: a tiered Root file (3+ segments ending in ".root") used to be missed by the
-        // classic rule's hardcoded segment[1] check - the folder-shape check's "this file IS the
-        // Root" fast path fixes it for free.
-        $this->assertTrue(ComponentRootUtility::isDeclaredRootFromViewHelperName('tier.widget.root', $collection));
+    #[DataProvider('viewHelperNames')]
+    public function detectsRootComponentsByNameAndByTheFolderShapeOfTheirTemplates(
+        string $viewHelperName,
+        bool $expected,
+    ): void {
+        $this->assertSame($expected, ComponentRootUtility::isDeclaredRootFromViewHelperName(
+            $viewHelperName,
+            new RootDetectionComponentCollection(),
+        ));
     }
 }

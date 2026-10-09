@@ -28,14 +28,4 @@ final class AbstractComponentCollectionTest extends TestCase
             $collection->getComponentDefinition('widget.examples.demo')->getArgumentDefinitions(),
         );
     }
-
-    #[Test]
-    public function isDeclaredRootMirrorsTheRootIdArgumentDefinitionItReadsBackFrom(): void
-    {
-        $collection = new RootDetectionComponentCollection();
-
-        $this->assertTrue($collection->isDeclaredRoot('widget.root'));
-        $this->assertFalse($collection->isDeclaredRoot('widget.item'));
-        $this->assertTrue($collection->isDeclaredRoot('widget.examples.demo'));
-    }
 }

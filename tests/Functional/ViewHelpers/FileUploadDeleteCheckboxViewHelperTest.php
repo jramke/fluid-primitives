@@ -40,7 +40,7 @@ final class FileUploadDeleteCheckboxViewHelperTest extends FunctionalTestCase
     }
 
     #[Test]
-    public function rendersACheckboxWithAValidHmacSignedToken(): void
+    public function rendersACheckboxNamedAfterTheFormObjectWithATokenSignedForTheEnclosingFieldsProperty(): void
     {
         $html = $this->renderTemplate('
             <primitives:form.root actionUri="/submit" objectName="conference">
@@ -51,25 +51,12 @@ final class FileUploadDeleteCheckboxViewHelperTest extends FunctionalTestCase
         ', ['fileReference' => $this->createFileReference(42)]);
 
         $this->assertMatchesRegularExpression('/<input[^>]*type="checkbox"/', $html);
+        $this->assertStringContainsString('name="@delete[conference][]"', $html);
 
         $decoded = $this->extractAndValidateToken($html);
 
         $this->assertSame(42, $decoded['fileReference']);
         $this->assertSame('logo', $decoded['property']);
-    }
-
-    #[Test]
-    public function inheritsThePropertyFromTheEnclosingFieldWhenNotGivenExplicitly(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:form.root actionUri="/submit" objectName="conference">
-                <primitives:field.root name="logo">
-                    <ui:fileUploadDeleteCheckbox fileReference="{fileReference}" />
-                </primitives:field.root>
-            </primitives:form.root>
-        ', ['fileReference' => $this->createFileReference(42)]);
-
-        $this->assertSame('logo', $this->extractAndValidateToken($html)['property']);
     }
 
     #[Test]
@@ -84,20 +71,6 @@ final class FileUploadDeleteCheckboxViewHelperTest extends FunctionalTestCase
         ', ['fileReference' => $this->createFileReference(42)]);
 
         $this->assertSame('banner', $this->extractAndValidateToken($html)['property']);
-    }
-
-    #[Test]
-    public function buildsAnArrayStyleNameFromTheFormsObjectNameAndADeleteMarker(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:form.root actionUri="/submit" objectName="conference">
-                <primitives:field.root name="logo">
-                    <ui:fileUploadDeleteCheckbox fileReference="{fileReference}" />
-                </primitives:field.root>
-            </primitives:form.root>
-        ', ['fileReference' => $this->createFileReference(42)]);
-
-        $this->assertStringContainsString('name="@delete[conference][]"', $html);
     }
 
     #[Test]

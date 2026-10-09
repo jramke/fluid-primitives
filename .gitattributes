@@ -8,6 +8,7 @@ phpunit.xml export-ignore
 .phpunit.cache export-ignore
 tsconfig.json export-ignore
 tsdown.config.ts export-ignore
+vitest.config.ts export-ignore
 package.json export-ignore
 package-lock.json export-ignore
 .claude-plugin export-ignore

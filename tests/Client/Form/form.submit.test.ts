@@ -46,6 +46,7 @@ const settle = (ms = 200) => vi.advanceTimersByTimeAsync(ms);
 afterEach(() => {
     instances.splice(0).forEach(instance => instance.destroy());
     vi.useRealTimers();
+    vi.unstubAllGlobals();
 });
 
 describe('submitting a form of fields', () => {
@@ -166,6 +167,46 @@ describe('submitting a form of fields', () => {
         expect(onSubmit).toHaveBeenCalledOnce();
     });
 
+    test('a field whose markup left the page no longer counts, though nobody destroyed it', async () => {
+        vi.useFakeTimers();
+        const onSubmit = vi.fn(() => true);
+        const { submit } = mount(
+            field('f-a', 'a', input('f-a', 'a', 'required')) +
+                field('f-b', 'b', input('f-b', 'b', 'value="ok"')),
+            { form: { onSubmit }, fields: { a: { required: true } } }
+        );
+        submit();
+        await settle();
+        expect(onSubmit).not.toHaveBeenCalled();
+
+        document.querySelector('[data-field-root="f-a"]')!.remove();
+        submit();
+        await settle();
+
+        expect(onSubmit).toHaveBeenCalledOnce();
+    });
+
+    test('an error the validation reports for a name no field owns still blocks the submit', async () => {
+        vi.useFakeTimers();
+        const onSubmit = vi.fn(() => true);
+        const { form, submit } = mount(
+            field('f-a', 'a', input('f-a', 'a', 'value="ok"')) +
+                '<input type="hidden" name="token" value="stale">',
+            {
+                form: {
+                    onSubmit,
+                    validation: (): FormErrors => ({ token: { messages: ['The token expired'] } }),
+                },
+            }
+        );
+
+        submit();
+        await settle();
+
+        expect(onSubmit).not.toHaveBeenCalled();
+        expect(form.machine.state.get()).toBe('invalid');
+    });
+
     test('a required field without any named control, like an empty combobox, still blocks the submit', async () => {
         vi.useFakeTimers();
         const onSubmit = vi.fn(() => true);
@@ -193,5 +234,93 @@ describe('submitting a form of fields', () => {
         await settle();
 
         expect(onSubmit).toHaveBeenCalledOnce();
+    });
+});
+
+describe('posting a form', () => {
+    function stubPost(status: number, body: object) {
+        const posted: FormData[] = [];
+        vi.stubGlobal('fetch', async (_url: string, init: RequestInit) => {
+            posted.push(init.body as FormData);
+            return new Response(JSON.stringify(body), { status });
+        });
+        return posted;
+    }
+
+    test('post() sends the names the Extbase action expects and puts a 422 body on the fields', async () => {
+        vi.useFakeTimers();
+        const posted = stubPost(422, { 'event.title': ['too short'] });
+        const { form, fields, formEl, submit } = mount(
+            field('f-title', 'title', input('f-title', 'title', 'value="ab"')) +
+                '<input type="hidden" name="tx_events_list[__trustedProperties]" value="signed">',
+            {
+                form: {
+                    objectName: 'event',
+                    onSubmit: async ({ post }) => {
+                        await post('/save');
+                        return true;
+                    },
+                },
+            }
+        );
+        formEl.setAttribute('data-field-name-prefix', 'tx_events_list');
+
+        submit();
+        await settle();
+
+        // a name that already carries the plugin prefix is left alone, the others get prefix and object name
+        expect([...posted[0].keys()]).toEqual([
+            'tx_events_list[event][title]',
+            'tx_events_list[__trustedProperties]',
+        ]);
+        expect(fields.get('title')!.api.errors).toEqual(['too short']);
+        expect(form.machine.state.get()).toBe('invalid');
+    });
+
+    test('a response that is not a 422 leaves the result to onSubmit', async () => {
+        vi.useFakeTimers();
+        const posted = stubPost(200, {});
+        const { form, submit } = mount(
+            field('f-title', 'title', input('f-title', 'title', 'value="ok"')),
+            {
+                form: {
+                    objectName: 'event',
+                    onSubmit: async ({ post }) => {
+                        await post('/save');
+                        return true;
+                    },
+                },
+            }
+        );
+
+        submit();
+        await settle();
+
+        expect([...posted[0].keys()]).toEqual(['event[title]']);
+        expect(form.machine.state.get()).toBe('success');
+    });
+
+    test('a 422 body about the object itself becomes the error text of the form, not a field error', async () => {
+        vi.useFakeTimers();
+        stubPost(422, { event: ['The event is full'] });
+        const { form, fields, submit } = mount(
+            field('f-title', 'title', input('f-title', 'title', 'value="ok"')),
+            {
+                form: {
+                    objectName: 'event',
+                    onSubmit: async ({ post }) => {
+                        await post('/save');
+                        return true;
+                    },
+                },
+            }
+        );
+
+        submit();
+        await settle();
+
+        expect(form.api.getErrorText()).toBe('The event is full');
+        expect(form.machine.state.get()).toBe('error');
+        expect(fields.get('title')!.api.errors).toEqual([]);
     });
 });

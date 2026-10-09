@@ -5,199 +5,103 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Tests\Functional\Components;
 
 use Jramke\FluidPrimitives\Constants;
-use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Tests\Fixtures\PlainComponentCollection;
 use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use TYPO3Fluid\Fluid\Core\ViewHelper\InvalidArgumentValueException;
 
+/**
+ * `asChild` is one mechanism (`AsChildAttributeSpreader`) that every part with `{ui:asChild()}` shares, so it is
+ * proven here on a dialog trigger and not again for every component.
+ */
 final class AsChildRenderingTest extends FunctionalTestCase
 {
     #[Test]
-    public function rendersComponentTemplateElementWhenAsChildFalse(): void
+    public function rendersTheChildInPlaceOfTheTemplateElementCarryingTheComponentAttributes(): void
     {
-        $html = $this->renderTemplate('
+        $asChild = $this->renderDialogTrigger('<a href="/some-link">Open Dialog</a>');
+        $trigger = $this->elementWith($asChild, 'data-dialog-trigger');
+
+        // one element carries the marker: the template's own <button> is gone, not wrapped around the child
+        $this->assertSame('a', $trigger->tag);
+        $this->assertSame('/some-link', $trigger->get('href'));
+        $this->assertSame('closed', $trigger->get('data-state'));
+
+        $template = $this->renderTemplate('
             <primitives:dialog.root>
                 <primitives:dialog.trigger asChild="{false}">Open</primitives:dialog.trigger>
                 <primitives:dialog.content>Content</primitives:dialog.content>
             </primitives:dialog.root>
         ');
+        $this->assertSame('button', $this->elementWith($template, 'data-dialog-trigger')->tag);
 
-        $this->assertStringContainsString('<button', $html);
-        $this->assertStringContainsString('data-dialog-trigger="', $html);
-        $this->assertStringContainsString('Open', $html);
+        // the marker only tells the spreader which tag to merge onto, it is never part of the output
+        $this->assertStringNotContainsString(Constants::AS_CHILD_TARGET_MARKER, $asChild);
+        $this->assertStringNotContainsString(Constants::AS_CHILD_TARGET_MARKER, $template);
     }
 
-    #[Test]
-    public function rendersChildElementWithComponentAttributesWhenAsChildTrue(): void
+    /**
+     * @return iterable<string, array{0: string, 1: string, 2: array<string, string>}>
+     */
+    public static function children(): iterable
     {
-        $html = $this->renderTemplate('
-            <primitives:dialog.root>
-                <primitives:dialog.trigger asChild="{true}">
-                    <a href="/some-link">Open Dialog</a>
-                </primitives:dialog.trigger>
-                <primitives:dialog.content>Content</primitives:dialog.content>
-            </primitives:dialog.root>
-        ');
+        yield 'a button with its own attributes' => [
+            '<button type="submit" class="my-custom-class" data-custom="value">Open</button>',
+            'button',
+            ['type' => 'submit', 'class' => 'my-custom-class', 'data-custom' => 'value'],
+        ];
+        yield 'a div acting as a button' => [
+            '<div role="button" tabindex="0">Clickable</div>',
+            'div',
+            ['role' => 'button', 'tabindex' => '0'],
+        ];
+        yield 'a span' => ['<span class="trigger-span">Click me</span>', 'span', ['class' => 'trigger-span']];
+        yield 'boolean attributes' => [
+            '<button disabled autofocus>Open</button>',
+            'button',
+            ['disabled' => '', 'autofocus' => ''],
+        ];
+        yield 'a void element' => [
+            '<input type="button" value="Open" />',
+            'input',
+            ['type' => 'button', 'value' => 'Open'],
+        ];
+    }
 
-        $this->assertStringContainsString('<a', $html);
-        $this->assertStringContainsString('href="/some-link"', $html);
-        $this->assertStringContainsString('data-dialog-trigger="', $html);
-        $this->assertStringContainsString('Open Dialog', $html);
-        $this->assertDoesNotMatchRegularExpression('/<button[^>]*data-dialog-trigger="/', $html);
+    /**
+     * @param array<string, string> $expectedAttributes
+     */
+    #[Test]
+    #[DataProvider('children')]
+    public function keepsEveryAttributeOfTheChildWhateverItsElement(
+        string $child,
+        string $expectedTag,
+        array $expectedAttributes,
+    ): void {
+        $trigger = $this->elementWith($this->renderDialogTrigger($child), 'data-dialog-trigger');
+
+        $this->assertSame($expectedTag, $trigger->tag);
+        foreach ($expectedAttributes as $name => $value) {
+            $this->assertSame($value, $trigger->get($name), $name);
+        }
     }
 
     #[Test]
-    public function preservesChildElementAttributesWhenSpreading(): void
+    public function theChildsAttributesWinWhereTheyConflictWithTheComponents(): void
     {
-        $html = $this->renderTemplate('
-            <primitives:dialog.root>
-                <primitives:dialog.trigger asChild="{true}">
-                    <button type="submit" class="my-custom-class" data-custom="value">Open</button>
-                </primitives:dialog.trigger>
-                <primitives:dialog.content>Content</primitives:dialog.content>
-            </primitives:dialog.root>
-        ');
+        $html = $this->renderDialogTrigger(
+            '<button class="child-class" data-state="child-state">Open</button>',
+            'class="component-class"',
+        );
 
-        $this->assertStringContainsString('type="submit"', $html);
-        $this->assertStringContainsString('class="my-custom-class"', $html);
-        $this->assertStringContainsString('data-custom="value"', $html);
-        $this->assertStringContainsString('data-dialog-trigger="', $html);
+        $trigger = $this->elementWith($html, 'data-dialog-trigger');
+        $this->assertSame('child-class', $trigger->get('class'));
+        $this->assertSame('child-state', $trigger->get('data-state'));
     }
 
     #[Test]
-    public function childAttributesTakePrecedenceOverComponentAttributes(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:dialog.root>
-                <primitives:dialog.trigger asChild="{true}">
-                    <button class="child-class">Open</button>
-                </primitives:dialog.trigger>
-                <primitives:dialog.content>Content</primitives:dialog.content>
-            </primitives:dialog.root>
-        ');
-
-        $this->assertStringContainsString('class="child-class"', $html);
-    }
-
-    #[Test]
-    public function worksWithDivElements(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:dialog.root>
-                <primitives:dialog.trigger asChild="{true}">
-                    <div role="button" tabindex="0">Clickable Div</div>
-                </primitives:dialog.trigger>
-                <primitives:dialog.content>Content</primitives:dialog.content>
-            </primitives:dialog.root>
-        ');
-
-        $this->assertStringContainsString('<div', $html);
-        $this->assertStringContainsString('role="button"', $html);
-        $this->assertStringContainsString('tabindex="0"', $html);
-        $this->assertStringContainsString('data-dialog-trigger="', $html);
-    }
-
-    #[Test]
-    public function worksWithSpanElements(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:dialog.root>
-                <primitives:dialog.trigger asChild="{true}">
-                    <span class="trigger-span">Click me</span>
-                </primitives:dialog.trigger>
-                <primitives:dialog.content>Content</primitives:dialog.content>
-            </primitives:dialog.root>
-        ');
-
-        $this->assertStringContainsString('<span', $html);
-        $this->assertStringContainsString('class="trigger-span"', $html);
-        $this->assertStringContainsString('data-dialog-trigger="', $html);
-    }
-
-    #[Test]
-    public function worksWithCustomDataAttributesOnElements(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:dialog.root>
-                <primitives:dialog.trigger asChild="{true}">
-                    <button data-variant="primary" data-size="large">Custom Button</button>
-                </primitives:dialog.trigger>
-                <primitives:dialog.content>Content</primitives:dialog.content>
-            </primitives:dialog.root>
-        ');
-
-        $this->assertStringContainsString('<button', $html);
-        $this->assertStringContainsString('data-variant="primary"', $html);
-        $this->assertStringContainsString('data-size="large"', $html);
-        $this->assertStringContainsString('data-dialog-trigger="', $html);
-    }
-
-    #[Test]
-    public function spreadsAttributesToCustomTriggerElementInAccordion(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:accordion.root>
-                <primitives:accordion.item value="item-1">
-                    <primitives:accordion.itemTrigger asChild="{true}">
-                        <div class="custom-accordion-trigger">
-                            <span>Toggle Section</span>
-                            <svg class="icon"></svg>
-                        </div>
-                    </primitives:accordion.itemTrigger>
-                    <primitives:accordion.itemContent>Content 1</primitives:accordion.itemContent>
-                </primitives:accordion.item>
-            </primitives:accordion.root>
-        ');
-
-        $this->assertStringContainsString('<div', $html);
-        $this->assertStringContainsString('class="custom-accordion-trigger"', $html);
-        $this->assertStringContainsString('data-accordion-item-trigger="', $html);
-        $this->assertStringContainsString('Toggle Section', $html);
-    }
-
-    #[Test]
-    public function spreadsAttributesToCustomCloseElement(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:dialog.root>
-                <primitives:dialog.trigger>Open</primitives:dialog.trigger>
-                <primitives:dialog.content>
-                    <primitives:dialog.closeTrigger asChild="{true}">
-                        <span class="close-icon" aria-label="Close">×</span>
-                    </primitives:dialog.closeTrigger>
-                </primitives:dialog.content>
-            </primitives:dialog.root>
-        ');
-
-        $this->assertStringContainsString('<span', $html);
-        $this->assertStringContainsString('class="close-icon"', $html);
-        $this->assertStringContainsString('aria-label="Close"', $html);
-        $this->assertStringContainsString('data-dialog-close-trigger="', $html);
-    }
-
-    #[Test]
-    public function correctlyRegistersHydrationDataWhenUsingAsChild(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:dialog.root rootId="as-child-dialog">
-                <primitives:dialog.trigger asChild="{true}">
-                    <button class="custom-btn">Open</button>
-                </primitives:dialog.trigger>
-                <primitives:dialog.content>Content</primitives:dialog.content>
-            </primitives:dialog.root>
-        ');
-
-        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
-
-        $this->assertArrayHasKey('dialog', $hydrationData);
-        $this->assertArrayHasKey('as-child-dialog', $hydrationData['dialog']);
-        $this->assertStringContainsString('data-dialog-trigger="as-child-dialog"', $html);
-        $this->assertStringContainsString('data-dialog-content="as-child-dialog"', $html);
-    }
-
-    #[Test]
-    public function worksWithMultipleAsChildComponentsInSameDialog(): void
+    public function marksEveryAsChildPartOfOneRootEvenInsideAnotherPartsSlot(): void
     {
         $html = $this->renderTemplate('
             <primitives:dialog.root rootId="multi-aschild">
@@ -213,74 +117,18 @@ final class AsChildRenderingTest extends FunctionalTestCase
             </primitives:dialog.root>
         ');
 
-        $this->assertStringContainsString('class="open-link"', $html);
-        $this->assertStringContainsString('class="close-link"', $html);
-        $this->assertStringContainsString('data-dialog-trigger="multi-aschild"', $html);
-        $this->assertStringContainsString('data-dialog-close-trigger="multi-aschild"', $html);
-
-        // Check that multiple parts within the same dialog instance carry the instance's rootId
-        preg_match_all('/data-dialog-[a-z-]+="multi-aschild"/', $html, $matches);
-        $this->assertGreaterThanOrEqual(3, count($matches[0]));
-    }
-
-    #[Test]
-    public function handlesBooleanAttributesOnChildElement(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:dialog.root>
-                <primitives:dialog.trigger asChild="{true}">
-                    <button disabled autofocus>Open</button>
-                </primitives:dialog.trigger>
-                <primitives:dialog.content>Content</primitives:dialog.content>
-            </primitives:dialog.root>
-        ');
-
-        $this->assertStringContainsString('disabled', $html);
-        $this->assertStringContainsString('autofocus', $html);
-        $this->assertStringContainsString('data-dialog-trigger="', $html);
-    }
-
-    #[Test]
-    public function handlesEmptyChildContentGracefully(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:dialog.root>
-                <primitives:dialog.trigger asChild="{true}">
-                    <button></button>
-                </primitives:dialog.trigger>
-                <primitives:dialog.content>Content</primitives:dialog.content>
-            </primitives:dialog.root>
-        ');
-
-        $this->assertStringContainsString('data-dialog-trigger="', $html);
-    }
-
-    #[Test]
-    public function handlesSelfClosingChildElements(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:dialog.root>
-                <primitives:dialog.trigger asChild="{true}">
-                    <input type="button" value="Open" />
-                </primitives:dialog.trigger>
-                <primitives:dialog.content>Content</primitives:dialog.content>
-            </primitives:dialog.root>
-        ');
-
-        $this->assertStringContainsString('<input', $html);
-        $this->assertStringContainsString('type="button"', $html);
-        $this->assertStringContainsString('value="Open"', $html);
-        $this->assertStringContainsString('data-dialog-trigger="', $html);
+        $this->assertSame('open-link', $this->elementWith($html, 'data-dialog-trigger')->get('class'));
+        $this->assertSame('close-link', $this->elementWith($html, 'data-dialog-close-trigger')->get('class'));
+        // trigger, content and close trigger, all of the one dialog
+        $this->assertSame(3, preg_match_all('/data-dialog-[a-z-]+="multi-aschild"/', $html));
     }
 
     #[Test]
     public function supportsAsChildOnAComponentWithNoClientHydrationAtAll(): void
     {
-        // asChild is opted into per-component via {ui:asChild()} - this demonstrates it works even
-        // on a plain, purely server-rendered component with no hydration part at all (no ui:ref),
-        // like a userland Card, as long as it places {ui:asChild()} on its own root <div>.
-        $view = $this->getView();
-        $view->getRenderingContext()->getViewHelperResolver()->addNamespace('plain', new PlainComponentCollection());
+        // asChild is opted into per component via {ui:asChild()}: it works on a plain, purely server-rendered
+        // component with no ui:ref at all, like a userland Card
+        $this->registerPlainComponents();
 
         $html = $this->renderTemplate('
             <plain:card asChild="{true}" class="card-class">
@@ -288,10 +136,10 @@ final class AsChildRenderingTest extends FunctionalTestCase
             </plain:card>
         ');
 
-        $this->assertStringContainsString('<a', $html);
-        $this->assertStringContainsString('href="/some-link"', $html);
-        $this->assertStringContainsString('class="card-class"', $html);
-        $this->assertStringContainsString('data-custom="value"', $html);
+        $card = $this->elementWith($html, 'data-custom');
+        $this->assertSame('a', $card->tag);
+        $this->assertSame('/some-link', $card->get('href'));
+        $this->assertSame('card-class', $card->get('class'));
         $this->assertDoesNotMatchRegularExpression('/<div[^>]*class="card-class"/', $html);
     }
 
@@ -312,31 +160,12 @@ final class AsChildRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
-    public function handlesChildWithDataAttributes(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:dialog.root>
-                <primitives:dialog.trigger asChild="{true}">
-                    <button data-testid="dialog-trigger" data-analytics="open-dialog">Open</button>
-                </primitives:dialog.trigger>
-                <primitives:dialog.content>Content</primitives:dialog.content>
-            </primitives:dialog.root>
-        ');
-
-        $this->assertStringContainsString('data-testid="dialog-trigger"', $html);
-        $this->assertStringContainsString('data-analytics="open-dialog"', $html);
-        $this->assertStringContainsString('data-dialog-trigger="', $html);
-    }
-
-    #[Test]
     public function rejectsAsChildOnAComponentThatDidNotOptIn(): void
     {
-        // asChild is opt-in per component via {ui:asChild()} - a component whose template never
-        // calls it (NoAsChildOptIn fixture: a plain <div>, no {ui:attributes()} either) doesn't
-        // declare asChild as an argument at all, so passing it is just an unknown argument, exactly
-        // like passing any other undeclared prop.
-        $view = $this->getView();
-        $view->getRenderingContext()->getViewHelperResolver()->addNamespace('plain', new PlainComponentCollection());
+        // asChild is opt-in per component via {ui:asChild()}: a component whose template never calls it
+        // (NoAsChildOptIn: a plain <div>, no {ui:attributes()} either) doesn't declare asChild as an
+        // argument at all, so passing it is an unknown argument like any other undeclared prop
+        $this->registerPlainComponents();
 
         $this->expectException(InvalidArgumentValueException::class);
         $this->expectExceptionMessage('asChild');
@@ -349,36 +178,12 @@ final class AsChildRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
-    public function neverLeaksTheAsChildTargetMarkerIntoRenderedOutput(): void
-    {
-        $htmlWhenTrue = $this->renderTemplate('
-            <primitives:dialog.root>
-                <primitives:dialog.trigger asChild="{true}">
-                    <a href="/some-link">Open Dialog</a>
-                </primitives:dialog.trigger>
-                <primitives:dialog.content>Content</primitives:dialog.content>
-            </primitives:dialog.root>
-        ');
-        $htmlWhenFalse = $this->renderTemplate('
-            <primitives:dialog.root>
-                <primitives:dialog.trigger asChild="{false}">Open</primitives:dialog.trigger>
-                <primitives:dialog.content>Content</primitives:dialog.content>
-            </primitives:dialog.root>
-        ');
-
-        $this->assertStringNotContainsString(Constants::AS_CHILD_TARGET_MARKER, $htmlWhenTrue);
-        $this->assertStringNotContainsString(Constants::AS_CHILD_TARGET_MARKER, $htmlWhenFalse);
-    }
-
-    #[Test]
     public function targetsTheTagCarryingTheMarkerNotJustTheFirstBareTag(): void
     {
-        // Toolbar fixture nests two bare tags: a decorative outer <div data-outer="yes"> and the
-        // real target inner <div {ui:asChild()} data-inner="yes">. Merging onto "whichever tag comes
-        // first" would incorrectly grab the outer one - this proves the marker-based lookup finds
-        // the tag its author actually placed {ui:asChild()} on instead.
-        $view = $this->getView();
-        $view->getRenderingContext()->getViewHelperResolver()->addNamespace('plain', new PlainComponentCollection());
+        // Toolbar nests two bare tags: a decorative outer <div data-outer="yes"> and the real target, the
+        // inner <div {ui:asChild()} data-inner="yes">. Merging onto "whichever tag comes first" would grab
+        // the outer one.
+        $this->registerPlainComponents();
 
         $html = $this->renderTemplate('
             <plain:toolbar asChild="{true}">
@@ -386,10 +191,33 @@ final class AsChildRenderingTest extends FunctionalTestCase
             </plain:toolbar>
         ');
 
-        $this->assertStringContainsString('<a', $html);
-        $this->assertStringContainsString('href="/some-link"', $html);
-        $this->assertStringContainsString('data-inner="yes"', $html);
-        $this->assertStringNotContainsString('data-outer="yes"', $html);
+        $target = $this->elementWith($html, 'data-inner');
+        $this->assertSame('a', $target->tag);
+        $this->assertSame('/some-link', $target->get('href'));
+        $this->assertSame([], $this->elementsWith($html, 'data-outer'));
         $this->assertStringNotContainsString('outer-wrapper', $html);
+    }
+
+    private function renderDialogTrigger(string $child, string $triggerAttributes = ''): string
+    {
+        return $this->renderTemplate('
+            <primitives:dialog.root>
+                <primitives:dialog.trigger asChild="{true}" ' .
+        $triggerAttributes .
+        '>' .
+        $child .
+        '</primitives:dialog.trigger>
+                <primitives:dialog.content>Content</primitives:dialog.content>
+            </primitives:dialog.root>
+        ');
+    }
+
+    private function registerPlainComponents(): void
+    {
+        $this
+            ->getView()
+            ->getRenderingContext()
+            ->getViewHelperResolver()
+            ->addNamespace('plain', new PlainComponentCollection());
     }
 }

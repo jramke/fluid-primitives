@@ -6,6 +6,7 @@ namespace Jramke\FluidPrimitives\Tests\Functional\Components;
 
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use RuntimeException;
 
@@ -28,33 +29,27 @@ final class FieldRenderingTest extends FunctionalTestCase
             </primitives:field.root>
         ');
 
-        $this->assertStringContainsString('data-field-root="', $html);
-        $this->assertStringContainsString('data-name="notifications"', $html);
+        $this->assertSame('notifications', $this->elementWith($html, 'data-field-root')->get('data-name'));
 
         foreach (['data-field-root', 'data-field-label', 'data-field-helper-text', 'data-field-error-text'] as $part) {
-            $tag = $this->extractTag($html, $part);
+            $element = $this->elementWith($html, $part);
             foreach (['data-invalid', 'data-disabled', 'data-readonly', 'data-required'] as $state) {
-                $this->assertStringContainsString($state, $tag, sprintf('%s should carry %s.', $part, $state));
+                $this->assertTrue($element->has($state), sprintf('%s should carry %s.', $part, $state));
             }
         }
     }
 
     #[Test]
-    public function hidesErrorTextUnlessInvalid(): void
+    public function showsAnErrorTextOnlyWhileTheFieldIsInvalidAndKeepsOneNarrowedToAConstraintHidden(): void
     {
-        $html = $this->renderTemplate('
+        $valid = $this->renderTemplate('
             <primitives:field.root name="email">
                 <primitives:field.errorText>Invalid email address.</primitives:field.errorText>
             </primitives:field.root>
         ');
+        $this->assertTrue($this->elementWith($valid, 'data-field-error-text')->has('hidden'));
 
-        $this->assertStringContainsString('hidden', $this->extractTag($html, 'data-field-error-text'));
-    }
-
-    #[Test]
-    public function showsErrorTextWhenInvalidButKeepsOneNarrowedToAConstraintHidden(): void
-    {
-        $html = $this->renderTemplate('
+        $invalid = $this->renderTemplate('
             <primitives:field.root name="email" invalid="{true}">
                 <primitives:field.errorText>Invalid email address.</primitives:field.errorText>
                 <primitives:field.errorText match="' .
@@ -63,24 +58,25 @@ final class FieldRenderingTest extends FunctionalTestCase
             </primitives:field.root>
         ');
 
-        preg_match_all('/<div[^>]*data-field-error-text="[^"]*"[^>]*>/', $html, $matches);
-        $this->assertCount(2, $matches[0]);
-        [$unmatched, $matched] = $matches[0];
+        $errorTexts = $this->elementsWith($invalid, 'data-field-error-text');
+        $this->assertCount(2, $errorTexts);
+        [$unmatched, $matched] = $errorTexts;
 
-        $this->assertStringNotContainsString('hidden', $unmatched);
-        $this->assertStringNotContainsString('data-value', $unmatched);
-
+        $this->assertFalse($unmatched->has('hidden'));
+        $this->assertFalse($unmatched->has('data-value'));
         // which constraint failed is only known once the browser validated, so it stays hidden on the server
-        $this->assertStringContainsString('hidden', $matched);
-        $this->assertStringContainsString('data-value="valueMissing"', $matched);
+        $this->assertTrue($matched->has('hidden'));
+        $this->assertSame('valueMissing', $matched->get('data-value'));
     }
 
     #[Test]
     public function rendersIndicatorsHiddenUnlessTheirStateFollowsFromProps(): void
     {
-        $html = $this->renderTemplate(
+        $field = static fn(string $arguments): string => (
             '
-            <primitives:field.root name="email" required="{true}">
+            <primitives:field.root name="email" ' .
+            $arguments .
+            '>
                 <primitives:field.indicator type="' .
             self::INDICATOR_REQUIRED .
             '">*</primitives:field.indicator>
@@ -94,22 +90,28 @@ final class FieldRenderingTest extends FunctionalTestCase
             self::INDICATOR_VALIDATING .
             '">...</primitives:field.indicator>
             </primitives:field.root>
-        ',
+        '
+        );
+        $hidden = fn(string $html): array => array_map(
+            static fn($indicator): bool => $indicator->has('hidden'),
+            $this->elementsByValue($html, 'data-field-indicator'),
         );
 
-        preg_match_all('/<span[^>]*data-field-indicator="[^"]*"[^>]*>/', $html, $matches);
-        $this->assertCount(4, $matches[0]);
-        [$required, $invalid, $valid, $validating] = $matches[0];
-
-        $this->assertFalse($this->hasHiddenAttribute($required));
-        $this->assertStringContainsString('data-type="required"', $required);
-        $this->assertStringContainsString('data-value="required"', $required);
-        $this->assertStringContainsString('aria-hidden="true"', $required);
-
         // valid and validating are results of validation, which only exist on the client
-        foreach ([$invalid, $valid, $validating] as $indicator) {
-            $this->assertTrue($this->hasHiddenAttribute($indicator));
-        }
+        $required = $this->renderTemplate($field('required="{true}"'));
+        $this->assertSame(
+            ['required' => false, 'invalid' => true, 'valid' => true, 'validating' => true],
+            $hidden($required),
+        );
+        $indicator = $this->elementsByValue($required, 'data-field-indicator')['required'];
+        $this->assertSame('required', $indicator->get('data-type'));
+        $this->assertSame('true', $indicator->get('aria-hidden'));
+
+        $invalid = $this->renderTemplate($field('invalid="{true}"'));
+        $this->assertSame(
+            ['required' => true, 'invalid' => false, 'valid' => true, 'validating' => true],
+            $hidden($invalid),
+        );
     }
 
     #[Test]
@@ -123,22 +125,22 @@ final class FieldRenderingTest extends FunctionalTestCase
             </primitives:field.root>
         ');
 
-        $control = $this->extractTag($html, 'data-field-control');
-        $this->assertStringContainsString('name="email"', $control);
-        $this->assertStringContainsString('disabled', $control);
-        $this->assertStringContainsString('required', $control);
-        $this->assertStringContainsString('aria-invalid="true"', $control);
+        $control = $this->elementWith($html, 'data-field-control');
+        $this->assertSame('email', $control->get('name'));
+        // native attributes, not the data-* ones they would otherwise be mistaken for
+        $this->assertTrue($control->has('disabled'));
+        $this->assertTrue($control->has('required'));
+        $this->assertSame('true', $control->get('aria-invalid'));
     }
 
     #[Test]
     public function shipsTheValidationModeToTheClientDefaultingToOnBlur(): void
     {
-        $html = $this->renderTemplate('
+        $this->renderTemplate('
             <primitives:field.root name="email" rootId="default-mode"></primitives:field.root>
             <primitives:field.root name="name" rootId="own-mode" validationMode="{f:constant(name: \'Jramke\\FluidPrimitives\\Enum\\ValidationMode::OnChange\')}"></primitives:field.root>
         ');
 
-        $this->assertStringContainsString('data-field-root="default-mode"', $html);
         $registry = HydrationRegistry::getInstance();
         $this->assertSame(
             'onBlur',
@@ -165,45 +167,125 @@ final class FieldRenderingTest extends FunctionalTestCase
         ');
     }
 
-    #[Test]
-    public function propagatesNameAndStateToNestedFieldAwareComponentAndOverridesItsIds(): void
+    /**
+     * The components a Field can wrap (Classes/Utility/FieldIdMapping.php): the markup of the component, the marker of the
+     * native control it hands the Field's control id to, the marker of its own label and the one of the element that
+     * submits the name (the control itself, unless the component submits through hidden inputs of its own).
+     *
+     * @return iterable<string, array{0: string, 1: string, 2: string, 3: string}>
+     */
+    public static function fieldAwareComponents(): iterable
     {
+        yield 'an input' => [
+            '<primitives:input.root>
+                <primitives:input.label>Label</primitives:input.label>
+                <primitives:input.input />
+            </primitives:input.root>',
+            'data-input-input',
+            'data-input-label',
+            'data-input-input',
+        ];
+        yield 'a textarea' => [
+            '<primitives:textarea.root>
+                <primitives:textarea.label>Label</primitives:textarea.label>
+                <primitives:textarea.textarea />
+            </primitives:textarea.root>',
+            'data-textarea-textarea',
+            'data-textarea-label',
+            'data-textarea-textarea',
+        ];
+        yield 'a number input' => [
+            '<primitives:numberInput.root>
+                <primitives:numberInput.label>Label</primitives:numberInput.label>
+                <primitives:numberInput.control>
+                    <primitives:numberInput.input />
+                </primitives:numberInput.control>
+            </primitives:numberInput.root>',
+            'data-number-input-input',
+            'data-number-input-label',
+            'data-number-input-input',
+        ];
+        yield 'a switch' => [
+            '<primitives:switch.root>
+                <primitives:switch.control><primitives:switch.thumb /></primitives:switch.control>
+                <primitives:switch.label>Label</primitives:switch.label>
+                <primitives:switch.hiddenInput />
+            </primitives:switch.root>',
+            'data-switch-hidden-input',
+            'data-switch-label',
+            'data-switch-hidden-input',
+        ];
+        yield 'a checkbox' => [
+            '<primitives:checkbox.root>
+                <primitives:checkbox.control />
+                <primitives:checkbox.label>Label</primitives:checkbox.label>
+                <primitives:checkbox.hiddenInput />
+            </primitives:checkbox.root>',
+            'data-checkbox-hidden-input',
+            'data-checkbox-label',
+            'data-checkbox-hidden-input',
+        ];
+        yield 'a select' => [
+            '<primitives:select.root>
+                <primitives:select.label>Label</primitives:select.label>
+                <primitives:select.control>
+                    <primitives:select.trigger>Select</primitives:select.trigger>
+                </primitives:select.control>
+                <primitives:select.hiddenSelect />
+            </primitives:select.root>',
+            'data-select-hidden-select',
+            'data-select-label',
+            'data-select-hidden-select',
+        ];
+        yield 'a combobox' => [
+            '<primitives:combobox.root>
+                <primitives:combobox.label>Label</primitives:combobox.label>
+                <primitives:combobox.control>
+                    <primitives:combobox.input />
+                </primitives:combobox.control>
+                <primitives:combobox.hiddenInput />
+            </primitives:combobox.root>',
+            'data-combobox-input',
+            'data-combobox-label',
+            'data-combobox-hidden-input',
+        ];
+        yield 'a file upload' => [
+            '<primitives:fileUpload.root>
+                <primitives:fileUpload.label>Label</primitives:fileUpload.label>
+                <primitives:fileUpload.hiddenInput />
+            </primitives:fileUpload.root>',
+            'data-file-upload-hidden-input',
+            'data-file-upload-label',
+            'data-file-upload-hidden-input',
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('fieldAwareComponents')]
+    public function handsTheNameTheStateAndTheIdsOfTheFieldToTheNativeControlOfAFieldAwareComponent(
+        string $component,
+        string $controlMarker,
+        string $labelMarker,
+        string $nameMarker,
+    ): void {
         $html = $this->renderTemplate('
-            <primitives:field.root name="marketing" rootId="my-field" disabled="{true}">
-                <primitives:field.label>Marketing emails</primitives:field.label>
-                <primitives:switch.root>
-                    <primitives:switch.control>
-                        <primitives:switch.thumb />
-                    </primitives:switch.control>
-                    <primitives:switch.hiddenInput />
-                </primitives:switch.root>
+            <primitives:field.root name="marketing" rootId="my-field" disabled="{true}" required="{true}">
+                <primitives:field.label>Field label</primitives:field.label>' .
+        $component .
+        '
             </primitives:field.root>
         ');
 
-        // Field.Label is marked with the Field's root id, independently of the nested Switch.
-        $this->assertStringContainsString('data-field-label="my-field"', $html);
+        // Field.Label is marked with the Field's root id, independently of the nested component
+        $this->assertSame('my-field', $this->elementWith($html, 'data-field-label')->get('data-field-label'));
 
-        // The Switch inherits the Field's name/disabled state...
-        $this->assertStringContainsString('name="marketing"', $html);
-        $this->assertStringContainsString('data-disabled', $html);
-
-        // ...and its hiddenInput carries the Field's generated "control" id (per
-        // FieldIdMapping::FIELD_ID_PARTS['switch']['control'] = 'hiddenInput') - this is what lets a
-        // <label for="..."> pointing at the Field's control id reach the actual native input.
-        $hiddenInputTag = $this->extractTag($html, 'data-switch-hidden-input');
-        $this->assertStringContainsString('id="field:my-field:control"', $hiddenInputTag);
-    }
-
-    private function hasHiddenAttribute(string $tag): bool
-    {
-        return preg_match('/\shidden[\s>=]/', $tag) === 1;
-    }
-
-    private function extractTag(string $html, string $attribute): string
-    {
-        $matched = preg_match('/<[a-z]+[^>]*' . preg_quote($attribute, '/') . '="[^"]*"[^>]*>/', $html, $matches);
-        $this->assertSame(1, $matched, sprintf('Expected exactly one element with %s.', $attribute));
-
-        return $matches[0];
+        $control = $this->elementWith($html, $controlMarker);
+        $this->assertTrue($control->has('disabled'));
+        $this->assertTrue($control->has('required'));
+        $this->assertSame('marketing', $this->elementWith($html, $nameMarker)->get('name'));
+        // the ids a <label for="..."> of the Field points at: the client machine looks its control up by it
+        // and a rename of a FieldArray row restamps them by the `field:<rootId>:` prefix
+        $this->assertSame('field:my-field:control', $control->get('id'));
+        $this->assertSame('field:my-field:label', $this->elementWith($html, $labelMarker)->get('id'));
     }
 }

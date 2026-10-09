@@ -8,332 +8,153 @@ use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
 use PHPUnit\Framework\Attributes\Test;
 
-// @mago-expect lint:too-many-methods
 final class AccordionRenderingTest extends FunctionalTestCase
 {
-    #[Test]
-    public function rendersAccordionRootWithDataAttributes(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:accordion.root>
-                <primitives:accordion.item value="item-1">
-                    <primitives:accordion.itemTrigger>Trigger 1</primitives:accordion.itemTrigger>
-                    <primitives:accordion.itemContent>Content 1</primitives:accordion.itemContent>
-                </primitives:accordion.item>
-            </primitives:accordion.root>
-        ');
+    private const array PARTS = ['item', 'item-header', 'item-trigger', 'item-content'];
 
-        $this->assertStringContainsString('data-accordion-root="', $html);
+    #[Test]
+    public function marksEveryPartWithTheGeneratedRootIdAndTheValueOfItsItem(): void
+    {
+        $html = $this->renderTemplate($this->accordion('', 'item-1', 'item-2'));
+
+        $rootIds = $this->valuesOf($html, 'data-accordion-root');
+        $this->assertCount(1, $rootIds);
+        $this->assertNotSame('', $rootIds[0]);
+
+        foreach (self::PARTS as $part) {
+            $attribute = 'data-accordion-' . $part;
+            $this->assertSame([$rootIds[0], $rootIds[0]], $this->valuesOf($html, $attribute), $part);
+            $this->assertSame(['item-1', 'item-2'], array_keys($this->elementsByValue($html, $attribute)), $part);
+        }
+
+        $item = $this->elementsByValue($html, 'data-accordion-item-trigger')['item-1'];
+        $this->assertSame('button', $item->tag);
+        $this->assertSame('button', $item->get('type'));
+        $this->assertSame('h3', $this->elementsByValue($html, 'data-accordion-item-header')['item-1']->tag);
+        $this->assertSame(
+            'region',
+            $this->elementsByValue($html, 'data-accordion-item-content')['item-1']->get('role'),
+        );
     }
 
     #[Test]
-    public function generatesUniqueRootIdForHydration(): void
+    public function rendersAnItemOpenOnlyWhenItsValueIsInTheDefaultValue(): void
     {
-        $html = $this->renderTemplate('
-            <primitives:accordion.root>
-                <primitives:accordion.item value="item-1">
+        $html = $this->renderTemplate($this->accordion(
+            'defaultValue="{0: \'item-1\', 1: \'item-2\'}"',
+            'item-1',
+            'item-2',
+            'item-3',
+        ));
+
+        foreach (['item', 'item-header', 'item-trigger', 'item-content'] as $part) {
+            foreach ($this->elementsByValue($html, 'data-accordion-' . $part) as $value => $element) {
+                $this->assertSame(
+                    $value === 'item-3' ? 'closed' : 'open',
+                    $element->get('data-state'),
+                    $part . ' ' . $value,
+                );
+            }
+        }
+        foreach ($this->elementsByValue($html, 'data-accordion-item-content') as $value => $content) {
+            $this->assertSame($value === 'item-3', $content->has('hidden'), $value);
+        }
+    }
+
+    #[Test]
+    public function disablesAnItemNativelyOnItsOwnOrThroughTheRootAndLetsItOverrideTheRoot(): void
+    {
+        $item = static fn(string $value, string $arguments = ''): string => (
+            '
+            <primitives:accordion.item value="' . $value . '" ' . $arguments . '>
+                <primitives:accordion.itemHeader>
                     <primitives:accordion.itemTrigger>Trigger</primitives:accordion.itemTrigger>
-                    <primitives:accordion.itemContent>Content</primitives:accordion.itemContent>
-                </primitives:accordion.item>
-            </primitives:accordion.root>
-        ');
+                </primitives:accordion.itemHeader>
+                <primitives:accordion.itemContent>Content</primitives:accordion.itemContent>
+            </primitives:accordion.item>
+        '
+        );
+        $disabled = static fn($element): array => [
+            $element->has('disabled'),
+            $element->get('aria-disabled'),
+            $element->has('data-disabled'),
+        ];
 
-        preg_match('/data-accordion-root="([^"]+)"/', $html, $root);
+        $rootDisabled = $this->renderTemplate(
+            '<primitives:accordion.root disabled="{true}">' .
+            $item('inherits') .
+            $item('overrides', 'disabled="{false}"') .
+            '</primitives:accordion.root>',
+        );
+        $triggers = $this->elementsByValue($rootDisabled, 'data-accordion-item-trigger');
+        $this->assertSame([true, 'true', true], $disabled($triggers['inherits']));
+        $this->assertSame([false, 'false', false], $disabled($triggers['overrides']));
 
-        $this->assertNotEmpty($root[1]);
-        $this->assertStringContainsString('data-accordion-item="' . $root[1] . '"', $html);
+        $itemDisabled = $this->renderTemplate(
+            '<primitives:accordion.root>' .
+            $item('off', 'disabled="{true}"') .
+            $item('on') .
+            '</primitives:accordion.root>',
+        );
+        $triggers = $this->elementsByValue($itemDisabled, 'data-accordion-item-trigger');
+        $this->assertSame([true, 'true', true], $disabled($triggers['off']));
+        $this->assertSame([false, 'false', false], $disabled($triggers['on']));
+        // the header carries the same state and value, the client spreads it by value
+        $header = $this->elementsByValue($itemDisabled, 'data-accordion-item-header')['off'];
+        $this->assertTrue($header->has('data-disabled'));
+        $this->assertSame('off', $header->get('data-value'));
     }
 
     #[Test]
-    public function rendersAccordionItemsWithValueAttribute(): void
+    public function passesOrientationOnToEveryPart(): void
     {
-        $html = $this->renderTemplate('
-            <primitives:accordion.root>
-                <primitives:accordion.item value="my-unique-value">
-                    <primitives:accordion.itemTrigger>Trigger</primitives:accordion.itemTrigger>
-                    <primitives:accordion.itemContent>Content</primitives:accordion.itemContent>
-                </primitives:accordion.item>
-            </primitives:accordion.root>
-        ');
+        $html = $this->renderTemplate($this->accordion(
+            'orientation="{f:constant(name: \'Jramke\FluidPrimitives\Enum\Orientation::Horizontal\')}"',
+            'item-1',
+        ));
 
-        $this->assertStringContainsString('data-accordion-item="', $html);
-        $this->assertStringContainsString('data-value="my-unique-value"', $html);
+        foreach (['root', 'item', 'item-trigger', 'item-content'] as $part) {
+            $this->assertSame(
+                'horizontal',
+                $this->elementWith($html, 'data-accordion-' . $part)->get('data-orientation'),
+                $part,
+            );
+        }
     }
 
     #[Test]
-    public function rendersAsButtonElement(): void
+    public function registersOneRootWithItsClientProps(): void
     {
-        $html = $this->renderTemplate('
-            <primitives:accordion.root>
-                <primitives:accordion.item value="item-1">
-                    <primitives:accordion.itemTrigger>Click me</primitives:accordion.itemTrigger>
-                    <primitives:accordion.itemContent>Content</primitives:accordion.itemContent>
-                </primitives:accordion.item>
-            </primitives:accordion.root>
-        ');
+        $this->renderTemplate($this->accordion(
+            'multiple="{true}" collapsible="{false}" defaultValue="{0: \'item-1\'}"',
+            'item-1',
+            'item-2',
+        ));
 
-        $this->assertStringContainsString('<button', $html);
-        $this->assertStringContainsString('type="button"', $html);
-        $this->assertStringContainsString('data-accordion-item-trigger="', $html);
+        $accordions = HydrationRegistry::getInstance()->getAll()['primitives']['accordion'];
+
+        // items, triggers and the like are parts of the root, not roots of their own
+        $this->assertCount(1, $accordions);
+        $props = array_values($accordions)[0]['props'];
+        $this->assertTrue($props['multiple']);
+        $this->assertFalse($props['collapsible']);
+        $this->assertSame(['item-1'], $props['defaultValue']);
     }
 
-    #[Test]
-    public function hasAriaDisabledAttribute(): void
+    private function accordion(string $rootArguments, string ...$values): string
     {
-        $html = $this->renderTemplate('
-            <primitives:accordion.root>
-                <primitives:accordion.item value="item-1">
-                    <primitives:accordion.itemTrigger>Trigger</primitives:accordion.itemTrigger>
-                    <primitives:accordion.itemContent>Content</primitives:accordion.itemContent>
-                </primitives:accordion.item>
-            </primitives:accordion.root>
-        ');
-
-        $this->assertStringContainsString('aria-disabled="false"', $html);
-    }
-
-    #[Test]
-    public function rendersDisabledStateCorrectly(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:accordion.root>
-                <primitives:accordion.item value="item-1" disabled="{true}">
-                    <primitives:accordion.itemTrigger>Trigger</primitives:accordion.itemTrigger>
-                    <primitives:accordion.itemContent>Content</primitives:accordion.itemContent>
-                </primitives:accordion.item>
-            </primitives:accordion.root>
-        ');
-
-        $this->assertStringContainsString('aria-disabled="true"', $html);
-        $this->assertStringContainsString('disabled', $html);
-        $this->assertStringContainsString('data-disabled', $html);
-    }
-
-    #[Test]
-    public function rendersItemHeaderWithItsItemsValueAndDisabledState(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:accordion.root>
-                <primitives:accordion.item value="item-1" disabled="{true}">
+        $items = '';
+        foreach ($values as $value) {
+            $items .= '
+                <primitives:accordion.item value="' . $value . '">
                     <primitives:accordion.itemHeader>
                         <primitives:accordion.itemTrigger>Trigger</primitives:accordion.itemTrigger>
                     </primitives:accordion.itemHeader>
                     <primitives:accordion.itemContent>Content</primitives:accordion.itemContent>
                 </primitives:accordion.item>
-            </primitives:accordion.root>
-        ');
+            ';
+        }
 
-        preg_match('/<h3[^>]*data-accordion-item-header="[^"]+"[^>]*>/', $html, $header);
-
-        $this->assertNotEmpty($header);
-        $this->assertStringContainsString('data-value="item-1"', $header[0]);
-        $this->assertStringContainsString('data-disabled', $header[0]);
-    }
-
-    #[Test]
-    public function rendersContentContainerWithDataAttributes(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:accordion.root>
-                <primitives:accordion.item value="item-1">
-                    <primitives:accordion.itemTrigger>Trigger</primitives:accordion.itemTrigger>
-                    <primitives:accordion.itemContent>My Content Here</primitives:accordion.itemContent>
-                </primitives:accordion.item>
-            </primitives:accordion.root>
-        ');
-
-        $this->assertStringContainsString('data-accordion-item-content="', $html);
-        $this->assertStringContainsString('My Content Here', $html);
-    }
-
-    #[Test]
-    public function rendersMultipleAccordionItems(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:accordion.root>
-                <primitives:accordion.item value="first">
-                    <primitives:accordion.itemTrigger>First Trigger</primitives:accordion.itemTrigger>
-                    <primitives:accordion.itemContent>First Content</primitives:accordion.itemContent>
-                </primitives:accordion.item>
-                <primitives:accordion.item value="second">
-                    <primitives:accordion.itemTrigger>Second Trigger</primitives:accordion.itemTrigger>
-                    <primitives:accordion.itemContent>Second Content</primitives:accordion.itemContent>
-                </primitives:accordion.item>
-            </primitives:accordion.root>
-        ');
-
-        $this->assertStringContainsString('data-value="first"', $html);
-        $this->assertStringContainsString('data-value="second"', $html);
-        $this->assertStringContainsString('First Trigger', $html);
-        $this->assertStringContainsString('Second Trigger', $html);
-    }
-
-    #[Test]
-    public function appliesCustomClassToRoot(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:accordion.root class="my-custom-class">
-                <primitives:accordion.item value="item-1">
-                    <primitives:accordion.itemTrigger>Trigger</primitives:accordion.itemTrigger>
-                    <primitives:accordion.itemContent>Content</primitives:accordion.itemContent>
-                </primitives:accordion.item>
-            </primitives:accordion.root>
-        ');
-
-        $this->assertStringContainsString('class="my-custom-class"', $html);
-    }
-
-    #[Test]
-    public function passesOrientationPropThroughDataAttribute(): void
-    {
-        $html = $this->renderTemplate(<<<'FLUID'
-            <primitives:accordion.root orientation="{f:constant(name: 'Jramke\FluidPrimitives\Enum\Orientation::Horizontal')}">
-                <primitives:accordion.item value="item-1">
-                    <primitives:accordion.itemTrigger>Trigger</primitives:accordion.itemTrigger>
-                    <primitives:accordion.itemContent>Content</primitives:accordion.itemContent>
-                </primitives:accordion.item>
-            </primitives:accordion.root>
-        FLUID);
-
-        $this->assertStringContainsString('data-orientation="horizontal"', $html);
-    }
-
-    #[Test]
-    public function registersComponentInHydrationRegistry(): void
-    {
-        $this->renderTemplate('
-            <primitives:accordion.root>
-                <primitives:accordion.item value="item-1">
-                    <primitives:accordion.itemTrigger>Trigger</primitives:accordion.itemTrigger>
-                    <primitives:accordion.itemContent>Content</primitives:accordion.itemContent>
-                </primitives:accordion.item>
-            </primitives:accordion.root>
-        ');
-
-        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
-
-        $this->assertArrayHasKey('accordion', $hydrationData);
-        $this->assertIsArray($hydrationData['accordion']);
-        $this->assertCount(1, $hydrationData['accordion']);
-    }
-
-    #[Test]
-    public function includesClientPropsInHydrationData(): void
-    {
-        $this->renderTemplate('
-            <primitives:accordion.root multiple="{true}" collapsible="{true}">
-                <primitives:accordion.item value="item-1">
-                    <primitives:accordion.itemTrigger>Trigger</primitives:accordion.itemTrigger>
-                    <primitives:accordion.itemContent>Content</primitives:accordion.itemContent>
-                </primitives:accordion.item>
-            </primitives:accordion.root>
-        ');
-
-        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
-        $accordionData = array_values($hydrationData['accordion'])[0];
-
-        $this->assertArrayHasKey('multiple', $accordionData['props']);
-        $this->assertTrue($accordionData['props']['multiple']);
-        $this->assertArrayHasKey('collapsible', $accordionData['props']);
-        $this->assertTrue($accordionData['props']['collapsible']);
-    }
-
-    #[Test]
-    public function includesDefaultValueInHydrationData(): void
-    {
-        $this->renderTemplate('
-            <primitives:accordion.root defaultValue="{0: \'item-1\'}">
-                <primitives:accordion.item value="item-1">
-                    <primitives:accordion.itemTrigger>Trigger</primitives:accordion.itemTrigger>
-                    <primitives:accordion.itemContent>Content</primitives:accordion.itemContent>
-                </primitives:accordion.item>
-            </primitives:accordion.root>
-        ');
-
-        $hydrationData = HydrationRegistry::getInstance()->getAll()['primitives'] ?? [];
-        $accordionData = array_values($hydrationData['accordion'])[0];
-
-        $this->assertArrayHasKey('defaultValue', $accordionData['props']);
-        $this->assertSame(['item-1'], $accordionData['props']['defaultValue']);
-    }
-
-    #[Test]
-    public function rendersClosedStateByDefault(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:accordion.root>
-                <primitives:accordion.item value="item-1">
-                    <primitives:accordion.itemTrigger>Trigger</primitives:accordion.itemTrigger>
-                    <primitives:accordion.itemContent>Content</primitives:accordion.itemContent>
-                </primitives:accordion.item>
-            </primitives:accordion.root>
-        ');
-
-        $this->assertStringContainsString('data-state="closed"', $html);
-    }
-
-    #[Test]
-    public function rendersOpenStateWhenItemIsInDefaultValueArray(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:accordion.root defaultValue="{0: \'item-1\', 1: \'item-2\'}">
-                <primitives:accordion.item value="item-1">
-                    <primitives:accordion.itemTrigger>Trigger 1</primitives:accordion.itemTrigger>
-                    <primitives:accordion.itemContent>Content 1</primitives:accordion.itemContent>
-                </primitives:accordion.item>
-                <primitives:accordion.item value="item-2">
-                    <primitives:accordion.itemTrigger>Trigger 2</primitives:accordion.itemTrigger>
-                    <primitives:accordion.itemContent>Content 2</primitives:accordion.itemContent>
-                </primitives:accordion.item>
-                <primitives:accordion.item value="item-3">
-                    <primitives:accordion.itemTrigger>Trigger 3</primitives:accordion.itemTrigger>
-                    <primitives:accordion.itemContent>Content 3</primitives:accordion.itemContent>
-                </primitives:accordion.item>
-            </primitives:accordion.root>
-        ');
-
-        // 2 items x 3 parts = 6 open
-        $this->assertSame(6, preg_match_all('/data-state="open"/', $html));
-        // 1 item x 3 parts = 3 closed
-        $this->assertSame(3, preg_match_all('/data-state="closed"/', $html));
-    }
-
-    #[Test]
-    public function inheritsDisabledStateFromRootToAllItems(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:accordion.root disabled="{true}">
-                <primitives:accordion.item value="item-1">
-                    <primitives:accordion.itemTrigger>Trigger 1</primitives:accordion.itemTrigger>
-                    <primitives:accordion.itemContent>Content 1</primitives:accordion.itemContent>
-                </primitives:accordion.item>
-                <primitives:accordion.item value="item-2">
-                    <primitives:accordion.itemTrigger>Trigger 2</primitives:accordion.itemTrigger>
-                    <primitives:accordion.itemContent>Content 2</primitives:accordion.itemContent>
-                </primitives:accordion.item>
-            </primitives:accordion.root>
-        ');
-
-        $this->assertSame(2, preg_match_all('/aria-disabled="true"/', $html));
-    }
-
-    #[Test]
-    public function itemLevelDisabledOverridesRootDisabled(): void
-    {
-        $html = $this->renderTemplate('
-            <primitives:accordion.root disabled="{true}">
-                <primitives:accordion.item value="item-1" disabled="{false}">
-                    <primitives:accordion.itemTrigger>Enabled Item</primitives:accordion.itemTrigger>
-                    <primitives:accordion.itemContent>Content 1</primitives:accordion.itemContent>
-                </primitives:accordion.item>
-                <primitives:accordion.item value="item-2">
-                    <primitives:accordion.itemTrigger>Disabled Item</primitives:accordion.itemTrigger>
-                    <primitives:accordion.itemContent>Content 2</primitives:accordion.itemContent>
-                </primitives:accordion.item>
-            </primitives:accordion.root>
-        ');
-
-        $this->assertStringContainsString('aria-disabled="false"', $html);
-        $this->assertStringContainsString('aria-disabled="true"', $html);
+        return '<primitives:accordion.root ' . $rootArguments . '>' . $items . '</primitives:accordion.root>';
     }
 }
