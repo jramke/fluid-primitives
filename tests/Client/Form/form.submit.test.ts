@@ -253,7 +253,15 @@ describe('posting a form', () => {
         const { form, fields, formEl, submit } = mount(
             field('f-title', 'title', input('f-title', 'title', 'value="ab"')) +
                 '<input type="hidden" name="tx_events_list[__trustedProperties]" value="signed">',
-            { form: { objectName: 'event', onSubmit: ({ post }) => post('/save') } }
+            {
+                form: {
+                    objectName: 'event',
+                    onSubmit: async ({ post }) => {
+                        await post('/save');
+                        return true;
+                    },
+                },
+            }
         );
         formEl.setAttribute('data-field-name-prefix', 'tx_events_list');
 
@@ -269,12 +277,43 @@ describe('posting a form', () => {
         expect(form.machine.state.get()).toBe('invalid');
     });
 
+    test('a response that is not a 422 leaves the result to onSubmit', async () => {
+        vi.useFakeTimers();
+        const posted = stubPost(200, {});
+        const { form, submit } = mount(
+            field('f-title', 'title', input('f-title', 'title', 'value="ok"')),
+            {
+                form: {
+                    objectName: 'event',
+                    onSubmit: async ({ post }) => {
+                        await post('/save');
+                        return true;
+                    },
+                },
+            }
+        );
+
+        submit();
+        await settle();
+
+        expect([...posted[0].keys()]).toEqual(['event[title]']);
+        expect(form.machine.state.get()).toBe('success');
+    });
+
     test('a 422 body about the object itself becomes the error text of the form, not a field error', async () => {
         vi.useFakeTimers();
         stubPost(422, { event: ['The event is full'] });
         const { form, fields, submit } = mount(
             field('f-title', 'title', input('f-title', 'title', 'value="ok"')),
-            { form: { objectName: 'event', onSubmit: ({ post }) => post('/save') } }
+            {
+                form: {
+                    objectName: 'event',
+                    onSubmit: async ({ post }) => {
+                        await post('/save');
+                        return true;
+                    },
+                },
+            }
         );
 
         submit();
