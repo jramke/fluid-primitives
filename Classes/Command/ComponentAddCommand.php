@@ -52,7 +52,8 @@ class ComponentAddCommand extends Command
             'fluid-suffix',
             '',
             InputOption::VALUE_NEGATABLE,
-            'Use .fluid.html suffix for component files. Defaults to enabled on TYPO3 v14+.',
+            'Use .fluid.html suffix for component files.',
+            true,
         );
         $this->addOption('force', 'f', InputOption::VALUE_NONE, 'Force overwriting existing component.');
     }
@@ -77,16 +78,12 @@ class ComponentAddCommand extends Command
         }
 
         $componentFolderName = Typed::string($manifest['name'] ?? null);
-        $files = array_map(Typed::string(...), Typed::arrayOrNull($manifest['files'] ?? null) ?? []);
-        // Checked with is_bool() rather than Typed::bool() below - this is a VALUE_NONE flag, so a
-        // real value here is always already a genuine bool; Typed::bool() would also (incorrectly for
-        // this option) accept boolean-keyword strings.
-        // @mago-expect analysis:mixed-assignment
-        $useFluidSuffix = $input->getOption('fluid-suffix');
-        if (!is_bool($useFluidSuffix)) {
-            $useFluidSuffix = $this->fileWriter->shouldUseFluidSuffixByDefault();
+        if (!$this->fileWriter->isSafeRelativePath($componentFolderName) || str_contains($componentFolderName, '/')) {
+            $io->error('The registry sent "' . $componentFolderName . '" as the name of the component folder.');
+            return Command::FAILURE;
         }
 
+        $files = array_map(Typed::string(...), Typed::arrayOrNull($manifest['files'] ?? null) ?? []);
         $targetFolder =
             $availablePackages[$extension]->getPackagePath() .
             Typed::string($input->getOption('path')) .
@@ -95,11 +92,15 @@ class ComponentAddCommand extends Command
 
         $writeResult = $this->fileWriter->write($io, $componentKey, $files, [
             'targetFolder' => $targetFolder,
-            'useFluidSuffix' => $useFluidSuffix,
+            'useFluidSuffix' => $input->getOption('fluid-suffix') !== false,
             'force' => Typed::bool($input->getOption('force')),
         ]);
 
         $this->fileWriter->reportResult($io, $componentKey, $extension, $writeResult);
+        if ($writeResult['failed']) {
+            $io->error('Not every file of the component could be written.');
+            return Command::FAILURE;
+        }
 
         return Command::SUCCESS;
     }

@@ -7,7 +7,6 @@ namespace Jramke\FluidPrimitives\Command;
 use Jramke\FluidPrimitives\Service\RegistryService;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Cache\CacheManager;
-use TYPO3\CMS\Core\Information\Typo3Version;
 
 /**
  * Fetches and writes a component's files to disk for `ui:add`, then reports the outcome and flushes
@@ -25,7 +24,7 @@ final readonly class ComponentFileWriter
      *
      * @param string[] $files
      * @param array{targetFolder: string, useFluidSuffix: bool, force: bool} $options
-     * @return array{skipped: bool, updated: bool, created: bool}
+     * @return array{skipped: bool, updated: bool, created: bool, failed: bool}
      */
     public function write(SymfonyStyle $io, string $componentKey, array $files, array $options): array
     {
@@ -34,11 +33,20 @@ final readonly class ComponentFileWriter
         $someSkipped = false;
         $someUpdated = false;
         $someCreated = false;
+        $someFailed = false;
 
         foreach ($files as $file) {
+            // the names come from the registry's answer, so one must not lead out of the component folder
+            if (!$this->isSafeRelativePath($file)) {
+                $io->warning('Skipped "' . $file . '": it is not a path inside the component folder.');
+                $someFailed = true;
+                continue;
+            }
+
             [$error, $content] = $this->registryService->fetchComponentFile($componentKey, $file);
             if ($error) {
                 $io->warning($error['message']);
+                $someFailed = true;
                 continue;
             }
 
@@ -68,11 +76,30 @@ final readonly class ComponentFileWriter
             $someCreated = true;
         }
 
-        return ['skipped' => $someSkipped, 'updated' => $someUpdated, 'created' => $someCreated];
+        return [
+            'skipped' => $someSkipped,
+            'updated' => $someUpdated,
+            'created' => $someCreated,
+            'failed' => $someFailed,
+        ];
     }
 
     /**
-     * @param array{skipped: bool, updated: bool, created: bool} $writeResult
+     * Whether `$path` stays below the folder it is joined to: not absolute, no `..` segment, no backslash or
+     * control character.
+     */
+    public function isSafeRelativePath(string $path): bool
+    {
+        return (
+            $path !== '' &&
+            !str_starts_with($path, '/') &&
+            preg_match('/[\\\\\x00-\x1f]/', $path) === 0 &&
+            !in_array('..', explode('/', $path), strict: true)
+        );
+    }
+
+    /**
+     * @param array{skipped: bool, updated: bool, created: bool, failed: bool} $writeResult
      */
     public function reportResult(SymfonyStyle $io, string $componentKey, string $extension, array $writeResult): void
     {
@@ -102,12 +129,9 @@ final readonly class ComponentFileWriter
             $io->success($successMessage);
         }
 
-        $this->cacheManager->flushCachesInGroup('pages');
-    }
-
-    public function shouldUseFluidSuffixByDefault(): bool
-    {
-        return (new Typo3Version())->getMajorVersion() >= 14;
+        if ($someCreated || $someUpdated) {
+            $this->cacheManager->flushCachesInGroup('pages');
+        }
     }
 
     private function resolveTargetFileName(string $file, bool $useFluidSuffix): string
