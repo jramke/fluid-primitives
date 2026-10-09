@@ -39,10 +39,8 @@ final class ComponentRootUtility
      * Root.html/Root.fluid.html file. This makes any standalone file in a Root-less folder root by
      * default (a flat folder of unrelated files like `Icon/Menu.html`, `Icon/Copy.html`, or a nested
      * folder like `CheckboxGroup/Examples/SelectAll.html`), matching the single-file-component
-     * convention extended recursively to any depth, with no new syntax. $templateResolver is only
-     * needed (and only ever consulted) to run the folder-shape check - pass the calling
-     * `ComponentCollectionInterface` for a real decision; omit it to get just the classic,
-     * filesystem-free rule (e.g. from a plain unit test with no real template tree).
+     * convention extended recursively to any depth, with no new syntax. $templateResolver runs the
+     * folder-shape check - the calling `ComponentCollectionInterface` passes itself.
      *
      * {@see \Jramke\FluidPrimitives\Component\AbstractComponentCollection::getComponentDefinition()}
      * is the only place that runs this filesystem-aware branch - once per unique viewHelperName per
@@ -54,7 +52,7 @@ final class ComponentRootUtility
      */
     public static function isDeclaredRootFromViewHelperName(
         string $viewHelperName,
-        ?ComponentTemplateResolverInterface $templateResolver = null,
+        ComponentTemplateResolverInterface $templateResolver,
     ): bool {
         if ($viewHelperName === '' || $viewHelperName === '0') {
             return false;
@@ -67,10 +65,6 @@ final class ComponentRootUtility
 
         if (strtolower($componentParts[1] ?? '') === 'root') {
             return true;
-        }
-
-        if (!$templateResolver instanceof ComponentTemplateResolverInterface) {
-            return false;
         }
 
         $templateName = $templateResolver->resolveTemplateName($viewHelperName);
