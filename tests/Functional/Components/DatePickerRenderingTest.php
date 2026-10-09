@@ -251,7 +251,7 @@ final class DatePickerRenderingTest extends FunctionalTestCase
                     </primitives:datePicker.table>
                     <primitives:datePicker.table view="day" offset="1" />
                 </primitives:datePicker.view>
-                <primitives:datePicker.presetTrigger value="last7Days">Last 7 days</primitives:datePicker.presetTrigger>
+                <primitives:datePicker.presetTrigger value="{f:constant(name: \'Jramke\\FluidPrimitives\\Enum\\DatePickerRangePreset::Last7Days\')}">Last 7 days</primitives:datePicker.presetTrigger>
             </primitives:datePicker.root>
         ');
 
