@@ -135,7 +135,8 @@ class DatePickerContext extends AbstractComponentContext
      */
     public function getDefaultValue(): ?array
     {
-        // `defaultValue` is declared type="mixed" and genuinely accepts every shape handled below.
+        // A Field sets `defaultValue` on the context without Fluid checking its type, so it can be any
+        // shape handled below.
         // @mago-expect analysis:mixed-assignment
         $defaultValue = $this->get('defaultValue');
 
