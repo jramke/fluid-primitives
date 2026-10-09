@@ -6,12 +6,12 @@
 <ui:prop name="required" type="boolean" optional="{true}" client="{true}" description="Whether the date picker is required. Inherited from a surrounding field when available." />
 <ui:prop name="invalid" type="boolean" optional="{true}" client="{true}" description="Whether the date picker is invalid. Inherited from a surrounding field when available." />
 <ui:prop name="outsideDaySelectable" type="boolean" optional="{true}" client="{true}" default="{false}" description="Whether a day outside the visible month can be selected." />
-<ui:prop name="min" type="string" optional="{true}" client="{true}" description="The minimum date that can be selected, as an ISO date string (`2025-01-31`)." />
-<ui:prop name="max" type="string" optional="{true}" client="{true}" description="The maximum date that can be selected, as an ISO date string (`2025-01-31`)." />
+<ui:prop name="min" type="mixed" optional="{true}" description="The minimum date that can be selected: an ISO date string (`2025-01-31`) or a `DateTimeInterface`." />
+<ui:prop name="max" type="mixed" optional="{true}" description="The maximum date that can be selected: an ISO date string (`2025-01-31`) or a `DateTimeInterface`." />
 <ui:prop name="closeOnSelect" type="boolean" optional="{true}" client="{true}" default="{true}" description="Whether the calendar should close after the date selection is complete. Ignored when `selectionMode` is `multiple`." />
 <ui:prop name="openOnClick" type="boolean" optional="{true}" client="{true}" default="{false}" description="Whether to open the calendar when the input is clicked." />
 <ui:prop name="defaultValue" type="mixed" optional="{true}" description="The initial selected date(s) when rendered: an ISO date string (`2025-01-31`), a `DateTimeInterface`, or a list of them. Use when you don't need to control the selected date(s) of the date picker. Inherited from a surrounding field when available." />
-<ui:prop name="defaultFocusedValue" type="string" optional="{true}" client="{true}" description="The initially focused date when rendered, as an ISO date string. Use when you don't need to control the focused date of the date picker." />
+<ui:prop name="defaultFocusedValue" type="mixed" optional="{true}" description="The initially focused date when rendered: an ISO date string or a `DateTimeInterface`. Use when you don't need to control the focused date of the date picker." />
 <ui:prop name="numOfMonths" type="integer" optional="{true}" client="{true}" description="The number of months the day view shows next to each other." />
 <ui:prop name="startOfWeek" type="integer" optional="{true}" client="{true}" default="1" description="The first day of the week. `0` is Sunday, `1` is Monday, and so on." />
 <ui:prop name="fixedWeeks" type="boolean" optional="{true}" client="{true}" description="Whether the calendar should render with a fixed number of weeks (6), instead of 5 or 6 depending on the month." />

@@ -137,6 +137,29 @@ final class DatePickerRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function shipsMinMaxAndDefaultFocusedValueToTheClientAsIsoDates(): void
+    {
+        $dates = [
+            'string' => ['2024-01-15', '2024-01-15'],
+            'DateTime' => [new \DateTime('2024-03-05 23:30:00', new \DateTimeZone('Europe/Berlin')), '2024-03-05'],
+            'DateTimeImmutable' => [new \DateTimeImmutable('2024-03-07 08:00:00'), '2024-03-07'],
+            'not a date' => ['tomorrow', null],
+        ];
+
+        foreach (['min', 'max', 'defaultFocusedValue'] as $prop) {
+            foreach ($dates as $case => [$value, $expected]) {
+                $props = $this->renderHydrationProps($prop . '="{value}"', ['value' => $value]);
+
+                if ($expected === null) {
+                    $this->assertArrayNotHasKey($prop, $props, $prop . ' / ' . $case);
+                } else {
+                    $this->assertSame($expected, $props[$prop], $prop . ' / ' . $case);
+                }
+            }
+        }
+    }
+
+    #[Test]
     public function submitsIsoDatesThroughHiddenInputsNotTheVisibleInput(): void
     {
         $expectations = [

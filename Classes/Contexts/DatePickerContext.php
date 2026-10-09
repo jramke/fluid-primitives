@@ -12,6 +12,8 @@ use Jramke\FluidPrimitives\Utility\DateUtility;
 use Jramke\FluidPrimitives\Utility\Typed;
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 
+// Every public method is a getter a template or the client reads by name, so there is nothing to split off.
+// @mago-expect lint:too-many-methods
 #[Autoconfigure(public: true)]
 class DatePickerContext extends AbstractComponentContext
 {
@@ -147,6 +149,26 @@ class DatePickerContext extends AbstractComponentContext
         }
 
         return $dates === [] ? null : $dates;
+    }
+
+    // `min`, `max` and `defaultFocusedValue` take an ISO date string or a `DateTimeInterface`, but the
+    // client only gets the ISO date.
+    #[ExposeToClient(excludeIfNull: true)]
+    public function getMin(): ?string
+    {
+        return DateUtility::toIsoDate($this->get('min'));
+    }
+
+    #[ExposeToClient(excludeIfNull: true)]
+    public function getMax(): ?string
+    {
+        return DateUtility::toIsoDate($this->get('max'));
+    }
+
+    #[ExposeToClient(excludeIfNull: true)]
+    public function getDefaultFocusedValue(): ?string
+    {
+        return DateUtility::toIsoDate($this->get('defaultFocusedValue'));
     }
 
     /**
