@@ -6,7 +6,10 @@ import type { DateView, IntlTranslations } from '@zag-js/date-picker';
  */
 export type TranslationTexts = Record<string, string | false | undefined>;
 
-/** Zag's translations, plus the role descriptions it hard-codes in English. */
+/**
+ * Zag's translations, plus the role descriptions it hard-codes in English.
+ * TODO: chakra-ui/zag#3421 makes them part of Zag's own translations.
+ */
 export interface DatePickerTranslations extends IntlTranslations {
     roleDescription?: {
         content?: string;

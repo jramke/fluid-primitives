@@ -76,6 +76,8 @@ export class DatePicker extends FieldAwareComponent<datePicker.Props, datePicker
     transformProps(props: datePicker.Props): datePicker.Props {
         return {
             ...props,
+            // TODO: Zag only knows the English placeholder letters, drop this once chakra-ui/zag#3421
+            // (translatable placeholder) is released and `translations.placeholder` is used as it is.
             placeholder:
                 props.placeholder ??
                 getPlaceholder(
@@ -136,6 +138,7 @@ export class DatePicker extends FieldAwareComponent<datePicker.Props, datePicker
         }
 
         // Zag hard-codes English role descriptions for the content and the tables.
+        // TODO: drop this override once chakra-ui/zag#3421 (translatable role descriptions) is released.
         const roleDescription = (this.userProps.translations as DatePickerTranslations | undefined)
             ?.roleDescription;
 
