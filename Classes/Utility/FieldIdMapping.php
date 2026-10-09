@@ -23,7 +23,6 @@ class FieldIdMapping
         'switch' => ['label' => 'label', 'control' => 'hiddenInput'],
         'checkbox' => ['label' => 'label', 'control' => 'hiddenInput'],
         'file-upload' => ['label' => 'label', 'control' => 'hiddenInput'],
-        'checkbox-group' => ['label' => 'label'],
     ];
 
     // A component listed here takes its field state from the listed ancestor, not from the enclosing

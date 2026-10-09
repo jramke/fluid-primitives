@@ -123,7 +123,6 @@ final readonly class ComponentHydrationCollector
                 'ids' => $arguments['ids'] ?? [],
                 ...$props,
             ],
-            ...array_filter($candidate->relatedContextRootIds),
         ];
 
         // Enforced here, lazily, rather than unconditionally for every root component in

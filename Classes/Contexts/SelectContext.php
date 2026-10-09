@@ -57,7 +57,9 @@ class SelectContext extends AbstractComponentContext
      */
     public function getSelectedItems(): array
     {
-        return $this->getCollection()?->findMany($this->getDefaultValue() ?? []) ?? [];
+        return array_values(
+            $this->getCollection()?->findMany(array_map(Typed::string(...), $this->getDefaultValue() ?? [])) ?? [],
+        );
     }
 
     #[ExposeToClient]

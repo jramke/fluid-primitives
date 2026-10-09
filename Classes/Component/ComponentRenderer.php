@@ -136,8 +136,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
             );
         }
 
-        $renderState = $this->prepareRenderState($parentRenderingContext, $view, $identity, $arguments);
-        $ctx = $renderState['ctx'];
+        $ctx = $this->prepareRenderState($parentRenderingContext, $view, $identity, $arguments);
 
         $rendered = $this->renderComponentOutputAndRestoreContext(
             $view,
@@ -167,13 +166,6 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
                     $argumentDefinitions,
                     $propsMarkedForClient,
                     $ctx,
-                    array_filter(
-                        [
-                            'field' => $renderState['fieldRootId'],
-                            'checkboxGroup' => $renderState['checkboxGroupRootId'],
-                        ],
-                        static fn(?string $rootId): bool => $rootId !== null,
-                    ),
                 ),
             );
         }
@@ -188,14 +180,14 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
      * ambient rendering state.
      *
      * @param array<string, mixed> $arguments
-     * @return array{ctx: ?AbstractComponentContext, fieldRootId: ?string, checkboxGroupRootId: ?string}
+     * @return ?AbstractComponentContext The component's active context.
      */
     private function prepareRenderState(
         RenderingContextInterface $parentRenderingContext,
         TemplateView $view,
         ComponentIdentity $identity,
         array &$arguments,
-    ): array {
+    ): ?AbstractComponentContext {
         $baseName = $identity->baseName;
         $isRenderedAsRoot = $identity->isRenderedAsRoot;
 
@@ -205,9 +197,8 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         // Pick up potential context from current component (parent or itself if root)
         $ctx = $this->getRootComponentContext($parentRenderingContext, $baseName);
 
-        $fieldRootId = null;
         if ($isRenderedAsRoot && $this->componentSupportsField($identity->clientBaseName)) {
-            $fieldRootId = $this->fieldContextVariableMerger->apply(
+            $this->fieldContextVariableMerger->apply(
                 $otherComponentContexts,
                 $identity->clientBaseName,
                 $view,
@@ -216,14 +207,8 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
             );
         }
 
-        $checkboxGroupRootId = null;
         if ($isRenderedAsRoot && $baseName === 'checkbox') {
-            $checkboxGroupRootId = $this->checkboxGroupContextVariableMerger->apply(
-                $otherComponentContexts,
-                $view,
-                $arguments,
-                $ctx,
-            );
+            $this->checkboxGroupContextVariableMerger->apply($otherComponentContexts, $view, $arguments, $ctx);
         }
 
         // Assign context if available
@@ -236,11 +221,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
             $ctx->beforeRendering();
         }
 
-        return [
-            'ctx' => $ctx,
-            'fieldRootId' => $fieldRootId,
-            'checkboxGroupRootId' => $checkboxGroupRootId,
-        ];
+        return $ctx;
     }
 
     /**

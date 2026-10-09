@@ -6,7 +6,6 @@
 <span
     aria-hidden="true"
     {f:if(condition: isHidden, then: 'hidden' )}
-    {f:if(condition: context.checked, then: '' , else: '' )}
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'indicator' , value: state.value, data: refData )}
     {ui:attributes()}

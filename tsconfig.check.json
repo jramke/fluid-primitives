@@ -1,0 +1,6 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "paths": { "fluid-primitives": ["./Resources/Private/Client/index.ts"] }
+    }
+}

@@ -105,16 +105,6 @@ class DatePickerContext extends AbstractComponentContext
         )];
     }
 
-    /**
-     * One entry per month the day view shows next to each other, counted from `0`.
-     *
-     * @return list<int>
-     */
-    public function getMonthOffsets(): array
-    {
-        return range(0, max(Typed::int($this->get('numOfMonths')), 1) - 1);
-    }
-
     // excludeIfNull: without an own locale the site language applies, and without one of those
     // Zag falls back to its own default.
     #[ExposeToClient(excludeIfNull: true)]

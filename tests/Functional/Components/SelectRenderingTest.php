@@ -338,6 +338,10 @@ final class SelectRenderingTest extends FunctionalTestCase
             ],
             $collection['items'],
         );
-        $this->assertSame([3, 'opt-1', 'opt-3'], [$collection['size'], $collection['first'], $collection['last']]);
+        // what getListCollectionFromHydrationData() rebuilds the collection from: the client computes the rest
+        $this->assertSame(
+            ['items', 'itemToValueKey', 'itemToStringKey', 'isItemDisabledKey', 'groupByKey', 'groupSort'],
+            array_keys($collection),
+        );
     }
 }

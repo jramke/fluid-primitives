@@ -19,7 +19,7 @@ final readonly class ExtbaseFormHiddenFieldsRenderer
 {
     public function __construct(
         private MvcPropertyMappingConfigurationService $mvcPropertyMappingConfigurationService,
-        private ExtbaseFormFieldNamer $fieldNamer = new ExtbaseFormFieldNamer(),
+        private ExtbaseFormFieldNamer $fieldNamer,
     ) {}
 
     /**
