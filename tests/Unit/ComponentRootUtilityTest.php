@@ -14,8 +14,9 @@ final class ComponentRootUtilityTest extends TestCase
 {
     /**
      * Against {@see RootDetectionComponentCollection}, which has every folder shape: classic Root + parts
-     * (Widget/), a nested example folder without a Root file (Widget/Examples/), a flat folder where no file
-     * is named like the folder (Icon/), and a tiered Root file (Tier/Widget/Root).
+     * (Widget/), a folder-named file + parts (Gadget/), a nested example folder without a Root file
+     * (Widget/Examples/), a flat folder where no file is named like the folder (Icon/), and a tiered Root
+     * file (Tier/Widget/Root).
      *
      * @return iterable<string, array{0: string, 1: bool}>
      */
@@ -24,6 +25,7 @@ final class ComponentRootUtilityTest extends TestCase
         yield 'a single segment is its own root' => ['collapsible', true];
         yield 'a ".root" suffix names the root' => ['widget.root', true];
         yield 'a part next to a Root file is no root' => ['widget.item', false];
+        yield 'a part next to the file named like its folder is no root' => ['gadget.part', false];
         yield 'a nested file in a folder without a Root file' => ['widget.examples.demo', true];
         yield 'a file in a flat folder without a Root file' => ['icon.menu', true];
         yield 'another file of that flat folder' => ['icon.copy', true];
