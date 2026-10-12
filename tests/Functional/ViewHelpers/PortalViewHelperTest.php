@@ -38,9 +38,15 @@ final class PortalViewHelperTest extends FunctionalTestCase
             <div id="again"><ui:portalContainer name="sidebar" /></div>
         ');
 
-        $this->assertStringContainsString('<div id="target"><div data-testid="sidebar-portaled">', $html);
+        $this->assertStringContainsString(
+            '<div id="target"><template data-portal-container="sidebar"></template><div data-testid="sidebar-portaled">',
+            $html,
+        );
         // a container empties its portal: another one of the same name would otherwise repeat the markup
-        $this->assertStringContainsString('<div id="again"></div>', $html);
+        $this->assertStringContainsString(
+            '<div id="again"><template data-portal-container="sidebar"></template></div>',
+            $html,
+        );
         $this->assertSame(1, substr_count($html, 'data-testid="sidebar-portaled"'));
         // only the default portal goes to the footer, which core renders at the end of <body> on its own
         $this->assertStringNotContainsString('data-testid="sidebar-portaled"', $this->readFooterData());
@@ -68,6 +74,27 @@ final class PortalViewHelperTest extends FunctionalTestCase
             $html,
         );
         $this->assertStringNotContainsString('data-testid="stencil-portaled"', $this->readFooterData());
+        // what a clone of the stencil moves to the end of the body
+        $wrapper = $this->elementWith($html, 'data-portal');
+        $this->assertSame('default', $wrapper->get('data-portal'));
+    }
+
+    #[Test]
+    public function leavesADisabledPortalInAStencilInPlaceWithoutAWrapperAndNamesTheWrapperOfANamedOne(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:combobox.root collection="{collection}">
+                <ui:template name="itemTemplate" context="combobox">
+                    <ui:portal disabled="{true}"><b data-testid="stays">In place</b></ui:portal>
+                    <ui:portal name="sidebar"><i data-testid="moves">Moves</i></ui:portal>
+                </ui:template>
+            </primitives:combobox.root>
+        ', ['collection' => new ListCollection([])]);
+
+        // the named one is the positive control that wrappers are rendered at all
+        $this->assertSame('sidebar', $this->elementWith($html, 'data-portal')->get('data-portal'));
+        $this->assertStringContainsString('<b data-testid="stays">In place</b>', $html);
+        $this->assertStringNotContainsString('data-portal="default"', $html);
     }
 
     #[Test]

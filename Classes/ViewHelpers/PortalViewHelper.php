@@ -16,6 +16,10 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
  * With the default `name`, portalled content is rendered automatically at the end of `<body>` - no further setup needed.
  * Pass a custom `name` together with a matching [ui:portalContainer](./portalContainer) ViewHelper if you want portalled content to end up somewhere else instead.
  *
+ * Inside a `ui:template` stencil (e.g. the row of a FieldArray) the content is rendered in place, wrapped in
+ * `<div data-portal>`, and moved to its destination when the client clones the stencil. With `disabled` it
+ * stays in place.
+ *
  * ## Example
  * Common use case inside `Tooltip/Content.html`:
  * ```html
@@ -55,15 +59,19 @@ class PortalViewHelper extends AbstractViewHelper
         // something authored inside a stencil (e.g. a Popover nested in a FieldArray row's
         // itemTemplate) would leak it into the live page immediately on load, before any row even
         // exists, and with placeholder ids that were never meant to be shown. Rendering in place
-        // instead keeps it part of the stencil's own clonable content, exactly like `disabled`
-        // already does for a consumer who opts out of portalling by hand - the open tracking scope
-        // of `ui:template` (it is open however deep the nested component sits) is its own marker for
-        // "opt out of it for me automatically", not something a template author needs to know to ask
-        // for explicitly.
-        if (
-            Typed::bool($this->arguments['disabled']) || NestedComponentRegistry::getInstance()->isTrackingScopeOpen()
-        ) {
+        // instead keeps it part of the stencil's own clonable content. The wrapper is how the client finds
+        // it again: a clone of the stencil moves it to where the portal wants to go (`movePortals()` in
+        // Client/src/lib/portal.ts). A `disabled` portal stays in place for good, without a wrapper.
+        if (Typed::bool($this->arguments['disabled'])) {
             return $rendered;
+        }
+
+        if ($rendered !== '' && NestedComponentRegistry::getInstance()->isTrackingScopeOpen()) {
+            return sprintf(
+                '<div data-portal="%s" style="display: contents">%s</div>',
+                htmlspecialchars(Typed::string($this->arguments['name'])),
+                $rendered,
+            );
         }
 
         if ($rendered === '') {

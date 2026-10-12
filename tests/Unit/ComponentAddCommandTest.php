@@ -240,7 +240,11 @@ final class ComponentAddCommandTest extends TestCase
         $tester->execute(['component' => 'accordion', '--extension' => 'my_ext', '--path' => '']);
 
         $this->assertSame(1, $tester->getStatusCode());
-        $this->assertStringContainsString('not a path inside the component folder', $tester->getDisplay());
+        // the console wraps the message at the width of the terminal
+        $this->assertStringContainsString(
+            'not a path inside the component folder',
+            (string)preg_replace('/\s+/', ' ', $tester->getDisplay()),
+        );
         $this->assertSame(['Root.fluid.html'], $this->writtenFiles());
         $this->assertFileDoesNotExist($this->tempDir . 'escape.html');
         $this->assertFileDoesNotExist('/escape.html');

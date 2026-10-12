@@ -1,4 +1,5 @@
 import type { ComponentHydrator } from './hydration';
+import { movePortals } from './portal';
 
 /** The options of a {@link Template}. */
 export interface TemplateOptions {
@@ -70,6 +71,8 @@ export class Template extends DocumentFragment {
                 options.attributes
             );
         }
+
+        movePortals(this);
     }
 
     /** Finds the first element of `part` inside the clone. */
