@@ -24,6 +24,10 @@ final class JsonValidationErrorsTraitTest extends TestCase
         $result->forProperty('eventRegistration.email')->addError(new Error('Invalid email', 1));
         $result->forProperty('eventRegistration.email')->addError(new Error('Too long', 2));
         $result->forProperty('eventRegistration.name')->addError(new Error('Required', 3));
+        // an error of the argument itself is keyed by its bare name, which the Form shows as a form-level message
+        $result->forProperty('eventRegistration')->addError(new Error('Registration closed', 4));
+        // a property of a collection item is keyed by its index
+        $result->forProperty('guests.0.email')->addError(new Error('Invalid email', 5));
 
         $arguments = $this->createStub(Arguments::class);
         $arguments->method('validate')->willReturn($result);
@@ -52,8 +56,14 @@ final class JsonValidationErrorsTraitTest extends TestCase
 
         $this->assertSame(422, $response->getStatusCode());
         $this->assertStringStartsWith('application/json', $response->getHeaderLine('Content-Type'));
-        $this->assertSame(
-            ['eventRegistration.email' => ['Invalid email', 'Too long'], 'eventRegistration.name' => ['Required']],
+        // the order of the keys is Extbase's, not part of the contract
+        $this->assertEquals(
+            [
+                'eventRegistration.email' => ['Invalid email', 'Too long'],
+                'eventRegistration.name' => ['Required'],
+                'eventRegistration' => ['Registration closed'],
+                'guests.0.email' => ['Invalid email'],
+            ],
             json_decode((string)$response->getBody(), true),
         );
     }

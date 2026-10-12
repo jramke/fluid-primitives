@@ -38,7 +38,7 @@ class SelectContext extends AbstractComponentContext
         // `defaultValue` is declared type="mixed" and genuinely accepts either shape checked below.
         // @mago-expect analysis:mixed-assignment
         $defaultValue = $this->get('defaultValue');
-        if ($defaultValue === null || $defaultValue === []) {
+        if ($defaultValue === null || $defaultValue === [] || $defaultValue === '') {
             return null;
         }
 
@@ -47,6 +47,19 @@ class SelectContext extends AbstractComponentContext
         }
 
         return Typed::arrayOrNull($defaultValue);
+    }
+
+    /**
+     * The items of the collection the default value selects: a value that is not in the collection
+     * selects nothing, which is when the placeholder shows (as in Zag).
+     *
+     * @return list<ListCollectionItem>
+     */
+    public function getSelectedItems(): array
+    {
+        return array_values(
+            $this->getCollection()?->findMany(array_map(Typed::string(...), $this->getDefaultValue() ?? [])) ?? [],
+        );
     }
 
     #[ExposeToClient]

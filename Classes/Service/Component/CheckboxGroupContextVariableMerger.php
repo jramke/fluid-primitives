@@ -7,7 +7,6 @@ namespace Jramke\FluidPrimitives\Service\Component;
 use Jramke\FluidPrimitives\Contexts\AbstractComponentContext;
 use Jramke\FluidPrimitives\Contexts\CheckboxGroupContext;
 use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
-use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3Fluid\Fluid\View\TemplateView;
 
 /**
@@ -19,22 +18,20 @@ final readonly class CheckboxGroupContextVariableMerger
     /**
      * @param array<string, ComponentContextInterface> $otherComponentContexts
      * @param array<string, mixed> $arguments
-     * @return string|null The checkbox-group's rootId, if a checkbox-group context was merged in.
      */
     public function apply(
         array $otherComponentContexts,
         TemplateView $view,
         array &$arguments,
         ?AbstractComponentContext $ctx,
-    ): ?string {
+    ): void {
         // $otherComponentContexts is keyed by ContextService's camelCase context key, not the
         // kebab-case baseName used elsewhere (ref attribute names, hydration, FieldIdMapping).
         $checkboxGroupContext = $otherComponentContexts['checkboxGroup'] ?? null;
         if (!$checkboxGroupContext instanceof CheckboxGroupContext) {
-            return null;
+            return;
         }
 
-        $checkboxGroupRootId = Typed::stringOrNull($checkboxGroupContext->get('rootId'));
         $checkboxGroupVariables = $checkboxGroupContext->getChildVariables($arguments);
 
         foreach ($checkboxGroupVariables as $varName => $varValue) {
@@ -48,7 +45,5 @@ final readonly class CheckboxGroupContextVariableMerger
                 $ctx->set($varName, $varValue);
             }
         }
-
-        return $checkboxGroupRootId;
     }
 }

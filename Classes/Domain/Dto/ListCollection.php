@@ -239,7 +239,7 @@ final class ListCollection implements JsonSerializable, IteratorAggregate
 
         // A manual counter rather than the foreach key, since getItems() preserves whatever keys the
         // raw $items array happened to use (not necessarily a sequential list) - "index" here means
-        // position in iteration order, matching how at()/getFirstValue()/getLastValue() use it.
+        // position in iteration order, matching how at() uses it.
         $index = 0;
         foreach ($this->getItems() as $item) {
             if ($item->value === $value) {
@@ -271,27 +271,6 @@ final class ListCollection implements JsonSerializable, IteratorAggregate
         }
         $value = $item instanceof ListCollectionItem ? $item->value : $this->getItemValue($item);
         return $this->has($value);
-    }
-
-    public function getFirstValue(): ?string
-    {
-        foreach ($this->getItems() as $item) {
-            if (!$item->disabled) {
-                return $item->value;
-            }
-        }
-        return null;
-    }
-
-    public function getLastValue(): ?string
-    {
-        $items = $this->getItems();
-        for ($i = count($items) - 1; $i >= 0; $i--) {
-            if (!$items[$i]->disabled) {
-                return $items[$i]->value;
-            }
-        }
-        return null;
     }
 
     /**
@@ -360,16 +339,12 @@ final class ListCollection implements JsonSerializable, IteratorAggregate
     }
 
     /**
-     * The actual wire shape sent to the client - not this class's own constructor
-     * properties/internal state, which differ (e.g. `size`/`first`/`last` are computed here, not
-     * stored). This docblock is the authoritative source a TypeScript-generation tool should read
-     * for this class's client-facing shape, rather than reflecting its properties directly.
+     * The actual wire shape sent to the client - the client rebuilds the collection from the items
+     * and the keys, and computes everything else itself. This docblock is the authoritative source a
+     * TypeScript-generation tool should read for this class's client-facing shape.
      *
      * @return array{
      *     items: array<array-key, array<array-key, mixed>|object>,
-     *     size: int,
-     *     first: string|null,
-     *     last: string|null,
      *     itemToValueKey: string|null,
      *     itemToStringKey: string|null,
      *     isItemDisabledKey: string|null,
@@ -381,9 +356,6 @@ final class ListCollection implements JsonSerializable, IteratorAggregate
     {
         return [
             'items' => $this->items,
-            'size' => $this->getSize(),
-            'first' => $this->getFirstValue(),
-            'last' => $this->getLastValue(),
             'itemToValueKey' => $this->itemToValueKey,
             'itemToStringKey' => $this->itemToStringKey,
             'isItemDisabledKey' => $this->isItemDisabledKey,

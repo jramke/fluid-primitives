@@ -8,6 +8,7 @@ use Jramke\FluidPrimitives\Domain\Dto\ResolvedFormPersistedObjects;
 use Jramke\FluidPrimitives\Service\ExtbaseFormHiddenFieldsRenderer;
 use Jramke\FluidPrimitives\Tests\Helper\TestEntity;
 use Jramke\FluidPrimitives\Tests\TestCase;
+use Jramke\FluidPrimitives\Utility\ExtbaseFormFieldNamer;
 use PHPUnit\Framework\Attributes\Test;
 use TYPO3\CMS\Extbase\Mvc\Controller\MvcPropertyMappingConfigurationService;
 
@@ -15,7 +16,10 @@ final class ExtbaseFormHiddenFieldsRendererTest extends TestCase
 {
     private function createRenderer(): ExtbaseFormHiddenFieldsRenderer
     {
-        return new ExtbaseFormHiddenFieldsRenderer($this->createStub(MvcPropertyMappingConfigurationService::class));
+        return new ExtbaseFormHiddenFieldsRenderer(
+            $this->createStub(MvcPropertyMappingConfigurationService::class),
+            new ExtbaseFormFieldNamer(),
+        );
     }
 
     #[Test]
@@ -90,7 +94,10 @@ final class ExtbaseFormHiddenFieldsRendererTest extends TestCase
             )
             ->willReturn('signed-token');
 
-        $renderer = new ExtbaseFormHiddenFieldsRenderer($mvcPropertyMappingConfigurationService);
+        $renderer = new ExtbaseFormHiddenFieldsRenderer(
+            $mvcPropertyMappingConfigurationService,
+            new ExtbaseFormFieldNamer(),
+        );
 
         $html = $renderer->renderTrustedPropertiesField(
             ['field1' => ['name' => 'name']],

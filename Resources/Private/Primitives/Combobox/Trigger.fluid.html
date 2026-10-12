@@ -15,7 +15,6 @@
     aria-label="{context.translations.triggerLabel}"
     aria-haspopup="{f:if(condition: isDialogPopup, then: 'dialog', else: 'listbox')}"
     aria-expanded="{f:if(condition: context.defaultOpen, then: 'true', else: 'false')}"
-    data-state="{state}"
     {f:if(condition: isFocusable, then: 'data-focusable', else: 'tabindex="-1"' )}
     {f:if(condition: class, then: 'class="{class}"' )}
     {f:if(condition: context.disabled, then: 'disabled' )}

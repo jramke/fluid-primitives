@@ -129,7 +129,8 @@
         "dev": "tsdown --watch",
         "version": "node scripts/version.js",
         "bump-zag": "node scripts/bump-zag.js",
-        "test": "vitest run"
+        "test": "vitest run",
+        "types": "tsc --noEmit -p tsconfig.check.json"
     },
     "peerDependencies": {
         "zod": "^4.0.0"

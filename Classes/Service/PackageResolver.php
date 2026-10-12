@@ -79,16 +79,6 @@ readonly class PackageResolver
         return $directories;
     }
 
-    public function getComposerProjectVendor(): string
-    {
-        if (!Environment::isComposerMode()) {
-            return '';
-        }
-        $rootPackageName = $this->getRootPackageName();
-        $parts = explode('/', $rootPackageName);
-        return $parts[0];
-    }
-
     /**
      * @param array<string, PackageInterface> $packages
      * @return array<string, PackageInterface>

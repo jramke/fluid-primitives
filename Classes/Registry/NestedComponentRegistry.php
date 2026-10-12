@@ -73,6 +73,14 @@ class NestedComponentRegistry
     }
 
     /**
+     * Whether a tracking scope is open, i.e. whatever renders right now is part of a stencil.
+     */
+    public function isTrackingScopeOpen(): bool
+    {
+        return $this->trackingScopeStack !== [];
+    }
+
+    /**
      * Records a just-registered root component (`$componentName`/`$rootId`, exactly as
      * {@see HydrationRegistry::add()} received them) against every currently-open tracking scope
      * ({@see pushTrackingScope}) and, when given, the explicit `$additionalScopeKey` - the single

@@ -106,8 +106,13 @@ final readonly class ComponentHydrationCollector
         $clientPropsFromContext = $candidate->ctx instanceof AbstractComponentContext
             ? ClientPropsContextExtractor::extract($candidate->ctx)
             : [];
+        $exposedByContext = $candidate->ctx instanceof AbstractComponentContext
+            ? ClientPropsContextExtractor::discover($candidate->ctx::class)
+            : [];
 
-        $props = [...$propsMarkedForClientValues, ...$clientPropsFromContext];
+        // A prop the context exposes is the context's to send: an `excludeIfNull` getter that returns null
+        // means "nothing", not "send the raw argument", which could be the very value it rejected (`''`).
+        $props = [...array_diff_key($propsMarkedForClientValues, $exposedByContext), ...$clientPropsFromContext];
         unset($props['id']); // Remove potential id from client props as it is handled separately
         unset($props['ids']);
 
@@ -118,7 +123,6 @@ final readonly class ComponentHydrationCollector
                 'ids' => $arguments['ids'] ?? [],
                 ...$props,
             ],
-            ...array_filter($candidate->relatedContextRootIds),
         ];
 
         // Enforced here, lazily, rather than unconditionally for every root component in

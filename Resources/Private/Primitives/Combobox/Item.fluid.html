@@ -11,8 +11,6 @@
     data-state="{f:if(condition: itemState.selected, then: 'checked', else: 'unchecked')}"
     {f:if(condition: itemState.selected, then: 'aria-selected="true"' )}
     {f:if(condition: itemState.disabled, then: 'aria-disabled="true"' )}
-    {f:if(condition: itemState.highlighted, then: 'data-highlighted="true"' )}
-    {f:if(condition: itemState.disabled, then: 'data-disabled="true"' )}
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'item' , value: itemState.value, data: refData )}
     {ui:attributes()}

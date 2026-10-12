@@ -78,28 +78,4 @@ class CheckboxGroupContext extends AbstractComponentContext
 
         return $currentCount >= $maxSelectedValues;
     }
-
-    /**
-     * Get item state for a checkbox. This is the main method used by child Checkbox components
-     * to determine their checked/disabled state when inside a CheckboxGroup.
-     *
-     * @param string $value The checkbox value
-     * @param bool|null $itemDisabled Whether the item is explicitly disabled
-     * @param bool|null $itemInvalid Whether the item is explicitly invalid
-     */
-    public function getCheckboxState(string $value, ?bool $itemDisabled = null, ?bool $itemInvalid = null): array
-    {
-        $checked = $this->isValueChecked($value);
-        $groupDisabled = Typed::bool($this->get('disabled'));
-        $groupInvalid = Typed::bool($this->get('invalid'));
-        $disabledByMax = $this->isValueDisabledByMax($value);
-
-        return [
-            'defaultChecked' => $checked,
-            'disabled' => $itemDisabled ?? $groupDisabled || $disabledByMax,
-            'invalid' => $itemInvalid ?? $groupInvalid,
-            'readOnly' => Typed::bool($this->get('readOnly')),
-            'name' => Typed::stringOrNull($this->get('name')),
-        ];
-    }
 }

@@ -17,10 +17,15 @@ use TYPO3\CMS\Core\Http\ServerRequest;
 use TYPO3\CMS\Core\Http\Uri;
 use TYPO3\CMS\Core\Site\Entity\Site;
 use TYPO3\CMS\Core\Site\Entity\SiteLanguage;
+use TYPO3\CMS\Core\TypoScript\AST\Node\RootNode;
+use TYPO3\CMS\Core\TypoScript\FrontendTypoScript;
 use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
 use TYPO3\CMS\Core\View\ViewFactoryData;
 use TYPO3\CMS\Core\View\ViewFactoryInterface;
 use TYPO3\CMS\Core\View\ViewInterface;
+use TYPO3\CMS\Extbase\Configuration\ConfigurationManagerInterface;
+use TYPO3\CMS\Extbase\Mvc\ExtbaseRequestParameters;
+use TYPO3\CMS\Extbase\Mvc\Request;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase as TYPO3FunctionalTestCase;
 
 /**
@@ -87,7 +92,31 @@ abstract class FunctionalTestCase extends TYPO3FunctionalTestCase
 
         $view->getRenderingContext()->getTemplatePaths()->setTemplateSource($template);
 
-        return $view->render();
+        $html = $view->render();
+        $this->assertNoRepeatedAttributes($html);
+
+        return $html;
+    }
+
+    /**
+     * A tag that writes an attribute twice is invalid HTML, and the browser keeps only the first, which hides
+     * a difference between the markup of the server and the one the client spreads.
+     */
+    protected function assertNoRepeatedAttributes(string $html): void
+    {
+        $repeated = [];
+        foreach (HtmlElement::parseAll($html) as $element) {
+            if ($element->repeatedAttributes !== []) {
+                $repeated[] = sprintf(
+                    '<%s %s> repeats %s',
+                    $element->tag,
+                    implode(' ', array_keys($element->attributes)),
+                    implode(', ', $element->repeatedAttributes),
+                );
+            }
+        }
+
+        $this->assertSame([], $repeated, 'A rendered tag repeats an attribute.');
     }
 
     /**
@@ -177,6 +206,35 @@ abstract class FunctionalTestCase extends TYPO3FunctionalTestCase
             $this->view->getRenderingContext()->setAttribute(ServerRequest::class, $request);
             $this->view->getRenderingContext()->setAttribute(ServerRequestInterface::class, $request);
         }
+    }
+
+    /**
+     * Makes the request of the view the Extbase request of a plugin, like the dispatch of a plugin has it.
+     */
+    protected function setExtbasePlugin(string $extensionName, string $pluginName): void
+    {
+        // creates the request with the site and the application type first
+        $view = $this->getView();
+        $request = $GLOBALS['TYPO3_REQUEST'] ?? new ServerRequest();
+        if (!$request instanceof ServerRequest) {
+            $request = new ServerRequest();
+        }
+
+        $parameters = new ExtbaseRequestParameters();
+        $parameters->setControllerExtensionName($extensionName);
+        $parameters->setPluginName($pluginName);
+        // what ExtensionService and the doctype read from, empty here
+        $typoScript = new FrontendTypoScript(new RootNode(), [], [], []);
+        $typoScript->setSetupArray([]);
+        $typoScript->setConfigArray([]);
+        $request = new Request($request->withAttribute('extbase', $parameters)->withAttribute(
+            'frontend.typoscript',
+            $typoScript,
+        ));
+        $GLOBALS['TYPO3_REQUEST'] = $request;
+
+        $this->get(ConfigurationManagerInterface::class)->setRequest($request);
+        $view->getRenderingContext()->setAttribute(ServerRequestInterface::class, $request);
     }
 
     /**

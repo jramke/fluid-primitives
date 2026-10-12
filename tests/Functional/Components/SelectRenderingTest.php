@@ -69,7 +69,10 @@ final class SelectRenderingTest extends FunctionalTestCase
         // a button inside a form submits it when clicked, before the client has hydrated
         $this->assertSame('button', $trigger->get('type'));
         $this->assertSame('combobox', $trigger->get('role'));
+        $this->assertSame('false', $trigger->get('aria-invalid'));
         $this->assertSame($open, $trigger->has('data-expanded'));
+        // an open select that rendered its content hidden would open only after hydration
+        $this->assertSame(!$open, $this->elementWith($html, 'data-select-content')->has('hidden'));
 
         $this->assertSame(
             $open,
@@ -92,6 +95,7 @@ final class SelectRenderingTest extends FunctionalTestCase
         foreach (['data-disabled', 'data-invalid', 'data-readonly', 'disabled'] as $flag) {
             $this->assertTrue($trigger->has($flag), $flag);
         }
+        $this->assertSame('true', $trigger->get('aria-invalid'));
     }
 
     /**
@@ -100,12 +104,14 @@ final class SelectRenderingTest extends FunctionalTestCase
     public static function selections(): iterable
     {
         yield 'nothing selected' => ['', true];
+        yield 'an empty string, which is what an empty string property of an object binds' => ['defaultValue=""', true];
+        yield 'a value that is not in the collection' => ['defaultValue="unknown"', true];
         yield 'a value selected' => ['defaultValue="opt-3"', false];
     }
 
     #[Test]
     #[DataProvider('selections')]
-    public function showsThePlaceholderOnTheTriggerOnlyWhileNothingIsSelected(
+    public function showsThePlaceholderAndHidesTheClearTriggerOnlyWhileNothingIsSelected(
         string $arguments,
         bool $placeholderShown,
     ): void {
@@ -113,7 +119,10 @@ final class SelectRenderingTest extends FunctionalTestCase
             '
             <primitives:select.root collection="{collection}" ' . $arguments . '>
                 <primitives:select.control>
-                    <primitives:select.trigger>Select an option</primitives:select.trigger>
+                    <primitives:select.trigger>
+                        <primitives:select.valueText placeholder="Pick one" />
+                    </primitives:select.trigger>
+                    <primitives:select.clearTrigger>x</primitives:select.clearTrigger>
                 </primitives:select.control>
             </primitives:select.root>
         ',
@@ -124,6 +133,9 @@ final class SelectRenderingTest extends FunctionalTestCase
             $placeholderShown,
             $this->elementWith($html, 'data-select-trigger')->has('data-placeholder-shown'),
         );
+        $this->assertSame($placeholderShown, $this->elementWith($html, 'data-select-clear-trigger')->has('hidden'));
+        preg_match('/data-select-value-text[^>]*>\s*([^<]*?)\s*</', $html, $valueText);
+        $this->assertSame($placeholderShown ? 'Pick one' : 'Option 3', $valueText[1] ?? null);
     }
 
     #[Test]
@@ -267,6 +279,7 @@ final class SelectRenderingTest extends FunctionalTestCase
         yield 'a string' => ['opt-1', ['opt-1']];
         yield 'a list' => [['opt-1', 'opt-3'], ['opt-1', 'opt-3']];
         yield 'nothing' => [null, null];
+        yield 'an empty string' => ['', null];
     }
 
     /**
@@ -325,6 +338,10 @@ final class SelectRenderingTest extends FunctionalTestCase
             ],
             $collection['items'],
         );
-        $this->assertSame([3, 'opt-1', 'opt-3'], [$collection['size'], $collection['first'], $collection['last']]);
+        // what getListCollectionFromHydrationData() rebuilds the collection from: the client computes the rest
+        $this->assertSame(
+            ['items', 'itemToValueKey', 'itemToStringKey', 'isItemDisabledKey', 'groupByKey', 'groupSort'],
+            array_keys($collection),
+        );
     }
 }

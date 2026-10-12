@@ -17,6 +17,9 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
  * `name`), or rendering outside TYPO3's regular page pipeline (e.g. an isolated component preview), where
  * nothing else flushes the registry for you.
  *
+ * It renders an empty `<template data-portal-container>` marker first: portals inside a `ui:template` stencil
+ * are moved after it when the client clones the stencil.
+ *
  * ## Example
  * Place a matching `name` wherever you want that portal's content to end up:
  * ```html
@@ -37,16 +40,18 @@ class PortalContainerViewHelper extends AbstractViewHelper
     public function render(): string
     {
         $name = Typed::string($this->arguments['name']);
+        // where the client moves the portals of a cloned stencil to
+        $marker = sprintf('<template data-portal-container="%s"></template>', htmlspecialchars($name));
         $portalledHtmlStrings = PortalRegistry::getInstance()->getAllByName($name);
 
         if ($portalledHtmlStrings === []) {
-            return '';
+            return $marker;
         }
 
         $concatenatedHtml = implode("\n", array_map(trim(...), $portalledHtmlStrings));
 
         PortalRegistry::getInstance()->clearByName($name);
 
-        return $concatenatedHtml;
+        return $marker . $concatenatedHtml;
     }
 }

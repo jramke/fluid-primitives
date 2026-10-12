@@ -31,9 +31,6 @@ class FieldContext extends AbstractComponentContext
         $this->inDisabledFieldset =
             $fieldsetContext instanceof ComponentContextInterface && Typed::bool($fieldsetContext->get('disabled'));
 
-        $variableContainer = $parentRenderingContext->getViewHelperVariableContainer();
-        $variableContainer->add(self::class, Typed::string($this->get('rootId')), ['name' => $this->get('name')]);
-
         // A field nested inside a `FieldArray.Item` gets its `name` prefixed with the array's own
         // `name` and the item's row index (e.g. `people` + row 0 -> `people[0][firstName]`), or
         // with an empty index segment (`people[][firstName]`) inside the unfilled `itemTemplate`
@@ -60,6 +57,10 @@ class FieldContext extends AbstractComponentContext
                         ...$childPath,
                     ]),
                 );
+                // the stencil's `people[][firstName]` has no row to sign, and Extbase rejects an empty segment
+                if ($index !== null) {
+                    $this->registerNameForTrustedProperties();
+                }
                 return;
             }
         }
@@ -89,6 +90,21 @@ class FieldContext extends AbstractComponentContext
             $canonicalPath = $this->extbaseFormFieldNamer->parseFieldPath((string)$this->get('name'));
             $this->set('name', $this->extbaseFormFieldNamer->stringifyFieldPathAsBrackets($canonicalPath));
         }
+
+        $this->registerNameForTrustedProperties();
+    }
+
+    /**
+     * The form signs the names of its fields into `__trustedProperties`, so it has to learn the name the
+     * field posts under, not the one typed on the tag.
+     */
+    private function registerNameForTrustedProperties(): void
+    {
+        $this->getParentRenderingContext()->getViewHelperVariableContainer()->add(
+            self::class,
+            Typed::string($this->get('rootId')),
+            ['name' => $this->get('name')],
+        );
     }
 
     /**

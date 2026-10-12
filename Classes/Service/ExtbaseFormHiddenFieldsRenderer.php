@@ -19,7 +19,7 @@ final readonly class ExtbaseFormHiddenFieldsRenderer
 {
     public function __construct(
         private MvcPropertyMappingConfigurationService $mvcPropertyMappingConfigurationService,
-        private ExtbaseFormFieldNamer $fieldNamer = new ExtbaseFormFieldNamer(),
+        private ExtbaseFormFieldNamer $fieldNamer,
     ) {}
 
     /**
@@ -80,20 +80,20 @@ final readonly class ExtbaseFormHiddenFieldsRenderer
 
             $fieldNames[] = $this->fieldNamer->prefixFieldName(
                 $fieldContextData['name'],
-                $objectName,
                 $fieldNamePrefix,
+                $objectName,
             );
         }
 
         if ($objects->boundObject instanceof AbstractDomainObject) {
-            $fieldNames[] = $this->fieldNamer->prefixFieldName('__identity', $objectName, $fieldNamePrefix);
+            $fieldNames[] = $this->fieldNamer->prefixFieldName('__identity', $fieldNamePrefix, $objectName);
         }
 
         foreach (array_keys($objects->nestedObjects) as $propertyPath) {
             $fieldNames[] = $this->fieldNamer->prefixFieldName(
                 $propertyPath . '.__identity',
-                $objectName,
                 $fieldNamePrefix,
+                $objectName,
             );
         }
 
@@ -103,7 +103,7 @@ final readonly class ExtbaseFormHiddenFieldsRenderer
         );
 
         return $this->hiddenInput(
-            $this->fieldNamer->prefixFieldName('__trustedProperties', null, $fieldNamePrefix),
+            $this->fieldNamer->prefixFieldName('__trustedProperties', $fieldNamePrefix),
             $requestHash,
             $xhtmlCompliant,
         );
@@ -121,7 +121,7 @@ final readonly class ExtbaseFormHiddenFieldsRenderer
         }
 
         $fieldName = $propertyPath === null ? '__identity' : $propertyPath . '.__identity';
-        $name = $this->fieldNamer->prefixFieldName($fieldName, $objectName, $fieldNamePrefix);
+        $name = $this->fieldNamer->prefixFieldName($fieldName, $fieldNamePrefix, $objectName);
 
         return $this->hiddenInput($name, (string)$object->getUid(), $xhtmlCompliant);
     }

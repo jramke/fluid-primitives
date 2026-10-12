@@ -4,20 +4,17 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Service;
 
-use GuzzleHttp\Client;
+use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\ClientException;
 use Jramke\FluidPrimitives\Utility\Typed;
 
 class RegistryService
 {
-    protected Client $client;
+    private const string REGISTRY_URL = 'https://fluid-primitives.com';
 
-    public function __construct()
-    {
-        $this->client = new Client([
-            'base_uri' => 'https://fluid-primitives.com/',
-        ]);
-    }
+    public function __construct(
+        private readonly ClientInterface $client,
+    ) {}
 
     /**
      * @return array{0: array{message: string, details: \Throwable|null}|null, 1: array<array-key, mixed>}
@@ -32,7 +29,7 @@ class RegistryService
         $error = null;
 
         try {
-            $response = $this->client->get("/registry/components/{$componentKey}");
+            $response = $this->client->request('GET', self::REGISTRY_URL . "/registry/components/{$componentKey}");
             $data = Typed::arrayOrNull(json_decode((string)$response->getBody(), associative: true)) ?? [];
         } catch (ClientException $e) {
             $error = [
@@ -64,7 +61,10 @@ class RegistryService
         $error = null;
 
         try {
-            $response = $this->client->get("/registry/components/{$componentKey}/files/{$filePath}");
+            $response = $this->client->request(
+                'GET',
+                self::REGISTRY_URL . "/registry/components/{$componentKey}/files/{$filePath}",
+            );
             $data = (string)$response->getBody();
         } catch (ClientException $e) {
             $error = [
@@ -85,7 +85,7 @@ class RegistryService
         $error = null;
 
         try {
-            $response = $this->client->get('/registry/components');
+            $response = $this->client->request('GET', self::REGISTRY_URL . '/registry/components');
             $data = Typed::arrayOrNull(json_decode((string)$response->getBody(), associative: true)) ?? [];
         } catch (ClientException $e) {
             $error = [

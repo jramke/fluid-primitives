@@ -19,27 +19,27 @@ final class ExtbaseFormFieldNamerTest extends TestCase
         // dot and bracket notation are one path: what trusted properties and the browser's submission agree on
         $this->assertSame('tx_docs_registration[eventRegistration][person][name]', $namer->prefixFieldName(
             'person.name',
-            'eventRegistration',
             $prefix,
+            'eventRegistration',
         ));
         $this->assertSame('tx_docs_registration[eventRegistration][persons][0][name]', $namer->prefixFieldName(
             'persons[0].name',
-            'eventRegistration',
             $prefix,
+            'eventRegistration',
         ));
         $this->assertSame('tx_docs_registration[eventRegistration][persons][0][name]', $namer->prefixFieldName(
             'persons.0.name',
-            'eventRegistration',
             $prefix,
+            'eventRegistration',
         ));
         $this->assertSame('tx_docs_registration[eventRegistration][tags][]', $namer->prefixFieldName(
             'tags[]',
-            'eventRegistration',
             $prefix,
+            'eventRegistration',
         ));
 
         // a missing object name or plugin prefix just leaves its segment out
-        $this->assertSame('tx_docs_registration[name]', $namer->prefixFieldName('name', null, $prefix));
-        $this->assertSame('eventRegistration[name]', $namer->prefixFieldName('name', 'eventRegistration', ''));
+        $this->assertSame('tx_docs_registration[name]', $namer->prefixFieldName('name', $prefix));
+        $this->assertSame('eventRegistration[name]', $namer->prefixFieldName('name', '', 'eventRegistration'));
     }
 }

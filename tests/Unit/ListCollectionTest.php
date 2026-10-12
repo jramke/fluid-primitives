@@ -101,26 +101,6 @@ final class ListCollectionTest extends TestCase
     }
 
     #[Test]
-    public function firstAndLastValueSkipDisabledItems(): void
-    {
-        $collection = new ListCollection([
-            ['value' => 'disabled-first', 'label' => 'D1', 'disabled' => true],
-            ['value' => 'first-enabled', 'label' => 'E1'],
-            ['value' => 'last-enabled', 'label' => 'E2'],
-            ['value' => 'disabled-last', 'label' => 'D2', 'disabled' => true],
-        ]);
-        $this->assertSame('first-enabled', $collection->getFirstValue());
-        $this->assertSame('last-enabled', $collection->getLastValue());
-
-        $allDisabled = new ListCollection([
-            ['value' => 'a', 'label' => 'A', 'disabled' => true],
-            ['value' => 'b', 'label' => 'B', 'disabled' => true],
-        ]);
-        $this->assertNull($allDisabled->getFirstValue());
-        $this->assertNull($allDisabled->getLastValue());
-    }
-
-    #[Test]
     public function groupsItemsBySpecifiedKey(): void
     {
         $collection = new ListCollection(items: [

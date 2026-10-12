@@ -326,7 +326,7 @@ final class ComboboxRenderingTest extends FunctionalTestCase
             </primitives:combobox.root>
         ');
 
-        $this->assertSame('true', $this->elementWith($html, 'data-combobox-content')->get('data-empty'));
+        $this->assertTrue($this->elementWith($html, 'data-combobox-content')->has('data-empty'));
     }
 
     /**

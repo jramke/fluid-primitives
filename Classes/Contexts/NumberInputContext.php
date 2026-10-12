@@ -98,13 +98,4 @@ class NumberInputContext extends AbstractComponentContext
 
         return (float)$value < $max;
     }
-
-    public function getDataAttributes(): array
-    {
-        return [
-            'disabled' => Typed::boolOrNull($this->get('disabled')),
-            'invalid' => Typed::boolOrNull($this->get('invalid')),
-            'readonly' => Typed::boolOrNull($this->get('readOnly')),
-        ];
-    }
 }

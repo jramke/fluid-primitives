@@ -18,10 +18,6 @@ final readonly class ComponentHydrationCandidate
      * @param array<string, mixed> $arguments
      * @param array<string, ArgumentDefinition> $argumentDefinitions
      * @param array<string, true> $propsMarkedForClient
-     * @param array{field?: string, checkboxGroup?: string} $relatedContextRootIds Root ids of any
-     *   related ancestor context merged in (see {@see FieldContextVariableMerger},
-     *   {@see CheckboxGroupContextVariableMerger}), keyed by the hydration data key they're exposed
-     *   under.
      */
     public function __construct(
         public string $rendered,
@@ -40,6 +36,5 @@ final readonly class ComponentHydrationCandidate
         public array $argumentDefinitions,
         public array $propsMarkedForClient,
         public ?AbstractComponentContext $ctx,
-        public array $relatedContextRootIds,
     ) {}
 }

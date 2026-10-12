@@ -31,8 +31,9 @@ final class TranslatorService
 
     public function getLocale(ServerRequestInterface $request): ?string
     {
-        $siteLanguage = $this->getSiteLanguage($request);
-        return (string)$siteLanguage?->getLocale();
+        $locale = $this->getSiteLanguage($request)?->getLocale();
+
+        return $locale === null ? null : (string)$locale;
     }
 
     private function getTranslator(ServerRequestInterface $request): LanguageService

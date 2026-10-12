@@ -16,6 +16,10 @@ use TYPO3\CMS\Extbase\Reflection\ObjectAccess;
  */
 final readonly class ExtbasePersistedObjectResolver
 {
+    public function __construct(
+        private ExtbaseFormFieldNamer $fieldNamer,
+    ) {}
+
     /**
      * Resolves a form's raw `object` argument and its nested sub-objects (per
      * {@see getNestedPersistedObjects()}) together.
@@ -34,12 +38,11 @@ final readonly class ExtbasePersistedObjectResolver
 
     /**
      * The given value (unwrapped if it's a lazy proxy), if it's a domain object with a real uid.
-     * Deliberately mirrors the checks of core's `AbstractFormViewHelper::renderHiddenIdentityField()`,
-     * including its new/clone guard:
+     * Deliberately mirrors the checks of core's `AbstractFormViewHelper::renderHiddenIdentityField()`:
      * https://github.com/TYPO3/typo3/blob/07f4dc8267d1824a3021c00cd36c5ad8ee7f84a1/typo3/sysext/fluid/Classes/ViewHelpers/Form/AbstractFormViewHelper.php#L77
      */
     // This method is already a minimal, guard-clause chain of type-narrowing checks (proxy unwrap,
-    // instanceof, new/clone state, uid presence) - the operator variety relative to its short length
+    // instanceof, uid presence) - the operator variety relative to its short length
     // is what trips the halstead difficulty threshold, not any real complexity a split would reduce.
     // @mago-expect lint:halstead
     private function resolve(mixed $object): ?AbstractDomainObject
@@ -52,17 +55,14 @@ final readonly class ExtbasePersistedObjectResolver
             return null;
         }
 
-        if ($object->_isNew() && !$object->_isClone()) {
-            return null;
-        }
-
         return $object->getUid() !== null ? $object : null;
     }
 
     /**
      * Persisted domain sub-objects directly nested under `$rootObject` (e.g. `person` on an
-     * `EventRegistration`), keyed by their dot-notation property path. Derived from the property
-     * paths of `<ui:field.root>`s actually used in the form (e.g. `person.name` yields `person`) -
+     * `EventRegistration`), keyed by their property name. Derived from the names of the
+     * `<ui:field.root>`s actually used in the form, in dot or bracket notation (`person.name` and
+     * `person[name]` both yield `person`) -
      * fields on the root object itself (e.g. `ticketType`) are skipped, since those aren't sub-objects
      * and are already covered by `resolve($rootObject)` itself.
      *
@@ -82,18 +82,19 @@ final readonly class ExtbasePersistedObjectResolver
 
         $nestedObjects = [];
         foreach ($fieldContextInformations as $fieldContextData) {
-            $name = $fieldContextData['name'] ?? '';
-            $dotPosition = strpos($name, needle: '.');
-            if ($dotPosition === false) {
+            $path = $this->fieldNamer->parseFieldPath($fieldContextData['name'] ?? '');
+            if (count($path) < 2) {
                 continue;
             }
 
-            $propertyPath = substr($name, offset: 0, length: $dotPosition);
+            $propertyPath = $path[0];
             if (($nestedObjects[$propertyPath] ?? null) instanceof AbstractDomainObject) {
                 continue;
             }
 
-            $nestedObject = $this->resolve(ObjectAccess::getProperty($rootObject, $propertyPath));
+            // the lenient accessor: the first segment of a field of a FieldArray row (`people[0][name]`) is
+            // not necessarily a property of the object
+            $nestedObject = $this->resolve(ObjectAccess::getPropertyPath($rootObject, $propertyPath));
             if ($nestedObject instanceof AbstractDomainObject) {
                 $nestedObjects[$propertyPath] = $nestedObject;
             }

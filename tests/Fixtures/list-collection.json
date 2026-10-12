@@ -16,9 +16,6 @@
                     "value": "c"
                 }
             ],
-            "size": 3,
-            "first": "a",
-            "last": "c",
             "itemToValueKey": null,
             "itemToStringKey": null,
             "isItemDisabledKey": null,
@@ -55,9 +52,6 @@
                     "team": "red"
                 }
             ],
-            "size": 3,
-            "first": "usr-2",
-            "last": "usr-3",
             "itemToValueKey": "id",
             "itemToStringKey": "name",
             "isItemDisabledKey": "isInactive",
@@ -115,9 +109,6 @@
                     }
                 }
             ],
-            "size": 3,
-            "first": "n-1",
-            "last": "n-3",
             "itemToValueKey": "meta.id",
             "itemToStringKey": "display.title",
             "isItemDisabledKey": "state.locked",
@@ -154,9 +145,6 @@
                     "cat": "Mango"
                 }
             ],
-            "size": 3,
-            "first": "c",
-            "last": "b",
             "itemToValueKey": null,
             "itemToStringKey": null,
             "isItemDisabledKey": null,
@@ -194,9 +182,6 @@
                     "cat": "Mango"
                 }
             ],
-            "size": 3,
-            "first": "c",
-            "last": "b",
             "itemToValueKey": null,
             "itemToStringKey": null,
             "isItemDisabledKey": null,
@@ -234,9 +219,6 @@
                     "region": "south"
                 }
             ],
-            "size": 3,
-            "first": "e",
-            "last": "s",
             "itemToValueKey": null,
             "itemToStringKey": null,
             "isItemDisabledKey": null,

@@ -94,13 +94,6 @@ class PropViewHelper extends AbstractViewHelper implements ViewHelperNodeInitial
             throw new \RuntimeException('The client argument can only be used inside a root component.', 1698255602);
         }
 
-        if (PropsUtility::isReservedProp($name)) {
-            throw new \RuntimeException(
-                'The name "' . $name . '" is reserved and cannot be used as prop name.',
-                1758400699,
-            );
-        }
-
         if (
             Typed::bool($this->arguments['requiredAtRuntime']) &&
             !$renderingContext->getVariableProvider()->exists($name)

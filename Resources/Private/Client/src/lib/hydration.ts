@@ -8,6 +8,7 @@ import type {
 } from '../types';
 import { applyClientPropConverters } from './client-prop-converters';
 import { Component } from './component';
+import { removePortalsWithin } from './portal';
 
 /**
  * @internal
@@ -202,6 +203,8 @@ export function mountAll<K extends KnownComponentName | (string & {})>(
  * @param root - The element that is about to be removed.
  */
 export function destroyComponentsWithin(root: Element | Document) {
+    if (root instanceof Element) removePortalsWithin(root);
+
     if (!window.FluidPrimitives) return;
 
     for (const namespaceBucket of Object.values(window.FluidPrimitives.componentInstances)) {

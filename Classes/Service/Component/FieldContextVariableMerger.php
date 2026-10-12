@@ -9,7 +9,6 @@ use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
 use Jramke\FluidPrimitives\Contexts\FieldContext;
 use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
 use Jramke\FluidPrimitives\Utility\FieldIdMapping;
-use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3Fluid\Fluid\View\TemplateView;
 
 /**
@@ -22,7 +21,6 @@ final readonly class FieldContextVariableMerger
     /**
      * @param array<string, ComponentContextInterface> $otherComponentContexts
      * @param array<string, mixed> $arguments
-     * @return string|null The field's rootId, if a field context was merged in.
      */
     public function apply(
         array $otherComponentContexts,
@@ -30,17 +28,16 @@ final readonly class FieldContextVariableMerger
         TemplateView $view,
         array &$arguments,
         ?AbstractComponentContext $ctx,
-    ): ?string {
+    ): void {
         $fieldContext = $otherComponentContexts['field'] ?? null;
         if (!$fieldContext instanceof FieldContext) {
-            return null;
+            return;
         }
 
         if ($this->takesFieldStateFromAncestor($baseName, $otherComponentContexts)) {
-            return null;
+            return;
         }
 
-        $fieldRootId = Typed::stringOrNull($fieldContext->get('rootId'));
         $fieldVariables = $fieldContext->getChildVariables();
 
         // Each key holds a different, genuinely heterogeneous type (name: ?string, disabled: ?bool,
@@ -62,8 +59,6 @@ final readonly class FieldContextVariableMerger
                 $ctx->set($varName, $varValue);
             }
         }
-
-        return $fieldRootId;
     }
 
     /**
