@@ -39,7 +39,9 @@ final class ComponentRootUtility
      * Root.html/Root.fluid.html file. This makes any standalone file in a Root-less folder root by
      * default (a flat folder of unrelated files like `Icon/Menu.html`, `Icon/Copy.html`, or a nested
      * folder like `CheckboxGroup/Examples/SelectAll.html`), matching the single-file-component
-     * convention extended recursively to any depth, with no new syntax. $templateResolver runs the
+     * convention extended recursively to any depth, with no new syntax. A file named like its folder
+     * (`Button/Button.html`) counts as the folder's designated root too, so its siblings
+     * (`Button/Indicator.html`) are parts. $templateResolver runs the
      * folder-shape check - the calling `ComponentCollectionInterface` passes itself.
      *
      * {@see \Jramke\FluidPrimitives\Component\AbstractComponentCollection::getComponentDefinition()}
@@ -79,14 +81,25 @@ final class ComponentRootUtility
         }
 
         $directory = $lastSlash === false ? '' : substr($templateName, offset: 0, length: $lastSlash);
-        $rootSiblingTemplateName = ($directory !== '' ? $directory . '/' : '') . 'Root';
-
-        return (
+        $siblingExists = static fn(string $name): bool => (
             $templateResolver->getTemplatePaths()->resolveTemplateFileForControllerAndActionAndFormat(
                 'Default',
-                $rootSiblingTemplateName,
-            ) === null
+                ($directory !== '' ? $directory . '/' : '') . $name,
+            ) !== null
         );
+
+        if ($siblingExists('Root')) {
+            return false;
+        }
+
+        // Without a Root, the file named like its folder (`Button/Button`) is the folder's designated root and
+        // every other file in it one of its parts. Only a folder with neither holds independent roots.
+        $folderName = basename($directory);
+        if ($folderName === '' || strtolower($ownName) === strtolower($folderName)) {
+            return true;
+        }
+
+        return !$siblingExists($folderName);
     }
 
     /**

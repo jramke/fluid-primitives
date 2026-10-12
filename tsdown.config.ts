@@ -4,6 +4,7 @@ export default defineConfig({
     entry: {
         client: './Resources/Private/Client/index.ts',
         accordion: './Resources/Private/Primitives/Accordion/Accordion.ts',
+        button: './Resources/Private/Primitives/Button/Button.ts',
         checkbox: './Resources/Private/Primitives/Checkbox/Checkbox.ts',
         'checkbox-group': './Resources/Private/Primitives/CheckboxGroup/CheckboxGroup.ts',
         dialog: './Resources/Private/Primitives/Dialog/Dialog.ts',

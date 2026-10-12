@@ -9,7 +9,7 @@ use TYPO3Fluid\Fluid\View\TemplatePaths;
 
 /**
  * Stands in for a userland component collection exercising every root-component folder shape:
- * classic Root.html + parts (Widget/), a nested example folder with no Root sibling
+ * classic Root.html + parts (Widget/), a file named like its folder + parts (Gadget/), a nested example folder with no Root sibling
  * (Widget/Examples/), a flat multi-file folder with no Root and no matching filename (Icon/), and
  * a tiered classic root (Tier/Widget/Root.fluid.html).
  */
