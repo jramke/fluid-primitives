@@ -2,7 +2,8 @@ import * as toggle from '@zag-js/toggle';
 import type { CommonProperties } from '@zag-js/types';
 import { Component, Machine, normalizeProps } from '../../Client';
 
-// Zag's toggle declares no `id`, so its `splitProps()` would drop the one the parts are found by
+// Zag's toggle declares no `id`, so its `splitProps()` would drop the one the parts are found by.
+// Drop this and use `splitProps()` once https://github.com/chakra-ui/zag/pull/3438 is released.
 export type ToggleProps = toggle.Props & CommonProperties;
 
 export class Toggle extends Component<ToggleProps, toggle.Api> {
