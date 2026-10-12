@@ -111,6 +111,10 @@
             "import": "./dist/tabs.js",
             "types": "./dist/tabs.d.ts"
         },
+        "./toggle": {
+            "import": "./dist/toggle.js",
+            "types": "./dist/toggle.d.ts"
+        },
         "./tooltip": {
             "import": "./dist/tooltip.js",
             "types": "./dist/tooltip.d.ts"
@@ -183,6 +187,7 @@
         "@zag-js/store": "^2.0.0-next.3",
         "@zag-js/switch": "^2.0.0-next.3",
         "@zag-js/tabs": "^2.0.0-next.3",
+        "@zag-js/toggle": "^2.0.0-next.3",
         "@zag-js/tooltip": "^2.0.0-next.3",
         "@zag-js/types": "^2.0.0-next.3",
         "@zag-js/utils": "^2.0.0-next.3",

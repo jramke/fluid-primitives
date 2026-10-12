@@ -29,6 +29,7 @@ export default defineConfig({
         slider: './Resources/Private/Primitives/Slider/Slider.ts',
         switch: './Resources/Private/Primitives/Switch/Switch.ts',
         tabs: './Resources/Private/Primitives/Tabs/Tabs.ts',
+        toggle: './Resources/Private/Primitives/Toggle/Toggle.ts',
         tooltip: './Resources/Private/Primitives/Tooltip/Tooltip.ts',
     },
     platform: 'browser',

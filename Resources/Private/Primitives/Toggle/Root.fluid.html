@@ -1,0 +1,15 @@
+<ui:prop name="defaultPressed" type="boolean" optional="{true}" client="{true}" default="{false}" description="The initial pressed state of the toggle when rendered. Use when you don't need to control the pressed state of the toggle." />
+<ui:prop name="disabled" type="boolean" optional="{true}" client="{true}" description="Whether the toggle is disabled." />
+
+<f:variable name="refData" value="{pressed: defaultPressed, disabled: disabled}" />
+
+<button
+    type="button"
+    aria-pressed="{f:if(condition: defaultPressed, then: 'true', else: 'false')}"
+    {f:if(condition: disabled, then: 'disabled' )}
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'root' , data: refData )}
+    {ui:attributes()}
+    {ui:asChild()}>
+    <f:slot />
+</button>
