@@ -23,6 +23,10 @@
             "import": "./dist/accordion.js",
             "types": "./dist/accordion.d.ts"
         },
+        "./button": {
+            "import": "./dist/button.js",
+            "types": "./dist/button.d.ts"
+        },
         "./checkbox": {
             "import": "./dist/checkbox.js",
             "types": "./dist/checkbox.d.ts"

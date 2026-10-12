@@ -1,0 +1,12 @@
+<ui:prop name="state" type="Jramke\FluidPrimitives\Enum\ButtonIndicatorState" optional="{true}" requiredAtRuntime="{true}" description="The state of the button this indicator is shown in." />
+
+<f:variable name="isHidden" value="{context -> ui:call(method: 'isIndicatorHidden', arguments: {0: state})}" />
+
+<span
+    {f:if(condition: isHidden, then: 'hidden' )}
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'indicator' , value: state.value )}
+    {ui:attributes()}
+    {ui:asChild()}>
+    <f:slot />
+</span>
