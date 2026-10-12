@@ -1,0 +1,18 @@
+<ui:prop name="defaultValue" type="string[]" optional="{true}" client="{true}" description="The initial value of the pressed items when rendered. Use when you don't need to control the value of the toggle group." />
+<ui:prop name="disabled" type="boolean" optional="{true}" client="{true}" description="Whether all items of the toggle group are disabled." />
+<ui:prop name="multiple" type="boolean" optional="{true}" client="{true}" default="{false}" description="Whether multiple items can be pressed at the same time." />
+<ui:prop name="deselectable" type="boolean" optional="{true}" client="{true}" default="{true}" description="Whether the pressed item can be deselected again. Ignored when `multiple` is `true`." />
+<ui:prop name="loopFocus" type="boolean" optional="{true}" client="{true}" default="{true}" description="Whether the keyboard navigation loops from the last item to the first, and vice versa." />
+<ui:prop name="rovingFocus" type="boolean" optional="{true}" client="{true}" default="{true}" description="Whether the items use a roving tabindex, so the whole group is a single tab stop and the arrow keys move the focus." />
+<ui:prop name="orientation" type="Jramke\FluidPrimitives\Enum\Orientation" optional="{true}" client="{true}" default="{f:constant(name: 'Jramke\FluidPrimitives\Enum\Orientation::Horizontal')}" description="The orientation of the toggle group." />
+
+<f:variable name="refData" value="{disabled: disabled, multiple: multiple, orientation: orientation}" />
+
+<div
+    role="group"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'root' , data: refData )}
+    {ui:attributes()}
+    {ui:asChild()}>
+    <f:slot />
+</div>
