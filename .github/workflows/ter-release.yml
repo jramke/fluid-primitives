@@ -7,6 +7,8 @@ on:
 
 jobs:
   TERUpload:
+    # the TER only knows X.Y.Z versions, so a prerelease tag like 1.0.0-beta.1 is not uploaded
+    if: ${{ !contains(github.ref_name, '-') }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false

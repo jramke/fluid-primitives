@@ -14,9 +14,9 @@ const versionArg = process.argv[2];
 
 if (!versionArg) {
     console.error(
-        'Error: Please provide a version argument (major, minor, patch, or a specific version like 1.2.3)'
+        'Error: Please provide a version argument (major, minor, patch, or a specific version like 1.2.3 or 1.0.0-beta.1)'
     );
-    console.error('Usage: npm run version <major|minor|patch|X.Y.Z>');
+    console.error('Usage: npm run version <major|minor|patch|X.Y.Z|X.Y.Z-tag.N>');
     process.exit(1);
 }
 
@@ -30,7 +30,7 @@ console.log(`Current version: ${currentVersion}`);
 // Calculate new version
 let newVersion;
 if (['major', 'minor', 'patch'].includes(versionArg)) {
-    const [major, minor, patch] = currentVersion.split('.').map(Number);
+    const [major, minor, patch] = currentVersion.split('-')[0].split('.').map(Number);
 
     switch (versionArg) {
         case 'major':
@@ -44,10 +44,10 @@ if (['major', 'minor', 'patch'].includes(versionArg)) {
             break;
     }
 } else {
-    // Validate custom version format (X.Y.Z)
-    const versionRegex = /^\d+\.\d+\.\d+$/;
+    // Validate custom version format (X.Y.Z, optionally with a prerelease like -beta.1)
+    const versionRegex = /^\d+\.\d+\.\d+(-[0-9A-Za-z]+(\.[0-9A-Za-z]+)*)?$/;
     if (!versionRegex.test(versionArg)) {
-        console.error('Error: Invalid version format. Must be X.Y.Z (e.g., 1.2.3)');
+        console.error('Error: Invalid version format. Must be X.Y.Z or X.Y.Z-tag.N (e.g., 1.2.3 or 1.0.0-beta.1)');
         process.exit(1);
     }
     newVersion = versionArg;

@@ -35,6 +35,13 @@ jobs:
         if: github.ref == 'refs/heads/main'
         run: npm publish --tag next
 
-      - name: Publish stable release
+      - name: Publish release
         if: startsWith(github.ref, 'refs/tags/')
-        run: npm publish
+        run: |
+          VERSION=$(node -p 'require("./package.json").version')
+          if [[ "$VERSION" == *-* ]]; then
+            # a prerelease like 1.0.0-beta.1 goes to the dist-tag of its identifier (beta), never to latest
+            npm publish --tag "$(echo "${VERSION#*-}" | cut -d. -f1)"
+          else
+            npm publish
+          fi
