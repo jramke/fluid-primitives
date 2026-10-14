@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Tests\Unit;
 
 use Jramke\FluidPrimitives\Contexts\AccordionContext;
-use Jramke\FluidPrimitives\Contexts\BaseContext;
 use Jramke\FluidPrimitives\Contexts\CollapsibleContext;
+use Jramke\FluidPrimitives\Contexts\DefaultContext;
 use Jramke\FluidPrimitives\Tests\TestCase;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use PHPUnit\Framework\Attributes\Test;
@@ -59,12 +59,12 @@ final class ComponentUtilityTest extends TestCase
         // Regression test: a naive "just use the last segment as the class name in the flat
         // namespace" scheme would make "Icon/Menu" wrongly resolve to the real, unrelated
         // `MenuContext` (a fixture stand-in for it exists flat in this namespace, proving it's
-        // reachable) instead of falling back to BaseContext, because the two components merely
+        // reachable) instead of falling back to DefaultContext, because the two components merely
         // happen to share a last-segment name.
         $resolved = ComponentUtility::getContextClassNameFromViewHelperName('Icon/Menu', [
             self::FIXTURE_CONTEXTS_NAMESPACE,
         ]);
-        $this->assertSame(BaseContext::class, $resolved);
+        $this->assertSame(DefaultContext::class, $resolved);
     }
 
     #[Test]
