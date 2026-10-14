@@ -52,6 +52,9 @@ final class HydrationScriptBuilder
 
     private function toJson(array $data, bool $development): string
     {
+        // PHP encodes an empty array as [], but every one of these is a map for the client
+        $value = $data === [] ? new \stdClass() : $data;
+
         // HEX flags prevent a string containing "</script>" from breaking out of the inline
         // <script> tag this gets embedded into (see HydrationRegistry::updateAssetCollector()).
         $flags =
@@ -64,8 +67,8 @@ final class HydrationScriptBuilder
             JSON_HEX_QUOT;
 
         if ($development) {
-            return json_encode($data, $flags | JSON_PRETTY_PRINT);
+            return json_encode($value, $flags | JSON_PRETTY_PRINT);
         }
-        return json_encode($data, $flags);
+        return json_encode($value, $flags);
     }
 }

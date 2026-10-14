@@ -6,6 +6,7 @@ namespace Jramke\FluidPrimitives\Contexts;
 
 use ArrayAccess;
 use Jramke\FluidPrimitives\Component\ComponentCollectionInterface;
+use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Utility\EnumUtility;
 use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -90,6 +91,7 @@ abstract class AbstractComponentContext implements ComponentContextInterface, \A
                 // an isolated render without a request: the getters have to cope without one
             }
             $this->globals = $globals;
+            HydrationRegistry::getInstance()->requestGlobals();
         }
 
         return $this->globals;

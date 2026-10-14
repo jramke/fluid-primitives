@@ -4,11 +4,16 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Registry;
 
+use Jramke\FluidPrimitives\Contexts\GlobalContextInterface;
+use Jramke\FluidPrimitives\Utility\ClientPropsContextExtractor;
 use Jramke\FluidPrimitives\Utility\EnumUtility;
 use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Core\Page\AssetCollector;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 
+// The globals accessors and their request handling are one concern of this per-request singleton.
+// @mago-expect lint:too-many-methods
 class HydrationRegistry
 {
     private const string SCRIPT_ID = 'fluid-primitives-hydration-data';
@@ -18,9 +23,11 @@ class HydrationRegistry
     private static ?self $instance = null;
     private array $globals = [];
     private bool $globalsResolved = false;
+    private bool $globalsRequested = false;
 
     public function __construct(
         private readonly AssetCollector $assetCollector,
+        private readonly GlobalContextInterface $globalContext,
         private readonly HydrationScriptBuilder $scriptBuilder = new HydrationScriptBuilder(),
         private readonly NestedComponentRegistry $nestedComponentRegistry = new NestedComponentRegistry(),
     ) {}
@@ -108,6 +115,30 @@ class HydrationRegistry
         return $this->registry;
     }
 
+    /**
+     * Makes the inline script carry the globals even when no component hydrates on this page, because
+     * a template read one: the client then finds them with `getGlobal()`. Called by the first
+     * `getGlobals()` of a component context per request.
+     */
+    public function requestGlobals(): void
+    {
+        $this->globalsRequested = true;
+        $this->updateAssetCollector();
+    }
+
+    /**
+     * Gives the global context the request of the render that registers a component, before its values
+     * are read. The first request wins, see {@see GlobalContextInterface::initialize()}.
+     */
+    public function initializeGlobals(RenderingContextInterface $renderingContext): void
+    {
+        if (!$renderingContext->hasAttribute(ServerRequestInterface::class)) {
+            return;
+        }
+
+        $this->globalContext->initialize($renderingContext->getAttribute(ServerRequestInterface::class));
+    }
+
     public function getGlobals(): array
     {
         $this->resolveGlobals();
@@ -119,11 +150,12 @@ class HydrationRegistry
         $this->registry = [];
         $this->globals = [];
         $this->globalsResolved = false;
+        $this->globalsRequested = false;
     }
 
     private function updateAssetCollector(): void
     {
-        if ($this->registry === []) {
+        if ($this->registry === [] && !$this->globalsRequested) {
             return;
         }
 
@@ -147,20 +179,12 @@ class HydrationRegistry
 
         $this->globalsResolved = true;
 
-        $this->globals['debug'] = $this->scriptBuilder->isDevelopment();
-
         $request = $this->getRequest();
-        if (!$request instanceof ServerRequestInterface) {
-            return;
+        if ($request instanceof ServerRequestInterface) {
+            $this->globalContext->initialize($request);
         }
 
-        // Narrowed immediately below via is_object()/method_exists() - a generic PSR-7 request
-        // attribute has no narrower static type, and there's no Typed:: equivalent for objects.
-        // @mago-expect analysis:mixed-assignment
-        $language = $request->getAttribute('language');
-        $locale = is_object($language) && method_exists($language, 'getLocale') ? (string)$language->getLocale() : '';
-
-        $this->globals['locale'] = $locale;
+        $this->globals = ClientPropsContextExtractor::extract($this->globalContext);
     }
 
     private function getRequest(): ?ServerRequestInterface

@@ -9,10 +9,12 @@ use Jramke\FluidPrimitives\Contexts\AbstractComponentContext;
 use Jramke\FluidPrimitives\Contexts\AbstractGlobalContext;
 use Jramke\FluidPrimitives\Contexts\GlobalContextInterface;
 use Jramke\FluidPrimitives\Factory\ComponentContextFactory;
+use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Tests\Helper\ConcreteTestContext;
 use Jramke\FluidPrimitives\Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
 use TYPO3\CMS\Core\Http\ServerRequest;
+use TYPO3\CMS\Core\Page\AssetCollector;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 
@@ -29,6 +31,23 @@ final class AbstractComponentContextTest extends TestCase
         $this->renderingContext = $this->createStub(RenderingContextInterface::class);
         $this->parentRenderingContext = $this->createStub(RenderingContextInterface::class);
         $this->componentResolver = $this->createStub(ComponentCollectionInterface::class);
+    }
+
+    protected function tearDown(): void
+    {
+        (new \ReflectionProperty(HydrationRegistry::class, 'instance'))->setValue(null, null);
+        parent::tearDown();
+    }
+
+    /**
+     * What the container hands out in production: the registry a first getGlobals() asks to emit the globals.
+     */
+    private function useHydrationRegistry(AbstractGlobalContext $globals): HydrationRegistry
+    {
+        $registry = new HydrationRegistry($this->createStub(AssetCollector::class), $globals);
+        (new \ReflectionProperty(HydrationRegistry::class, 'instance'))->setValue(null, $registry);
+
+        return $registry;
     }
 
     private function createContext(array $contextVariables = []): ConcreteTestContext
@@ -116,6 +135,7 @@ final class AbstractComponentContextTest extends TestCase
         $this->renderingContext->method('getAttribute')->willReturn($request);
         $globals = new class extends AbstractGlobalContext {};
         GeneralUtility::addInstance(GlobalContextInterface::class, $globals);
+        $this->useHydrationRegistry($globals);
         $context = $this->createContext(['globals' => 'a variable named like it must not win']);
 
         $this->assertSame($globals, $context->getGlobals());
@@ -129,6 +149,7 @@ final class AbstractComponentContextTest extends TestCase
     {
         $globals = new class extends AbstractGlobalContext {};
         GeneralUtility::addInstance(GlobalContextInterface::class, $globals);
+        $this->useHydrationRegistry($globals);
 
         $this->assertSame($globals, $this->createContext()->getGlobals());
         $this->assertNull($globals->getRequest());

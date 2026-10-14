@@ -37,6 +37,7 @@ final readonly class ComponentHydrationCollector
         private ClientPropValueResolver $clientPropValueResolver,
     ) {}
 
+    // @mago-expect lint:halstead
     public function collectForRootComponent(ComponentHydrationCandidate $candidate): string
     {
         $rendered = $candidate->rendered;
@@ -149,7 +150,9 @@ final readonly class ComponentHydrationCollector
             $rootId,
             $this->resolveFieldArrayItemScopeKey($candidate),
         );
-        HydrationRegistry::getInstance()->add($namespaceIdentifier, $candidate->clientBaseName, $rootId, $data);
+        $registry = HydrationRegistry::getInstance();
+        $registry->initializeGlobals($candidate->renderingContext);
+        $registry->add($namespaceIdentifier, $candidate->clientBaseName, $rootId, $data);
 
         return $rendered;
     }
