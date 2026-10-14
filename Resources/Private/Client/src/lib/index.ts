@@ -7,6 +7,7 @@ export type {
     ConverterMachineProps,
 } from './client-prop-converters';
 export { Component } from './component';
+export { devWarn, isDebug } from './debug';
 export { DelayedIndicator } from './delayed-indicator';
 export type { DelayedIndicatorOptions } from './delayed-indicator';
 export { extbase } from './extbase';

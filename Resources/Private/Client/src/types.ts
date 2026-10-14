@@ -132,15 +132,16 @@ export type HydrationPropsFor<K extends string> = K extends keyof HydrationProps
     ? Omit<HydrationPropsRegistry[K], keyof PickOverride<K>> & PickOverride<K>
     : ComponentHydrationData['props'];
 
-/** @internal */
+/**
+ * What the server renders into `window.FluidPrimitives.globals`: the getters of the global context
+ * marked `#[ExposeToClient]`. `locale` and `debug` come from the library, the rest from the project.
+ */
 export interface FluidPrimitivesGlobals {
     locale?: string;
     /**
-     * Enables dev-only checks. Set automatically to whether
-     * TYPO3's own Application Context is development (see `HydrationRegistry::resolveGlobals()`),
-     * nothing for a consumer to configure. These checks aren't gated by a bundler env variable, so
-     * nothing is stripped from the production bundle either way - they simply never run unless
-     * this is true.
+     * Whether TYPO3's Application Context is development (see `GlobalContext::getDebug()`). Gates the
+     * client's dev-only warnings (`devWarn()`), which never run unless this is true. Nothing for a
+     * consumer to configure, and nothing is stripped from the production bundle either way.
      */
     debug?: boolean;
     [key: string]: unknown;

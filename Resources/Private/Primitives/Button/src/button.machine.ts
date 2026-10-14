@@ -1,4 +1,5 @@
 import { createMachine } from '@zag-js/core';
+import { devWarn } from '../../../Client';
 import * as dom from './button.dom';
 import type { ButtonSchema } from './button.types';
 
@@ -21,7 +22,7 @@ export const machine = createMachine<ButtonSchema>({
 
             const buttonEl = dom.getRootEl(scope);
             if (buttonEl && scope.isActiveElement(buttonEl)) {
-                console.warn(
+                devWarn(
                     '[Button] A focused button was disabled, so it loses focus. Set `focusableWhenDisabled` to keep it.',
                     buttonEl
                 );

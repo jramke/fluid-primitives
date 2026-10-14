@@ -8,6 +8,8 @@ afterEach(() => {
     button = undefined;
     document.body.innerHTML = '';
     vi.restoreAllMocks();
+    // @ts-expect-error back to a page without globals
+    delete window.FluidPrimitives;
 });
 
 function mountButton(
@@ -123,8 +125,9 @@ test('leaves the attributes of a trigger it is merged into alone', () => {
     expect(buttonEl.getAttribute('aria-expanded')).toBe('true');
 });
 
-test('warns about a focused button that is disabled without focusableWhenDisabled', () => {
+test('warns in debug about a focused button that is disabled without focusableWhenDisabled', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    window.FluidPrimitives = { globals: { debug: true } } as Window['FluidPrimitives'];
     const { buttonEl } = mountButton();
     buttonEl.focus();
 
@@ -137,5 +140,16 @@ test('warns about a focused button that is disabled without focusableWhenDisable
     focusable.buttonEl.focus();
 
     button!.api.setDisabled(true);
+    expect(warn).not.toHaveBeenCalled();
+});
+
+test('does not warn about a disabled focused button outside debug', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    window.FluidPrimitives = { globals: { debug: false } } as Window['FluidPrimitives'];
+    const { buttonEl } = mountButton();
+    buttonEl.focus();
+
+    button!.api.setDisabled(true);
+
     expect(warn).not.toHaveBeenCalled();
 });
