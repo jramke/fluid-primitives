@@ -38,6 +38,17 @@ final class ComboboxRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function namesThePartAndItsRootWhenAPartIsUsedOutsideTheRoot(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('<combobox> must be used inside its root component (e.g. <ui:combobox.root>)');
+
+        $this->renderTemplate(
+            '<primitives:combobox.item item="{value: \'a\', label: \'A\'}">A</primitives:combobox.item>',
+        );
+    }
+
+    #[Test]
     #[DataProvider('openStates')]
     public function rendersTheStateOnTheControlTheInputTheTriggerAndTheContent(
         string $arguments,
