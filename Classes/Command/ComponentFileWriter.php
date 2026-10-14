@@ -61,7 +61,7 @@ final readonly class ComponentFileWriter
             $targetFilePath = $targetFolder . $targetFileName;
 
             if (str_ends_with($file, '.html')) {
-                $content = str_replace('%componentPath%', $componentPath, $content);
+                $content = str_replace('%componentPath%', $componentPath, (string)$content);
                 $usesViteAsset = $usesViteAsset || str_contains($content, '<vite:asset');
             }
 

@@ -30,4 +30,30 @@ final class RegistryContentTest extends TestCase
             }
         }
     }
+
+    #[Test]
+    public function everyComponentLoadsItsListedEntryFileThroughExactlyOneComponentPathToken(): void
+    {
+        $registryDir = dirname(__DIR__, 2) . '/Resources/Private/Registry/';
+        /** @var array<string, array{name: string, files: list<string>}> $registry */
+        $registry = Yaml::parseFile($registryDir . 'registry.yaml');
+
+        foreach ($registry as $key => $component) {
+            $entry = $component['name'] . '.entry.ts';
+            $this->assertContains($entry, $component['files'], $key);
+
+            $tags = [];
+            foreach ($component['files'] as $file) {
+                if (str_ends_with($file, '.html')) {
+                    preg_match_all(
+                        '/<vite:asset entry="%componentPath%\/([^"]+)"/',
+                        (string)file_get_contents($registryDir . $component['name'] . '/' . $file),
+                        $matches,
+                    );
+                    array_push($tags, ...$matches[1]);
+                }
+            }
+            $this->assertSame([$entry], $tags, $key);
+        }
+    }
 }

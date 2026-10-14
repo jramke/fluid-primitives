@@ -84,7 +84,7 @@ class ComponentAddCommand extends Command
         }
 
         $files = array_map(Typed::string(...), Typed::arrayOrNull($manifest['files'] ?? null) ?? []);
-        $path = rtrim(Typed::string($input->getOption('path')), '/');
+        $path = rtrim(Typed::string($input->getOption('path')), characters: '/');
         $path = $path === '' ? '' : $path . '/';
         $targetFolder = $availablePackages[$extension]->getPackagePath() . $path . $componentFolderName . '/';
 
@@ -96,9 +96,10 @@ class ComponentAddCommand extends Command
         ]);
 
         $this->fileWriter->reportResult($io, $componentKey, $extension, $writeResult);
-        if (
-            $writeResult['usesViteAsset'] && !isset($GLOBALS['TYPO3_CONF_VARS']['SYS']['fluid']['namespaces']['vite'])
-        ) {
+        // @mago-expect lint:no-global
+        // @mago-expect analysis:mixed-assignment
+        $viteNamespace = $GLOBALS['TYPO3_CONF_VARS']['SYS']['fluid']['namespaces']['vite'] ?? null;
+        if ($writeResult['usesViteAsset'] && $viteNamespace === null) {
             $io->warning(
                 'The templates contain <vite:asset> to load the entry file, but the "vite" Fluid namespace is not ' .
                 'registered. Install praetorius/vite-asset-collector and register the namespace, or remove the line.',
