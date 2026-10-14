@@ -8,9 +8,10 @@ use ArrayAccess;
 use Jramke\FluidPrimitives\Component\ComponentCollectionInterface;
 use Jramke\FluidPrimitives\Utility\EnumUtility;
 use Psr\Http\Message\ServerRequestInterface;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 
-// Method count is dictated by ComponentContextInterface (11 methods) plus the 4 ArrayAccess methods
+// Method count is dictated by ComponentContextInterface (11 methods), getGlobals() and the 4 ArrayAccess methods
 // PHP requires on the implementing class itself - not internal complexity to delegate elsewhere.
 // @mago-expect lint:too-many-methods
 /**
@@ -22,6 +23,7 @@ abstract class AbstractComponentContext implements ComponentContextInterface, \A
     private RenderingContextInterface $parentRenderingContext;
     private array $contextVariables = [];
     private ComponentCollectionInterface $componentResolver;
+    private ?GlobalContextInterface $globals = null;
 
     /**
      * Initialize the context with state after dependency injection
@@ -69,6 +71,28 @@ abstract class AbstractComponentContext implements ComponentContextInterface, \A
         }
 
         throw new \RuntimeException('Rendering context does not have a ServerRequestInterface attribute.', 1785067721);
+    }
+
+    /**
+     * The request-wide global context, the same instance for every component: `{context.globals.x}` in a
+     * template, `$this->getGlobals()->get('x')` here. `final` so a project cannot shadow it, `globals` is a
+     * reserved prop name for the same reason.
+     */
+    final public function getGlobals(): GlobalContextInterface
+    {
+        if (!$this->globals instanceof GlobalContextInterface) {
+            $globals = GeneralUtility::makeInstance(GlobalContextInterface::class);
+            try {
+                $globals->initialize($this->getRequest());
+
+                // @mago-expect lint:no-empty-catch-clause
+            } catch (\RuntimeException) {
+                // an isolated render without a request: the getters have to cope without one
+            }
+            $this->globals = $globals;
+        }
+
+        return $this->globals;
     }
 
     /**

@@ -73,6 +73,7 @@ final readonly class ComponentRootContextFactory
             'component',
             'settings',
             'context',
+            'globals',
             'class',
             'asChild',
         ];

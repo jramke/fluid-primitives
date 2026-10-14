@@ -13,6 +13,7 @@ class Constants
     public const RESERVED_PROPS = [
         self::PROP_ROOT_ID, // reserved as we declare it manually
         'context', // reserved for the component context
+        'globals', // reserved for the global context, read as {context.globals.x}
         'component', // reserved for the component data
         'settings', // reserved for the component settings
         'class', // reserved for the component class and added automatically for every component
