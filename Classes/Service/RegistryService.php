@@ -6,6 +6,7 @@ namespace Jramke\FluidPrimitives\Service;
 
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
+use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
 use Jramke\FluidPrimitives\Utility\Typed;
 use Symfony\Component\Yaml\Exception\ParseException;
 use Symfony\Component\Yaml\Yaml;
@@ -36,6 +37,9 @@ class RegistryService
             throw new \InvalidArgumentException('Component key must not be empty.', 1767042111);
         }
 
+        // the keys are camelCase like the Fluid tags, the kebab-case spelling of older releases still resolves
+        $componentKey = ComponentNameUtility::lowerCaseDashedToCamelCase($componentKey);
+
         [$error, $components] = $this->loadComponents();
         if ($error !== null) {
             return [$error, []];
@@ -56,6 +60,8 @@ class RegistryService
         if ($componentKey === '' || $componentKey === '0' || ($filePath === '' || $filePath === '0')) {
             throw new \InvalidArgumentException('Component key and file path must not be empty.', 1767042112);
         }
+
+        $componentKey = ComponentNameUtility::lowerCaseDashedToCamelCase($componentKey);
 
         [$error, $components] = $this->loadComponents();
         if ($error !== null || !array_key_exists($componentKey, $components)) {
