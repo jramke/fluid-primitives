@@ -90,10 +90,21 @@ class ComponentAddCommand extends Command
             $componentFolderName .
             '/';
 
+        $useFluidSuffix = $input->getOption('fluid-suffix') !== false;
+
+        $existing = $this->fileWriter->existingTargets($files, $targetFolder, $useFluidSuffix);
+        if ($existing !== [] && !Typed::bool($input->getOption('force'))) {
+            $io->error([
+                'Component "' . $componentKey . '" already exists in extension "' . $extension . '":',
+                ...array_map(static fn(string $file): string => '- ' . $file, $existing),
+                'Nothing was written. Use --force to overwrite the whole component.',
+            ]);
+            return Command::FAILURE;
+        }
+
         $writeResult = $this->fileWriter->write($io, $componentKey, $files, [
             'targetFolder' => $targetFolder,
-            'useFluidSuffix' => $input->getOption('fluid-suffix') !== false,
-            'force' => Typed::bool($input->getOption('force')),
+            'useFluidSuffix' => $useFluidSuffix,
         ]);
 
         $this->fileWriter->reportResult($io, $componentKey, $extension, $writeResult);
