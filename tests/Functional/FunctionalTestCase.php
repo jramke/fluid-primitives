@@ -209,6 +209,14 @@ abstract class FunctionalTestCase extends TYPO3FunctionalTestCase
     }
 
     /**
+     * Puts the view back outside an Extbase dispatch, where the request is a plain PSR-7 one.
+     */
+    protected function usePlainRequest(): void
+    {
+        $this->getView()->getRenderingContext()->setAttribute(ServerRequestInterface::class, new ServerRequest());
+    }
+
+    /**
      * Makes the request of the view the Extbase request of a plugin, like the dispatch of a plugin has it.
      */
     protected function setExtbasePlugin(string $extensionName, string $pluginName): void
@@ -216,7 +224,7 @@ abstract class FunctionalTestCase extends TYPO3FunctionalTestCase
         // creates the request with the site and the application type first
         $view = $this->getView();
         $request = $GLOBALS['TYPO3_REQUEST'] ?? new ServerRequest();
-        if (!$request instanceof ServerRequest) {
+        if (!$request instanceof ServerRequestInterface) {
             $request = new ServerRequest();
         }
 
@@ -244,7 +252,7 @@ abstract class FunctionalTestCase extends TYPO3FunctionalTestCase
     {
         // Set up a frontend request for proper context, but keep any locale/site overrides set by tests.
         $request = $GLOBALS['TYPO3_REQUEST'] ?? new ServerRequest();
-        if (!$request instanceof ServerRequest) {
+        if (!$request instanceof ServerRequestInterface) {
             $request = new ServerRequest();
         }
 

@@ -16,6 +16,13 @@ use TYPO3\CMS\Extbase\Security\HashScope;
 
 final class FormRenderingTest extends FunctionalTestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        // a form needs the plugin namespace of an Extbase request, see FormContext::getFieldNamePrefix()
+        $this->setExtbasePlugin('Test', 'Form');
+    }
+
     #[Test]
     public function rendersAFormElementWithMethodActionAndTheReadyState(): void
     {
@@ -42,14 +49,56 @@ final class FormRenderingTest extends FunctionalTestCase
         // ServerRequestInterface attribute is a plain PSR-7 request rather than an Extbase one -
         // exactly the condition production code must reject to build an action URI via the
         // UriBuilder. `actionUri` is the explicit escape hatch for exactly this case.
+        $this->usePlainRequest();
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('is not an Extbase RequestInterface');
 
         $this->renderTemplate('
-            <primitives:form.root>
+            <primitives:form.root extensionName="Docs" pluginName="Form">
                 <button type="submit">Send</button>
             </primitives:form.root>
         ');
+    }
+
+    #[Test]
+    public function derivesThePrefixFromTheGivenPluginOutsideAnExtbaseRequest(): void
+    {
+        $this->usePlainRequest();
+
+        $html = $this->renderTemplate('
+            <primitives:form.root actionUri="/submit" objectName="conference" extensionName="Other" pluginName="Search">
+                <button type="submit">Send</button>
+            </primitives:form.root>
+        ');
+
+        $this->assertSame(
+            'tx_other_search',
+            $this->elementWith($html, 'data-form-root')->get('data-field-name-prefix'),
+        );
+        $this->assertStringContainsString('name="tx_other_search[__trustedProperties]"', $html);
+    }
+
+    #[Test]
+    #[DataProvider('incompletePluginArguments')]
+    public function throwsOutsideAnExtbaseRequestWithoutBothExtensionAndPluginName(string $arguments): void
+    {
+        $this->usePlainRequest();
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Cannot determine the field name prefix for <ui:form.root>');
+
+        $this->renderTemplate(
+            '<primitives:form.root actionUri="/submit" ' . $arguments . '>Send</primitives:form.root>',
+        );
+    }
+
+    /**
+     * @return iterable<string, array{0: string}>
+     */
+    public static function incompletePluginArguments(): iterable
+    {
+        yield 'neither' => [''];
+        yield 'only the extension' => ['extensionName="Other"'];
+        yield 'only the plugin' => ['pluginName="Search"'];
     }
 
     #[Test]
@@ -63,9 +112,11 @@ final class FormRenderingTest extends FunctionalTestCase
 
         // The `__trustedProperties` field itself is deliberately not objectName-prefixed (mirroring
         // core's `<f:form>` - Extbase always reads it back from this fixed top-level key), unlike
-        // the field names hashed into its value, which are. It would still carry the plugin's own
-        // field name prefix in a real request; this functional test environment has none.
-        $this->assertMatchesRegularExpression('/name="__trustedProperties"[^>]*value="[^"]+"[^>]*>\s*<\/form>/', $html);
+        // the field names hashed into its value, which are. It carries the plugin's own field name prefix.
+        $this->assertMatchesRegularExpression(
+            '/name="tx_test_form\[__trustedProperties\]"[^>]*value="[^"]+"[^>]*>\s*<\/form>/',
+            $html,
+        );
     }
 
     #[Test]
@@ -120,7 +171,7 @@ final class FormRenderingTest extends FunctionalTestCase
 
         $identityFields = array_filter(
             $this->elementsWith($html, 'name'),
-            static fn($element): bool => $element->get('name') === 'conference[__identity]',
+            static fn($element): bool => $element->get('name') === 'tx_test_form[conference][__identity]',
         );
 
         if ($uid === null) {
@@ -347,6 +398,38 @@ final class FormRenderingTest extends FunctionalTestCase
 
         // signed below the namespace: Extbase looks the token up by the name of the argument
         $this->assertEquals(['conference' => ['__identity' => 1, 'title' => 1]], $this->trustedProperties($html));
+    }
+
+    #[Test]
+    public function prefixesWithThePluginTheActionIsRegisteredUnderNotThePluginThatRenders(): void
+    {
+        $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['extbase']['extensions']['DocsExt']['plugins']['RegistrationSubmit'] = [
+            'controllers' => [
+                'Vendor\\DocsExt\\Controller\\RegistrationController' => [
+                    'alias' => 'Registration',
+                    'actions' => ['submit'],
+                ],
+            ],
+        ];
+        $this->setExtbasePlugin('DocsExt', 'Registration');
+
+        $template = static fn(string $arguments): string => (
+            '<primitives:form.root actionUri="/submit" controller="Registration" action="submit" ' .
+            $arguments .
+            '>Send</primitives:form.root>'
+        );
+
+        $derived = $this->renderTemplate($template(''));
+        $this->assertSame(
+            'tx_docsext_registrationsubmit',
+            $this->elementWith($derived, 'data-form-root')->get('data-field-name-prefix'),
+        );
+
+        $explicit = $this->renderTemplate($template('pluginName="Registration"'));
+        $this->assertSame(
+            'tx_docsext_registration',
+            $this->elementWith($explicit, 'data-form-root')->get('data-field-name-prefix'),
+        );
     }
 
     /**
