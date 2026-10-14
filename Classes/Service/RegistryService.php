@@ -137,6 +137,8 @@ class RegistryService
     private function ref(): string
     {
         $version = $this->packageManager->getPackage('fluid_primitives')->getPackageMetaData()->getVersion();
+        // TYPO3 hands out the Composer-normalized prerelease (1.0.0-beta2), the tag is 1.0.0-beta.2
+        $version = (string)preg_replace('/-([A-Za-z]+)(\d+)$/', replacement: '-$1.$2', subject: $version);
 
         return preg_match('/^\d+\.\d+\.\d+(-[0-9A-Za-z.]+)?$/', $version) === 1 ? $version : 'main';
     }

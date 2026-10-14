@@ -62,7 +62,8 @@ final class RegistryServiceTest extends TestCase
     {
         return [
             'release' => ['1.2.0', '1.2.0'],
-            'prerelease' => ['1.0.0-beta.1', '1.0.0-beta.1'],
+            'prerelease as TYPO3 normalizes it' => ['1.0.0-beta2', '1.0.0-beta.2'],
+            'prerelease with a dot' => ['1.0.0-beta.1', '1.0.0-beta.1'],
             'not a release' => ['dev-main', 'main'],
         ];
     }
