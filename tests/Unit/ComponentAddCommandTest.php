@@ -209,6 +209,80 @@ final class ComponentAddCommandTest extends TestCase
     }
 
     /**
+     * @return iterable<string, array{0: string, 1: string, 2: string}>
+     */
+    public static function componentPaths(): iterable
+    {
+        yield 'the default path' => [
+            'Resources/Private/Components/ui/',
+            'my_ext',
+            'EXT:my_ext/Resources/Private/Components/ui/my-component',
+        ];
+        yield 'a custom path without trailing slash' => [
+            'Resources/Private/Ui',
+            'my_ext',
+            'EXT:my_ext/Resources/Private/Ui/my-component',
+        ];
+        yield 'no path' => ['', 'my_ext', 'EXT:my_ext/my-component'];
+    }
+
+    #[Test]
+    #[DataProvider('componentPaths')]
+    public function replacesTheComponentPathTokenInTemplatesOnly(
+        string $path,
+        string $extension,
+        string $expected,
+    ): void {
+        $tester = $this->createCommandTester(
+            $this->createRegistryService(
+                ['Root.html', 'Root.entry.ts'],
+                '<vite:asset entry="%componentPath%/Root.entry.ts" />',
+            ),
+            $this->createStub(CacheManager::class),
+        );
+        $tester->execute(['component' => 'accordion', '--extension' => $extension, '--path' => $path]);
+
+        $this->assertSame(0, $tester->getStatusCode());
+        $folder = $this->tempDir . ($path === '' ? '' : rtrim($path, '/') . '/') . 'my-component/';
+        $this->assertSame(
+            '<vite:asset entry="' . $expected . '/Root.entry.ts" />',
+            file_get_contents($folder . 'Root.fluid.html'),
+        );
+        $this->assertSame(
+            '<vite:asset entry="%componentPath%/Root.entry.ts" />',
+            file_get_contents($folder . 'Root.entry.ts'),
+        );
+    }
+
+    #[Test]
+    public function warnsWhenTheViteNamespaceIsNotRegistered(): void
+    {
+        $registryService = $this->createRegistryService(
+            ['Root.html'],
+            '<vite:asset entry="%componentPath%/Root.entry.ts" />',
+        );
+        $execute = fn(): string => (function () use ($registryService): string {
+            $tester = $this->createCommandTester($registryService, $this->createStub(CacheManager::class));
+            $tester->execute([
+                'component' => 'accordion',
+                '--extension' => 'my_ext',
+                '--path' => '',
+                '--force' => true,
+            ]);
+
+            return (string)preg_replace('/\s+/', ' ', $tester->getDisplay());
+        })();
+
+        unset($GLOBALS['TYPO3_CONF_VARS']['SYS']['fluid']['namespaces']['vite']);
+        $this->assertStringContainsString('"vite" Fluid namespace is not registered', $execute());
+
+        $GLOBALS['TYPO3_CONF_VARS']['SYS']['fluid']['namespaces']['vite'] = [
+            'Praetorius\\ViteAssetCollector\\ViewHelpers',
+        ];
+        $this->assertStringNotContainsString('namespace is not registered', $execute());
+    }
+
+    /**
      * @return iterable<string, array{0: string}>
      */
     public static function fileNamesOutsideTheComponentFolder(): iterable

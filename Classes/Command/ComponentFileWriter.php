@@ -21,19 +21,26 @@ final readonly class ComponentFileWriter
 
     /**
      * Fetches and writes each component file to disk, skipping existing files unless `force` is set.
+     * `%componentPath%` in the templates becomes `componentPath`, the `EXT:` path of the component folder.
      *
      * @param string[] $files
-     * @param array{targetFolder: string, useFluidSuffix: bool, force: bool} $options
-     * @return array{skipped: bool, updated: bool, created: bool, failed: bool}
+     * @param array{targetFolder: string, useFluidSuffix: bool, force: bool, componentPath: string} $options
+     * @return array{skipped: bool, updated: bool, created: bool, failed: bool, usesViteAsset: bool}
      */
     public function write(SymfonyStyle $io, string $componentKey, array $files, array $options): array
     {
-        ['targetFolder' => $targetFolder, 'useFluidSuffix' => $useFluidSuffix, 'force' => $force] = $options;
+        [
+            'targetFolder' => $targetFolder,
+            'useFluidSuffix' => $useFluidSuffix,
+            'force' => $force,
+            'componentPath' => $componentPath,
+        ] = $options;
 
         $someSkipped = false;
         $someUpdated = false;
         $someCreated = false;
         $someFailed = false;
+        $usesViteAsset = false;
 
         foreach ($files as $file) {
             // the names come from the registry's answer, so one must not lead out of the component folder
@@ -52,6 +59,11 @@ final readonly class ComponentFileWriter
 
             $targetFileName = $this->resolveTargetFileName($file, $useFluidSuffix);
             $targetFilePath = $targetFolder . $targetFileName;
+
+            if (str_ends_with($file, '.html')) {
+                $content = str_replace('%componentPath%', $componentPath, $content);
+                $usesViteAsset = $usesViteAsset || str_contains($content, '<vite:asset');
+            }
 
             $targetDir = dirname($targetFilePath);
             if (!is_dir($targetDir)) {
@@ -81,6 +93,7 @@ final readonly class ComponentFileWriter
             'updated' => $someUpdated,
             'created' => $someCreated,
             'failed' => $someFailed,
+            'usesViteAsset' => $usesViteAsset,
         ];
     }
 
@@ -99,7 +112,7 @@ final readonly class ComponentFileWriter
     }
 
     /**
-     * @param array{skipped: bool, updated: bool, created: bool, failed: bool} $writeResult
+     * @param array{skipped: bool, updated: bool, created: bool, failed: bool, usesViteAsset: bool} $writeResult
      */
     public function reportResult(SymfonyStyle $io, string $componentKey, string $extension, array $writeResult): void
     {
