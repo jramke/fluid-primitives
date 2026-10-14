@@ -75,6 +75,27 @@ final class NumberInputRenderingTest extends FunctionalTestCase
         );
     }
 
+    #[Test]
+    public function shipsTheOwnLocaleOtherwiseTheGlobalOne(): void
+    {
+        $this->setRequestLocale('de_DE');
+
+        $this->renderTemplate(sprintf(self::NUMBER_INPUT, 'locale="fr-CH"'));
+        $this->assertSame('fr-CH', $this->numberInputProps()['locale']);
+
+        HydrationRegistry::getInstance()->clear();
+        $this->renderTemplate(sprintf(self::NUMBER_INPUT, ''));
+        $this->assertSame('de-DE', $this->numberInputProps()['locale']);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function numberInputProps(): array
+    {
+        return array_values(HydrationRegistry::getInstance()->getAll()['primitives']['number-input'])[0]['props'];
+    }
+
     /**
      * @return iterable<string, array{0: string, 1: array<string, ?string>, 2: bool, 3: bool}>
      */
