@@ -44,6 +44,34 @@ final class DialogRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function rejectsTheSameExplicitRootIdOnTwoRootsOfOneComponent(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('The rootId "same-id" is already used by another <dialog> component.');
+
+        $this->renderTemplate('
+            <primitives:dialog.root rootId="same-id" />
+            <primitives:dialog.root rootId="same-id" />
+        ');
+    }
+
+    #[Test]
+    public function allowsTheSameExplicitRootIdOnRootsOfDifferentComponents(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:dialog.root rootId="same-id">
+                <primitives:dialog.trigger>Open</primitives:dialog.trigger>
+            </primitives:dialog.root>
+            <primitives:popover.root rootId="same-id">
+                <primitives:popover.trigger>Open</primitives:popover.trigger>
+            </primitives:popover.root>
+        ');
+
+        $this->assertSame('same-id', $this->elementWith($html, 'data-dialog-trigger')->get('data-dialog-trigger'));
+        $this->assertSame('same-id', $this->elementWith($html, 'data-popover-trigger')->get('data-popover-trigger'));
+    }
+
+    #[Test]
     public function marksEveryPartWithTheGeneratedRootIdOfItsDialog(): void
     {
         $html = $this->renderTemplate('
