@@ -14,3 +14,8 @@ services:
   Jramke\FluidPrimitives\Registry\PortalRegistry:
     shared: true
     public: true
+
+  # A project overrides this alias with its own GlobalContext subclass
+  Jramke\FluidPrimitives\Contexts\GlobalContextInterface:
+    alias: Jramke\FluidPrimitives\Contexts\GlobalContext
+    public: true
