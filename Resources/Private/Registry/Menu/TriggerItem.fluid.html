@@ -1,0 +1,18 @@
+<ui:useProps name="primitives:menu.triggerItem" as="triggerItemProps" />
+
+<primitives:menu.triggerItem spreadProps="{triggerItemProps}" class="{ui:cn(value: '
+    data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground
+    [&_svg:not([class*=text-])]:text-muted-foreground
+    relative flex w-full items-center justify-between gap-2 rounded-sm py-1.5 px-2 text-sm
+    outline-hidden select-none cursor-default
+    data-[disabled]:pointer-events-none data-[disabled]:opacity-50
+    [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*=size-])]:size-4
+    {class}
+')}">
+    <span class="flex items-center gap-2">
+        <f:slot />
+    </span>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4 opacity-50">
+        <path d="m9 18 6-6-6-6"></path>
+    </svg>
+</primitives:menu.triggerItem>

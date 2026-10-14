@@ -1,0 +1,18 @@
+<ui:useProps name="primitives:numberInput.decrementTrigger" as="decrementTriggerProps" />
+
+<primitives:numberInput.decrementTrigger spreadProps="{decrementTriggerProps}" class="{ui:cn(value: '
+    inline-flex h-full items-center justify-center px-2
+    border-r border-input bg-transparent
+    text-accent-foreground hover:bg-accent
+    transition-colors rounded-l-[calc(var(--radius)-1px)]
+    disabled:pointer-events-none disabled:opacity-50
+    [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*=size-])]:size-4
+    {class}
+')}">
+    <f:variable name="fallback">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4">
+            <path d="M5 12h14"></path>
+        </svg>
+    </f:variable>
+    {f:slot() -> f:or(alternative: fallback) -> f:spaceless() -> f:format.raw()}
+</primitives:numberInput.decrementTrigger>

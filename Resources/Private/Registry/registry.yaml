@@ -1,0 +1,360 @@
+accordion:
+  name: Accordion
+  description: A set of collapsible panels with headings
+  files:
+    - Root.fluid.html
+    - Item.fluid.html
+    - ItemTrigger.fluid.html
+    - ItemContent.fluid.html
+    - Accordion.entry.ts
+
+button:
+  name: Button
+  description: A button with a loading state and a disabled state that can keep focus
+  files:
+    - Button.fluid.html
+    - Indicator.fluid.html
+    - Button.entry.ts
+
+checkbox:
+  name: Checkbox
+  description: An easily stylable checkbox component
+  files:
+    - Root.fluid.html
+    - Label.fluid.html
+    - Control.fluid.html
+    - Checkbox.entry.ts
+
+checkbox-group:
+  name: CheckboxGroup
+  description: A group of checkboxes for selecting multiple values
+  files:
+    - Root.fluid.html
+    - Label.fluid.html
+    - CheckboxGroup.entry.ts
+
+clipboard:
+  name: Clipboard
+  description: A component to copy text to the clipboard
+  files:
+    - Root.fluid.html
+    - Label.fluid.html
+    - Control.fluid.html
+    - Input.fluid.html
+    - Trigger.fluid.html
+    - Indicator.fluid.html
+    - Clipboard.entry.ts
+
+combobox:
+  name: Combobox
+  description: An input with a popup listbox for filtering and selecting values
+  files:
+    - Root.fluid.html
+    - Label.fluid.html
+    - Control.fluid.html
+    - Input.fluid.html
+    - Trigger.fluid.html
+    - ClearTrigger.fluid.html
+    - Content.fluid.html
+    - List.fluid.html
+    - Item.fluid.html
+    - ItemText.fluid.html
+    - ItemIndicator.fluid.html
+    - ItemGroup.fluid.html
+    - ItemGroupLabel.fluid.html
+    - Empty.fluid.html
+    - Combobox.entry.ts
+
+collapsible:
+  name: Collapsible
+  description: A collapsible panel controlled by a button
+  files:
+    - Root.fluid.html
+    - Trigger.fluid.html
+    - Indicator.fluid.html
+    - Content.fluid.html
+    - Collapsible.entry.ts
+
+date-picker:
+  name: DatePicker
+  description: A calendar for picking a date, several dates, or a range of dates
+  files:
+    - Root.fluid.html
+    - Label.fluid.html
+    - Control.fluid.html
+    - Input.fluid.html
+    - Trigger.fluid.html
+    - ClearTrigger.fluid.html
+    - Content.fluid.html
+    - View.fluid.html
+    - ViewControl.fluid.html
+    - PrevTrigger.fluid.html
+    - ViewTrigger.fluid.html
+    - NextTrigger.fluid.html
+    - RangeText.fluid.html
+    - Table.fluid.html
+    - TableHeader.fluid.html
+    - TableBody.fluid.html
+    - PresetTrigger.fluid.html
+    - MonthSelect.fluid.html
+    - YearSelect.fluid.html
+    - DatePicker.entry.ts
+
+dialog:
+  name: Dialog
+  description: A popup that opens on top of the entire page
+  files:
+    - Root.fluid.html
+    - Trigger.fluid.html
+    - Content.fluid.html
+    - Header.fluid.html
+    - Footer.fluid.html
+    - Title.fluid.html
+    - Description.fluid.html
+    - Close.fluid.html
+    - Dialog.entry.ts
+
+field:
+  name: Field
+  description: A wrapper for form fields with an optional label, helper text, error texts and state indicators
+  files:
+    - Root.fluid.html
+    - Label.fluid.html
+    - HelperText.fluid.html
+    - Control.fluid.html
+    - ErrorText.fluid.html
+    - Indicator.fluid.html
+    - Field.entry.ts
+
+field-array:
+  name: FieldArray
+  description: A repeatable group of fields, e.g. for adding and removing rows
+  files:
+    - Root.fluid.html
+    - ItemGroup.fluid.html
+    - Item.fluid.html
+    - EmptyState.fluid.html
+    - AddTrigger.fluid.html
+    - RemoveTrigger.fluid.html
+    - FieldArray.entry.ts
+
+fieldset:
+  name: Fieldset
+  description: A group of related fields with a legend, helper text and error text that disables everything inside it at once
+  files:
+    - Root.fluid.html
+    - Legend.fluid.html
+    - HelperText.fluid.html
+    - ErrorText.fluid.html
+    - Fieldset.entry.ts
+
+file-upload:
+  name: FileUpload
+  description: A file picker with drag and drop support and managed file lists
+  files:
+    - Root.fluid.html
+    - Label.fluid.html
+    - Dropzone.fluid.html
+    - Trigger.fluid.html
+    - ClearTrigger.fluid.html
+    - ItemGroup.fluid.html
+    - FileItem.fluid.html
+    - FileName.fluid.html
+    - FileMeta.fluid.html
+    - FileDeleteTrigger.fluid.html
+    - EmptyState.fluid.html
+    - FileError.fluid.html
+    - FilePreviewFallback.fluid.html
+    - ItemPreview.fluid.html
+    - ItemPreviewImage.fluid.html
+    - FileUpload.entry.ts
+
+form:
+  name: Form
+  description: A wrapper for forms that provides context for form controls
+  files:
+    - Root.fluid.html
+    - Content.fluid.html
+    - Indicator.fluid.html
+    - ErrorText.fluid.html
+    - SuccessText.fluid.html
+    - Form.entry.ts
+
+input:
+  name: Input
+  description: A text input that works with Field, with optional word count and screen reader announcements
+  files:
+    - Root.fluid.html
+    - Label.fluid.html
+    - Input.fluid.html
+    - WordCount.fluid.html
+    - Input.entry.ts
+
+textarea:
+  name: Textarea
+  description: A multi-line text input that works with Field, with optional word count, screen reader announcements, and submit-on-Enter
+  files:
+    - Root.fluid.html
+    - Label.fluid.html
+    - Textarea.fluid.html
+    - WordCount.fluid.html
+    - Textarea.entry.ts
+
+menu:
+  name: Menu
+  description: An accessible dropdown and context menu for actions and options
+  files:
+    - Root.fluid.html
+    - Trigger.fluid.html
+    - ContextTrigger.fluid.html
+    - Content.fluid.html
+    - Item.fluid.html
+    - CheckboxItem.fluid.html
+    - RadioItem.fluid.html
+    - TriggerItem.fluid.html
+    - ItemGroup.fluid.html
+    - ItemGroupLabel.fluid.html
+    - Separator.fluid.html
+    - Menu.entry.ts
+
+navigation-menu:
+  name: NavigationMenu
+  description: A collection of links and menus for website navigation
+  files:
+    - Arrow.fluid.html
+    - Content.fluid.html
+    - Indicator.fluid.html
+    - Item.fluid.html
+    - Link.fluid.html
+    - List.fluid.html
+    - Root.fluid.html
+    - Trigger.fluid.html
+    - Viewport.fluid.html
+    - ViewportPositioner.fluid.html
+    - NavigationMenu.entry.ts
+
+number-input:
+  name: NumberInput
+  description: A numeric input with increment and decrement controls
+  files:
+    - Root.fluid.html
+    - Label.fluid.html
+    - Control.fluid.html
+    - Input.fluid.html
+    - IncrementTrigger.fluid.html
+    - DecrementTrigger.fluid.html
+    - Scrubber.fluid.html
+    - NumberInput.entry.ts
+
+popover:
+  name: Popover
+  description: An accessible popup anchored to a button
+  files:
+    - Root.fluid.html
+    - Trigger.fluid.html
+    - Content.fluid.html
+    - Title.fluid.html
+    - Description.fluid.html
+    - Close.fluid.html
+    - Popover.entry.ts
+
+radio-group:
+  name: RadioGroup
+  description: An easily stylable radio button component
+  files:
+    - Root.fluid.html
+    - Label.fluid.html
+    - Item.fluid.html
+    - ItemControl.fluid.html
+    - ItemText.fluid.html
+    - RadioGroup.entry.ts
+
+scroll-area:
+  name: ScrollArea
+  description: A native scroll container with custom scrollbars
+  files:
+    - Root.fluid.html
+    - Viewport.fluid.html
+    - Content.fluid.html
+    - Scrollbar.fluid.html
+    - Thumb.fluid.html
+    - ScrollArea.entry.ts
+
+select:
+  name: Select
+  description: A common form component for choosing a predefined value in a dropdown menu
+  files:
+    - Root.fluid.html
+    - Label.fluid.html
+    - Control.fluid.html
+    - Trigger.fluid.html
+    - ValueText.fluid.html
+    - Content.fluid.html
+    - List.fluid.html
+    - Item.fluid.html
+    - ItemText.fluid.html
+    - ItemIndicator.fluid.html
+    - ItemGroup.fluid.html
+    - ItemGroupLabel.fluid.html
+    - Select.entry.ts
+
+slider:
+  name: Slider
+  description: An input for selecting a value, or a range of values, from a given range
+  files:
+    - Root.fluid.html
+    - Label.fluid.html
+    - ValueText.fluid.html
+    - Control.fluid.html
+    - Track.fluid.html
+    - Range.fluid.html
+    - Thumb.fluid.html
+    - DraggingIndicator.fluid.html
+    - MarkerGroup.fluid.html
+    - Marker.fluid.html
+    - Slider.entry.ts
+
+switch:
+  name: Switch
+  description: A toggle component for turning a single option on or off.
+  files:
+    - Control.fluid.html
+    - Indicator.fluid.html
+    - Label.fluid.html
+    - Root.fluid.html
+    - Switch.entry.ts
+
+tabs:
+  name: Tabs
+  description: A component for toggling between related panels on the same page
+  files:
+    - Root.fluid.html
+    - List.fluid.html
+    - Trigger.fluid.html
+    - Content.fluid.html
+    - Tabs.entry.ts
+
+toggle:
+  name: Toggle
+  description: A button that toggles between pressed and unpressed
+  files:
+    - Root.fluid.html
+    - Indicator.fluid.html
+    - Toggle.entry.ts
+
+toggle-group:
+  name: ToggleGroup
+  description: A set of toggle buttons where one or several can be pressed
+  files:
+    - Root.fluid.html
+    - Item.fluid.html
+    - ToggleGroup.entry.ts
+
+tooltip:
+  name: Tooltip
+  description: A popup that appears when an element is hovered or focused, showing a hint for sighted users
+  files:
+    - Root.fluid.html
+    - Trigger.fluid.html
+    - Content.fluid.html
+    - Tooltip.entry.ts

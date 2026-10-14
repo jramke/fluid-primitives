@@ -1,0 +1,6 @@
+<ui:useProps name="primitives:navigationMenu.root" as="rootProps" />
+<ui:prop name="withViewport" type="boolean" optional="{true}" default="{false}" />
+
+<primitives:navigationMenu.root spreadProps="{rootProps}" class="{ui:cn(value: 'isolate relative z-1 [--arrow-size:12px] [--indicator-size:10px] {class}')}">
+    <f:slot />
+</primitives:navigationMenu.root>

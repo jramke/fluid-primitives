@@ -1,0 +1,7 @@
+<ui:useProps name="primitives:collapsible.content" as="contentProps" />
+
+<primitives:collapsible.content
+    spreadProps="{contentProps}"
+    class="{ui:cn(value: 'overflow-hidden data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up {class}')}">
+    <f:slot />
+</primitives:collapsible.content>

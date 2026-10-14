@@ -1,0 +1,5 @@
+<ui:useProps name="primitives:field.indicator" as="indicatorProps" />
+
+<primitives:field.indicator class="{ui:cn(value: 'text-sm data-[type=required]:text-destructive data-[type=invalid]:text-destructive data-[type=validating]:text-muted-foreground {class}')}" spreadProps="{indicatorProps}">
+    <f:slot />
+</primitives:field.indicator>

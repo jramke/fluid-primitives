@@ -1,0 +1,12 @@
+<ui:useProps name="primitives:combobox.control" as="controlProps" />
+
+<primitives:combobox.control spreadProps="{controlProps}" class="{ui:cn(value: '
+    border-input focus-within:border-ring focus-within:ring-ring/50 aria-invalid:border-destructive
+    aria-invalid:ring-destructive/20 relative flex h-9 w-full items-center gap-1 rounded-md border
+    bg-transparent pr-1 shadow-xs transition-[box-shadow] focus-within:ring-[3px]
+    data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50
+    data-[invalid]:border-destructive data-[invalid]:ring-destructive/20
+    {class}
+')}">
+    <f:slot />
+</primitives:combobox.control>

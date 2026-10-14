@@ -1,0 +1,9 @@
+<ui:useProps name="primitives:fileUpload.item" as="itemProps" />
+
+<primitives:fileUpload.item spreadProps="{itemProps}" class="{ui:cn(value: '
+    flex items-center gap-3 rounded-lg border bg-background px-3 py-2 shadow-xs
+    data-[type=rejected]:border-destructive/30 data-[type=rejected]:bg-destructive/5
+    {class}
+')}">
+    <f:slot />
+</primitives:fileUpload.item>

@@ -1,0 +1,7 @@
+<ui:useProps name="primitives:combobox.root" as="rootProps" />
+<ui:prop name="portalled" type="bool" optional="{true}" default="{true}" />
+
+<primitives:combobox.root spreadProps="{rootProps}" class="{ui:cn(value: 'isolate flex flex-col items-start gap-1.5 {class}')}">
+    <f:slot />
+    <primitives:combobox.hiddenInput />
+</primitives:combobox.root>

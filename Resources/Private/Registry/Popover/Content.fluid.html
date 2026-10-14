@@ -1,0 +1,33 @@
+<ui:useProps name="primitives:popover.content" as="contentProps" />
+<ui:prop name="showCloseButton" type="boolean" default="{false}" />
+
+<ui:portal>
+    <primitives:popover.positioner class="[--arrow-size:8px] [--arrow-background:var(--color-popover)]">
+        <primitives:popover.content spreadProps="{contentProps}" class="{ui:cn(value: '
+            bg-popover text-popover-foreground z-50 w-72 rounded-md border p-3 pt-3.5 shadow-md outline-none
+            transition-all ease-out duration-150 transition-discrete origin-(--transform-origin)
+            starting:data-[state=open]:opacity-0 starting:data-[state=open]:scale-97 starting:data-[state=open]:-translate-y-0.5 starting:data-[state=open]:blur-[2px]
+            data-[state=closed]:opacity-0 data-[state=closed]:scale-97 data-[state=closed]:-translate-y-0.5 data-[state=closed]:blur-[2px]
+            data-[state=open]:opacity-100 data-[state=open]:scale-100 data-[state=open]:translate-0 data-[state=open]:blur-0
+            {class}
+        ')}">
+            <primitives:popover.arrow class="border-l border-t" />
+            <f:slot />
+            <f:if condition="{showCloseButton}">
+                <primitives:popover.closeTrigger class="{ui:cn(value: '
+                    absolute right-3 top-3 size-4 grid leading-none place-items-center
+                    ring-offset-background focus-visible:ring-ring rounded-sm
+                    opacity-70 transition-opacity hover:opacity-100
+                    focus-visible:ring-2 focus-visible:ring-offset-2 focus:outline-hidden
+                    disabled:pointer-events-none
+                ')}">
+                    <span class="sr-only">Close</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4">
+                        <path d="M18 6 6 18"></path>
+                        <path d="m6 6 12 12"></path>
+                    </svg>
+                </primitives:popover.closeTrigger>
+            </f:if>
+        </primitives:popover.content>
+    </primitives:popover.positioner>
+</ui:portal>

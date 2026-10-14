@@ -1,0 +1,20 @@
+<ui:useProps name="primitives:menu.radioItem" as="radioItemProps" />
+
+<primitives:menu.radioItem spreadProps="{radioItemProps}" class="{ui:cn(value: '
+    data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground
+    [&_svg:not([class*=text-])]:text-muted-foreground
+    relative flex w-full items-center gap-2 rounded-sm py-1.5 pl-8 pr-2 text-sm
+    outline-hidden select-none cursor-default
+    data-[disabled]:pointer-events-none data-[disabled]:opacity-50
+    [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*=size-])]:size-4
+    {class}
+')}">
+    <span class="absolute left-2 flex size-4 items-center justify-center">
+        <primitives:menu.itemIndicator>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="size-2">
+                <circle cx="12" cy="12" r="10"></circle>
+            </svg>
+        </primitives:menu.itemIndicator>
+    </span>
+    <f:slot />
+</primitives:menu.radioItem>

@@ -1,0 +1,12 @@
+<ui:useProps name="primitives:slider.control" as="controlProps" />
+
+<primitives:slider.control
+    spreadProps="{controlProps}"
+    class="{ui:cn(value: '
+        relative flex items-center
+        data-[orientation=horizontal]:h-5 data-[orientation=horizontal]:w-full
+        data-[orientation=vertical]:h-full data-[orientation=vertical]:w-5 data-[orientation=vertical]:flex-col
+        {class}
+    ')}">
+    <f:slot />
+</primitives:slider.control>

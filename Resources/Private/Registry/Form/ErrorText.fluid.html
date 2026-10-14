@@ -1,0 +1,5 @@
+<ui:useProps name="primitives:form.errorText" as="errorTextProps" />
+
+<primitives:form.errorText spreadProps="{errorTextProps}" class="{ui:cn(value: 'text-sm text-destructive {class}')}">
+    <f:slot />
+</primitives:form.errorText>

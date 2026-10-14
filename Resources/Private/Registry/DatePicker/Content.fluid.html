@@ -1,0 +1,24 @@
+<ui:useProps name="primitives:datePicker.content" as="contentProps" />
+
+<f:variable name="multipleMonths" value="{f:if(condition: '{context.numOfMonths} > 1', then: '{true}', else: '{false}')}" />
+
+<ui:cn
+    value="
+        bg-popover text-popover-foreground z-50 w-fit min-w-64 rounded-md border p-3 shadow-md outline-none
+        transition-all ease-out duration-150 transition-discrete origin-(--transform-origin)
+        starting:data-[state=open]:opacity-0 starting:data-[state=open]:scale-97 starting:data-[state=open]:-translate-y-0.5
+        data-[state=closed]:opacity-0 data-[state=closed]:scale-97 data-[state=closed]:-translate-y-0.5
+        data-[state=open]:opacity-100 data-[state=open]:scale-100 data-[state=open]:translate-0
+        data-[inline]:border-0 data-[inline]:p-0 data-[inline]:shadow-none
+        {class}
+    "
+    when="{'[&_[data-outside-range]]:invisible': multipleMonths}"
+    as="class" />
+
+<ui:portal disabled="{context.inline}">
+    <primitives:datePicker.positioner>
+        <primitives:datePicker.content spreadProps="{contentProps}" class="{class}">
+            <f:slot />
+        </primitives:datePicker.content>
+    </primitives:datePicker.positioner>
+</ui:portal>

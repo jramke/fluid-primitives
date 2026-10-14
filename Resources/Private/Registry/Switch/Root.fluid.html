@@ -1,0 +1,6 @@
+<ui:useProps name="primitives:switch.root" as="rootProps" />
+
+<primitives:switch.root spreadProps="{rootProps}" class="{ui:cn(value: 'grid gap-1.5 {class}')}">
+    <f:slot />
+    <primitives:switch.hiddenInput />
+</primitives:switch.root>

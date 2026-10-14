@@ -1,0 +1,5 @@
+<ui:useProps name="primitives:checkbox.label" as="labelProps" />
+
+<primitives:checkbox.label spreadProps="{labelProps}" class="{ui:cn(value: 'text-sm font-medium data-[required]:after:content-[\'*\'] data-[required]:after:opacity-65 data-[invalid]:text-destructive data-[disabled]:cursor-not-allowed data-[disabled]:opacity-80 {class}')}">
+    <f:slot />
+</primitives:checkbox.label>

@@ -1,0 +1,33 @@
+<ui:useProps name="primitives:navigationMenu.content" as="contentProps" />
+
+<f:if condition="{context.withViewport}">
+    <f:then>
+        <primitives:navigationMenu.content
+            spreadProps="{contentProps}"
+            class="{ui:cn(value: '
+                absolute top-0 left-0 p-1.5
+                will-change-[transform,opacity]
+                transition-all duration-200 ease transition-discrete
+                starting:data-[state=open]:opacity-0
+                data-[state=closed]:opacity-0
+                data-[state=open]:opacity-100
+                {class}
+            ')}">
+            <f:slot />
+        </primitives:navigationMenu.content>
+    </f:then>
+    <f:else>
+        <primitives:navigationMenu.content
+            spreadProps="{contentProps}"
+            class="{ui:cn(value: '
+                absolute top-full mt-1.5 min-w-[150px] rounded-md border bg-popover p-1.5 shadow-md outline-none
+                transition-all ease-out duration-150 transition-discrete
+                starting:data-[state=open]:opacity-0 starting:data-[state=open]:-translate-y-1 starting:data-[state=open]:scale-97
+                data-[state=closed]:opacity-0 data-[state=closed]:-translate-y-1 data-[state=closed]:scale-97
+                data-[state=open]:opacity-100 data-[state=open]:translate-y-0 data-[state=open]:scale-100
+                {class}
+            ')}">
+            <f:slot />
+        </primitives:navigationMenu.content>
+    </f:else>
+</f:if>

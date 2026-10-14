@@ -1,0 +1,14 @@
+<ui:useProps name="primitives:slider.thumb" as="thumbProps" />
+
+<primitives:slider.thumb
+    spreadProps="{thumbProps}"
+    class="{ui:cn(value: '
+        block size-4 rounded-full border-2 border-primary bg-background shadow-sm outline-none transition-transform
+        data-[focus]:ring-[3px] data-[focus]:ring-ring/50
+        data-[dragging]:scale-110
+        data-[disabled]:pointer-events-none 
+        {class}
+    ')}">
+    <f:slot />
+    <primitives:slider.hiddenInput />
+</primitives:slider.thumb>

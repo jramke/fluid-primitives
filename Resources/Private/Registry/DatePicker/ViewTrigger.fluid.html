@@ -1,0 +1,10 @@
+<ui:useProps name="primitives:datePicker.viewTrigger" as="viewTriggerProps" />
+
+<primitives:datePicker.viewTrigger spreadProps="{viewTriggerProps}" class="{ui:cn(value: '
+    hover:bg-accent hover:text-accent-foreground
+    flex h-7 items-center justify-center rounded-md px-2 text-sm font-medium transition-colors
+    disabled:pointer-events-none
+    {class}
+')}">
+    <f:slot />
+</primitives:datePicker.viewTrigger>

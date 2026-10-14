@@ -5,15 +5,26 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Service;
 
 use GuzzleHttp\ClientInterface;
-use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\GuzzleException;
 use Jramke\FluidPrimitives\Utility\Typed;
+use Symfony\Component\Yaml\Exception\ParseException;
+use Symfony\Component\Yaml\Yaml;
+use TYPO3\CMS\Core\Package\PackageManager;
 
+/**
+ * Reads the component registry (`Resources/Private/Registry`) of the installed version of the library from its
+ * git tag, so a project never gets templates that need a newer release.
+ */
 class RegistryService
 {
-    private const string REGISTRY_URL = 'https://fluid-primitives.com';
+    private const string BASE_URL = 'https://raw.githubusercontent.com/jramke/fluid-primitives/%s/Resources/Private/Registry/';
+
+    /** @var array<string, array{key: string, name: string, description: string, files: list<string>}>|null */
+    private ?array $components = null;
 
     public function __construct(
         private readonly ClientInterface $client,
+        private readonly PackageManager $packageManager,
     ) {}
 
     /**
@@ -25,27 +36,16 @@ class RegistryService
             throw new \InvalidArgumentException('Component key must not be empty.', 1767042111);
         }
 
-        $data = [];
-        $error = null;
-
-        try {
-            $response = $this->client->request('GET', self::REGISTRY_URL . "/registry/components/{$componentKey}");
-            $data = Typed::arrayOrNull(json_decode((string)$response->getBody(), associative: true)) ?? [];
-        } catch (ClientException $e) {
-            $error = [
-                'message' => 'Component not found in registry.',
-                'details' => $e,
-            ];
+        [$error, $components] = $this->loadComponents();
+        if ($error !== null) {
+            return [$error, []];
         }
 
-        if (($data['files'] ?? []) === [] || ($data['name'] ?? '') === '') {
-            $error = [
-                'message' => 'Invalid component manifest received from registry.',
-                'details' => null,
-            ];
+        if (!array_key_exists($componentKey, $components)) {
+            return [['message' => 'Component not found in registry.', 'details' => null], []];
         }
 
-        return [$error, $data];
+        return [null, $components[$componentKey]];
     }
 
     /**
@@ -57,23 +57,21 @@ class RegistryService
             throw new \InvalidArgumentException('Component key and file path must not be empty.', 1767042112);
         }
 
-        $data = null;
-        $error = null;
+        [$error, $components] = $this->loadComponents();
+        if ($error !== null || !array_key_exists($componentKey, $components)) {
+            return [$error ?? ['message' => 'Component not found in registry.', 'details' => null], null];
+        }
 
         try {
             $response = $this->client->request(
                 'GET',
-                self::REGISTRY_URL . "/registry/components/{$componentKey}/files/{$filePath}",
+                $this->baseUrl() . $components[$componentKey]['name'] . '/' . $filePath,
             );
-            $data = (string)$response->getBody();
-        } catch (ClientException $e) {
-            $error = [
-                'message' => 'Failed to fetch component file from registry.',
-                'details' => $e,
-            ];
+        } catch (GuzzleException $e) {
+            return [['message' => 'Failed to fetch component file from registry.', 'details' => $e], null];
         }
 
-        return [$error, $data];
+        return [null, (string)$response->getBody()];
     }
 
     /**
@@ -81,19 +79,65 @@ class RegistryService
      */
     public function fetchComponentList(): array
     {
-        $data = [];
-        $error = null;
+        [$error, $components] = $this->loadComponents();
+
+        return [$error, array_values($components)];
+    }
+
+    /**
+     * @return array{0: array{message: string, details: \Throwable|null}|null, 1: array<string, array{key: string, name: string, description: string, files: list<string>}>}
+     */
+    private function loadComponents(): array
+    {
+        if ($this->components !== null) {
+            return [null, $this->components];
+        }
 
         try {
-            $response = $this->client->request('GET', self::REGISTRY_URL . '/registry/components');
-            $data = Typed::arrayOrNull(json_decode((string)$response->getBody(), associative: true)) ?? [];
-        } catch (ClientException $e) {
-            $error = [
-                'message' => 'Failed to fetch component registry.',
-                'details' => $e,
+            $response = $this->client->request('GET', $this->baseUrl() . 'registry.yaml');
+            $data = Typed::arrayOrNull(Yaml::parse((string)$response->getBody())) ?? [];
+        } catch (GuzzleException|ParseException $e) {
+            return [['message' => 'Failed to fetch component registry.', 'details' => $e], []];
+        }
+
+        $components = [];
+        // Narrowed right below: the registry is hand-maintained, its shape is not trusted.
+        // @mago-expect analysis:mixed-assignment
+        foreach ($data as $key => $config) {
+            $config = Typed::arrayOrNull($config) ?? [];
+            $name = Typed::string($config['name'] ?? null);
+            $files = array_map(Typed::string(...), Typed::arrayOrNull($config['files'] ?? null) ?? []);
+            if ($name === '' || $files === []) {
+                continue;
+            }
+
+            $components[(string)$key] = [
+                'key' => (string)$key,
+                'name' => $name,
+                'description' => Typed::string($config['description'] ?? null),
+                'files' => array_values($files),
             ];
         }
 
-        return [$error, $data];
+        if ($components === []) {
+            return [['message' => 'Invalid component manifest received from registry.', 'details' => null], []];
+        }
+
+        return [null, $this->components = $components];
+    }
+
+    private function baseUrl(): string
+    {
+        return sprintf(self::BASE_URL, $this->ref());
+    }
+
+    /**
+     * The tag of the installed release. Anything that is no release version (a branch checkout) gets `main`.
+     */
+    private function ref(): string
+    {
+        $version = $this->packageManager->getPackage('fluid_primitives')->getPackageMetaData()->getVersion();
+
+        return preg_match('/^\d+\.\d+\.\d+(-[0-9A-Za-z.]+)?$/', $version) === 1 ? $version : 'main';
     }
 }

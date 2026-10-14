@@ -1,0 +1,5 @@
+<ui:useProps name="primitives:scrollArea.viewport" as="viewportProps" />
+
+<primitives:scrollArea.viewport spreadProps="{viewportProps}" class="{ui:cn(value: 'data-[overflow-y]:overscroll-y-contain peer {class}')}">
+    <f:slot />
+</primitives:scrollArea.viewport>

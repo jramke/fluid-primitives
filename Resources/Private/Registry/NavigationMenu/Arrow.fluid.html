@@ -1,0 +1,9 @@
+<ui:useProps name="primitives:navigationMenu.arrow" as="arrowProps" />
+
+<primitives:navigationMenu.arrow
+    spreadProps="{arrowProps}"
+    class="{ui:cn(value: '
+        relative size-(--arrow-size) rotate-45 bg-gradient-to-br from-popover from-50% to-transparent to-50% border-border border-l border-t data-[orientation=horizontal]:top-1 data-[orientation=vertical]:left-3 {class}
+    ')}">
+    <f:slot />
+</primitives:navigationMenu.arrow>
