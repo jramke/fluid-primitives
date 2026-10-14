@@ -1,6 +1,6 @@
 {
     "name": "fluid-primitives",
-    "version": "1.0.0-beta.1",
+    "version": "1.0.0-beta.2",
     "description": "Client-side library for Fluid Primitives.",
     "type": "module",
     "license": "MIT",
