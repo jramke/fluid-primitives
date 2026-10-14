@@ -47,7 +47,10 @@ final class RegistryServiceTest extends TestCase
         $registry->fetchComponent('accordion');
         $registry->fetchComponentFile('accordion', 'Root.fluid.html');
 
-        $base = 'https://cdn.jsdelivr.net/gh/jramke/fluid-primitives@' . $expectedRef . '/Resources/Private/Registry/';
+        $base =
+            'https://raw.githubusercontent.com/jramke/fluid-primitives/' .
+            $expectedRef .
+            '/Resources/Private/Registry/';
         // the index is read once for the manifest and the file, the file comes out of the component folder
         $this->assertSame([$base . 'registry.yaml', $base . 'Accordion/Root.fluid.html'], $urls);
     }

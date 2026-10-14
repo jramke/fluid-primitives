@@ -17,7 +17,7 @@ use TYPO3\CMS\Core\Package\PackageManager;
  */
 class RegistryService
 {
-    private const string BASE_URL = 'https://cdn.jsdelivr.net/gh/jramke/fluid-primitives@%s/Resources/Private/Registry/';
+    private const string BASE_URL = 'https://raw.githubusercontent.com/jramke/fluid-primitives/%s/Resources/Private/Registry/';
 
     /** @var array<string, array{key: string, name: string, description: string, files: list<string>}>|null */
     private ?array $components = null;
