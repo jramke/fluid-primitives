@@ -1,0 +1,25 @@
+<ui:prop name="portalled" type="boolean" optional="{true}" default="{true}" description="Whether the menu content portals to the end of the document body. Disable when nesting the menu inside another portalled/focus-trapped element, like a dialog, so it stays within that element's DOM subtree." />
+<ui:useProps name="primitives:menu.content" as="contentProps" />
+
+<ui:portal disabled="!{portalled}">
+    <primitives:menu.positioner class="[--arrow-size:8px] [--arrow-background:var(--color-popover)]">
+        <primitives:menu.content spreadProps="{contentProps}" class="{ui:cn(value: '
+            outline-none bg-popover text-popover-foreground relative z-[var(--layer-index,0)]
+            max-h-(--available-height) min-w-[8rem] w-fit
+            origin-(--transform-origin) overflow-x-hidden overflow-y-auto
+            rounded-md border shadow-md scroll-my-1 p-1
+            transition-all ease-out duration-150 transition-discrete
+            starting:data-[state=open]:opacity-0 starting:data-[state=open]:scale-97 starting:data-[state=open]:blur-[1px]
+            data-[state=closed]:opacity-0 data-[state=closed]:scale-97 data-[state=closed]:blur-[1px]
+            data-[state=open]:opacity-100 data-[state=open]:scale-100 data-[state=open]:blur-0
+            data-[state=open]:translate-0
+            starting:data-[state=open]:data-[placement*=bottom]:-translate-y-1 data-[state=closed]:data-[placement*=bottom]:-translate-y-1
+            starting:data-[state=open]:data-[placement*=top]:translate-y-1 data-[state=closed]:data-[placement*=top]:translate-y-1
+            starting:data-[state=open]:data-[placement*=left]:translate-x-1 data-[state=closed]:data-[placement*=left]:translate-x-1
+            starting:data-[state=open]:data-[placement*=right]:-translate-x-1 data-[state=closed]:data-[placement*=right]:-translate-x-1
+            {class}
+        ')}">
+            <f:slot />
+        </primitives:menu.content>
+    </primitives:menu.positioner>
+</ui:portal>

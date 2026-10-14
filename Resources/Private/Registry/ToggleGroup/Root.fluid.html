@@ -1,0 +1,7 @@
+<ui:useProps name="primitives:toggleGroup.root" as="rootProps" />
+
+<primitives:toggleGroup.root
+    spreadProps="{rootProps}"
+    class="{ui:cn(value: 'inline-flex w-fit items-center data-[orientation=vertical]:flex-col data-[orientation=vertical]:items-stretch {class}')}">
+    <f:slot />
+</primitives:toggleGroup.root>

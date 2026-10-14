@@ -1,0 +1,40 @@
+<ui:useProps name="primitives:dialog.content" as="contentProps" />
+<ui:prop name="showCloseButton" type="boolean" default="{true}" />
+
+<ui:portal>
+    <primitives:dialog.backdrop class="{ui:cn(value: '
+        fixed inset-0 bg-black/50 z-[var(--layer-index,0)]
+        transition-all ease-out duration-150 transition-discrete
+        starting:data-[state=open]:opacity-0 starting:data-[state=open]:backdrop-blur-none
+        data-[state=closed]:opacity-0 data-[state=closed]:backdrop-blur-none
+        data-[state=open]:opacity-100 data-[state=open]:backdrop-blur-xs
+    ')}" />
+    <primitives:dialog.positioner class="fixed inset-0 grid place-items-center p-6 overflow-y-auto overscroll-y-contain z-[var(--layer-index,0)]">
+        <primitives:dialog.content spreadProps="{contentProps}" class="{ui:cn(value: '
+            flex flex-col gap-4 bg-popover text-popover-foreground rounded-lg shadow-lg w-full max-w-md border p-6 z-[var(--layer-index,0)]
+            transition-all ease-out duration-175 transition-discrete
+            starting:data-[state=open]:opacity-0 starting:data-[state=open]:scale-90 starting:data-[state=open]:blur-[4px]
+            data-[state=closed]:opacity-0 data-[state=closed]:scale-90 data-[state=closed]:blur-[4px]
+            data-[state=open]:opacity-100 data-[state=open]:scale-100 data-[state=open]:blur-0
+            data-[has-nested]:!scale-97 data-[has-nested]:!translate-y-4
+            {class}
+        ')}">
+            <f:slot />
+            <f:if condition="{showCloseButton}">
+                <primitives:dialog.closeTrigger class="{ui:cn(value: '
+                    absolute right-4 top-4 size-4 grid leading-none place-items-center
+                    ring-offset-background focus-visible:ring-ring rounded-sm
+                    opacity-70 transition-opacity hover:opacity-100
+                    focus-visible:ring-2 focus-visible:ring-offset-2 focus:outline-hidden
+                    disabled:pointer-events-none
+                ')}">
+                    <span class="sr-only">Close</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4">
+                        <path d="M18 6 6 18"></path>
+                        <path d="m6 6 12 12"></path>
+                    </svg>
+                </primitives:dialog.closeTrigger>
+            </f:if>
+        </primitives:dialog.content>
+    </primitives:dialog.positioner>
+</ui:portal>

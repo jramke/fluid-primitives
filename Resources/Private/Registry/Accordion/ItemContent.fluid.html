@@ -1,0 +1,9 @@
+<ui:useProps name="primitives:accordion.itemContent" as="itemContentProps" />
+
+<primitives:accordion.itemContent spreadProps="{itemContentProps}" class="{ui:cn(value: 'transition-all ease-out duration-200 transition-discrete grid starting:data-[state=open]:grid-rows-[0fr] data-[state=closed]:grid-rows-[0fr] data-[state=open]:grid-rows-[1fr] {class}')}">
+    <div class="overflow-hidden text-sm">
+        <div class="pb-4">
+            <f:slot />
+        </div>
+    </div>
+</primitives:accordion.itemContent>

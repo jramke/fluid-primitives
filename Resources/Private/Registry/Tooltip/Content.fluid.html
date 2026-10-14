@@ -1,0 +1,20 @@
+<ui:useProps name="primitives:tooltip.content" as="contentProps" />
+
+<ui:portal>
+    <primitives:tooltip.positioner class="[--arrow-size:8px] [--arrow-background:var(--color-popover)]">
+        <primitives:tooltip.content
+            class="{ui:cn(value: '
+                text-sm bg-popover py-0.5 px-1.5 rounded-md border
+                transition-all ease-out duration-150 transition-discrete 
+                starting:data-[state=open]:opacity-0 starting:data-[state=open]:scale-97 starting:data-[state=open]:translate-y-0.5 starting:data-[state=open]:blur-[2px]
+                data-[state=closed]:opacity-0 data-[state=closed]:scale-97 data-[state=closed]:translate-y-0.5 data-[state=closed]:blur-[2px]
+                data-[state=open]:opacity-100 data-[state=open]:scale-100 data-[state=open]:translate-0 data-[state=open]:blur-0
+                data-[instant]:duration-0
+                {class}
+            ')}"
+            spreadProps="{contentProps}">
+            <primitives:tooltip.arrow class="border-l border-t" />
+            <f:slot />
+        </primitives:tooltip.content>
+    </primitives:tooltip.positioner>
+</ui:portal>

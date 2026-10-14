@@ -1,0 +1,19 @@
+<ui:useProps name="primitives:switch.control" as="controlProps" />
+
+<primitives:switch.control
+    spreadProps="{controlProps}"
+    class="{ui:cn(value: '
+        inline-flex h-6 w-11 shrink-0 items-center rounded-full bg-input px-[2px] shadow-xs transition-all duration-150 ease-out
+        data-[hover]:bg-accent-foreground/15
+        data-[state=checked]:bg-primary
+        data-[focus]:ring-ring/50 data-[focus]:ring-[3px]
+        data-[invalid]:ring-destructive/20 data-[invalid]:outline-destructive data-[invalid]:outline-[1px] data-[focus]:data-[invalid]:ring-[4px]
+        data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50
+        data-[readonly]:cursor-default
+        {class}
+    ')}">
+    <primitives:switch.thumb class="{ui:cn(value: '
+        pointer-events-none block size-5 rounded-full bg-background shadow-sm ring-0 transition-transform duration-150 ease-out
+        data-[state=checked]:translate-x-5 data-[state=unchecked]:translate-x-0
+    ')}" />
+</primitives:switch.control>

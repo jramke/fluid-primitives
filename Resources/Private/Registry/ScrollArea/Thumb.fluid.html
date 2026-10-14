@@ -1,0 +1,10 @@
+<ui:useProps name="primitives:scrollArea.thumb" as="thumbProps" />
+
+<primitives:scrollArea.thumb
+    spreadProps="{thumbProps}"
+    class="{ui:cn(value: '
+        rounded-[inherit] z-1 relative bg-foreground/60 hover:bg-foreground/70 data-[dragging]:bg-foreground/80
+        data-[orientation=vertical]:w-1 data-[orientation=horizontal]:h-1 
+        after:-inset-1.5 after:absolute
+        {class}
+    ')}" />

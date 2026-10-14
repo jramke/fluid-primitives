@@ -1,0 +1,9 @@
+<ui:useProps name="primitives:navigationMenu.item" as="itemProps" />
+
+<primitives:navigationMenu.item spreadProps="{itemProps}" class="{ui:cn(value: '{class}')}">
+    <f:slot />
+    <f:if condition="{context.withViewport}">
+        <primitives:navigationMenu.triggerProxy />
+        <primitives:navigationMenu.viewportProxy />
+    </f:if>
+</primitives:navigationMenu.item>

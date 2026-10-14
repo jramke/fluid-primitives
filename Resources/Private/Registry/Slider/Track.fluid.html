@@ -1,0 +1,12 @@
+<ui:useProps name="primitives:slider.track" as="trackProps" />
+
+<primitives:slider.track
+    spreadProps="{trackProps}"
+    class="{ui:cn(value: '
+        relative grow rounded-full bg-secondary
+        data-[orientation=horizontal]:h-1.5 data-[orientation=horizontal]:w-full
+        data-[orientation=vertical]:h-full data-[orientation=vertical]:w-1.5
+        {class}
+    ')}">
+    <f:slot />
+</primitives:slider.track>

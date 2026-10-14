@@ -1,0 +1,9 @@
+<ui:useProps name="primitives:radioGroup.itemText" as="itemTextProps" />
+
+<primitives:radioGroup.itemText spreadProps="{itemTextProps}" class="{ui:cn(value: '
+    flex items-center gap-2 text-sm leading-none select-none
+    data-[disabled]:pointer-events-none data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50
+    {class}
+')}">
+    <f:slot />
+</primitives:radioGroup.itemText>

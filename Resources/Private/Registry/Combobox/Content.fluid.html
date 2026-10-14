@@ -1,0 +1,19 @@
+<ui:useProps name="primitives:combobox.content" as="contentProps" />
+
+<ui:portal disabled="!{context.portalled}">
+    <primitives:combobox.positioner>
+        <primitives:combobox.content spreadProps="{contentProps}" class="{ui:cn(value: '
+            bg-popover text-popover-foreground relative flex flex-col min-w-[8rem] max-h-[min(var(--available-height,310px),310px)] overflow-hidden
+            w-(--reference-width) origin-top-center rounded-md border shadow-md
+            outline-none transition-all ease-out transition-discrete duration-100 data-[state=closed]:duration-0
+            starting:data-[state=open]:opacity-0 starting:data-[state=open]:scale-98 starting:data-[state=open]:blur-[1px]
+            data-[state=closed]:opacity-0 data-[state=closed]:scale-98 data-[state=closed]:blur-[1px]
+            data-[state=open]:opacity-100 data-[state=open]:scale-100 data-[state=open]:blur-0
+            starting:data-[state=open]:data-[placement*=bottom]:-translate-y-1 data-[state=closed]:data-[placement*=bottom]:-translate-y-1
+            starting:data-[state=open]:data-[placement*=top]:translate-y-1 data-[state=closed]:data-[placement*=top]:translate-y-1
+            {class}
+        ')}">
+            <f:slot />
+        </primitives:combobox.content>
+    </primitives:combobox.positioner>
+</ui:portal>

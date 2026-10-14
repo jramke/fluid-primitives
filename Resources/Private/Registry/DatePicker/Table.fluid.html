@@ -1,0 +1,40 @@
+<ui:useProps name="primitives:datePicker.table" as="tableProps" />
+
+<f:comment>
+    The cells are built on the client, so there is no template that could give them a class: they
+    are styled with selectors on this table. A day, month or year cell is an element that carries
+    `data-date-picker-table-cell-trigger`, and `data-view` tells the three apart.
+</f:comment>
+<primitives:datePicker.table spreadProps="{tableProps}" class="{ui:cn(value: '
+    w-full border-collapse
+    [&_th]:pb-1 [&_th]:text-xs [&_th]:font-normal [&_th]:text-muted-foreground
+    [&_td]:p-0 [&_td]:text-center
+    [&_[data-type=week-number]]:text-xs [&_[data-type=week-number]]:text-muted-foreground
+
+    [&_[data-date-picker-table-cell-trigger]]:flex [&_[data-date-picker-table-cell-trigger]]:cursor-pointer
+    [&_[data-date-picker-table-cell-trigger]]:items-center [&_[data-date-picker-table-cell-trigger]]:justify-center
+    [&_[data-date-picker-table-cell-trigger]]:rounded-md [&_[data-date-picker-table-cell-trigger]]:text-sm
+    [&_[data-date-picker-table-cell-trigger]]:outline-none [&_[data-date-picker-table-cell-trigger]]:transition-colors
+    [&_[data-date-picker-table-cell-trigger]:focus-visible]:ring-[3px] [&_[data-date-picker-table-cell-trigger]:focus-visible]:ring-ring/50
+    [&_[data-date-picker-table-cell-trigger][data-view=day]]:aspect-square [&_[data-date-picker-table-cell-trigger][data-view=day]]:min-w-8 [&_[data-date-picker-table-cell-trigger][data-view=day]]:min-h-8 [&_[data-date-picker-table-cell-trigger][data-view=day]]:w-full
+    [&_[data-date-picker-table-cell-trigger]:not([data-view=day])]:h-9
+
+    [&_[data-date-picker-table-cell-trigger]:hover:not([data-selected])]:bg-accent
+    [&_[data-date-picker-table-cell-trigger][data-today]:not([data-selected])]:bg-accent
+    [&_[data-date-picker-table-cell-trigger][data-today]]:font-semibold
+    [&_[data-date-picker-table-cell-trigger][data-selected]]:bg-primary [&_[data-date-picker-table-cell-trigger][data-selected]]:text-primary-foreground
+
+    [&_[data-date-picker-table-cell-trigger][data-in-range]:not([data-selected])]:bg-accent
+    [&_[data-date-picker-table-cell-trigger][data-in-hover-range]:not([data-selected])]:bg-accent/60
+    [&_[data-date-picker-table-cell-trigger][data-in-range]]:rounded-none [&_[data-date-picker-table-cell-trigger][data-in-hover-range]]:rounded-none
+    [&_[data-date-picker-table-cell-trigger][data-in-range][data-range-start]:not([data-hover-range-end])]:rounded-l-md [&_[data-date-picker-table-cell-trigger][data-in-hover-range][data-hover-range-start]]:rounded-l-md
+    [&_[data-date-picker-table-cell-trigger][data-in-range][data-range-end]:not([data-hover-range-start])]:rounded-r-md [&_[data-date-picker-table-cell-trigger][data-in-hover-range][data-hover-range-end]]:rounded-r-md
+
+    [&_[data-date-picker-table-cell-trigger][data-outside-range]]:text-muted-foreground/50
+    [&_[data-date-picker-table-cell-trigger][data-disabled]]:pointer-events-none
+    [&_[data-date-picker-table-cell-trigger][data-disabled]:not([data-outside-range])]:opacity-40
+    [&_[data-date-picker-table-cell-trigger][data-unavailable]]:line-through
+    {class}
+')}">
+    <f:slot />
+</primitives:datePicker.table>

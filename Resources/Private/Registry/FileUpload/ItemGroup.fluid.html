@@ -1,0 +1,5 @@
+<ui:prop name="type" type="Jramke\FluidPrimitives\Enum\FileUploadItemType" optional="{true}" default="{f:constant(name: 'Jramke\FluidPrimitives\Enum\FileUploadItemType::Accepted')}" description="Which file list to render, `accepted` or `rejected`." />
+
+<primitives:fileUpload.itemGroup type="{type}" class="{ui:cn(value: 'grid gap-2 {class}')}">
+    <f:slot />
+</primitives:fileUpload.itemGroup>

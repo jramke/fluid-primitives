@@ -1,0 +1,17 @@
+<ui:useProps name="primitives:datePicker.trigger" as="triggerProps" />
+
+<primitives:datePicker.trigger spreadProps="{triggerProps}" class="{ui:cn(value: '
+    border-input focus-visible:border-ring hover:bg-accent hover:text-accent-foreground
+    focus-visible:ring-ring/50 flex size-9 shrink-0 items-center justify-center rounded-md border
+    bg-transparent shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px]
+    disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50
+    [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*=size-])]:size-4
+    {class}
+')}">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4">
+        <path d="M8 2v4"></path>
+        <path d="M16 2v4"></path>
+        <rect width="18" height="18" x="3" y="4" rx="2"></rect>
+        <path d="M3 10h18"></path>
+    </svg>
+</primitives:datePicker.trigger>

@@ -1,0 +1,14 @@
+<ui:useProps name="primitives:navigationMenu.viewport" as="viewportProps" />
+
+<primitives:navigationMenu.viewport spreadProps="{viewportProps}" class="{ui:cn(value: '
+    absolute left-0 top-0 overflow-hidden rounded-lg outline outline-border bg-popover shadow-lg origin-top
+    w-(--viewport-width) h-(--viewport-height)
+    transition-[width,height,translate] duration-200 ease-out
+    data-[orientation=horizontal]:mt-(--arrow-size) data-[orientation=horizontal]:translate-x-(--viewport-x)
+    data-[orientation=vertical]:ml-(--arrow-size) data-[orientation=vertical]:translate-y-(--viewport-y)
+    data-[state=open]:animate-in data-[state=open]:fade-in data-[state=open]:zoom-in-90
+    data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=closed]:zoom-out-90
+    {class}
+')}">
+    <f:slot />
+</primitives:navigationMenu.viewport>

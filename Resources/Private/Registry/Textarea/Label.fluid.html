@@ -1,0 +1,5 @@
+<ui:useProps name="primitives:textarea.label" as="labelProps" />
+
+<primitives:textarea.label spreadProps="{labelProps}" class="{ui:cn(value: 'text-sm font-medium data-[required]:after:content-[\'*\'] data-[required]:after:opacity-65 data-[invalid]:text-destructive {class}')}">
+    <f:slot />
+</primitives:textarea.label>

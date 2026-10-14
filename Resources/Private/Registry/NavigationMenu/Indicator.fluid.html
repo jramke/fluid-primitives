@@ -1,0 +1,17 @@
+<ui:useProps name="primitives:navigationMenu.indicator" as="indicatorProps" />
+
+<primitives:navigationMenu.indicator
+    spreadProps="{indicatorProps}"
+    class="{ui:cn(value: '
+        pointer-events-none absolute z-[2] flex justify-center
+        h-(--indicator-size)
+        transition-[translate,width,opacity] duration-[250ms] ease
+        data-[orientation=horizontal]:bottom-[calc(-1*var(--arrow-size))] data-[orientation=horizontal]:left-0 data-[orientation=horizontal]:[translate:var(--trigger-x)_0] data-[orientation=horizontal]:w-(--trigger-width)
+        data-[orientation=vertical]:right-[calc(-1*var(--arrow-size))] data-[orientation=vertical]:top-0 data-[orientation=vertical]:[translate:0_var(--trigger-y)] data-[orientation=vertical]:w-(--indicator-size)
+        starting:data-[state=open]:opacity-0
+        data-[state=closed]:opacity-0
+        data-[state=open]:opacity-100
+        {class}
+    ')}">
+    <f:slot />
+</primitives:navigationMenu.indicator>

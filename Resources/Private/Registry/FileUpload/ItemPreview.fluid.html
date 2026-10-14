@@ -1,0 +1,5 @@
+<ui:prop name="match" type="string" optional="{true}" default=".*" description="A file MIME type pattern (e.g. `image/*`) this preview variant should be used for. The first matching variant wins; `.*` is the catch-all fallback." />
+
+<primitives:fileUpload.itemPreview match="{match}" class="{ui:cn(value: 'bg-muted text-muted-foreground flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-md border {class}')}">
+    <f:slot />
+</primitives:fileUpload.itemPreview>

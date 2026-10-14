@@ -1,0 +1,29 @@
+<ui:useProps name="primitives:checkbox.control" as="controlProps" />
+
+<primitives:checkbox.control
+    spreadProps="{controlProps}"
+    class="{ui:cn(value: '
+        grid place-content-center border-input size-5 shrink-0 rounded-[4px] border shadow-xs transition-shadow duration-150 ease-out outline-none
+        data-[hover]:bg-primary/5 
+        data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground data-[state=checked]:border-primary 
+        data-[focus]:border-ring data-[focus]:ring-ring/50 data-[focus]:ring-[3px]
+        data-[invalid]:ring-destructive/20 data-[invalid]:border-destructive 
+        data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50 
+        {class}
+    ')}">
+    <primitives:checkbox.indicator class="{ui:cn(value: '
+        transition-all ease-out duration-150 transition-discrete 
+        starting:data-[state=checked]:opacity-0 starting:data-[state=checked]:scale-70 
+        data-[state=unchecked]:opacity-0 data-[state=unchecked]:scale-70 
+        data-[state=checked]:opacity-100 data-[state=checked]:scale-100
+        *:last:hidden
+        data-[state=indeterminate]:*:first:hidden data-[state=indeterminate]:*:last:block
+    ')}">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4">
+            <path d="M20 6 9 17l-5-5"></path>
+        </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4">
+            <path d="M5 12h14"></path>
+        </svg>
+    </primitives:checkbox.indicator>
+</primitives:checkbox.control>

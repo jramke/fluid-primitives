@@ -1,0 +1,6 @@
+<ui:useProps name="primitives:radioGroup.item" as="itemProps" />
+
+<primitives:radioGroup.item spreadProps="{itemProps}" class="{ui:cn(value: 'flex items-center gap-2 {class}')}">
+    <f:slot />
+    <primitives:radioGroup.itemHiddenInput />
+</primitives:radioGroup.item>

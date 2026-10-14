@@ -1,0 +1,6 @@
+<ui:useProps name="primitives:checkbox.root" as="rootProps" />
+
+<primitives:checkbox.root spreadProps="{rootProps}" class="{ui:cn(value: 'flex items-start gap-2 {class}')}">
+    <f:slot />
+    <primitives:checkbox.hiddenInput />
+</primitives:checkbox.root>

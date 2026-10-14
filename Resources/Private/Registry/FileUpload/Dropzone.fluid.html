@@ -1,0 +1,12 @@
+<ui:useProps name="primitives:fileUpload.dropzone" as="dropzoneProps" />
+
+<primitives:fileUpload.dropzone spreadProps="{dropzoneProps}" class="{ui:cn(value: '
+    group/file-upload relative grid min-h-36 place-items-center gap-3 rounded-xl border border-dashed border-border bg-muted/25 px-4 py-6 text-center outline-none transition-all
+    data-[dragging]:border-primary data-[dragging]:bg-primary/6
+    focus-visible:border-ring focus-visible:ring-ring/40 focus-visible:ring-4
+    data-[disabled]:cursor-not-allowed data-[disabled]:opacity-60
+    data-[readonly]:cursor-default
+    {class}
+')}">
+    <f:slot />
+</primitives:fileUpload.dropzone>

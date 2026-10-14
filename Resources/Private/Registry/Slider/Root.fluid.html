@@ -1,0 +1,12 @@
+<ui:useProps name="primitives:slider.root" as="rootProps" />
+
+<primitives:slider.root
+    spreadProps="{rootProps}"
+    class="{ui:cn(value: '
+        flex flex-col gap-1.5 w-full max-w-xs
+        data-[orientation=vertical]:h-48 data-[orientation=vertical]:w-auto
+        data-[disabled]:opacity-50
+        {class}
+    ')}">
+    <f:slot />
+</primitives:slider.root>

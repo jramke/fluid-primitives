@@ -1,0 +1,6 @@
+<ui:useProps name="primitives:fileUpload.root" as="rootProps" />
+
+<primitives:fileUpload.root spreadProps="{rootProps}" class="{ui:cn(value: 'grid gap-3 w-full {class}')}">
+    <f:slot />
+    <primitives:fileUpload.hiddenInput />
+</primitives:fileUpload.root>

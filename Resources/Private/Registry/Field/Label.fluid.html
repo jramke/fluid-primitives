@@ -1,0 +1,5 @@
+<ui:useProps name="primitives:field.label" as="labelProps" />
+
+<primitives:field.label class="{ui:cn(value: 'text-sm font-medium data-[required]:after:content-[\'*\'] data-[required]:after:opacity-65 data-[invalid]:text-destructive {class}')}" spreadProps="{labelProps}">
+    <f:slot />
+</primitives:field.label>

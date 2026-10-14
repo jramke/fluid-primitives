@@ -1,0 +1,16 @@
+<ui:useProps name="primitives:toggleGroup.item" as="itemProps" />
+
+<primitives:toggleGroup.item
+    spreadProps="{itemProps}"
+    class="{ui:cn(value: '
+        inline-flex h-9 min-w-9 cursor-pointer items-center justify-center gap-2 border border-input bg-transparent px-3 text-sm font-medium whitespace-nowrap shadow-xs outline-none transition-[color,background-color,box-shadow]
+        hover:bg-accent hover:text-accent-foreground
+        focus-visible:z-10 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]
+        data-[disabled]:pointer-events-none data-[disabled]:opacity-50
+        data-[pressed]:bg-accent data-[pressed]:text-accent-foreground
+        data-[orientation=horizontal]:-ml-px data-[orientation=horizontal]:first:ml-0 data-[orientation=horizontal]:first:rounded-l-md data-[orientation=horizontal]:last:rounded-r-md
+        data-[orientation=vertical]:-mt-px data-[orientation=vertical]:first:mt-0 data-[orientation=vertical]:first:rounded-t-md data-[orientation=vertical]:last:rounded-b-md
+        {class}
+    ')}">
+    <f:slot />
+</primitives:toggleGroup.item>

@@ -1,0 +1,23 @@
+<ui:useProps name="primitives:toggle.root" as="rootProps" />
+<ui:prop name="variant" type="string" default="default" />
+
+<f:switch expression="{variant}">
+    <f:case value="outline">
+        <f:variable name="variantClass" value="border border-input bg-transparent shadow-xs hover:bg-accent hover:text-accent-foreground" />
+    </f:case>
+    <f:defaultCase>
+        <f:variable name="variantClass" value="bg-transparent hover:bg-muted hover:text-muted-foreground" />
+    </f:defaultCase>
+</f:switch>
+
+<primitives:toggle.root
+    spreadProps="{rootProps}"
+    class="{ui:cn(value: '
+        inline-flex h-9 min-w-9 cursor-pointer items-center justify-center gap-2 rounded-md px-2.5 text-sm font-medium whitespace-nowrap outline-none transition-[color,background-color,box-shadow]
+        focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]
+        data-[disabled]:pointer-events-none data-[disabled]:opacity-50
+        data-[pressed]:bg-accent data-[pressed]:text-accent-foreground
+        {variantClass} {class}
+    ')}">
+    <f:slot />
+</primitives:toggle.root>

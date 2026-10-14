@@ -1,0 +1,22 @@
+<ui:useProps name="primitives:select.content" as="contentProps" />
+
+<ui:portal>
+    <primitives:select.positioner>
+        <primitives:select.content spreadProps="{contentProps}" class="{ui:cn(value: '
+            outline-none bg-popover text-popover-foreground relative z-50
+            flex flex-col max-h-(--available-height) min-w-[8rem] w-(--reference-width)
+            origin-(--transform-origin) overflow-hidden
+            rounded-md border shadow-md
+            transition-all ease-out duration-150 transition-discrete
+            starting:data-[state=open]:opacity-0 starting:data-[state=open]:scale-97 starting:data-[state=open]:blur-[1px]
+            data-[state=closed]:opacity-0 data-[state=closed]:scale-97 data-[state=closed]:blur-[1px]
+            data-[state=open]:opacity-100 data-[state=open]:scale-100 data-[state=open]:blur-0
+            data-[state=open]:translate-0
+            starting:data-[state=open]:data-[placement*=bottom]:-translate-y-1 data-[state=closed]:data-[placement*=bottom]:-translate-y-1
+            starting:data-[state=open]:data-[placement*=top]:translate-y-1 data-[state=closed]:data-[placement*=top]:translate-y-1
+            {class}
+        ')}">
+            <f:slot />
+        </primitives:select.content>
+    </primitives:select.positioner>
+</ui:portal>

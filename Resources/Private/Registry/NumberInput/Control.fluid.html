@@ -1,0 +1,12 @@
+<ui:useProps name="primitives:numberInput.control" as="controlProps" />
+
+<primitives:numberInput.control spreadProps="{controlProps}" class="{ui:cn(value: '
+    border-input focus-within:border-ring focus-within:ring-ring/50
+    data-[invalid]:ring-destructive/20 data-[invalid]:border-destructive
+    flex h-9 items-center rounded-md border bg-transparent shadow-xs
+    transition-[box-shadow] focus-within:ring-[3px]
+    data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50
+    {class}
+')}">
+    <f:slot />
+</primitives:numberInput.control>

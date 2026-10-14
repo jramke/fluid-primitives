@@ -1,0 +1,5 @@
+<ui:useProps name="primitives:menu.itemGroup" as="itemGroupProps" />
+
+<primitives:menu.itemGroup spreadProps="{itemGroupProps}" class="{ui:cn(value: '[&:not(:first-child)]:mt-1 {class}')}">
+    <f:slot />
+</primitives:menu.itemGroup>
