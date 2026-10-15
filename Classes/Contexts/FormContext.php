@@ -13,9 +13,11 @@ use Jramke\FluidPrimitives\Utility\Typed;
 use Psr\Http\Message\ServerRequestInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use TYPO3\CMS\Core\Type\DocType;
+use TYPO3\CMS\Extbase\Mvc\RequestInterface;
 use TYPO3\CMS\Extbase\Mvc\Web\Routing\UriBuilder;
 use TYPO3\CMS\Extbase\Service\ExtensionService;
 
+// @mago-expect lint:too-many-methods
 #[Autoconfigure(public: true)]
 class FormContext extends AbstractComponentContext
 {
@@ -60,8 +62,8 @@ class FormContext extends AbstractComponentContext
 
     public function getResolvedAction(): ?string
     {
-        $actionUri = Typed::stringOrNull($this->get('actionUri'));
-        if ($actionUri !== null && $actionUri !== '') {
+        $actionUri = Typed::string($this->get('actionUri'));
+        if ($actionUri !== '') {
             return $actionUri;
         }
 
@@ -79,17 +81,19 @@ class FormContext extends AbstractComponentContext
         // ->setFormat($this->arguments['format'] ?? '')
         ;
 
-        $pageUid = (int)($this->get('pageUid') ?? 0);
+        $pageUid = Typed::int($this->get('pageUid'));
         if ($pageUid > 0) {
             $uriBuilder->setTargetPageUid($pageUid);
         }
+
+        $extensionName = $this->getExtensionNameFromPropOrRequest($request);
 
         return $uriBuilder->uriFor(
             Typed::stringOrNull($this->get('action')),
             Typed::arrayOrNull($this->get('get')) ?? [],
             Typed::stringOrNull($this->get('controller')),
-            Typed::stringOrNull($this->get('extensionName')),
-            Typed::stringOrNull($this->get('pluginName')),
+            $extensionName,
+            $this->resolveTargetPluginName($extensionName, $request),
         );
     }
 
@@ -118,25 +122,68 @@ class FormContext extends AbstractComponentContext
     // FileUploadDeleteCheckboxViewHelper) can build correctly-prefixed field names of their own.
     public function getFieldNamePrefix(): string
     {
+        $extensionNameProp = Typed::string($this->get('extensionName'));
+        $pluginNameProp = Typed::string($this->get('pluginName'));
+
         try {
             $request = $this->requestResolver->resolveOrThrow($this->getRenderingContext());
         } catch (\RuntimeException) {
-            return '';
+            if ($extensionNameProp === '' || $pluginNameProp === '') {
+                throw new \RuntimeException(
+                    'Cannot determine the field name prefix for <ui:form.root>: no Extbase request is available ' .
+                    'and "extensionName"/"pluginName" were not both given explicitly.',
+                    1_788_200_005,
+                );
+            }
+
+            return $this->extensionService->getPluginNamespace($extensionNameProp, $pluginNameProp);
         }
 
+        $extensionName = $this->getExtensionNameFromPropOrRequest($request);
+
+        return $this->extensionService->getPluginNamespace($extensionName, $this->resolveTargetPluginName(
+            $extensionName,
+            $request,
+        ));
+    }
+
+    private function getExtensionNameFromPropOrRequest(RequestInterface $request): string
+    {
         $extensionNameProp = Typed::string($this->get('extensionName'));
-        $extensionName = $extensionNameProp === '' ? $request->getControllerExtensionName() : $extensionNameProp;
+        return $extensionNameProp === '' ? $request->getControllerExtensionName() : $extensionNameProp;
+    }
 
+    /**
+     * The plugin the form submits to, which is the one whose namespace prefixes its fields: an explicit
+     * `pluginName`, else the plugin registered for `controller`/`action` (the lookup UriBuilder::uriFor()
+     * makes itself), else the plugin rendering the form.
+     */
+    private function resolveTargetPluginName(string $extensionName, RequestInterface $request): string
+    {
         $pluginNameProp = Typed::string($this->get('pluginName'));
-        $pluginName = $pluginNameProp === '' ? $request->getPluginName() : $pluginNameProp;
+        if ($pluginNameProp !== '') {
+            return $pluginNameProp;
+        }
 
-        return $this->extensionService->getPluginNamespace($extensionName, $pluginName);
+        $controller = Typed::string($this->get('controller'));
+        if ($controller !== '') {
+            $resolved = $this->extensionService->getPluginNameByAction(
+                $extensionName,
+                $controller,
+                Typed::stringOrNull($this->get('action')),
+            );
+            if ($resolved !== null) {
+                return $resolved;
+            }
+        }
+
+        return $request->getPluginName();
     }
 
     /**
      * @return array<string, array{name?: string}>
      */
-    protected function getFieldContextInformations(): array
+    private function getFieldContextInformations(): array
     {
         // The intermediate variable isn't redundant here despite the immediate return - it's what the
         // @var below narrows, since ViewHelperVariableContainer::getAll() itself only declares a bare
@@ -151,7 +198,7 @@ class FormContext extends AbstractComponentContext
         return $fieldContextInformations;
     }
 
-    protected function shouldUseXHtmlSlash(): bool
+    private function shouldUseXHtmlSlash(): bool
     {
         return DocType::createFromRequest($this->getRenderingContext()->getAttribute(ServerRequestInterface::class))->isXmlCompliant();
     }
