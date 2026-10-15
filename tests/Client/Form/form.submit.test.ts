@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
+import { extbase } from '../../../Resources/Private/Client/src/lib/extbase';
 import { Field } from '../../../Resources/Private/Primitives/Field/Field';
 import type { FieldProps } from '../../../Resources/Private/Primitives/Field/src/field.types';
 import { Form } from '../../../Resources/Private/Primitives/Form/Form';
@@ -261,7 +262,7 @@ describe('submitting a form of fields', () => {
     });
 });
 
-describe('posting a form', () => {
+describe('posting a form with extbase', () => {
     function stubPost(status: number, body: object) {
         const posted: FormData[] = [];
         vi.stubGlobal('fetch', async (_url: string, init: RequestInit) => {
@@ -271,31 +272,30 @@ describe('posting a form', () => {
         return posted;
     }
 
-    test('post() sends the names the Extbase action expects and puts a 422 body on the fields', async () => {
+    const send: FormProps['onSubmit'] = async ({ api, values }) => {
+        await extbase.post('/save', values.toObject(), {
+            prefix: api.getFieldNamePrefix(),
+            objectName: api.getObjectName(),
+        });
+        return true;
+    };
+
+    test('the values go out under the names the Extbase action expects, a 422 lands on the fields', async () => {
         vi.useFakeTimers();
         const posted = stubPost(422, { 'event.title': ['too short'] });
-        const { form, fields, formEl, submit } = mount(
+        const { form, fields, submit } = mount(
             field('f-title', 'title', input('f-title', 'title', 'value="ab"')) +
                 '<input type="hidden" name="tx_events_list[__trustedProperties]" value="signed">',
-            {
-                form: {
-                    objectName: 'event',
-                    onSubmit: async ({ post }) => {
-                        await post('/save');
-                        return true;
-                    },
-                },
-            }
+            { form: { objectName: 'event', fieldNamePrefix: 'tx_events_list', onSubmit: send } }
         );
-        formEl.setAttribute('data-field-name-prefix', 'tx_events_list');
 
         submit();
         await settle();
 
-        // a name that already carries the plugin prefix is left alone, the others get prefix and object name
+        // Extbase's own hidden field stays below the plugin prefix, the fields get prefix and object name
         expect([...posted[0].keys()]).toEqual([
-            'tx_events_list[event][title]',
             'tx_events_list[__trustedProperties]',
+            'tx_events_list[event][title]',
         ]);
         expect(fields.get('title')!.api.errors).toEqual(['too short']);
         expect(form.machine.state.get()).toBe('invalid');
@@ -306,15 +306,7 @@ describe('posting a form', () => {
         const posted = stubPost(200, {});
         const { form, submit } = mount(
             field('f-title', 'title', input('f-title', 'title', 'value="ok"')),
-            {
-                form: {
-                    objectName: 'event',
-                    onSubmit: async ({ post }) => {
-                        await post('/save');
-                        return true;
-                    },
-                },
-            }
+            { form: { objectName: 'event', onSubmit: send } }
         );
 
         submit();
@@ -329,15 +321,7 @@ describe('posting a form', () => {
         stubPost(422, { event: ['The event is full'] });
         const { form, fields, submit } = mount(
             field('f-title', 'title', input('f-title', 'title', 'value="ok"')),
-            {
-                form: {
-                    objectName: 'event',
-                    onSubmit: async ({ post }) => {
-                        await post('/save');
-                        return true;
-                    },
-                },
-            }
+            { form: { objectName: 'event', onSubmit: send } }
         );
 
         submit();

@@ -137,6 +137,7 @@ export type HydrationPropsFor<K extends string> = K extends keyof HydrationProps
  * marked `#[ExposeToClient]`. `locale` and `debug` come from the library, the rest from the project.
  */
 export interface FluidPrimitivesGlobals {
+    /** The language of the site as a BCP 47 tag (`de-DE`), missing on a page rendered without a request. */
     locale?: string;
     /**
      * Whether TYPO3's Application Context is development (see `GlobalContext::getDebug()`). Gates the

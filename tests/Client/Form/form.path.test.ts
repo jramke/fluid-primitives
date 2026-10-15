@@ -2,7 +2,6 @@ import { describe, expect, test } from 'vitest';
 import {
     appendFieldPathSegment,
     parseFieldPath,
-    prefixFieldName,
     stringifyFieldPathAsBrackets,
     toRegisteredFieldName,
 } from '../../../Resources/Private/Primitives/Form/src/form.path';
@@ -35,11 +34,5 @@ describe('field name normalization', () => {
         expect(toRegisteredFieldName('person.country')).toBe('person[country]');
         expect(toRegisteredFieldName('event.attendees.0.name', 'event')).toBe('attendees[0][name]');
         expect(toRegisteredFieldName('a11yNeeds[]')).toBe('a11yNeeds');
-    });
-
-    test('submitted names get prefix then objectName unshifted in front', () => {
-        expect(prefixFieldName('title', 'tx_plugin', 'event')).toBe('tx_plugin[event][title]');
-        expect(prefixFieldName('address.city', '', 'event')).toBe('event[address][city]');
-        expect(prefixFieldName('', 'tx_plugin', 'event')).toBe('');
     });
 });

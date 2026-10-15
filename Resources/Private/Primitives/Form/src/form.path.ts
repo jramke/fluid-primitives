@@ -60,28 +60,6 @@ export function stringifyFieldPathAsBrackets(fieldPath: readonly FieldPathSegmen
 }
 
 /**
- * Parses `fieldName` (dot or bracket notation) and rebuilds it fully bracketed, with
- * `prefix` and `objectName` unshifted onto the front in that order. Used to rewrite submitted
- * `FormData` keys into the form's real Extbase argument name just before `fetch()`.
- */
-export function prefixFieldName(fieldName: string, prefix: string, objectName?: string) {
-    if (fieldName === '') {
-        return '';
-    }
-
-    const fieldPath = parseFieldPath(fieldName);
-    if (objectName) {
-        fieldPath.unshift(objectName);
-    }
-
-    if (prefix) {
-        fieldPath.unshift(prefix);
-    }
-
-    return stringifyFieldPathAsBrackets(fieldPath);
-}
-
-/**
  * Resolves any field-name string (dot or bracket, optionally objectName-prefixed) to the exact
  * bracket-notation key the field registry uses.
  */

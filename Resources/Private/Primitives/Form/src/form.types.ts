@@ -73,24 +73,6 @@ export type FormSubmitResult = true | false | FormErrors;
 export type AnyFormControlElement =
     HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | HTMLButtonElement;
 
-/**
- * Error thrown by post() when server returns 422 validation errors.
- * The machine catches this and transitions to 'invalid' state.
- */
-export class ValidationError extends Error {
-    constructor(public errors: FormErrors) {
-        super('Server validation failed');
-        this.name = 'ValidationError';
-    }
-}
-
-export class FormError extends Error {
-    constructor(public errors: string[]) {
-        super('Server form validation failed');
-        this.name = 'FormError';
-    }
-}
-
 export interface FormProps {
     /** The unique identifier of the form. */
     id: string;
@@ -103,6 +85,11 @@ export interface FormProps {
     /** The object name that prefixes the names of nested form fields. */
     objectName?: string;
     /**
+     * The Extbase argument namespace (`tx_events_list`) `post()` prefixes the field names with. Set by
+     * the server from the plugin the form submits to.
+     */
+    fieldNamePrefix?: string;
+    /**
      * How long the fields wait after the last change before they read their value, never less than
      * 50. A `validate` that sends a request should not fire on every keystroke.
      * @default 100
@@ -110,19 +97,19 @@ export interface FormProps {
     inputDebounceMs?: number;
     /**
      * Called with the values once the form is valid and submitted. Return `true` for success,
-     * `false` for an error, or field errors to mark the form invalid. `post(url)` submits the form
-     * as `FormData` and maps a 422 JSON response to field errors for you.
+     * `false` for an error, or field errors to mark the form invalid. Send the values with
+     * `extbase.post(api.getAction(), values.toObject(), { prefix: api.getFieldNamePrefix(), objectName: api.getObjectName() })`:
+     * a 422 JSON response of `JsonValidationErrorsTrait` it throws is mapped to field errors, or to the
+     * error text of the form for the errors of the object itself.
      */
     onSubmit?: ({
         values,
         api,
         event,
-        post,
     }: {
         values: FormValues;
         api: FormApi;
         event: JSX.FormEvent<HTMLElement>;
-        post: (url: string) => Promise<Response>;
     }) => Promise<FormSubmitResult> | FormSubmitResult;
     /** Called every time the form state changes. Use it to update UI the form does not wire itself. */
     render?: (form: Form) => void;
@@ -187,6 +174,10 @@ export interface FormApi {
     getFormEl(): HTMLFormElement | null;
     /** The `action` of the form, an empty string if it has none. */
     getAction(): string;
+    /** The Extbase argument namespace (`tx_events_list`) of the action the form submits to. */
+    getFieldNamePrefix(): string | undefined;
+    /** The `objectName` of the form: the name of the object its fields belong to. */
+    getObjectName(): string | undefined;
     /** Resets the form to its initial state. */
     reset(): void;
     /** Picks up fields that were added or removed after the form was hydrated. */

@@ -124,6 +124,12 @@ export function connect<T extends PropTypes>(
         getAction() {
             return formEl?.getAttribute('action') || '';
         },
+        getFieldNamePrefix() {
+            return prop('fieldNamePrefix');
+        },
+        getObjectName() {
+            return prop('objectName');
+        },
         reset() {
             send({ type: 'RESET' });
         },

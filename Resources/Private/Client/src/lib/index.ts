@@ -10,7 +10,8 @@ export { Component } from './component';
 export { devWarn, isDebug } from './debug';
 export { DelayedIndicator } from './delayed-indicator';
 export type { DelayedIndicatorOptions } from './delayed-indicator';
-export { extbase } from './extbase';
+export { ExtbaseValidationError, extbase } from './extbase';
+export type { ExtbaseRequestInit } from './extbase';
 export { FieldAwareComponent } from './field-aware-component';
 export {
     ComponentHydrator,
