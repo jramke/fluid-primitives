@@ -1,9 +1,9 @@
 import { MachineStatus, type Params, type Scope } from '@zag-js/core';
+import { trimArraySuffix } from '../../../Client/src/lib/field-path';
 import { isInsideField } from '../../Field/src/field.dom';
 import type { FieldMachine } from '../../Field/src/field.registry';
 import { getFieldElement } from '../../Field/src/field.value';
 import * as dom from './form.dom';
-import { trimArraySuffix } from './form.path';
 import { getFieldMachinesFor, renameFieldMachineForForm } from './form.registry';
 import type { FormErrors, FormSchema } from './form.types';
 import { getCurrentErrorForField, validateWithValidation } from './form.validation';

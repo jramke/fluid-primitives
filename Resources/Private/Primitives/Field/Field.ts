@@ -1,6 +1,6 @@
 import { Component, Machine } from '../../Client';
+import { trimArraySuffix } from '../../Client/src/lib/field-path';
 import { getFieldMessages } from '../Form/src/form.fields';
-import { trimArraySuffix } from '../Form/src/form.path';
 import {
     getFieldMachinesFor,
     getFormMachineFor,

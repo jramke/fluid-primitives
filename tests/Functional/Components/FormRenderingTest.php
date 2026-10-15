@@ -245,7 +245,7 @@ final class FormRenderingTest extends FunctionalTestCase
         // dot-notation name (ObjectAccess::getPropertyPath() has no concept of brackets) before
         // canonicalizing `name` itself to the bracket wire format Extbase's own argument mapping
         // requires - a regression here would silently break either nested error matching
-        // (person.country vs person[country], see form.path.ts) or nested defaultValue resolution.
+        // (person.country vs person[country], see field-path.ts) or nested defaultValue resolution.
         $nested = new TestEntity();
         $nested->setTitle('Nested title');
         $entity = new TestEntity();

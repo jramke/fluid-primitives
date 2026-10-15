@@ -12,7 +12,6 @@ import {
     sendToFieldMachines,
     settleFieldMachines,
 } from './form.fields';
-import { prefixFieldName } from './form.path';
 import type { FormErrors, FormSchema } from './form.types';
 import {
     attachErrorValues,
@@ -130,22 +129,12 @@ export const machine = createMachine<FormSchema>({
                             values: submittedValues,
                             api: event.detail.api,
                             event: event.detail.event,
-                            post: (url, init) => {
-                                const prefix = prop('fieldNamePrefix') || '';
-                                const objectName = prop('objectName');
-                                const body = new FormData();
-
-                                for (const [key, value] of submittedFormData.entries()) {
-                                    body.append(
-                                        prefix && key.startsWith(`${prefix}[`)
-                                            ? key
-                                            : prefixFieldName(key, prefix, objectName),
-                                        value
-                                    );
-                                }
-
-                                return extbase.post(url, body, init);
-                            },
+                            post: (url, init) =>
+                                extbase.post(url, submittedFormData, {
+                                    ...init,
+                                    prefix: prop('fieldNamePrefix'),
+                                    objectName: prop('objectName'),
+                                }),
                         });
 
                         if (result === true) {

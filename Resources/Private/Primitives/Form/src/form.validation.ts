@@ -1,10 +1,10 @@
-import { serializeFieldValue } from '../../Field/src/field.value';
 import {
     type FieldPathSegment,
     stringifyFieldPathAsBrackets,
-    toRegisteredFieldName,
     trimArraySuffix,
-} from './form.path';
+} from '../../../Client/src/lib/field-path';
+import { serializeFieldValue } from '../../Field/src/field.value';
+import { toRegisteredFieldName } from './form.path';
 import {
     type FieldError,
     type FormErrors,

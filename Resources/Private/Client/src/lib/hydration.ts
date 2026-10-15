@@ -656,7 +656,7 @@ function remapIdsProp(ids: Record<string, string>, remaps: RootIdRemap[]): Recor
  * unlike {@see renameNestedComponentEntry}, which re-keys a single existing entry in place.
  *
  * Rewrites a `[]` "append" placeholder in any string `name` prop to `value` (the same trailing-
- * `[]`-means-append convention `form.path.ts`'s `appendFieldPathSegment`/`FieldContext.php` use).
+ * `[]`-means-append convention `field-path.ts`'s `appendFieldPathSegment`/`FieldContext.php` use).
  * Returns whether a stencil entry was actually found and copied, so a caller only counts this
  * component name as "found" when there was real hydration data to prepare.
  */

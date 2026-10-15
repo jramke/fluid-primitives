@@ -1,9 +1,9 @@
 import { nextTick } from '@zag-js/dom-query';
 import type { NormalizeProps, PropTypes } from '@zag-js/types';
+import { parseFieldPath, stringifyFieldPathAsBrackets } from '../../../Client/src/lib/field-path';
 import { destroyComponentsWithin } from '../../../Client/src/lib/hydration';
 import { Template } from '../../../Client/src/lib/template';
 import { getFieldValueFromContainer, type FieldValue } from '../../Field/src/field.value';
-import { parseFieldPath, stringifyFieldPathAsBrackets } from '../../Form/src/form.path';
 import { renameFieldMachineForForm } from '../../Form/src/form.registry';
 import type { FieldArray } from '../FieldArray';
 import { parts } from './field-array.anatomy';
