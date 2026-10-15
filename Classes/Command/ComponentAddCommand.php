@@ -33,7 +33,7 @@ class ComponentAddCommand extends Command
         $this->addArgument(
             'component',
             InputArgument::REQUIRED,
-            'The name of the component to add (e.g., accordion or scroll-area)',
+            'The name of the component to add (e.g., accordion or scrollArea)',
         );
         $this->addOption(
             'extension',

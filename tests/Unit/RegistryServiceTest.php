@@ -25,6 +25,11 @@ final class RegistryServiceTest extends TestCase
       files:
         - Root.fluid.html
         - Accordion.entry.ts
+    scrollArea:
+      name: ScrollArea
+      description: A scroll container
+      files:
+        - Root.fluid.html
     empty:
       name: Empty
       files: []
@@ -94,6 +99,36 @@ final class RegistryServiceTest extends TestCase
         [$error, $content] = $registry->fetchComponentFile('accordion', 'Root.fluid.html');
         $this->assertSame('Failed to fetch component file from registry.', $error['message'] ?? null);
         $this->assertNull($content);
+    }
+
+    #[Test]
+    #[DataProvider('spellingsOfAMultiWordKey')]
+    public function resolvesACamelCaseKeyAndItsOlderKebabCaseSpelling(string $key): void
+    {
+        $urls = [];
+        $client = $this->createStub(ClientInterface::class);
+        $client
+            ->method('request')
+            ->willReturnCallback(static function (string $method, string $url) use (&$urls): Response {
+                $urls[] = $url;
+                return new Response(200, body: str_ends_with($url, 'registry.yaml') ? self::INDEX : '<div />');
+            });
+        $registry = new RegistryService($client, $this->packageManagerWithVersion('1.0.0'));
+
+        [$error, $manifest] = $registry->fetchComponent($key);
+        $this->assertNull($error);
+        $this->assertSame('scrollArea', $manifest['key']);
+
+        $registry->fetchComponentFile($key, 'Root.fluid.html');
+        $this->assertStringEndsWith('/ScrollArea/Root.fluid.html', (string)end($urls));
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function spellingsOfAMultiWordKey(): array
+    {
+        return ['camelCase' => ['scrollArea'], 'kebab-case' => ['scroll-area']];
     }
 
     #[Test]
