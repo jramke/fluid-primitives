@@ -62,8 +62,8 @@ class FormContext extends AbstractComponentContext
 
     public function getResolvedAction(): ?string
     {
-        $actionUri = Typed::stringOrNull($this->get('actionUri'));
-        if ($actionUri !== null && $actionUri !== '') {
+        $actionUri = Typed::string($this->get('actionUri'));
+        if ($actionUri !== '') {
             return $actionUri;
         }
 
@@ -81,13 +81,12 @@ class FormContext extends AbstractComponentContext
         // ->setFormat($this->arguments['format'] ?? '')
         ;
 
-        $pageUid = (int)($this->get('pageUid') ?? 0);
+        $pageUid = Typed::int($this->get('pageUid'));
         if ($pageUid > 0) {
             $uriBuilder->setTargetPageUid($pageUid);
         }
 
-        $extensionNameProp = Typed::string($this->get('extensionName'));
-        $extensionName = $extensionNameProp === '' ? $request->getControllerExtensionName() : $extensionNameProp;
+        $extensionName = $this->getExtensionNameFromPropOrRequest($request);
 
         return $uriBuilder->uriFor(
             Typed::stringOrNull($this->get('action')),
@@ -140,12 +139,18 @@ class FormContext extends AbstractComponentContext
             return $this->extensionService->getPluginNamespace($extensionNameProp, $pluginNameProp);
         }
 
-        $extensionName = $extensionNameProp === '' ? $request->getControllerExtensionName() : $extensionNameProp;
+        $extensionName = $this->getExtensionNameFromPropOrRequest($request);
 
         return $this->extensionService->getPluginNamespace($extensionName, $this->resolveTargetPluginName(
             $extensionName,
             $request,
         ));
+    }
+
+    private function getExtensionNameFromPropOrRequest(RequestInterface $request): string
+    {
+        $extensionNameProp = Typed::string($this->get('extensionName'));
+        return $extensionNameProp === '' ? $request->getControllerExtensionName() : $extensionNameProp;
     }
 
     /**
@@ -160,8 +165,8 @@ class FormContext extends AbstractComponentContext
             return $pluginNameProp;
         }
 
-        $controller = Typed::stringOrNull($this->get('controller'));
-        if ($controller !== null && $controller !== '') {
+        $controller = Typed::string($this->get('controller'));
+        if ($controller !== '') {
             $resolved = $this->extensionService->getPluginNameByAction(
                 $extensionName,
                 $controller,
@@ -178,7 +183,7 @@ class FormContext extends AbstractComponentContext
     /**
      * @return array<string, array{name?: string}>
      */
-    protected function getFieldContextInformations(): array
+    private function getFieldContextInformations(): array
     {
         // The intermediate variable isn't redundant here despite the immediate return - it's what the
         // @var below narrows, since ViewHelperVariableContainer::getAll() itself only declares a bare
@@ -193,7 +198,7 @@ class FormContext extends AbstractComponentContext
         return $fieldContextInformations;
     }
 
-    protected function shouldUseXHtmlSlash(): bool
+    private function shouldUseXHtmlSlash(): bool
     {
         return DocType::createFromRequest($this->getRenderingContext()->getAttribute(ServerRequestInterface::class))->isXmlCompliant();
     }
