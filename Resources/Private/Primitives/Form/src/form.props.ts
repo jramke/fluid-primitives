@@ -6,6 +6,7 @@ export const props = createProps<FormProps>()([
     'id',
     'validation',
     'objectName',
+    'fieldNamePrefix',
     'inputDebounceMs',
     'onSubmit',
     'render',

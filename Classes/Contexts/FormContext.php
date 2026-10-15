@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Contexts;
 
+use Jramke\FluidPrimitives\Attributes\ExposeToClient;
 use Jramke\FluidPrimitives\Enum\FormState;
 use Jramke\FluidPrimitives\Service\ExtbaseFormHiddenFieldsRenderer;
 use Jramke\FluidPrimitives\Traits\HasIndicatorStateTrait;
@@ -120,6 +121,7 @@ class FormContext extends AbstractComponentContext
     // TODO: The form viewhelper has an argument to override the field name prefix, is this needed here?
     // Public so other ViewHelpers rendered inside the form's slot content (e.g.
     // FileUploadDeleteCheckboxViewHelper) can build correctly-prefixed field names of their own.
+    #[ExposeToClient]
     public function getFieldNamePrefix(): string
     {
         $extensionNameProp = Typed::string($this->get('extensionName'));

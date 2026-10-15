@@ -274,12 +274,13 @@ describe('posting a form', () => {
     test('post() sends the names the Extbase action expects and puts a 422 body on the fields', async () => {
         vi.useFakeTimers();
         const posted = stubPost(422, { 'event.title': ['too short'] });
-        const { form, fields, formEl, submit } = mount(
+        const { form, fields, submit } = mount(
             field('f-title', 'title', input('f-title', 'title', 'value="ab"')) +
                 '<input type="hidden" name="tx_events_list[__trustedProperties]" value="signed">',
             {
                 form: {
                     objectName: 'event',
+                    fieldNamePrefix: 'tx_events_list',
                     onSubmit: async ({ post }) => {
                         await post('/save');
                         return true;
@@ -287,7 +288,6 @@ describe('posting a form', () => {
                 },
             }
         );
-        formEl.setAttribute('data-field-name-prefix', 'tx_events_list');
 
         submit();
         await settle();

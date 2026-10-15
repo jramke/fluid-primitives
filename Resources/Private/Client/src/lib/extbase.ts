@@ -24,6 +24,48 @@ function flatten(value: unknown, key: string): [string, string | Blob][] {
 }
 
 /**
+ * Thrown by {@link extbase} when the action answers `422` with a JSON object, the response
+ * `JsonValidationErrorsTrait` sends for failed validation. Any other status resolves as a plain `Response`.
+ */
+export class ExtbaseValidationError extends Error {
+    /**
+     * @param errors - The messages by property path, e.g. `{ 'person.email': ['Invalid email'] }`.
+     * @param response - The `422` response, its body still unread.
+     */
+    constructor(
+        public errors: Record<string, string[]>,
+        public response: Response
+    ) {
+        super('Extbase validation failed');
+        this.name = 'ExtbaseValidationError';
+    }
+}
+
+/** The options of {@link extbase}'s requests: everything `fetch` takes, plus the argument namespace. */
+export type ExtbaseRequestInit = RequestInit & {
+    /**
+     * The Extbase argument namespace (`tx_docs_docs`) the data is nested under. Read from the URL when
+     * omitted, which finds none for a URL without an `[action]` or `[controller]` key, e.g. one a route
+     * enhancer built: pass it then. `''` sends the data unprefixed.
+     */
+    prefix?: string;
+};
+
+async function send(input: URL | string, init: RequestInit): Promise<Response> {
+    const response = await fetch(input, init);
+    if (response.status === 422) {
+        const errors: unknown = await response
+            .clone()
+            .json()
+            .catch(() => null);
+        if (errors !== null && typeof errors === 'object' && !Array.isArray(errors)) {
+            throw new ExtbaseValidationError(errors as Record<string, string[]>, response);
+        }
+    }
+    return response;
+}
+
+/**
  * Sends GET and POST requests to an Extbase controller action from your own code, e.g. from the
  * `load` callback of an async search. The data is nested under the Extbase argument namespace of the
  * URL, the way `f:uri.action` builds it.
@@ -36,15 +78,21 @@ export const extbase = {
      *
      * @param url - The URL of the action, absolute or relative.
      * @param data - The arguments. Nested objects and arrays are flattened into bracket notation.
-     * @param init - More options for `fetch`, e.g. `{ signal }`.
-     * @returns The native `Response`. A non-2xx status resolves normally, check `response.ok`.
+     * @param options - More options for `fetch`, e.g. `{ signal }`, and the `prefix` to nest the data under.
+     * @returns The native `Response`. A non-2xx status resolves normally, check `response.ok`, except a
+     * `422` with a JSON object as body, which throws an {@link ExtbaseValidationError}.
      */
-    async get(url: string, data?: Record<string, unknown>, init?: RequestInit): Promise<Response> {
+    async get(
+        url: string,
+        data?: Record<string, unknown>,
+        options?: ExtbaseRequestInit
+    ): Promise<Response> {
+        const { prefix = getArgumentPrefix(url) ?? '', ...init } = options ?? {};
         const target = new URL(url, document.baseURI);
-        for (const [key, value] of flatten(data, getArgumentPrefix(url) ?? '')) {
+        for (const [key, value] of flatten(data, prefix)) {
             target.searchParams.append(key, String(value));
         }
-        return fetch(target, { ...init, method: 'GET' });
+        return send(target, { ...init, method: 'GET' });
     },
 
     /**
@@ -53,16 +101,26 @@ export const extbase = {
      *
      * @param url - The URL of the action.
      * @param data - The arguments. Nested objects and arrays are flattened into bracket notation, `null`
-     * and `undefined` are skipped, a `File` or `Blob` is sent as it is.
-     * @param init - More options for `fetch`, e.g. `{ signal }`.
-     * @returns The native `Response`. A non-2xx status resolves normally, check `response.ok`.
+     * and `undefined` are skipped, a `File` or `Blob` is sent as it is. A `FormData` is sent as it is,
+     * its names are yours.
+     * @param options - More options for `fetch`, e.g. `{ signal }`, and the `prefix` to nest the data under.
+     * @returns The native `Response`. A non-2xx status resolves normally, check `response.ok`, except a
+     * `422` with a JSON object as body, which throws an {@link ExtbaseValidationError}.
      */
-    async post(url: string, data?: Record<string, unknown>, init?: RequestInit): Promise<Response> {
-        const body = new FormData();
-        for (const [key, value] of flatten(data, getArgumentPrefix(url) ?? '')) {
-            body.append(key, value);
+    async post(
+        url: string,
+        data?: Record<string, unknown> | FormData,
+        options?: ExtbaseRequestInit
+    ): Promise<Response> {
+        const { prefix = getArgumentPrefix(url) ?? '', ...init } = options ?? {};
+        let body = data;
+        if (!(body instanceof FormData)) {
+            body = new FormData();
+            for (const [key, value] of flatten(data, prefix)) {
+                body.append(key, value);
+            }
         }
-        return fetch(url, { ...init, method: 'POST', body });
+        return send(url, { ...init, method: 'POST', body });
     },
 
     getArgumentPrefix,

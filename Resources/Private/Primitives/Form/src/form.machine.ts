@@ -1,6 +1,6 @@
 import { createMachine } from '@zag-js/core';
 import { nextTick } from '@zag-js/dom-query';
-import { devWarn } from '../../../Client';
+import { devWarn, extbase, ExtbaseValidationError } from '../../../Client';
 import * as dom from './form.dom';
 import {
     focusField,
@@ -14,7 +14,6 @@ import {
 } from './form.fields';
 import { prefixFieldName } from './form.path';
 import type { FormErrors, FormSchema } from './form.types';
-import { FormError, ValidationError } from './form.types';
 import {
     attachErrorValues,
     filterErrorsForCurrentValues,
@@ -131,45 +130,21 @@ export const machine = createMachine<FormSchema>({
                             values: submittedValues,
                             api: event.detail.api,
                             event: event.detail.event,
-                            post: async (url: string): Promise<Response> => {
-                                const prefixedData = new FormData();
+                            post: (url, init) => {
+                                const prefix = prop('fieldNamePrefix') || '';
                                 const objectName = prop('objectName');
-                                const formEl = dom.getFormEl(scope);
-                                const prefix = formEl?.getAttribute('data-field-name-prefix') || '';
+                                const body = new FormData();
 
                                 for (const [key, value] of submittedFormData.entries()) {
-                                    if (prefix && key.startsWith(`${prefix}[`)) {
-                                        prefixedData.append(key, value);
-                                        continue;
-                                    }
-
-                                    prefixedData.append(
-                                        prefixFieldName(key, prefix, objectName),
+                                    body.append(
+                                        prefix && key.startsWith(`${prefix}[`)
+                                            ? key
+                                            : prefixFieldName(key, prefix, objectName),
                                         value
                                     );
                                 }
 
-                                const response = await fetch(url, {
-                                    method: 'POST',
-                                    body: prefixedData,
-                                });
-
-                                if (response.status === 422) {
-                                    const responseErrors = await response.json();
-                                    const formErrorMessages = getFormErrorMessages(
-                                        responseErrors,
-                                        objectName
-                                    );
-                                    if (formErrorMessages) {
-                                        throw new FormError(formErrorMessages);
-                                    }
-
-                                    throw new ValidationError(
-                                        mapServerErrors(responseErrors, objectName, submittedValues)
-                                    );
-                                }
-
-                                return response;
+                                return extbase.post(url, body, init);
                             },
                         });
 
@@ -195,17 +170,24 @@ export const machine = createMachine<FormSchema>({
 
                         send({ type: 'ERROR' });
                     } catch (error) {
-                        if (error instanceof FormError) {
-                            send({
-                                type: 'SET_ERROR_TEXT',
-                                detail: { text: error.errors.join(' ') },
-                            });
-                            send({ type: 'ERROR' });
-                            return;
-                        }
+                        if (error instanceof ExtbaseValidationError) {
+                            const objectName = prop('objectName');
+                            const formErrorMessages = getFormErrorMessages(
+                                error.errors,
+                                objectName
+                            );
+                            if (formErrorMessages) {
+                                send({
+                                    type: 'SET_ERROR_TEXT',
+                                    detail: { text: formErrorMessages.join(' ') },
+                                });
+                                send({ type: 'ERROR' });
+                                return;
+                            }
 
-                        if (error instanceof ValidationError) {
-                            invalidateWithErrors(error.errors);
+                            invalidateWithErrors(
+                                mapServerErrors(error.errors, objectName, submittedValues)
+                            );
                             return;
                         }
 

@@ -71,10 +71,7 @@ final class FormRenderingTest extends FunctionalTestCase
             </primitives:form.root>
         ');
 
-        $this->assertSame(
-            'tx_other_search',
-            $this->elementWith($html, 'data-form-root')->get('data-field-name-prefix'),
-        );
+        $this->assertSame('tx_other_search', $this->hydratedFormProps()['fieldNamePrefix']);
         $this->assertStringContainsString('name="tx_other_search[__trustedProperties]"', $html);
     }
 
@@ -382,9 +379,10 @@ final class FormRenderingTest extends FunctionalTestCase
         );
 
         // what the client prefixes every posted key with, and the object it posts them under
-        $form = $this->elementWith($html, 'data-form-root');
-        $this->assertSame($namespace, $form->get('data-field-name-prefix'));
-        $this->assertSame('conference', $form->get('data-object-name'));
+        $props = $this->hydratedFormProps();
+        $this->assertSame($namespace, $props['fieldNamePrefix']);
+        $this->assertSame('conference', $props['objectName']);
+        $this->assertFalse($this->elementWith($html, 'data-form-root')->has('data-field-name-prefix'));
 
         $hiddenFields = [];
         foreach ($this->elementsWith($html, 'type') as $element) {
@@ -419,17 +417,23 @@ final class FormRenderingTest extends FunctionalTestCase
             '>Send</primitives:form.root>'
         );
 
-        $derived = $this->renderTemplate($template(''));
-        $this->assertSame(
-            'tx_docsext_registrationsubmit',
-            $this->elementWith($derived, 'data-form-root')->get('data-field-name-prefix'),
-        );
+        $this->renderTemplate($template(''));
+        $this->assertSame('tx_docsext_registrationsubmit', $this->hydratedFormProps()['fieldNamePrefix']);
 
-        $explicit = $this->renderTemplate($template('pluginName="Registration"'));
-        $this->assertSame(
-            'tx_docsext_registration',
-            $this->elementWith($explicit, 'data-form-root')->get('data-field-name-prefix'),
-        );
+        $this->renderTemplate($template('pluginName="Registration"'));
+        $this->assertSame('tx_docsext_registration', $this->hydratedFormProps()['fieldNamePrefix']);
+    }
+
+    /**
+     * The client props of the form the last render hydrated.
+     *
+     * @return array<string, mixed>
+     */
+    private function hydratedFormProps(): array
+    {
+        $forms = HydrationRegistry::getInstance()->getAll()['primitives']['form'];
+
+        return array_values($forms)[0]['props'];
     }
 
     /**
