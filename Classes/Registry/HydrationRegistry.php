@@ -70,6 +70,12 @@ class HydrationRegistry
         $bucket[$lastSegment] ??= [];
         /** @var array<string, array<string, mixed>> $leaf */
         $leaf = &$bucket[$lastSegment];
+        if (isset($leaf[$id])) {
+            throw new \InvalidArgumentException(
+                sprintf('The rootId "%s" is already used by another <%s> component.', $id, $componentType),
+                1_788_200_003,
+            );
+        }
         $leaf[$id] = $normalizedProps;
 
         // Update the asset collector whenever data changes

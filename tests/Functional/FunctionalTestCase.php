@@ -9,7 +9,6 @@ use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Registry\NestedComponentRegistry;
 use Jramke\FluidPrimitives\Registry\PortalRegistry;
 use Jramke\FluidPrimitives\Registry\ReferencedRootRegistry;
-use Jramke\FluidPrimitives\Registry\UsedRootIdRegistry;
 use Jramke\FluidPrimitives\Tests\Helper\HtmlElement;
 use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Core\Core\SystemEnvironmentBuilder;
@@ -94,7 +93,7 @@ abstract class FunctionalTestCase extends TYPO3FunctionalTestCase
         $view->getRenderingContext()->getTemplatePaths()->setTemplateSource($template);
 
         // Each render stands for its own request, so a test may reuse a rootId across renders
-        UsedRootIdRegistry::clear();
+        HydrationRegistry::getInstance()->clear();
         $html = $view->render();
         $this->assertNoRepeatedAttributes($html);
 
