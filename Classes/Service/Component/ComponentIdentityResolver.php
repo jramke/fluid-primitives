@@ -6,7 +6,6 @@ namespace Jramke\FluidPrimitives\Service\Component;
 
 use Jramke\FluidPrimitives\Component\ComponentCollectionInterface;
 use Jramke\FluidPrimitives\Domain\Dto\ComponentIdentity;
-use Jramke\FluidPrimitives\Registry\UsedRootIdRegistry;
 use Jramke\FluidPrimitives\Service\ComponentCollectionService;
 use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
@@ -48,9 +47,6 @@ final readonly class ComponentIdentityResolver
             $isRenderedAsRoot = false;
         }
 
-        $baseName = ComponentNameUtility::getComponentBaseNameFromViewHelperName($viewHelperName, $isDeclaredRoot);
-        $clientBaseName = ComponentNameUtility::camelCaseToLowerCaseDashed($baseName);
-
         $rootId = Typed::stringOrNull($arguments['rootId'] ?? null);
         if ($rootId !== null && preg_match('/["\\\\]/', $rootId) === 1) {
             // The rootId is the value of every part attribute and lands unescaped in zag's own attribute selectors.
@@ -59,21 +55,15 @@ final readonly class ComponentIdentityResolver
                 1_788_200_001,
             );
         }
-        if ($rootId !== null && $isRenderedAsRoot) {
-            if (UsedRootIdRegistry::isUsed($clientBaseName, $rootId)) {
-                throw new \InvalidArgumentException(
-                    sprintf('The rootId "%s" is already used by another <%s> component.', $rootId, $baseName),
-                    1_788_200_003,
-                );
-            }
-            UsedRootIdRegistry::mark($clientBaseName, $rootId);
-        }
         if ($rootId === null) {
             // For a non-root component we assign the rootId of the parent component when rendering subcomponents.
             $rootId = $isRenderedAsRoot
                 ? ComponentUtility::id()
                 : Typed::stringOrNull($renderingContext->getVariableProvider()->get('rootId'));
         }
+
+        $baseName = ComponentNameUtility::getComponentBaseNameFromViewHelperName($viewHelperName, $isDeclaredRoot);
+        $clientBaseName = ComponentNameUtility::camelCaseToLowerCaseDashed($baseName);
 
         // $componentResolver->getNamespace() is AbstractComponentCollection's own PHP class name (a
         // naming trap shared with Fluid core's ViewHelperResolverDelegateInterface), not the Fluid

@@ -50,8 +50,12 @@ final class DialogRenderingTest extends FunctionalTestCase
         $this->expectExceptionMessage('The rootId "same-id" is already used by another <dialog> component.');
 
         $this->renderTemplate('
-            <primitives:dialog.root rootId="same-id" />
-            <primitives:dialog.root rootId="same-id" />
+            <primitives:dialog.root rootId="same-id">
+                <primitives:dialog.trigger>Open</primitives:dialog.trigger>
+            </primitives:dialog.root>
+            <primitives:dialog.root rootId="same-id">
+                <primitives:dialog.trigger>Open</primitives:dialog.trigger>
+            </primitives:dialog.root>
         ');
     }
 
