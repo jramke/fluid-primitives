@@ -141,7 +141,7 @@ final class ComponentRootUtility
      * from slot content in the first place - both `?? false` callers above already default to the
      * correct answer ("not root") for that case without `ui:template` needing to fake anything here.
      */
-    private static function currentIdentity(RenderingContextInterface $renderingContext): ?ComponentIdentity
+    public static function currentIdentity(RenderingContextInterface $renderingContext): ?ComponentIdentity
     {
         // ViewHelperVariableContainer::get() is Fluid core's own untyped API - inherently mixed,
         // narrowed immediately below via instanceof.
