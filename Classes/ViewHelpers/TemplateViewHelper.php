@@ -51,10 +51,14 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
  * `context` is only required when this `ui:template` sits inside slot content passed into
  * *another* component - the common case: item/row markup a consumer authors for a primitive like
  * `combobox`/`fileUpload` to clone, where the ambient component is whatever encloses that slot
- * content, not the primitive itself. Omit it when `ui:template` is written directly inside a
- * component's own template body instead (e.g. a custom, single-file component) - it then defaults
- * to whichever component is already ambiently active there, the same way a bare `ui:ref` (no
- * `context` argument) already does.
+ * content, not the primitive itself. Omit it only when `ui:template` is written directly inside a
+ * real, registered component's own template body (a component with its own `ui:prop` declarations
+ * etc., whether or not it is split across multiple files) - it then defaults to whichever component
+ * is already ambiently active there, the same way a bare `ui:ref` (no `context` argument) already
+ * does. A plain, non-component Fluid template (e.g. a content element with no backing `ui:`
+ * component) has no ambiently active component and always needs an explicit `context` naming the
+ * enclosing component - or no `ui:template` at all if there is none (a native `<template>` element
+ * covers a one-off client-rendered list just as well).
  *
  * ## Example
  * ```html
@@ -87,7 +91,7 @@ class TemplateViewHelper extends AbstractViewHelper
         $this->registerArgument(
             'context',
             'string',
-            'camelCase base name of the enclosing component this template belongs to, e.g. "fileUpload". Only needed when this ui:template is slot content passed into another component - omit it when writing ui:template directly inside a component\'s own template body, where it defaults to whichever component is already ambiently active (the same fallback a bare `ui:ref` uses).',
+            'camelCase base name of the enclosing component this template belongs to, e.g. "fileUpload". Only needed when this ui:template is slot content passed into another component - omit it only when writing ui:template directly inside a real, registered component\'s own template body, where it defaults to whichever component is already ambiently active (the same fallback a bare `ui:ref` uses). A plain template with no enclosing component always needs an explicit context.',
             false,
             '',
         );

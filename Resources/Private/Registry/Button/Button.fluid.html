@@ -16,3 +16,8 @@
 <primitives:button spreadProps="{buttonProps}" class="{class}">
     <f:slot />
 </primitives:button>
+
+
+<f:if condition="{focusableWhenDisabled}">
+    <vite:asset entry="%componentPath%/Button.entry.ts" />
+</f:if>

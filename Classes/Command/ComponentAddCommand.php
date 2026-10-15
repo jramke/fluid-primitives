@@ -33,7 +33,7 @@ class ComponentAddCommand extends Command
         $this->addArgument(
             'component',
             InputArgument::REQUIRED,
-            'The name of the component to add (e.g., accordion or scroll-area)',
+            'The name of the component to add (e.g., accordion or scrollArea)',
         );
         $this->addOption(
             'extension',
@@ -84,19 +84,38 @@ class ComponentAddCommand extends Command
         }
 
         $files = array_map(Typed::string(...), Typed::arrayOrNull($manifest['files'] ?? null) ?? []);
-        $targetFolder =
-            $availablePackages[$extension]->getPackagePath() .
-            Typed::string($input->getOption('path')) .
-            $componentFolderName .
-            '/';
+        $path = rtrim(Typed::string($input->getOption('path')), characters: '/');
+        $path = $path === '' ? '' : $path . '/';
+        $targetFolder = $availablePackages[$extension]->getPackagePath() . $path . $componentFolderName . '/';
+
+        $useFluidSuffix = $input->getOption('fluid-suffix') !== false;
+
+        $existing = $this->fileWriter->existingTargets($files, $targetFolder, $useFluidSuffix);
+        if ($existing !== [] && !Typed::bool($input->getOption('force'))) {
+            $io->error([
+                'Component "' . $componentKey . '" already exists in extension "' . $extension . '":',
+                ...array_map(static fn(string $file): string => '- ' . $file, $existing),
+                'Nothing was written. Use --force to overwrite the whole component.',
+            ]);
+            return Command::FAILURE;
+        }
 
         $writeResult = $this->fileWriter->write($io, $componentKey, $files, [
             'targetFolder' => $targetFolder,
-            'useFluidSuffix' => $input->getOption('fluid-suffix') !== false,
-            'force' => Typed::bool($input->getOption('force')),
+            'useFluidSuffix' => $useFluidSuffix,
+            'componentPath' => 'EXT:' . $extension . '/' . $path . $componentFolderName,
         ]);
 
         $this->fileWriter->reportResult($io, $componentKey, $extension, $writeResult);
+        // @mago-expect lint:no-global
+        // @mago-expect analysis:mixed-assignment
+        $viteNamespace = $GLOBALS['TYPO3_CONF_VARS']['SYS']['fluid']['namespaces']['vite'] ?? null;
+        if ($writeResult['usesViteAsset'] && $viteNamespace === null) {
+            $io->warning(
+                'The templates contain <vite:asset> to load the entry file, but the "vite" Fluid namespace is not ' .
+                'registered. Install praetorius/vite-asset-collector and register the namespace, or remove the line.',
+            );
+        }
         if ($writeResult['failed']) {
             $io->error('Not every file of the component could be written.');
             return Command::FAILURE;

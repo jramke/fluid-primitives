@@ -13,6 +13,13 @@ use TYPO3\CMS\Extbase\Domain\Model\FileReference;
 
 final class FileUploadDeleteCheckboxViewHelperTest extends FunctionalTestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        // a form needs the plugin namespace of an Extbase request, see FormContext::getFieldNamePrefix()
+        $this->setExtbasePlugin('Test', 'Form');
+    }
+
     private function createFileReference(int $uid): FileReference
     {
         $fileReference = new FileReference();
@@ -51,7 +58,7 @@ final class FileUploadDeleteCheckboxViewHelperTest extends FunctionalTestCase
         ', ['fileReference' => $this->createFileReference(42)]);
 
         $this->assertMatchesRegularExpression('/<input[^>]*type="checkbox"/', $html);
-        $this->assertStringContainsString('name="@delete[conference][]"', $html);
+        $this->assertStringContainsString('name="tx_test_form[@delete][conference][]"', $html);
 
         $decoded = $this->extractAndValidateToken($html);
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Tests\Unit;
 
 use Jramke\FluidPrimitives\Contexts\GlobalContext;
+use Jramke\FluidPrimitives\Domain\Dto\HydrationEntry;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Registry\NestedComponentRegistry;
 use Jramke\FluidPrimitives\Service\TranslatorService;
@@ -48,27 +49,42 @@ final class HydrationRegistryTest extends TestCase
     #[Test]
     public function keepsEveryInstanceOfEveryComponentTypeOfANamespace(): void
     {
-        $this->registry->add('ui', 'accordion', '«f1»', ['type' => 'first-accordion']);
-        $this->registry->add('ui', 'accordion', '«f2»', ['type' => 'second-accordion']);
-        $this->registry->add('ui', 'dialog', '«f3»', ['type' => 'dialog']);
+        $this->registry->add('ui', 'accordion', new HydrationEntry('«f1»', [], true, ['type' => 'first-accordion']));
+        $this->registry->add('ui', 'accordion', new HydrationEntry('«f2»', [], true, ['type' => 'second-accordion']));
+        $this->registry->add('ui', 'dialog', new HydrationEntry('«f3»', [], true, ['type' => 'dialog']));
 
         $all = $this->registry->getAll();
 
-        $this->assertSame(['type' => 'first-accordion'], $all['ui']['accordion']['«f1»']);
-        $this->assertSame(['type' => 'second-accordion'], $all['ui']['accordion']['«f2»']);
-        $this->assertSame(['type' => 'dialog'], $all['ui']['dialog']['«f3»']);
+        $this->assertSame('first-accordion', $all['ui']['accordion']['«f1»']['props']['type']);
+        $this->assertSame('second-accordion', $all['ui']['accordion']['«f2»']['props']['type']);
+        $this->assertSame('dialog', $all['ui']['dialog']['«f3»']['props']['type']);
+    }
+
+    #[Test]
+    public function rejectsARootIdAlreadyRegisteredForTheSameComponentType(): void
+    {
+        $this->registry->add('ui', 'select', new HydrationEntry('same', [], true, []));
+        // the same id on another component type is a different instance
+        $this->registry->add('ui', 'dialog', new HydrationEntry('same', [], true, []));
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('The rootId "same" is already used by another <select> component.');
+
+        $this->registry->add('ui', 'select', new HydrationEntry('same', [], true, []));
     }
 
     #[Test]
     public function keepsSameNamedComponentsFromDifferentNamespacesSeparate(): void
     {
-        $this->registry->add('ui', 'select', '«f1»', ['type' => 'ui-select']);
-        $this->registry->add('primitives', 'select', '«f2»', ['type' => 'primitives-select']);
+        $this->registry->add('ui', 'select', new HydrationEntry('«f1»', [], true, ['type' => 'ui-select']));
+        $this->registry->add('primitives', 'select', new HydrationEntry('«f2»', [], true, [
+            'type' => 'primitives-select',
+        ]));
 
         $all = $this->registry->getAll();
 
-        $this->assertSame(['type' => 'ui-select'], $all['ui']['select']['«f1»']);
-        $this->assertSame(['type' => 'primitives-select'], $all['primitives']['select']['«f2»']);
+        $this->assertSame('ui-select', $all['ui']['select']['«f1»']['props']['type']);
+        $this->assertSame('primitives-select', $all['primitives']['select']['«f2»']['props']['type']);
     }
 
     #[Test]
@@ -78,14 +94,19 @@ final class HydrationRegistryTest extends TestCase
         // ComponentNameUtility::getComponentBaseNameFromViewHelperName()) builds one nested array
         // level per segment, rather than being stored under one flat "molecules.checkboxGroup" key -
         // this is what the client's own getHydrationData() walks to find it.
-        $this->registry->add('ui', 'molecules.checkboxGroup', '«f1»', ['type' => 'checkbox-group']);
-        $this->registry->add('ui', 'molecules.tooltip', '«f2»', ['type' => 'tooltip']);
+        $this->registry->add('ui', 'molecules.checkboxGroup', new HydrationEntry('«f1»', [], true, [
+            'type' => 'checkbox-group',
+        ]));
+        $this->registry->add('ui', 'molecules.tooltip', new HydrationEntry('«f2»', [], true, ['type' => 'tooltip']));
 
         $all = $this->registry->getAll();
 
-        $this->assertSame(['type' => 'checkbox-group'], $all['ui']['molecules']['checkboxGroup']['«f1»']);
-        $this->assertSame(['type' => 'tooltip'], $all['ui']['molecules']['tooltip']['«f2»']);
-        $this->assertSame(['type' => 'checkbox-group'], $this->registry->get('ui', 'molecules.checkboxGroup', '«f1»'));
+        $this->assertSame('checkbox-group', $all['ui']['molecules']['checkboxGroup']['«f1»']['props']['type']);
+        $this->assertSame('tooltip', $all['ui']['molecules']['tooltip']['«f2»']['props']['type']);
+        $this->assertSame(
+            'checkbox-group',
+            $this->registry->get('ui', 'molecules.checkboxGroup', '«f1»')['props']['type'],
+        );
     }
 
     #[Test]
@@ -117,10 +138,7 @@ final class HydrationRegistryTest extends TestCase
     #[Test]
     public function addsInlineJavaScriptWithComponentData(): void
     {
-        $this->registry->add('ui', 'accordion', '«f1»', [
-            'autoMount' => true,
-            'props' => ['multiple' => true],
-        ]);
+        $this->registry->add('ui', 'accordion', new HydrationEntry('«f1»', [], true, ['multiple' => true]));
 
         $this->assertStringContainsString('window.FluidPrimitives', $this->capturedJs);
         $this->assertStringContainsString('"accordion"', $this->capturedJs);
@@ -145,7 +163,7 @@ final class HydrationRegistryTest extends TestCase
             $this->globalContext,
             nestedComponentRegistry: $nestedComponentRegistry,
         );
-        $registry->add('primitives', 'field', '«f1»', ['props' => ['name' => 'firstName']]);
+        $registry->add('primitives', 'field', new HydrationEntry('«f1»', [], true, ['name' => 'firstName']));
 
         $this->assertStringContainsString('nestedComponents', $this->capturedJs);
         $this->assertStringContainsString('field-array:«f0»:itemTemplate', $this->capturedJs);
