@@ -140,18 +140,17 @@ final class ListCollection implements JsonSerializable, IteratorAggregate
 
     public function getItemValue(array|object $item): ?string
     {
-        if ($this->itemToValueKey) {
-            return (string)($this->getFromKey($item, $this->itemToValueKey) ?? '');
-        }
-        return Typed::stringOrNull($item['value'] ?? null);
+        return Typed::stringOrNull($this->getFromKey($item, $this->itemToValueKey ?? 'value'));
     }
 
     public function stringifyItem(array|object $item): ?string
     {
-        if ($this->itemToStringKey) {
-            return (string)($this->getFromKey($item, $this->itemToStringKey) ?? '');
+        $label = Typed::stringOrNull($this->getFromKey($item, $this->itemToStringKey ?? 'label'));
+        if ($label !== null) {
+            return $label;
         }
-        return Typed::stringOrNull($item['label'] ?? $item['value'] ?? null);
+        // A plain {value} item needs no separate label; a configured itemToStringKey never falls back.
+        return $this->itemToStringKey === null ? Typed::stringOrNull($this->getFromKey($item, 'value')) : '';
     }
 
     /**
@@ -185,11 +184,7 @@ final class ListCollection implements JsonSerializable, IteratorAggregate
         // recognizes explicit boolean-keyword strings, whereas a raw item's "disabled" value should
         // be read with PHP's normal truthiness (matching how the ListCollectionItem branch above
         // reads its own already-real bool $item->disabled).
-        if ($this->isItemDisabledKey) {
-            return (bool)$this->getFromKey($item, $this->isItemDisabledKey);
-        }
-        // @mago-expect analysis:mixed-operand
-        return (bool)($item['disabled'] ?? false);
+        return (bool)$this->getFromKey($item, $this->isItemDisabledKey ?? 'disabled');
     }
 
     /**
