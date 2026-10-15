@@ -12,8 +12,9 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
  * The library's global context: `locale` and `debug`. A project extends it with getters of its own and
- * aliases {@see GlobalContextInterface} to the subclass; the two getters below are `final`, the library
- * relies on what they return.
+ * aliases {@see GlobalContextInterface} to the subclass. `getLocale()` is `final`, the library relies on
+ * what it returns; `getDebug()` can be overridden, e.g. to turn the client's dev warnings on for a staging
+ * site. An override repeats `#[ExposeToClient]`, an attribute is not inherited.
  *
  * Takes no constructor arguments, so a subclass can use its own constructor without passing any on.
  */
@@ -31,7 +32,7 @@ class GlobalContext extends AbstractGlobalContext
 
     /** Whether TYPO3's Application Context is development: the client prints its dev-only warnings. */
     #[ExposeToClient]
-    final public function getDebug(): bool
+    public function getDebug(): bool
     {
         try {
             return Environment::getContext()->isDevelopment();

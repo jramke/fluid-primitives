@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Tests\Unit;
 
+use Jramke\FluidPrimitives\Attributes\ExposeToClient;
 use Jramke\FluidPrimitives\Contexts\GlobalContext;
 use Jramke\FluidPrimitives\Service\TranslatorService;
 use Jramke\FluidPrimitives\Tests\TestCase;
+use Jramke\FluidPrimitives\Utility\ClientPropsContextExtractor;
 use PHPUnit\Framework\Attributes\Test;
 use TYPO3\CMS\Core\Http\ServerRequest;
 use TYPO3\CMS\Core\Http\Uri;
@@ -43,10 +45,24 @@ final class GlobalContextTest extends TestCase
     }
 
     #[Test]
-    public function doesNotAllowASubclassToChangeLocaleAndDebug(): void
+    public function doesNotAllowASubclassToChangeTheLocale(): void
     {
-        foreach (['getLocale', 'getDebug'] as $method) {
-            $this->assertTrue((new \ReflectionMethod(GlobalContext::class, $method))->isFinal(), $method);
-        }
+        $this->assertTrue((new \ReflectionMethod(GlobalContext::class, 'getLocale'))->isFinal());
+    }
+
+    #[Test]
+    public function letsASubclassOverrideDebug(): void
+    {
+        $context = new class extends GlobalContext {
+            #[ExposeToClient]
+            #[\Override]
+            public function getDebug(): bool
+            {
+                return true;
+            }
+        };
+
+        $this->assertTrue($context->get('debug'));
+        $this->assertTrue(ClientPropsContextExtractor::extract($context)['debug']);
     }
 }
