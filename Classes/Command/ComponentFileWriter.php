@@ -20,23 +20,22 @@ final readonly class ComponentFileWriter
     ) {}
 
     /**
-     * Fetches and writes each component file to disk, skipping existing files unless `force` is set.
+     * Fetches and writes each component file to disk, overwriting existing ones: the caller decides
+     * beforehand (see {@see existingTargets()}) whether that is allowed.
      * `%componentPath%` in the templates becomes `componentPath`, the `EXT:` path of the component folder.
      *
      * @param string[] $files
-     * @param array{targetFolder: string, useFluidSuffix: bool, force: bool, componentPath: string} $options
-     * @return array{skipped: bool, updated: bool, created: bool, failed: bool, usesViteAsset: bool}
+     * @param array{targetFolder: string, useFluidSuffix: bool, componentPath: string} $options
+     * @return array{updated: bool, created: bool, failed: bool, usesViteAsset: bool}
      */
     public function write(SymfonyStyle $io, string $componentKey, array $files, array $options): array
     {
         [
             'targetFolder' => $targetFolder,
             'useFluidSuffix' => $useFluidSuffix,
-            'force' => $force,
             'componentPath' => $componentPath,
         ] = $options;
 
-        $someSkipped = false;
         $someUpdated = false;
         $someCreated = false;
         $someFailed = false;
@@ -71,12 +70,6 @@ final readonly class ComponentFileWriter
             }
 
             if (file_exists($targetFilePath)) {
-                if (!$force) {
-                    $io->writeln('Skipped: ' . $targetFileName);
-                    $someSkipped = true;
-                    continue;
-                }
-
                 file_put_contents($targetFilePath, $content);
                 $io->writeln('Updated: ' . $targetFileName);
                 $someUpdated = true;
@@ -89,12 +82,33 @@ final readonly class ComponentFileWriter
         }
 
         return [
-            'skipped' => $someSkipped,
             'updated' => $someUpdated,
             'created' => $someCreated,
             'failed' => $someFailed,
             'usesViteAsset' => $usesViteAsset,
         ];
+    }
+
+    /**
+     * The target file names, relative to the component folder, that already exist on disk.
+     *
+     * @param string[] $files
+     * @return string[]
+     */
+    public function existingTargets(array $files, string $targetFolder, bool $useFluidSuffix): array
+    {
+        $existing = [];
+        foreach ($files as $file) {
+            if (!$this->isSafeRelativePath($file)) {
+                continue;
+            }
+            $targetFileName = $this->resolveTargetFileName($file, $useFluidSuffix);
+            if (file_exists($targetFolder . $targetFileName)) {
+                $existing[] = $targetFileName;
+            }
+        }
+
+        return $existing;
     }
 
     /**
@@ -112,26 +126,11 @@ final readonly class ComponentFileWriter
     }
 
     /**
-     * @param array{skipped: bool, updated: bool, created: bool, failed: bool, usesViteAsset: bool} $writeResult
+     * @param array{updated: bool, created: bool, failed: bool, usesViteAsset: bool} $writeResult
      */
     public function reportResult(SymfonyStyle $io, string $componentKey, string $extension, array $writeResult): void
     {
-        ['skipped' => $someSkipped, 'updated' => $someUpdated, 'created' => $someCreated] = $writeResult;
-
-        if ($someSkipped && !$someCreated && !$someUpdated) {
-            $io->warning([
-                'Component "' . $componentKey . '" already exists in extension "' . $extension . '".',
-                'No files were changed.',
-                'Use the --force option to overwrite existing files.',
-            ]);
-            return;
-        }
-
-        if ($someSkipped) {
-            $io->writeln(
-                '<comment>Some files were skipped. Use the --force option to overwrite existing files.</comment>',
-            );
-        }
+        ['updated' => $someUpdated, 'created' => $someCreated] = $writeResult;
 
         $successMessage = match (true) {
             $someUpdated => 'Component "' . $componentKey . '" updated in extension "' . $extension . '".',

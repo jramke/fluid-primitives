@@ -33,7 +33,7 @@ class ComponentAddCommand extends Command
         $this->addArgument(
             'component',
             InputArgument::REQUIRED,
-            'The name of the component to add (e.g., accordion or scroll-area)',
+            'The name of the component to add (e.g., accordion or scrollArea)',
         );
         $this->addOption(
             'extension',
@@ -88,10 +88,21 @@ class ComponentAddCommand extends Command
         $path = $path === '' ? '' : $path . '/';
         $targetFolder = $availablePackages[$extension]->getPackagePath() . $path . $componentFolderName . '/';
 
+        $useFluidSuffix = $input->getOption('fluid-suffix') !== false;
+
+        $existing = $this->fileWriter->existingTargets($files, $targetFolder, $useFluidSuffix);
+        if ($existing !== [] && !Typed::bool($input->getOption('force'))) {
+            $io->error([
+                'Component "' . $componentKey . '" already exists in extension "' . $extension . '":',
+                ...array_map(static fn(string $file): string => '- ' . $file, $existing),
+                'Nothing was written. Use --force to overwrite the whole component.',
+            ]);
+            return Command::FAILURE;
+        }
+
         $writeResult = $this->fileWriter->write($io, $componentKey, $files, [
             'targetFolder' => $targetFolder,
-            'useFluidSuffix' => $input->getOption('fluid-suffix') !== false,
-            'force' => Typed::bool($input->getOption('force')),
+            'useFluidSuffix' => $useFluidSuffix,
             'componentPath' => 'EXT:' . $extension . '/' . $path . $componentFolderName,
         ]);
 

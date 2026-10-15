@@ -22,7 +22,7 @@ final class ComponentListCommandTest extends TestCase
                 null,
                 [
                     ['key' => 'accordion', 'name' => 'Accordion', 'description' => 'A stack of sections.'],
-                    ['key' => 'scroll-area', 'name' => 'Scroll Area', 'description' => 'A styled scroll container.'],
+                    ['key' => 'scrollArea', 'name' => 'Scroll Area', 'description' => 'A styled scroll container.'],
                 ],
             ]);
 
@@ -32,7 +32,7 @@ final class ComponentListCommandTest extends TestCase
         $this->assertSame(0, $tester->getStatusCode());
         $this->assertMatchesRegularExpression('/accordion\s+Accordion\s+A stack of sections\./', $tester->getDisplay());
         $this->assertMatchesRegularExpression(
-            '/scroll-area\s+Scroll Area\s+A styled scroll container\./',
+            '/scrollArea\s+Scroll Area\s+A styled scroll container\./',
             $tester->getDisplay(),
         );
     }

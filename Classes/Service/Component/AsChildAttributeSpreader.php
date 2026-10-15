@@ -13,12 +13,34 @@ use Jramke\FluidPrimitives\Constants;
  */
 final readonly class AsChildAttributeSpreader
 {
+    private const array VOID_ELEMENTS = [
+        'area',
+        'base',
+        'br',
+        'col',
+        'embed',
+        'hr',
+        'img',
+        'input',
+        'link',
+        'meta',
+        'source',
+        'track',
+        'wbr',
+    ];
+
     public function spread(string $childHtml, string $componentHtml): string
     {
         // Extract child tag + attributes
         $childMatches = null;
         if (!preg_match('/^\s*<([a-zA-Z0-9]+)([^>]*)>/', $childHtml, $childMatches)) {
             return $childHtml; // fallback
+        }
+        if ($this->countTopLevelElements($childHtml) > 1) {
+            throw new \RuntimeException(
+                'asChild requires exactly one child element, but multiple were found in the slot content.',
+                1_788_200_004,
+            );
         }
         $childTag = $childMatches[1];
         $childAttrs = $this->parseAttributes(trim($childMatches[2]));
@@ -70,6 +92,35 @@ final readonly class AsChildAttributeSpreader
             $childHtml,
             limit: 1,
         );
+    }
+
+    private function countTopLevelElements(string $html): int
+    {
+        $html = (string)preg_replace('/<!--.*?-->/s', replacement: '', subject: $html);
+        $tags = [];
+        preg_match_all(
+            '/<(\/?)([a-zA-Z][a-zA-Z0-9:-]*)(?:"[^"]*"|\'[^\']*\'|[^>"\'])*>/',
+            $html,
+            $tags,
+            PREG_SET_ORDER,
+        );
+
+        $depth = 0;
+        $count = 0;
+        foreach ($tags as [$tag, $closing, $name]) {
+            if ($closing === '/') {
+                $depth = max(0, $depth - 1);
+                continue;
+            }
+            if ($depth === 0) {
+                $count++;
+            }
+            if (!str_ends_with($tag, '/>') && !in_array(strtolower($name), self::VOID_ELEMENTS, strict: true)) {
+                $depth++;
+            }
+        }
+
+        return $count;
     }
 
     /**

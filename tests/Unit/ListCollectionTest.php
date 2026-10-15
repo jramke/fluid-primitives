@@ -51,6 +51,55 @@ final class ListCollectionTest extends TestCase
     }
 
     #[Test]
+    public function resolvesPlainObjectItemsFromTheDefaultProperties(): void
+    {
+        $collection = new ListCollection([
+            (object)['value' => 'a', 'label' => 'Option A', 'disabled' => true],
+            (object)['value' => 'b'],
+        ]);
+
+        $items = $collection->getItems();
+
+        $this->assertSame('a', $items[0]->value);
+        $this->assertSame('Option A', $items[0]->label);
+        $this->assertTrue($items[0]->disabled);
+        $this->assertSame('b', $items[1]->label);
+        $this->assertFalse($items[1]->disabled);
+    }
+
+    #[Test]
+    public function resolvesPlainObjectItemsWithoutIsItemDisabledKey(): void
+    {
+        $collection = new ListCollection(
+            items: [(object)['uid' => 7, 'title' => 'News']],
+            itemToValueKey: 'uid',
+            itemToStringKey: 'title',
+        );
+
+        $item = $collection->at(0);
+
+        $this->assertSame('7', $item->value);
+        $this->assertSame('News', $item->label);
+        $this->assertFalse($item->disabled);
+    }
+
+    #[Test]
+    public function resolvesPlainObjectItemsWithOnlyIsItemDisabledKey(): void
+    {
+        $collection = new ListCollection(items: [(object)[
+            'value' => 'a',
+            'label' => 'A',
+            'inactive' => true,
+        ]], isItemDisabledKey: 'inactive');
+
+        $item = $collection->at(0);
+
+        $this->assertSame('a', $item->value);
+        $this->assertSame('A', $item->label);
+        $this->assertTrue($item->disabled);
+    }
+
+    #[Test]
     public function supportsDotNotationForNestedKeyAccess(): void
     {
         $collection = new ListCollection(

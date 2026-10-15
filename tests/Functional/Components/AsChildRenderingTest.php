@@ -88,6 +88,25 @@ final class AsChildRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function rejectsMoreThanOneTopLevelChild(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('asChild requires exactly one child element');
+
+        $this->renderDialogTrigger('<a href="/one">One</a><span>Two</span>');
+    }
+
+    #[Test]
+    public function acceptsOneChildWithNestedAndVoidElementsAndComments(): void
+    {
+        $html = $this->renderDialogTrigger(
+            '<button><span>icon</span> text <img src="x.svg"><br/><b>bold</b></button><!-- end -->',
+        );
+
+        $this->assertSame('button', $this->elementWith($html, 'data-dialog-trigger')->tag);
+    }
+
+    #[Test]
     public function theChildsAttributesWinWhereTheyConflictWithTheComponents(): void
     {
         $html = $this->renderDialogTrigger(

@@ -124,7 +124,7 @@ final class ComponentAddCommandTest extends TestCase
     }
 
     #[Test]
-    public function skipsExistingFilesWithoutForce(): void
+    public function writesNothingAndFailsWhenAnyFileExistsWithoutForce(): void
     {
         mkdir($this->tempDir . 'my-component', 0o777, true);
         file_put_contents($this->tempDir . 'my-component/Root.html', 'original content');
@@ -132,7 +132,10 @@ final class ComponentAddCommandTest extends TestCase
         $cacheManager = $this->createMock(CacheManager::class);
         $cacheManager->expects($this->never())->method('flushCachesInGroup');
 
-        $tester = $this->createCommandTester($this->createRegistryService(['Root.html']), $cacheManager);
+        $tester = $this->createCommandTester(
+            $this->createRegistryService(['Root.html', 'Item.html', 'Root.entry.ts']),
+            $cacheManager,
+        );
         $tester->execute([
             'component' => 'accordion',
             '--extension' => 'my_ext',
@@ -140,8 +143,34 @@ final class ComponentAddCommandTest extends TestCase
             '--fluid-suffix' => false,
         ]);
 
-        $this->assertStringContainsString('Skipped', $tester->getDisplay());
+        $this->assertSame(1, $tester->getStatusCode());
+        $this->assertStringContainsString('- Root.html', $tester->getDisplay());
+        $this->assertStringContainsString('Nothing was written', $tester->getDisplay());
         $this->assertSame('original content', file_get_contents($this->tempDir . 'my-component/Root.html'));
+        $this->assertSame(['Root.html'], $this->writtenFiles());
+    }
+
+    #[Test]
+    public function overwritesTheWholeComponentWithForce(): void
+    {
+        mkdir($this->tempDir . 'my-component', 0o777, true);
+        file_put_contents($this->tempDir . 'my-component/Root.html', 'original content');
+
+        $tester = $this->createCommandTester(
+            $this->createRegistryService(['Root.html', 'Item.html']),
+            $this->createStub(CacheManager::class),
+        );
+        $tester->execute([
+            'component' => 'accordion',
+            '--extension' => 'my_ext',
+            '--path' => '',
+            '--force' => true,
+            '--fluid-suffix' => false,
+        ]);
+
+        $this->assertSame(0, $tester->getStatusCode());
+        $this->assertSame('<div>content</div>', file_get_contents($this->tempDir . 'my-component/Root.html'));
+        $this->assertSame(['Item.html', 'Root.html'], $this->writtenFiles());
     }
 
     #[Test]

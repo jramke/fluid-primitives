@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Registry;
 
+use Jramke\FluidPrimitives\Domain\Dto\HydrationEntry;
 use Jramke\FluidPrimitives\Utility\EnumUtility;
 use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Core\Page\AssetCollector;
@@ -50,10 +51,10 @@ class HydrationRegistry
      * otherwise multi-segment identity gets its own distinct branch of the tree rather than
      * colliding with an unrelated component sharing only its first segment.
      */
-    public function add(string $namespace, string $componentType, string $id, array $props): void
+    public function add(string $namespace, string $componentType, HydrationEntry $entry): void
     {
         /** @var array<string, mixed> $normalizedProps */
-        $normalizedProps = EnumUtility::normalize($props);
+        $normalizedProps = EnumUtility::normalize($entry->toArray());
 
         $segments = explode('.', $componentType);
         $lastSegment = array_pop($segments);
@@ -70,7 +71,13 @@ class HydrationRegistry
         $bucket[$lastSegment] ??= [];
         /** @var array<string, array<string, mixed>> $leaf */
         $leaf = &$bucket[$lastSegment];
-        $leaf[$id] = $normalizedProps;
+        if (array_key_exists($entry->id, $leaf)) {
+            throw new \InvalidArgumentException(
+                sprintf('The rootId "%s" is already used by another <%s> component.', $entry->id, $componentType),
+                1_788_200_003,
+            );
+        }
+        $leaf[$entry->id] = $normalizedProps;
 
         // Update the asset collector whenever data changes
         $this->updateAssetCollector();

@@ -25,7 +25,7 @@ checkbox:
     - Control.fluid.html
     - Checkbox.entry.ts
 
-checkbox-group:
+checkboxGroup:
   name: CheckboxGroup
   description: A group of checkboxes for selecting multiple values
   files:
@@ -75,7 +75,7 @@ collapsible:
     - Content.fluid.html
     - Collapsible.entry.ts
 
-date-picker:
+datePicker:
   name: DatePicker
   description: A calendar for picking a date, several dates, or a range of dates
   files:
@@ -126,7 +126,7 @@ field:
     - Indicator.fluid.html
     - Field.entry.ts
 
-field-array:
+fieldArray:
   name: FieldArray
   description: A repeatable group of fields, e.g. for adding and removing rows
   files:
@@ -148,7 +148,7 @@ fieldset:
     - ErrorText.fluid.html
     - Fieldset.entry.ts
 
-file-upload:
+fileUpload:
   name: FileUpload
   description: A file picker with drag and drop support and managed file lists
   files:
@@ -217,7 +217,7 @@ menu:
     - Separator.fluid.html
     - Menu.entry.ts
 
-navigation-menu:
+navigationMenu:
   name: NavigationMenu
   description: A collection of links and menus for website navigation
   files:
@@ -233,7 +233,7 @@ navigation-menu:
     - ViewportPositioner.fluid.html
     - NavigationMenu.entry.ts
 
-number-input:
+numberInput:
   name: NumberInput
   description: A numeric input with increment and decrement controls
   files:
@@ -258,7 +258,7 @@ popover:
     - Close.fluid.html
     - Popover.entry.ts
 
-radio-group:
+radioGroup:
   name: RadioGroup
   description: An easily stylable radio button component
   files:
@@ -269,7 +269,7 @@ radio-group:
     - ItemText.fluid.html
     - RadioGroup.entry.ts
 
-scroll-area:
+scrollArea:
   name: ScrollArea
   description: A native scroll container with custom scrollbars
   files:
@@ -342,7 +342,7 @@ toggle:
     - Indicator.fluid.html
     - Toggle.entry.ts
 
-toggle-group:
+toggleGroup:
   name: ToggleGroup
   description: A set of toggle buttons where one or several can be pressed
   files:

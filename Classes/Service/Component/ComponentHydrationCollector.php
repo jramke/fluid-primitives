@@ -8,6 +8,7 @@ use Jramke\FluidPrimitives\Constants;
 use Jramke\FluidPrimitives\Contexts\AbstractComponentContext;
 use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
 use Jramke\FluidPrimitives\Domain\Dto\ComponentHydrationCandidate;
+use Jramke\FluidPrimitives\Domain\Dto\HydrationEntry;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Registry\NestedComponentRegistry;
 use Jramke\FluidPrimitives\Registry\ReferencedRootRegistry;
@@ -116,15 +117,6 @@ final readonly class ComponentHydrationCollector
         unset($props['id']); // Remove potential id from client props as it is handled separately
         unset($props['ids']);
 
-        $data = [
-            'autoMount' => $arguments['autoMount'] ?? true,
-            'props' => [
-                'id' => $rootId,
-                'ids' => $arguments['ids'] ?? [],
-                ...$props,
-            ],
-        ];
-
         // Enforced here, lazily, rather than unconditionally for every root component in
         // ComponentIdentityResolver: a purely server-rendered root component with no ui:ref/exposed
         // prop at all never reaches this point (see the early return above) and so never needs its
@@ -149,7 +141,16 @@ final readonly class ComponentHydrationCollector
             $rootId,
             $this->resolveFieldArrayItemScopeKey($candidate),
         );
-        HydrationRegistry::getInstance()->add($namespaceIdentifier, $candidate->clientBaseName, $rootId, $data);
+        HydrationRegistry::getInstance()->add(
+            $namespaceIdentifier,
+            $candidate->clientBaseName,
+            new HydrationEntry(
+                $rootId,
+                Typed::arrayOrNull($arguments['ids'] ?? null) ?? [],
+                Typed::bool($arguments['autoMount'] ?? null, true),
+                $props,
+            ),
+        );
 
         return $rendered;
     }
