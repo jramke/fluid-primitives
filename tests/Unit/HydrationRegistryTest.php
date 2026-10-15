@@ -4,15 +4,20 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Tests\Unit;
 
+use Jramke\FluidPrimitives\Contexts\GlobalContext;
 use Jramke\FluidPrimitives\Domain\Dto\HydrationEntry;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Registry\NestedComponentRegistry;
+use Jramke\FluidPrimitives\Service\TranslatorService;
+use Jramke\FluidPrimitives\Tests\Fixtures\GlobalContext\ProjectGlobalContext;
 use Jramke\FluidPrimitives\Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
 use TYPO3\CMS\Core\Http\ServerRequest;
 use TYPO3\CMS\Core\Http\Uri;
+use TYPO3\CMS\Core\Localization\LanguageServiceFactory;
 use TYPO3\CMS\Core\Page\AssetCollector;
 use TYPO3\CMS\Core\Site\Entity\SiteLanguage;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 final class HydrationRegistryTest extends TestCase
 {
@@ -20,6 +25,7 @@ final class HydrationRegistryTest extends TestCase
     private ?array $capturedAttributes = null;
     private AssetCollector $assetCollector;
     private HydrationRegistry $registry;
+    private GlobalContext $globalContext;
 
     protected function setUp(): void
     {
@@ -36,7 +42,8 @@ final class HydrationRegistryTest extends TestCase
                 return $this->assetCollector;
             });
 
-        $this->registry = new HydrationRegistry($this->assetCollector);
+        $this->globalContext = new GlobalContext();
+        $this->registry = new HydrationRegistry($this->assetCollector, $this->globalContext);
     }
 
     #[Test]
@@ -108,6 +115,10 @@ final class HydrationRegistryTest extends TestCase
         // What the docs pass on as `getGlobal('locale')` to `Intl`, which wants a BCP 47 tag, not `de_DE`.
         $language = new SiteLanguage(0, 'de_DE', new Uri('https://example.com/'), []);
         $GLOBALS['TYPO3_REQUEST'] = (new ServerRequest())->withAttribute('language', $language);
+        GeneralUtility::addInstance(
+            TranslatorService::class,
+            new TranslatorService($this->createStub(LanguageServiceFactory::class)),
+        );
 
         $globals = $this->registry->getGlobals();
 
@@ -147,10 +158,73 @@ final class HydrationRegistryTest extends TestCase
         $nestedComponentRegistry->recordNestedComponent('field', '«f1»');
         $nestedComponentRegistry->popTrackingScope();
 
-        $registry = new HydrationRegistry($this->assetCollector, nestedComponentRegistry: $nestedComponentRegistry);
+        $registry = new HydrationRegistry(
+            $this->assetCollector,
+            $this->globalContext,
+            nestedComponentRegistry: $nestedComponentRegistry,
+        );
         $registry->add('primitives', 'field', new HydrationEntry('«f1»', [], true, ['name' => 'firstName']));
 
         $this->assertStringContainsString('nestedComponents', $this->capturedJs);
         $this->assertStringContainsString('field-array:«f0»:itemTemplate', $this->capturedJs);
+    }
+
+    #[Test]
+    public function takesTheGlobalsFromWhateverTheGlobalContextExposes(): void
+    {
+        $registry = new HydrationRegistry($this->assetCollector, new ProjectGlobalContext());
+
+        $this->assertSame(
+            ['siteName' => 'Demo', 'lightbox' => ['icons' => ['close' => '<svg/>']], 'plain' => true],
+            $registry->getGlobals(),
+        );
+    }
+
+    #[Test]
+    public function emitsTheScriptWhenOnlyAGlobalWasRead(): void
+    {
+        $registry = new HydrationRegistry($this->assetCollector, new ProjectGlobalContext());
+
+        $registry->requestGlobals();
+
+        $this->assertStringContainsString('"siteName"', (string)$this->capturedJs);
+        $this->assertStringContainsString('"close":"\u003Csvg/\u003E"', (string)$this->capturedJs);
+    }
+
+    #[Test]
+    public function emitsNoScriptWhenNeitherAComponentNorAGlobalWasUsed(): void
+    {
+        $registry = new HydrationRegistry($this->assetCollector, new ProjectGlobalContext());
+
+        $registry->getGlobals();
+
+        $this->assertNull($this->capturedJs);
+    }
+
+    #[Test]
+    public function encodesEveryEmptyMapAsAnObject(): void
+    {
+        $registry = new HydrationRegistry($this->assetCollector, new GlobalContext());
+        unset($GLOBALS['TYPO3_REQUEST']);
+
+        $registry->requestGlobals();
+
+        $this->assertMatchesRegularExpression(
+            '/globals:\{"debug":false\},\s*hydrationData:\{\},\s*nestedComponents:\{\}/',
+            (string)$this->capturedJs,
+        );
+    }
+
+    #[Test]
+    public function forgetsTheRequestedGlobalsOnClear(): void
+    {
+        $registry = new HydrationRegistry($this->assetCollector, new ProjectGlobalContext());
+        $registry->requestGlobals();
+        $this->capturedJs = null;
+
+        $registry->clear();
+        $registry->getGlobals();
+
+        $this->assertNull($this->capturedJs);
     }
 }

@@ -8,6 +8,7 @@ import type {
 } from '../types';
 import { applyClientPropConverters } from './client-prop-converters';
 import { Component } from './component';
+import { devWarn, isDebug } from './debug';
 import { removePortalsWithin } from './portal';
 
 /**
@@ -116,7 +117,13 @@ export function getComponentInstance<
     ] as T | undefined;
 }
 
-/** @internal */
+/**
+ * The request-wide values the server rendered into the page: `locale`, `debug` and whatever the
+ * project's global context exposes with `#[ExposeToClient]`.
+ *
+ * @returns The globals, or `null` when the page has none: `window.FluidPrimitives` only exists when a
+ * component hydrates or a global was read while rendering.
+ */
 export function getGlobals(): FluidPrimitivesGlobals | null {
     const globals = window.FluidPrimitives?.globals;
 
@@ -127,14 +134,35 @@ export function getGlobals(): FluidPrimitivesGlobals | null {
     return globals;
 }
 
-/** @internal */
-export function getGlobal<T = unknown>(key: string): T | undefined {
+/**
+ * Reads one global by its dot path, e.g. `getGlobal('lightbox.icons')`. A key that literally contains a
+ * dot wins over the nested lookup. Walks objects and arrays and never throws: a missing segment, or a
+ * page without globals, gives `fallback` (or `undefined` without one).
+ *
+ * @param path - The name of the global, with `.` between nesting levels.
+ * @param fallback - Returned when the global does not exist.
+ */
+export function getGlobal<T = unknown>(path: string): T | undefined;
+export function getGlobal<T>(path: string, fallback: T): T;
+export function getGlobal<T>(path: string, fallback?: T): T | undefined {
     const globals = getGlobals();
-    if (!globals || !(key in globals)) {
-        return undefined;
+    if (!globals) {
+        return fallback;
     }
 
-    return globals[key] as T;
+    if (Object.hasOwn(globals, path)) {
+        return globals[path] as T;
+    }
+
+    let current: unknown = globals;
+    for (const segment of path.split('.')) {
+        if (current === null || typeof current !== 'object' || !Object.hasOwn(current, segment)) {
+            return fallback;
+        }
+        current = (current as Record<string, unknown>)[segment];
+    }
+
+    return current as T;
 }
 
 /**
@@ -217,7 +245,11 @@ export function destroyComponentsWithin(root: Element | Document) {
                 const hasRootPartInNode = root.querySelector(rootPartSelector) !== null;
 
                 if (isRootItself || hasRootPartInNode) {
-                    console.log(`Destroying component instance: ${instance.getClientName()}:${id}`);
+                    if (isDebug()) {
+                        console.log(
+                            `[fluid-primitives] Destroying component instance: ${instance.getClientName()}:${id}`
+                        );
+                    }
                     instance.destroy();
                     delete instances[id];
                 }
@@ -252,7 +284,13 @@ export function mount<
 ): T | undefined {
     const { namespace, baseName } = parseNamespacedComponentName(componentName);
     const hydrationData = getHydrationData(componentName, rootId);
-    if (!hydrationData) return undefined;
+    if (!hydrationData) {
+        devWarn(
+            `mount(): no hydration data for ${componentName} "${rootId}". Is it rendered on this page, ` +
+                'or is it a fragment inserted without its payload?'
+        );
+        return undefined;
+    }
 
     const instance = callback({
         ...hydrationData,
@@ -267,7 +305,14 @@ export function mount<
     const clientBaseName = toKebabCase(baseName);
     window.FluidPrimitives.componentInstances[namespace] ??= {};
     window.FluidPrimitives.componentInstances[namespace][clientBaseName] ??= {};
-    window.FluidPrimitives.componentInstances[namespace][clientBaseName][rootId] = instance;
+    const instances = window.FluidPrimitives.componentInstances[namespace][clientBaseName];
+    if (instances[rootId] && instances[rootId] !== instance) {
+        devWarn(
+            `mount(): ${componentName} "${rootId}" is already mounted and is replaced without being destroyed. ` +
+                'Call destroy() on the old instance first.'
+        );
+    }
+    instances[rootId] = instance;
 
     return instance;
 }

@@ -1,5 +1,6 @@
 import { createMachine } from '@zag-js/core';
 import { nextTick } from '@zag-js/dom-query';
+import { devWarn } from '../../../Client';
 import * as dom from './form.dom';
 import {
     focusField,
@@ -110,6 +111,9 @@ export const machine = createMachine<FormSchema>({
 
                     const onSubmit = prop('onSubmit');
                     if (!onSubmit) {
+                        devWarn(
+                            'Form has no onSubmit: a valid submit is only prevented and shown as success. Pass onSubmit to send the values.'
+                        );
                         send({ type: 'SUCCESS' });
                         return;
                     }

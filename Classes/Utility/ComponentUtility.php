@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Utility;
 
 use Jramke\FluidPrimitives\Contexts\AbstractComponentContext;
-use Jramke\FluidPrimitives\Contexts\BaseContext;
 use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
+use Jramke\FluidPrimitives\Contexts\DefaultContext;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Configuration\ConfigurationManagerInterface;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
@@ -108,7 +108,7 @@ class ComponentUtility
         string $resolvedTemplateName,
         array $additionalNamespaces,
     ): string {
-        $baseClass = BaseContext::class;
+        $baseClass = DefaultContext::class;
         $backslashPosition = strrpos($baseClass, needle: '\\');
         $baseNamespace = $backslashPosition === false ? '' : substr($baseClass, offset: 0, length: $backslashPosition);
 

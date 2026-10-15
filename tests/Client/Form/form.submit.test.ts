@@ -47,6 +47,30 @@ afterEach(() => {
     instances.splice(0).forEach(instance => instance.destroy());
     vi.useRealTimers();
     vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+    // @ts-expect-error back to a page without globals
+    delete window.FluidPrimitives;
+});
+
+describe('submitting a form without onSubmit', () => {
+    test('treats the submit as a success and says so in debug', async () => {
+        vi.useFakeTimers();
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        window.FluidPrimitives = { globals: { debug: true } } as Window['FluidPrimitives'];
+        const { form, submit } = mount(field('f-a', 'a', input('f-a', 'a')));
+
+        submit();
+        await settle();
+
+        expect(form.machine.state.get()).toBe('success');
+        expect(warn).toHaveBeenCalledWith(expect.stringContaining('Form has no onSubmit'));
+
+        warn.mockClear();
+        window.FluidPrimitives = { globals: { debug: false } } as Window['FluidPrimitives'];
+        submit();
+        await settle();
+        expect(warn).not.toHaveBeenCalled();
+    });
 });
 
 describe('submitting a form of fields', () => {

@@ -37,7 +37,7 @@ class NumberInputContext extends AbstractComponentContext
     #[ExposeToClient(excludeIfNull: true)]
     public function getLocale(): ?string
     {
-        return $this->translator->getLocale($this->getRequest());
+        return Typed::stringOrNull($this->get('locale')) ?: Typed::stringOrNull($this->getGlobals()->get('locale'));
     }
 
     #[ExposeToClient]
