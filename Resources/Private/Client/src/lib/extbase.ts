@@ -1,5 +1,3 @@
-import { parseFieldPath, stringifyFieldPathAsBrackets } from './field-path';
-
 /**
  * Reads the Extbase argument namespace (`tx_docs_docs`) of a frontend action URL, from its
  * `[controller]` or `[action]` query key. `UriBuilder::uriFor()` nests those under it, also for a
@@ -25,27 +23,21 @@ function flatten(value: unknown, key: string): [string, string | Blob][] {
     return [[key, value instanceof Blob ? value : String(value)]];
 }
 
-/** The name every key of the data is nested under: `tx_docs_docs[event]`, `event` or `''`. */
-function baseName(prefix: string, objectName: string | undefined): string {
-    return stringifyFieldPathAsBrackets([prefix, objectName ?? ''].filter(Boolean));
-}
-
 /**
- * Names the fields of a form the way Extbase expects them: `address.city` becomes
- * `tx_docs_docs[event][address][city]`. A name that already starts with the prefix is Extbase's own
- * hidden field (`__trustedProperties`, `__identity`) and is kept.
+ * The names and values of `data` below `prefix[objectName]`. A top-level key equal to the prefix holds
+ * Extbase's own fields (`__trustedProperties`, `__identity`), which the values of a form carry that way:
+ * it stays below the prefix alone.
  */
-function nameFormData(data: FormData, prefix: string, objectName: string | undefined): FormData {
-    const body = new FormData();
-    const head = [prefix, objectName ?? ''].filter(Boolean);
-    for (const [key, value] of data.entries()) {
-        const named =
-            key === '' || (prefix && key.startsWith(`${prefix}[`))
-                ? key
-                : stringifyFieldPathAsBrackets([...head, ...parseFieldPath(key)]);
-        body.append(named, value);
-    }
-    return body;
+function entriesOf(
+    data: Record<string, unknown> | undefined,
+    prefix: string,
+    objectName: string | undefined
+): [string, string | Blob][] {
+    const base = prefix && objectName ? `${prefix}[${objectName}]` : prefix || (objectName ?? '');
+    if (!prefix || !data) return flatten(data, base);
+
+    const { [prefix]: own, ...rest } = data;
+    return [...flatten(own, prefix), ...flatten(rest, base)];
 }
 
 /**
@@ -116,7 +108,7 @@ export const extbase = {
     ): Promise<Response> {
         const { prefix = getArgumentPrefix(url) ?? '', objectName, ...init } = options ?? {};
         const target = new URL(url, document.baseURI);
-        for (const [key, value] of flatten(data, baseName(prefix, objectName))) {
+        for (const [key, value] of entriesOf(data, prefix, objectName)) {
             target.searchParams.append(key, String(value));
         }
         return send(target, { ...init, method: 'GET' });
@@ -128,26 +120,21 @@ export const extbase = {
      *
      * @param url - The URL of the action.
      * @param data - The arguments. Nested objects and arrays are flattened into bracket notation, `null`
-     * and `undefined` are skipped, a `File` or `Blob` is sent as it is. The names of a `FormData` (dot or
-     * bracket notation) are nested the same way, except those that already start with the prefix.
+     * and `undefined` are skipped, a `File` or `Blob` is sent as it is. The `toObject()` of the values of
+     * a `Form` works as it is.
      * @param options - More options for `fetch`, e.g. `{ signal }`, and the `prefix` and `objectName` to nest the data under.
      * @returns The native `Response`. A non-2xx status resolves normally, check `response.ok`, except a
      * `422` with a JSON object as body, which throws an {@link ExtbaseValidationError}.
      */
     async post(
         url: string,
-        data?: Record<string, unknown> | FormData,
+        data?: Record<string, unknown>,
         options?: ExtbaseRequestInit
     ): Promise<Response> {
         const { prefix = getArgumentPrefix(url) ?? '', objectName, ...init } = options ?? {};
-        let body: FormData;
-        if (data instanceof FormData) {
-            body = nameFormData(data, prefix, objectName);
-        } else {
-            body = new FormData();
-            for (const [key, value] of flatten(data, baseName(prefix, objectName))) {
-                body.append(key, value);
-            }
+        const body = new FormData();
+        for (const [key, value] of entriesOf(data, prefix, objectName)) {
+            body.append(key, value);
         }
         return send(url, { ...init, method: 'POST', body });
     },

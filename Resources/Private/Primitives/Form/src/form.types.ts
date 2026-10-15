@@ -97,20 +97,19 @@ export interface FormProps {
     inputDebounceMs?: number;
     /**
      * Called with the values once the form is valid and submitted. Return `true` for success,
-     * `false` for an error, or field errors to mark the form invalid. `post(url)` submits the form
-     * as `FormData` with the names Extbase expects. A 422 JSON response of `JsonValidationErrorsTrait`
-     * is mapped to field errors, or to the error text of the form for the errors of the object itself.
+     * `false` for an error, or field errors to mark the form invalid. Send the values with
+     * `extbase.post(api.getAction(), values.toObject(), { prefix: api.getFieldNamePrefix(), objectName: api.getObjectName() })`:
+     * a 422 JSON response of `JsonValidationErrorsTrait` it throws is mapped to field errors, or to the
+     * error text of the form for the errors of the object itself.
      */
     onSubmit?: ({
         values,
         api,
         event,
-        post,
     }: {
         values: FormValues;
         api: FormApi;
         event: JSX.FormEvent<HTMLElement>;
-        post: (url: string, init?: RequestInit) => Promise<Response>;
     }) => Promise<FormSubmitResult> | FormSubmitResult;
     /** Called every time the form state changes. Use it to update UI the form does not wire itself. */
     render?: (form: Form) => void;
@@ -175,6 +174,10 @@ export interface FormApi {
     getFormEl(): HTMLFormElement | null;
     /** The `action` of the form, an empty string if it has none. */
     getAction(): string;
+    /** The Extbase argument namespace (`tx_events_list`) of the action the form submits to. */
+    getFieldNamePrefix(): string | undefined;
+    /** The `objectName` of the form: the name of the object its fields belong to. */
+    getObjectName(): string | undefined;
     /** Resets the form to its initial state. */
     reset(): void;
     /** Picks up fields that were added or removed after the form was hydrated. */

@@ -7,7 +7,7 @@
 import { setup } from '@zag-js/core';
 import { observeChildren, trackFormControl } from '@zag-js/dom-query';
 import { isEqual } from '@zag-js/utils';
-import { trimArraySuffix } from '../../../Client/src/lib/field-path';
+import { trimArraySuffix } from '../../Form/src/form.path';
 import { getFormMachineFor } from '../../Form/src/form.registry';
 import * as dom from './field.dom';
 import type { FieldParams, FieldSchema, ValidateResult, ValiditySnapshot } from './field.types';

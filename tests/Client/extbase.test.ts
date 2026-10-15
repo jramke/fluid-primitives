@@ -68,9 +68,39 @@ test('an explicit prefix wins over the one of the URL and an empty one sends unp
     expect(new URL(calls[2].url, 'https://example.com').searchParams.get('tx_docs_docs[q]')).toBe(
         'x'
     );
-    // the prefix is an option of extbase, not something fetch should see
+    // the options of extbase are not something fetch should see
     expect(calls[0].init).not.toHaveProperty('prefix');
     expect(calls[0].init).not.toHaveProperty('objectName');
+});
+
+test('an objectName nests the data between the prefix and the keys, the prefix key of form values stays below the prefix', async () => {
+    const calls = stubFetch(() => new Response('{}'));
+    const values = {
+        title: 'x',
+        address: { city: 'Berlin' },
+        tx_docs_docs: { __trustedProperties: 'signed', event: { __identity: '42' } },
+    };
+    await extbase.post(ACTION_URL, values, { objectName: 'event' });
+    await extbase.post('/save', { title: 'x' }, { objectName: 'event' });
+    await extbase.post('/save', values, { prefix: '', objectName: 'event' });
+    await extbase.get('/find', { q: 'x' }, { prefix: 'tx_docs_docs', objectName: 'demand' });
+
+    const keys = (call: number) => [...(calls[call].init.body as FormData).keys()];
+    expect(keys(0)).toEqual([
+        'tx_docs_docs[__trustedProperties]',
+        'tx_docs_docs[event][__identity]',
+        'tx_docs_docs[event][title]',
+        'tx_docs_docs[event][address][city]',
+    ]);
+    expect(keys(1)).toEqual(['event[title]']);
+    // without a prefix there is nothing to hoist
+    expect(keys(2)).toContain('event[tx_docs_docs][__trustedProperties]');
+    expect(
+        new URL(calls[3].url, 'https://example.com').searchParams.get('tx_docs_docs[demand][q]')
+    ).toBe('x');
+    expect((calls[0].init.body as FormData).get('tx_docs_docs[__trustedProperties]')).toBe(
+        'signed'
+    );
 });
 
 test('a 422 with a JSON object throws the messages by property path, any other response resolves', async () => {
@@ -91,48 +121,4 @@ test('a 422 with a JSON object throws the messages by property path, any other r
         vi.stubGlobal('fetch', async () => response);
         expect(await extbase.post(ACTION_URL, {})).toBe(response);
     }
-});
-
-test('an objectName nests the data between the prefix and the keys, for data and for a FormData of fields', async () => {
-    const calls = stubFetch(() => new Response('{}'));
-    await extbase.post(
-        ACTION_URL,
-        { title: 'x', address: { city: 'Berlin' } },
-        { objectName: 'event' }
-    );
-    await extbase.post('/save', { title: 'x' }, { objectName: 'event' });
-
-    const form = new FormData();
-    form.append('title', 'x');
-    form.append('address.city', 'Berlin');
-    form.append('attendees[0].name', 'Ann');
-    form.append('tx_docs_docs[__trustedProperties]', 'signed');
-    await extbase.post(ACTION_URL, form, { objectName: 'event' });
-    await extbase.post('/save', form, { prefix: '', objectName: 'event' });
-    await extbase.post('/save', form, { prefix: 'tx_docs_docs' });
-    await extbase.get('/find', { q: 'x' }, { prefix: 'tx_docs_docs', objectName: 'demand' });
-
-    const keys = (call: number) => [...(calls[call].init.body as FormData).keys()];
-    expect(keys(0)).toEqual(['tx_docs_docs[event][title]', 'tx_docs_docs[event][address][city]']);
-    expect(keys(1)).toEqual(['event[title]']);
-    // a name that already starts with the prefix is one of Extbase's hidden fields
-    expect(keys(2)).toEqual([
-        'tx_docs_docs[event][title]',
-        'tx_docs_docs[event][address][city]',
-        'tx_docs_docs[event][attendees][0][name]',
-        'tx_docs_docs[__trustedProperties]',
-    ]);
-    expect(keys(3)).toEqual([
-        'event[title]',
-        'event[address][city]',
-        'event[attendees][0][name]',
-        'event[tx_docs_docs][__trustedProperties]',
-    ]);
-    expect(keys(4)[0]).toBe('tx_docs_docs[title]');
-    expect(
-        new URL(calls[5].url, 'https://example.com').searchParams.get('tx_docs_docs[demand][q]')
-    ).toBe('x');
-    expect((calls[2].init.body as FormData).get('tx_docs_docs[__trustedProperties]')).toBe(
-        'signed'
-    );
 });

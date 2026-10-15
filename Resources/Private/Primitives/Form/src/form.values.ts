@@ -3,7 +3,7 @@ import {
     parseFieldPath,
     trimArraySuffix,
     type FieldPathSegment,
-} from '../../../Client/src/lib/field-path';
+} from './form.path';
 import type { FormValueLeaf, FormValues, FormValuesObject, FormValueTree } from './form.types';
 
 export function createFormValues(formData: FormData): FormValues {

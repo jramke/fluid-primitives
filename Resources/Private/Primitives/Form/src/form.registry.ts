@@ -1,6 +1,6 @@
 import type { Machine } from '../../../Client';
-import { trimArraySuffix } from '../../../Client/src/lib/field-path';
 import type { FieldMachine } from '../../Field/src/field.registry';
+import { trimArraySuffix } from './form.path';
 
 export type FormMachine = Machine<any>;
 export type { FieldMachine };

@@ -1,4 +1,4 @@
-import { trimArraySuffix } from '../../../Client/src/lib/field-path';
+import { trimArraySuffix } from '../../Form/src/form.path';
 
 export type FieldValue = FormDataEntryValue | FormDataEntryValue[] | null;
 

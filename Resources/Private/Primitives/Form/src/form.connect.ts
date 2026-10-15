@@ -1,10 +1,10 @@
 import type { Service } from '@zag-js/core';
 import type { NormalizeProps, PropTypes } from '@zag-js/types';
-import { trimArraySuffix } from '../../../Client/src/lib/field-path';
 import { createFieldHandle, type FieldHandle } from '../../Field/src/field.handle';
 import { parts } from './form.anatomy';
 import * as dom from './form.dom';
 import { getRegisteredFieldMachines, renameFieldMachine } from './form.fields';
+import { trimArraySuffix } from './form.path';
 import type { FormApi, FormDirty, FormErrors, FormSchema, FormTouched } from './form.types';
 import { createFormValues } from './form.values';
 
@@ -123,6 +123,12 @@ export function connect<T extends PropTypes>(
         },
         getAction() {
             return formEl?.getAttribute('action') || '';
+        },
+        getFieldNamePrefix() {
+            return prop('fieldNamePrefix');
+        },
+        getObjectName() {
+            return prop('objectName');
         },
         reset() {
             send({ type: 'RESET' });

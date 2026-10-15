@@ -1,6 +1,6 @@
 import { createMachine } from '@zag-js/core';
 import { nextTick } from '@zag-js/dom-query';
-import { devWarn, extbase, ExtbaseValidationError } from '../../../Client';
+import { devWarn, ExtbaseValidationError } from '../../../Client';
 import * as dom from './form.dom';
 import {
     focusField,
@@ -129,12 +129,6 @@ export const machine = createMachine<FormSchema>({
                             values: submittedValues,
                             api: event.detail.api,
                             event: event.detail.event,
-                            post: (url, init) =>
-                                extbase.post(url, submittedFormData, {
-                                    ...init,
-                                    prefix: prop('fieldNamePrefix'),
-                                    objectName: prop('objectName'),
-                                }),
                         });
 
                         if (result === true) {
