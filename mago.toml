@@ -4,9 +4,19 @@ php-version = "8.3.0"
 
 [source]
 workspace = "."
+# Standalone (CI) lints this folder, the monorepo root passes paths on the CLI against this same file.
 paths = ["Classes", "Configuration", "tests"]
 includes = ["vendor"]
-excludes = ["node_modules/**", "**/*.svg", "**/*.xlf"]
+excludes = [
+    "Public/**",
+    "node_modules/**",
+    "packages/*/vendor/**",
+    "packages/*/public/**",
+    "config/system/settings.php",
+    "**/rector.php",
+    "**/*.svg",
+    "**/*.xlf",
+]
 
 [formatter]
 preset = "default"
@@ -16,7 +26,7 @@ indent-heredoc = false
 
 [linter]
 integrations = ["symfony"]
-excludes = ["tests/**"]
+excludes = ["**/tests/**"]
 
 [linter.rules]
 no-shorthand-ternary = { enabled = false }
@@ -30,4 +40,4 @@ excessive-parameter-list = { threshold = 5, constructor-threshold = 10 }
 
 [analyzer]
 ignore = ["invalid-type-cast"]
-excludes = ["tests/**"]
+excludes = ["**/tests/**"]
