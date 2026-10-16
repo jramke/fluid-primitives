@@ -178,11 +178,7 @@ export function getGlobal<T>(path: string, fallback?: T): T | undefined {
  *
  * @example
  * ```typescript
- * mountAll('ui:accordion', ({ props }) => {
- *     const accordion = new Accordion(props);
- *     accordion.init();
- *     return accordion;
- * });
+ * mountAll('ui:accordion', ({ props }) => new Accordion(props).init());
  * ```
  */
 export function mountAll<K extends KnownComponentName | (string & {})>(

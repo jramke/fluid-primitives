@@ -44,6 +44,7 @@ export abstract class FieldAwareComponent<Props, Api> extends Component<Props, A
     init() {
         super.init();
         this.notifyFieldHydrated();
+        return this;
     }
 
     protected withFieldProps(props: Props): Props {

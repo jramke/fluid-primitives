@@ -79,6 +79,12 @@ describe('Component lifecycle', () => {
         expect(probe.hydrator.rootId).toBe('p1');
     });
 
+    test('init() returns the instance, so a mount callback can return it directly', () => {
+        probe = new Probe({ id: 'p1' });
+
+        expect(probe.init()).toBe(probe);
+    });
+
     test('a prop change and refresh() both connect a fresh api and render again', () => {
         probe = new Probe({ id: 'p1', label: 'raw' });
         probe.init();
