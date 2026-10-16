@@ -1,0 +1,33 @@
+#:schema https://mago.carthage.software/1.48.1/schema.json
+version = "1"
+php-version = "8.3.0"
+
+[source]
+workspace = "."
+paths = ["Classes", "Configuration", "tests"]
+includes = ["vendor"]
+excludes = ["node_modules/**", "**/*.svg", "**/*.xlf"]
+
+[formatter]
+preset = "default"
+space-after-cast-unary-prefix-operators = false
+line-before-binary-operator = false
+indent-heredoc = false
+
+[linter]
+integrations = ["symfony"]
+excludes = ["tests/**"]
+
+[linter.rules]
+no-shorthand-ternary = { enabled = false }
+readable-literal = { enabled = false }
+tagged-todo = { enabled = false }
+cyclomatic-complexity = { threshold = 25 }
+kan-defect = { threshold = 3.0 }
+too-many-methods = { threshold = 12 }
+no-boolean-flag-parameter = { enabled = false }
+excessive-parameter-list = { threshold = 5, constructor-threshold = 10 }
+
+[analyzer]
+ignore = ["invalid-type-cast"]
+excludes = ["tests/**"]

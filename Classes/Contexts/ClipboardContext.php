@@ -29,6 +29,8 @@ class ClipboardContext extends AbstractComponentContext
     #[ExposeToClient]
     public function getTranslations(): array
     {
+        // translationsWithDefaults() merges user overrides, so it can't be typed more precisely than array.
+        // @mago-expect analysis:invalid-return-statement
         return $this->translationsWithDefaults([
             'triggerLabelIdle' => 'clipboard.triggerLabelIdle',
             'triggerLabelCopied' => 'clipboard.triggerLabelCopied',

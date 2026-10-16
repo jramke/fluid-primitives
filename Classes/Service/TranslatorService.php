@@ -8,6 +8,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use TYPO3\CMS\Core\Localization\LanguageService;
 use TYPO3\CMS\Core\Localization\LanguageServiceFactory;
+use TYPO3\CMS\Core\Localization\Locale;
 use TYPO3\CMS\Core\Site\Entity\Site;
 use TYPO3\CMS\Core\Site\Entity\SiteLanguage;
 
@@ -33,7 +34,7 @@ final class TranslatorService
     {
         $locale = $this->getSiteLanguage($request)?->getLocale();
 
-        return $locale === null ? null : (string)$locale;
+        return $locale instanceof Locale ? (string)$locale : null;
     }
 
     private function getTranslator(ServerRequestInterface $request): LanguageService

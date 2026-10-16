@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\ViewHelpers;
 
+use Jramke\FluidPrimitives\Domain\Dto\ComponentIdentity;
 use Jramke\FluidPrimitives\Utility\ComponentRootUtility;
 use Jramke\FluidPrimitives\Utility\Typed;
+use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
 /**
@@ -43,17 +45,17 @@ class CallViewHelper extends AbstractViewHelper
         // @mago-expect analysis:mixed-assignment
         $object = $this->renderChildren();
         if (!$object) {
-            $identity = $this->renderingContext === null
-                ? null
-                : ComponentRootUtility::currentIdentity($this->renderingContext);
+            $identity = $this->renderingContext instanceof RenderingContextInterface
+                ? ComponentRootUtility::currentIdentity($this->renderingContext)
+                : null;
             throw new \RuntimeException(
-                $identity === null
-                    ? 'No object provided to call method on.'
-                    : sprintf(
+                $identity instanceof ComponentIdentity
+                    ? sprintf(
                         '<%s> must be used inside its root component (e.g. <ui:%s.root>) - no context was found.',
                         $identity->baseName,
                         $identity->baseName,
-                    ),
+                    )
+                    : 'No object provided to call method on.',
                 2131365274,
             );
         }

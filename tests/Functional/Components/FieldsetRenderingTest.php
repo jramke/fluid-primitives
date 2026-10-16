@@ -6,6 +6,7 @@ namespace Jramke\FluidPrimitives\Tests\Functional\Components;
 
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
+use Jramke\FluidPrimitives\Tests\Helper\HtmlElement;
 use PHPUnit\Framework\Attributes\Test;
 
 final class FieldsetRenderingTest extends FunctionalTestCase
@@ -92,7 +93,7 @@ final class FieldsetRenderingTest extends FunctionalTestCase
     }
 
     /**
-     * @return array<string, \Jramke\FluidPrimitives\Tests\Helper\HtmlElement>
+     * @return array<string, HtmlElement>
      */
     private function elementsByRootId(string $html): array
     {

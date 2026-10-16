@@ -20,10 +20,8 @@ class ComponentUtility
         static $counter = 0;
         static $requestSalt = null;
 
-        if ($requestSalt === null) {
-            // 6 bytes => 48 bits => 8 base64url chars, generated once per request
-            $requestSalt = rtrim(strtr(base64_encode(random_bytes(6)), to: '-_', from: '+/'), characters: '=');
-        }
+        // 6 bytes => 48 bits => 8 base64url chars, generated once per request
+        $requestSalt ??= rtrim(strtr(base64_encode(random_bytes(6)), to: '-_', from: '+/'), characters: '=');
 
         return '«' . $prefix . $requestSalt . base_convert((string)++$counter, from_base: 10, to_base: 36) . '»';
     }

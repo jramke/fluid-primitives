@@ -16,7 +16,7 @@ final class ComboboxRenderingTest extends FunctionalTestCase
     private const string POPUP_DIALOG = "{f:constant(name: 'Jramke\\FluidPrimitives\\Enum\\PopupType::Dialog')}";
     private const string SELECTION_CLEAR = "{f:constant(name: 'Jramke\\FluidPrimitives\\Enum\\ComboboxSelectionBehavior::Clear')}";
 
-    private static function cities(): ListCollection
+    private function cities(): ListCollection
     {
         return new ListCollection([
             ['value' => 'berlin', 'label' => 'Berlin'],
@@ -233,7 +233,7 @@ final class ComboboxRenderingTest extends FunctionalTestCase
                     </f:for>
                 </primitives:combobox.content>
             </primitives:combobox.root>
-        ', ['collection' => self::cities()]);
+        ', ['collection' => $this->cities()]);
 
         $items = $this->elementsByValue($html, 'data-combobox-item');
         $this->assertSame(['berlin', 'paris', 'rome'], array_keys($items));
@@ -452,7 +452,7 @@ final class ComboboxRenderingTest extends FunctionalTestCase
                 </primitives:combobox.control>
             </primitives:combobox.root>
         ',
-            ['collection' => self::cities()],
+            ['collection' => $this->cities()],
         );
 
         $this->assertSame($value, $this->elementWith($html, 'data-combobox-input')->get('value') ?? '');
@@ -474,7 +474,7 @@ final class ComboboxRenderingTest extends FunctionalTestCase
                     </primitives:combobox.content>
                 </ui:portal>
             </primitives:combobox.root>
-        ', ['collection' => self::cities()]);
+        ', ['collection' => $this->cities()]);
 
         // the root and the trigger stay where they are, the content is gone from the markup ...
         $this->assertSame(

@@ -38,7 +38,6 @@ final readonly class ComponentHydrationCollector
         private ClientPropValueResolver $clientPropValueResolver,
     ) {}
 
-    // @mago-expect lint:halstead
     public function collectForRootComponent(ComponentHydrationCandidate $candidate): string
     {
         $rendered = $candidate->rendered;
@@ -123,12 +122,15 @@ final readonly class ComponentHydrationCollector
         // prop at all never reaches this point (see the early return above) and so never needs its
         // collection globally registered just to render - only a component that's actually about
         // to be hydrated does.
-        $namespaceIdentifier = $candidate->namespaceIdentifier ?? throw new \RuntimeException(sprintf(
-            'Cannot hydrate "%s": its component collection is not registered under any Fluid ' .
-            'namespace via $GLOBALS[\'TYPO3_CONF_VARS\'][\'SYS\'][\'fluid\'][\'namespaces\'] - a ' .
-            'component collection must be globally registered for its components to be hydratable.',
-            $candidate->clientBaseName,
-        ));
+        $namespaceIdentifier = $candidate->namespaceIdentifier ?? throw new \RuntimeException(
+            sprintf(
+                'Cannot hydrate "%s": its component collection is not registered under any Fluid ' .
+                'namespace via $GLOBALS[\'TYPO3_CONF_VARS\'][\'SYS\'][\'fluid\'][\'namespaces\'] - a ' .
+                'component collection must be globally registered for its components to be hydratable.',
+                $candidate->clientBaseName,
+            ),
+            3552683359,
+        );
 
         // Recorded before add() - add() self-triggers the inline hydration script's rebuild, and
         // this way that rebuild already reflects this component's own nested-tracking entry too,

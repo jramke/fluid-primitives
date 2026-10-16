@@ -55,12 +55,10 @@ final readonly class ComponentIdentityResolver
                 1_788_200_001,
             );
         }
-        if ($rootId === null) {
-            // For a non-root component we assign the rootId of the parent component when rendering subcomponents.
-            $rootId = $isRenderedAsRoot
-                ? ComponentUtility::id()
-                : Typed::stringOrNull($renderingContext->getVariableProvider()->get('rootId'));
-        }
+        // For a non-root component we assign the rootId of the parent component when rendering subcomponents.
+        $rootId ??= $isRenderedAsRoot
+            ? ComponentUtility::id()
+            : Typed::stringOrNull($renderingContext->getVariableProvider()->get('rootId'));
 
         $baseName = ComponentNameUtility::getComponentBaseNameFromViewHelperName($viewHelperName, $isDeclaredRoot);
         $clientBaseName = ComponentNameUtility::camelCaseToLowerCaseDashed($baseName);

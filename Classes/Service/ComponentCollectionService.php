@@ -94,11 +94,13 @@ class ComponentCollectionService
 
             foreach ($delegateClassNames as $delegateClassName) {
                 if (
-                    is_string($delegateClassName) &&
-                    is_a($delegateClassName, ComponentCollectionInterface::class, allow_string: true)
+                    !is_string($delegateClassName) ||
+                    !is_a($delegateClassName, ComponentCollectionInterface::class, allow_string: true)
                 ) {
-                    $collections[$delegateClassName] = $delegateClassName;
+                    continue;
                 }
+
+                $collections[$delegateClassName] = $delegateClassName;
             }
         }
 
@@ -140,11 +142,14 @@ class ComponentCollectionService
                 // is_a() with allow_string degrades safely to `false` if it's ever not one.
                 // @mago-expect analysis:possibly-invalid-argument
                 if (
-                    is_string($delegateClassName) && is_a($delegateClassName, $collectionClassName, allow_string: true)
+                    !is_string($delegateClassName) ||
+                    !is_a($delegateClassName, $collectionClassName, allow_string: true)
                 ) {
-                    $resolvedNamespaceIdentifier = $namespaceIdentifier;
-                    break 2;
+                    continue;
                 }
+
+                $resolvedNamespaceIdentifier = $namespaceIdentifier;
+                break 2;
             }
         }
 

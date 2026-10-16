@@ -125,6 +125,8 @@ class SliderContext extends AbstractComponentContext
     #[ExposeToClient(excludeIfNull: true)]
     public function getDefaultValue(): ?array
     {
+        // `defaultValue` is declared type="mixed" and genuinely accepts either shape checked below.
+        // @mago-expect analysis:mixed-assignment
         $raw = $this->get('defaultValue');
         if ($raw === null || $raw === []) {
             return null;

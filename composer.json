@@ -20,6 +20,8 @@
         "typo3fluid/fluid": "^5"
     },
     "require-dev": {
+        "carthage-software/mago": "1.48.1",
+        "ssch/typo3-rector": "^3.14",
         "typo3/testing-framework": "^9.4"
     },
     "suggest": {
@@ -36,6 +38,23 @@
         "test": "php vendor/bin/phpunit -c phpunit.xml --testdox --colors=always --display-notices",
         "test:unit": "@test --testsuite=Unit",
         "test:functional": "@test --testsuite=Functional",
+        "format": "mago format",
+        "format:check": "mago format --check",
+        "mago:lint": "mago lint",
+        "mago:analyze": "mago analyze",
+        "rector:check": "rector process --dry-run",
+        "lint": [
+            "@rector:check",
+            "@mago:lint",
+            "@mago:analyze",
+            "@format:check"
+        ],
+        "lint:fix": [
+            "rector process",
+            "mago lint --fix --format-after-fix --unsafe",
+            "mago analyze --fix --format-after-fix --unsafe",
+            "@format"
+        ],
         "test:fromdocs": "php ../../vendor/bin/phpunit -c phpunit.xml --testdox --colors=always --display-notices",
         "prepare-release": [
             "rm -rf .github",
@@ -46,6 +65,8 @@
             "rm -rf scripts",
             "rm -rf tests",
             "rm -f phpunit.xml",
+            "rm -f mago.toml",
+            "rm -f rector.php",
             "rm -f tsconfig.json",
             "rm -f tsdown.config.ts",
             "rm -f vitest.config.ts",
