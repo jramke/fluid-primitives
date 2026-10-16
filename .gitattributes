@@ -6,6 +6,8 @@ scripts export-ignore
 tests export-ignore
 phpunit.xml export-ignore
 mago.toml export-ignore
+.prettierrc export-ignore
+.prettierignore export-ignore
 rector.php export-ignore
 .phpunit.cache export-ignore
 tsconfig.json export-ignore

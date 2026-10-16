@@ -1,0 +1,5 @@
+**/*.html
+composer.lock
+package-lock.json
+dist
+vendor

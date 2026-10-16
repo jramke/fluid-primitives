@@ -69,6 +69,8 @@
             "rm -rf tests",
             "rm -f phpunit.xml",
             "rm -f mago.toml",
+            "rm -f .prettierrc",
+            "rm -f .prettierignore",
             "rm -f rector.php",
             "rm -f tsconfig.json",
             "rm -f tsdown.config.ts",

@@ -142,7 +142,9 @@
         "version": "node scripts/version.js",
         "bump-zag": "node scripts/bump-zag.js",
         "test": "vitest run",
-        "types": "tsc --noEmit -p tsconfig.check.json"
+        "types": "tsc --noEmit -p tsconfig.check.json",
+        "format": "sh -c 'prettier --write --ignore-unknown ${@:-.}' --",
+        "format:check": "prettier --check ."
     },
     "peerDependencies": {
         "zod": "^4.0.0"
@@ -155,6 +157,8 @@
     "devDependencies": {
         "@types/node": "^22.15.17",
         "jsdom": "^30.1.2",
+        "prettier": "^3.6.2",
+        "prettier-plugin-organize-imports": "^4.3.0",
         "tsdown": "^0.21.7",
         "typescript": "^5.8.3",
         "valibot": "^1.1.0",
