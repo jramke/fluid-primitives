@@ -38,10 +38,10 @@
         "test": "php vendor/bin/phpunit -c phpunit.xml --testdox --colors=always --display-notices",
         "test:unit": "@test --testsuite=Unit",
         "test:functional": "@test --testsuite=Functional",
-        "format": "mago format",
-        "format:check": "mago format --check",
-        "mago:lint": "mago lint",
-        "mago:analyze": "mago analyze",
+        "format": "mago format Classes Configuration tests",
+        "format:check": "mago format Classes Configuration tests --check",
+        "mago:lint": "mago lint Classes Configuration tests",
+        "mago:analyze": "mago analyze Classes Configuration tests",
         "rector:check": "rector process --dry-run",
         "lint": [
             "@rector:check",
@@ -51,8 +51,8 @@
         ],
         "lint:fix": [
             "rector process",
-            "mago lint --fix --format-after-fix --unsafe",
-            "mago analyze --fix --format-after-fix --unsafe",
+            "mago lint Classes Configuration tests --fix --format-after-fix --unsafe",
+            "mago analyze Classes Configuration tests --fix --format-after-fix --unsafe",
             "@format"
         ],
         "test:fromdocs": "php ../../vendor/bin/phpunit -c phpunit.xml --testdox --colors=always --display-notices",
