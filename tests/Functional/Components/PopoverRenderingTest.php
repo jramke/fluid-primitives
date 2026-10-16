@@ -114,4 +114,21 @@ final class PopoverRenderingTest extends FunctionalTestCase
 
         $this->assertTrue($popoverData['props']['modal']);
     }
+
+    #[Test]
+    public function shipsOnlyThePositioningOptionsThatWereSet(): void
+    {
+        $this->renderTemplate('
+            <primitives:popover.root rootId="p" positioning="{ui:positioning(placement: \'right-start\', gutter: 12)}">
+                <primitives:popover.trigger>Open</primitives:popover.trigger>
+                <primitives:popover.positioner>
+                    <primitives:popover.content>Content</primitives:popover.content>
+                </primitives:popover.positioner>
+            </primitives:popover.root>
+        ');
+
+        $positioning = HydrationRegistry::getInstance()->get('primitives', 'popover', 'p')['props']['positioning'];
+
+        $this->assertSame('{"placement":"right-start","gutter":12}', json_encode($positioning, JSON_THROW_ON_ERROR));
+    }
 }
