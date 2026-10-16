@@ -1,8 +1,8 @@
 import { extbase, mountAll } from 'fluid-primitives';
 import { Form } from 'fluid-primitives/form';
 
-mountAll('ui:form', ({ props }) => {
-    const form = new Form({
+mountAll('ui:form', ({ props }) =>
+    new Form({
         ...props,
         onSubmit: async ({ api, values }) => {
             const response = await extbase.post(api.getAction(), values.toObject(), {
@@ -19,7 +19,5 @@ mountAll('ui:form', ({ props }) => {
             api.setSuccessText(data.message ?? null);
             return true;
         },
-    });
-    form.init();
-    return form;
-});
+    }).init()
+);

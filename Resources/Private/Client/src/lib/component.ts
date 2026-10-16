@@ -116,12 +116,15 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
     /**
      * Builds everything the instance runs on - `userProps`, hydrator, machine and api - then renders
      * once and starts the machine. Call it once after constructing.
+     *
+     * @returns The instance itself, so a `mountAll()`/`mount()` callback can return it right away:
+     * `return new Collapsible(props).init();`.
      */
     // None of it happens in the constructor on purpose: `transformProps`, `initMachine` and
     // `initApi` are overridden by subclasses, and a subclass' own field initializers only run after
     // `super()` returns. A hook called from the base constructor would see those fields unset, and
     // whatever it assigned to one would be reset right afterwards.
-    init() {
+    init(): this {
         this.#userProps = this.transformProps(this.initialProps);
         this.#hydrator = this.initHydrator(this.#userProps);
         this.#machine = this.initMachine(this.#userProps);
@@ -133,6 +136,8 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
             this.render();
         });
         this.#machine.start();
+
+        return this;
     }
 
     /**

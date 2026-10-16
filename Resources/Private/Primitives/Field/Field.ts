@@ -72,6 +72,7 @@ export class Field extends Component<FieldProps, FieldClientApi> {
     init() {
         super.init();
         this.listenToDependencies();
+        return this;
     }
 
     updateProps(newProps: Partial<FieldProps>) {

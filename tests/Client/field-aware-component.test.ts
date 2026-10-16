@@ -36,6 +36,16 @@ afterEach(() => {
 });
 
 describe('a primitive inside a Field', () => {
+    test('init() still returns the instance when the primitive does more after it', () => {
+        render();
+        const field = new Field({ id: 'f1', name: 'terms' });
+        const toggle = new Switch({ id: 's1' });
+        instances.push(field, toggle);
+
+        expect(field.init()).toBe(field);
+        expect(toggle.init()).toBe(toggle);
+    });
+
     test.each(['the field', 'the switch'])(
         'takes its name and state from the field when %s hydrates first',
         first => {
