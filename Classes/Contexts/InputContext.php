@@ -46,8 +46,8 @@ class InputContext extends AbstractComponentContext
             return null;
         }
 
-        $template = $this->getTranslations()['wordCount'] ?? null;
-        if (!is_string($template) || $template === '') {
+        $template = Typed::string($this->getTranslations()['wordCount'] ?? null);
+        if ($template === '') {
             return null;
         }
 

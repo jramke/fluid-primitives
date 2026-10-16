@@ -65,6 +65,7 @@ class ClientPropsContextExtractor
      * types, without a live Context instance to invoke them on (e.g. static TypeScript generation).
      * Reflects the same #[ExposeToClient] methods {@see extract()} does, but never invokes them.
      *
+     * @param class-string $contextClass
      * @return array<string, array{method: \ReflectionMethod, excludeIfNull: bool}>
      */
     public static function discover(string $contextClass): array

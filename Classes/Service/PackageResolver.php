@@ -70,7 +70,7 @@ readonly class PackageResolver
         $directories = [];
 
         foreach ($this->getAvailablePackagesForDisplay() as $package) {
-            $classesDirectory = rtrim($package->getPackagePath(), '/') . '/Classes';
+            $classesDirectory = rtrim($package->getPackagePath(), characters: '/') . '/Classes';
             if (is_dir($classesDirectory)) {
                 $directories[] = $classesDirectory;
             }

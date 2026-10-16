@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Service\Component;
 
 use Jramke\FluidPrimitives\Contracts\ClientTypeAwareInterface;
-use Jramke\FluidPrimitives\Registry\ClientPropConverterRegistry;
 use JsonSerializable;
 use TYPO3Fluid\Fluid\Core\ViewHelper\ArgumentDefinition;
 

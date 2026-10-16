@@ -14,7 +14,6 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 
 // The globals accessors and their request handling are one concern of this per-request singleton.
-// @mago-expect lint:too-many-methods
 class HydrationRegistry
 {
     private const string SCRIPT_ID = 'fluid-primitives-hydration-data';

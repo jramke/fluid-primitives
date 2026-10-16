@@ -38,7 +38,7 @@ class SelectContext extends AbstractComponentContext
         // `defaultValue` is declared type="mixed" and genuinely accepts either shape checked below.
         // @mago-expect analysis:mixed-assignment
         $defaultValue = $this->get('defaultValue');
-        if ($defaultValue === null || $defaultValue === [] || $defaultValue === '') {
+        if (in_array($defaultValue, [null, [], ''], strict: true)) {
             return null;
         }
 

@@ -458,6 +458,6 @@ final class FormRenderingTest extends FunctionalTestCase
             HashAlgo::SHA3_256,
         );
 
-        return json_decode($json, true, flags: JSON_THROW_ON_ERROR);
+        return json_decode((string)$json, true, flags: JSON_THROW_ON_ERROR);
     }
 }

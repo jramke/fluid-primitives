@@ -47,7 +47,9 @@ if (['major', 'minor', 'patch'].includes(versionArg)) {
     // Validate custom version format (X.Y.Z, optionally with a prerelease like -beta.1)
     const versionRegex = /^\d+\.\d+\.\d+(-[0-9A-Za-z]+(\.[0-9A-Za-z]+)*)?$/;
     if (!versionRegex.test(versionArg)) {
-        console.error('Error: Invalid version format. Must be X.Y.Z or X.Y.Z-tag.N (e.g., 1.2.3 or 1.0.0-beta.1)');
+        console.error(
+            'Error: Invalid version format. Must be X.Y.Z or X.Y.Z-tag.N (e.g., 1.2.3 or 1.0.0-beta.1)'
+        );
         process.exit(1);
     }
     newVersion = versionArg;

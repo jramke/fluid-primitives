@@ -20,6 +20,8 @@
         "typo3fluid/fluid": "^5"
     },
     "require-dev": {
+        "carthage-software/mago": "1.48.1",
+        "ssch/typo3-rector": "^3.14",
         "typo3/testing-framework": "^9.4"
     },
     "suggest": {
@@ -36,6 +38,26 @@
         "test": "php vendor/bin/phpunit -c phpunit.xml --testdox --colors=always --display-notices",
         "test:unit": "@test --testsuite=Unit",
         "test:functional": "@test --testsuite=Functional",
+        "format": "mago format Classes Configuration tests",
+        "format:check": "mago format Classes Configuration tests --check",
+        "rector": "rector process",
+        "rector:check": "rector process --dry-run",
+        "mago:lint": "mago lint Classes Configuration tests --fix --format-after-fix --unsafe",
+        "mago:lint:check": "mago lint Classes Configuration tests",
+        "mago:analyze": "mago analyze Classes Configuration tests --fix --format-after-fix --unsafe",
+        "mago:analyze:check": "mago analyze Classes Configuration tests",
+        "lint": [
+            "@rector",
+            "@mago:lint",
+            "@mago:analyze",
+            "@format"
+        ],
+        "lint:check": [
+            "@rector:check",
+            "@mago:lint:check",
+            "@mago:analyze:check",
+            "@format:check"
+        ],
         "test:fromdocs": "php ../../vendor/bin/phpunit -c phpunit.xml --testdox --colors=always --display-notices",
         "prepare-release": [
             "rm -rf .github",
@@ -46,6 +68,10 @@
             "rm -rf scripts",
             "rm -rf tests",
             "rm -f phpunit.xml",
+            "rm -f mago.toml",
+            "rm -f .prettierrc",
+            "rm -f .prettierignore",
+            "rm -f rector.php",
             "rm -f tsconfig.json",
             "rm -f tsdown.config.ts",
             "rm -f vitest.config.ts",

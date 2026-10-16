@@ -7,6 +7,7 @@ namespace Jramke\FluidPrimitives\Tests\Unit;
 use Jramke\FluidPrimitives\Tests\TestCase;
 use Jramke\FluidPrimitives\Traits\JsonValidationErrorsTrait;
 use PHPUnit\Framework\Attributes\Test;
+use Psr\Http\Message\ResponseInterface;
 use TYPO3\CMS\Core\Http\PropagateResponseException;
 use TYPO3\CMS\Core\Http\ResponseFactory;
 use TYPO3\CMS\Core\Http\StreamFactory;
@@ -42,9 +43,10 @@ final class JsonValidationErrorsTraitTest extends TestCase
                 $this->injectStreamFactory(new StreamFactory());
             }
 
-            public function callErrorAction(): never
+            public function callErrorAction(): ResponseInterface
             {
                 $this->errorAction();
+                return $this->htmlResponse();
             }
         };
 

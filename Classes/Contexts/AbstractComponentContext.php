@@ -14,7 +14,6 @@ use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 
 // Method count is dictated by ComponentContextInterface (11 methods), getGlobals() and the 4 ArrayAccess methods
 // PHP requires on the implementing class itself - not internal complexity to delegate elsewhere.
-// @mago-expect lint:too-many-methods
 /**
  * @implements \ArrayAccess<string, mixed>
  */

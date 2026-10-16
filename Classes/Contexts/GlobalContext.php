@@ -6,6 +6,7 @@ namespace Jramke\FluidPrimitives\Contexts;
 
 use Jramke\FluidPrimitives\Attributes\ExposeToClient;
 use Jramke\FluidPrimitives\Service\TranslatorService;
+use Psr\Http\Message\ServerRequestInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -27,7 +28,9 @@ class GlobalContext extends AbstractGlobalContext
     {
         $request = $this->getRequest();
 
-        return $request === null ? null : GeneralUtility::makeInstance(TranslatorService::class)->getLocale($request);
+        return $request instanceof ServerRequestInterface
+            ? GeneralUtility::makeInstance(TranslatorService::class)->getLocale($request)
+            : null;
     }
 
     /** Whether TYPO3's Application Context is development: the client prints its dev-only warnings. */

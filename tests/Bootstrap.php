@@ -16,7 +16,7 @@ use TYPO3\TestingFramework\Core\Testbase;
 
 // Only load autoloader if not already loaded (when running from root)
 if (!class_exists(Testbase::class)) {
-    require dirname(__DIR__) . '/vendor/autoload.php';
+    require __DIR__ . '/../vendor/autoload.php';
 }
 
 // Initialize TYPO3 testing framework for functional tests

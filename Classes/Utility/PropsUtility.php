@@ -104,7 +104,7 @@ class PropsUtility
      * also inherit the *fact* it was tagged with, or a component that only reuses declarations
      * (never delegates) would incorrectly end up with `additionalArgumentsAllowed` too. The prop
      * itself still needs to forward untouched (spreadProps's special "attributes" handling in
-     * {@see \Jramke\FluidPrimitives\Service\Component\ComponentArgumentResolver::resolveSpreadProps()}
+     * {@see \Jramke\FluidPrimitives\Service\Component\SpreadPropsResolver::resolve()}
      * depends on it staying in the forwarded set) - only this one annotation is stripped. A genuine
      * `as=` delegation still gets the correct fact independently, via
      * {@see createDelegationBindingArgumentDefinition()} checking `additionalArgumentsAllowed()`

@@ -14,7 +14,7 @@ final class SelectRenderingTest extends FunctionalTestCase
 {
     private const string POPUP_DIALOG = "{f:constant(name: 'Jramke\\FluidPrimitives\\Enum\\PopupType::Dialog')}";
 
-    private static function collection(): ListCollection
+    private function collection(): ListCollection
     {
         return new ListCollection([
             ['value' => 'opt-1', 'label' => 'Option 1'],
@@ -55,7 +55,7 @@ final class SelectRenderingTest extends FunctionalTestCase
                 </primitives:select.positioner>
             </primitives:select.root>
         ',
-            ['collection' => self::collection()],
+            ['collection' => $this->collection()],
         );
 
         // what the client queries every part by
@@ -89,7 +89,7 @@ final class SelectRenderingTest extends FunctionalTestCase
                     <primitives:select.trigger>Select an option</primitives:select.trigger>
                 </primitives:select.control>
             </primitives:select.root>
-        ', ['collection' => self::collection()]);
+        ', ['collection' => $this->collection()]);
 
         $trigger = $this->elementWith($html, 'data-select-trigger');
         foreach (['data-disabled', 'data-invalid', 'data-readonly', 'disabled'] as $flag) {
@@ -126,7 +126,7 @@ final class SelectRenderingTest extends FunctionalTestCase
                 </primitives:select.control>
             </primitives:select.root>
         ',
-            ['collection' => self::collection()],
+            ['collection' => $this->collection()],
         );
 
         $this->assertSame(
@@ -154,7 +154,7 @@ final class SelectRenderingTest extends FunctionalTestCase
                 </primitives:select.positioner>
                 <primitives:select.hiddenSelect />
             </primitives:select.root>
-        ', ['collection' => self::collection()]);
+        ', ['collection' => $this->collection()]);
 
         $items = $this->elementsByValue($html, 'data-select-item');
         $this->assertSame(['opt-1', 'opt-2', 'opt-3'], array_keys($items));
@@ -184,7 +184,7 @@ final class SelectRenderingTest extends FunctionalTestCase
             <primitives:select.root collection="{collection}" name="country" form="signup" multiple="{true}" required="{true}">
                 <primitives:select.hiddenSelect />
             </primitives:select.root>
-        ', ['collection' => self::collection()]);
+        ', ['collection' => $this->collection()]);
 
         $select = $this->elementWith($html, 'data-select-hidden-select');
         $this->assertSame('select', $select->tag);
@@ -219,7 +219,7 @@ final class SelectRenderingTest extends FunctionalTestCase
                 </primitives:select.positioner>
             </primitives:select.root>
         ',
-            ['collection' => self::collection()],
+            ['collection' => $this->collection()],
         );
 
         // markup mirrored from Zag, for the accessibility tree before the client hydrated
@@ -260,7 +260,7 @@ final class SelectRenderingTest extends FunctionalTestCase
                 </primitives:select.positioner>
             </primitives:select.root>
         ',
-            ['collection' => self::collection()],
+            ['collection' => $this->collection()],
         );
 
         $this->assertSame($popupType, $this->elementWith($html, 'data-select-trigger')->get('aria-haspopup'));
@@ -296,7 +296,10 @@ final class SelectRenderingTest extends FunctionalTestCase
             <primitives:select.root collection="{collection}" defaultValue="{defaultValue}">
                 <primitives:select.hiddenSelect />
             </primitives:select.root>
-        ', ['collection' => self::collection(), 'defaultValue' => $defaultValue]);
+        ', [
+            'collection' => $this->collection(),
+            'defaultValue' => $defaultValue,
+        ]);
 
         $rootId = (string)$this->elementWith($html, 'data-select-root')->get('data-select-root');
         $props = HydrationRegistry::getInstance()->get('primitives', 'select', $rootId)['props'];
@@ -318,7 +321,7 @@ final class SelectRenderingTest extends FunctionalTestCase
             <primitives:select.root collection="{collection}">
                 <primitives:select.hiddenSelect />
             </primitives:select.root>
-        ', ['collection' => self::collection()]);
+        ', ['collection' => $this->collection()]);
 
         $rootId = (string)$this->elementWith($html, 'data-select-root')->get('data-select-root');
         $collection = json_decode(
