@@ -22,7 +22,7 @@ no-shorthand-ternary = { enabled = false }
 readable-literal = { enabled = false }
 tagged-todo = { enabled = false }
 cyclomatic-complexity = { threshold = 25 }
-kan-defect = { threshold = 3.0 }
+kan-defect = { threshold = 1.75 }
 too-many-methods = { threshold = 12 }
 no-boolean-flag-parameter = { enabled = false }
 excessive-parameter-list = { threshold = 5, constructor-threshold = 10 }

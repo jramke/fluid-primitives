@@ -42,11 +42,11 @@ jobs:
 
       - name: Mago lint
         if: success() || failure()
-        run: composer mago:lint
+        run: composer mago:lint:check
 
       - name: Mago analyze
         if: success() || failure()
-        run: composer mago:analyze
+        run: composer mago:analyze:check
 
       - name: Mago format
         if: success() || failure()

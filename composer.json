@@ -40,20 +40,23 @@
         "test:functional": "@test --testsuite=Functional",
         "format": "mago format Classes Configuration tests",
         "format:check": "mago format Classes Configuration tests --check",
-        "mago:lint": "mago lint Classes Configuration tests",
-        "mago:analyze": "mago analyze Classes Configuration tests",
+        "rector": "rector process",
         "rector:check": "rector process --dry-run",
+        "mago:lint": "mago lint Classes Configuration tests --fix --format-after-fix --unsafe",
+        "mago:lint:check": "mago lint Classes Configuration tests",
+        "mago:analyze": "mago analyze Classes Configuration tests --fix --format-after-fix --unsafe",
+        "mago:analyze:check": "mago analyze Classes Configuration tests",
         "lint": [
-            "@rector:check",
+            "@rector",
             "@mago:lint",
             "@mago:analyze",
-            "@format:check"
-        ],
-        "lint:fix": [
-            "rector process",
-            "mago lint Classes Configuration tests --fix --format-after-fix --unsafe",
-            "mago analyze Classes Configuration tests --fix --format-after-fix --unsafe",
             "@format"
+        ],
+        "lint:check": [
+            "@rector:check",
+            "@mago:lint:check",
+            "@mago:analyze:check",
+            "@format:check"
         ],
         "test:fromdocs": "php ../../vendor/bin/phpunit -c phpunit.xml --testdox --colors=always --display-notices",
         "prepare-release": [
