@@ -1,8 +1,4 @@
 import { mountAll } from 'fluid-primitives';
 import { Switch } from 'fluid-primitives/switch';
 
-mountAll('ui:switch', ({ props }) => {
-    const switchInstance = new Switch(props);
-    switchInstance.init();
-    return switchInstance;
-});
+mountAll('ui:switch', ({ props }) => new Switch(props).init());

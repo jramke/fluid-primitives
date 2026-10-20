@@ -18,11 +18,7 @@ Headless, accessible UI primitives for TYPO3 Fluid. Components render on the ser
     import { mountAll } from 'fluid-primitives';
     import { Accordion } from 'fluid-primitives/accordion';
 
-    mountAll('ui:accordion', ({ props }) => {
-        const accordion = new Accordion(props);
-        accordion.init();
-        return accordion;
-    });
+    mountAll('ui:accordion', ({ props }) => new Accordion(props).init());
     ```
 
 ## Where to look

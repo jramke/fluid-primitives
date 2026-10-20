@@ -46,6 +46,7 @@ export class Menu extends Component<menu.Props, menu.Api> {
     init() {
         super.init();
         this.linkToParent();
+        return this;
     }
 
     // Not a machine prop (`splitProps` drops it), so it's read from the props the instance was created with.

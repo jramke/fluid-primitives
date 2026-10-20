@@ -57,9 +57,16 @@ export class AsyncList<T, Filter = string, Sorting = asyncList.SortDescriptor<T>
         this.machine.updateProps(newProps);
     }
 
-    /** Starts the machine, which loads the list for the first time. Call it once, after constructing. */
-    init(): void {
+    /**
+     * Starts the machine, which loads the list for the first time when `autoReload` is set. Call it
+     * once, after constructing.
+     *
+     * @returns The instance itself, like `Component.init()`: `const list = new AsyncList(options).init();`.
+     */
+    init(): this {
         this.machine.start();
+
+        return this;
     }
 
     /** Stops the machine and cancels a load that is in flight. */
