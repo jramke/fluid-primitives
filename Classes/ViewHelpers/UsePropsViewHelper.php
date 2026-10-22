@@ -21,18 +21,11 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\ArgumentDefinition;
 use TYPO3Fluid\Fluid\Core\ViewHelper\ViewHelperNodeInitializedEventInterface;
 
 /**
- * Use props from another component.
  *
- * This ViewHelper allows you to import all props from another component and register them for the current component.
- * This is helpful/needed when consuming the `primitives` components or when you want to reuse props from another component.
+ * Imports the props of another component, so that a wrapper around a primitive declares and forwards them without listing each one.
  *
- * You can also override default values of the imported props by passing a `defaults` array with key-value pairs.
+ * A tooltip root that opens after 200 ms by default:
  *
- * ## Examples
- *
- * `Tooltip/Root.html` that uses the tooltip primitive and delegates rendering to it - `as` binds the
- * imported, forwardable prop names under a name you choose, so the actual delegate call can reference
- * it directly instead of the opaque `spreadProps="{true}"` this used to require:
  * ```html
  * <ui:useProps name="primitives:tooltip.root" as="rootProps" defaults="{openDelay: 200}" />
  *
@@ -41,20 +34,19 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\ViewHelperNodeInitializedEventInterface;
  * </primitives:tooltip.root>
  * ```
  *
- * Omit `as` when you only want to reuse another component's prop shape without rendering it at all -
- * see [Composition](/docs/core-concepts/composition) for when this applies.
+ * `as` binds the imported prop names to a variable that you pass to `spreadProps` of the component you render. Omit `as` to reuse the props of a component without rendering it, see [Inheriting Props](/docs/core-concepts/arguments#content-inheriting-props).
  *
- * If you dont want all props from a component, you can also selectively import props by passing an array of prop names to the `props` argument.
+ * ## Import only some props
+ *
+ * Pass the prop names to `props`:
+ *
  * ```html
  * <ui:useProps name="primitives:tooltip.root" as="rootProps" props="{0: 'openDelay', 1: 'closeDelay'}" />
- *
- * // ...
  * ```
  *
- * ## Limitation
+ * ## Require a prop of a wrapped component
  *
- * Currently its not possible to use this `useProps` and `spreadProps` pattern with required arguments because of how Fluid parses the templates.
- * If a prop for a primitive is required, we use the `requiredAtRuntime` argument on the [ui:prop](./prop) ViewHelper.
+ * A prop forwarded with `ui:useProps` and `spreadProps` cannot be a required argument, because Fluid checks required arguments while it parses the template. Declare such a prop with `requiredAtRuntime` on [ui:prop](./prop). The component then throws an exception at render time when the prop is missing.
  *
  */
 class UsePropsViewHelper extends AbstractViewHelper implements ViewHelperNodeInitializedEventInterface
@@ -70,7 +62,7 @@ class UsePropsViewHelper extends AbstractViewHelper implements ViewHelperNodeIni
         $this->registerArgument(
             'as',
             'string',
-            'Bind the imported, forwardable prop names under this name, so the actual delegate call can use spreadProps="{name}". Required to genuinely delegate rendering - omit it to only reuse the referenced component\'s prop declarations without rendering it (see Composition docs).',
+            'Bind the imported, forwardable prop names under this name, so the actual delegate call can use spreadProps="{name}". Needed to delegate rendering. Omit it to only reuse the prop declarations of the referenced component without rendering it.',
         );
         $this->registerArgument(
             'defaults',

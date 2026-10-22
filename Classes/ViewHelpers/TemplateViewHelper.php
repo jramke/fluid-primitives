@@ -17,50 +17,9 @@ use TYPO3Fluid\Fluid\Core\Variables\VariableProviderInterface;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
 /**
- * Wraps its children in a `<template>` element and, for the duration of rendering them, makes
- * them behave as if they were genuinely nested inside the named enclosing component - so `ui:ref`
- * (used completely unmodified) resolves correctly even though this content is, structurally,
- * plain slot content rather than a dedicated component's own template body.
  *
- * This is needed because a component's slot content (the markup a consumer writes between two
- * component tags, e.g. everything inside `<ui:combobox.content>...</ui:combobox.content>`) is
- * always evaluated against the *calling* rendering context, not the component's own internal one.
- * A bare `ui:ref` call written directly inside such slot content therefore doesn't, by default,
- * know which component (or rootId) it belongs to.
+ * Wraps markup in a `<template>` that the client clones for content the server does not have yet, such as async search results, previews of uploaded files or the rows of a recurring field.
  *
- * `ui:template` fixes this generically for any component, by reading the real, currently-active
- * component context (which - unlike the plain `component`/`context`
- * variables `ui:ref` reads - is threaded correctly through slot-content nesting) and temporarily
- * re-exposing it as those ordinary variables (`component`, `context` and `rootId`). `ui:ref` itself accepts the same `context` argument
- * directly, for hand-authored elements that need this without being wrapped in a `<template>` -
- * see its own docblock for when to reach for that instead.
- *
- * Intended for content whose real data doesn't exist yet at server-render time and is filled in
- * later, client-side (e.g. a combobox's async search results, file-upload item previews,
- * recurring/array form-field rows) - clone the `<template>`'s content, find its `ui:ref`'d
- * elements, and populate them directly.
- *
- * Also marks a `isRenderStencil` flag on the component context for the duration of rendering
- * children, so a nested component (e.g. `combobox.item`) can detect on its own that it's being
- * rendered as a client-filled stencil rather than a real instance, without the template author
- * having to pass an explicit prop for it.
- *
- * `name` follows the same camelCase convention as `ui:ref`'s own `name` argument - the `<template>`
- * itself is marked like any other part (e.g. `itemTemplate` -> `data-combobox-item-template="{rootId}"`).
- *
- * `context` is only required when this `ui:template` sits inside slot content passed into
- * *another* component - the common case: item/row markup a consumer authors for a primitive like
- * `combobox`/`fileUpload` to clone, where the ambient component is whatever encloses that slot
- * content, not the primitive itself. Omit it only when `ui:template` is written directly inside a
- * real, registered component's own template body (a component with its own `ui:prop` declarations
- * etc., whether or not it is split across multiple files) - it then defaults to whichever component
- * is already ambiently active there, the same way a bare `ui:ref` (no `context` argument) already
- * does. A plain, non-component Fluid template (e.g. a content element with no backing `ui:`
- * component) has no ambiently active component and always needs an explicit `context` naming the
- * enclosing component - or no `ui:template` at all if there is none (a native `<template>` element
- * covers a one-off client-rendered list just as well).
- *
- * ## Example
  * ```html
  * <ui:combobox.root>
  *   ...
@@ -75,6 +34,15 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
  *   </ui:combobox.content>
  * </ui:combobox.root>
  * ```
+ *
+ * Clone the template and fill its `ui:ref` parts with the [`Template`](/docs/client-utilities/template) client utility. Inside it, `ui:ref` works as in a component's own template, and components such as `ui:combobox.item` render as part of the template without extra props.
+ *
+ * `name` is the ref name of the `<template>` element: `itemTemplate` renders `data-combobox-item-template="{rootId}"`.
+ *
+ * ## Set the context
+ *
+ * `context` is the camelCase name of the enclosing component. Pass it when the template is slot content of another component, as above. That includes the plain Fluid template of a content element. Omit it in the template body of a component, where it defaults to the active component. A native `<template>` element is enough for a one-off client-rendered list that has no enclosing component.
+ *
  */
 class TemplateViewHelper extends AbstractViewHelper
 {
@@ -91,7 +59,7 @@ class TemplateViewHelper extends AbstractViewHelper
         $this->registerArgument(
             'context',
             'string',
-            'camelCase base name of the enclosing component this template belongs to, e.g. "fileUpload". Only needed when this ui:template is slot content passed into another component - omit it only when writing ui:template directly inside a real, registered component\'s own template body, where it defaults to whichever component is already ambiently active (the same fallback a bare `ui:ref` uses). A plain template with no enclosing component always needs an explicit context.',
+            'camelCase base name of the enclosing component this template belongs to, e.g. "fileUpload". Required when this ui:template is slot content passed into another component or sits in a plain Fluid template. Defaults to the active component when written directly inside a component\'s own template body.',
             false,
             '',
         );

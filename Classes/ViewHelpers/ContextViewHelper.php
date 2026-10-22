@@ -12,15 +12,17 @@ use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
 /**
- * Access the context of another parent component.
  *
- * This is useful when you have nested components and you want to access the context of a parent component from another type.
- * You cannot access the context of the current component using this ViewHelper. Use the exposed "context" variable instead.
+ * Reads the context of the closest enclosing component of another type.
  *
- * ## Example
+ * Use it when a nested component needs something from an ancestor, for example a custom button inside a dialog:
+ *
  * ```html
  * <ui:context name="dialog" as="dialogContext" />
  * ```
+ *
+ * `name` is the camelCase name of the enclosing component and `as` the variable that receives its context. A component reads its own context through the `context` variable. Asking `ui:context` for it throws an exception.
+ *
  */
 class ContextViewHelper extends AbstractViewHelper
 {

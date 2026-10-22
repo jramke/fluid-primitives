@@ -11,19 +11,15 @@ use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
 /**
- * Call a method on an object with optional arguments.
  *
- * Only needed for methods that take arguments or aren't getters: Fluid already resolves
- * `{object.something}` to `getSomething()`, `isSomething()` or `hasSomething()`.
+ * Calls a method that takes arguments, or that is not a getter, on an object.
  *
- * Used internally and exposed for convenience.
+ * Fluid reads `{object.something}` through `getSomething()`, `isSomething()` or `hasSomething()`. Use `ui:call` for any other method, for example `getItemState()` on a component's context. Pass the arguments by position:
  *
- * ## Examples
- *
+ * ```html
+ * {context -> ui:call(method: 'getItemState', arguments: {0: item})}
  * ```
- * {object -> ui:call(method: 'doSomething')}
- * {object -> ui:call(method: 'doSomethingWithArguments', arguments: {0: 'foo', 1: 'bar'})}
- * ```
+ *
  */
 
 class CallViewHelper extends AbstractViewHelper

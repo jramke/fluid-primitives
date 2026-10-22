@@ -12,22 +12,9 @@ use TYPO3\CMS\Extbase\Domain\Model\FileReference;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
 /**
- * Renders a checkbox that, when checked and the enclosing form is submitted, marks an already
- * uploaded `FileReference` for deletion - the counterpart to the `FileUpload` primitive, which only
- * ever handles files newly picked in the browser.
  *
- * Reimplements TYPO3 core's `<f:form.uploadDeleteCheckbox>` for the `Form`/`Field` primitives:
- * it produces the exact same `TYPO3\CMS\Extbase\Service\FileHandlingService`-compatible HMAC-signed
- * `@delete` token, but resolves the Extbase argument name/prefix from the surrounding
- * `<ui:form.root>` context instead of `<f:form>`'s own (unused here) ViewHelperVariableContainer
- * state.
+ * Renders a checkbox that deletes an already uploaded file when the form is submitted.
  *
- * Must be used inside a `<ui:form.root objectName="...">`, where `objectName` matches the
- * controller action argument name. Use `property` to declare which model property the file
- * reference belongs to - when used inside a `<ui:field.root name="...">`, the field's `name` is
- * used as a fallback (core's version always requires `property` explicitly).
- *
- * ## Example
  * ```html
  * <ui:form.root action="update" objectName="conference" object="{conference}">
  *     <ui:field.root name="logo">
@@ -43,6 +30,11 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
  *     </ui:field.root>
  * </ui:form.root>
  * ```
+ *
+ * It complements the `FileUpload` primitive, which handles files picked in the browser, for a `FileReference` that is already stored. The checkbox carries the same signed `@delete` value as TYPO3's `<f:form.uploadDeleteCheckbox>`.
+ *
+ * Place it inside a `ui:form.root` whose `objectName` matches the name of the action argument, otherwise it throws an exception. `property` names the model property the file reference belongs to. Inside a `ui:field.root` it defaults to the `name` of the field.
+ *
  */
 class FileUploadDeleteCheckboxViewHelper extends AbstractViewHelper
 {

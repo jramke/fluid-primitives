@@ -9,38 +9,45 @@ use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
 /**
- * Create a ListCollection from an array of items.
  *
- * This is needed for components like [Select](/docs/components/select) that expect a Zag.js [ListCollection](https://zagjs.com/guides/collection) instance.
- * This ViewHelper is a first approach to get this DX working. Currently you should format your items like `{value: string, label: string, disabled: boolean}`.
- *
- * The `itemToString`, `itemToValue`, `isItemDisabled` and `groupBy` props are currently supported as key props like `groupByKey`.
- *
- * ## Example
- * ```html
- * <ui:listCollection
- *     items="{
- *         0: {value: 'apple', label: 'Apple'},
- *         1: {value: 'banana', label: 'Banana', disabled: true}
- *     }"
- *     as="collection"
- * />
- * ```
- *
- * Grouped example:
+ * Turns a list of items into the collection that [Select](/docs/components/select) and [Combobox](/docs/components/combobox) take as `collection`. The client rebuilds it as a Zag.js [ListCollection](https://zagjs.com/guides/collection).
  *
  * ```html
  * <ui:listCollection
  *     items="{
- *         0: {value: 'apple', label: 'Apple', type: 'Fruits'},
- *         1: {value: 'banana', label: 'Banana', disabled: true, type: 'Fruits'},
- *         2: {value: 'carrot', label: 'Carrot', type: 'Vegetables'},
- *         3: {value: 'broccoli', label: 'Broccoli', type: 'Vegetables'}
+ *         0: {value: 'de', label: 'Germany'},
+ *         1: {value: 'fr', label: 'France'},
+ *         2: {value: 'ch', label: 'Switzerland', disabled: true}
  *     }"
- *     as="collection"
- *     groupByKey="type"
+ *     as="countries"
+ * />
+ *
+ * <ui:select.root collection="{countries}">...</ui:select.root>
+ * ```
+ *
+ * ## Group the items
+ *
+ * Name the key that holds the group with `groupByKey`:
+ *
+ * ```html
+ * <ui:listCollection
+ *     items="{
+ *         0: {value: 'de', label: 'Germany', region: 'Europe'},
+ *         1: {value: 'fr', label: 'France', region: 'Europe'},
+ *         2: {value: 'us', label: 'United States', region: 'North America'},
+ *         3: {value: 'ca', label: 'Canada', region: 'North America'}
+ *     }"
+ *     as="countries"
+ *     groupByKey="region"
  * />
  * ```
+ *
+ * `groupSort` takes `asc`, `desc` or a list of group keys in the order you want.
+ *
+ * ## Use other item keys
+ *
+ * An item is an array or an object with a `value`, a `label` and optionally `disabled`. When your items use other keys, name them with `itemToValueKey`, `itemToStringKey` and `isItemDisabledKey`. A key can be a dot path such as `country.isoCode`.
+ *
  */
 class ListCollectionViewHelper extends AbstractViewHelper
 {

@@ -9,18 +9,18 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 use TYPO3Fluid\Fluid\ViewHelpers\SlotViewHelper;
 
 /**
- * Check if a slot has content.
- * Returns the content of the slot if it has content, otherwise returns false.
  *
- * Using this ViewHelper is the equivalent of calling `{f:slot() -> f:trim()}`.
+ * Checks whether a slot has content. It returns the trimmed content, or `false` when the slot is empty.
  *
- * ## Example
  * ```html
- * <f:variable name="content" value="{ui:slotFilled()}" />
- * <f:if condition="{content}">
- *     // Slot has content
+ * <f:variable name="note" value="{ui:slotFilled()}" />
+ * <f:if condition="{note}">
+ *     <p class="text-sm">{note -> f:format.raw()}</p>
  * </f:if>
  * ```
+ *
+ * `name` picks a named slot, the default slot otherwise.
+ *
  */
 class SlotFilledViewHelper extends AbstractViewHelper
 {

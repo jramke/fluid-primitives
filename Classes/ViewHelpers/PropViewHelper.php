@@ -22,18 +22,18 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\ArgumentDefinition;
 use TYPO3Fluid\Fluid\Core\ViewHelper\ViewHelperNodeInitializedEventInterface;
 
 /**
- * Defines a template argument (prop) for a component.
  *
- * You must use this ViewHelper instead of the standard `f:argument` ViewHelper to define props for a component.
- * It mirrors the API of `f:argument` but adds some additional features like exposing the prop to the client hydration data or the context.
+ * Declares a prop of a component. Use it where you would write `f:argument`: it takes the same arguments and adds `client` and `context`.
  *
- * {% component: "ui:alert", arguments: {"title": "All props from a root component are automatically exposed to the context.", "variant": "info"} %}
- *
- * ## Example
  * ```html
  * <ui:prop name="variant" type="string" optional="{true}" default="primary" />
  * <ui:prop name="size" type="string" optional="{true}" default="medium" client="{true}" />
  * ```
+ *
+ * `client` works on a root component and `context` on its other parts. The other way round throws an exception.
+ *
+ * {% component: "ui:alert", arguments: {"title": "All props from a root component are automatically exposed to the context.", "variant": "info"} %}
+ *
  */
 class PropViewHelper extends AbstractViewHelper implements ViewHelperNodeInitializedEventInterface
 {
@@ -63,7 +63,7 @@ class PropViewHelper extends AbstractViewHelper implements ViewHelperNodeInitial
         $this->registerArgument(
             'requiredAtRuntime',
             'boolean',
-            'Whether the property is required at runtime. This means that the component will throw an error if the property is not defined when rendering. This is used internally by the primitives so props spreading works.',
+            'Whether the property is required at runtime. This means that the component will throw an error if the property is not defined when rendering. Primitives use it for props that a wrapper forwards with [ui:useProps](./useProps).',
             false,
             false,
         );

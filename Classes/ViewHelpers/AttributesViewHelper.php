@@ -16,31 +16,39 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\ArgumentDefinition;
 use TYPO3Fluid\Fluid\Core\ViewHelper\ViewHelperNodeInitializedEventInterface;
 
 /**
- * Renders arbitrary HTML attributes.
  *
- * When this ViewHelper is used inside a component, all attributes that are not defined as props will be collected and made available via this ViewHelper.
+ * Renders the attributes a caller passes to your component that are not declared as props.
  *
- * ## Examples
+ * ## Forward attributes to an element
  *
- * ### Usage on HTML elements
+ * A caller adds attributes like on any other element:
+ *
  * ```html
- * <ui:button class="my-button" data-test="123" disabled />
- * ```
- * Inside the button component, you can use this ViewHelper to render the attributes:
- * ```html
- * <button {ui:attributes()}></button>
- * ```
- * This will render:
- * ```html
- * <button class="my-button" data-test="123" disabled></button>
+ * <ui:addToBasket data-product-id="42" disabled />
  * ```
  *
- * ### Usage on other components
- * When you need to pass the attributes to another component, you can use its attributes prop.
- * This prop is automatically added to components that use the `ui:attributes` ViewHelper inside them.
+ * Place `{ui:attributes()}` on the element inside the component that should carry them:
+ *
  * ```html
- * <ui:someComponent attributes="{ui:attributes()}" />
+ * <button {ui:attributes()}>Add to basket</button>
  * ```
+ *
+ * This renders:
+ *
+ * ```html
+ * <button data-product-id="42" disabled>Add to basket</button>
+ * ```
+ *
+ * A template that uses `{class}` takes `class` as a prop and keeps it out of the attributes. Render it yourself there, for example with [`ui:cn`](./cn).
+ *
+ * ## Forward attributes to another component
+ *
+ * A component that uses `ui:attributes` gets an `attributes` prop. Pass the attributes on through it:
+ *
+ * ```html
+ * <ui:input attributes="{ui:attributes()}" />
+ * ```
+ *
  */
 class AttributesViewHelper extends AbstractViewHelper implements ViewHelperNodeInitializedEventInterface
 {

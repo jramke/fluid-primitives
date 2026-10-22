@@ -8,14 +8,16 @@ use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
 /**
- * Throw an error with a custom message.
  *
- * This is useful inside components to throw errors for required props or other misconfigurations that you cant handle with argument definitions.
+ * Throws an exception with your own message when a condition is true.
  *
- * ## Example
+ * Use it in a component for a misconfiguration that argument definitions cannot express, such as missing slot content:
+ *
  * ```html
- * <ui:error when="!{value}" message="This is an error message." />
+ * <f:variable name="reviewText" value="{ui:slotFilled()}" />
+ * <ui:error when="!{reviewText}" message="ui:productReview needs the review text as slot content." />
  * ```
+ *
  */
 class ErrorViewHelper extends AbstractViewHelper
 {

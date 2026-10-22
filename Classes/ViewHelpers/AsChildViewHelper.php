@@ -14,13 +14,11 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\ArgumentDefinition;
 use TYPO3Fluid\Fluid\Core\ViewHelper\ViewHelperNodeInitializedEventInterface;
 
 /**
- * Opts a component into the `asChild` prop and marks which of its tags is the asChild target.
  *
- * Place this inline, inside the opening bracket of whichever tag should receive the merged
- * attributes when a caller passes `asChild="{true}"` - the same way `{ui:ref(...)}` and
- * `{ui:attributes()}` are already placed.
+ * Marks the tag of your component whose attributes pass to the caller's element when the caller sets `asChild="{true}"`.
  *
- * ## Example
+ * Add it inline inside the opening bracket of that tag, like `{ui:ref(...)}` and `{ui:attributes()}`. It also gives the component its `asChild` prop:
+ *
  * ```html
  * <button
  *     {ui:ref(name: 'trigger')}
@@ -29,6 +27,9 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\ViewHelperNodeInitializedEventInterface;
  *     <f:slot />
  * </button>
  * ```
+ *
+ * See [Composition](/docs/core-concepts/composition) for how callers use `asChild`.
+ *
  */
 class AsChildViewHelper extends AbstractViewHelper implements ViewHelperNodeInitializedEventInterface
 {

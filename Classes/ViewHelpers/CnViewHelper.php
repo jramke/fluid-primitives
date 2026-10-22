@@ -8,28 +8,21 @@ use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
 /**
- * A ViewHelper that mimics the behavior of the popular `clsx` library for conditional class name merging.
- * It allows you to combine static class names with conditional ones based on the truthiness of values.
  *
- * It also helps you with whitespace management by filtering out empty or whitespace-only class names
- * and makes it possible to declare your class in multiple lines, which is especially useful in combination with Tailwind CSS.
+ * Combines fixed class names with class names that apply on a condition.
  *
- * ## Examples
- *
- * A common pattern you maybe already needed to use is something like this:
  * ```html
- * <div class="my-class{f:if(condition: someCondition, then: ' my-other-class')}">
- * ```
- * This can get unwieldy when you have multiple conditional classes. Instead, you can use this ViewHelper:
- * ```html
- * <div class="{ui:cn(value: 'my-class', when: { 'my-other-class': someCondition})}">
+ * <article class="{ui:cn(value: 'rounded border p-4', when: {'opacity-50': isSoldOut, 'border-red-500 bg-red-50': hasError})}">
  * ```
  *
- * In context of components you will do something like this:
+ * Each key in `when` holds one or more class names and applies when its value is truthy. Empty entries and duplicates are dropped, so a long class list can span several lines, which suits Tailwind CSS.
+ *
+ * In a component, add the classes a caller passes to your own:
+ *
  * ```html
- * <div class="{ui:cn(value: 'my-class-1 my-class-2 {class}')}">
+ * <div class="{ui:cn(value: 'rounded border p-4 {class}')}">
  * ```
- * This will render the classes and if the component consumer passes a `class` prop, it will be appended.
+ *
  */
 class CnViewHelper extends AbstractViewHelper
 {

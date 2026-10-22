@@ -1,5 +1,5 @@
 /**
- * Reads the Extbase argument namespace (`tx_docs_docs`) of a frontend action URL, from its
+ * Reads the Extbase argument namespace (`tx_myextension_eventregistration`) of a frontend action URL, from its
  * `[controller]` or `[action]` query key. `UriBuilder::uriFor()` nests those under it, also for a
  * custom `pluginNamespace`.
  *
@@ -61,12 +61,12 @@ export class ExtbaseValidationError extends Error {
 /** The options of {@link extbase}'s requests: everything `fetch` takes, plus the names to send the data under. */
 export type ExtbaseRequestInit = RequestInit & {
     /**
-     * The Extbase argument namespace (`tx_docs_docs`) the data is nested under. Read from the URL when
+     * The Extbase argument namespace (`tx_myextension_eventregistration`) the data is nested under. Read from the URL when
      * omitted, which finds none for a URL without an `[action]` or `[controller]` key, e.g. one a route
      * enhancer built: pass it then. `''` sends the data unprefixed.
      */
     prefix?: string;
-    /** The name of the object the action takes, nested between the prefix and the keys: `tx_docs_docs[event][title]`. */
+    /** The name of the object the action takes, nested between the prefix and the keys: `tx_myextension_eventregistration[event][title]`. */
     objectName?: string;
 };
 

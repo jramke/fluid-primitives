@@ -15,74 +15,71 @@ use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
 /**
- * Marks a part of a component for JavaScript interaction or styling.
  *
- * It renders a single `data-<component>-<part>="<rootId>"` attribute - the convention Zag.js uses for
- * its own parts - so the client finds the element with `hydrator.query('<part>')` and CSS can target it with
- * `[data-<component>-<part>]`. No `id` is generated: Zag adds the ids it needs for ARIA links itself
- * when the component hydrates.
+ * Marks a part of a component so that JavaScript and CSS can find it.
  *
- * ## Example
  * ```html
- * <div {ui:ref(name: 'button')}>Click me</div>
- * ```
- * This will generate:
- * ```html
- * <div data-my-component-button="«uniqueRootId»">Click me</div>
+ * <button {ui:ref(name: 'addToBasket')}>Add to basket</button>
  * ```
  *
- * For multi-instance parts (e.g. accordion items, tab panels) pass a `value:` discriminator, which
- * additionally renders `data-value`:
+ * This renders:
+ *
  * ```html
- * <div {ui:ref(name: 'item', value: value)}>...</div>
+ * <button data-product-card-add-to-basket="«fq7Zr2LpA1»">Add to basket</button>
  * ```
  *
- * A part without a `value:` may legitimately appear more than once within one component instance
- * (e.g. two close buttons of a dialog) - read them with `hydrator.queryAll()` on the client.
+ * The attribute is `data-<component>-<part>`, the convention Zag.js uses for its own parts, and its value is the root id of the component. The client finds the part with `hydrator.query('addToBasket')`, CSS with `[data-product-card-add-to-basket]`. Zag.js adds the ids the ARIA links need when the component hydrates.
  *
- * Ids are only rendered where you declare them: pass `ids` on the component's root
- * (`ids="{content: 'my-content'}"`, the same override Zag uses - for the primitives and your own
- * components alike) and the ref'd part with that name renders that `id`, while the client uses the
- * same one. Never write an `id` attribute on an element that carries `ui:ref` yourself - the client
- * doesn't know about it and Zag replaces it on hydration. A part rendered with a `value:` never
- * gets an id from `ids`.
+ * ## Mark one of many parts
  *
- * You can also pass additional data attributes:
+ * Pass a `value` for parts that repeat, such as accordion items or tab panels. It also renders `data-value`:
+ *
  * ```html
- * <div {ui:ref(name: 'button', data: { action: 'submit' })}>Click me</div>
- * ```
- * This will generate:
- * ```html
- * <div data-my-component-button="..." data-action="submit">Click me</div>
+ * <div {ui:ref(name: 'item', value: item.value)}>...</div>
  * ```
  *
- * `rootId` attaches the ref to another instance of the same component, by its root id, instead of the
- * ambient one - for a part that belongs to a different instance's scope than the template it's
- * rendered in, like a submenu's trigger item, which sits in its parent menu's content but is the
- * submenu's own anchor. The ambient component's `ids` don't apply to it:
+ * A part without a `value` can appear several times in one instance, for example two close buttons of a dialog. Read them with `hydrator.queryAll()`.
+ *
+ * ## Add data attributes
+ *
+ * `data` renders its keys as `data-` attributes next to the part attribute:
+ *
+ * ```html
+ * <button {ui:ref(name: 'addToBasket', data: {sku: product.sku})}>Add to basket</button>
+ * ```
+ *
+ * ## Give a part an id
+ *
+ * Pass `ids` on the root of the component, the same prop Zag.js uses. The part with that name renders the id and the client uses the same one:
+ *
+ * ```html
+ * <ui:dialog.root ids="{content: 'cookie-settings'}">...</ui:dialog.root>
+ * ```
+ *
+ * Set ids through `ids`. An `id` attribute written on the element is unknown to the client and Zag.js replaces it when the component hydrates. A part with a `value` takes no id from `ids`.
+ *
+ * ## Attach a part to another instance
+ *
+ * A part can belong to another instance of the same component than the template it sits in. The trigger item of a submenu is written inside the content of the parent menu, yet it is the anchor of the submenu. Pass the root id of that instance as `rootId`. The `ids` of the surrounding component do not apply to it:
+ *
  * ```html
  * <div {ui:ref(name: 'triggerItem', rootId: childId)}>Share</div>
  * ```
  *
- * A component's slot content (the markup a consumer writes between its opening/closing tags) is
- * always evaluated against the *calling* rendering context, not the component's own internal one -
- * so a bare `ui:ref` written directly inside such slot content doesn't, by default, know which
- * component (or rootId) it belongs to, and throws. Pass `context` to attach it explicitly to a
- * named ancestor component instead (resolved the same way `ui:template`'s own `context` argument
- * is - it threads correctly through slot-content nesting, unlike the ambient `component`/`context`
- * variables this ViewHelper otherwise reads):
+ * ## Mark an element in the slot content of another component
+ *
+ * Slot content is evaluated in the template of the caller, so a bare `ui:ref` there does not know which component it belongs to and throws an exception. Pass `context` with the camelCase name of the enclosing component:
+ *
  * ```html
  * <ui:combobox.root>
  *   <ui:combobox.content>
- *     <div>
- *       <span {ui:ref(name: 'statusText', context: 'combobox')}>Loading…</span>
- *     </div>
+ *     <span {ui:ref(name: 'statusText', context: 'combobox')}>Searching products...</span>
  *   </ui:combobox.content>
  * </ui:combobox.root>
  * ```
- * Use `ui:template` instead when the content's real data doesn't exist yet at server-render time
- * and needs cloning client-side per instance (e.g. async search results) - `context` here is for
- * hand-authored elements that render immediately, once, and never get cloned.
+ *
+ * For markup that the client clones for every item, such as async search results, use [`ui:template`](./template).
+ *
  */
 class RefViewHelper extends AbstractViewHelper
 {

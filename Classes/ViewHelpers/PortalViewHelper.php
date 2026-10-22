@@ -10,18 +10,11 @@ use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
 /**
- * This ViewHelper allows you to render content in a different part of the DOM tree than where it is defined.
- * This is particularly useful for modals, tooltips, or any component that needs to break out of its parent container for styling or positioning reasons.
  *
- * With the default `name`, portalled content is rendered automatically at the end of `<body>` - no further setup needed.
- * Pass a custom `name` together with a matching [ui:portalContainer](./portalContainer) ViewHelper if you want portalled content to end up somewhere else instead.
+ * Renders its content at the end of `<body>` instead of where you write it, for a tooltip, a dialog or anything else that has to leave its parent container for styling or positioning.
  *
- * Inside a `ui:template` stencil (e.g. the row of a FieldArray) the content is rendered in place, wrapped in
- * `<div data-portal>`, and moved to its destination when the client clones the stencil. With `disabled` it
- * stays in place.
+ * The content part of a tooltip portals its positioner:
  *
- * ## Example
- * Common use case inside `Tooltip/Content.html`:
  * ```html
  * <ui:portal>
  *     <primitives:tooltip.positioner>
@@ -32,6 +25,11 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
  *     </primitives:tooltip.positioner>
  * </ui:portal>
  * ```
+ *
+ * To render the content somewhere else, give the portal a `name` and place a matching [ui:portalContainer](./portalContainer). With `disabled="{true}"` the content stays in place.
+ *
+ * Inside a [`ui:template`](./template) the content stays in place too, wrapped in `<div data-portal>`, and moves to its destination when the client clones the template.
+ *
  */
 class PortalViewHelper extends AbstractViewHelper
 {

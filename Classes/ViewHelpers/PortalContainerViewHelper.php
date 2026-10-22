@@ -9,24 +9,21 @@ use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
 /**
- * Renders the elements used inside the `ui:portal` ViewHelper into the current position in the DOM.
  *
- * The default `name` bucket is rendered automatically at the end of `<body>` (via TYPO3's `PageRenderer`),
- * so this ViewHelper is no longer needed for it in a normal page render. It's still useful for two cases:
- * placing portalled content somewhere other than the end of `<body>` (give `ui:portal` a matching custom
- * `name`), or rendering outside TYPO3's regular page pipeline (e.g. an isolated component preview), where
- * nothing else flushes the registry for you.
+ * Renders the content that [`ui:portal`](./portal) collected under the same `name` at the place where you write it.
  *
- * It renders an empty `<template data-portal-container>` marker first: portals inside a `ui:template` stencil
- * are moved after it when the client clones the stencil.
+ * Use it to portal content somewhere other than the end of `<body>`. Give the portal a custom `name` and place the container with that name where the content should end up:
  *
- * ## Example
- * Place a matching `name` wherever you want that portal's content to end up:
  * ```html
  * <ui:portal name="sidebar">...</ui:portal>
  * ...
  * <ui:portalContainer name="sidebar" />
  * ```
+ *
+ * The default `name` renders at the end of `<body>` through TYPO3's page rendering. Add `<ui:portalContainer />` for it when you render outside that pipeline, for example in an isolated component preview.
+ *
+ * The container also renders an empty `<template data-portal-container>` marker. The portals of a cloned [`ui:template`](./template) move after it.
+ *
  */
 class PortalContainerViewHelper extends AbstractViewHelper
 {
