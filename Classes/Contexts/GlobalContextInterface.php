@@ -11,8 +11,8 @@ use Psr\Http\Message\ServerRequestInterface;
  * `$this->getGlobals()`. Its getters marked `#[ExposeToClient]` are written once into
  * `window.FluidPrimitives.globals`.
  *
- * A project replaces the library default by aliasing this interface to its own class in its
- * `Configuration/Services.yaml`.
+ * A project replaces the library default by putting `#[AsAlias(GlobalContextInterface::class, public: true)]`
+ * on its own class.
  *
  * @extends \ArrayAccess<string, mixed>
  */

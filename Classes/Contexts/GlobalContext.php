@@ -13,7 +13,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
  * The library's global context: `locale` and `debug`. A project extends it with getters of its own and
- * aliases {@see GlobalContextInterface} to the subclass. `getLocale()` is `final`, the library relies on
+ * registers it with `#[AsAlias(GlobalContextInterface::class, public: true)]`. `getLocale()` is `final`, the library relies on
  * what it returns; `getDebug()` can be overridden, e.g. to turn the client's dev warnings on for a staging
  * site. An override repeats `#[ExposeToClient]`, an attribute is not inherited.
  *

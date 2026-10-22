@@ -15,7 +15,7 @@ services:
     shared: true
     public: true
 
-  # A project overrides this alias with its own GlobalContext subclass
+  # A project overrides this alias with #[AsAlias(GlobalContextInterface::class, public: true)] on its own GlobalContext subclass
   Jramke\FluidPrimitives\Contexts\GlobalContextInterface:
     alias: Jramke\FluidPrimitives\Contexts\GlobalContext
     public: true
