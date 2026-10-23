@@ -348,12 +348,53 @@ final class ListCollection implements JsonSerializable, IteratorAggregate
     public function jsonSerialize(): array
     {
         return [
-            'items' => $this->items,
+            'items' => array_map($this->itemForClient(...), $this->items),
             'itemToValueKey' => $this->itemToValueKey,
             'itemToStringKey' => $this->itemToStringKey,
             'isItemDisabledKey' => $this->isItemDisabledKey,
             'groupByKey' => $this->groupByKey,
             'groupSort' => $this->groupSort,
         ];
+    }
+
+    /**
+     * Only what the client reads of an item: its value, label, disabled flag and group, at the paths the keys name.
+     * The rest of a row, like the other columns of a database record, stays on the server instead of in the page source.
+     *
+     * @return array<string, mixed>
+     */
+    private function itemForClient(array|object $item): array
+    {
+        $paths = array_filter(array_unique([
+            $this->itemToValueKey ?? 'value',
+            $this->itemToStringKey ?? 'label',
+            $this->isItemDisabledKey ?? 'disabled',
+            $this->groupByKey,
+        ]));
+
+        $projected = [];
+        foreach ($paths as $path) {
+            $value = $this->getFromKey($item, $path);
+            if ($value === null) {
+                continue;
+            }
+
+            $projected = array_replace_recursive($projected, $this->nest(explode('.', $path), $value));
+        }
+
+        return $projected;
+    }
+
+    /**
+     * `['meta', 'off']` and `true` become `['meta' => ['off' => true]]`.
+     *
+     * @param list<string> $segments
+     * @return array<string, mixed>
+     */
+    private function nest(array $segments, string|int|float|bool $value): array
+    {
+        $segment = (string)array_shift($segments);
+
+        return [$segment => $segments === [] ? $value : $this->nest($segments, $value)];
     }
 }
