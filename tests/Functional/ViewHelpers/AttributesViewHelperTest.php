@@ -38,4 +38,15 @@ final class AttributesViewHelperTest extends FunctionalTestCase
         $this->assertFalse($element->has('autofocus'));
         $this->assertNoRepeatedAttributes($html);
     }
+
+    #[Test]
+    public function escapesAForwardedValueOnlyOnce(): void
+    {
+        $value = 'Tom & "Jerry" <b>';
+
+        $html = $this->renderTemplate('<plain:forwarder title="{value}">Text</plain:forwarder>', ['value' => $value]);
+
+        $this->assertSame($value, $this->elementWith($html, 'data-inner')->get('title'));
+        $this->assertStringNotContainsString('&amp;amp;', $html);
+    }
 }
