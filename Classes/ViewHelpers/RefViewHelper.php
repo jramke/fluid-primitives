@@ -183,6 +183,8 @@ class RefViewHelper extends AbstractViewHelper
 
         $explicitRootId = (string)($this->arguments['rootId'] ?? '');
         if ($explicitRootId !== '') {
+            ComponentUtility::assertValidRootId($explicitRootId);
+
             return [$componentName, $explicitRootId, []];
         }
 

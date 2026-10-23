@@ -73,4 +73,24 @@ final class CollapsibleRenderingTest extends FunctionalTestCase
         );
         $this->assertSame('', trim($open->get('style') ?? ''));
     }
+
+    #[Test]
+    public function acceptsACssLengthOrAMathExpressionAsTheCollapsedSizeAndNothingElse(): void
+    {
+        $collapsible = static fn(string $size): string => (
+            '<primitives:collapsible.root collapsedHeight="' . $size . '">
+                <primitives:collapsible.content>Content</primitives:collapsible.content>
+            </primitives:collapsible.root>'
+        );
+
+        foreach (['40px', '2.5rem', '.5em', '50%', 'calc(100vh - 2rem)', 'min(10px, 5vh)'] as $size) {
+            $content = $this->elementWith($this->renderTemplate($collapsible($size)), 'data-collapsible-content');
+            $this->assertStringContainsString('--collapsed-height: ' . $size . ';', $content->get('style') ?? '');
+        }
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('must be a CSS length');
+
+        $this->renderTemplate($collapsible('1px; position: fixed; inset: 0'));
+    }
 }
