@@ -1,0 +1,5 @@
+<ui:prop name="closed" type="boolean" optional="{true}" />
+
+<button type="button" {f:if(condition: closed, then: 'hidden')} {ui:attributes()}>
+    <f:slot />
+</button>

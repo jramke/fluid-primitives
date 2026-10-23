@@ -8,7 +8,7 @@
     {f:if(condition: context.translations.content, then: 'aria-label="{context.translations.content}"' )}
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'content' , data: refData )}
-    {ui:attributes(skip: 'hidden' )}
+    {ui:attributes()}
     {ui:asChild()}
     {f:if(condition: hidden, then: 'hidden="{hidden}"' )}>
     <f:slot />

@@ -9,7 +9,7 @@
     aria-modal="{f:if(condition: '{context.modal}', then: 'true', else: 'false')}"
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'content' , data: refData )}
-    {ui:attributes(skip: 'hidden' )}
+    {ui:attributes()}
     {ui:asChild()}
     {f:if(condition: hidden, then: 'hidden="{hidden}"' )}>
     <f:slot />

@@ -17,6 +17,7 @@ use Jramke\FluidPrimitives\Service\Component\ComponentHydrationCollector;
 use Jramke\FluidPrimitives\Service\Component\ComponentIdentityResolver;
 use Jramke\FluidPrimitives\Service\Component\ContextMarkedPropsExposer;
 use Jramke\FluidPrimitives\Service\Component\FieldContextVariableMerger;
+use Jramke\FluidPrimitives\Service\Component\OwnedAttributesTemplateProcessor;
 use Jramke\FluidPrimitives\Service\ContextService;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use TYPO3Fluid\Fluid\Core\Component\ComponentRendererInterface;
@@ -42,6 +43,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         private CheckboxGroupContextVariableMerger $checkboxGroupContextVariableMerger,
         private ComponentHydrationCollector $hydrationCollector,
         private AsChildAttributeSpreader $asChildAttributeSpreader,
+        private OwnedAttributesTemplateProcessor $ownedAttributesProcessor,
     ) {}
 
     /**
@@ -49,7 +51,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
      * template name and possible additional variables) are expected to be provided by the component template
      * resolver.
      *
-     * This is the single entry point every component render goes through, coordinating the 9 collaborators
+     * This is the single entry point every component render goes through, coordinating the 10 collaborators
      * above in sequence; {@see createView}, {@see prepareRenderState} and {@see renderComponentOutput} already
      * carry as much of that sequence as can be extracted without exceeding the 5-parameter guideline on the
      * extracted methods themselves (the remaining steps interleave too many of viewHelperName/arguments/
@@ -72,6 +74,14 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         $renderingContext->getTemplateCompiler()->reset();
         $renderingContext->setTemplatePaths($this->componentResolver->getTemplatePaths());
         $renderingContext->setViewHelperResolver($renderingContext->getViewHelperResolver()->getScopedCopy());
+        // a context cloned from another component's already carries the shared processor
+        $renderingContext->setTemplateProcessors([
+            ...array_filter(
+                $renderingContext->getTemplateProcessors(),
+                fn($processor) => $processor !== $this->ownedAttributesProcessor,
+            ),
+            $this->ownedAttributesProcessor,
+        ]);
 
         $identity = $this->identityResolver->resolve(
             $viewHelperName,
