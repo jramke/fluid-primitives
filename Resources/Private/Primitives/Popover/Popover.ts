@@ -8,10 +8,9 @@ import {
     type ConverterMachineProps,
 } from '../../Client';
 
-// PHP can't distinguish a list-shaped array from an object-shaped one for a bare `type="array"`
-// prop (see WireTypeResolver), so `positioning` resolves to `unknown` on the wire - this converter
-// just tells TS what it actually is (a real @zag-js/popper PositioningOptions object) rather than
-// transforming the value itself.
+// The server sends `positioning` as the JSON of its Positioning DTO, where `placement` and `strategy` are
+// plain strings - this converter just tells TS what it actually is (a real @zag-js/popper
+// PositioningOptions object) rather than transforming the value itself.
 const popoverPropConverters = {
     positioning: (positioning: popover.Props['positioning']) => positioning,
 } satisfies ClientPropConverterMap;

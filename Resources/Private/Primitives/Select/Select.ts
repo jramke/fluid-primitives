@@ -18,9 +18,9 @@ import type { FieldClientApi } from '../Field/src/field.handle';
 const selectPropConverters = {
     collection: (collection: Parameters<typeof getListCollectionFromHydrationData>[0]) =>
         getListCollectionFromHydrationData(collection),
-    // PHP can't distinguish a list-shaped array from an object-shaped one for a bare `type="array"`
-    // prop (see WireTypeResolver), so `positioning` resolves to `unknown` on the wire - this just
-    // tells TS what it actually is (a real @zag-js/popper PositioningOptions object).
+    // The server sends `positioning` as the JSON of its Positioning DTO, where `placement` and `strategy`
+    // are plain strings - this just tells TS what it actually is (a real @zag-js/popper PositioningOptions
+    // object).
     positioning: (positioning: select.Props['positioning']) => positioning,
 } satisfies ClientPropConverterMap;
 

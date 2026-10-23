@@ -45,9 +45,9 @@ const datePickerPropConverters = {
     // The labels are texts on the wire, Zag wants functions of the date and the view for most.
     translations: (texts: TranslationTexts | undefined, props: Record<string, unknown>) =>
         buildTranslations(texts, props.locale as string | undefined),
-    // PHP can't distinguish a list-shaped array from an object-shaped one for a bare `type="array"`
-    // prop (see WireTypeResolver), so this resolves to `unknown` on the wire - this just tells TS
-    // what it actually is (a real @zag-js/popper PositioningOptions object).
+    // The server sends `positioning` as the JSON of its Positioning DTO, where `placement` and `strategy`
+    // are plain strings - this just tells TS what it actually is (a real @zag-js/popper PositioningOptions
+    // object).
     positioning: (positioning: datePicker.Props['positioning']) => positioning,
 } satisfies ClientPropConverterMap;
 
@@ -76,6 +76,7 @@ export class DatePicker extends FieldAwareComponent<datePicker.Props, datePicker
     transformProps(props: datePicker.Props): datePicker.Props {
         return {
             ...props,
+            positioning: { placement: 'bottom-start', gutter: 8, ...props.positioning },
             // TODO: Zag only knows the English placeholder letters, drop this once chakra-ui/zag#3421
             // (translatable placeholder) is released and `translations.placeholder` is used as it is.
             placeholder:
