@@ -178,6 +178,37 @@ final class SelectRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function rendersTheItemOfAStencilWithoutAnItemAndMarksItsPartsForTheClient(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:select.root rootId="my-select" collection="{collection}">
+                <primitives:select.positioner>
+                    <primitives:select.content>
+                        <primitives:select.list>
+                            <ui:template name="itemTemplate" context="select">
+                                <primitives:select.item>
+                                    <primitives:select.itemText />
+                                    <primitives:select.itemIndicator />
+                                </primitives:select.item>
+                            </ui:template>
+                        </primitives:select.list>
+                    </primitives:select.content>
+                </primitives:select.positioner>
+            </primitives:select.root>
+        ', ['collection' => new ListCollection([])]);
+
+        $template = $this->elementWith($html, 'data-select-item-template');
+        $this->assertSame('template', $template->tag);
+        $this->assertSame('my-select', $template->get('data-select-item-template'));
+        foreach (['data-select-item', 'data-select-item-text', 'data-select-item-indicator'] as $part) {
+            $this->assertSame('my-select', $this->elementWith($html, $part)->get($part), $part);
+        }
+
+        // nothing is selected in a stencil: the client sets the state on each copy it makes
+        $this->assertFalse($this->elementWith($html, 'data-select-item')->has('aria-selected'));
+    }
+
+    #[Test]
     public function rendersTheNativeSelectWithTheFormAttributesOfTheRoot(): void
     {
         $html = $this->renderTemplate('
