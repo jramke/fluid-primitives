@@ -13,6 +13,7 @@ use Jramke\FluidPrimitives\Service\Component\ComponentHydrationCollector;
 use Jramke\FluidPrimitives\Service\Component\ComponentIdentityResolver;
 use Jramke\FluidPrimitives\Service\Component\ContextMarkedPropsExposer;
 use Jramke\FluidPrimitives\Service\Component\FieldContextVariableMerger;
+use Jramke\FluidPrimitives\Service\Component\OwnedAttributesTemplateProcessor;
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use TYPO3Fluid\Fluid\Core\Component\ComponentRendererInterface;
 
@@ -35,6 +36,7 @@ final readonly class ComponentRendererFactory
         private CheckboxGroupContextVariableMerger $checkboxGroupContextVariableMerger,
         private ComponentHydrationCollector $hydrationCollector,
         private AsChildAttributeSpreader $asChildAttributeSpreader,
+        private OwnedAttributesTemplateProcessor $ownedAttributesProcessor,
     ) {}
 
     public function create(ComponentCollectionInterface $componentResolver): ComponentRendererInterface
@@ -49,6 +51,7 @@ final readonly class ComponentRendererFactory
             $this->checkboxGroupContextVariableMerger,
             $this->hydrationCollector,
             $this->asChildAttributeSpreader,
+            $this->ownedAttributesProcessor,
         );
     }
 }

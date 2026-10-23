@@ -41,6 +41,28 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\ViewHelperNodeInitializedEventInterface;
  *
  * A template that uses `{class}` takes `class` as a prop and keeps it out of the attributes. Render it yourself there, for example with [`ui:cn`](./cn).
  *
+ * ## Keep what the element sets itself
+ *
+ * A caller's attribute never replaces one the same element writes. This element sets `type`:
+ *
+ * ```html
+ * <button type="button" {ui:attributes()}>Add to basket</button>
+ * ```
+ *
+ * A caller passes `type` and `data-product-id`:
+ *
+ * ```html
+ * <ui:addToBasket type="submit" data-product-id="42" />
+ * ```
+ *
+ * This renders:
+ *
+ * ```html
+ * <button type="button" data-product-id="42">Add to basket</button>
+ * ```
+ *
+ * An attribute the element renders under a condition, like `{f:if(condition: closed, then: 'hidden')}`, counts as well, so a caller's `hidden` stays out while the condition is false. List attributes the template adds some other way, for example from a variable, in `skip`. Use `only` to render a few attributes and leave out the rest.
+ *
  * ## Forward attributes to another component
  *
  * A component that uses `ui:attributes` gets an `attributes` prop. Pass the attributes on through it:
@@ -56,11 +78,15 @@ class AttributesViewHelper extends AbstractViewHelper implements ViewHelperNodeI
 
     public function initializeArguments(): void
     {
-        $this->registerArgument('skip', 'string', 'A comma-separated list of attributes to skip');
+        $this->registerArgument(
+            'skip',
+            'string',
+            'A comma-separated list of attributes to leave out, on top of the ones the element sets itself',
+        );
         $this->registerArgument(
             'only',
             'string',
-            'A comma-separated list of attributes to include. All other attributes will be skipped',
+            'A comma-separated list of attributes to render. All other attributes are left out',
         );
         $this->registerArgument(
             'asArray',

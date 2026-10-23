@@ -9,7 +9,7 @@
     tabindex="{f:if(condition: context.virtualFocus, then: '-1', else: '0')}"
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'content' , value: value, data: refData )}
-    {ui:attributes(skip: 'hidden' )}
+    {ui:attributes()}
     {ui:asChild()}
     {f:if(condition: '!{selected}' , then: 'hidden' )}>
     <f:slot />
