@@ -6,6 +6,7 @@ namespace Jramke\FluidPrimitives\Tests\Unit;
 
 use Jramke\FluidPrimitives\Domain\Dto\TagAttributes;
 use Jramke\FluidPrimitives\Tests\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 
 final class TagAttributesTest extends TestCase
@@ -25,14 +26,75 @@ final class TagAttributesTest extends TestCase
     }
 
     #[Test]
-    public function escapesHtmlInValuesAndKeys(): void
+    public function escapesHtmlInValues(): void
+    {
+        $attrs = new TagAttributes(['data-value' => '<script>alert("xss")</script>']);
+
+        $this->assertSame('data-value="&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;"', (string)$attrs);
+    }
+
+    /**
+     * @return iterable<string, array{0: string}>
+     */
+    public static function namesThatCarryMoreThanAName(): iterable
+    {
+        yield 'a space' => ['data-x onfocus=alert(1) autofocus a'];
+        yield 'an equals sign' => ['a=b'];
+        yield 'a slash' => ['a/onload=alert(1)'];
+        yield 'a quote' => ['a"b'];
+        yield 'an angle bracket' => ['data-<test>'];
+        yield 'an ampersand' => ['a&b'];
+    }
+
+    #[Test]
+    #[DataProvider('namesThatCarryMoreThanAName')]
+    public function rejectsAnAttributeNameThatWouldRenderMoreAttributes(string $name): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid attribute name provided');
+
+        new TagAttributes([$name => 'v']);
+    }
+
+    #[Test]
+    public function acceptsTheAttributeNamesFrameworksUse(): void
     {
         $attrs = new TagAttributes([
-            'data-value' => '<script>alert("xss")</script>',
-            'data-<test>' => 'value',
+            '@click.prevent' => 'go',
+            ':class' => 'a',
+            'x-on:keydown.esc' => 'b',
+            'data-a_b.c' => 'c',
         ]);
-        $this->assertStringContainsString('&lt;script&gt;', (string)$attrs);
-        $this->assertStringContainsString('data-&lt;test&gt;', (string)$attrs);
+
+        $this->assertSame('@click.prevent="go" :class="a" x-on:keydown.esc="b" data-a_b.c="c"', (string)$attrs);
+    }
+
+    #[Test]
+    public function leavesOutAUrlThatRunsScriptWhereABrowserFollowsIt(): void
+    {
+        $attrs = new TagAttributes([
+            'href' => " \tJava\nScript:alert(1)",
+            'action' => 'vbscript:x',
+            'formaction' => 'data:text/html,<b>',
+            'src' => 'data:image/png;base64,AAAA',
+            'title' => 'javascript:not a url',
+        ]);
+
+        // the image is data on purpose and a title is no URL
+        $this->assertSame('src="data:image/png;base64,AAAA" title="javascript:not a url"', (string)$attrs);
+        $this->assertSame(
+            ['src' => 'data:image/png;base64,AAAA', 'title' => 'javascript:not a url'],
+            $attrs->renderAsArray(),
+        );
+    }
+
+    #[Test]
+    public function skipsAndKeepsAttributesWhateverTheirCase(): void
+    {
+        $attrs = new TagAttributes(['hidden' => true, 'Type' => 'text', 'id' => 'a']);
+
+        $this->assertSame('id="a"', $attrs->renderWithSkip(['HIDDEN', 'type']));
+        $this->assertSame('hidden Type="text"', $attrs->renderWithOnly(['Hidden', 'TYPE']));
     }
 
     #[Test]
