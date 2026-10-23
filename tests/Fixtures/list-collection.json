@@ -1,5 +1,56 @@
 [
     {
+        "name": "numbers as values are strings",
+        "wire": {
+            "items": [
+                {
+                    "value": 1,
+                    "label": "January"
+                },
+                {
+                    "value": 2,
+                    "label": "February"
+                }
+            ],
+            "itemToValueKey": null,
+            "itemToStringKey": null,
+            "isItemDisabledKey": null,
+            "groupByKey": null,
+            "groupSort": null
+        },
+        "expected": {
+            "values": ["1", "2"],
+            "labels": ["January", "February"],
+            "disabled": [false, false],
+            "groups": [["", ["1", "2"]]]
+        }
+    },
+    {
+        "name": "numbers as labels, and a number as the only key",
+        "wire": {
+            "items": [
+                {
+                    "value": 2024,
+                    "label": 24
+                },
+                {
+                    "value": 2025
+                }
+            ],
+            "itemToValueKey": null,
+            "itemToStringKey": null,
+            "isItemDisabledKey": null,
+            "groupByKey": null,
+            "groupSort": null
+        },
+        "expected": {
+            "values": ["2024", "2025"],
+            "labels": ["24", "2025"],
+            "disabled": [false, false],
+            "groups": [["", ["2024", "2025"]]]
+        }
+    },
+    {
         "name": "the default keys",
         "wire": {
             "items": [

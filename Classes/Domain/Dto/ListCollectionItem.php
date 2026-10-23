@@ -56,7 +56,6 @@ class ListCollectionItem implements ArrayAccess, JsonSerializable
             'value' => $this->value,
             'label' => $this->label,
             'disabled' => $this->disabled,
-            'original' => $this->original,
         ];
     }
 }

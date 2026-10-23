@@ -859,6 +859,10 @@ function getByPath(item: unknown, path: string): any {
     return path.split('.').reduce<any>((value, key) => value?.[key], item);
 }
 
+function asString(value: unknown): string {
+    return value == null ? '' : String(value);
+}
+
 export function getListCollectionFromHydrationData<T extends CollectionItem>(hydrationCollection: {
     items: T[];
     itemToValueKey?: string | null;
@@ -876,8 +880,16 @@ export function getListCollectionFromHydrationData<T extends CollectionItem>(hyd
 
     return new ListCollection<T>({
         items: hydrationCollection.items,
-        itemToValue: itemToValueKey ? (item: any) => getByPath(item, itemToValueKey) : undefined,
-        itemToString: itemToStringKey ? (item: any) => getByPath(item, itemToStringKey) : undefined,
+        // Zag types these as returning a `string` but never coerces. Fluid turns a quoted `'1'` into
+        // an int, and the PHP collection reads it back as the string `'1'`, so do the same here.
+        itemToValue: (item: any) => asString(getByPath(item, itemToValueKey ?? 'value')),
+        itemToString: (item: any) => {
+            const label = getByPath(item, itemToStringKey ?? 'label');
+            // a plain `{value}` item needs no label, a configured `itemToStringKey` never falls back
+            return asString(
+                label ?? (itemToStringKey ? '' : getByPath(item, itemToValueKey ?? 'value'))
+            );
+        },
         isItemDisabled: isItemDisabledKey
             ? (item: any) => getByPath(item, isItemDisabledKey)
             : undefined,
