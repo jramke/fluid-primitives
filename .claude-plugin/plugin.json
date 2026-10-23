@@ -1,6 +1,6 @@
 {
     "name": "fluid-primitives",
-    "version": "1.0.0-beta.3",
+    "version": "1.0.0-beta.4",
     "description": "Teaches your coding agent Fluid Primitives, the headless component library for TYPO3 Fluid: usage and the live docs endpoints.",
     "author": {
         "name": "Joost Ramke"
