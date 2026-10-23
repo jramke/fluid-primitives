@@ -8,8 +8,6 @@ use Jramke\FluidPrimitives\Annotations\ClientArgumentAnnotation;
 use Jramke\FluidPrimitives\Annotations\ContextArgumentAnnotation;
 use Jramke\FluidPrimitives\Domain\Dto\ResolvedComponentArguments;
 use Jramke\FluidPrimitives\Domain\Dto\TagAttributes;
-use Jramke\FluidPrimitives\Utility\TagAttributesStringParser;
-use Jramke\FluidPrimitives\Utility\Typed;
 use Jramke\FluidPrimitives\ViewHelpers\AttributesViewHelper;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 use TYPO3Fluid\Fluid\Core\ViewHelper\ArgumentDefinition;
@@ -89,38 +87,17 @@ final readonly class ComponentArgumentResolver
         array $arguments,
         array $additionalArguments,
     ): void {
-        /** @var array|string|null $attributesArgument */
-        $attributesArgument = $arguments['attributes'] ?? null;
-        if (!$this->hasAdditionalAttributes($additionalArguments, $attributesArgument)) {
+        // `attributes` is declared as an array: Fluid rejects a string before the component renders
+        /** @var array<string, mixed> $attributes */
+        $attributes = is_array($arguments['attributes'] ?? null) ? $arguments['attributes'] : [];
+        if ($additionalArguments === [] && $attributes === []) {
             return;
         }
-
-        /** @var array<string, mixed> $attributes */
-        $attributes = is_array($attributesArgument)
-            ? $attributesArgument
-            : TagAttributesStringParser::parse(Typed::string($attributesArgument));
-        $mergedAttributes = array_merge($additionalArguments, $attributes);
 
         $renderingContext->getViewHelperVariableContainer()->add(
             AttributesViewHelper::class,
             'attributes',
-            new TagAttributes($mergedAttributes),
+            new TagAttributes(array_merge($additionalArguments, $attributes)),
         );
-    }
-
-    /**
-     * @param array<string, mixed> $additionalArguments
-     */
-    private function hasAdditionalAttributes(array $additionalArguments, array|string|null $attributesArgument): bool
-    {
-        if ($additionalArguments !== []) {
-            return true;
-        }
-
-        if (is_string($attributesArgument)) {
-            return trim($attributesArgument) !== '';
-        }
-
-        return is_array($attributesArgument) && $attributesArgument !== [];
     }
 }

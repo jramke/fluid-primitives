@@ -110,6 +110,19 @@ final class UsePropsViewHelperTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function escapesAnAttributeForwardedThroughSpreadPropsOnlyOnce(): void
+    {
+        $value = 'Tom & "Jerry" <b>';
+
+        $html = $this->renderTemplate('<wrapper:delegatesToAllowsExtra.root title="{value}">Content</wrapper:delegatesToAllowsExtra.root>', [
+            'value' => $value,
+        ]);
+
+        $this->assertSame($value, $this->elementWith($html, 'data-variant')->get('title'));
+        $this->assertStringNotContainsString('&amp;amp;', $html);
+    }
+
+    #[Test]
     public function usePropsWithoutAsNeverGrantsAdditionalArguments(): void
     {
         // Regression test for the bug an earlier draft's naive fix introduced: ImportsOnlyFromAllowsExtra.root

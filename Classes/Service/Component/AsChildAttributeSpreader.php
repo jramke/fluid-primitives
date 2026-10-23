@@ -85,13 +85,8 @@ final readonly class AsChildAttributeSpreader
             $finalAttrs .= $v === null ? " {$k}" : ' ' . $k . '="' . $v . '"';
         }
 
-        // Replace child opening tag
-        return (string)preg_replace(
-            '/^\s*<' . $childTag . '[^>]*>/',
-            '<' . $childTag . $finalAttrs . '>',
-            $childHtml,
-            limit: 1,
-        );
+        // Not preg_replace(): it would read a `$0` or `\0` in a value as a back-reference to the old tag
+        return '<' . $childTag . $finalAttrs . '>' . substr($childHtml, strlen($childMatches[0]));
     }
 
     private function countTopLevelElements(string $html): int

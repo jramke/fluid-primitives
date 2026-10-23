@@ -178,6 +178,38 @@ final class AsChildRenderingTest extends FunctionalTestCase
         $this->assertStringNotContainsString('&amp;amp;', $html);
     }
 
+    /**
+     * @return iterable<string, array{0: string}>
+     */
+    public static function valuesThatReadAsReplacementReferences(): iterable
+    {
+        yield 'the whole match, which carries the quotes of the tag' => ['$0 onmouseover=alert(1) x='];
+        yield 'a backslash reference' => ['\\0 onmouseover=alert(1) x='];
+        yield 'a braced reference' => ['${0} onmouseover=alert(1) x='];
+        yield 'text that merely contains them' => ['Cost $10 \\\\ $1 ${2}'];
+    }
+
+    #[Test]
+    #[DataProvider('valuesThatReadAsReplacementReferences')]
+    public function keepsAttributeValuesVerbatimThatReadAsReplacementReferences(string $value): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:dialog.root>
+                <primitives:dialog.trigger asChild="{true}" data-price="{value}">
+                    <a href="{value}" title="{value}">Open</a>
+                </primitives:dialog.trigger>
+                <primitives:dialog.content>Content</primitives:dialog.content>
+            </primitives:dialog.root>
+        ', ['value' => $value]);
+
+        $trigger = $this->elementWith($html, 'data-dialog-trigger');
+        $this->assertSame($value, $trigger->get('href'));
+        $this->assertSame($value, $trigger->get('title'));
+        $this->assertSame($value, $trigger->get('data-price'));
+        $this->assertFalse($trigger->has('onmouseover'));
+        $this->assertNoRepeatedAttributes($html);
+    }
+
     #[Test]
     public function rejectsAsChildOnAComponentThatDidNotOptIn(): void
     {

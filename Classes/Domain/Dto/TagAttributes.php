@@ -43,7 +43,8 @@ class TagAttributes implements \Countable, \Stringable
             $attributes = $this->attributes;
         }
 
-        return $this->normalizeAttributes($attributes, static fn($key, $value) => htmlspecialchars($value));
+        // raw on purpose: whatever renders the array (another TagAttributes, f:tag) escapes it once
+        return $this->normalizeAttributes($attributes, static fn($key, $value) => $value);
     }
 
     /**
