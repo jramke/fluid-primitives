@@ -614,7 +614,11 @@ function restampIdReferences(root: Element | Document, remaps: RootIdRemap[]): v
         for (const { name, value } of Array.from(el.attributes)) {
             if (name === 'id') {
                 const match = remaps.find(({ oldRootId }) => referencesRootId(value, oldRootId));
-                if (match) el.setAttribute(name, value.replace(match.oldRootId, () => match.newRootId));
+                if (match)
+                    el.setAttribute(
+                        name,
+                        value.replace(match.oldRootId, () => match.newRootId)
+                    );
             } else if (name.startsWith('data-')) {
                 const match = remaps.find(({ oldRootId }) => oldRootId === value);
                 if (match) el.setAttribute(name, match.newRootId);
