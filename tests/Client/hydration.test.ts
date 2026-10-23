@@ -89,6 +89,17 @@ describe('ComponentHydrator', () => {
         }
     );
 
+    test('keeps a quote or bracket of a root id inside the attribute selector', () => {
+        const rootId = 'a"],[data-dialog-root';
+        const own = document.createElement('div');
+        own.setAttribute('data-dialog-root', rootId);
+        const other = document.createElement('div');
+        other.setAttribute('data-dialog-root', 'other');
+        document.body.replaceChildren(other, own);
+
+        expect(new ComponentHydrator('dialog', rootId).queryAll('root')).toEqual([own]);
+    });
+
     test('finds the parts of its own root id anywhere in the document, portaled content included', () => {
         document.body.innerHTML = `
             <div data-dialog-root="d1"><button id="inside" data-dialog-close-trigger="d1"></button></div>
@@ -174,6 +185,27 @@ describe('ComponentHydrator nested components of a row', () => {
         expect(window.FluidPrimitives.nestedComponents).toMatchObject({
             'field-array:fa1:item:3': [{ name: 'primitives:field', id: 'fld:3' }],
         });
+    });
+
+    test('restampValue writes a value like $& literally instead of expanding it', () => {
+        setGlobals({
+            hydrationData: {
+                primitives: { field: { fld: fieldEntry('fld', 'people[][name]') } },
+            },
+            nestedComponents: {
+                'field-array:fa1:item-template': [{ name: 'primitives:field', id: 'fld' }],
+            },
+        });
+        document.body.innerHTML = `<template>${row('', 'fld')}</template>`;
+        const clone = document.querySelector('template')!.content.firstElementChild!;
+        const hydrator = new ComponentHydrator('fieldArray', 'fa1');
+
+        hydrator.restampValue(clone, '$&', hydrator.scopeKey('itemTemplate'));
+
+        expect(attr(clone, 'input', 'id')).toBe('field:fld:$&:control');
+        const fields = window.FluidPrimitives.hydrationData.primitives.field;
+        expect(Object.keys(fields)).toEqual(['fld', 'fld:$&']);
+        expect(fields['fld:$&'].props.name).toBe('people[$&][name]');
     });
 
     test('renameValue moves a live row to its new value without touching the row of a longer number', () => {

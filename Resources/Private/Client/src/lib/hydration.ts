@@ -355,7 +355,7 @@ export class ComponentHydrator {
 
     /** The CSS selector of every element of `part` that belongs to this instance. */
     selector(part: string): string {
-        return `[${this.attr(part)}="${this.rootId}"]`;
+        return `[${this.attr(part)}="${CSS.escape(this.rootId)}"]`;
     }
 
     // Keep in sync with: Classes/Utility/ComponentRefUtility.php getScopeKey()
@@ -614,7 +614,7 @@ function restampIdReferences(root: Element | Document, remaps: RootIdRemap[]): v
         for (const { name, value } of Array.from(el.attributes)) {
             if (name === 'id') {
                 const match = remaps.find(({ oldRootId }) => referencesRootId(value, oldRootId));
-                if (match) el.setAttribute(name, value.replace(match.oldRootId, match.newRootId));
+                if (match) el.setAttribute(name, value.replace(match.oldRootId, () => match.newRootId));
             } else if (name.startsWith('data-')) {
                 const match = remaps.find(({ oldRootId }) => oldRootId === value);
                 if (match) el.setAttribute(name, match.newRootId);
@@ -638,7 +638,7 @@ function remapIdsProp(ids: Record<string, string>, remaps: RootIdRemap[]): Recor
     const remapped: Record<string, string> = {};
     for (const [key, value] of Object.entries(ids)) {
         const match = remaps.find(({ oldRootId }) => referencesRootId(value, oldRootId));
-        remapped[key] = match ? value.replace(match.oldRootId, match.newRootId) : value;
+        remapped[key] = match ? value.replace(match.oldRootId, () => match.newRootId) : value;
     }
     return remapped;
 }
@@ -672,7 +672,7 @@ function copyNestedComponentEntry(
         ids: remapIdsProp(stencilData.props.ids, remaps),
     };
     if (typeof rewrittenProps.name === 'string' && rewrittenProps.name.includes('[]')) {
-        rewrittenProps.name = rewrittenProps.name.replace('[]', `[${value}]`);
+        rewrittenProps.name = rewrittenProps.name.replace('[]', () => `[${value}]`);
     }
 
     const { namespace, baseName } = parseNamespacedComponentName(componentName);

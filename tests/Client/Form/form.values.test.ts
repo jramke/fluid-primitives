@@ -11,6 +11,20 @@ function formData(entries: Array<[string, string]>) {
 }
 
 describe('createFormValues', () => {
+    test('ignores a field named after a prototype property instead of writing to Object.prototype', () => {
+        const values = createFormValues(
+            formData([
+                ['__proto__[polluted]', 'yes'],
+                ['address[constructor][prototype][polluted]', 'yes'],
+                ['name', 'Ada'],
+            ])
+        );
+
+        expect(values.toObject()).toEqual({ name: 'Ada' });
+        expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+        expect(Object.keys(Object.prototype)).not.toContain('polluted');
+    });
+
     test('nests bracket and dot names and keeps repeated or [] keys as arrays', () => {
         const values = createFormValues(
             formData([
