@@ -1,5 +1,22 @@
 import { describe, expect, test } from 'vitest';
-import { spreadTextControlProps } from '../../Resources/Private/Client/src/lib/spread-props';
+import {
+    spreadProps,
+    spreadTextControlProps,
+} from '../../Resources/Private/Client/src/lib/spread-props';
+
+describe('spreadProps', () => {
+    test('refuses a children prop, which Zag would write with innerHTML', () => {
+        const el = document.createElement('span');
+
+        expect(() =>
+            spreadProps(el, { children: '<img src=x onerror=alert(1)>' }, 'scope')
+        ).toThrow(/children/);
+        expect(el.querySelector('img')).toBeNull();
+
+        spreadProps(el, { 'data-state': 'idle' }, 'scope');
+        expect(el.getAttribute('data-state')).toBe('idle');
+    });
+});
 
 /** Records what scripts assign; `type` mimics the user typing and is not recorded. */
 function watchValue(el: HTMLInputElement | HTMLTextAreaElement) {

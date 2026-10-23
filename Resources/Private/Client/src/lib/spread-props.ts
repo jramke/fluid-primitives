@@ -1,6 +1,24 @@
-import { spreadProps, type Attrs } from '@zag-js/vanilla';
+import { spreadProps as zagSpreadProps, type Attrs } from '@zag-js/vanilla';
 
-export { spreadProps };
+/**
+ * Applies the attributes and event handlers of a part's props to its element.
+ *
+ * It throws on a `children` prop: Zag would write it with `innerHTML`. Set `textContent` instead.
+ *
+ * @param node - The element to update.
+ * @param attrs - The props of a part, as returned by a machine's `connect()`.
+ * @param scopeKey - Keeps the cleanup of one component apart from another's on the same element.
+ * @returns A function that removes what was applied.
+ */
+export function spreadProps(node: HTMLElement, attrs: Attrs, scopeKey?: string) {
+    if ('children' in attrs) {
+        throw new Error(
+            'spreadProps does not support the "children" prop, it would be written with innerHTML. Set textContent instead.'
+        );
+    }
+
+    return zagSpreadProps(node, attrs, scopeKey);
+}
 
 const lastValues = new WeakMap<HTMLElement, unknown>();
 

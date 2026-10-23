@@ -106,12 +106,9 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
             const currentText = valueTextEl.textContent || valueTextEl.dataset.placeholder || '';
             const nextValue = this.api.valueAsString || valueTextEl.dataset.placeholder || '';
 
-            this.spreadProps(
-                valueTextEl,
-                mergeProps(this.api.getValueTextProps(), {
-                    children: nextValue,
-                })
-            );
+            this.spreadProps(valueTextEl, this.api.getValueTextProps());
+            // Text, never `children`: Zag writes that with innerHTML, and a label is user data
+            if (valueTextEl.textContent !== nextValue) valueTextEl.textContent = nextValue;
 
             if (nextValue !== currentText) {
                 queueMicrotask(() => {
