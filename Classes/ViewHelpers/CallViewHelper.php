@@ -24,9 +24,6 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
 class CallViewHelper extends AbstractViewHelper
 {
-    protected $escapeOutput = false;
-    protected $escapeChildren = false;
-
     public function initializeArguments(): void
     {
         $this->registerArgument('object', 'object', 'The object to call a method on', false);
