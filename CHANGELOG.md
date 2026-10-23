@@ -7,6 +7,7 @@ What changed in each release of Fluid Primitives, newest first. Breaking changes
 **Fixes**
 
 - A `ListCollection` item with a number as its value or label is found by the client. Quoted values like `'1'` in an inline array no longer miss their item in `Select` and `Combobox`. The items no longer render a `data-item` attribute. ([`28e1504`](https://github.com/jramke/fluid-primitives/commit/28e1504))
+- `asChild` keeps attribute values of the child element that contain `$` or `\`, like `title="Cost $10"`. A value such as `$0 onmouseover=...` no longer breaks out of its attribute and adds an event handler. ([#86](https://github.com/jramke/fluid-primitives/pull/86))
 - The item text and item indicator of a `Select` render inside a `ui:template`, so a stencil can hold an item the client clones, as in `Combobox`. ([`f4285d4`](https://github.com/jramke/fluid-primitives/commit/f4285d4))
 
 ## 1.0.0-beta.4
