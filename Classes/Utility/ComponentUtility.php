@@ -26,6 +26,20 @@ class ComponentUtility
         return '«' . $prefix . $requestSalt . base_convert((string)++$counter, from_base: 10, to_base: 36) . '»';
     }
 
+    /**
+     * The rootId is the value of every part attribute and lands unescaped in the attribute selectors of the
+     * client, so a quote or backslash in it would end the selector.
+     */
+    public static function assertValidRootId(string $rootId): void
+    {
+        if (preg_match('/["\\\\]/', $rootId) === 1) {
+            throw new \InvalidArgumentException(
+                sprintf('The rootId "%s" must not contain quotes or backslashes.', $rootId),
+                1_788_200_001,
+            );
+        }
+    }
+
     public static function isComponent(RenderingContextInterface $renderingContext): bool
     {
         $componentProp = Typed::arrayOrNull($renderingContext->getVariableProvider()->get('component'));

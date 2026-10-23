@@ -18,6 +18,17 @@ describe('file upload translations', () => {
         );
     });
 
+    test('writes a file name with a replacement pattern like $& as it is', () => {
+        const t = resolveTranslations({ itemPreview: 'Preview of %fileName%' }) as Record<
+            string,
+            unknown
+        >;
+
+        expect((t.itemPreview as (file: File) => string)(file('a$&b$`c.png'))).toBe(
+            'Preview of a$&b$`c.png'
+        );
+    });
+
     test('leaves an entry that is not a string to the default of Zag instead of calling it', () => {
         const t = resolveTranslations({
             dropzone: false,

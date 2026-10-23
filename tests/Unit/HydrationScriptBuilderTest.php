@@ -28,6 +28,21 @@ final class HydrationScriptBuilderTest extends TestCase
     }
 
     #[Test]
+    public function keepsTheTextOfTheDataAsItIsWhenMinified(): void
+    {
+        $label = "a  =  ( b ) ;  c\t{ d }";
+
+        $js = (new HydrationScriptBuilder())->build(
+            ['select' => ['«f1»' => ['label' => $label]]],
+            ['locale' => 'en_US'],
+            [],
+            development: false,
+        );
+
+        $this->assertStringContainsString('"label":' . json_encode($label), $js);
+    }
+
+    #[Test]
     public function escapesScriptTagBreakoutInBothModes(): void
     {
         $builder = new HydrationScriptBuilder();

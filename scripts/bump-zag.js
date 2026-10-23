@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { execSync } from 'child_process';
+import { execFileSync, execSync } from 'child_process';
 import { readFileSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
@@ -71,11 +71,12 @@ console.log(
 );
 
 // Install each package with the target version
-const packageList = zagPackages.map(pkg => `${pkg}@^${versionToInstall}`).join(' ');
+const packageList = zagPackages.map(pkg => `${pkg}@^${versionToInstall}`);
 
 console.log('Running npm install...');
 try {
-    execSync(`npm install ${packageList}`, {
+    // execFileSync: the version comes from the command line and must not reach a shell
+    execFileSync('npm', ['install', ...packageList], {
         cwd: rootDir,
         stdio: 'inherit',
     });

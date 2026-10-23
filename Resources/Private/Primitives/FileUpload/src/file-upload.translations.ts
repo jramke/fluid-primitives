@@ -29,7 +29,7 @@ export function resolveTranslations(
         if (typeof text !== 'string') continue;
         resolved[key] =
             key === 'itemPreview' || key === 'deleteFile'
-                ? (file: File) => text.replaceAll(FILE_NAME_PLACEHOLDER, file.name)
+                ? (file: File) => text.replaceAll(FILE_NAME_PLACEHOLDER, () => file.name)
                 : text;
     }
 
