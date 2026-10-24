@@ -6,7 +6,7 @@ What changed in each release of Fluid Primitives, newest first. Breaking changes
 
 **Fixes**
 
-- The package declares `"sideEffects": false`. A component you import but never use, like `import { Select } from 'fluid-primitives/select'`, no longer ends up in your bundle.
+- The package declares `"sideEffects": false`. A component you import but never use, like `import { Select } from 'fluid-primitives/select'`, no longer ends up in your bundle. ([#88](https://github.com/jramke/fluid-primitives/pull/88))
 - A `ListCollection` item with a number as its value or label is found by the client. Quoted values like `'1'` in an inline array no longer miss their item in `Select` and `Combobox`. The items no longer render a `data-item` attribute. ([`28e1504`](https://github.com/jramke/fluid-primitives/commit/28e1504))
 - `asChild` keeps attribute values of the child element that contain `$` or `\`, like `title="Cost $10"`. A value such as `$0 onmouseover=...` no longer breaks out of its attribute and adds an event handler. ([#86](https://github.com/jramke/fluid-primitives/pull/86))
 - An attribute you forward with `attributes="{ui:attributes(asArray: true)}"` or through `spreadProps` is escaped once. `Tom & "Jerry"` no longer arrives as `Tom &amp; &quot;Jerry&quot;`. ([#86](https://github.com/jramke/fluid-primitives/pull/86))
