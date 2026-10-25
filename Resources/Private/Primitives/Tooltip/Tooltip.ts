@@ -8,10 +8,9 @@ import {
     type ConverterMachineProps,
 } from '../../Client';
 
-// PHP can't distinguish a list-shaped array from an object-shaped one for a bare `type="array"`
-// prop (see WireTypeResolver), so `positioning` resolves to `unknown` on the wire - this converter
-// just tells TS what it actually is (a real @zag-js/popper PositioningOptions object) rather than
-// transforming the value itself.
+// The wire type of `positioning` is the generated `Positioning`, whose placement is a plain string
+// (PHP validates it, but its docblock can't carry the literal union) - this converter just tells TS
+// it is a real @zag-js/popper PositioningOptions object rather than transforming the value itself.
 const tooltipPropConverters = {
     positioning: (positioning: tooltip.Props['positioning']) => positioning,
 } satisfies ClientPropConverterMap;

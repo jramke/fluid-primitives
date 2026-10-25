@@ -25,6 +25,8 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
  * <ui:select.root collection="{countries}">...</ui:select.root>
  * ```
  *
+ * `collection` takes a plain array of items with a `value` and a `label` as well. Use the ViewHelper when your items use other keys or when you want groups.
+ *
  * ## Group the items
  *
  * Name the key that holds the group with `groupByKey`:

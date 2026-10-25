@@ -8,6 +8,7 @@ use Jramke\FluidPrimitives\Component\ComponentCollectionInterface;
 use Jramke\FluidPrimitives\Service\ContextService;
 use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
+use Jramke\FluidPrimitives\Utility\ConvertibleArgumentUtility;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 use TYPO3Fluid\Fluid\Core\Variables\VariableProviderInterface;
 use TYPO3Fluid\Fluid\Core\ViewHelper\ArgumentDefinition;
@@ -99,7 +100,12 @@ final readonly class ComponentRootContextFactory
                     continue; // Skip required arguments that are not provided
                 }
 
-                $contextVariables[$argumentName] = $argumentDefinition->getDefaultValue();
+                // A default is a literal baked into the cached template, so it can only be the array form of a convertible object.
+                $contextVariables[$argumentName] = $this->convertAndExpose(
+                    $argumentDefinition->getDefaultValue(),
+                    $argumentDefinition,
+                    $variableProvider,
+                );
                 continue;
             }
 
@@ -110,7 +116,11 @@ final readonly class ComponentRootContextFactory
             if (!$argumentProcessor->isValid($processedValue, $argumentDefinition)) {
                 continue; // Skip invalid values
             }
-            $contextVariables[$argumentName] = $processedValue;
+            $contextVariables[$argumentName] = $this->convertAndExpose(
+                $processedValue,
+                $argumentDefinition,
+                $variableProvider,
+            );
         }
 
         foreach ($variablesToRemove as $var) {
@@ -118,5 +128,25 @@ final readonly class ComponentRootContextFactory
         }
 
         return $contextVariables;
+    }
+
+    /**
+     * Turns the array form of a prop into the object it is declared as (see {@see ConvertibleArgumentUtility})
+     * and puts that object in the view's variables too, so `{prop}` in the root template and Fluid's own
+     * validation see it, not just the context.
+     */
+    private function convertAndExpose(
+        mixed $value,
+        ArgumentDefinition $argumentDefinition,
+        VariableProviderInterface $variableProvider,
+    ): mixed {
+        // A prop's converted value is as mixed as the prop itself.
+        // @mago-expect analysis:mixed-assignment
+        $converted = ConvertibleArgumentUtility::convert($value, $argumentDefinition);
+        if ($converted !== $value) {
+            $variableProvider->add($argumentDefinition->getName(), $converted);
+        }
+
+        return $converted;
     }
 }

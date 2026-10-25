@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Tests\Functional\Components;
 
 use Jramke\FluidPrimitives\Domain\Dto\ListCollection;
+use Jramke\FluidPrimitives\Domain\Dto\Positioning;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -377,5 +378,71 @@ final class SelectRenderingTest extends FunctionalTestCase
             ['items', 'itemToValueKey', 'itemToStringKey', 'isItemDisabledKey', 'groupByKey', 'groupSort'],
             array_keys($collection),
         );
+    }
+
+    /**
+     * @return iterable<string, array{0: string}>
+     */
+    public static function arrayCollections(): iterable
+    {
+        yield 'an array from the controller' => ['collection="{items}"'];
+        yield 'an array literal in the template' => [
+            'collection="{0: {value: \'opt-1\', label: \'Option 1\'}, 1: {value: \'opt-2\', label: \'Option 2\'}}"',
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('arrayCollections')]
+    public function turnsAnArrayCollectionIntoTheListCollectionTheTemplateAndTheClientGet(string $argument): void
+    {
+        $html = $this->renderTemplate('<primitives:select.root ' .
+        $argument .
+        '><primitives:select.hiddenSelect /></primitives:select.root>', [
+            'items' => [['value' => 'opt-1', 'label' => 'Option 1'], ['value' => 'opt-2', 'label' => 'Option 2']],
+        ]);
+
+        preg_match_all('/<option value="([^"]+)"/', $html, $options);
+        $this->assertSame(['opt-1', 'opt-2'], $options[1]);
+
+        $rootId = (string)$this->elementWith($html, 'data-select-root')->get('data-select-root');
+        $collection = HydrationRegistry::getInstance()->get('primitives', 'select', $rootId)['props']['collection'];
+        $this->assertInstanceOf(ListCollection::class, $collection);
+        $this->assertSame(2, $collection->getSize());
+    }
+
+    #[Test]
+    public function takesTheGivenPositioningAsItIsAndConvertsTheDefaultToo(): void
+    {
+        $positioningOf = function (string $arguments): Positioning {
+            HydrationRegistry::getInstance()->clear();
+            $html = $this->renderTemplate('<primitives:select.root collection="{items}" ' .
+            $arguments .
+            ' />', ['items' => []]);
+            $rootId = (string)$this->elementWith($html, 'data-select-root')->get('data-select-root');
+
+            return HydrationRegistry::getInstance()->get('primitives', 'select', $rootId)['props']['positioning'];
+        };
+
+        $default = $positioningOf('');
+        $this->assertInstanceOf(Positioning::class, $default);
+        $this->assertSame(['placement' => 'bottom-start', 'gutter' => 8], $default->jsonSerialize());
+
+        // not merged with the default: whoever sets the option names every one they want
+        $custom = $positioningOf('positioning="{placement: \'top\'}"');
+        $this->assertSame(['placement' => 'top'], $custom->jsonSerialize());
+
+        // a bare placement is the shorthand for the option of the same name
+        $this->assertSame(['placement' => 'top-end'], $positioningOf('positioning="top-end"')->jsonSerialize());
+    }
+
+    #[Test]
+    public function throwsForAPositioningOptionZagDoesNotKnow(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Unknown positioning option "placment"');
+
+        $this->renderTemplate('<primitives:select.root collection="{items}" positioning="{placment: \'top\'}" />', [
+            'items' => [],
+        ]);
     }
 }

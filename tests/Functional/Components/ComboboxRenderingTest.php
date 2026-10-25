@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Tests\Functional\Components;
 
 use Jramke\FluidPrimitives\Domain\Dto\ListCollection;
+use Jramke\FluidPrimitives\Domain\Dto\Positioning;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Registry\PortalRegistry;
 use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
@@ -493,5 +494,20 @@ final class ComboboxRenderingTest extends FunctionalTestCase
             ['berlin', 'paris', 'rome'],
             array_keys($this->elementsByValue($portaled, 'data-combobox-item')),
         );
+    }
+
+    #[Test]
+    public function shipsTheDefaultPositioningAsThePositioningObjectItMeans(): void
+    {
+        $html = $this->renderTemplate('<primitives:combobox.root collection="{cities}" />', [
+            'cities' => $this->cities(),
+        ]);
+
+        $rootId = (string)$this->elementWith($html, 'data-combobox-root')->get('data-combobox-root');
+        $positioning = HydrationRegistry::getInstance()->get('primitives', 'combobox', $rootId)['props']['positioning'];
+
+        $this->assertInstanceOf(Positioning::class, $positioning);
+        // `sameWidth: '{true}'` in the default of the prop is the boolean the client reads
+        $this->assertSame(['placement' => 'bottom', 'sameWidth' => true], $positioning->jsonSerialize());
     }
 }
