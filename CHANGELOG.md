@@ -6,8 +6,8 @@ What changed in each release of Fluid Primitives, newest first. Breaking changes
 
 **Features**
 
-- The `collection` of `Select` and `Combobox` takes a plain array of items with a `value` and a `label`, so an array from your controller needs no `ui:listCollection`. Use the ViewHelper for other item keys and groups.
-- The `positioning` prop of `Popover`, `Tooltip`, `Select`, `Combobox`, `Menu` and `DatePicker` becomes a `Positioning` object, with the options Zag.js can take as JSON. `positioning="top-end"` is short for `{placement: 'top-end'}`. A misspelled option name or an unknown `placement` now throws instead of being ignored. An array you pass replaces the default of the component, as before.
+- The `collection` of `Select` and `Combobox` takes a plain array of items with a `value` and a `label`, so an array from your controller needs no `ui:listCollection`. Use the ViewHelper for other item keys and groups. ([#89](https://github.com/jramke/fluid-primitives/pull/89))
+- The `positioning` prop of `Popover`, `Tooltip`, `Select`, `Combobox`, `Menu` and `DatePicker` becomes a `Positioning` object, with the options Zag.js can take as JSON. `positioning="top-end"` is short for `{placement: 'top-end'}`. A misspelled option name or an unknown `placement` now throws instead of being ignored. An array you pass replaces the default of the component, as before. ([#89](https://github.com/jramke/fluid-primitives/pull/89))
 
 **Fixes**
 
