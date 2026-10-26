@@ -9,6 +9,7 @@ use Jramke\FluidPrimitives\Contexts\AbstractComponentContext;
 use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
 use Jramke\FluidPrimitives\Domain\Dto\ComponentHydrationCandidate;
 use Jramke\FluidPrimitives\Domain\Dto\HydrationEntry;
+use Jramke\FluidPrimitives\Exception\HydrationException;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Registry\NestedComponentRegistry;
 use Jramke\FluidPrimitives\Registry\ReferencedRootRegistry;
@@ -44,7 +45,7 @@ final readonly class ComponentHydrationCollector
 
         $rootId = ComponentUtility::getRootIdFromContext($candidate->renderingContext);
         if ($rootId === '' || $rootId === '0') {
-            throw new \RuntimeException(
+            throw new HydrationException(
                 'No rootId found for root component ' . $candidate->viewHelperName . '.',
                 1756025241,
             );
@@ -122,7 +123,7 @@ final readonly class ComponentHydrationCollector
         // prop at all never reaches this point (see the early return above) and so never needs its
         // collection globally registered just to render - only a component that's actually about
         // to be hydrated does.
-        $namespaceIdentifier = $candidate->namespaceIdentifier ?? throw new \RuntimeException(
+        $namespaceIdentifier = $candidate->namespaceIdentifier ?? throw new HydrationException(
             sprintf(
                 'Cannot hydrate "%s": its component collection is not registered under any Fluid ' .
                 'namespace via $GLOBALS[\'TYPO3_CONF_VARS\'][\'SYS\'][\'fluid\'][\'namespaces\'] - a ' .

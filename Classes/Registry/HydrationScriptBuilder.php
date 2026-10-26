@@ -24,30 +24,25 @@ final class HydrationScriptBuilder
 
     public function build(array $registry, array $globals, array $nestedComponentsByScope, bool $development): string
     {
-        $js = <<<JS
+        $globalsJson = $this->toJson($globals, $development);
+        $hydrationJson = $this->toJson($registry, $development);
+        $nestedJson = $this->toJson($nestedComponentsByScope, $development);
+
+        if (!$development) {
+            // not a regex over the whole script: it would also rewrite whitespace inside the JSON strings
+            return "(function(){window.FluidPrimitives={componentInstances:{},globals:{$globalsJson},hydrationData:{$hydrationJson},nestedComponents:{$nestedJson}};})();";
+        }
+
+        return <<<JS
         (function() {
         window.FluidPrimitives = {
             componentInstances: {},
-            globals: {$this->toJson($globals, $development)},
-            hydrationData: {$this->toJson($registry, $development)},
-            nestedComponents: {$this->toJson($nestedComponentsByScope, $development)}
+            globals: {$globalsJson},
+            hydrationData: {$hydrationJson},
+            nestedComponents: {$nestedJson}
         };
         })();
         JS;
-
-        if ($development) {
-            return $js;
-        }
-
-        return $this->minify($js);
-    }
-
-    private function minify(string $js): string
-    {
-        $js = str_replace("\n", replace: '', subject: $js);
-        $js = str_replace("\r", replace: '', subject: $js);
-        $js = preg_replace('/\s+/', replacement: ' ', subject: $js); // replace multiple whitespaces with one space
-        return (string)preg_replace('/\s*([{}();=])\s*/', replacement: '$1', subject: (string)$js); // remove spaces around special characters
     }
 
     private function toJson(array $data, bool $development): string

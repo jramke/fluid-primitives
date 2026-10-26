@@ -161,7 +161,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
             ContextService::removeFromRenderingContext($parentRenderingContext, $identity->baseName);
 
             // Call afterRendering lifecycle method only for root or closed components
-            if ($ctx && method_exists($ctx, 'afterRendering')) {
+            if ($ctx instanceof AbstractComponentContext && method_exists($ctx, 'afterRendering')) {
                 $ctx->afterRendering($rendered);
             }
 
@@ -227,7 +227,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         }
 
         // Call beforeRendering lifecycle method only for root or closed components
-        if ($ctx && $isRenderedAsRoot && method_exists($ctx, 'beforeRendering')) {
+        if ($ctx instanceof AbstractComponentContext && $isRenderedAsRoot && method_exists($ctx, 'beforeRendering')) {
             $ctx->beforeRendering();
         }
 

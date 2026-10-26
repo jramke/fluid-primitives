@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Command;
 
+use Jramke\FluidPrimitives\Exception\ConfigurationException;
 use Jramke\FluidPrimitives\Service\PackageResolver;
 use Jramke\FluidPrimitives\Utility\Typed;
 use Symfony\Component\Console\Exception\MissingInputException;
@@ -33,7 +34,7 @@ final readonly class ComponentTargetExtensionResolver
         $extension = Typed::stringOrNull($input->getOption('extension'));
         if ($extension) {
             if (!array_key_exists($extension, $availablePackages)) {
-                throw new \RuntimeException(
+                throw new ConfigurationException(
                     'The extension "' . $extension . '" could not be found. Please choose one of these extensions: '
                         . implode(', ', $this->getPackageKeys($availablePackages)),
                     1678781015,

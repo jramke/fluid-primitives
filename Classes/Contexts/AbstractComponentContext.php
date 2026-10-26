@@ -6,6 +6,7 @@ namespace Jramke\FluidPrimitives\Contexts;
 
 use ArrayAccess;
 use Jramke\FluidPrimitives\Component\ComponentCollectionInterface;
+use Jramke\FluidPrimitives\Exception\MissingRequestException;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Utility\EnumUtility;
 use Psr\Http\Message\ServerRequestInterface;
@@ -70,7 +71,10 @@ abstract class AbstractComponentContext implements ComponentContextInterface, \A
             return $this->getRenderingContext()->getAttribute(ServerRequestInterface::class);
         }
 
-        throw new \RuntimeException('Rendering context does not have a ServerRequestInterface attribute.', 1785067721);
+        throw new MissingRequestException(
+            'Rendering context does not have a ServerRequestInterface attribute.',
+            1785067721,
+        );
     }
 
     /**
@@ -86,7 +90,7 @@ abstract class AbstractComponentContext implements ComponentContextInterface, \A
                 $globals->initialize($this->getRequest());
 
                 // @mago-expect lint:no-empty-catch-clause
-            } catch (\RuntimeException) {
+            } catch (MissingRequestException) {
                 // an isolated render without a request: the getters have to cope without one
             }
             $this->globals = $globals;

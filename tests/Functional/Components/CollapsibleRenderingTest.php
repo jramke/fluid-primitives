@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Tests\Functional\Components;
 
+use Jramke\FluidPrimitives\Exception\InvalidPropValueException;
 use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
 use PHPUnit\Framework\Attributes\Test;
+use TYPO3Fluid\Fluid\Core\ViewHelper\Exception as ViewHelperException;
 
 final class CollapsibleRenderingTest extends FunctionalTestCase
 {
@@ -72,5 +74,37 @@ final class CollapsibleRenderingTest extends FunctionalTestCase
             'data-collapsible-content',
         );
         $this->assertSame('', trim($open->get('style') ?? ''));
+    }
+
+    #[Test]
+    public function acceptsACssLengthOrAMathExpressionAsTheCollapsedSizeAndNothingElse(): void
+    {
+        $collapsible = static fn(string $size): string => (
+            '<primitives:collapsible.root collapsedHeight="' . $size . '">
+                <primitives:collapsible.content>Content</primitives:collapsible.content>
+            </primitives:collapsible.root>'
+        );
+
+        foreach ([
+            '40px',
+            '2.5rem',
+            '.5em',
+            '50%',
+            '10svmin',
+            '4dvmax',
+            'calc(100vh - 2rem)',
+            'min(10px, 5vh)',
+        ] as $size) {
+            $content = $this->elementWith($this->renderTemplate($collapsible($size)), 'data-collapsible-content');
+            $this->assertStringContainsString('--collapsed-height: ' . $size . ';', $content->get('style') ?? '');
+        }
+
+        try {
+            $this->renderTemplate($collapsible('1px; position: fixed; inset: 0'));
+            $this->fail('A size that is not a CSS length was not rejected.');
+        } catch (ViewHelperException $exception) {
+            $this->assertInstanceOf(InvalidPropValueException::class, $exception->getPrevious());
+            $this->assertStringContainsString('must be a CSS length', $exception->getMessage());
+        }
     }
 }

@@ -4,15 +4,10 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Tests\Unit;
 
-use GuzzleHttp\ClientInterface;
-use GuzzleHttp\Exception\ClientException;
-use GuzzleHttp\Psr7\Request;
-use GuzzleHttp\Psr7\Response;
 use Jramke\FluidPrimitives\Service\RegistryService;
 use Jramke\FluidPrimitives\Tests\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
-use TYPO3\CMS\Core\Package\MetaData;
 use TYPO3\CMS\Core\Package\PackageInterface;
 use TYPO3\CMS\Core\Package\PackageManager;
 
@@ -35,59 +30,57 @@ final class RegistryServiceTest extends TestCase
       files: []
     YAML;
 
-    #[Test]
-    #[DataProvider('installedVersions')]
-    public function readsTheRegistryOfTheTagOfTheInstalledVersion(string $installed, string $expectedRef): void
+    private string $package;
+
+    protected function setUp(): void
     {
-        $urls = [];
-        $client = $this->createStub(ClientInterface::class);
-        $client
-            ->method('request')
-            ->willReturnCallback(static function (string $method, string $url) use (&$urls): Response {
-                $urls[] = $url;
-                return new Response(200, body: str_ends_with($url, 'registry.yaml') ? self::INDEX : '<div />');
-            });
-
-        $registry = new RegistryService($client, $this->packageManagerWithVersion($installed));
-        $registry->fetchComponent('accordion');
-        $registry->fetchComponentFile('accordion', 'Root.fluid.html');
-
-        $base =
-            'https://raw.githubusercontent.com/jramke/fluid-primitives/' .
-            $expectedRef .
-            '/Resources/Private/Registry/';
-        // the index is read once for the manifest and the file, the file comes out of the component folder
-        $this->assertSame([$base . 'registry.yaml', $base . 'Accordion/Root.fluid.html'], $urls);
+        parent::setUp();
+        $this->package = sys_get_temp_dir() . '/fluid-primitives-registry-' . bin2hex(random_bytes(4));
+        $registry = $this->package . '/Resources/Private/Registry';
+        mkdir($registry . '/Accordion', 0o755, recursive: true);
+        mkdir($registry . '/ScrollArea', 0o755, recursive: true);
+        file_put_contents($registry . '/registry.yaml', self::INDEX);
+        file_put_contents($registry . '/Accordion/Root.fluid.html', '<div>accordion</div>');
+        file_put_contents($registry . '/ScrollArea/Root.fluid.html', '<div>scroll</div>');
+        file_put_contents($registry . '/secret.txt', 'not a component file');
+        symlink($registry . '/secret.txt', $registry . '/Accordion/link.txt');
     }
 
-    /**
-     * @return array<string, array{string, string}>
-     */
-    public static function installedVersions(): array
+    protected function tearDown(): void
     {
-        return [
-            'release' => ['1.2.0', '1.2.0'],
-            'prerelease as TYPO3 normalizes it' => ['1.0.0-beta2', '1.0.0-beta.2'],
-            'prerelease with a dot' => ['1.0.0-beta.1', '1.0.0-beta.1'],
-            'not a release' => ['dev-main', 'main'],
-        ];
+        $entries = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($this->package, \FilesystemIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::CHILD_FIRST,
+        );
+        foreach ($entries as $entry) {
+            $entry->isDir() && !$entry->isLink() ? rmdir($entry->getPathname()) : unlink($entry->getPathname());
+        }
+        rmdir($this->package);
+        parent::tearDown();
+    }
+
+    #[Test]
+    public function readsTheRegistryThatShipsWithTheInstalledPackage(): void
+    {
+        $registry = new RegistryService($this->packageManager());
+
+        [$error, $manifest] = $registry->fetchComponent('accordion');
+        $this->assertNull($error);
+        $this->assertSame(['Root.fluid.html', 'Accordion.entry.ts'], $manifest['files']);
+
+        [$error, $content] = $registry->fetchComponentFile('accordion', 'Root.fluid.html');
+        $this->assertNull($error);
+        $this->assertSame('<div>accordion</div>', $content);
+
+        [$error, $components] = $registry->fetchComponentList();
+        $this->assertNull($error);
+        $this->assertSame(['accordion', 'scrollArea'], array_column($components, 'key'));
     }
 
     #[Test]
     public function reportsWhatIsWrongWithTheRegistryInsteadOfThrowing(): void
     {
-        $notFound = new ClientException('Not Found', new Request('GET', '/'), new Response(404));
-        $client = $this->createStub(ClientInterface::class);
-        $client->method('request')->willReturnOnConsecutiveCalls(
-            new Response(200, body: self::INDEX),
-            $this->throwException($notFound),
-        );
-
-        $registry = new RegistryService($client, $this->packageManagerWithVersion('1.0.0'));
-
-        [$error, $manifest] = $registry->fetchComponent('accordion');
-        $this->assertNull($error);
-        $this->assertSame(['Root.fluid.html', 'Accordion.entry.ts'], $manifest['files']);
+        $registry = new RegistryService($this->packageManager());
 
         [$error] = $registry->fetchComponent('nope');
         $this->assertSame('Component not found in registry.', $error['message'] ?? null);
@@ -96,7 +89,31 @@ final class RegistryServiceTest extends TestCase
         [$error] = $registry->fetchComponent('empty');
         $this->assertSame('Component not found in registry.', $error['message'] ?? null);
 
-        [$error, $content] = $registry->fetchComponentFile('accordion', 'Root.fluid.html');
+        [$error, $content] = $registry->fetchComponentFile('accordion', 'Accordion.entry.ts');
+        $this->assertSame('Failed to fetch component file from registry.', $error['message'] ?? null);
+        $this->assertNull($content);
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function pathsOutsideTheComponentFolder(): array
+    {
+        return [
+            'a parent folder' => ['../secret.txt'],
+            'a parent folder after a folder' => ['Examples/../../secret.txt'],
+            'another component' => ['../ScrollArea/Root.fluid.html'],
+            'an absolute path' => ['/etc/hosts'],
+            'a symlink out of the folder' => ['link.txt'],
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('pathsOutsideTheComponentFolder')]
+    public function neverReadsAFileOutsideTheFolderOfTheComponent(string $path): void
+    {
+        [$error, $content] = (new RegistryService($this->packageManager()))->fetchComponentFile('accordion', $path);
+
         $this->assertSame('Failed to fetch component file from registry.', $error['message'] ?? null);
         $this->assertNull($content);
     }
@@ -105,22 +122,14 @@ final class RegistryServiceTest extends TestCase
     #[DataProvider('spellingsOfAMultiWordKey')]
     public function resolvesACamelCaseKeyAndItsOlderKebabCaseSpelling(string $key): void
     {
-        $urls = [];
-        $client = $this->createStub(ClientInterface::class);
-        $client
-            ->method('request')
-            ->willReturnCallback(static function (string $method, string $url) use (&$urls): Response {
-                $urls[] = $url;
-                return new Response(200, body: str_ends_with($url, 'registry.yaml') ? self::INDEX : '<div />');
-            });
-        $registry = new RegistryService($client, $this->packageManagerWithVersion('1.0.0'));
+        $registry = new RegistryService($this->packageManager());
 
         [$error, $manifest] = $registry->fetchComponent($key);
         $this->assertNull($error);
         $this->assertSame('scrollArea', $manifest['key']);
 
-        $registry->fetchComponentFile($key, 'Root.fluid.html');
-        $this->assertStringEndsWith('/ScrollArea/Root.fluid.html', (string)end($urls));
+        [, $content] = $registry->fetchComponentFile($key, 'Root.fluid.html');
+        $this->assertSame('<div>scroll</div>', $content);
     }
 
     /**
@@ -132,25 +141,19 @@ final class RegistryServiceTest extends TestCase
     }
 
     #[Test]
-    public function failsWhenTheIndexCannotBeFetched(): void
+    public function failsWhenThePackageHasNoRegistryIndex(): void
     {
-        $client = $this->createStub(ClientInterface::class);
-        $client
-            ->method('request')
-            ->willThrowException(new ClientException('Not Found', new Request('GET', '/'), new Response(404)));
+        unlink($this->package . '/Resources/Private/Registry/registry.yaml');
 
-        $registry = new RegistryService($client, $this->packageManagerWithVersion('1.0.0'));
+        [$error] = (new RegistryService($this->packageManager()))->fetchComponentList();
 
-        [$error] = $registry->fetchComponentList();
         $this->assertSame('Failed to fetch component registry.', $error['message'] ?? null);
     }
 
-    private function packageManagerWithVersion(string $version): PackageManager
+    private function packageManager(): PackageManager
     {
-        $metaData = $this->createStub(MetaData::class);
-        $metaData->method('getVersion')->willReturn($version);
         $package = $this->createStub(PackageInterface::class);
-        $package->method('getPackageMetaData')->willReturn($metaData);
+        $package->method('getPackagePath')->willReturn($this->package . '/');
         $packageManager = $this->createStub(PackageManager::class);
         $packageManager->method('getPackage')->willReturn($package);
 

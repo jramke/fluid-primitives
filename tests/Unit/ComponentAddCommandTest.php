@@ -7,12 +7,12 @@ namespace Jramke\FluidPrimitives\Tests\Unit;
 use Jramke\FluidPrimitives\Command\ComponentAddCommand;
 use Jramke\FluidPrimitives\Command\ComponentFileWriter;
 use Jramke\FluidPrimitives\Command\ComponentTargetExtensionResolver;
+use Jramke\FluidPrimitives\Exception\ConfigurationException;
 use Jramke\FluidPrimitives\Service\PackageResolver;
 use Jramke\FluidPrimitives\Service\RegistryService;
 use Jramke\FluidPrimitives\Tests\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
-use RuntimeException;
 use Symfony\Component\Console\Tester\CommandTester;
 use TYPO3\CMS\Core\Cache\CacheManager;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
@@ -46,7 +46,7 @@ final class ComponentAddCommandTest extends TestCase
                 continue;
             }
             $path = $dir . '/' . $item;
-            is_dir($path) ? $this->removeDirectory($path) : unlink($path);
+            is_dir($path) && !is_link($path) ? $this->removeDirectory($path) : unlink($path);
         }
         rmdir($dir);
     }
@@ -117,7 +117,7 @@ final class ComponentAddCommandTest extends TestCase
         $cacheManager = $this->createStub(CacheManager::class);
         $tester = $this->createCommandTester($this->createRegistryService(['Root.html']), $cacheManager);
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(ConfigurationException::class);
         $this->expectExceptionMessage('could not be found');
 
         $tester->execute(['component' => 'accordion', '--extension' => 'unknown_ext']);
@@ -320,6 +320,10 @@ final class ComponentAddCommandTest extends TestCase
         yield 'a parent folder further down' => ['sub/../../escape.html'];
         yield 'an absolute path' => ['/escape.html'];
         yield 'a backslash' => ['..\\escape.html'];
+        yield 'a dot segment' => ['./escape.html'];
+        yield 'an empty segment' => ['sub//escape.html'];
+        yield 'a delete character' => ["escape\x7f.html"];
+        yield 'an escape sequence for the terminal' => ["\x1b[31mescape.html"];
     }
 
     #[Test]
@@ -348,9 +352,35 @@ final class ComponentAddCommandTest extends TestCase
             'not a path inside the component folder',
             (string)preg_replace('/\s+/', ' ', $tester->getDisplay()),
         );
+        // a name never brings a control character of its own into the terminal
+        $this->assertStringNotContainsString("\x1b", $tester->getDisplay());
         $this->assertSame(['Root.fluid.html'], $this->writtenFiles());
         $this->assertFileDoesNotExist($this->tempDir . 'escape.html');
         $this->assertFileDoesNotExist('/escape.html');
+    }
+
+    #[Test]
+    public function doesNotWriteThroughASymlinkThatLeavesTheComponentFolder(): void
+    {
+        $outside = $this->tempDir . 'outside/';
+        mkdir($outside);
+        mkdir($this->tempDir . 'my-component');
+        symlink($outside, $this->tempDir . 'my-component/Linked');
+
+        $tester = $this->createCommandTester(
+            $this->createRegistryService(['Root.html', 'Linked/Evil.html']),
+            $this->createStub(CacheManager::class),
+        );
+        $tester->execute([
+            'component' => 'accordion',
+            '--extension' => 'my_ext',
+            '--path' => '',
+            '--fluid-suffix' => false,
+        ]);
+
+        $this->assertSame(1, $tester->getStatusCode());
+        $this->assertFileDoesNotExist($outside . 'Evil.html');
+        $this->assertFileExists($this->tempDir . 'my-component/Root.html');
     }
 
     #[Test]

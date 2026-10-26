@@ -6,6 +6,7 @@ namespace Jramke\FluidPrimitives\Tests\Unit;
 
 use Jramke\FluidPrimitives\Contexts\GlobalContext;
 use Jramke\FluidPrimitives\Domain\Dto\HydrationEntry;
+use Jramke\FluidPrimitives\Exception\HydrationException;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Registry\NestedComponentRegistry;
 use Jramke\FluidPrimitives\Service\TranslatorService;
@@ -23,6 +24,7 @@ final class HydrationRegistryTest extends TestCase
 {
     private ?string $capturedJs = null;
     private ?array $capturedAttributes = null;
+    private ?array $capturedOptions = null;
     private AssetCollector $assetCollector;
     private HydrationRegistry $registry;
     private GlobalContext $globalContext;
@@ -39,11 +41,21 @@ final class HydrationRegistryTest extends TestCase
             ->willReturnCallback(function ($id, $js, $attributes, $options) {
                 $this->capturedJs = $js;
                 $this->capturedAttributes = $attributes;
+                $this->capturedOptions = $options;
                 return $this->assetCollector;
             });
 
         $this->globalContext = new GlobalContext();
         $this->registry = new HydrationRegistry($this->assetCollector, $this->globalContext);
+    }
+
+    #[Test]
+    public function registersTheScriptForTheContentSecurityPolicyOfTheSite(): void
+    {
+        $this->registry->add('ui', 'dialog', new HydrationEntry('«f1»', [], true, []));
+
+        $this->assertNotNull($this->capturedJs);
+        $this->assertTrue($this->capturedOptions['csp'] ?? false);
     }
 
     #[Test]
@@ -67,7 +79,7 @@ final class HydrationRegistryTest extends TestCase
         // the same id on another component type is a different instance
         $this->registry->add('ui', 'dialog', new HydrationEntry('same', [], true, []));
 
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(HydrationException::class);
         $this->expectExceptionMessage('The rootId "same" is already used by another <select> component.');
 
         $this->registry->add('ui', 'select', new HydrationEntry('same', [], true, []));

@@ -6,6 +6,8 @@ namespace Jramke\FluidPrimitives\ViewHelpers;
 
 use Jramke\FluidPrimitives\Contexts\FormContext;
 use Jramke\FluidPrimitives\Domain\Dto\TagAttributes;
+use Jramke\FluidPrimitives\Exception\MissingContextException;
+use Jramke\FluidPrimitives\Exception\MissingPropException;
 use Jramke\FluidPrimitives\Service\ContextService;
 use TYPO3\CMS\Core\Crypto\HashService;
 use TYPO3\CMS\Extbase\Domain\Model\FileReference;
@@ -64,14 +66,14 @@ class FileUploadDeleteCheckboxViewHelper extends AbstractViewHelper
 
     public function render(): string
     {
-        $renderingContext = $this->renderingContext ?? throw new \RuntimeException(
+        $renderingContext = $this->renderingContext ?? throw new \LogicException(
             'FileUploadDeleteCheckbox ViewHelper is missing its rendering context.',
             1_788_100_006,
         );
 
         $formContext = ContextService::getFromRenderingContext($renderingContext, 'form');
         if (!$formContext instanceof FormContext) {
-            throw new \RuntimeException(
+            throw new MissingContextException(
                 'ui:fileUploadDeleteCheckbox can only be used inside a <ui:form.root>.',
                 1_788_000_001,
             );
@@ -79,7 +81,7 @@ class FileUploadDeleteCheckboxViewHelper extends AbstractViewHelper
 
         $objectName = (string)($formContext->get('objectName') ?? '');
         if ($objectName === '') {
-            throw new \RuntimeException(
+            throw new MissingPropException(
                 'ui:fileUploadDeleteCheckbox requires the enclosing <ui:form.root> to have an "objectName" matching the Extbase action argument name.',
                 1_788_000_002,
             );
@@ -91,7 +93,7 @@ class FileUploadDeleteCheckboxViewHelper extends AbstractViewHelper
         // @mago-expect analysis:mixed-assignment
         $property = $this->arguments['property'] ?? $fieldContext?->get('name');
         if (!is_string($property) || $property === '') {
-            throw new \RuntimeException(
+            throw new MissingPropException(
                 'ui:fileUploadDeleteCheckbox requires a "property" argument, unless used inside a <ui:field.root name="...">.',
                 1_788_000_003,
             );

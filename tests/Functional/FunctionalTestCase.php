@@ -101,6 +101,31 @@ abstract class FunctionalTestCase extends TYPO3FunctionalTestCase
     }
 
     /**
+     * Fluid wraps what a ViewHelper throws in a plain `ViewHelper\Exception` that names the template, once for every
+     * template the exception passes on its way up, so the exception that was thrown is found by walking the previous ones.
+     *
+     * @param class-string<\Throwable> $class
+     * @param callable(): mixed $render
+     */
+    protected function assertRenderThrows(string $class, string $message, callable $render): void
+    {
+        try {
+            $render();
+        } catch (\Throwable $exception) {
+            for ($thrown = $exception; $thrown instanceof \Throwable; $thrown = $thrown->getPrevious()) {
+                if ($thrown instanceof $class) {
+                    $this->assertStringContainsString($message, $thrown->getMessage());
+                    return;
+                }
+            }
+
+            throw $exception;
+        }
+
+        $this->fail(sprintf('Expected %s, but nothing was thrown.', $class));
+    }
+
+    /**
      * A tag that writes an attribute twice is invalid HTML, and the browser keeps only the first, which hides
      * a difference between the markup of the server and the one the client spreads.
      */

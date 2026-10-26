@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Tests\Functional\ViewHelpers;
 
 use Jramke\FluidPrimitives\Domain\Dto\ListCollection;
+use Jramke\FluidPrimitives\Exception\MissingContextException;
 use Jramke\FluidPrimitives\Registry\NestedComponentRegistry;
 use Jramke\FluidPrimitives\Tests\Fixtures\TemplateWrapperCollection;
 use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
@@ -107,15 +108,19 @@ final class TemplateViewHelperTest extends FunctionalTestCase
     {
         $collection = new ListCollection([]);
 
-        $this->expectExceptionMessage('ui:template could not find an active "select" component to attach to.');
-
-        $this->renderTemplate('
+        $this->assertRenderThrows(
+            MissingContextException::class,
+            'ui:template could not find an active "select" component to attach to.',
+            function () use ($collection): void {
+                $this->renderTemplate('
             <primitives:combobox.root collection="{collection}">
                 <ui:template name="itemTemplate" context="select">
                     <span>content</span>
                 </ui:template>
             </primitives:combobox.root>
         ', ['collection' => $collection]);
+            },
+        );
     }
 
     #[Test]
@@ -124,12 +129,16 @@ final class TemplateViewHelperTest extends FunctionalTestCase
         // No `context` argument, and this ui:template isn't inside any component's own template
         // body (it's plain top-level content in the test) - neither resolution path applies, so it
         // should fail with a message pointing at the fix, not the generic "no active X" one above.
-        $this->expectExceptionMessage('ui:template could not determine which component to attach to');
-
-        $this->renderTemplate('
+        $this->assertRenderThrows(
+            MissingContextException::class,
+            'ui:template could not determine which component to attach to',
+            function (): void {
+                $this->renderTemplate('
             <ui:template name="itemTemplate">
                 <span>content</span>
             </ui:template>
         ');
+            },
+        );
     }
 }

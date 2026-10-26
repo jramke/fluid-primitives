@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Tests\Functional\Hydration;
 
 use Jramke\FluidPrimitives\Domain\Dto\ListCollection;
+use Jramke\FluidPrimitives\Exception\HydrationException;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Tests\Fixtures\HydrationEdgeCasesCollection;
 use Jramke\FluidPrimitives\Tests\Fixtures\NonConvertibleObject;
 use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
 use PHPUnit\Framework\Attributes\Test;
+use TYPO3Fluid\Fluid\Core\ViewHelper\InvalidArgumentValueException;
 
 /**
  * Covers {@see \Jramke\FluidPrimitives\Service\Component\ComponentHydrationCollector}'s object-prop
@@ -49,7 +51,7 @@ final class ComponentHydrationCollectorTest extends FunctionalTestCase
             ->getViewHelperResolver()
             ->addNamespace('hydrationFixture', new HydrationEdgeCasesCollection());
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(InvalidArgumentValueException::class);
         $this->expectExceptionMessage('requiredProp');
 
         $this->renderTemplate('<hydrationFixture:edgeCases requiredProp="{explicitNull}" />', ['explicitNull' => null]);
@@ -105,7 +107,7 @@ final class ComponentHydrationCollectorTest extends FunctionalTestCase
             ->getViewHelperResolver()
             ->addNamespace('hydrationFixture', new HydrationEdgeCasesCollection());
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(HydrationException::class);
         $this->expectExceptionMessage('objectProp');
         $this->expectExceptionMessage(NonConvertibleObject::class);
 

@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Tests\Functional\Components;
 
+use Jramke\FluidPrimitives\Exception\TemplateErrorException;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
-use RuntimeException;
 
 final class FieldRenderingTest extends FunctionalTestCase
 {
@@ -155,16 +155,19 @@ final class FieldRenderingTest extends FunctionalTestCase
     #[Test]
     public function requiresAsChildOnControl(): void
     {
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage("'asChild' prop is required");
-
-        $this->renderTemplate('
+        $this->assertRenderThrows(
+            TemplateErrorException::class,
+            "'asChild' prop is required",
+            function (): void {
+                $this->renderTemplate('
             <primitives:field.root name="email">
                 <primitives:field.control>
                     <input type="email" />
                 </primitives:field.control>
             </primitives:field.root>
         ');
+            },
+        );
     }
 
     /**

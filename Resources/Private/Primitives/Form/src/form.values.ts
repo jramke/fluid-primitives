@@ -97,13 +97,21 @@ function createContainerForFieldPathSegment(
     return typeof segment === 'number' || segment === appendFieldPathSegment ? [] : {};
 }
 
+// A name like `__proto__[polluted]` would otherwise write onto Object.prototype
+const unsafeFieldPathSegments = new Set(['__proto__', 'constructor', 'prototype']);
+
 function setValueAtFieldPath(
     target: FormValuesObject,
     fieldName: string,
     value: FormValueLeaf | FormValueLeaf[]
 ) {
     const fieldPath = parseFieldPath(fieldName);
-    if (fieldPath.length === 0) {
+    if (
+        fieldPath.length === 0 ||
+        fieldPath.some(
+            segment => typeof segment === 'string' && unsafeFieldPathSegments.has(segment)
+        )
+    ) {
         return;
     }
 

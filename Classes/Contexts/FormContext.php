@@ -6,6 +6,8 @@ namespace Jramke\FluidPrimitives\Contexts;
 
 use Jramke\FluidPrimitives\Attributes\ExposeToClient;
 use Jramke\FluidPrimitives\Enum\FormState;
+use Jramke\FluidPrimitives\Exception\MissingPropException;
+use Jramke\FluidPrimitives\Exception\MissingRequestException;
 use Jramke\FluidPrimitives\Service\ExtbaseFormHiddenFieldsRenderer;
 use Jramke\FluidPrimitives\Traits\HasIndicatorStateTrait;
 use Jramke\FluidPrimitives\Utility\ExtbasePersistedObjectResolver;
@@ -128,9 +130,9 @@ class FormContext extends AbstractComponentContext
 
         try {
             $request = $this->requestResolver->resolveOrThrow($this->getRenderingContext());
-        } catch (\RuntimeException) {
+        } catch (MissingRequestException) {
             if ($extensionNameProp === '' || $pluginNameProp === '') {
-                throw new \RuntimeException(
+                throw new MissingPropException(
                     'Cannot determine the field name prefix for <ui:form.root>: no Extbase request is available ' .
                     'and "extensionName"/"pluginName" were not both given explicitly.',
                     1_788_200_005,

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Service;
 
 use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
+use Jramke\FluidPrimitives\Exception\MissingContextException;
 use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 
@@ -53,7 +54,7 @@ class ContextService
         $context = self::getFromRenderingContext($renderingContext, $name);
 
         if (!$context instanceof ComponentContextInterface) {
-            throw new \RuntimeException(
+            throw new MissingContextException(
                 $viewHelperTag .
                 ' could not find an active "' .
                 $name .

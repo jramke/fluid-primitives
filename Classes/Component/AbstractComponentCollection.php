@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Component;
 
 use Jramke\FluidPrimitives\Annotations\AdditionalArgumentsAllowedAnnotation;
+use Jramke\FluidPrimitives\Exception\UnresolvableComponentException;
 use Jramke\FluidPrimitives\Factory\ComponentRendererFactory;
 use Jramke\FluidPrimitives\Utility\ComponentRootUtility;
 use Jramke\FluidPrimitives\Utility\PropsUtility;
@@ -14,7 +15,6 @@ use TYPO3Fluid\Fluid\Core\Component\ComponentDefinition;
 use TYPO3Fluid\Fluid\Core\Component\ComponentRendererInterface;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContext;
 use TYPO3Fluid\Fluid\Core\ViewHelper\ArgumentDefinition;
-use TYPO3Fluid\Fluid\Core\ViewHelper\UnresolvableViewHelperException;
 
 abstract class AbstractComponentCollection implements ComponentCollectionInterface
 {
@@ -226,7 +226,7 @@ abstract class AbstractComponentCollection implements ComponentCollectionInterfa
             'Default',
             $expectedTemplateName,
         )) {
-            throw new UnresolvableViewHelperException(
+            throw new UnresolvableComponentException(
                 sprintf(
                     'Based on your spelling, the system would load the component template "%s.%s" in "%s", however this file does not exist.',
                     $expectedTemplateName,

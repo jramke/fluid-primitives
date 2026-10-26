@@ -3,7 +3,7 @@
     "type": "typo3-cms-extension",
     "description": "The headless component library for TYPO3 Fluid",
     "license": "GPL-2.0-or-later",
-    "version": "1.0.0-beta.4",
+    "version": "1.0.0-beta.5",
     "authors": [
         {
             "name": "Joost Ramke",
@@ -17,7 +17,7 @@
         "typo3/cms-core": "^14",
         "typo3/cms-extbase": "^14",
         "typo3/cms-fluid": "^14",
-        "typo3fluid/fluid": "^5"
+        "typo3fluid/fluid": "^5.2"
     },
     "require-dev": {
         "carthage-software/mago": "1.48.1",
@@ -29,7 +29,6 @@
     },
     "config": {
         "allow-plugins": {
-            "pestphp/pest-plugin": true,
             "typo3/class-alias-loader": true,
             "typo3/cms-composer-installers": true
         }

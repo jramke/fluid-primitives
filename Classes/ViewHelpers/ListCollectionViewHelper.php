@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\ViewHelpers;
 
 use Jramke\FluidPrimitives\Domain\Dto\ListCollection;
+use Jramke\FluidPrimitives\Exception\InvalidArgumentException;
+use Jramke\FluidPrimitives\Exception\InvalidPropValueException;
 use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
@@ -48,6 +50,8 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
  *
  * An item is an array or an object with a `value`, a `label` and optionally `disabled`. When your items use other keys, name them with `itemToValueKey`, `itemToStringKey` and `isItemDisabledKey`. A key can be a dot path such as `country.isoCode`.
  *
+ * Only the value, label, disabled flag and group of an item reach the page. Every other key, like the columns of a database record, stays on the server, so a template can still read it from `item.original`.
+ *
  */
 class ListCollectionViewHelper extends AbstractViewHelper
 {
@@ -77,7 +81,7 @@ class ListCollectionViewHelper extends AbstractViewHelper
         // @mago-expect analysis:mixed-assignment
         $items = $this->arguments['items'] ?? null;
         if (!is_array($items) && !$items instanceof \Traversable) {
-            throw new \InvalidArgumentException('The "items" argument must be an array or Traversable.', 1_759_769_689);
+            throw new InvalidPropValueException('The "items" argument must be an array or Traversable.', 1_759_769_689);
         }
 
         // Fluid's own registered type is 'array|string' - stays mixed here since it's consumed via
@@ -88,7 +92,7 @@ class ListCollectionViewHelper extends AbstractViewHelper
         $normalizedItems = array_map(
             static function (mixed $item): array|object {
                 if (!is_array($item) && !is_object($item)) {
-                    throw new \InvalidArgumentException(
+                    throw new InvalidPropValueException(
                         'Each item in the "items" argument must be an array or object.',
                         1_788_200_001,
                     );
@@ -98,18 +102,22 @@ class ListCollectionViewHelper extends AbstractViewHelper
             is_array($items) ? $items : iterator_to_array($items),
         );
 
-        $collection = new ListCollection(
-            $normalizedItems,
-            Typed::stringOrNull($this->arguments['itemToValueKey']),
-            Typed::stringOrNull($this->arguments['itemToStringKey']),
-            Typed::stringOrNull($this->arguments['isItemDisabledKey']),
-            Typed::stringOrNull($this->arguments['groupByKey']),
-            is_array($groupSort) ? array_map(Typed::string(...), $groupSort) : Typed::stringOrNull($groupSort),
-        );
+        try {
+            $collection = new ListCollection(
+                $normalizedItems,
+                Typed::stringOrNull($this->arguments['itemToValueKey']),
+                Typed::stringOrNull($this->arguments['itemToStringKey']),
+                Typed::stringOrNull($this->arguments['isItemDisabledKey']),
+                Typed::stringOrNull($this->arguments['groupByKey']),
+                is_array($groupSort) ? array_map(Typed::string(...), $groupSort) : Typed::stringOrNull($groupSort),
+            );
+        } catch (InvalidArgumentException $exception) {
+            throw new InvalidPropValueException($exception->getMessage(), (int)$exception->getCode(), $exception);
+        }
 
         $as = Typed::string($this->arguments['as']);
         if ($as !== '') {
-            $renderingContext = $this->renderingContext ?? throw new \RuntimeException(
+            $renderingContext = $this->renderingContext ?? throw new \LogicException(
                 'ListCollection ViewHelper is missing its rendering context.',
                 1_788_100_013,
             );

@@ -6,6 +6,8 @@ namespace Jramke\FluidPrimitives\ViewHelpers;
 
 use Jramke\FluidPrimitives\Annotations\AdditionalArgumentsAllowedAnnotation;
 use Jramke\FluidPrimitives\Domain\Dto\TagAttributes;
+use Jramke\FluidPrimitives\Exception\InvalidPropValueException;
+use Jramke\FluidPrimitives\Exception\MissingContextException;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -99,13 +101,13 @@ class AttributesViewHelper extends AbstractViewHelper implements ViewHelperNodeI
 
     public function render(): string|array
     {
-        $renderingContext = $this->renderingContext ?? throw new \RuntimeException(
+        $renderingContext = $this->renderingContext ?? throw new \LogicException(
             'Attributes ViewHelper is missing its rendering context.',
             1_788_100_002,
         );
 
         if (!ComponentUtility::isComponent($renderingContext)) {
-            throw new \RuntimeException(
+            throw new MissingContextException(
                 'The attributes ViewHelper can only be used inside a component context.',
                 1698255600,
             );
@@ -136,7 +138,7 @@ class AttributesViewHelper extends AbstractViewHelper implements ViewHelperNodeI
 
         // TODO: maybe we can allow both?
         if ($skipProp && $onlyProp) {
-            throw new \RuntimeException(
+            throw new InvalidPropValueException(
                 'You cannot use both "skip" and "only" arguments at the same time.',
                 1698255600,
             );

@@ -4,8 +4,36 @@ What changed in each release of Fluid Primitives, newest first. Breaking changes
 
 ## Unreleased
 
+**Breaking changes**
+
+- `typo3fluid/fluid` has to be `^5.2`. ([#90](https://github.com/jramke/fluid-primitives/pull/90))
+- A template mistake throws an exception of `Jramke\FluidPrimitives\Exception` instead of a bare `\RuntimeException` or `\InvalidArgumentException`: a part outside its root is a `MissingContextException`, a missing prop a `MissingPropException`, a wrong value an `InvalidPropValueException`. Where you caught `\InvalidArgumentException` around a render, catch `ExceptionInterface` instead. ([#90](https://github.com/jramke/fluid-primitives/pull/90))
+
+**Features**
+
+- Everything the library throws implements `Jramke\FluidPrimitives\Exception\ExceptionInterface`, so one `catch` takes it all. Fluid names the template file in the message of a ViewHelper that fails, and the exception of the library is the `getPrevious()` of the one you catch. ([#90](https://github.com/jramke/fluid-primitives/pull/90))
+
+## 1.0.0-beta.5
+
+_2026-10-26_
+
+**Breaking changes**
+
+- `ui:call` escapes the text a method returns, like any other variable. Where you relied on HTML from it, use `f:format.raw`. ([#87](https://github.com/jramke/fluid-primitives/pull/87))
+- A `ListCollection` sends the client only the value, label, disabled flag and group of an item, at the paths its keys name. Every other key stays on the server and a template reads it from `item.original`. ([#87](https://github.com/jramke/fluid-primitives/pull/87))
+- An attribute name with a space, quote, `=`, `/`, `<`, `>` or `&` throws, and `href`, `src`, `action`, `formaction`, `poster`, `xlink:href`, `cite` and `data` leave out a `javascript:` or `vbscript:` URL. `skip` and `only` of `ui:attributes` match names without regard to case. ([#87](https://github.com/jramke/fluid-primitives/pull/87))
+- `collapsedHeight` and `collapsedWidth` of a `Collapsible` have to be a CSS length or a `calc()`, `min()`, `max()` or `clamp()` expression, anything else throws. ([#87](https://github.com/jramke/fluid-primitives/pull/87))
+
+**Features**
+
+- `ui:add` reads the registry of the installed version from the Composer package. Nothing is fetched from GitHub any more, and a checkout of `main` gets its own templates. ([#87](https://github.com/jramke/fluid-primitives/pull/87))
+
 **Fixes**
 
+- A `Select` shows the selected label and the placeholder as text. An option like `<img src=x onerror=...>` no longer runs as markup, and `spreadProps` throws on a `children` prop. ([#87](https://github.com/jramke/fluid-primitives/pull/87))
+- The hydration script keeps the whitespace of your data in production, so a label like `a  =  ( b )` is no longer saved as `a=(b)`. A site with a Content-Security-Policy gets a nonce for it. ([#87](https://github.com/jramke/fluid-primitives/pull/87))
+- A form field named `__proto__[x]` is ignored, a quote in a root id cannot end the selector of a part, and a file name with `$&` is written as it is into ids and translations. `ui:ref(rootId:)` throws on a quote or backslash like a component's `rootId`. ([#87](https://github.com/jramke/fluid-primitives/pull/87))
+- `ui:add` refuses a file name with a `.` or empty segment, does not write through a symlink out of the component folder, and reports a file it could not write instead of "Created". ([#87](https://github.com/jramke/fluid-primitives/pull/87))
 - The package declares `"sideEffects": false`. A component you import but never use, like `import { Select } from 'fluid-primitives/select'`, no longer ends up in your bundle. ([#88](https://github.com/jramke/fluid-primitives/pull/88))
 - A `ListCollection` item with a number as its value or label is found by the client. Quoted values like `'1'` in an inline array no longer miss their item in `Select` and `Combobox`. The items no longer render a `data-item` attribute. ([`28e1504`](https://github.com/jramke/fluid-primitives/commit/28e1504))
 - `asChild` keeps attribute values of the child element that contain `$` or `\`, like `title="Cost $10"`. A value such as `$0 onmouseover=...` no longer breaks out of its attribute and adds an event handler. ([#86](https://github.com/jramke/fluid-primitives/pull/86))

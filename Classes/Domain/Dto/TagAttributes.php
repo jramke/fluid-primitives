@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Domain\Dto;
 
+use Jramke\FluidPrimitives\Exception\InvalidArgumentException;
 use Jramke\FluidPrimitives\Utility\EnumUtility;
 
 class TagAttributes implements \Countable, \Stringable
@@ -52,11 +53,7 @@ class TagAttributes implements \Countable, \Stringable
      */
     public function renderWithOnly(array $attributeKeys, bool $asArray = false): string|array
     {
-        $attributesToRender = $attributeKeys === []
-            ? $this->attributes
-            : array_intersect_key($this->attributes, array_flip($attributeKeys));
-
-        return $this->renderFiltered($attributesToRender, $asArray);
+        return $this->renderFiltered($this->filterByName($attributeKeys, keep: true), $asArray);
     }
 
     /**
@@ -64,11 +61,28 @@ class TagAttributes implements \Countable, \Stringable
      */
     public function renderWithSkip(array $attributeKeys, bool $asArray = false): string|array
     {
-        $attributesToRender = $attributeKeys === []
-            ? $this->attributes
-            : array_diff_key($this->attributes, array_flip($attributeKeys));
+        return $this->renderFiltered($this->filterByName($attributeKeys, keep: false), $asArray);
+    }
 
-        return $this->renderFiltered($attributesToRender, $asArray);
+    /**
+     * Attribute names are case-insensitive in HTML, so `HIDDEN` in a template skips a caller's `hidden`.
+     *
+     * @param string[] $names
+     * @return array<string, mixed>
+     */
+    private function filterByName(array $names, bool $keep): array
+    {
+        if ($names === []) {
+            return $this->attributes;
+        }
+
+        $names = array_map(strtolower(...), $names);
+
+        return array_filter(
+            $this->attributes,
+            static fn(string $key) => in_array(strtolower($key), $names, strict: true) === $keep,
+            ARRAY_FILTER_USE_KEY,
+        );
     }
 
     /**
@@ -110,6 +124,8 @@ class TagAttributes implements \Countable, \Stringable
                 continue;
             }
 
+            $this->assertValidName($key);
+
             // @mago-expect analysis:mixed-assignment
             $value = EnumUtility::normalize($value);
 
@@ -130,10 +146,52 @@ class TagAttributes implements \Countable, \Stringable
                 $value = json_encode($value);
             }
 
+            if ($this->isScriptUrl($key, (string)$value)) {
+                continue;
+            }
+
             $result[$key] = $valueFormatter($key, (string)$value);
         }
 
         return $result;
+    }
+
+    /**
+     * The same rule as Fluid's TagBuilder: escaping the name would keep a space, `=` or `/` in it, and the
+     * rest of the name would become attributes of their own.
+     */
+    private function assertValidName(string $name): void
+    {
+        if (preg_match('/[^0-9A-Za-z!#\$%()*+,\.:;?@\[\]\^_`{|}~-]/', $name)) {
+            throw new InvalidArgumentException('Invalid attribute name provided: ' . $name, 1_788_100_041);
+        }
+    }
+
+    /**
+     * A `javascript:` or `vbscript:` URL, and a `data:` one where a link or form is followed, is left out like
+     * `f:link` does. The browser drops tabs, newlines and leading control characters inside a URL, so they are
+     * dropped here before the scheme is compared.
+     */
+    private function isScriptUrl(string $name, string $value): bool
+    {
+        $name = strtolower($name);
+        if (!in_array(
+            $name,
+            ['href', 'src', 'action', 'formaction', 'poster', 'xlink:href', 'cite', 'data'],
+            strict: true,
+        )) {
+            return false;
+        }
+
+        $url = strtolower((string)preg_replace('/[\x00-\x20]+/', replacement: '', subject: $value));
+        if (str_starts_with($url, 'javascript:') || str_starts_with($url, 'vbscript:')) {
+            return true;
+        }
+
+        return (
+            str_starts_with($url, 'data:') &&
+            in_array($name, ['href', 'action', 'formaction', 'xlink:href'], strict: true)
+        );
     }
 
     protected function buildSingleAttributeString(string $key, string $value): string
