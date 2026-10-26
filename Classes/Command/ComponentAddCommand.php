@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Command;
 
+use Jramke\FluidPrimitives\Exception\ConfigurationException;
 use Jramke\FluidPrimitives\Service\PackageResolver;
 use Jramke\FluidPrimitives\Service\RegistryService;
 use Jramke\FluidPrimitives\Utility\Typed;
@@ -66,7 +67,7 @@ class ComponentAddCommand extends Command
 
         $availablePackages = $this->packageResolver->getAvailablePackages();
         if ($availablePackages === []) {
-            throw new \RuntimeException('No packages were found in which to store the Component.', 1766947893);
+            throw new ConfigurationException('No packages were found in which to store the Component.', 1766947893);
         }
 
         $extension = $this->extensionResolver->resolve($input, $io, $availablePackages);

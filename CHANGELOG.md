@@ -2,6 +2,17 @@
 
 What changed in each release of Fluid Primitives, newest first. Breaking changes come first in every release. The library follows [semantic versioning](https://semver.org), and the 1.0 betas may still change between releases.
 
+## Unreleased
+
+**Breaking changes**
+
+- `typo3fluid/fluid` has to be `^5.2`. ([#90](https://github.com/jramke/fluid-primitives/pull/90))
+- A template mistake throws an exception of `Jramke\FluidPrimitives\Exception` instead of a bare `\RuntimeException` or `\InvalidArgumentException`: a part outside its root is a `MissingContextException`, a missing prop a `MissingPropException`, a wrong value an `InvalidPropValueException`. Where you caught `\InvalidArgumentException` around a render, catch `ExceptionInterface` instead. ([#90](https://github.com/jramke/fluid-primitives/pull/90))
+
+**Features**
+
+- Everything the library throws implements `Jramke\FluidPrimitives\Exception\ExceptionInterface`, so one `catch` takes it all. Fluid names the template file in the message of a ViewHelper that fails, and the exception of the library is the `getPrevious()` of the one you catch. ([#90](https://github.com/jramke/fluid-primitives/pull/90))
+
 ## 1.0.0-beta.5
 
 _2026-10-26_

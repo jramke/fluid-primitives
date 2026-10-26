@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Service;
 
+use Jramke\FluidPrimitives\Exception\InvalidArgumentException;
 use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
 use Jramke\FluidPrimitives\Utility\ContainedPath;
 use Jramke\FluidPrimitives\Utility\Typed;
@@ -31,7 +32,7 @@ class RegistryService
     public function fetchComponent(string $componentKey): array
     {
         if ($componentKey === '' || $componentKey === '0') {
-            throw new \InvalidArgumentException('Component key must not be empty.', 1767042111);
+            throw new InvalidArgumentException('Component key must not be empty.', 1767042111);
         }
 
         // the keys are camelCase like the Fluid tags, the kebab-case spelling of older releases still resolves
@@ -55,7 +56,7 @@ class RegistryService
     public function fetchComponentFile(string $componentKey, string $filePath): array
     {
         if ($componentKey === '' || $componentKey === '0' || ($filePath === '' || $filePath === '0')) {
-            throw new \InvalidArgumentException('Component key and file path must not be empty.', 1767042112);
+            throw new InvalidArgumentException('Component key and file path must not be empty.', 1767042112);
         }
 
         $componentKey = ComponentNameUtility::lowerCaseDashedToCamelCase($componentKey);

@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Tests\Unit;
 
 use Jramke\FluidPrimitives\Domain\Dto\ComponentIdentity;
+use Jramke\FluidPrimitives\Exception\HydrationException;
+use Jramke\FluidPrimitives\Exception\InvalidPropValueException;
+use Jramke\FluidPrimitives\Exception\MissingContextException;
 use Jramke\FluidPrimitives\Registry\ReferencedRootRegistry;
 use Jramke\FluidPrimitives\Tests\TestCase;
 use Jramke\FluidPrimitives\ViewHelpers\RefViewHelper;
 use PHPUnit\Framework\Attributes\Test;
-use RuntimeException;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContext;
 use TYPO3Fluid\Fluid\Core\Variables\StandardVariableProvider;
 
@@ -112,7 +114,7 @@ final class RefViewHelperTest extends TestCase
             'rootId' => 'share"],[data-menu-root',
         ]);
 
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidPropValueException::class);
         $this->expectExceptionMessage('must not contain quotes or backslashes');
 
         $this->viewHelper->render();
@@ -184,7 +186,7 @@ final class RefViewHelperTest extends TestCase
             'value' => null,
         ]);
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(MissingContextException::class);
         $this->expectExceptionMessage('can only be used inside a component context');
 
         $this->viewHelper->render();
@@ -202,7 +204,7 @@ final class RefViewHelperTest extends TestCase
             'value' => null,
         ]);
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(HydrationException::class);
         $this->expectExceptionMessage('No rootId found');
 
         $this->viewHelper->render();

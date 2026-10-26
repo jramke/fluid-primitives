@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Tests\Functional\Components;
 
+use Jramke\FluidPrimitives\Exception\InvalidPropValueException;
 use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
 use PHPUnit\Framework\Attributes\Test;
+use TYPO3Fluid\Fluid\Core\ViewHelper\Exception as ViewHelperException;
 
 final class CollapsibleRenderingTest extends FunctionalTestCase
 {
@@ -97,9 +99,12 @@ final class CollapsibleRenderingTest extends FunctionalTestCase
             $this->assertStringContainsString('--collapsed-height: ' . $size . ';', $content->get('style') ?? '');
         }
 
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('must be a CSS length');
-
-        $this->renderTemplate($collapsible('1px; position: fixed; inset: 0'));
+        try {
+            $this->renderTemplate($collapsible('1px; position: fixed; inset: 0'));
+            $this->fail('A size that is not a CSS length was not rejected.');
+        } catch (ViewHelperException $exception) {
+            $this->assertInstanceOf(InvalidPropValueException::class, $exception->getPrevious());
+            $this->assertStringContainsString('must be a CSS length', $exception->getMessage());
+        }
     }
 }

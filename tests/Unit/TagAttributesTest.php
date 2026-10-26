@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Tests\Unit;
 
 use Jramke\FluidPrimitives\Domain\Dto\TagAttributes;
+use Jramke\FluidPrimitives\Exception\InvalidArgumentException;
 use Jramke\FluidPrimitives\Tests\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -50,7 +51,7 @@ final class TagAttributesTest extends TestCase
     #[DataProvider('namesThatCarryMoreThanAName')]
     public function rejectsAnAttributeNameThatWouldRenderMoreAttributes(string $name): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Invalid attribute name provided');
 
         new TagAttributes([$name => 'v']);

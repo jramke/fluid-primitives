@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\ViewHelpers;
 
 use Jramke\FluidPrimitives\Component\ComponentPrimitivesCollection;
+use Jramke\FluidPrimitives\Exception\InvalidPropValueException;
+use Jramke\FluidPrimitives\Exception\MissingContextException;
 use Jramke\FluidPrimitives\Service\ComponentCollectionService;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use Jramke\FluidPrimitives\Utility\PropsUtility;
@@ -83,12 +85,12 @@ class UsePropsViewHelper extends AbstractViewHelper implements ViewHelperNodeIni
     public function render(): string
     {
         if (!ComponentUtility::isComponent(
-            $this->renderingContext ?? throw new \RuntimeException(
+            $this->renderingContext ?? throw new \LogicException(
                 'UseProps ViewHelper is missing its rendering context.',
                 1_788_100_012,
             ),
         )) {
-            throw new \RuntimeException(
+            throw new MissingContextException(
                 'The useProps viewhelper can only be used inside a component context.',
                 1698255600,
             );
@@ -116,7 +118,7 @@ class UsePropsViewHelper extends AbstractViewHelper implements ViewHelperNodeIni
         if (($arguments['name'] ?? null) !== null) {
             $name = $arguments['name'] instanceof TextNode ? $arguments['name']->getText() : '';
             if ($name === '' || $name === '0') {
-                throw new \RuntimeException('The name argument must not be empty.', 1755936423);
+                throw new InvalidPropValueException('The name argument must not be empty.', 1755936423);
             }
 
             $isPrimitivesComponent = str_starts_with($name, 'primitives:');
@@ -183,7 +185,7 @@ class UsePropsViewHelper extends AbstractViewHelper implements ViewHelperNodeIni
         $selected = [];
         foreach (array_map(Typed::string(...), $evaluatedSelectedProps) as $argumentName) {
             if (($forwardableArgumentDefinitions[$argumentName] ?? null) === null) {
-                throw new \RuntimeException(
+                throw new InvalidPropValueException(
                     "The prop {$argumentName} does not exist in the referenced component {$referencedComponentName}.",
                     1772899866,
                 );

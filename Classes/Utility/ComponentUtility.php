@@ -7,6 +7,7 @@ namespace Jramke\FluidPrimitives\Utility;
 use Jramke\FluidPrimitives\Contexts\AbstractComponentContext;
 use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
 use Jramke\FluidPrimitives\Contexts\DefaultContext;
+use Jramke\FluidPrimitives\Exception\InvalidPropValueException;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Configuration\ConfigurationManagerInterface;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
@@ -33,9 +34,9 @@ class ComponentUtility
     public static function assertValidRootId(string $rootId): void
     {
         if (preg_match('/["\\\\]/', $rootId) === 1) {
-            throw new \InvalidArgumentException(
+            throw new InvalidPropValueException(
                 sprintf('The rootId "%s" must not contain quotes or backslashes.', $rootId),
-                1_788_200_001,
+                1_788_200_009,
             );
         }
     }

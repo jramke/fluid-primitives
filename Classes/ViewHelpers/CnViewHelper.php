@@ -67,7 +67,7 @@ class CnViewHelper extends AbstractViewHelper
 
         $as = Typed::string($this->arguments['as']);
         if ($as !== '') {
-            $renderingContext = $this->renderingContext ?? throw new \RuntimeException(
+            $renderingContext = $this->renderingContext ?? throw new \LogicException(
                 'Cn ViewHelper is missing its rendering context.',
                 1_788_100_011,
             );

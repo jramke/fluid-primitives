@@ -7,6 +7,9 @@ namespace Jramke\FluidPrimitives\ViewHelpers;
 use Jramke\FluidPrimitives\Annotations\ClientArgumentAnnotation;
 use Jramke\FluidPrimitives\Annotations\ContextArgumentAnnotation;
 use Jramke\FluidPrimitives\Annotations\RequiredAtRuntimeArgumentAnnotation;
+use Jramke\FluidPrimitives\Exception\InvalidPropValueException;
+use Jramke\FluidPrimitives\Exception\MissingContextException;
+use Jramke\FluidPrimitives\Exception\MissingPropException;
 use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
 use Jramke\FluidPrimitives\Utility\ComponentRootUtility;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
@@ -71,34 +74,40 @@ class PropViewHelper extends AbstractViewHelper implements ViewHelperNodeInitial
 
     public function render(): string
     {
-        $renderingContext = $this->renderingContext ?? throw new \RuntimeException(
+        $renderingContext = $this->renderingContext ?? throw new \LogicException(
             'Prop ViewHelper is missing its rendering context.',
             1_788_100_003,
         );
 
         if (!ComponentUtility::isComponent($renderingContext)) {
-            throw new \RuntimeException('The prop ViewHelper can only be used inside a component context.', 1698255600);
+            throw new MissingContextException(
+                'The prop ViewHelper can only be used inside a component context.',
+                1698255600,
+            );
         }
 
         $isDeclaredRoot = ComponentRootUtility::isDeclaredRootFromContext($renderingContext);
         $name = Typed::string($this->arguments['name']);
 
         if (Typed::bool($this->arguments['context']) && $isDeclaredRoot) {
-            throw new \RuntimeException(
+            throw new InvalidPropValueException(
                 'The context argument can only be used inside a composable component. All props from the root component are automatically available in the context.',
                 1698255601,
             );
         }
 
         if (Typed::bool($this->arguments['client']) && !$isDeclaredRoot) {
-            throw new \RuntimeException('The client argument can only be used inside a root component.', 1698255602);
+            throw new InvalidPropValueException(
+                'The client argument can only be used inside a root component.',
+                1698255602,
+            );
         }
 
         if (
             Typed::bool($this->arguments['requiredAtRuntime']) &&
             !$renderingContext->getVariableProvider()->exists($name)
         ) {
-            throw new \RuntimeException(
+            throw new MissingPropException(
                 'The prop "' .
                 $name .
                 '" is required for component "' .

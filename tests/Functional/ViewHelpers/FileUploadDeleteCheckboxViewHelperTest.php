@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Tests\Functional\ViewHelpers;
 
+use Jramke\FluidPrimitives\Exception\MissingContextException;
+use Jramke\FluidPrimitives\Exception\MissingPropException;
 use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
 use PHPUnit\Framework\Attributes\Test;
 use ReflectionProperty;
-use RuntimeException;
 use TYPO3\CMS\Core\Crypto\HashService;
 use TYPO3\CMS\Extbase\Domain\Model\FileReference;
 
@@ -99,7 +100,7 @@ final class FileUploadDeleteCheckboxViewHelperTest extends FunctionalTestCase
     #[Test]
     public function throwsWhenUsedOutsideAFormRoot(): void
     {
-        $this->expectException(RuntimeException::class);
+        $this->expectException(MissingContextException::class);
         $this->expectExceptionMessage('can only be used inside a <ui:form.root>');
 
         $this->renderTemplate('
@@ -110,26 +111,32 @@ final class FileUploadDeleteCheckboxViewHelperTest extends FunctionalTestCase
     #[Test]
     public function throwsWhenTheFormHasNoObjectName(): void
     {
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('requires the enclosing <ui:form.root> to have an "objectName"');
-
-        $this->renderTemplate('
+        $this->assertRenderThrows(
+            MissingPropException::class,
+            'requires the enclosing <ui:form.root> to have an "objectName"',
+            function (): void {
+                $this->renderTemplate('
             <primitives:form.root actionUri="/submit">
                 <ui:fileUploadDeleteCheckbox fileReference="{fileReference}" property="logo" />
             </primitives:form.root>
         ', ['fileReference' => $this->createFileReference(42)]);
+            },
+        );
     }
 
     #[Test]
     public function throwsWhenNeitherPropertyNorAnEnclosingFieldIsGiven(): void
     {
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('requires a "property" argument');
-
-        $this->renderTemplate('
+        $this->assertRenderThrows(
+            MissingPropException::class,
+            'requires a "property" argument',
+            function (): void {
+                $this->renderTemplate('
             <primitives:form.root actionUri="/submit" objectName="conference">
                 <ui:fileUploadDeleteCheckbox fileReference="{fileReference}" />
             </primitives:form.root>
         ', ['fileReference' => $this->createFileReference(42)]);
+            },
+        );
     }
 }

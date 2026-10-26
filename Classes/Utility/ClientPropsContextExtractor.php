@@ -6,6 +6,7 @@ namespace Jramke\FluidPrimitives\Utility;
 
 use Jramke\FluidPrimitives\Attributes\ExposeToClient;
 use Jramke\FluidPrimitives\Contexts\GlobalContextInterface;
+use Jramke\FluidPrimitives\Exception\HydrationException;
 use ReflectionClass;
 use TYPO3\CMS\Core\Core\Environment;
 
@@ -42,7 +43,7 @@ class ClientPropsContextExtractor
 
             if (!self::isSerializable($value)) {
                 if (self::isDevelopment()) {
-                    throw new \RuntimeException(
+                    throw new HydrationException(
                         sprintf(
                             '%s::%s() is exposed to the client but its value cannot be encoded as JSON.',
                             $context::class,

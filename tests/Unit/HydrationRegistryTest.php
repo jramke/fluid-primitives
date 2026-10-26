@@ -6,6 +6,7 @@ namespace Jramke\FluidPrimitives\Tests\Unit;
 
 use Jramke\FluidPrimitives\Contexts\GlobalContext;
 use Jramke\FluidPrimitives\Domain\Dto\HydrationEntry;
+use Jramke\FluidPrimitives\Exception\HydrationException;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Registry\NestedComponentRegistry;
 use Jramke\FluidPrimitives\Service\TranslatorService;
@@ -78,7 +79,7 @@ final class HydrationRegistryTest extends TestCase
         // the same id on another component type is a different instance
         $this->registry->add('ui', 'dialog', new HydrationEntry('same', [], true, []));
 
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(HydrationException::class);
         $this->expectExceptionMessage('The rootId "same" is already used by another <select> component.');
 
         $this->registry->add('ui', 'select', new HydrationEntry('same', [], true, []));

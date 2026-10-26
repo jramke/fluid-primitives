@@ -17,7 +17,7 @@
         "typo3/cms-core": "^14",
         "typo3/cms-extbase": "^14",
         "typo3/cms-fluid": "^14",
-        "typo3fluid/fluid": "^5"
+        "typo3fluid/fluid": "^5.2"
     },
     "require-dev": {
         "carthage-software/mago": "1.48.1",

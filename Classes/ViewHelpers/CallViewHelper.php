@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\ViewHelpers;
 
 use Jramke\FluidPrimitives\Domain\Dto\ComponentIdentity;
+use Jramke\FluidPrimitives\Exception\InvalidPropValueException;
+use Jramke\FluidPrimitives\Exception\MissingContextException;
 use Jramke\FluidPrimitives\Utility\ComponentRootUtility;
 use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
@@ -41,7 +43,7 @@ class CallViewHelper extends AbstractViewHelper
             $identity = $this->renderingContext instanceof RenderingContextInterface
                 ? ComponentRootUtility::currentIdentity($this->renderingContext)
                 : null;
-            throw new \RuntimeException(
+            throw new MissingContextException(
                 $identity instanceof ComponentIdentity
                     ? sprintf(
                         '<%s> must be used inside its root component (e.g. <ui:%s.root>) - no context was found.',
@@ -57,10 +59,10 @@ class CallViewHelper extends AbstractViewHelper
         $args = Typed::arrayOrNull($this->arguments['arguments']) ?? [];
 
         if (!is_object($object)) {
-            throw new \RuntimeException('The provided value is not an object.', 2653378988);
+            throw new InvalidPropValueException('The provided value is not an object.', 2653378988);
         }
         if (!method_exists($object, $method)) {
-            throw new \RuntimeException(
+            throw new InvalidPropValueException(
                 sprintf('Method "%s" does not exist on object of type %s', $method, $object::class),
                 9125095715,
             );

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Service\Component;
 
 use Jramke\FluidPrimitives\Contracts\ClientTypeAwareInterface;
+use Jramke\FluidPrimitives\Exception\HydrationException;
 use JsonSerializable;
 use TYPO3Fluid\Fluid\Core\ViewHelper\ArgumentDefinition;
 
@@ -31,7 +32,7 @@ final readonly class ClientPropValueResolver
             return;
         }
 
-        throw new \RuntimeException(
+        throw new HydrationException(
             sprintf(
                 'The required prop "%s" for component "%s" resolved to null. A required prop must not be explicitly null.',
                 $propName,
@@ -67,7 +68,7 @@ final readonly class ClientPropValueResolver
             return $value;
         }
 
-        throw new \RuntimeException(
+        throw new HydrationException(
             sprintf(
                 'The prop "%s" for component "%s" is a "%s" instance, which is neither JSON-serializable ' .
                 'nor convertible for client hydration. Implement ClientTypeAwareInterface on it, or ' .

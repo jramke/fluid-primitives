@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Tests\Functional\Components;
 
 use Jramke\FluidPrimitives\Domain\Dto\ListCollection;
+use Jramke\FluidPrimitives\Exception\MissingContextException;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Registry\PortalRegistry;
 use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
@@ -40,11 +41,14 @@ final class ComboboxRenderingTest extends FunctionalTestCase
     #[Test]
     public function namesThePartAndItsRootWhenAPartIsUsedOutsideTheRoot(): void
     {
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('<combobox> must be used inside its root component (e.g. <ui:combobox.root>)');
-
-        $this->renderTemplate(
-            '<primitives:combobox.item item="{value: \'a\', label: \'A\'}">A</primitives:combobox.item>',
+        $this->assertRenderThrows(
+            MissingContextException::class,
+            '<combobox> must be used inside its root component (e.g. <ui:combobox.root>)',
+            function (): void {
+                $this->renderTemplate(
+                    '<primitives:combobox.item item="{value: \'a\', label: \'A\'}">A</primitives:combobox.item>',
+                );
+            },
         );
     }
 

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Tests\Functional\Components;
 
+use Jramke\FluidPrimitives\Exception\HydrationException;
+use Jramke\FluidPrimitives\Exception\InvalidPropValueException;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
 use PHPUnit\Framework\Attributes\Test;
@@ -46,7 +48,7 @@ final class DialogRenderingTest extends FunctionalTestCase
     #[Test]
     public function rejectsTheSameExplicitRootIdOnTwoRootsOfOneComponent(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(HydrationException::class);
         $this->expectExceptionMessage('The rootId "same-id" is already used by another <dialog> component.');
 
         $this->renderTemplate('
@@ -214,7 +216,7 @@ final class DialogRenderingTest extends FunctionalTestCase
     #[Test]
     public function rejectsARootIdThatWouldBreakThePartSelectors(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidPropValueException::class);
         $this->expectExceptionMessage('must not contain quotes or backslashes');
 
         $this->renderTemplate(

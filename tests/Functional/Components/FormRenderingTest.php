@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Tests\Functional\Components;
 
+use Jramke\FluidPrimitives\Exception\MissingPropException;
+use Jramke\FluidPrimitives\Exception\MissingRequestException;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
 use Jramke\FluidPrimitives\Tests\Helper\TestEntity;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
-use RuntimeException;
 use TYPO3\CMS\Core\Crypto\HashAlgo;
 use TYPO3\CMS\Core\Crypto\HashService;
 use TYPO3\CMS\Extbase\Security\HashScope;
@@ -50,7 +51,7 @@ final class FormRenderingTest extends FunctionalTestCase
         // exactly the condition production code must reject to build an action URI via the
         // UriBuilder. `actionUri` is the explicit escape hatch for exactly this case.
         $this->usePlainRequest();
-        $this->expectException(RuntimeException::class);
+        $this->expectException(MissingRequestException::class);
         $this->expectExceptionMessage('is not an Extbase RequestInterface');
 
         $this->renderTemplate('
@@ -80,7 +81,7 @@ final class FormRenderingTest extends FunctionalTestCase
     public function throwsOutsideAnExtbaseRequestWithoutBothExtensionAndPluginName(string $arguments): void
     {
         $this->usePlainRequest();
-        $this->expectException(RuntimeException::class);
+        $this->expectException(MissingPropException::class);
         $this->expectExceptionMessage('Cannot determine the field name prefix for <ui:form.root>');
 
         $this->renderTemplate(
