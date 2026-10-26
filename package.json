@@ -12,6 +12,7 @@
     "files": [
         "./dist"
     ],
+    "sideEffects": false,
     "main": "./dist/client.js",
     "types": "./dist/client.d.ts",
     "exports": {
