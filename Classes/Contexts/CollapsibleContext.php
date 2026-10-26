@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Contexts;
 
+use Jramke\FluidPrimitives\Exception\InvalidPropValueException;
 use Jramke\FluidPrimitives\Traits\HasIndicatorStateTrait;
 use Jramke\FluidPrimitives\Utility\Typed;
 
@@ -64,7 +65,7 @@ class CollapsibleContext extends AbstractComponentContext
         $isLength = preg_match('/^-?(\d+|\d*\.\d+)([a-z]{1,5}|%)?$/i', $length) === 1;
         $isMath = preg_match('/^(calc|min|max|clamp)\([0-9a-z\s.,+*\/%()-]+\)$/i', $length) === 1;
         if (!$isLength && !$isMath) {
-            throw new \InvalidArgumentException(
+            throw new InvalidPropValueException(
                 sprintf('The prop "%s" must be a CSS length like "120px", "%s" given.', $prop, $length),
                 1_788_100_042,
             );

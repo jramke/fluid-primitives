@@ -33,7 +33,7 @@ class SlotFilledViewHelper extends AbstractViewHelper
 
     public function render(): false|string
     {
-        $renderingContext = $this->renderingContext ?? throw new \RuntimeException(
+        $renderingContext = $this->renderingContext ?? throw new \LogicException(
             'SlotFilled ViewHelper is missing its rendering context.',
             1_788_100_001,
         );

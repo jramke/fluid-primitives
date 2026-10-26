@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Tests\Functional\Components;
 
 use Jramke\FluidPrimitives\Constants;
+use Jramke\FluidPrimitives\Exception\InvalidSlotContentException;
 use Jramke\FluidPrimitives\Tests\Fixtures\PlainComponentCollection;
 use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -90,10 +91,13 @@ final class AsChildRenderingTest extends FunctionalTestCase
     #[Test]
     public function rejectsMoreThanOneTopLevelChild(): void
     {
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('asChild requires exactly one child element');
-
-        $this->renderDialogTrigger('<a href="/one">One</a><span>Two</span>');
+        $this->assertRenderThrows(
+            InvalidSlotContentException::class,
+            'asChild requires exactly one child element',
+            function (): void {
+                $this->renderDialogTrigger('<a href="/one">One</a><span>Two</span>');
+            },
+        );
     }
 
     #[Test]

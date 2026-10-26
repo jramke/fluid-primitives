@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\ViewHelpers;
 
 use Jramke\FluidPrimitives\Constants;
+use Jramke\FluidPrimitives\Exception\MissingContextException;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3Fluid\Fluid\Core\Parser\ParsingState;
@@ -37,13 +38,13 @@ class AsChildViewHelper extends AbstractViewHelper implements ViewHelperNodeInit
 
     public function render(): string
     {
-        $renderingContext = $this->renderingContext ?? throw new \RuntimeException(
+        $renderingContext = $this->renderingContext ?? throw new \LogicException(
             'AsChild ViewHelper is missing its rendering context.',
             1_788_100_020,
         );
 
         if (!ComponentUtility::isComponent($renderingContext)) {
-            throw new \RuntimeException(
+            throw new MissingContextException(
                 'The asChild ViewHelper can only be used inside a component context.',
                 1_788_100_021,
             );

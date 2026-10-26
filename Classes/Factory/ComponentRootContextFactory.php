@@ -85,7 +85,7 @@ final readonly class ComponentRootContextFactory
             // (and the rest of this class's own array<string, mixed> plumbing) assumes a real array -
             // fail clearly here rather than silently misbehaving if a custom VariableProvider is ever
             // introduced that actually exercises that part of the contract.
-            throw new \RuntimeException(
+            throw new \LogicException(
                 'Expected VariableProviderInterface::getAll() to return an array, got an ArrayAccess instance.',
                 1_788_100_014,
             );

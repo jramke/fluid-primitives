@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Domain\Dto;
 
 use IteratorAggregate;
+use Jramke\FluidPrimitives\Exception\InvalidArgumentException;
 use Jramke\FluidPrimitives\Utility\Typed;
 use JsonSerializable;
 use Traversable;
@@ -33,7 +34,7 @@ final class ListCollection implements JsonSerializable, IteratorAggregate
         protected array|string|null $groupSort = null,
     ) {
         if (is_string($groupSort) && $groupSort !== 'asc' && $groupSort !== 'desc') {
-            throw new \InvalidArgumentException(
+            throw new InvalidArgumentException(
                 'The "groupSort" argument must be either "asc", "desc", or an array of strings.',
                 1_788_200_002,
             );

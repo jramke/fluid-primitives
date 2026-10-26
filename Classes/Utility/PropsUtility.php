@@ -7,6 +7,7 @@ namespace Jramke\FluidPrimitives\Utility;
 use Jramke\FluidPrimitives\Annotations\AdditionalArgumentsAllowedAnnotation;
 use Jramke\FluidPrimitives\Annotations\InternalBindingAnnotation;
 use Jramke\FluidPrimitives\Constants;
+use Jramke\FluidPrimitives\Exception\InvalidPropValueException;
 use TYPO3Fluid\Fluid\Core\Component\ComponentDefinition;
 use TYPO3Fluid\Fluid\Core\Definition\Annotation\ArgumentAnnotationInterface;
 use TYPO3Fluid\Fluid\Core\Parser\SyntaxTree\TextNode;
@@ -91,7 +92,7 @@ class PropsUtility
 
         $as = $arguments['as'] instanceof TextNode ? $arguments['as']->getText() : '';
         if ($as === '' || $as === '0') {
-            throw new \RuntimeException('The as argument must not be empty.', 1_788_200_001);
+            throw new InvalidPropValueException('The as argument must not be empty.', 1_788_200_008);
         }
 
         return $as;

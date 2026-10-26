@@ -21,13 +21,13 @@ jobs:
           # TYPO3 14.x combinations
           - php: '8.3'
             typo3: '14.3'
-            fluid: '5'
+            fluid: '5.2'
           - php: '8.4'
             typo3: '14.3'
-            fluid: '5'
+            fluid: '5.2'
           - php: '8.5'
             typo3: '14.3'
-            fluid: '5'
+            fluid: '5.2'
 
     steps:
       - name: Checkout code

@@ -7,12 +7,12 @@ namespace Jramke\FluidPrimitives\Tests\Unit;
 use Jramke\FluidPrimitives\Command\ComponentAddCommand;
 use Jramke\FluidPrimitives\Command\ComponentFileWriter;
 use Jramke\FluidPrimitives\Command\ComponentTargetExtensionResolver;
+use Jramke\FluidPrimitives\Exception\ConfigurationException;
 use Jramke\FluidPrimitives\Service\PackageResolver;
 use Jramke\FluidPrimitives\Service\RegistryService;
 use Jramke\FluidPrimitives\Tests\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
-use RuntimeException;
 use Symfony\Component\Console\Tester\CommandTester;
 use TYPO3\CMS\Core\Cache\CacheManager;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
@@ -117,7 +117,7 @@ final class ComponentAddCommandTest extends TestCase
         $cacheManager = $this->createStub(CacheManager::class);
         $tester = $this->createCommandTester($this->createRegistryService(['Root.html']), $cacheManager);
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(ConfigurationException::class);
         $this->expectExceptionMessage('could not be found');
 
         $tester->execute(['component' => 'accordion', '--extension' => 'unknown_ext']);

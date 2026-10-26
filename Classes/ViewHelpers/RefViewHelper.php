@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\ViewHelpers;
 
 use Jramke\FluidPrimitives\Domain\Dto\TagAttributes;
+use Jramke\FluidPrimitives\Exception\HydrationException;
+use Jramke\FluidPrimitives\Exception\MissingContextException;
 use Jramke\FluidPrimitives\Registry\ReferencedRootRegistry;
 use Jramke\FluidPrimitives\Service\ContextService;
 use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
@@ -189,7 +191,7 @@ class RefViewHelper extends AbstractViewHelper
         }
 
         if ($rootId === '' || $rootId === '0') {
-            throw new \RuntimeException('No rootId found for component ' . $componentName . '.', 1756025267);
+            throw new HydrationException('No rootId found for component ' . $componentName . '.', 1756025267);
         }
 
         return [$componentName, $rootId, $this->normalizeIdsArray($ids)];
@@ -220,7 +222,7 @@ class RefViewHelper extends AbstractViewHelper
      */
     private function resolveExplicitContext(string $explicitContextName): array
     {
-        $renderingContext = $this->renderingContext ?? throw new \RuntimeException(
+        $renderingContext = $this->renderingContext ?? throw new \LogicException(
             'Ref ViewHelper is missing its rendering context.',
             1_788_100_008,
         );
@@ -238,13 +240,16 @@ class RefViewHelper extends AbstractViewHelper
      */
     private function resolveAmbientContext(): array
     {
-        $renderingContext = $this->renderingContext ?? throw new \RuntimeException(
+        $renderingContext = $this->renderingContext ?? throw new \LogicException(
             'Ref ViewHelper is missing its rendering context.',
             1_788_100_009,
         );
 
         if (!ComponentUtility::isComponent($renderingContext)) {
-            throw new \RuntimeException('The ref ViewHelper can only be used inside a component context.', 1698255600);
+            throw new MissingContextException(
+                'The ref ViewHelper can only be used inside a component context.',
+                1698255600,
+            );
         }
 
         return [

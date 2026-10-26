@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Service\Component;
 
 use Jramke\FluidPrimitives\Constants;
+use Jramke\FluidPrimitives\Exception\InvalidSlotContentException;
 
 /**
  * Implements the `asChild` prop pattern: instead of rendering its own wrapping tag, a component
@@ -37,7 +38,7 @@ final readonly class AsChildAttributeSpreader
             return $childHtml; // fallback
         }
         if ($this->countTopLevelElements($childHtml) > 1) {
-            throw new \RuntimeException(
+            throw new InvalidSlotContentException(
                 'asChild requires exactly one child element, but multiple were found in the slot content.',
                 1_788_200_004,
             );

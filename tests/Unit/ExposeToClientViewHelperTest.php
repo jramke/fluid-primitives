@@ -6,10 +6,10 @@ namespace Jramke\FluidPrimitives\Tests\Unit;
 
 use Jramke\FluidPrimitives\Constants;
 use Jramke\FluidPrimitives\Domain\Dto\ComponentIdentity;
+use Jramke\FluidPrimitives\Exception\MissingContextException;
 use Jramke\FluidPrimitives\Tests\TestCase;
 use Jramke\FluidPrimitives\ViewHelpers\ExposeToClientViewHelper;
 use PHPUnit\Framework\Attributes\Test;
-use RuntimeException;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContext;
 use TYPO3Fluid\Fluid\Core\Variables\StandardVariableProvider;
 
@@ -56,7 +56,7 @@ final class ExposeToClientViewHelperTest extends TestCase
     {
         $this->markAsComponent('accordion.item', isDeclaredRoot: false, isRenderedAsRoot: false);
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(MissingContextException::class);
         $this->expectExceptionMessage('can only be used in a root component');
 
         $this->viewHelper->render();
@@ -65,7 +65,7 @@ final class ExposeToClientViewHelperTest extends TestCase
     #[Test]
     public function throwsOutsideAnyComponent(): void
     {
-        $this->expectException(RuntimeException::class);
+        $this->expectException(MissingContextException::class);
         $this->expectExceptionMessage('can only be used inside a component');
 
         $this->viewHelper->render();

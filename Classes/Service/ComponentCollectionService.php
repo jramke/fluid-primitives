@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Service;
 
 use Jramke\FluidPrimitives\Component\ComponentCollectionInterface;
-use RuntimeException;
+use Jramke\FluidPrimitives\Exception\ConfigurationException;
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use TYPO3\CMS\Fluid\Core\ViewHelper\ViewHelperResolverFactoryInterface;
 use TYPO3Fluid\Fluid\Core\Component\ComponentDefinitionProviderInterface;
@@ -25,7 +25,7 @@ class ComponentCollectionService
     public function getCollectionByViewHelperName(string $viewHelperName): ComponentDefinitionProviderInterface&ComponentTemplateResolverInterface
     {
         if (!str_contains($viewHelperName, ':')) {
-            throw new RuntimeException(
+            throw new ConfigurationException(
                 'Could not resolve component collection for ' .
                 $viewHelperName .
                 ', invalid ViewHelper name format, expected "namespace:name"',
@@ -37,7 +37,7 @@ class ComponentCollectionService
         $viewHelperResolver = $this->viewHelperResolverFactory->create();
         $viewHelperResolverDelegate = $viewHelperResolver->getResponsibleDelegate($explodedNamespace, $explodedName);
         if (!$viewHelperResolverDelegate instanceof ViewHelperResolverDelegateInterface) {
-            throw new RuntimeException(
+            throw new ConfigurationException(
                 'Could not resolve component collection for ' .
                 $explodedNamespace .
                 ':' .
@@ -48,7 +48,7 @@ class ComponentCollectionService
         }
 
         if (!$viewHelperResolverDelegate instanceof ComponentDefinitionProviderInterface) {
-            throw new RuntimeException(
+            throw new ConfigurationException(
                 'Could not resolve component collection for ' .
                 $explodedNamespace .
                 ':' .
@@ -60,7 +60,7 @@ class ComponentCollectionService
         }
 
         if (!$viewHelperResolverDelegate instanceof ComponentTemplateResolverInterface) {
-            throw new RuntimeException(
+            throw new ConfigurationException(
                 'Could not resolve component collection for ' .
                 $explodedNamespace .
                 ':' .

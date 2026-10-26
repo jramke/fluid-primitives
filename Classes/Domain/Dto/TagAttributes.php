@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Domain\Dto;
 
+use Jramke\FluidPrimitives\Exception\InvalidArgumentException;
 use Jramke\FluidPrimitives\Utility\EnumUtility;
 
 class TagAttributes implements \Countable, \Stringable
@@ -162,7 +163,7 @@ class TagAttributes implements \Countable, \Stringable
     private function assertValidName(string $name): void
     {
         if (preg_match('/[^0-9A-Za-z!#\$%()*+,\.:;?@\[\]\^_`{|}~-]/', $name)) {
-            throw new \InvalidArgumentException('Invalid attribute name provided: ' . $name, 1_788_100_041);
+            throw new InvalidArgumentException('Invalid attribute name provided: ' . $name, 1_788_100_041);
         }
     }
 

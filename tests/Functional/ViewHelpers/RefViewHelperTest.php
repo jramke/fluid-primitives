@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Tests\Functional\ViewHelpers;
 
 use Jramke\FluidPrimitives\Domain\Dto\ListCollection;
+use Jramke\FluidPrimitives\Exception\MissingContextException;
 use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -55,9 +56,11 @@ final class RefViewHelperTest extends FunctionalTestCase
     #[Test]
     public function throwsForAContextThatIsNotActive(): void
     {
-        $this->expectExceptionMessage('ui:ref could not find an active "select" component to attach to.');
-
-        $this->renderTemplate('
+        $this->assertRenderThrows(
+            MissingContextException::class,
+            'ui:ref could not find an active "select" component to attach to.',
+            function (): void {
+                $this->renderTemplate('
             <primitives:combobox.root collection="{collection}">
                 <primitives:combobox.content>
                     <primitives:combobox.empty>
@@ -66,5 +69,7 @@ final class RefViewHelperTest extends FunctionalTestCase
                 </primitives:combobox.content>
             </primitives:combobox.root>
         ', ['collection' => new ListCollection([])]);
+            },
+        );
     }
 }

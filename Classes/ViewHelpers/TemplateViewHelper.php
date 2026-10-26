@@ -7,6 +7,7 @@ namespace Jramke\FluidPrimitives\ViewHelpers;
 use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
 use Jramke\FluidPrimitives\Domain\Dto\ComponentIdentity;
 use Jramke\FluidPrimitives\Domain\Dto\TagAttributes;
+use Jramke\FluidPrimitives\Exception\MissingContextException;
 use Jramke\FluidPrimitives\Registry\NestedComponentRegistry;
 use Jramke\FluidPrimitives\Registry\ReferencedRootRegistry;
 use Jramke\FluidPrimitives\Service\ContextService;
@@ -69,7 +70,7 @@ class TemplateViewHelper extends AbstractViewHelper
     {
         [$baseName, $clientBaseName, $context] = $this->resolveContext();
 
-        $renderingContext = $this->renderingContext ?? throw new \RuntimeException(
+        $renderingContext = $this->renderingContext ?? throw new \LogicException(
             'Template ViewHelper is missing its rendering context.',
             1_788_100_004,
         );
@@ -161,7 +162,7 @@ class TemplateViewHelper extends AbstractViewHelper
      */
     private function resolveContext(): array
     {
-        $renderingContext = $this->renderingContext ?? throw new \RuntimeException(
+        $renderingContext = $this->renderingContext ?? throw new \LogicException(
             'Template ViewHelper is missing its rendering context.',
             1_788_100_005,
         );
@@ -190,7 +191,7 @@ class TemplateViewHelper extends AbstractViewHelper
             ];
         }
 
-        throw new \RuntimeException(
+        throw new MissingContextException(
             'ui:template could not determine which component to attach to. Pass `context` explicitly ' .
             '(e.g. context="combobox") when this ui:template is slot content passed into another ' .
             'component, rather than written directly inside a component\'s own template body.',
