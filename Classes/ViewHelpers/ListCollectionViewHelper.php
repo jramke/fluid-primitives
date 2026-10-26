@@ -48,6 +48,8 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
  *
  * An item is an array or an object with a `value`, a `label` and optionally `disabled`. When your items use other keys, name them with `itemToValueKey`, `itemToStringKey` and `isItemDisabledKey`. A key can be a dot path such as `country.isoCode`.
  *
+ * Only the value, label, disabled flag and group of an item reach the page. Every other key, like the columns of a database record, stays on the server, so a template can still read it from `item.original`.
+ *
  */
 class ListCollectionViewHelper extends AbstractViewHelper
 {

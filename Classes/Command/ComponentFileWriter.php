@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Command;
 
 use Jramke\FluidPrimitives\Service\RegistryService;
+use Jramke\FluidPrimitives\Utility\ContainedPath;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Cache\CacheManager;
 
@@ -36,15 +37,15 @@ final readonly class ComponentFileWriter
             'componentPath' => $componentPath,
         ] = $options;
 
-        $someUpdated = false;
-        $someCreated = false;
+        /** @var bool[] $written Whether each file written replaced one that existed */
+        $written = [];
         $someFailed = false;
         $usesViteAsset = false;
 
         foreach ($files as $file) {
             // the names come from the registry's answer, so one must not lead out of the component folder
             if (!$this->isSafeRelativePath($file)) {
-                $io->warning('Skipped "' . $file . '": it is not a path inside the component folder.');
+                $io->warning('Skipped ' . $this->quote($file) . ': it is not a path inside the component folder.');
                 $someFailed = true;
                 continue;
             }
@@ -64,26 +65,20 @@ final readonly class ComponentFileWriter
                 $usesViteAsset = $usesViteAsset || str_contains($content, '<vite:asset');
             }
 
-            $targetDir = dirname($targetFilePath);
-            if (!is_dir($targetDir)) {
-                mkdir($targetDir, permissions: 0o777, recursive: true);
-            }
-
-            if (file_exists($targetFilePath)) {
-                file_put_contents($targetFilePath, $content);
-                $io->writeln('Updated: ' . $targetFileName);
-                $someUpdated = true;
+            $updated = file_exists($targetFilePath);
+            if (!$this->writeFile($targetFolder, $targetFilePath, (string)$content)) {
+                $io->warning('Could not write ' . $this->quote($targetFileName) . ' inside the component folder.');
+                $someFailed = true;
                 continue;
             }
 
-            file_put_contents($targetFilePath, $content);
-            $io->writeln('Created: ' . $targetFileName);
-            $someCreated = true;
+            $io->writeln(($updated ? 'Updated: ' : 'Created: ') . $targetFileName);
+            $written[] = $updated;
         }
 
         return [
-            'updated' => $someUpdated,
-            'created' => $someCreated,
+            'updated' => in_array(true, $written, strict: true),
+            'created' => in_array(false, $written, strict: true),
             'failed' => $someFailed,
             'usesViteAsset' => $usesViteAsset,
         ];
@@ -112,16 +107,43 @@ final readonly class ComponentFileWriter
     }
 
     /**
-     * Whether `$path` stays below the folder it is joined to: not absolute, no `..` segment, no backslash or
-     * control character.
+     * Whether `$path` stays below the folder it is joined to: not absolute, no empty, `.` or `..` segment, no
+     * backslash or control character.
      */
     public function isSafeRelativePath(string $path): bool
     {
         return (
             $path !== '' &&
             !str_starts_with($path, '/') &&
-            preg_match('/[\\\\\x00-\x1f]/', $path) === 0 &&
-            !in_array('..', explode('/', $path), strict: true)
+            preg_match('/[\\\\\x00-\x1f\x7f]/', $path) === 0 &&
+            array_diff(explode('/', $path), ['', '.', '..']) === explode('/', $path)
+        );
+    }
+
+    /**
+     * A file name comes from the registry, so it must not bring control characters or terminal escape sequences
+     * into the output.
+     */
+    private function quote(string $name): string
+    {
+        return json_encode($name, JSON_INVALID_UTF8_SUBSTITUTE | JSON_THROW_ON_ERROR);
+    }
+
+    /**
+     * Writes into the component folder and nowhere else: a symlink that leads out of it, in the folder or as the
+     * file itself, is not followed.
+     */
+    private function writeFile(string $targetFolder, string $targetFilePath, string $content): bool
+    {
+        $targetDir = dirname($targetFilePath);
+        if (!is_dir($targetDir) && !mkdir($targetDir, permissions: 0o755, recursive: true) && !is_dir($targetDir)) {
+            return false;
+        }
+
+        return (
+            ContainedPath::isInside($targetFolder, $targetDir) &&
+            !is_link($targetFilePath) &&
+            file_put_contents($targetFilePath, $content) !== false
         );
     }
 

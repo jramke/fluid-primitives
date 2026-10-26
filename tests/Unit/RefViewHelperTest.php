@@ -98,6 +98,27 @@ final class RefViewHelperTest extends TestCase
     }
 
     #[Test]
+    public function rejectsAnotherInstancesRootIdThatWouldBreakTheClientSelectors(): void
+    {
+        $this->markAsDeclaredRootComponent('Menu.Root', 'menu');
+        $this->variableProvider->add('rootId', '«f1»');
+        $this->variableProvider->add('context', ['ids' => []]);
+
+        $this->viewHelper->setArguments([
+            'name' => 'triggerItem',
+            'asArray' => false,
+            'data' => [],
+            'value' => null,
+            'rootId' => 'share"],[data-menu-root',
+        ]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('must not contain quotes or backslashes');
+
+        $this->viewHelper->render();
+    }
+
+    #[Test]
     public function includesAdditionalDataAttributes(): void
     {
         $this->markAsDeclaredRootComponent('Collapsible.Root', 'collapsible');

@@ -235,6 +235,39 @@ final class ListCollectionTest extends TestCase
      * @param array<string, mixed> $expected
      */
     #[Test]
+    public function sendsTheClientOnlyTheKeysItReadsOfAnItem(): void
+    {
+        $collection = new ListCollection(
+            [
+                [
+                    'uid' => 7,
+                    'name' => 'Alice',
+                    'password' => '$argon2id$secret',
+                    'meta' => ['off' => true, 'token' => 'secret'],
+                    'team' => 'a',
+                ],
+                (object)['uid' => 8, 'name' => 'Bob', 'email' => 'bob@example.org', 'team' => 'b'],
+            ],
+            'uid',
+            'name',
+            'meta.off',
+            'team',
+        );
+
+        $wire = json_decode(json_encode($collection, JSON_THROW_ON_ERROR), true, flags: JSON_THROW_ON_ERROR);
+
+        $this->assertSame(
+            [
+                ['uid' => 7, 'name' => 'Alice', 'meta' => ['off' => true], 'team' => 'a'],
+                ['uid' => 8, 'name' => 'Bob', 'team' => 'b'],
+            ],
+            $wire['items'],
+        );
+        // the server still has the whole row for its own templates
+        $this->assertSame('$argon2id$secret', $collection->getItems()[0]->original['password']);
+    }
+
+    #[Test]
     #[DataProvider('clientWireCases')]
     public function agreesWithTheClientOnWhatTheWireShapeMeans(array $wire, array $expected): void
     {

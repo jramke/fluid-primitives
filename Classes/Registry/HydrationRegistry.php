@@ -174,6 +174,8 @@ class HydrationRegistry
         // Add or update the script in AssetCollector
         $this->assetCollector->addInlineJavaScript(self::SCRIPT_ID, $js, $scriptAttributes, [
             'priority' => true,
+            // a nonce or hash when the site sends a Content-Security-Policy, so it needs no 'unsafe-inline'
+            'csp' => true,
         ]);
     }
 

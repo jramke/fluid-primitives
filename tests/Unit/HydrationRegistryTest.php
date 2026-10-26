@@ -23,6 +23,7 @@ final class HydrationRegistryTest extends TestCase
 {
     private ?string $capturedJs = null;
     private ?array $capturedAttributes = null;
+    private ?array $capturedOptions = null;
     private AssetCollector $assetCollector;
     private HydrationRegistry $registry;
     private GlobalContext $globalContext;
@@ -39,11 +40,21 @@ final class HydrationRegistryTest extends TestCase
             ->willReturnCallback(function ($id, $js, $attributes, $options) {
                 $this->capturedJs = $js;
                 $this->capturedAttributes = $attributes;
+                $this->capturedOptions = $options;
                 return $this->assetCollector;
             });
 
         $this->globalContext = new GlobalContext();
         $this->registry = new HydrationRegistry($this->assetCollector, $this->globalContext);
+    }
+
+    #[Test]
+    public function registersTheScriptForTheContentSecurityPolicyOfTheSite(): void
+    {
+        $this->registry->add('ui', 'dialog', new HydrationEntry('«f1»', [], true, []));
+
+        $this->assertNotNull($this->capturedJs);
+        $this->assertTrue($this->capturedOptions['csp'] ?? false);
     }
 
     #[Test]
