@@ -83,7 +83,16 @@ final class CollapsibleRenderingTest extends FunctionalTestCase
             </primitives:collapsible.root>'
         );
 
-        foreach (['40px', '2.5rem', '.5em', '50%', 'calc(100vh - 2rem)', 'min(10px, 5vh)'] as $size) {
+        foreach ([
+            '40px',
+            '2.5rem',
+            '.5em',
+            '50%',
+            '10svmin',
+            '4dvmax',
+            'calc(100vh - 2rem)',
+            'min(10px, 5vh)',
+        ] as $size) {
             $content = $this->elementWith($this->renderTemplate($collapsible($size)), 'data-collapsible-content');
             $this->assertStringContainsString('--collapsed-height: ' . $size . ';', $content->get('style') ?? '');
         }

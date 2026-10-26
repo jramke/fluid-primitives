@@ -61,7 +61,7 @@ class CollapsibleContext extends AbstractComponentContext
             return null;
         }
 
-        $isLength = preg_match('/^-?(\d+|\d*\.\d+)([a-z]{1,4}|%)?$/i', $length) === 1;
+        $isLength = preg_match('/^-?(\d+|\d*\.\d+)([a-z]{1,5}|%)?$/i', $length) === 1;
         $isMath = preg_match('/^(calc|min|max|clamp)\([0-9a-z\s.,+*\/%()-]+\)$/i', $length) === 1;
         if (!$isLength && !$isMath) {
             throw new \InvalidArgumentException(
