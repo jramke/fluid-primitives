@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Domain\Dto;
 
 use IteratorAggregate;
+use Jramke\FluidPrimitives\Contracts\ConvertibleArgumentInterface;
 use Jramke\FluidPrimitives\Utility\Typed;
 use JsonSerializable;
 use Traversable;
@@ -14,7 +15,7 @@ use Traversable;
 /**
  * @implements IteratorAggregate<array-key, ListCollectionItem>
  */
-final class ListCollection implements JsonSerializable, IteratorAggregate
+final class ListCollection implements JsonSerializable, IteratorAggregate, ConvertibleArgumentInterface
 {
     /** @var ListCollectionItem[]|null Cached normalized items */
     private ?array $normalizedItems = null;
@@ -38,6 +39,36 @@ final class ListCollection implements JsonSerializable, IteratorAggregate
                 1_788_200_002,
             );
         }
+    }
+
+    /**
+     * A collection of the given items with the default `value`, `label` and `disabled` keys and no
+     * groups: what a prop declared `array|ListCollection` makes of an array. Other keys and groups
+     * need the {@see \Jramke\FluidPrimitives\ViewHelpers\ListCollectionViewHelper}.
+     */
+    public static function fromArgument(mixed $value): static
+    {
+        if ($value instanceof Traversable) {
+            $value = iterator_to_array($value);
+        }
+
+        if (!is_array($value)) {
+            throw new \InvalidArgumentException(
+                'The items of a collection must be an array or Traversable.',
+                1_788_400_006,
+            );
+        }
+
+        return new self(array_map(static function (mixed $item): array|object {
+            if (!is_array($item) && !is_object($item)) {
+                throw new \InvalidArgumentException(
+                    'Each item of a collection must be an array or object.',
+                    1_788_400_007,
+                );
+            }
+
+            return $item;
+        }, $value));
     }
 
     /**

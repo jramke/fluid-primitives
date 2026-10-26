@@ -45,9 +45,8 @@ const datePickerPropConverters = {
     // The labels are texts on the wire, Zag wants functions of the date and the view for most.
     translations: (texts: TranslationTexts | undefined, props: Record<string, unknown>) =>
         buildTranslations(texts, props.locale as string | undefined),
-    // PHP can't distinguish a list-shaped array from an object-shaped one for a bare `type="array"`
-    // prop (see WireTypeResolver), so this resolves to `unknown` on the wire - this just tells TS
-    // what it actually is (a real @zag-js/popper PositioningOptions object).
+    // The wire type of `positioning` is the generated `Positioning`, whose placement is a plain
+    // string - this just tells TS it is a real @zag-js/popper PositioningOptions object.
     positioning: (positioning: datePicker.Props['positioning']) => positioning,
 } satisfies ClientPropConverterMap;
 

@@ -17,6 +17,11 @@ _2026-10-26_
 
 - `ui:add` reads the registry of the installed version from the Composer package. Nothing is fetched from GitHub any more, and a checkout of `main` gets its own templates. ([#87](https://github.com/jramke/fluid-primitives/pull/87))
 
+**Features**
+
+- The `collection` of `Select` and `Combobox` takes a plain array of items with a `value` and a `label`, so an array from your controller needs no `ui:listCollection`. Use the ViewHelper for other item keys and groups. ([#89](https://github.com/jramke/fluid-primitives/pull/89))
+- The `positioning` prop of `Popover`, `Tooltip`, `Select`, `Combobox`, `Menu` and `DatePicker` becomes a `Positioning` object, with the options Zag.js can take as JSON. `positioning="top-end"` is short for `{placement: 'top-end'}`. A misspelled option name or an unknown `placement` now throws instead of being ignored. An array you pass replaces the default of the component, as before. ([#89](https://github.com/jramke/fluid-primitives/pull/89))
+
 **Fixes**
 
 - A `Select` shows the selected label and the placeholder as text. An option like `<img src=x onerror=...>` no longer runs as markup, and `spreadProps` throws on a `children` prop. ([#87](https://github.com/jramke/fluid-primitives/pull/87))
