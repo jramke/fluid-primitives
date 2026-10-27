@@ -29,6 +29,8 @@ declare module 'fluid-primitives' {
 export class NumberInput extends FieldAwareComponent<numberInput.Props, numberInput.Api> {
     static componentName = 'numberInput';
 
+    #latestChange = 0;
+
     propsWithField(props: numberInput.Props, field: FieldClientApi): numberInput.Props {
         return {
             ...props,
@@ -44,7 +46,24 @@ export class NumberInput extends FieldAwareComponent<numberInput.Props, numberIn
         return {
             ...props,
             onValueChange: details => {
-                this.hydrator.query('input')?.dispatchEvent(new Event('input', { bubbles: true }));
+                // Typing fires a native input event itself, so only the changes the machine makes on
+                // its own (steppers, arrow keys, blur formatting) need an event for the Field. It is
+                // a change, not an input event: the machine would read the not yet updated text of
+                // the input back as typed. The machine writes that text in an animation frame it
+                // requests after this callback, so a listener would read the old text any sooner.
+                // The input only ever shows the last value of a frame, so only the event of the last
+                // change goes out: it is queued behind that change's own write.
+                if (details.reason !== 'input-change') {
+                    const change = ++this.#latestChange;
+                    queueMicrotask(() =>
+                        requestAnimationFrame(() => {
+                            if (change !== this.#latestChange) return;
+                            this.hydrator
+                                .query('input')
+                                ?.dispatchEvent(new Event('change', { bubbles: true }));
+                        })
+                    );
+                }
                 props?.onValueChange?.(details);
             },
         };
