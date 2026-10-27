@@ -15,9 +15,9 @@ What changed in each release of Fluid Primitives, newest first. Breaking changes
 
 **Fixes**
 
-- Removing a row of a `FieldArray` no longer breaks the components in the rows after it. A `Select`, `DatePicker` or `Popover` in a row that moved up kept reading and writing the ids it started with, so it stopped reacting, or opened the parts of a row you added later. A cloned row now keeps the root ids of its components until you remove it, and only the `data-value` of the row and the names of its fields change.
-- The fields of a `FieldArray` outside a `Form` are renamed when you remove a row. Rows used to keep `people[1]` and `people[2]` after the first one was gone, and the next added row got `people[2]` too.
-- `destroyComponentsWithin()` forgets the hydration data of the components it destroys, so a later `mountAll()` does not mount a removed row again.
+- Removing a row of a `FieldArray` no longer breaks the components in the rows after it. A `Select`, `DatePicker` or `Popover` in a row that moved up kept reading and writing the ids it started with, so it stopped reacting, or opened the parts of a row you added later. A cloned row now keeps the root ids of its components until you remove it, and only the `data-value` of the row and the names of its fields change. ([#91](https://github.com/jramke/fluid-primitives/pull/91))
+- The fields of a `FieldArray` outside a `Form` are renamed when you remove a row. Rows used to keep `people[1]` and `people[2]` after the first one was gone, and the next added row got `people[2]` too. ([#91](https://github.com/jramke/fluid-primitives/pull/91))
+- `destroyComponentsWithin()` forgets the hydration data of the components it destroys, so a later `mountAll()` does not mount a removed row again. ([#91](https://github.com/jramke/fluid-primitives/pull/91))
 
 ## 1.0.0-beta.5
 
