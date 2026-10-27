@@ -164,6 +164,5 @@ test('announces the last of several steps, also when a microtask separates them'
 
     // an event that fires between the two writes would stop at $6.00 and never announce $7.00
     expect(input.value).toBe('$7.00');
-    expect(read.at(-1)).toBe('$7.00');
-    expect(read.length).toBeLessThanOrEqual(2);
+    expect(read).toEqual(['$7.00']);
 });
