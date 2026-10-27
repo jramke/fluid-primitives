@@ -6,16 +6,13 @@ namespace Jramke\FluidPrimitives\Service\Component;
 
 use Jramke\FluidPrimitives\Constants;
 use Jramke\FluidPrimitives\Contexts\AbstractComponentContext;
-use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
 use Jramke\FluidPrimitives\Domain\Dto\ComponentHydrationCandidate;
 use Jramke\FluidPrimitives\Domain\Dto\HydrationEntry;
 use Jramke\FluidPrimitives\Exception\HydrationException;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Registry\NestedComponentRegistry;
 use Jramke\FluidPrimitives\Registry\ReferencedRootRegistry;
-use Jramke\FluidPrimitives\Service\ContextService;
 use Jramke\FluidPrimitives\Utility\ClientPropsContextExtractor;
-use Jramke\FluidPrimitives\Utility\ComponentRefUtility;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
 use Jramke\FluidPrimitives\Utility\Typed;
 
@@ -25,13 +22,10 @@ use Jramke\FluidPrimitives\Utility\Typed;
  * holds however the ref'd markup ends up rendered, portaled away included), mirrored by
  * `ui:exposeToClient`'s marker for components with no ref'd part at all.
  *
- * Also the single place every such registration is recorded against whatever
- * {@see NestedComponentRegistry::recordNestedComponent()} tracking is currently active for it - a
- * `ui:template` stencil this render happens to be nested inside (via the tracking-scope stack), or
- * a real, server-rendered `FieldArray` row (via {@see resolveFieldArrayItemScopeKey}, since a real
- * row has no `ui:template` wrapping it to push/pop a scope) - so this works for *any* root component
- * regardless of how it renders (e.g. `Dialog`, whose own `Root` renders no DOM element at all), not
- * just ones a client-side scan of the rendered HTML would happen to find.
+ * Also the single place every such registration is recorded as nested inside the `ui:template` stencil
+ * this render happens to be in (via {@see NestedComponentRegistry}'s tracking-scope stack), so this
+ * works for *any* root component regardless of how it renders (e.g. `Dialog`, whose own `Root` renders
+ * no DOM element at all), not just ones a client-side scan of the rendered HTML would happen to find.
  */
 final readonly class ComponentHydrationCollector
 {
@@ -143,7 +137,6 @@ final readonly class ComponentHydrationCollector
         NestedComponentRegistry::getInstance()->recordNestedComponent(
             "{$namespaceIdentifier}:{$candidate->clientBaseName}",
             $rootId,
-            $this->resolveFieldArrayItemScopeKey($candidate),
         );
         $registry = HydrationRegistry::getInstance();
         $registry->initializeGlobals($candidate->renderingContext);
@@ -159,51 +152,5 @@ final readonly class ComponentHydrationCollector
         );
 
         return $rendered;
-    }
-
-    /**
-     * The row-scoped tracking key a real, server-rendered `FieldArray` row's own nested components
-     * (e.g. a `Field`+`Input`) should *also* be recorded against, alongside whatever `ui:template`
-     * scope is on the stack (there is none here - a real row is an ordinary `f:for` iteration, not
-     * `ui:template` content) - `null` when this component isn't rendering inside a `FieldArray` item
-     * at all, or is rendering inside `itemTemplate`'s own unfilled stencil (`item.index` is null
-     * there; that case is already covered by the tracking-scope stack instead, via the stencil's own
-     * key), the common case for every other root component.
-     *
-     * Reads `$candidate->ctx`'s own `getParentRenderingContext()` - the same ambient-context lookup
-     * `FieldContext::beforeRendering()` already performs to prefix a nested field's own `name` - not
-     * `$candidate->renderingContext` itself, which is this *component's own*, freshly reset rendering
-     * context (see `ComponentRenderer::renderComponent()`), not the one carrying the `fieldArray`
-     * context on its `ContextService` stack.
-     *
-     * Uses `ComponentRefUtility::getScopeKey()` - the same key `ComponentHydrator.scopeKey()`
-     * rebuilds client-side from the row's own `item` part and `data-value`, which is what
-     * `ComponentHydrator.renameValue()` looks it up by.
-     */
-    private function resolveFieldArrayItemScopeKey(ComponentHydrationCandidate $candidate): ?string
-    {
-        if (!$candidate->ctx instanceof AbstractComponentContext) {
-            return null;
-        }
-
-        $fieldArrayContext = ContextService::getFromRenderingContext(
-            $candidate->ctx->getParentRenderingContext(),
-            'fieldArray',
-        );
-        if (!$fieldArrayContext instanceof ComponentContextInterface) {
-            return null;
-        }
-
-        $itemIndex = Typed::intOrNull($fieldArrayContext->get('item.index'));
-        if ($itemIndex === null) {
-            return null;
-        }
-
-        $fieldArrayRootId = Typed::stringOrNull($fieldArrayContext->get('rootId'));
-        if ($fieldArrayRootId === null) {
-            return null;
-        }
-
-        return ComponentRefUtility::getScopeKey('field-array', $fieldArrayRootId, 'item', (string)$itemIndex);
     }
 }

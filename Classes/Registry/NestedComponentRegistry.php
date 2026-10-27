@@ -8,11 +8,10 @@ use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
- * Tracks which root components render nested inside a "tracked scope" - a `ui:template` stencil,
- * or a FieldArray row - so the client can look nesting up as authoritative, PHP-recorded data
- * instead of inferring it from rendered DOM shape (which can't find a component that renders no DOM
- * element of its own, e.g. `Dialog`'s `Root`, or whose content has since portaled elsewhere). See
- * {@see recordNestedComponent}'s own docblock for the two call sites that populate this.
+ * Tracks which root components render nested inside a "tracked scope" - a `ui:template` stencil -
+ * so the client can look nesting up as authoritative, PHP-recorded data instead of inferring it from
+ * rendered DOM shape (which can't find a component that renders no DOM element of its own, e.g.
+ * `Dialog`'s `Root`, or whose content has since portaled elsewhere).
  *
  * A sibling to {@see HydrationRegistry} rather than folded into it - same singleton-per-request
  * shape (a hard `getInstance()`, for the same reason: `TemplateViewHelper`, one of its two writers,
@@ -83,24 +82,12 @@ class NestedComponentRegistry
     /**
      * Records a just-registered root component (`$componentName`/`$rootId`, exactly as
      * {@see HydrationRegistry::add()} received them) against every currently-open tracking scope
-     * ({@see pushTrackingScope}) and, when given, the explicit `$additionalScopeKey` - the single
-     * call site in {@see \Jramke\FluidPrimitives\Service\Component\ComponentHydrationCollector}
-     * covers both a `ui:template` stencil (via the stack) and a FieldArray row (via
-     * `$additionalScopeKey`, since a real row has no `ui:template` wrapping it to push/pop a scope)
-     * in one call. A no-op when neither applies (the common case for a component rendered outside
-     * any tracked scope).
+     * ({@see pushTrackingScope}). A no-op for a component rendered outside any tracked scope, the
+     * common case.
      */
-    public function recordNestedComponent(
-        string $componentName,
-        string $rootId,
-        ?string $additionalScopeKey = null,
-    ): void {
-        $keys = $this->trackingScopeStack;
-        if ($additionalScopeKey !== null) {
-            $keys[] = $additionalScopeKey;
-        }
-
-        foreach (array_unique($keys) as $key) {
+    public function recordNestedComponent(string $componentName, string $rootId): void
+    {
+        foreach (array_unique($this->trackingScopeStack) as $key) {
             $this->nestedComponentsByScope[$key][] = ['name' => $componentName, 'id' => $rootId];
         }
     }

@@ -128,7 +128,7 @@ final class FieldArrayRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
-    public function tracksEachServerRenderedRowsNestedFieldAgainstItsOwnRowKeyNotTheStencils(): void
+    public function tracksOnlyTheNestedFieldOfTheStencilNotThoseOfTheServerRenderedRows(): void
     {
         $html = $this->renderTemplate('
             <primitives:fieldArray.root name="people" itemCount="2">
@@ -165,7 +165,8 @@ final class FieldArrayRenderingTest extends FunctionalTestCase
         $this->assertNotSame('', $fieldArrayRootId);
 
         preg_match_all('/data-field-root="([^"]*)"/', $html, $fieldMatches);
-        [$stencilFieldRootId, $row0FieldRootId, $row1FieldRootId] = $fieldMatches[1];
+        [$stencilFieldRootId] = $fieldMatches[1];
+        $this->assertCount(3, $fieldMatches[1]);
 
         $byScope = NestedComponentRegistry::getInstance()->getNestedComponentsByScope();
 
@@ -173,14 +174,8 @@ final class FieldArrayRenderingTest extends FunctionalTestCase
             [['name' => 'primitives:field', 'id' => $stencilFieldRootId]],
             $byScope["field-array:{$fieldArrayRootId}:item-template"] ?? null,
         );
-        $this->assertSame(
-            [['name' => 'primitives:field', 'id' => $row0FieldRootId]],
-            $byScope["field-array:{$fieldArrayRootId}:item:0"] ?? null,
-        );
-        $this->assertSame(
-            [['name' => 'primitives:field', 'id' => $row1FieldRootId]],
-            $byScope["field-array:{$fieldArrayRootId}:item:1"] ?? null,
-        );
+        // a row is never renamed on the client, so nothing looks its components up
+        $this->assertSame(["field-array:{$fieldArrayRootId}:item-template"], array_keys($byScope));
     }
 
     #[Test]
