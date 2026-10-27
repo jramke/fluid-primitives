@@ -29,9 +29,6 @@ declare module 'fluid-primitives' {
 export class NumberInput extends FieldAwareComponent<numberInput.Props, numberInput.Api> {
     static componentName = 'numberInput';
 
-    #initialInputValue: unknown;
-    #inputValueRendered = false;
-
     propsWithField(props: numberInput.Props, field: FieldClientApi): numberInput.Props {
         return {
             ...props,
@@ -85,16 +82,10 @@ export class NumberInput extends FieldAwareComponent<numberInput.Props, numberIn
 
         const inputEl = this.hydrator.query('input');
         if (inputEl) {
-            // Zag's `defaultValue` becomes `value` in the vanilla adapter, so a later render would
-            // replace what the user is typing with the formatted value. The machine keeps the
-            // element in sync itself (`syncInputElement`) and formats only on blur and enter, so
-            // the first value is passed on unchanged: omitting `value` would reset the element.
-            const props = mergeProps(this.api.getInputProps(), {
+            const mergedProps = mergeProps(this.api.getInputProps(), {
                 'aria-describedby': this.field?.ariaDescribedby,
             });
-            if (!this.#inputValueRendered) this.#initialInputValue = props.value;
-            this.#inputValueRendered = true;
-            this.spreadProps(inputEl, { ...props, value: this.#initialInputValue });
+            this.spreadProps(inputEl, mergedProps);
         }
 
         const incrementTriggerEl = this.hydrator.query('incrementTrigger');
