@@ -84,3 +84,33 @@ test('announces the changes the machine makes with a change event, but not the t
     expect(input.value).toBe('$4.00');
     expect(inputEvents).toBe(1);
 });
+
+test('a change listener reads the text the machine wrote', async () => {
+    document.body.innerHTML = `
+        <div data-number-input-root="n1">
+            <input data-number-input-input="n1" type="text" value="5" />
+        </div>`;
+    numberInput = new NumberInput({
+        id: 'n1',
+        defaultValue: '5',
+        formatOptions: { style: 'currency', currency: 'USD' },
+    } as never);
+    numberInput.init();
+    const input = document.querySelector<HTMLInputElement>('input')!;
+    const read: string[] = [];
+    document.body.addEventListener('change', () => read.push(input.value));
+    const settle = () => new Promise(resolve => setTimeout(resolve, 80));
+
+    input.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+    input.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true, cancelable: true })
+    );
+    await settle();
+    expect(read).toEqual(['$6.00']);
+
+    // blur formats what was typed, the listener must not see it half way
+    type(input, '3');
+    input.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+    await settle();
+    expect(read).toEqual(['$6.00', '$3.00']);
+});
