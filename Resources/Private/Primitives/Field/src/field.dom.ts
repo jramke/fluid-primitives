@@ -23,8 +23,6 @@ export const getErrorTextId = (ctx: Scope, match?: ValidityMatch | boolean, id?:
 };
 export const getHelperTextId = (ctx: Scope) => ctx.ids?.helperText ?? `field:${ctx.id}:helper-text`;
 
-// Looked up once when the machine starts and kept: a FieldArray row rename re-stamps the root
-// marker's value but the scope id is fixed at construction, so a later `scope.selector()` finds nothing.
 export const queryRootEl = (ctx: Scope) => ctx.query(ctx.selector(parts.root));
 export const getControlEl = (ctx: Scope) => ctx.getById<FieldControlElement>(getControlId(ctx));
 

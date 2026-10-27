@@ -4,7 +4,7 @@ import { destroyComponentsWithin } from '../../../Client/src/lib/hydration';
 import { Template } from '../../../Client/src/lib/template';
 import { getFieldValueFromContainer, type FieldValue } from '../../Field/src/field.value';
 import { parseFieldPath, stringifyFieldPathAsBrackets } from '../../Form/src/form.path';
-import { renameFieldMachineForForm } from '../../Form/src/form.registry';
+import { renameFieldMachineByRoot } from '../../Form/src/form.registry';
 import type { FieldArray } from '../FieldArray';
 import { parts } from './field-array.anatomy';
 import type { FieldArrayApi, FieldArrayApiActions, FieldArrayApiProps } from './field-array.types';
@@ -79,11 +79,10 @@ function canRemove(component: FieldArray): boolean {
 }
 
 /**
- * Clones the `itemTemplate` stencil for a new row and appends it to `itemGroup` - `Template`'s own
- * `{value}` option (via `ComponentHydrator.restampValue`) prepares any nested root components the
- * row happens to compose (Field/Input/...) too, but doesn't construct them (see `restampValue`'s
- * own docblock for why that step can't happen here) - `onItemAdded` carries `clone.componentNames`,
- * so consumer code can call `mountAll()` again for each of them.
+ * Clones the `itemTemplate` stencil for a new row and appends it to `itemGroup`. `Template` gives the
+ * root components inside the row (Field, Input, Select, ...) ids and hydration data of their own, but
+ * does not construct them: `onItemAdded` carries `clone.componentNames`, so consumer code can call
+ * `mountAll()` for each of them.
  */
 function append(component: FieldArray): void {
     if (!canAppend(component)) return;
@@ -104,8 +103,7 @@ function append(component: FieldArray): void {
 
 /**
  * Removes a row and shifts every later row's index (and its nested fields' `name`s) down by
- * one, via `renameFieldMachineForForm` - the same mechanism `Form.api.renameField` itself uses,
- * which keeps recurring-field rows contiguously indexed without touching any field's value/
+ * one, which keeps recurring-field rows contiguously indexed without touching any field's value/
  * touched/dirty/error state.
  */
 function remove(component: FieldArray, index: number): void {
@@ -172,21 +170,15 @@ function reindexRowsAfter(component: FieldArray, removedIndex: number): void {
 
         const newIndex = index - 1;
 
+        // The row index lives in `data-value` and in the field names only. The root ids of the
+        // components in the row stay: a Zag machine cannot change its id.
         rowEl.querySelectorAll<HTMLElement>('[data-field-root]').forEach(fieldRootEl => {
             const oldName = fieldRootEl.dataset.name;
             if (!oldName) return;
-            const newName = oldName.replace(`[${index}]`, `[${newIndex}]`);
-            renameFieldMachineForForm(fieldRootEl, oldName, newName);
+            renameFieldMachineByRoot(fieldRootEl, oldName.replace(`[${index}]`, `[${newIndex}]`));
         });
 
-        // renameFieldMachineForForm (above) only updates each nested field's `name` prop for
-        // submission purposes - it never touches their root ids. Without also re-keying those here, a
-        // later row appended at this now-freed-up index would clone the same stencil and collide
-        // with these nested Field/Input's still-stale root ids (see `ComponentHydrator.renameValue`'s
-        // own docblock for the full mechanism - `rowEl` is an existing, possibly already-mounted
-        // item, never a fresh `<template>` clone, so this must be `renameValue`, not
-        // `restampValue`).
-        component.hydrator.renameValue(rowEl, String(newIndex));
+        component.hydrator.setValue(rowEl, String(newIndex));
     }
 }
 

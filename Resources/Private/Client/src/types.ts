@@ -34,10 +34,9 @@ declare global {
                 };
             };
             /**
-             * Root components PHP found nested inside a tracked scope - a `ui:template` stencil, or
-             * a FieldArray row - keyed by that scope's own id (see
-             * `HydrationRegistry::recordNestedComponent()`'s own docblock for why this exists rather
-             * than inferring nesting from rendered DOM shape). Read via
+             * Root components PHP found nested inside a tracked scope - a `ui:template` stencil -
+             * keyed by that scope's own id (see `NestedComponentRegistry`'s own docblock for why this
+             * exists rather than inferring nesting from rendered DOM shape). Read via
              * {@see getNestedComponents}, not indexed directly.
              */
             nestedComponents?: {

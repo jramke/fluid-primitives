@@ -11,13 +11,13 @@ use PHPUnit\Framework\Attributes\Test;
 final class NestedComponentRegistryTest extends TestCase
 {
     #[Test]
-    public function recordsNestedComponentsAgainstOpenTrackingScopesAndTheAdditionalKey(): void
+    public function recordsNestedComponentsOnlyAgainstOpenTrackingScopes(): void
     {
         $registry = new NestedComponentRegistry();
 
         $registry->pushTrackingScope('field-array:«f0»:itemTemplate');
         $registry->recordNestedComponent('field', '«f1»');
-        $registry->recordNestedComponent('input', '«f2»', 'field-array:«f0»:item:0');
+        $registry->recordNestedComponent('input', '«f2»');
         $registry->popTrackingScope();
 
         // Recorded after the scope closed - must not appear anywhere.
@@ -29,7 +29,6 @@ final class NestedComponentRegistryTest extends TestCase
             [['name' => 'field', 'id' => '«f1»'], ['name' => 'input', 'id' => '«f2»']],
             $byScope['field-array:«f0»:itemTemplate'],
         );
-        $this->assertSame([['name' => 'input', 'id' => '«f2»']], $byScope['field-array:«f0»:item:0']);
         $this->assertNotContains('«f3»', array_column(array_merge(...array_values($byScope)), 'id'));
     }
 

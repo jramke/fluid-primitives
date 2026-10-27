@@ -1,5 +1,5 @@
 import type { Machine } from '../../../Client';
-import type { FieldMachine } from '../../Field/src/field.registry';
+import { getFieldMachineFor, type FieldMachine } from '../../Field/src/field.registry';
 import { trimArraySuffix } from './form.path';
 
 export type FormMachine = Machine<any>;
@@ -86,16 +86,36 @@ export function renameFieldMachineForForm(el: Element | null, oldName: string, n
     const form = resolveElToForm(el);
     if (!form) return;
 
-    const entry = registry.get(form);
-    if (!entry) return;
+    const fields = registry.get(form)?.fields;
+    const fieldMachine = fields?.get(trimArraySuffix(oldName));
+    if (!fields || !fieldMachine) return;
 
-    const normalizedOldName = trimArraySuffix(oldName);
-    const fieldMachine = entry.fields.get(normalizedOldName);
+    renameFieldMachine(fieldMachine, newName, fields);
+}
+
+/**
+ * Renames the field whose root element is `fieldRootEl`, in a form or not: the machine is found
+ * through its root element, and the form's field map is only re-keyed when there is a form.
+ */
+export function renameFieldMachineByRoot(fieldRootEl: HTMLElement, newName: string) {
+    const fieldMachine = getFieldMachineFor(fieldRootEl);
     if (!fieldMachine) return;
 
-    entry.fields.delete(normalizedOldName);
+    const form = resolveElToForm(fieldRootEl);
+    renameFieldMachine(fieldMachine, newName, form ? registry.get(form)?.fields : undefined);
+}
+
+function renameFieldMachine(
+    fieldMachine: FieldMachine,
+    newName: string,
+    fields = new Map<string, FieldMachine>()
+) {
+    // by identity: the entry is keyed by the name the machine had when it registered
+    for (const [name, registered] of fields) {
+        if (registered === fieldMachine) fields.delete(name);
+    }
     fieldMachine.updateProps({ name: newName });
-    entry.fields.set(trimArraySuffix(newName), fieldMachine);
+    fields.set(trimArraySuffix(newName), fieldMachine);
 }
 
 function resolveElToForm(el: Element | null): HTMLFormElement | null {

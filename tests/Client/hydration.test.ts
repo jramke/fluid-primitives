@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test } from 'vitest';
 import {
     ComponentHydrator,
+    destroyComponentsWithin,
     mount,
     mountAll,
     registerClientPropConverters,
@@ -169,22 +170,47 @@ describe('ComponentHydrator nested components of a row', () => {
         expect(clone.getAttribute('data-value')).toBe('3');
         expect(attr(clone, '[data-field-array-remove-trigger]', 'data-value')).toBe('3');
         expect(attr(clone, '[data-field-root]', 'data-value')).toBeNull();
-        // every reference to the stencil's Field id follows it, ids included
-        expect(attr(clone, '[data-field-root]', 'data-field-root')).toBe('fld:3');
-        expect(attr(clone, 'label', 'data-field-label')).toBe('fld:3');
-        expect(attr(clone, 'input', 'data-field-control')).toBe('fld:3');
-        expect(attr(clone, 'input', 'id')).toBe('field:fld:3:control');
+        // every reference to the stencil's Field id follows it, ids included. The new id says
+        // nothing about the value: the row moves, the id stays.
+        expect(attr(clone, '[data-field-root]', 'data-field-root')).toBe('fld:1');
+        expect(attr(clone, 'label', 'data-field-label')).toBe('fld:1');
+        expect(attr(clone, 'input', 'data-field-control')).toBe('fld:1');
+        expect(attr(clone, 'input', 'id')).toBe('field:fld:1:control');
         // the clone's hydration data is a copy, the stencil's stays for the next clone
         const fields = window.FluidPrimitives.hydrationData.primitives.field;
-        expect(Object.keys(fields)).toEqual(['fld', 'fld:3']);
-        expect(fields['fld:3'].props).toMatchObject({
-            id: 'fld:3',
+        expect(Object.keys(fields)).toEqual(['fld', 'fld:1']);
+        expect(fields['fld:1'].props).toMatchObject({
+            id: 'fld:1',
             name: 'people[3][name]',
-            ids: { control: 'field:fld:3:control' },
+            ids: { control: 'field:fld:1:control' },
         });
-        expect(window.FluidPrimitives.nestedComponents).toMatchObject({
-            'field-array:fa1:item:3': [{ name: 'primitives:field', id: 'fld:3' }],
+    });
+
+    test('every clone of a stencil gets ids no other clone has, whatever its value', () => {
+        setGlobals({
+            hydrationData: {
+                primitives: { field: { fld: fieldEntry('fld', 'people[][name]') } },
+            },
+            nestedComponents: {
+                'field-array:fa1:item-template': [{ name: 'primitives:field', id: 'fld' }],
+            },
         });
+        document.body.innerHTML = `<template>${row('', 'fld')}</template>`;
+        const stencil = document.querySelector('template')!.content.firstElementChild!;
+        const hydrator = new ComponentHydrator('fieldArray', 'fa1');
+        const clone = (value: string) => {
+            const el = stencil.cloneNode(true) as Element;
+            hydrator.restampValue(el, value, hydrator.scopeKey('itemTemplate'));
+            return attr(el, '[data-field-root]', 'data-field-root');
+        };
+
+        expect([clone('0'), clone('0'), clone('7')]).toEqual(['fld:1', 'fld:2', 'fld:3']);
+        expect(Object.keys(window.FluidPrimitives.hydrationData.primitives.field)).toEqual([
+            'fld',
+            'fld:1',
+            'fld:2',
+            'fld:3',
+        ]);
     });
 
     test('restampValue writes a value like $& literally instead of expanding it', () => {
@@ -202,72 +228,39 @@ describe('ComponentHydrator nested components of a row', () => {
 
         hydrator.restampValue(clone, '$&', hydrator.scopeKey('itemTemplate'));
 
-        expect(attr(clone, 'input', 'id')).toBe('field:fld:$&:control');
         const fields = window.FluidPrimitives.hydrationData.primitives.field;
-        expect(Object.keys(fields)).toEqual(['fld', 'fld:$&']);
-        expect(fields['fld:$&'].props.name).toBe('people[$&][name]');
+        expect(clone.getAttribute('data-value')).toBe('$&');
+        expect(fields['fld:1'].props.name).toBe('people[$&][name]');
     });
 
-    test('renameValue moves a live row to its new value without touching the row of a longer number', () => {
-        const hydrator2 = new ComponentHydrator('field', 'fld:2');
-        const hydrator20 = new ComponentHydrator('field', 'fld:20');
+    test('destroyComponentsWithin forgets the hydration data of what it destroys, so mountAll cannot mount it again', () => {
+        const destroyed: string[] = [];
+        const instance = (id: string) =>
+            ({
+                hydrator: new ComponentHydrator('field', id),
+                destroy: () => destroyed.push(id),
+                getClientName: () => 'field',
+            }) as unknown as Component<unknown, unknown>;
         setGlobals({
             hydrationData: {
                 primitives: {
-                    field: {
-                        'fld:2': fieldEntry('fld:2', 'people[2][name]'),
-                        'fld:20': fieldEntry('fld:20', 'people[20][name]'),
-                    },
+                    field: { 'fld:1': fieldEntry('fld:1', 'a'), 'fld:2': fieldEntry('fld:2', 'b') },
                 },
             },
             componentInstances: {
-                primitives: {
-                    field: {
-                        'fld:2': { hydrator: hydrator2 } as unknown as Component<unknown, unknown>,
-                        'fld:20': { hydrator: hydrator20 } as unknown as Component<
-                            unknown,
-                            unknown
-                        >,
-                    },
-                },
-            },
-            nestedComponents: {
-                'field-array:fa1:item:2': [{ name: 'primitives:field', id: 'fld:2' }],
-                'field-array:fa1:item:20': [{ name: 'primitives:field', id: 'fld:20' }],
+                primitives: { field: { 'fld:1': instance('fld:1'), 'fld:2': instance('fld:2') } },
             },
         });
-        document.body.innerHTML = row('2', 'fld:2') + row('20', 'fld:20');
-        const [rowTwo, rowTwenty] = Array.from(
-            document.querySelectorAll('[data-field-array-item]')
-        );
-        const hydrator = new ComponentHydrator('fieldArray', 'fa1');
+        document.body.innerHTML = row('0', 'fld:1') + row('1', 'fld:2');
 
-        hydrator.renameValue(rowTwo, '1');
+        destroyComponentsWithin(document.querySelector('[data-field-array-item]')!);
 
-        expect(rowTwo.getAttribute('data-value')).toBe('1');
-        expect(attr(rowTwo, '[data-field-array-remove-trigger]', 'data-value')).toBe('1');
-        expect(attr(rowTwo, '[data-field-root]', 'data-field-root')).toBe('fld:1');
-        expect(attr(rowTwo, 'input', 'id')).toBe('field:fld:1:control');
-        // `fld:2` is the start of `fld:20`: only a whole id segment counts as a reference
-        expect(attr(rowTwenty, '[data-field-root]', 'data-field-root')).toBe('fld:20');
-        expect(attr(rowTwenty, 'input', 'id')).toBe('field:fld:20:control');
-
-        // the live instance and its data follow the id, so later lookups still find them
-        const instances = window.FluidPrimitives.componentInstances.primitives.field;
-        expect(Object.keys(instances)).toEqual(['fld:20', 'fld:1']);
-        expect(hydrator2.rootId).toBe('fld:1');
-        expect(hydrator20.rootId).toBe('fld:20');
-        expect(Object.keys(window.FluidPrimitives.hydrationData.primitives.field)).toEqual([
-            'fld:20',
-            'fld:1',
+        expect(destroyed).toEqual(['fld:1']);
+        expect(Object.keys(window.FluidPrimitives.componentInstances.primitives.field)).toEqual([
+            'fld:2',
         ]);
-        expect(window.FluidPrimitives.hydrationData.primitives.field['fld:1'].props).toMatchObject({
-            id: 'fld:1',
-            ids: { control: 'field:fld:1:control' },
-        });
-        expect(Object.keys(window.FluidPrimitives.nestedComponents!)).toEqual([
-            'field-array:fa1:item:20',
-            'field-array:fa1:item:1',
+        expect(Object.keys(window.FluidPrimitives.hydrationData.primitives.field)).toEqual([
+            'fld:2',
         ]);
     });
 });
