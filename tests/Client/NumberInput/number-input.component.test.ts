@@ -114,3 +114,30 @@ test('a change listener reads the text the machine wrote', async () => {
     await settle();
     expect(read).toEqual(['$6.00', '$3.00']);
 });
+
+test('announces several steps of one frame with one change event', async () => {
+    document.body.innerHTML = `
+        <div data-number-input-root="n1">
+            <input data-number-input-input="n1" type="text" value="5" />
+        </div>`;
+    numberInput = new NumberInput({
+        id: 'n1',
+        defaultValue: '5',
+        formatOptions: { style: 'currency', currency: 'USD' },
+    } as never);
+    numberInput.init();
+    const input = document.querySelector<HTMLInputElement>('input')!;
+    const read: string[] = [];
+    document.body.addEventListener('change', () => read.push(input.value));
+    const settle = () => new Promise(resolve => setTimeout(resolve, 80));
+
+    numberInput.api.increment();
+    numberInput.api.increment();
+    await settle();
+    expect(read).toEqual(['$7.00']);
+
+    // the next frame announces again
+    numberInput.api.increment();
+    await settle();
+    expect(read).toEqual(['$7.00', '$8.00']);
+});
