@@ -20,7 +20,7 @@ What changed in each release of Fluid Primitives, newest first. Breaking changes
 - The fields of a `FieldArray` outside a `Form` are renamed when you remove a row. Rows used to keep `people[1]` and `people[2]` after the first one was gone, and the next added row got `people[2]` too. ([#91](https://github.com/jramke/fluid-primitives/pull/91))
 - `destroyComponentsWithin()` forgets the hydration data of the components it destroys, so a later `mountAll()` does not mount a removed row again. ([#91](https://github.com/jramke/fluid-primitives/pull/91))
 - The registry `Tabs` trigger and the `NumberInput` increment and decrement triggers show a pointer cursor. The `NumberInput` triggers no longer set `pointer-events: none` when disabled, so repeated clicks on one do not select the text next to it. Run `ui:add` again to pick it up. ([#92](https://github.com/jramke/fluid-primitives/pull/92))
-- The registry `Popover` and `Tooltip` scale and fade out of their trigger on every placement and skip the scale when a visitor prefers reduced motion. They used to slide down and blur on `transition-all`, which pointed the wrong way for content above its trigger. The `Popover` takes 250 ms instead of 150 ms.
+- The registry `Popover` and `Tooltip` scale and fade out of their trigger on every placement and skip the scale when a visitor prefers reduced motion. They used to slide down and blur on `transition-all`, which pointed the wrong way for content above its trigger. The `Popover` takes 250 ms instead of 150 ms. ([#94](https://github.com/jramke/fluid-primitives/pull/94))
 
 ## 1.0.0-beta.5
 
