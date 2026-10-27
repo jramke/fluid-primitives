@@ -141,3 +141,29 @@ test('announces several steps of one frame with one change event', async () => {
     await settle();
     expect(read).toEqual(['$7.00', '$8.00']);
 });
+
+test('announces the last of several steps, also when a microtask separates them', async () => {
+    document.body.innerHTML = `
+        <div data-number-input-root="n1">
+            <input data-number-input-input="n1" type="text" value="5" />
+        </div>`;
+    numberInput = new NumberInput({
+        id: 'n1',
+        defaultValue: '5',
+        formatOptions: { style: 'currency', currency: 'USD' },
+    } as never);
+    numberInput.init();
+    const input = document.querySelector<HTMLInputElement>('input')!;
+    const read: string[] = [];
+    document.body.addEventListener('change', () => read.push(input.value));
+
+    numberInput.api.increment();
+    await Promise.resolve();
+    numberInput.api.increment();
+    await new Promise(resolve => setTimeout(resolve, 80));
+
+    // an event that fires between the two writes would stop at $6.00 and never announce $7.00
+    expect(input.value).toBe('$7.00');
+    expect(read.at(-1)).toBe('$7.00');
+    expect(read.length).toBeLessThanOrEqual(2);
+});
