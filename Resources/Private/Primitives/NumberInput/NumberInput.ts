@@ -47,7 +47,15 @@ export class NumberInput extends FieldAwareComponent<numberInput.Props, numberIn
         return {
             ...props,
             onValueChange: details => {
-                this.hydrator.query('input')?.dispatchEvent(new Event('input', { bubbles: true }));
+                // Typing fires a native input event itself, so only the changes the machine makes on
+                // its own (steppers, arrow keys, blur formatting) need an event for the Field. It is
+                // a change, not an input event: the machine would read the not yet updated text of
+                // the input back as typed.
+                if (details.reason !== 'input-change') {
+                    this.hydrator
+                        .query('input')
+                        ?.dispatchEvent(new Event('change', { bubbles: true }));
+                }
                 props?.onValueChange?.(details);
             },
         };
