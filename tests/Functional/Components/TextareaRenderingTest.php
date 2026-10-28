@@ -28,7 +28,8 @@ final class TextareaRenderingTest extends FunctionalTestCase
         $this->assertSame('Type your message here...', $textarea->get('placeholder'));
         $this->assertSame('street-address', $textarea->get('autocomplete'));
         // the default value is the content of a textarea, not an attribute
-        $this->assertStringContainsString('>hello world</textarea>', $html);
+        // the parser drops the first line break after the opening tag, so the template adds one
+        $this->assertStringContainsString(">\nhello world</textarea>", $html);
     }
 
     /**
@@ -260,5 +261,22 @@ final class TextareaRenderingTest extends FunctionalTestCase
         $this->assertTrue($this->elementWith($html, 'data-textarea-root')->has('data-at-limit'));
         $this->assertSame(1, preg_match('/<span[^>]*data-textarea-word-count[^>]*>([^<]*)</', $html, $matches));
         $this->assertSame('6 / 6 characters', trim($matches[1]));
+    }
+
+    #[Test]
+    public function keepsALineBreakAtTheStartOfTheDefaultValue(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:textarea.root maxLength="4" defaultValue="{value}">
+                <primitives:textarea.textarea />
+                <primitives:textarea.wordCount />
+            </primitives:textarea.root>
+        ', ['value' => "\nabc"]);
+
+        // the first line break after the opening tag is the parser's, the second is the value's
+        $this->assertStringContainsString(">\n\nabc</textarea>", $html);
+        $this->assertTrue($this->elementWith($html, 'data-textarea-root')->has('data-at-limit'));
+        $this->assertSame(1, preg_match('/<span[^>]*data-textarea-word-count[^>]*>([^<]*)</', $html, $matches));
+        $this->assertSame('4 / 4 characters', trim($matches[1]));
     }
 }

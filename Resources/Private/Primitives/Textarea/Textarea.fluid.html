@@ -14,4 +14,6 @@
     {f:if(condition: context.maxLength, then: 'data-max-length-behavior="{context.maxLengthBehavior}"' )}
     {ui:ref(name: 'textarea' )}
     {ui:attributes()}
-    {ui:asChild()}>{context.defaultValue}</textarea>
+    {ui:asChild()}>
+    {context.defaultValue}
+</textarea>
