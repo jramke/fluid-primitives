@@ -16,7 +16,7 @@ const region = () => document.getElementById('__live-region-polite__');
 const flush = () => new Promise<void>(resolve => setTimeout(resolve, 0));
 const computed = (m: Machine<any>, key: string) => (m as any).computed(key);
 
-// five code points, six UTF-16 units
+// six UTF-16 units, five code points
 const WITH_EMOJI = 'ab😀cd';
 
 let running: Machine<any>[] = [];
@@ -50,7 +50,7 @@ describe.each([
         return (connected.getInputProps?.() ?? connected.getTextareaProps()) as Record<string, any>;
     };
 
-    test('block counts the units the browser enforces and is never over the limit', async () => {
+    test('block counts UTF-16 units like the browser and is never over the limit', async () => {
         const m = start({ maxLength: 3, translations });
 
         await change(m, WITH_EMOJI);
@@ -61,14 +61,14 @@ describe.each([
     });
 
     test.each(['warn', 'invalid'])(
-        '%s counts code points, reports the excess and swaps the count text',
+        '%s counts UTF-16 units like block, reports the excess and swaps the count text',
         async behavior => {
             const m = start({ maxLength: 3, maxLengthBehavior: behavior, translations });
 
             await change(m, WITH_EMOJI);
-            expect(computed(m, 'count')).toBe(5);
-            expect(computed(m, 'over')).toBe(2);
-            expect(computed(m, 'countText')).toBe('Characters over the limit: 2');
+            expect(computed(m, 'count')).toBe(6);
+            expect(computed(m, 'over')).toBe(3);
+            expect(computed(m, 'countText')).toBe('Characters over the limit: 3');
 
             await change(m, 'ab');
             expect(computed(m, 'over')).toBe(0);

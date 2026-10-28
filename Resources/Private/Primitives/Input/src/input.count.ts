@@ -14,12 +14,6 @@ export interface CountTranslations {
     wordCountOver?: string;
 }
 
-// `warn` and `invalid` count code points like the server's `mb_strlen`, `block` the UTF-16 units
-// the native `maxlength` enforces.
-export function countCharacters(value: string, behavior: MaxLengthBehavior = 'block'): number {
-    return behavior === 'block' ? value.length : [...value].length;
-}
-
 export function getOverLimit(
     count: number,
     maxLength: number | undefined,
@@ -57,7 +51,8 @@ export function getLengthViolation(
     const { maxLength, behavior, translations } = options;
     if (behavior !== 'invalid') return null;
 
-    const count = countCharacters(value, behavior);
+    // UTF-16 units like the native `maxlength`: never less than the server counts
+    const count = value.length;
     const over = getOverLimit(count, maxLength, behavior);
     if (over === 0) return null;
 

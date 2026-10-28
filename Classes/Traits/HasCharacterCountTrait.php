@@ -32,20 +32,15 @@ trait HasCharacterCountTrait
     }
 
     /**
-     * The characters of the default value the way whoever enforces the limit counts them, like the
-     * client does: `block` leaves it to the browser, which counts UTF-16 units, the other behaviors
-     * to the server, which counts code points (`mb_strlen`, a `VARCHAR(n)`).
+     * The characters of the default value in UTF-16 units, like the client and the native `maxlength`
+     * count them. A character outside the BMP, an emoji for example, is two. That is never less than
+     * the code points `mb_strlen` and a `VARCHAR(n)` count.
      */
     private function countDefaultValue(): int
     {
         $value = Typed::string($this->get('defaultValue'));
 
-        if ($this->resolveMaxLengthBehavior() === MaxLengthBehavior::Block) {
-            // a character outside the BMP is two UTF-16 units, an emoji for example
-            return mb_strlen($value) + (int)preg_match_all('/[\x{10000}-\x{10FFFF}]/u', $value);
-        }
-
-        return mb_strlen($value);
+        return mb_strlen($value) + (int)preg_match_all('/[\x{10000}-\x{10FFFF}]/u', $value);
     }
 
     /**

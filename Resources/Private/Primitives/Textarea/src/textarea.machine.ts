@@ -1,7 +1,7 @@
 import { createMachine } from '@zag-js/core';
 import { createLiveRegion } from '@zag-js/live-region';
 import { debounce } from '@zag-js/utils';
-import { countCharacters, formatCountText, getOverLimit } from '../../Input/src/input.count';
+import { formatCountText, getOverLimit } from '../../Input/src/input.count';
 import * as dom from './textarea.dom';
 import type { TextareaSchema } from './textarea.types';
 
@@ -20,8 +20,8 @@ export const machine = createMachine<TextareaSchema>({
         };
     },
     computed: {
-        count({ context, prop }) {
-            return countCharacters(context.get('value'), prop('maxLengthBehavior'));
+        count({ context }) {
+            return context.get('value').length;
         },
         over({ prop, computed }) {
             return getOverLimit(computed('count'), prop('maxLength'), prop('maxLengthBehavior'));

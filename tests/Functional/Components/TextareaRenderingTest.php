@@ -132,17 +132,10 @@ final class TextareaRenderingTest extends FunctionalTestCase
     public static function overLimitStates(): iterable
     {
         yield 'a value past the limit' => [null, 'warn', 'hello world', true, 'Characters over the limit: 6'];
-        yield 'code points like the server validator, not UTF-16 units' => [
+        yield 'UTF-16 units like the browser, an emoji is two' => [
             null,
             'invalid',
             'ab😀cd',
-            false,
-            '5 / 5 characters',
-        ];
-        yield 'emoji count once, so one more of them is over' => [
-            null,
-            'invalid',
-            'ab😀cde',
             true,
             'Characters over the limit: 1',
         ];
@@ -212,16 +205,16 @@ final class TextareaRenderingTest extends FunctionalTestCase
             false,
             'invalid',
         ];
-        yield 'block counts UTF-16 units like the browser, an emoji is two' => [
+        yield 'an emoji is two UTF-16 units' => [
             'maxLength="5"',
             'ab😀c',
             true,
             'block',
         ];
-        yield 'the other behaviors count code points like the server, an emoji is one' => [
+        yield 'the other behaviors count UTF-16 units too' => [
             'maxLength="5" maxLengthBehavior="{f:constant(name: \'Jramke\FluidPrimitives\Enum\MaxLengthBehavior::Warn\')}"',
             'ab😀c',
-            false,
+            true,
             'warn',
         ];
         yield 'nothing without a maximum' => ['', 'hello', false, null];

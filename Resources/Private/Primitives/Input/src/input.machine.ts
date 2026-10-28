@@ -1,7 +1,7 @@
 import { createMachine } from '@zag-js/core';
 import { createLiveRegion } from '@zag-js/live-region';
 import { debounce } from '@zag-js/utils';
-import { countCharacters, formatCountText, getOverLimit } from './input.count';
+import { formatCountText, getOverLimit } from './input.count';
 import * as dom from './input.dom';
 import type { InputSchema } from './input.types';
 
@@ -20,8 +20,8 @@ export const machine = createMachine<InputSchema>({
         };
     },
     computed: {
-        count({ context, prop }) {
-            return countCharacters(context.get('value'), prop('maxLengthBehavior'));
+        count({ context }) {
+            return context.get('value').length;
         },
         over({ prop, computed }) {
             return getOverLimit(computed('count'), prop('maxLength'), prop('maxLengthBehavior'));
