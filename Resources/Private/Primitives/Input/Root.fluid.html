@@ -7,7 +7,8 @@
 <ui:prop name="required" type="boolean" optional="{true}" client="{true}" description="Whether the input is required. Inherited from a surrounding field when available." />
 <ui:prop name="readOnly" type="boolean" optional="{true}" client="{true}" description="Whether the input is readonly. Inherited from a surrounding field when available." />
 <ui:prop name="defaultValue" type="string" optional="{true}" client="{true}" default="" description="The initial value of the input when rendered. Use when you don't need to control the value of the input. Inherited from a surrounding field when available." />
-<ui:prop name="maxLength" type="integer" optional="{true}" client="{true}" description="The maximum number of characters allowed. Also drives the wordCount part, e.g. '42 / 250 characters'." />
+<ui:prop name="maxLength" type="integer" optional="{true}" client="{true}" description="The maximum number of characters allowed, see `maxLengthBehavior` for what happens beyond it. Also drives the wordCount part, e.g. '42 / 250 characters'." />
+<ui:prop name="maxLengthBehavior" type="Jramke\FluidPrimitives\Enum\MaxLengthBehavior" optional="{true}" client="{true}" default="{f:constant(name: 'Jramke\FluidPrimitives\Enum\MaxLengthBehavior::Block')}" description="What happens when the value is longer than `maxLength`. - `block`: The browser stops the typing and cuts a paste off at the limit. - `warn`: Typing and pasting past the limit is allowed, the word count and `data-over-limit` show it, the form still submits. - `invalid`: Like `warn`, and a surrounding field also becomes invalid with the `tooLong` validity, so the form does not submit." />
 <ui:prop name="pattern" type="string" optional="{true}" client="{true}" description="A regular expression the input's value is checked against on form submission." />
 <ui:prop name="inputMode" type="Jramke\FluidPrimitives\Enum\InputMode" optional="{true}" client="{true}" description="Hints at the type of data that might be entered by the user and the keyboard shown on mobile devices, e.g. numeric, email, tel." />
 <ui:prop name="translations" type="array" optional="{true}" client="{true}" description="Specifies the localized word count string. Use `f:translate` for per-template localization overrides when needed." />
@@ -18,6 +19,9 @@
 
 <div
     {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.overLimit, then: 'data-over-limit' )}
+    {f:if(condition: context.atLimit, then: 'data-at-limit' )}
+    {f:if(condition: context.maxLength, then: 'data-max-length-behavior="{context.maxLengthBehavior}"' )}
     {ui:ref(name: 'root' , data: refData )}
     {ui:attributes()}
     {ui:asChild()}>

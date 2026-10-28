@@ -8,15 +8,20 @@ type TextareaServiceLike = Pick<Service<TextareaSchema>, 'prop' | 'context' | 's
 
 export function createTextareaHandle(service: TextareaServiceLike): TextareaHandle {
     const { prop, context, computed } = service;
+    const over = computed('over');
+    const maxLength = prop('maxLength');
 
     return {
         value: context.get('value'),
         count: computed('count'),
+        over,
+        atLimit: maxLength != null && computed('count') === maxLength,
         countText: computed('countText'),
         disabled: !!prop('disabled'),
         readOnly: !!prop('readOnly'),
         required: !!prop('required'),
-        invalid: !!prop('invalid'),
+        // a field, or the `invalid` prop, decides on its own - only a lone control judges its length
+        invalid: prop('invalid') ?? (prop('maxLengthBehavior') === 'invalid' && over > 0),
         name: prop('name'),
         maxLength: prop('maxLength'),
     };
@@ -28,6 +33,18 @@ export function connect<T extends PropTypes>(
 ): TextareaApi {
     const { scope, prop, send } = service;
     const handle = createTextareaHandle(service);
+    // only `block` leaves the limit to the browser, which cuts a paste off at it
+    const nativeMaxLength =
+        (prop('maxLengthBehavior') ?? 'block') === 'block' ? handle.maxLength : undefined;
+    const limitAttrs = {
+        /** The `maxLengthBehavior` while there is a `maxLength`: `block`, `warn` or `invalid`. Style the over-limit state of `warn` and `invalid` apart. */
+        'data-max-length-behavior':
+            handle.maxLength == null ? undefined : (prop('maxLengthBehavior') ?? 'block'),
+        /** Present while the value is exactly `maxLength` characters long. */
+        'data-at-limit': handle.atLimit ? '' : undefined,
+        /** Present while the value is longer than `maxLength` and `maxLengthBehavior` is not `block`. */
+        'data-over-limit': handle.over > 0 ? '' : undefined,
+    };
 
     return {
         ...handle,
@@ -35,6 +52,7 @@ export function connect<T extends PropTypes>(
         getRootProps() {
             return normalize.element({
                 ...parts.root.attrs(scope.id),
+                ...limitAttrs,
                 'data-invalid': handle.invalid ? '' : undefined,
                 'data-disabled': handle.disabled ? '' : undefined,
                 'data-readonly': handle.readOnly ? '' : undefined,
@@ -49,13 +67,14 @@ export function connect<T extends PropTypes>(
                 disabled: handle.disabled || undefined,
                 readOnly: handle.readOnly || undefined,
                 required: handle.required || undefined,
-                maxLength: handle.maxLength,
+                maxLength: nativeMaxLength,
                 rows: prop('rows'),
                 value: handle.value,
                 'aria-invalid': handle.invalid ? 'true' : undefined,
                 'data-invalid': handle.invalid ? '' : undefined,
                 'data-disabled': handle.disabled ? '' : undefined,
                 'data-readonly': handle.readOnly ? '' : undefined,
+                ...limitAttrs,
                 onInput(event) {
                     const target = event.currentTarget as HTMLTextAreaElement;
                     const transform = prop('transform');
@@ -116,6 +135,7 @@ export function connect<T extends PropTypes>(
             return normalize.element({
                 ...parts.wordCount.attrs(scope.id),
                 id: dom.getWordCountId(scope),
+                ...limitAttrs,
                 'aria-hidden': 'true',
             });
         },

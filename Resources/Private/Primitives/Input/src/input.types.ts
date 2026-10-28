@@ -1,5 +1,6 @@
 import type { EventObject } from '@zag-js/core';
 import type { JSX, PropTypes } from '@zag-js/types';
+import type { MaxLengthBehavior } from './input.count';
 
 export interface InputTranslations {
     /**
@@ -7,6 +8,12 @@ export interface InputTranslations {
      * with `maxLength`, e.g. `%count% / %max% characters`.
      */
     wordCount?: string;
+    /**
+     * The text of the word count part while the value is over `maxLength`, for a `maxLengthBehavior`
+     * other than `block`. `%over%` is replaced with the number of characters too many, `%count%` and
+     * `%max%` work as in `wordCount`, e.g. `%over% characters too many`.
+     */
+    wordCountOver?: string;
 }
 
 export interface InputProps {
@@ -28,6 +35,13 @@ export interface InputProps {
     defaultValue?: string;
     /** The most characters allowed. It also drives the word count, e.g. `42 / 250 characters`. */
     maxLength?: number;
+    /**
+     * What happens when the value is longer than `maxLength`. `block` stops the typing and cuts a
+     * paste off, `warn` allows both and only shows that the value is over the limit, `invalid` does
+     * the same and makes a surrounding field invalid (`tooLong`).
+     * @default "block"
+     */
+    maxLengthBehavior?: MaxLengthBehavior;
     /** A regular expression the value has to match. */
     pattern?: string;
     /** The kind of virtual keyboard to show on devices that have one. */
@@ -65,6 +79,8 @@ export interface InputSchema {
     };
     computed: {
         count: number;
+        /** The number of characters over `maxLength`, `0` for `block` or when it is not exceeded. */
+        over: number;
         /** e.g. "42 / 250 characters", or `null` when `maxLength` or the translation is unset. */
         countText: string | null;
     };
@@ -79,6 +95,10 @@ export interface InputHandle {
     value: string;
     /** The number of characters in the value. */
     count: number;
+    /** The number of characters over `maxLength`. It is always `0` for `maxLengthBehavior="block"`. */
+    over: number;
+    /** Whether the value is exactly `maxLength` characters long. */
+    atLimit: boolean;
     /** The word count text, e.g. `42 / 250 characters`. `null` without `maxLength` or when the text is turned off. */
     countText: string | null;
     /** Whether the input is disabled. */

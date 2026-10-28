@@ -71,6 +71,17 @@ export function withValueMissing(
     return next;
 }
 
+/**
+ * The flags with one more set by a constraint the control inside the field registered. The native
+ * validity cannot express it, e.g. a `maxLength` the browser must not enforce while typing.
+ */
+export function withConstraintViolation(
+    validity: ValiditySnapshot,
+    match: ValidityMatch
+): ValiditySnapshot {
+    return { ...validity, [match]: true, valid: false };
+}
+
 export function toErrorArray(result: ValidateResult): string[] {
     if (result == null) return [];
     const errors = Array.isArray(result) ? result : [result];

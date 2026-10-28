@@ -7,6 +7,7 @@ import type {
     FormErrors,
     FormProps,
 } from '../../../Resources/Private/Primitives/Form/src/form.types';
+import { Input } from '../../../Resources/Private/Primitives/Input/Input';
 
 const instances: Array<{ destroy(): void }> = [];
 
@@ -97,6 +98,51 @@ describe('submitting a form of fields', () => {
 
         expect(fields.get('email')!.api.invalid).toBe(false);
         expect(form.machine.state.get()).toBe('ready');
+
+        submit();
+        await settle();
+        expect(onSubmit).toHaveBeenCalledOnce();
+    });
+
+    test('an Input past its maxLength with the invalid behavior blocks the submit until the text fits', async () => {
+        vi.useFakeTimers();
+        const onSubmit = vi.fn(() => true);
+        const { form, fields, submit } = mount(
+            field(
+                'f-title',
+                'title',
+                '<div data-input-root="i1"><input id="field:f-title:control" data-input-input="i1" name="title" value=""></div>'
+            ),
+            { form: { onSubmit } }
+        );
+        const control = new Input({
+            id: 'i1',
+            ids: { input: 'field:f-title:control' },
+            maxLength: 255,
+            maxLengthBehavior: 'invalid',
+        } as any);
+        control.init();
+        instances.push(control);
+        await settle();
+        const inputEl = document.querySelector<HTMLInputElement>('input')!;
+        const type = (value: string) => {
+            inputEl.value = value;
+            inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+        };
+
+        // a VARCHAR(255) column: 255 characters fit, 256 do not
+        type('a'.repeat(256));
+        await settle();
+        submit();
+        await settle();
+
+        expect(onSubmit).not.toHaveBeenCalled();
+        expect(form.machine.state.get()).toBe('invalid');
+        expect(fields.get('title')!.api.validity?.tooLong).toBe(true);
+
+        type('a'.repeat(255));
+        await settle();
+        expect(fields.get('title')!.api.invalid).toBe(false);
 
         submit();
         await settle();

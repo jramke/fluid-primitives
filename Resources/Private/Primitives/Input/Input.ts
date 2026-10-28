@@ -1,6 +1,8 @@
 import { FieldAwareComponent, Machine, mergeProps, normalizeProps } from '../../Client';
 import type { FieldClientApi } from '../Field/src/field.handle';
+import type { FieldConstraint } from '../Field/src/field.types';
 import { connect } from './src/input.connect';
+import { getLengthViolation } from './src/input.count';
 import * as dom from './src/input.dom';
 import { machine } from './src/input.machine';
 import { splitProps } from './src/input.props';
@@ -18,6 +20,15 @@ export class Input extends FieldAwareComponent<InputProps, InputApi> {
             invalid: props.invalid ?? field.invalid,
             name: props.name ?? field.name,
         };
+    }
+
+    protected getFieldConstraint(): FieldConstraint {
+        return value =>
+            getLengthViolation(value, {
+                maxLength: this.machine.prop('maxLength'),
+                behavior: this.machine.prop('maxLengthBehavior'),
+                translations: this.machine.prop('translations'),
+            });
     }
 
     initMachine(props: InputProps): Machine<any> {

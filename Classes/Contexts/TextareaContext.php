@@ -6,13 +6,14 @@ namespace Jramke\FluidPrimitives\Contexts;
 
 use Jramke\FluidPrimitives\Attributes\ExposeToClient;
 use Jramke\FluidPrimitives\Service\TranslatorService;
+use Jramke\FluidPrimitives\Traits\HasCharacterCountTrait;
 use Jramke\FluidPrimitives\Traits\HasTranslationsTrait;
-use Jramke\FluidPrimitives\Utility\Typed;
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 
 #[Autoconfigure(public: true)]
 class TextareaContext extends AbstractComponentContext
 {
+    use HasCharacterCountTrait;
     use HasTranslationsTrait;
 
     public function __construct(
@@ -24,35 +25,17 @@ class TextareaContext extends AbstractComponentContext
         return $this->translator;
     }
 
-    #[ExposeToClient]
     /**
-     * @return array{wordCount: string}
+     * @return array{wordCount: string, wordCountOver: string}
      */
+    #[ExposeToClient]
     public function getTranslations(): array
     {
+        // translationsWithDefaults() merges user overrides, so it can't be typed more precisely than array.
+        // @mago-expect analysis:invalid-return-statement
         return $this->translationsWithDefaults([
             'wordCount' => 'textarea.wordCount',
+            'wordCountOver' => 'textarea.wordCountOver',
         ]);
-    }
-
-    /**
-     * Server-rendered so the word count part isn't empty before hydration. `null` when there's no
-     * `maxLength` to count against, or the translation is empty.
-     */
-    public function getWordCountText(): ?string
-    {
-        $maxLength = Typed::intOrNull($this->get('maxLength'));
-        if ($maxLength === null) {
-            return null;
-        }
-
-        $template = Typed::string($this->getTranslations()['wordCount'] ?? null);
-        if ($template === '') {
-            return null;
-        }
-
-        $count = mb_strlen(Typed::string($this->get('defaultValue')));
-
-        return str_replace(['%count%', '%max%'], [(string)$count, (string)$maxLength], $template);
     }
 }

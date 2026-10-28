@@ -1,5 +1,8 @@
 <span
     {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: context.overLimit, then: 'data-over-limit' )}
+    {f:if(condition: context.atLimit, then: 'data-at-limit' )}
+    {f:if(condition: context.maxLength, then: 'data-max-length-behavior="{context.maxLengthBehavior}"' )}
     {ui:ref(name: 'wordCount' )}
     {ui:attributes()}
     {ui:asChild()}>{context.wordCountText}</span>
