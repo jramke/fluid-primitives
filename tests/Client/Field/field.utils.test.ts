@@ -152,65 +152,39 @@ describe('shouldCommit', () => {
         ).toBe(false);
     });
 
-    test('onBlur commits on blur once the value was edited or a submit was attempted', () => {
-        expect(shouldCommit({ ...base, mode: 'onBlur', eventType: 'CONTROL.BLUR' })).toBe(false);
-        expect(
-            shouldCommit({ ...base, mode: 'onBlur', edited: true, eventType: 'CONTROL.BLUR' })
-        ).toBe(true);
-        expect(
-            shouldCommit({
-                ...base,
-                mode: 'onBlur',
-                submitAttempted: true,
-                eventType: 'CONTROL.BLUR',
-            })
-        ).toBe(true);
+    test('auto and onBlur commit on blur once the value was edited or a submit was attempted', () => {
+        for (const mode of ['auto', 'onBlur'] as const) {
+            expect(shouldCommit({ ...base, mode, eventType: 'CONTROL.BLUR' })).toBe(false);
+            expect(shouldCommit({ ...base, mode, edited: true, eventType: 'CONTROL.BLUR' })).toBe(
+                true
+            );
+            expect(
+                shouldCommit({ ...base, mode, submitAttempted: true, eventType: 'CONTROL.BLUR' })
+            ).toBe(true);
+        }
     });
 
-    test('onBlur does not commit on change until an error is showing', () => {
-        expect(
-            shouldCommit({ ...base, mode: 'onBlur', edited: true, eventType: 'CONTROL.CHANGE' })
-        ).toBe(false);
-        expect(
-            shouldCommit({
-                ...base,
-                mode: 'onBlur',
-                edited: true,
-                showingErrors: true,
-                eventType: 'CONTROL.CHANGE',
-            })
-        ).toBe(true);
+    test('only auto commits on change, and only while an error is showing', () => {
+        const state = { ...base, edited: true, submitAttempted: true, eventType: 'CONTROL.CHANGE' };
+
+        expect(shouldCommit({ ...state, mode: 'auto' })).toBe(false);
+        expect(shouldCommit({ ...state, mode: 'auto', showingErrors: true })).toBe(true);
+
+        for (const mode of ['onBlur', 'onSubmit'] as const) {
+            expect(shouldCommit({ ...state, mode, showingErrors: true })).toBe(false);
+        }
     });
 
-    test('onSubmit commits on change only after a submit attempt or while an error shows', () => {
-        expect(shouldCommit({ ...base, mode: 'onSubmit', eventType: 'CONTROL.CHANGE' })).toBe(
-            false
-        );
-        expect(
-            shouldCommit({
-                ...base,
-                mode: 'onSubmit',
-                submitAttempted: true,
-                eventType: 'CONTROL.CHANGE',
-            })
-        ).toBe(true);
-        expect(
-            shouldCommit({
-                ...base,
-                mode: 'onSubmit',
-                showingErrors: true,
-                eventType: 'CONTROL.CHANGE',
-            })
-        ).toBe(true);
-        expect(
-            shouldCommit({
-                ...base,
-                mode: 'onSubmit',
-                submitAttempted: true,
-                edited: true,
-                eventType: 'CONTROL.BLUR',
-            })
-        ).toBe(false);
+    test('onSubmit never commits on blur or change, whatever happened before', () => {
+        const state = {
+            mode: 'onSubmit',
+            submitAttempted: true,
+            edited: true,
+            showingErrors: true,
+        } as const;
+
+        expect(shouldCommit({ ...state, eventType: 'CONTROL.BLUR' })).toBe(false);
+        expect(shouldCommit({ ...state, eventType: 'CONTROL.CHANGE' })).toBe(false);
     });
 });
 

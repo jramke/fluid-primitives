@@ -134,7 +134,7 @@ final class FieldRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
-    public function shipsTheValidationModeToTheClientDefaultingToOnBlur(): void
+    public function shipsTheValidationModeToTheClientOnlyWhenTheFieldSetsOne(): void
     {
         $this->renderTemplate('
             <primitives:field.root name="email" rootId="default-mode"></primitives:field.root>
@@ -142,10 +142,8 @@ final class FieldRenderingTest extends FunctionalTestCase
         ');
 
         $registry = HydrationRegistry::getInstance();
-        $this->assertSame(
-            'onBlur',
-            $registry->get('primitives', 'field', 'default-mode')['props']['validationMode'] ?? null,
-        );
+        // the client falls back to the validationMode of the form, so a default shipped here would shadow it
+        $this->assertArrayNotHasKey('validationMode', $registry->get('primitives', 'field', 'default-mode')['props']);
         $this->assertSame(
             'onChange',
             $registry->get('primitives', 'field', 'own-mode')['props']['validationMode'] ?? null,

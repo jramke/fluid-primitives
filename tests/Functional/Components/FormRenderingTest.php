@@ -77,6 +77,25 @@ final class FormRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function shipsTheValidationTimingToTheClient(): void
+    {
+        $this->renderTemplate('<primitives:form.root actionUri="/submit"></primitives:form.root>');
+        $props = $this->hydratedFormProps();
+        $this->assertSame('auto', $props['validationMode'] ?? null);
+        $this->assertArrayNotHasKey('inputDebounceMs', $props);
+
+        $this->renderTemplate('
+            <primitives:form.root
+                actionUri="/submit"
+                validationMode="{f:constant(name: \'Jramke\\FluidPrimitives\\Enum\\ValidationMode::OnSubmit\')}"
+                inputDebounceMs="300"></primitives:form.root>
+        ');
+        $props = $this->hydratedFormProps();
+        $this->assertSame('onSubmit', $props['validationMode'] ?? null);
+        $this->assertSame(300, $props['inputDebounceMs'] ?? null);
+    }
+
+    #[Test]
     #[DataProvider('incompletePluginArguments')]
     public function throwsOutsideAnExtbaseRequestWithoutBothExtensionAndPluginName(string $arguments): void
     {

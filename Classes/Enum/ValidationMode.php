@@ -6,6 +6,7 @@ namespace Jramke\FluidPrimitives\Enum;
 
 enum ValidationMode: string
 {
+    case Auto = 'auto';
     case OnSubmit = 'onSubmit';
     case OnBlur = 'onBlur';
     case OnChange = 'onChange';

@@ -262,6 +262,71 @@ describe('submitting a form of fields', () => {
     });
 });
 
+describe('validation timing of a form', () => {
+    const blur = (el: Element) =>
+        el.dispatchEvent(
+            new FocusEvent('focusout', { bubbles: true, relatedTarget: document.body })
+        );
+    const typeInto = (name: string, value: string) => {
+        const el = document.querySelector<HTMLInputElement>(`input[name="${name}"]`)!;
+        el.value = value;
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+        return el;
+    };
+    const markup = () =>
+        field('f-a', 'a', input('f-a', 'a')) + field('f-b', 'b', input('f-b', 'b'));
+
+    test("fields follow the form's validationMode, and a field's own mode wins", async () => {
+        vi.useFakeTimers();
+        const validateA = vi.fn(() => null);
+        const validateB = vi.fn(() => null);
+        mount(markup(), {
+            form: { validationMode: 'onSubmit' },
+            fields: {
+                a: { validate: validateA },
+                b: { validate: validateB, validationMode: 'onChange' },
+            },
+        });
+
+        blur(typeInto('a', 'x'));
+        typeInto('b', 'y');
+        await settle();
+
+        expect(validateA).not.toHaveBeenCalled();
+        expect(validateB).toHaveBeenCalledOnce();
+    });
+
+    test('fields validate as auto in a form without a validationMode', async () => {
+        vi.useFakeTimers();
+        const validate = vi.fn(() => null);
+        mount(markup(), { fields: { a: { validate } } });
+
+        typeInto('a', 'x');
+        await settle();
+        expect(validate).not.toHaveBeenCalled();
+
+        blur(document.querySelector('input[name="a"]')!);
+        await settle();
+        expect(validate).toHaveBeenCalledOnce();
+    });
+
+    test('the inputDebounceMs of the form delays how long a field waits for a pause in typing', async () => {
+        vi.useFakeTimers();
+        const validate = vi.fn(() => null);
+        mount(markup(), {
+            form: { validationMode: 'onChange', inputDebounceMs: 300 },
+            fields: { a: { validate } },
+        });
+
+        typeInto('a', 'x');
+        await settle(200);
+        expect(validate).not.toHaveBeenCalled();
+
+        await settle(150);
+        expect(validate).toHaveBeenCalledOnce();
+    });
+});
+
 describe('posting a form with extbase', () => {
     function stubPost(status: number, body: object) {
         const posted: FormData[] = [];

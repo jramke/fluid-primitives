@@ -10,7 +10,13 @@ import { isEqual } from '@zag-js/utils';
 import { trimArraySuffix } from '../../Form/src/form.path';
 import { getFormMachineFor } from '../../Form/src/form.registry';
 import * as dom from './field.dom';
-import type { FieldParams, FieldSchema, ValidateResult, ValiditySnapshot } from './field.types';
+import type {
+    FieldParams,
+    FieldSchema,
+    ValidateResult,
+    ValidationMode,
+    ValiditySnapshot,
+} from './field.types';
 import {
     VALID_SNAPSHOT,
     getValiditySnapshot,
@@ -31,7 +37,6 @@ export const machine = createMachine({
             disabled: false,
             readOnly: false,
             required: false,
-            validationMode: 'onBlur',
             ...props,
         };
     },
@@ -143,7 +148,7 @@ export const machine = createMachine({
             isCurrentValidation: ({ refs, event }) => event.seq === refs.get('seq'),
             shouldCommit: ({ prop, context, refs, event }) =>
                 shouldCommit({
-                    mode: prop('validationMode'),
+                    mode: getValidationMode(prop('validationMode'), refs.get('rootEl')),
                     submitAttempted: context.get('submitAttempted'),
                     eventType: event.type,
                     edited: refs.get('markedDirty') || context.get('dirty'),
@@ -297,6 +302,8 @@ export const machine = createMachine({
 
             recoverValueMissing(params) {
                 const { context, event } = params;
+                // a showing error stays until the mode's own trigger; `auto` never gets here with one
+                if (context.get('errors').length > 0) return;
                 const validity = context.get('validity');
                 if (!validity || validity.valid || !validity.valueMissing) return;
 
@@ -508,6 +515,14 @@ function getNativeMessage(
 
 function isPromise(value: unknown): value is Promise<ValidateResult> {
     return typeof value === 'object' && value !== null && 'then' in value;
+}
+
+/** The field's own mode, else the form's, read live like `inputDebounceMs` so hydration order does not matter. */
+function getValidationMode(
+    own: ValidationMode | undefined,
+    rootEl: HTMLElement | null
+): ValidationMode {
+    return own ?? getFormMachineFor(rootEl)?.prop('validationMode') ?? 'auto';
 }
 
 /** At least a short settle, whatever the form's `inputDebounceMs`: see `schedule` in `trackFieldEvents`. */
