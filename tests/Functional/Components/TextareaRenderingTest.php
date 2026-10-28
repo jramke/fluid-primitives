@@ -279,4 +279,19 @@ final class TextareaRenderingTest extends FunctionalTestCase
         $this->assertSame(1, preg_match('/<span[^>]*data-textarea-word-count[^>]*>([^<]*)</', $html, $matches));
         $this->assertSame('4 / 4 characters', trim($matches[1]));
     }
+
+    #[Test]
+    public function escapesTheDefaultValueBetweenTheTags(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:textarea.root defaultValue="{value}">
+                <primitives:textarea.textarea />
+            </primitives:textarea.root>
+        ', ['value' => 'a<b & </textarea><script>x</script>']);
+
+        $this->assertStringContainsString(
+            ">\na&lt;b &amp; &lt;/textarea&gt;&lt;script&gt;x&lt;/script&gt;</textarea>",
+            $html,
+        );
+    }
 }
