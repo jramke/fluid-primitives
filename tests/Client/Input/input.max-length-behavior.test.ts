@@ -9,7 +9,7 @@ import { machine as textareaMachine } from '../../../Resources/Private/Primitive
 
 const translations = {
     wordCount: '%count% / %max% characters',
-    wordCountOver: '%over% characters too many',
+    wordCountOver: 'Characters over the limit: %over%',
 };
 const region = () => document.getElementById('__live-region-polite__');
 // the machine handles an event on a microtask, not inside `send()`
@@ -68,7 +68,7 @@ describe.each([
             await change(m, WITH_EMOJI);
             expect(computed(m, 'count')).toBe(5);
             expect(computed(m, 'over')).toBe(2);
-            expect(computed(m, 'countText')).toBe('2 characters too many');
+            expect(computed(m, 'countText')).toBe('Characters over the limit: 2');
 
             await change(m, 'ab');
             expect(computed(m, 'over')).toBe(0);
@@ -95,7 +95,7 @@ describe.each([
         m.send({ type: 'VALUE_CHANGE', value: 'abcd' });
         await vi.advanceTimersByTimeAsync(600);
 
-        await vi.waitFor(() => expect(region()?.textContent).toBe('1 characters too many'));
+        await vi.waitFor(() => expect(region()?.textContent).toBe('Characters over the limit: 1'));
     });
 
     test('only block hands the limit to the native maxlength, so a paste is not cut off', () => {
@@ -181,7 +181,7 @@ describe('the violation a field reports for a control', () => {
     test('only invalid reports one, with the tooLong flag and the over text', () => {
         expect(getLengthViolation('abcde', { ...options, behavior: 'invalid' })).toEqual({
             match: 'tooLong',
-            message: '2 characters too many',
+            message: 'Characters over the limit: 2',
         });
         expect(getLengthViolation('abc', { ...options, behavior: 'invalid' })).toBeNull();
         expect(getLengthViolation('abcde', { ...options, behavior: 'warn' })).toBeNull();

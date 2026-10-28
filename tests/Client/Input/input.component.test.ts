@@ -7,7 +7,7 @@ const instances: Array<{ destroy(): void }> = [];
 
 const translations = {
     wordCount: '%count% / %max% characters',
-    wordCountOver: '%over% characters too many',
+    wordCountOver: 'Characters over the limit: %over%',
 };
 
 const controls = {
@@ -104,12 +104,12 @@ describe.each(['input', 'textarea'] as const)('a %s with a soft maxLength inside
 
             expect(field.api.invalid).toBe(true);
             expect(field.api.validity?.tooLong).toBe(true);
-            expect(field.api.errors).toEqual(['2 characters too many']);
+            expect(field.api.errors).toEqual(['Characters over the limit: 2']);
             expect(errorText().hidden).toBe(false);
-            expect(errorText().textContent).toBe('2 characters too many');
+            expect(errorText().textContent).toBe('Characters over the limit: 2');
             // the control takes the verdict from its field, and the browser agrees
             expect(control().getAttribute('aria-invalid')).toBe('true');
-            expect(control().validationMessage).toBe('2 characters too many');
+            expect(control().validationMessage).toBe('Characters over the limit: 2');
 
             await typeAndLeave('abc');
 
@@ -129,7 +129,7 @@ describe.each(['input', 'textarea'] as const)('a %s with a soft maxLength inside
         expect(field.api.invalid).toBe(false);
         expect(control().hasAttribute('aria-invalid')).toBe(false);
         expect(document.querySelector(`[data-${kind}-word-count]`)!.textContent).toBe(
-            '2 characters too many'
+            'Characters over the limit: 2'
         );
     });
 

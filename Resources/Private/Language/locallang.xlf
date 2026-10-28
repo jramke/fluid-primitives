@@ -39,13 +39,13 @@
                 <source>%count% / %max% characters</source>
             </trans-unit>
             <trans-unit id="input.wordCountOver" approved="yes">
-                <source>%over% characters too many</source>
+                <source>Characters over the limit: %over%</source>
             </trans-unit>
             <trans-unit id="textarea.wordCount" approved="yes">
                 <source>%count% / %max% characters</source>
             </trans-unit>
             <trans-unit id="textarea.wordCountOver" approved="yes">
-                <source>%over% characters too many</source>
+                <source>Characters over the limit: %over%</source>
             </trans-unit>
             <trans-unit id="fieldArray.rowAdded" approved="yes">
                 <source>Row %number% added.</source>

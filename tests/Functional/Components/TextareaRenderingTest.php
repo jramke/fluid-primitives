@@ -81,7 +81,7 @@ final class TextareaRenderingTest extends FunctionalTestCase
         $textareaData = array_values(HydrationRegistry::getInstance()->getAll()['primitives']['textarea'])[0];
 
         $this->assertSame(
-            ['wordCount' => '%count% of %max%', 'wordCountOver' => '%over% characters too many'],
+            ['wordCount' => '%count% of %max%', 'wordCountOver' => 'Characters over the limit: %over%'],
             $textareaData['props']['translations'],
         );
         $this->assertSame('block', $textareaData['props']['maxLengthBehavior']);
@@ -131,7 +131,7 @@ final class TextareaRenderingTest extends FunctionalTestCase
      */
     public static function overLimitStates(): iterable
     {
-        yield 'a value past the limit' => [null, 'warn', 'hello world', true, '6 characters too many'];
+        yield 'a value past the limit' => [null, 'warn', 'hello world', true, 'Characters over the limit: 6'];
         yield 'code points like the server validator, not UTF-16 units' => [
             null,
             'invalid',
@@ -144,7 +144,7 @@ final class TextareaRenderingTest extends FunctionalTestCase
             'invalid',
             'ab😀cde',
             true,
-            '1 characters too many',
+            'Characters over the limit: 1',
         ];
         yield 'a value within the limit' => [null, 'warn', 'hello', false, '5 / 5 characters'];
         yield 'block can never be over, the browser stops it' => [

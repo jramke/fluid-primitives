@@ -11,7 +11,7 @@ export interface TextareaTranslations {
     /**
      * The text of the word count part while the value is over `maxLength`, for a `maxLengthBehavior`
      * other than `block`. `%over%` is replaced with the number of characters too many, `%count%` and
-     * `%max%` work as in `wordCount`, e.g. `%over% characters too many`.
+     * `%max%` work as in `wordCount`, e.g. `Characters over the limit: %over%`.
      */
     wordCountOver?: string;
 }
