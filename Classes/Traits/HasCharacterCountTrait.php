@@ -25,6 +25,16 @@ trait HasCharacterCountTrait
      */
     abstract public function getTranslations(): array;
 
+    /**
+     * The default value as the control reports it after the HTML parser is done with it. A textarea
+     * holds every line break as one LF, a using class overrides it where that differs (an input
+     * has them stripped).
+     */
+    protected function normalizeLineBreaks(string $value): string
+    {
+        return str_replace(search: ["\r\n", "\r"], replace: "\n", subject: $value);
+    }
+
     // Not a `getMaxLengthBehavior()`: Fluid would take it for `context.maxLengthBehavior`, which is the prop.
     private function resolveMaxLengthBehavior(): MaxLengthBehavior
     {
@@ -38,8 +48,11 @@ trait HasCharacterCountTrait
      */
     private function countDefaultValue(): int
     {
-        $value = Typed::string($this->get('defaultValue'));
+        return $this->countUtf16Units($this->normalizeLineBreaks(Typed::string($this->get('defaultValue'))));
+    }
 
+    private function countUtf16Units(string $value): int
+    {
         return mb_strlen($value) + (int)preg_match_all('/[\x{10000}-\x{10FFFF}]/u', $value);
     }
 

@@ -247,4 +247,20 @@ final class InputRenderingTest extends FunctionalTestCase
             $this->assertSame($expectedBehavior, $element->get('data-max-length-behavior'), $part);
         }
     }
+
+    #[Test]
+    public function countsTheLineBreaksOfTheDefaultValueTheWayTheBrowserReportsThem(): void
+    {
+        // an input has its line breaks stripped, "ab\r\ncd" is four characters
+        $html = $this->renderTemplate('
+            <primitives:input.root maxLength="4" defaultValue="{value}">
+                <primitives:input.input />
+                <primitives:input.wordCount />
+            </primitives:input.root>
+        ', ['value' => "ab\r\ncd"]);
+
+        $this->assertTrue($this->elementWith($html, 'data-input-root')->has('data-at-limit'));
+        $this->assertSame(1, preg_match('/<span[^>]*data-input-word-count[^>]*>([^<]*)</', $html, $matches));
+        $this->assertSame('4 / 4 characters', trim($matches[1]));
+    }
 }

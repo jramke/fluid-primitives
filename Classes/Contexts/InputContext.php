@@ -25,6 +25,11 @@ class InputContext extends AbstractComponentContext
         return $this->translator;
     }
 
+    protected function normalizeLineBreaks(string $value): string
+    {
+        return str_replace(search: ["\r", "\n"], replace: '', subject: $value);
+    }
+
     /**
      * @return array{wordCount: string, wordCountOver: string}
      */

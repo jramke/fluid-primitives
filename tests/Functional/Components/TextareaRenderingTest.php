@@ -245,4 +245,20 @@ final class TextareaRenderingTest extends FunctionalTestCase
             $this->assertSame($expectedBehavior, $element->get('data-max-length-behavior'), $part);
         }
     }
+
+    #[Test]
+    public function countsTheLineBreaksOfTheDefaultValueTheWayTheBrowserReportsThem(): void
+    {
+        // a textarea holds CRLF and a lone CR as one LF each, "ab\r\nc\rd" is six characters
+        $html = $this->renderTemplate('
+            <primitives:textarea.root maxLength="6" defaultValue="{value}">
+                <primitives:textarea.textarea />
+                <primitives:textarea.wordCount />
+            </primitives:textarea.root>
+        ', ['value' => "ab\r\nc\rd"]);
+
+        $this->assertTrue($this->elementWith($html, 'data-textarea-root')->has('data-at-limit'));
+        $this->assertSame(1, preg_match('/<span[^>]*data-textarea-word-count[^>]*>([^<]*)</', $html, $matches));
+        $this->assertSame('6 / 6 characters', trim($matches[1]));
+    }
 }
