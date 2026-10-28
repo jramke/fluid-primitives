@@ -55,12 +55,13 @@ export interface ValidityChangeDetails {
 }
 
 /**
- * When validation is committed (made visible):
- * - `onSubmit`: on form submission — behaves like `onChange` after the first submit attempt
- * - `onBlur`: when the control loses focus
+ * When validation is committed (made visible). A submit validates every field in every mode.
+ * - `auto`: when the control loses focus after an edit, and on every change while an error shows
+ * - `onBlur`: when the control loses focus after an edit, never on change
  * - `onChange`: on every change
+ * - `onSubmit`: only on submit
  */
-export type ValidationMode = 'onSubmit' | 'onBlur' | 'onChange';
+export type ValidationMode = 'auto' | 'onSubmit' | 'onBlur' | 'onChange';
 
 /* -----------------------------------------------------------------------------
  * Machine context
@@ -127,8 +128,9 @@ export interface FieldProps extends DirectionProperty, CommonProperties {
      */
     validate?: ((details: ValidateDetails) => ValidateResult | Promise<ValidateResult>) | undefined;
     /**
-     * When validation results become visible.
-     * @default "onBlur"
+     * When validation results become visible. Without one, the field follows the `validationMode`
+     * of its form, and validates as `auto` outside a form.
+     * @default "auto"
      */
     validationMode?: ValidationMode | undefined;
     /**
@@ -137,7 +139,7 @@ export interface FieldProps extends DirectionProperty, CommonProperties {
     onValidityChange?: ((details: ValidityChangeDetails) => void) | undefined;
 }
 
-type PropsWithDefault = 'disabled' | 'readOnly' | 'required' | 'validationMode';
+type PropsWithDefault = 'disabled' | 'readOnly' | 'required';
 
 export interface FieldSchema {
     state: 'idle';

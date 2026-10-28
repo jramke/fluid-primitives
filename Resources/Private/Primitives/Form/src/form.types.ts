@@ -1,6 +1,7 @@
 import type { EventObject } from '@zag-js/core';
 import type { JSX, PropTypes } from '@zag-js/types';
 import type { FieldHandle } from '../../Field/src/field.handle';
+import type { ValidationMode } from '../../Field/src/field.types';
 import type { Form } from '../Form';
 
 export interface FieldError {
@@ -95,6 +96,11 @@ export interface FormProps {
      * @default 100
      */
     inputDebounceMs?: number;
+    /**
+     * When the fields of the form validate, unless a field sets its own `validationMode`.
+     * @default "auto"
+     */
+    validationMode?: ValidationMode;
     /**
      * Called with the values once the form is valid and submitted. Return `true` for success,
      * `false` for an error, or field errors to mark the form invalid. Send the values with

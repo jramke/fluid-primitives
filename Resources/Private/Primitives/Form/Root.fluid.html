@@ -6,6 +6,8 @@
 <ui:prop name="arguments" type="array" optional="{true}" description="The Extbase arguments used to build the form action URI." />
 <ui:prop name="pageUid" type="int" optional="{true}" description="The target page UID used to build the form action URI." />
 <ui:prop name="objectName" type="string" optional="{true}" client="{true}" description="The object name prefix used for nested form field names." />
+<ui:prop name="validationMode" type="Jramke\FluidPrimitives\Enum\ValidationMode" optional="{true}" client="{true}" default="{f:constant(name: 'Jramke\FluidPrimitives\Enum\ValidationMode::Auto')}" description="When the fields of the form validate, unless a field sets its own `validationMode`. `auto` validates on blur once the value was edited and on every change while an error shows, `onBlur` only on blur, `onChange` on every change, `onSubmit` only on submit. A submit validates every field in every mode." />
+<ui:prop name="inputDebounceMs" type="integer" optional="{true}" client="{true}" description="How long the fields wait after the last change before they read their value, 100 by default and at least 50. A `validate` that sends a request should not fire on every keystroke." />
 <ui:prop name="object" type="mixed" optional="{true}" description="The bound object used for form value mapping." />
 <ui:prop name="method" type="string" optional="{true}" default="post" description="The HTTP method used for form submission." />
 

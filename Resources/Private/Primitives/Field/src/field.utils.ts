@@ -143,16 +143,17 @@ export interface ShouldCommitOptions {
  * Whether this event should commit validation (make it visible).
  * `VALIDATE` / `SUBMIT.INVALID` always commit and do not go through this.
  *
- * Two rules go beyond the modes: an error that is showing revalidates on every change in every
- * mode, so it clears the moment it is fixed; and a blur only commits once the value was edited or a
- * submit was attempted, so tabbing through a pristine field, or a popup taking focus from its
- * trigger, shows nothing.
+ * A blur only commits once the value was edited or a submit was attempted, so tabbing through a
+ * pristine field, or a popup taking focus from its trigger, shows nothing. Only `auto` revalidates
+ * a showing error on every change, so it clears the moment it is fixed; the other modes keep it
+ * until their own trigger.
  */
 export function shouldCommit(options: ShouldCommitOptions): boolean {
     const { mode, submitAttempted, eventType, edited, showingErrors } = options;
-    if (eventType === 'CONTROL.BLUR') return mode === 'onBlur' && (edited || submitAttempted);
+    if (eventType === 'CONTROL.BLUR')
+        return (mode === 'auto' || mode === 'onBlur') && (edited || submitAttempted);
     if (eventType === 'CONTROL.CHANGE')
-        return mode === 'onChange' || (mode === 'onSubmit' && submitAttempted) || showingErrors;
+        return mode === 'onChange' || (mode === 'auto' && showingErrors);
     return false;
 }
 

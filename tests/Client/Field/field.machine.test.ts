@@ -261,6 +261,58 @@ describe('field validity', () => {
     });
 });
 
+describe('validation modes of a field', () => {
+    test.each([
+        ['auto', true],
+        ['onBlur', false],
+        ['onSubmit', false],
+    ] as const)('%s: fixing the value clears a showing error: %s', async (mode, cleared) => {
+        vi.useFakeTimers();
+        const field = mountField('<input id="field:f1:control" name="email" value="" required>', {
+            required: true,
+            validationMode: mode,
+        });
+
+        field.send({ type: 'VALIDATE' });
+        await settle(0);
+        expect(field.context.get('errors')).not.toEqual([]);
+
+        type(input(), 'a@b.c');
+        await settle();
+        expect(field.context.get('errors').length === 0).toBe(cleared);
+    });
+
+    test.each([
+        ['auto', 0, 1],
+        ['onBlur', 0, 1],
+        ['onChange', 1, 1],
+        ['onSubmit', 0, 0],
+    ] as const)(
+        '%s: validate ran %i times after typing, %i after the blur',
+        async (mode, afterTyping, afterBlur) => {
+            vi.useFakeTimers();
+            const validate = vi.fn(() => null);
+            mountField('<input id="field:f1:control" name="email" value="">', {
+                validate,
+                validationMode: mode,
+            });
+
+            type(input(), 'a');
+            await settle();
+            expect(validate).toHaveBeenCalledTimes(afterTyping);
+
+            focusOut(input(), document.getElementById('outside'));
+            await settle(0);
+            expect(validate).toHaveBeenCalledTimes(afterBlur);
+
+            // a submit validates in every mode
+            input().dispatchEvent(new Event('invalid', { cancelable: true }));
+            await settle(0);
+            expect(validate).toHaveBeenCalledTimes(afterBlur + 1);
+        }
+    );
+});
+
 describe('field baseline', () => {
     test('BASELINE re-measures the starting value until the user changed the field', async () => {
         vi.useFakeTimers();
