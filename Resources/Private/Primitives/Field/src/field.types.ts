@@ -47,6 +47,23 @@ export interface ValidateDetails {
  */
 export type ValidateResult = string | string[] | null | undefined | void;
 
+/**
+ * A failed constraint of the control inside a field: the validity flag it sets and the message to
+ * show when nothing else explains it.
+ */
+export interface FieldConstraintViolation {
+    /** The validity flag to set, so `ErrorText` with that `match` shows. */
+    match: ValidityMatch;
+    /** The error text, used when neither the control nor the custom validation has a message. */
+    message: string;
+}
+
+/**
+ * A rule only the control inside a field knows, such as a soft `maxLength`. It runs with the value
+ * on every validation and returns the violation, or `null` while the value is fine.
+ */
+export type FieldConstraint = (value: string) => FieldConstraintViolation | null;
+
 export interface ValidityChangeDetails {
     valid: boolean;
     errors: string[];
@@ -184,6 +201,10 @@ export interface FieldSchema {
          * The field root, resolved once when the machine starts.
          */
         rootEl: HTMLElement | null;
+        /**
+         * The rule the control inside the field registered, see `FieldConstraint`.
+         */
+        constraint: FieldConstraint | null;
     };
     event: EventObject;
     action: string;

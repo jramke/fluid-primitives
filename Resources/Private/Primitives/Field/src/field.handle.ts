@@ -3,7 +3,7 @@ import { getFormMachineFor, type FormMachine } from '../../Form/src/form.registr
 import type { FormValues } from '../../Form/src/form.types';
 import { connect } from './field.connect';
 import type { FieldMachine } from './field.registry';
-import type { FieldApi } from './field.types';
+import type { FieldApi, FieldConstraint } from './field.types';
 import { getCurrentFieldValue, type FieldValue } from './field.value';
 
 /** Dispatched on a field's root whenever a field named in its own `listenTo` changes value. */
@@ -33,6 +33,12 @@ export interface FieldHandleExtras {
     setRequired(required: boolean): void;
     /** Makes the field read-only or editable. */
     setReadOnly(readOnly: boolean): void;
+    /**
+     * Registers a rule only the control inside the field knows, such as a soft `maxLength`. The field
+     * runs it with the value on every validation, and a violation makes the field invalid like a native
+     * constraint does. A field has one, a new one replaces the old, `null` takes it back.
+     */
+    setConstraint(constraint: FieldConstraint | null): void;
     /**
      * Calls `callback` whenever the value of a field named in the `listenTo` prop of this field
      * changes. Returns a function that removes the listener again. For a field without `listenTo` it
@@ -86,6 +92,9 @@ export function createFieldHandleExtras(machine: FieldMachine): FieldHandleExtra
         setDisabled: disabled => machine.updateProps({ disabled }),
         setRequired: required => machine.updateProps({ required }),
         setReadOnly: readOnly => machine.updateProps({ readOnly }),
+        // a ref, not an event: a control that hydrates before its field registers while the machine has
+        // not started yet, and a machine drops the events it gets before that
+        setConstraint: constraint => refs.set('constraint', constraint),
         addDependencyChangeListener(callback) {
             const rootEl = refs.get('rootEl');
             if (!rootEl) return () => {};

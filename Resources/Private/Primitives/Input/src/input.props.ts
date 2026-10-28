@@ -12,6 +12,7 @@ export const props = createProps<InputProps>()([
     'invalid',
     'defaultValue',
     'maxLength',
+    'maxLengthBehavior',
     'pattern',
     'inputMode',
     'translations',

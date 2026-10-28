@@ -1,9 +1,14 @@
 import { Component } from '.';
-import { connectField, type FieldClientApi } from '../../../Primitives/Field/src/field.handle';
+import {
+    connectField,
+    createFieldHandleExtras,
+    type FieldClientApi,
+} from '../../../Primitives/Field/src/field.handle';
 import {
     getFieldMachineFor,
     type FieldMachine,
 } from '../../../Primitives/Field/src/field.registry';
+import type { FieldConstraint } from '../../../Primitives/Field/src/field.types';
 
 const booleanFieldProps = ['invalid', 'disabled', 'readOnly', 'required'] as const;
 // `name` is tracked reactively too (not just merged once at mount) so that
@@ -26,6 +31,15 @@ export abstract class FieldAwareComponent<Props, Api> extends Component<Props, A
     protected closestField: HTMLElement | null = null;
 
     protected abstract propsWithField(props: Partial<Props>, field: FieldClientApi): Props;
+
+    /**
+     * A rule only this primitive knows, such as a soft `maxLength`, that the closest field runs on
+     * every validation. A violation makes the field invalid like a native constraint does. A primitive
+     * overrides this to register one, there is none by default.
+     */
+    protected getFieldConstraint(): FieldConstraint | undefined {
+        return undefined;
+    }
 
     /** The field's current api, for what a primitive merges into its own props when it renders. */
     protected get field(): FieldClientApi | undefined {
@@ -127,11 +141,24 @@ export abstract class FieldAwareComponent<Props, Api> extends Component<Props, A
         }
     }
 
+    /** Stops the machine and releases the hydrator, and takes its constraint back from the field. */
+    destroy() {
+        if (this.fieldMachine && this.getFieldConstraint()) {
+            createFieldHandleExtras(this.fieldMachine).setConstraint(null);
+        }
+        super.destroy();
+    }
+
     /**
      * The field measured its starting value from the server HTML; a primitive may hydrate to a
      * different state (a defaultChecked checkbox, a Select's selected option).
      */
     private notifyFieldHydrated() {
         this.fieldMachine?.send({ type: 'BASELINE' });
+
+        const constraint = this.getFieldConstraint();
+        if (constraint && this.fieldMachine) {
+            createFieldHandleExtras(this.fieldMachine).setConstraint(constraint);
+        }
     }
 }

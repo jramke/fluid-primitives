@@ -6,6 +6,7 @@ namespace Jramke\FluidPrimitives\Contexts;
 
 use Jramke\FluidPrimitives\Attributes\ExposeToClient;
 use Jramke\FluidPrimitives\Service\TranslatorService;
+use Jramke\FluidPrimitives\Traits\HasCharacterCountTrait;
 use Jramke\FluidPrimitives\Traits\HasTranslationsTrait;
 use Jramke\FluidPrimitives\Utility\Typed;
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
@@ -13,6 +14,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 #[Autoconfigure(public: true)]
 class TextareaContext extends AbstractComponentContext
 {
+    use HasCharacterCountTrait;
     use HasTranslationsTrait;
 
     public function __construct(
@@ -24,35 +26,28 @@ class TextareaContext extends AbstractComponentContext
         return $this->translator;
     }
 
-    #[ExposeToClient]
     /**
-     * @return array{wordCount: string}
+     * What goes between the tags of the textarea. The HTML parser drops a line break right behind the
+     * opening tag, so the default value follows one that is the parser's, and a value that starts
+     * with a line break keeps its own. It is built here and not written into the template, where a
+     * formatter that breaks the line would add whitespace to every value.
      */
-    public function getTranslations(): array
+    public function getDefaultValueContent(): string
     {
-        return $this->translationsWithDefaults([
-            'wordCount' => 'textarea.wordCount',
-        ]);
+        return "\n" . Typed::string($this->get('defaultValue'));
     }
 
     /**
-     * Server-rendered so the word count part isn't empty before hydration. `null` when there's no
-     * `maxLength` to count against, or the translation is empty.
+     * @return array{wordCount: string, wordCountOver: string}
      */
-    public function getWordCountText(): ?string
+    #[ExposeToClient]
+    public function getTranslations(): array
     {
-        $maxLength = Typed::intOrNull($this->get('maxLength'));
-        if ($maxLength === null) {
-            return null;
-        }
-
-        $template = Typed::string($this->getTranslations()['wordCount'] ?? null);
-        if ($template === '') {
-            return null;
-        }
-
-        $count = mb_strlen(Typed::string($this->get('defaultValue')));
-
-        return str_replace(['%count%', '%max%'], [(string)$count, (string)$maxLength], $template);
+        // translationsWithDefaults() merges user overrides, so it can't be typed more precisely than array.
+        // @mago-expect analysis:invalid-return-statement
+        return $this->translationsWithDefaults([
+            'wordCount' => 'textarea.wordCount',
+            'wordCountOver' => 'textarea.wordCountOver',
+        ]);
     }
 }

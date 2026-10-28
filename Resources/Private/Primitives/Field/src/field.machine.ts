@@ -24,6 +24,7 @@ import {
     shouldCommit,
     suppressValueMissing,
     toErrorArray,
+    withConstraintViolation,
     withValueMissing,
 } from './field.utils';
 import { getComparableFieldValue } from './field.value';
@@ -73,6 +74,7 @@ export const machine = createMachine({
             initialValue: null,
             seq: 0,
             rootEl: null,
+            constraint: null,
         };
     },
 
@@ -152,7 +154,10 @@ export const machine = createMachine({
                     submitAttempted: context.get('submitAttempted'),
                     eventType: event.type,
                     edited: refs.get('markedDirty') || context.get('dirty'),
-                    showingErrors: context.get('errors').length > 0,
+                    // an invalid field shows it even without a message, a constraint may have none
+                    showingErrors:
+                        context.get('errors').length > 0 ||
+                        context.get('validity')?.valid === false,
                 }),
         },
 
@@ -338,6 +343,7 @@ export const machine = createMachine({
                     validity: event.validity,
                     value: event.value,
                     nativeMessage: event.nativeMessage,
+                    constraintMessage: event.constraintMessage,
                 });
             },
 
@@ -383,7 +389,13 @@ function commitValidation(params: FieldParams, options: CommitOptions = {}) {
         validity = suppressValueMissing(validity);
     }
 
-    const nativeMessage = validity.valid ? '' : getNativeMessage(params, hostEl, validity);
+    const violation = refs.get('constraint')?.(value) ?? null;
+    if (violation) validity = withConstraintViolation(validity, violation.match);
+
+    const nativeMessage = validity.valid
+        ? ''
+        : getNativeMessage(params, hostEl, validity) || (violation?.message ?? '');
+    const constraintMessage = violation?.message;
 
     const seq = refs.get('seq') + 1;
     refs.set('seq', seq);
@@ -401,6 +413,7 @@ function commitValidation(params: FieldParams, options: CommitOptions = {}) {
                     validity,
                     value,
                     nativeMessage,
+                    constraintMessage,
                 }),
             error => {
                 send({
@@ -410,6 +423,7 @@ function commitValidation(params: FieldParams, options: CommitOptions = {}) {
                     validity,
                     value,
                     nativeMessage,
+                    constraintMessage,
                 });
                 queueMicrotask(() => {
                     throw error;
@@ -419,7 +433,13 @@ function commitValidation(params: FieldParams, options: CommitOptions = {}) {
         return;
     }
 
-    applyValidation(params, { customErrors: toErrorArray(result), validity, value, nativeMessage });
+    applyValidation(params, {
+        customErrors: toErrorArray(result),
+        validity,
+        value,
+        nativeMessage,
+        constraintMessage,
+    });
 }
 
 interface ApplyOptions {
@@ -427,16 +447,19 @@ interface ApplyOptions {
     validity: ValiditySnapshot;
     value: string;
     nativeMessage: string;
+    constraintMessage?: string | undefined;
 }
 
 function applyValidation(params: FieldParams, options: ApplyOptions) {
     const { context, prop } = params;
     const { errors, validity } = resolveValidation(options);
 
-    // mirror custom errors so native `:invalid` and submit gating agree
-    if (options.customErrors.length > 0) {
-        getHostEl(params)?.setCustomValidity(options.customErrors.join(' '));
-    }
+    // mirror custom errors and a violated constraint so native `:invalid` and submit gating agree
+    const mirrored =
+        options.customErrors.length > 0
+            ? options.customErrors.join(' ')
+            : options.constraintMessage;
+    if (mirrored) getHostEl(params)?.setCustomValidity(mirrored);
 
     const changed =
         context.get('validity')?.valid !== validity.valid ||

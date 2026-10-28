@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { Machine } from '../../../Resources/Private/Client/src/lib/machine';
 import { FIELD_VALUE_CHANGE_EVENT } from '../../../Resources/Private/Primitives/Field/src/field.dom';
+import { createFieldHandleExtras } from '../../../Resources/Private/Primitives/Field/src/field.handle';
 import { machine } from '../../../Resources/Private/Primitives/Field/src/field.machine';
 import type {
     FieldProps,
@@ -258,6 +259,92 @@ describe('field validity', () => {
         await settle(0);
 
         expect(field.computed('invalid')).toBe(false);
+    });
+});
+
+describe('a constraint of the control inside the field', () => {
+    const tooLong = (value: string) =>
+        value.length > 3
+            ? { match: 'tooLong' as const, message: `${value.length - 3} too many` }
+            : null;
+    const mountWithConstraint = (props: Partial<FieldProps> = {}) => {
+        const field = mountField(
+            '<input id="field:f1:control" name="email" value="abcdef">',
+            props
+        );
+        createFieldHandleExtras(field).setConstraint(tooLong);
+        return field;
+    };
+
+    test('a violation sets its flag and message, mirrors them on the control and clears once fixed', async () => {
+        vi.useFakeTimers();
+        const field = mountWithConstraint();
+
+        // typing alone commits nothing, the constraint runs where validation does
+        type(input(), 'abcdefg');
+        await settle();
+        expect(field.computed('valid')).toBeNull();
+
+        field.send({ type: 'VALIDATE' });
+        await settle(0);
+        expect(field.computed('invalid')).toBe(true);
+        expect(field.context.get('validity')).toMatchObject({ tooLong: true, valid: false });
+        expect(field.context.get('errors')).toEqual(['4 too many']);
+        expect(input().validationMessage).toBe('4 too many');
+
+        // every run clears the control's custom validity first, the constraint has to bring it back
+        field.send({ type: 'VALIDATE' });
+        await settle(0);
+        expect(input().validationMessage).toBe('4 too many');
+
+        type(input(), 'abc');
+        await settle();
+        expect(field.computed('invalid')).toBe(false);
+        expect(field.context.get('validity')).toMatchObject({ tooLong: false, valid: true });
+        expect(input().validationMessage).toBe('');
+    });
+
+    test('a violation without a message still revalidates on every change and clears once fixed', async () => {
+        vi.useFakeTimers();
+        const field = mountField('<input id="field:f1:control" name="email" value="abcdef">');
+        createFieldHandleExtras(field).setConstraint(value =>
+            value.length > 3 ? { match: 'tooLong', message: '' } : null
+        );
+
+        field.send({ type: 'VALIDATE' });
+        await settle(0);
+        expect(field.computed('invalid')).toBe(true);
+        expect(field.context.get('errors')).toEqual([]);
+
+        type(input(), 'abc');
+        await settle();
+        expect(field.computed('invalid')).toBe(false);
+    });
+
+    test('a custom validate error is shown instead of the message, the flag still matches', async () => {
+        vi.useFakeTimers();
+        const field = mountWithConstraint({ validate: () => 'taken' });
+
+        field.send({ type: 'VALIDATE' });
+        await settle(0);
+
+        expect(field.context.get('errors')).toEqual(['taken']);
+        expect(field.context.get('validity')).toMatchObject({ tooLong: true, customError: true });
+    });
+
+    test('a constraint the control took back no longer reports', async () => {
+        vi.useFakeTimers();
+        const field = mountWithConstraint();
+        field.send({ type: 'VALIDATE' });
+        await settle(0);
+        expect(field.computed('invalid')).toBe(true);
+
+        createFieldHandleExtras(field).setConstraint(null);
+        field.send({ type: 'VALIDATE' });
+        await settle(0);
+
+        expect(field.computed('invalid')).toBe(false);
+        expect(input().validationMessage).toBe('');
     });
 });
 

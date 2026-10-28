@@ -1,5 +1,7 @@
 import { FieldAwareComponent, Machine, mergeProps, normalizeProps } from '../../Client';
 import type { FieldClientApi } from '../Field/src/field.handle';
+import type { FieldConstraint } from '../Field/src/field.types';
+import { getLengthViolation } from '../Input/src/input.count';
 import { connect } from './src/textarea.connect';
 import * as dom from './src/textarea.dom';
 import { machine } from './src/textarea.machine';
@@ -18,6 +20,15 @@ export class Textarea extends FieldAwareComponent<TextareaProps, TextareaApi> {
             invalid: props.invalid ?? field.invalid,
             name: props.name ?? field.name,
         };
+    }
+
+    protected getFieldConstraint(): FieldConstraint {
+        return value =>
+            getLengthViolation(value, {
+                maxLength: this.machine.prop('maxLength'),
+                behavior: this.machine.prop('maxLengthBehavior'),
+                translations: this.machine.prop('translations'),
+            });
     }
 
     initMachine(props: TextareaProps): Machine<any> {

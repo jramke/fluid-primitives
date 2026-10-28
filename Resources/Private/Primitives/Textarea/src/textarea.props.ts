@@ -12,6 +12,7 @@ export const props = createProps<TextareaProps>()([
     'invalid',
     'defaultValue',
     'maxLength',
+    'maxLengthBehavior',
     'rows',
     'submitOn',
     'translations',

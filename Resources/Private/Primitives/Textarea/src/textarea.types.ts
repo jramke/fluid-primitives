@@ -1,5 +1,6 @@
 import type { EventObject } from '@zag-js/core';
 import type { PropTypes } from '@zag-js/types';
+import type { MaxLengthBehavior } from '../../Input/src/input.count';
 
 export interface TextareaTranslations {
     /**
@@ -7,6 +8,12 @@ export interface TextareaTranslations {
      * with `maxLength`, e.g. `%count% / %max% characters`.
      */
     wordCount?: string;
+    /**
+     * The text of the word count part while the value is over `maxLength`, for a `maxLengthBehavior`
+     * other than `block`. `%over%` is replaced with the number of characters too many, `%count%` and
+     * `%max%` work as in `wordCount`, e.g. `Characters over the limit: %over%`.
+     */
+    wordCountOver?: string;
 }
 
 export type TextareaSubmitOn = 'enter' | 'mod+enter';
@@ -30,6 +37,13 @@ export interface TextareaProps {
     defaultValue?: string;
     /** The most characters allowed. It also drives the word count, e.g. `42 / 250 characters`. */
     maxLength?: number;
+    /**
+     * What happens when the value is longer than `maxLength`. `block` stops the typing and cuts a
+     * paste off, `warn` allows both and only shows that the value is over the limit, `invalid` does
+     * the same and makes a surrounding field invalid (`tooLong`).
+     * @default "block"
+     */
+    maxLengthBehavior?: MaxLengthBehavior;
     /** The number of visible lines. */
     rows?: number;
     /**
@@ -71,6 +85,8 @@ export interface TextareaSchema {
     };
     computed: {
         count: number;
+        /** The number of characters over `maxLength`, `0` for `block` or when it is not exceeded. */
+        over: number;
         /** e.g. "42 / 250 characters", or `null` when `maxLength` or the translation is unset. */
         countText: string | null;
     };
@@ -85,6 +101,10 @@ export interface TextareaHandle {
     value: string;
     /** The number of characters in the value. */
     count: number;
+    /** The number of characters over `maxLength`. It is always `0` for `maxLengthBehavior="block"`. */
+    over: number;
+    /** Whether the value is exactly `maxLength` characters long. */
+    atLimit: boolean;
     /** The word count text, e.g. `42 / 250 characters`. `null` without `maxLength` or when the text is turned off. */
     countText: string | null;
     /** Whether the textarea is disabled. */

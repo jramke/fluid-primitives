@@ -1,6 +1,7 @@
 import { createMachine } from '@zag-js/core';
 import { createLiveRegion } from '@zag-js/live-region';
 import { debounce } from '@zag-js/utils';
+import { formatCountText, getOverLimit } from '../../Input/src/input.count';
 import * as dom from './textarea.dom';
 import type { TextareaSchema } from './textarea.types';
 
@@ -22,15 +23,16 @@ export const machine = createMachine<TextareaSchema>({
         count({ context }) {
             return context.get('value').length;
         },
+        over({ prop, computed }) {
+            return getOverLimit(computed('count'), prop('maxLength'), prop('maxLengthBehavior'));
+        },
         countText({ prop, computed }) {
-            const wordCountTemplate = prop('translations')?.wordCount;
-            const maxLength = prop('maxLength');
-            if (!wordCountTemplate || maxLength == null) return null;
-
-            const count = computed('count');
-            return wordCountTemplate
-                .replaceAll('%count%', String(count))
-                .replaceAll('%max%', String(maxLength));
+            return formatCountText(
+                prop('translations'),
+                computed('count'),
+                prop('maxLength'),
+                computed('over')
+            );
         },
     },
     // Reads the DOM's actual current value on startup rather than trusting `defaultValue` blindly -

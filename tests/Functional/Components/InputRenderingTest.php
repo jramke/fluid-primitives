@@ -84,8 +84,183 @@ final class InputRenderingTest extends FunctionalTestCase
 
         $inputData = array_values(HydrationRegistry::getInstance()->getAll()['primitives']['input'])[0];
 
-        $this->assertSame(['wordCount' => '%count% of %max%'], $inputData['props']['translations']);
+        $this->assertSame(
+            ['wordCount' => '%count% of %max%', 'wordCountOver' => 'Characters over the limit: %over%'],
+            $inputData['props']['translations'],
+        );
+        $this->assertSame('block', $inputData['props']['maxLengthBehavior']);
         $this->assertSame(600, $inputData['props']['announceDebounce']);
         $this->assertTrue($inputData['props']['announce']);
+    }
+
+    /**
+     * @return iterable<string, array{0: string, 1: ?string}>
+     */
+    public static function maxLengthBehaviors(): iterable
+    {
+        yield 'block is the default' => ['', '5'];
+        yield 'block' => [
+            'maxLengthBehavior="{f:constant(name: \'Jramke\FluidPrimitives\Enum\MaxLengthBehavior::Block\')}"',
+            '5',
+        ];
+        yield 'warn lets a paste through' => [
+            'maxLengthBehavior="{f:constant(name: \'Jramke\FluidPrimitives\Enum\MaxLengthBehavior::Warn\')}"',
+            null,
+        ];
+        yield 'invalid lets a paste through' => [
+            'maxLengthBehavior="{f:constant(name: \'Jramke\FluidPrimitives\Enum\MaxLengthBehavior::Invalid\')}"',
+            null,
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('maxLengthBehaviors')]
+    public function leavesTheLimitToTheBrowserOnlyForTheBlockBehavior(
+        string $arguments,
+        ?string $expectedMaxlength,
+    ): void {
+        $html = $this->renderTemplate('
+            <primitives:input.root maxLength="5" ' . $arguments . '>
+                <primitives:input.input />
+            </primitives:input.root>
+        ');
+
+        $this->assertSame($expectedMaxlength, $this->elementWith($html, 'data-input-input')->get('maxlength'));
+    }
+
+    /**
+     * @return iterable<string, array{0: ?string, 1: string, 2: string, 3: bool, 4: string}>
+     */
+    public static function overLimitStates(): iterable
+    {
+        yield 'a value past the limit' => [null, 'warn', 'hello world', true, 'Characters over the limit: 6'];
+        yield 'UTF-16 units like the browser, an emoji is two' => [
+            null,
+            'invalid',
+            'ab😀cd',
+            true,
+            'Characters over the limit: 1',
+        ];
+        yield 'a value within the limit' => [null, 'warn', 'hello', false, '5 / 5 characters'];
+        yield 'block can never be over, the browser stops it' => [
+            null,
+            'block',
+            'hello world',
+            false,
+            '11 / 5 characters',
+        ];
+        yield 'German for a German request' => ['de_DE', 'warn', 'hallo welt', true, '5 Zeichen zu viel'];
+    }
+
+    #[Test]
+    #[DataProvider('overLimitStates')]
+    public function marksAnOverLongDefaultValueBeforeHydrationOnTheRootTheControlAndTheCount(
+        ?string $locale,
+        string $behavior,
+        string $defaultValue,
+        bool $expectedOver,
+        string $expectedText,
+    ): void {
+        if ($locale !== null) {
+            $this->setRequestLocale($locale);
+        }
+
+        $html = $this->renderTemplate(
+            '
+            <primitives:input.root maxLength="5" maxLengthBehavior="{f:constant(name: \'Jramke\FluidPrimitives\Enum\MaxLengthBehavior::' .
+            ucfirst($behavior) .
+            '\')}" defaultValue="' .
+            $defaultValue .
+            '">
+                <primitives:input.input />
+                <primitives:input.wordCount />
+            </primitives:input.root>
+        ',
+        );
+
+        foreach (['root', 'input', 'word-count'] as $part) {
+            $this->assertSame(
+                $expectedOver,
+                $this->elementWith($html, 'data-input-' . $part)->has('data-over-limit'),
+                $part,
+            );
+        }
+        $this->assertSame(1, preg_match('/<span[^>]*data-input-word-count[^>]*>([^<]*)</', $html, $matches));
+        $this->assertSame($expectedText, trim($matches[1]));
+    }
+
+    /**
+     * @return iterable<string, array{0: string, 1: string, 2: bool, 3: ?string}>
+     */
+    public static function limitAttributes(): iterable
+    {
+        yield 'exactly at the limit' => ['maxLength="5"', 'hello', true, 'block'];
+        yield 'the behavior is on the parts' => [
+            'maxLength="5" maxLengthBehavior="{f:constant(name: \'Jramke\FluidPrimitives\Enum\MaxLengthBehavior::Warn\')}"',
+            'hello',
+            true,
+            'warn',
+        ];
+        yield 'past the limit is not at it' => [
+            'maxLength="5" maxLengthBehavior="{f:constant(name: \'Jramke\FluidPrimitives\Enum\MaxLengthBehavior::Invalid\')}"',
+            'hello!',
+            false,
+            'invalid',
+        ];
+        yield 'an emoji is two UTF-16 units' => [
+            'maxLength="5"',
+            'ab😀c',
+            true,
+            'block',
+        ];
+        yield 'the other behaviors count UTF-16 units too' => [
+            'maxLength="5" maxLengthBehavior="{f:constant(name: \'Jramke\FluidPrimitives\Enum\MaxLengthBehavior::Warn\')}"',
+            'ab😀c',
+            true,
+            'warn',
+        ];
+        yield 'nothing without a maximum' => ['', 'hello', false, null];
+    }
+
+    #[Test]
+    #[DataProvider('limitAttributes')]
+    public function marksTheBehaviorAndWhetherTheValueIsAtTheLimitOnTheRootTheControlAndTheCount(
+        string $arguments,
+        string $defaultValue,
+        bool $expectedAtLimit,
+        ?string $expectedBehavior,
+    ): void {
+        $html = $this->renderTemplate('
+            <primitives:input.root ' .
+        $arguments .
+        ' defaultValue="' .
+        $defaultValue .
+        '">
+                <primitives:input.input />
+                <primitives:input.wordCount />
+            </primitives:input.root>
+        ');
+
+        foreach (['root', 'input', 'word-count'] as $part) {
+            $element = $this->elementWith($html, 'data-input-' . $part);
+            $this->assertSame($expectedAtLimit, $element->has('data-at-limit'), $part);
+            $this->assertSame($expectedBehavior, $element->get('data-max-length-behavior'), $part);
+        }
+    }
+
+    #[Test]
+    public function countsTheLineBreaksOfTheDefaultValueTheWayTheBrowserReportsThem(): void
+    {
+        // an input has its line breaks stripped, "ab\r\ncd" is four characters
+        $html = $this->renderTemplate('
+            <primitives:input.root maxLength="4" defaultValue="{value}">
+                <primitives:input.input />
+                <primitives:input.wordCount />
+            </primitives:input.root>
+        ', ['value' => "ab\r\ncd"]);
+
+        $this->assertTrue($this->elementWith($html, 'data-input-root')->has('data-at-limit'));
+        $this->assertSame(1, preg_match('/<span[^>]*data-input-word-count[^>]*>([^<]*)</', $html, $matches));
+        $this->assertSame('4 / 4 characters', trim($matches[1]));
     }
 }
