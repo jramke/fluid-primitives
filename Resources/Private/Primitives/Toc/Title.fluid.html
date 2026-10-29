@@ -1,0 +1,7 @@
+<h2
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'title' )}
+    {ui:attributes()}
+    {ui:asChild()}>
+    <f:slot />
+</h2>

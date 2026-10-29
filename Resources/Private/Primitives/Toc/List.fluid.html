@@ -1,0 +1,8 @@
+<ul
+    style="position: relative;"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'list' )}
+    {ui:attributes()}
+    {ui:asChild()}>
+    <f:slot />
+</ul>

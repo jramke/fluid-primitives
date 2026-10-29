@@ -1,0 +1,14 @@
+<ui:prop name="defaultActiveIds" type="string[]" optional="{true}" client="{true}" description="The ids of the headings that are active when rendered, until the first observation replaces them. Use when you don't need to control the active headings." />
+<ui:prop name="rootMargin" type="string" optional="{true}" client="{true}" default="-20px 0% -40% 0%" description="The root margin of the IntersectionObserver. It sets the area of the viewport in which a heading counts as visible." />
+<ui:prop name="threshold" type="float|float[]" optional="{true}" client="{true}" default="0" description="The threshold of the IntersectionObserver. `0` makes a heading active as soon as a single pixel of it is inside the root margin." />
+<ui:prop name="scrollEl" type="string" optional="{true}" client="{true}" description="A CSS selector of the scroll container the headings sit in. Defaults to the viewport of the document." />
+<ui:prop name="autoScroll" type="boolean" optional="{true}" client="{true}" default="{true}" description="Whether the table of contents scrolls the first active item into view when the active headings change." />
+<ui:prop name="scrollBehavior" type="Jramke\FluidPrimitives\Enum\ScrollBehavior" optional="{true}" client="{true}" default="{f:constant(name: 'Jramke\FluidPrimitives\Enum\ScrollBehavior::Smooth')}" description="The scroll behavior of the auto-scroll and of a click on a link, when `scrollEl` is set." />
+
+<nav
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'root' )}
+    {ui:attributes()}
+    {ui:asChild()}>
+    <f:slot />
+</nav>
