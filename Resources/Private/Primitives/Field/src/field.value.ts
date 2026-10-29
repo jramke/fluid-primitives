@@ -142,7 +142,7 @@ export function getFieldValueFromContainer(container: ParentNode, fieldName: str
 }
 
 export function getFieldElement(form: HTMLFormElement, fieldName: string) {
-    return form.querySelector(
+    const elements = form.querySelectorAll<AnyFormControlElement>(
         [
             `input[name="${CSS.escape(fieldName)}"]`,
             `input[name="${CSS.escape(fieldName)}[]"]`,
@@ -151,7 +151,10 @@ export function getFieldElement(form: HTMLFormElement, fieldName: string) {
             `textarea[name="${CSS.escape(fieldName)}"]`,
             `textarea[name="${CSS.escape(fieldName)}[]"]`,
         ].join(', ')
-    ) as AnyFormControlElement | null;
+    );
+
+    // An empty-value input cannot take the focus, the control next to it can.
+    return Array.from(elements).find(el => !el.hasAttribute('data-empty-value')) ?? null;
 }
 
 export function serializeFieldValue(value: FormDataEntryValue | FormDataEntryValue[] | null) {

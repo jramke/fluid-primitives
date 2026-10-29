@@ -18,5 +18,7 @@
     {ui:ref(name: 'root' , data: refData )}
     {ui:attributes()}
     {ui:asChild()}>
+    <f:comment>Comes before the checkboxes: with none checked it submits `''`, otherwise PHP lets their `name[]` values replace it.</f:comment>
+    <ui:emptyValueInput />
     <f:slot />
 </div>

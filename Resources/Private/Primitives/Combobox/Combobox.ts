@@ -129,7 +129,7 @@ export class Combobox extends FieldAwareComponent<combobox.Props, combobox.Api> 
             inputValue.trim() !== '' &&
             inputValue !== this.api.valueAsString;
 
-        const resolvedValues = values.length > 0 ? values : isCustomValue ? [inputValue] : [''];
+        const resolvedValues = values.length > 0 ? values : isCustomValue ? [inputValue] : [];
 
         resolvedValues.forEach(value => {
             const inputEl = this.doc.createElement('input');
@@ -137,6 +137,8 @@ export class Combobox extends FieldAwareComponent<combobox.Props, combobox.Api> 
             this.spreadProps(inputEl, this.getHiddenInputProps(value, attrs));
             rootEl.appendChild(inputEl);
         });
+
+        this.syncEmptyValueInput(resolvedValues.length > 0, !!attrs.disabled);
     }
 
     initMachine(props: combobox.Props): Machine<any> {

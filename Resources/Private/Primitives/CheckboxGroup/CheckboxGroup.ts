@@ -45,6 +45,8 @@ export class CheckboxGroup extends FieldAwareComponent<CheckboxGroupProps, Check
 
         const labelEl = this.hydrator.query('label');
         if (labelEl) this.spreadProps(labelEl, this.api.getLabelProps());
+
+        this.syncEmptyValueInput(this.api.value.length > 0, this.api.disabled);
     }
 
     destroy() {

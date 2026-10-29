@@ -49,6 +49,8 @@ export class Switch extends FieldAwareComponent<zagSwitch.Props, zagSwitch.Api> 
             this.spreadProps(hiddenInputEl, mergedProps);
         }
 
+        this.syncEmptyValueInput(this.api.checked, this.api.disabled);
+
         this.spreadPropsByValue('indicator', ({ value }) => {
             const isActive = (value === 'checked') === this.api.checked;
             return normalizeProps.element({

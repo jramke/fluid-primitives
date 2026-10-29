@@ -1,4 +1,4 @@
-import { Component } from '.';
+import { Component, normalizeProps } from '.';
 import {
     connectField,
     createFieldHandleExtras,
@@ -39,6 +39,23 @@ export abstract class FieldAwareComponent<Props, Api> extends Component<Props, A
      */
     protected getFieldConstraint(): FieldConstraint | undefined {
         return undefined;
+    }
+
+    /**
+     * Disables the empty-value input (`<ui:emptyValueInput />`) while the control has a value or is
+     * disabled, so the form data holds the value or the empty one, never both. Call it from `render()`.
+     *
+     * @param hasValue - Whether the control holds a value right now.
+     * @param disabled - Whether the control is disabled, which disables the input as well.
+     */
+    protected syncEmptyValueInput(hasValue: boolean, disabled?: boolean) {
+        const emptyValueInputEl = this.hydrator.query('emptyValueInput');
+        if (emptyValueInputEl) {
+            this.spreadProps(
+                emptyValueInputEl,
+                normalizeProps.input({ disabled: hasValue || !!disabled })
+            );
+        }
     }
 
     /** The field's current api, for what a primitive merges into its own props when it renders. */

@@ -79,10 +79,13 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
             // We need to handle this client side so the select can default to an empty string
             // Setting the select attribute server side has no effect
             // There is no need to mirror the selected property on the other options since the select inputs value is correctly updated by the machine
+            // A multiple select submits its empty value through the empty-value input instead.
             const isValueEmpty = this.api.value.length === 0;
             const defaultOption = hiddenSelectEl.querySelector('option');
-            if (defaultOption) defaultOption.selected = isValueEmpty;
+            if (defaultOption) defaultOption.selected = isValueEmpty && !this.api.multiple;
         }
+
+        this.syncEmptyValueInput(this.api.value.length > 0, this.api.disabled);
 
         const labelEl = this.hydrator.query('label');
         if (labelEl) this.spreadProps(labelEl, this.api.getLabelProps());

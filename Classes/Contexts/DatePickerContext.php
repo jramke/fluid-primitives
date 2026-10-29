@@ -7,6 +7,7 @@ namespace Jramke\FluidPrimitives\Contexts;
 use Jramke\FluidPrimitives\Attributes\ExposeToClient;
 use Jramke\FluidPrimitives\Enum\DatePickerView;
 use Jramke\FluidPrimitives\Service\TranslatorService;
+use Jramke\FluidPrimitives\Traits\HasEmptyValueInputTrait;
 use Jramke\FluidPrimitives\Traits\HasTranslationsTrait;
 use Jramke\FluidPrimitives\Utility\DateUtility;
 use Jramke\FluidPrimitives\Utility\Typed;
@@ -17,6 +18,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 #[Autoconfigure(public: true)]
 class DatePickerContext extends AbstractComponentContext
 {
+    use HasEmptyValueInputTrait;
     use HasTranslationsTrait;
 
     /**
@@ -161,8 +163,8 @@ class DatePickerContext extends AbstractComponentContext
     }
 
     /**
-     * What the hidden inputs submit, one entry per date and at least one: an empty date picker
-     * still submits its name.
+     * What the hidden inputs submit, one entry per date. An empty date picker renders the empty-value
+     * input instead (see `HasEmptyValueInputTrait`).
      *
      * @return list<string>
      */
@@ -171,7 +173,7 @@ class DatePickerContext extends AbstractComponentContext
         /** @var list<string>|null $dates */
         $dates = $this->getDefaultValue();
 
-        return $dates === null ? [''] : array_map(DateUtility::toW3cMidnight(...), $dates);
+        return $dates === null ? [] : array_map(DateUtility::toW3cMidnight(...), $dates);
     }
 
     // The client builds the same W3C date-time for a date picked later, see `getHiddenInputValues()`.

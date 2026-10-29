@@ -8,6 +8,7 @@ use Jramke\FluidPrimitives\Attributes\ExposeToClient;
 use Jramke\FluidPrimitives\Domain\Dto\ListCollection;
 use Jramke\FluidPrimitives\Domain\Dto\ListCollectionItem;
 use Jramke\FluidPrimitives\Service\TranslatorService;
+use Jramke\FluidPrimitives\Traits\HasEmptyValueInputTrait;
 use Jramke\FluidPrimitives\Traits\HasListCollectionTrait;
 use Jramke\FluidPrimitives\Traits\HasPopupTypeTrait;
 use Jramke\FluidPrimitives\Traits\HasTranslationsTrait;
@@ -17,6 +18,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 #[Autoconfigure(public: true)]
 class ComboboxContext extends AbstractComponentContext
 {
+    use HasEmptyValueInputTrait;
     use HasListCollectionTrait;
     use HasPopupTypeTrait;
     use HasTranslationsTrait;
@@ -52,14 +54,14 @@ class ComboboxContext extends AbstractComponentContext
     }
 
     /**
-     * What the hidden inputs submit. Nothing selected still renders one empty input, like a native
-     * input does, so the name is always submitted and a field has an input to put its focus on.
+     * What the hidden inputs submit, one per value. Nothing selected renders the empty-value input
+     * instead (see `HasEmptyValueInputTrait`), which also gives a field an input to put its focus on.
      *
      * @return array<string>
      */
     public function getHiddenInputValues(): array
     {
-        return $this->getDefaultValue() ?: [''];
+        return $this->getDefaultValue() ?? [];
     }
 
     /**

@@ -7,6 +7,7 @@ namespace Jramke\FluidPrimitives\Contexts;
 use Jramke\FluidPrimitives\Attributes\ExposeToClient;
 use Jramke\FluidPrimitives\Domain\Dto\ListCollectionItem;
 use Jramke\FluidPrimitives\Service\TranslatorService;
+use Jramke\FluidPrimitives\Traits\HasEmptyValueInputTrait;
 use Jramke\FluidPrimitives\Traits\HasListCollectionTrait;
 use Jramke\FluidPrimitives\Traits\HasPopupTypeTrait;
 use Jramke\FluidPrimitives\Traits\HasTranslationsTrait;
@@ -16,6 +17,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 #[Autoconfigure(public: true)]
 class SelectContext extends AbstractComponentContext
 {
+    use HasEmptyValueInputTrait;
     use HasListCollectionTrait;
     use HasPopupTypeTrait;
     use HasTranslationsTrait;
@@ -27,6 +29,14 @@ class SelectContext extends AbstractComponentContext
     protected function getTranslator(): TranslatorService
     {
         return $this->translator;
+    }
+
+    /**
+     * A single select submits `''` through its placeholder option, only a multiple one needs the input.
+     */
+    protected function rendersEmptyValueInput(): bool
+    {
+        return Typed::bool($this->get('multiple'));
     }
 
     #[ExposeToClient(excludeIfNull: true)]
