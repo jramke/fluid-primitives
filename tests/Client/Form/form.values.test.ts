@@ -87,4 +87,18 @@ describe('readFormValues', () => {
         expect(values.getAll('tags[]')).toEqual([]);
         expect(values.pick('tags')).toEqual([]);
     });
+
+    test('keeps the entries of a field next to its enabled empty-value input, as before the control has hydrated', () => {
+        document.body.innerHTML = `
+            <form>
+                <input type="hidden" name="colors" value="" data-empty-value="colors[]">
+                <input type="checkbox" name="colors[]" value="red" checked>
+                <input type="checkbox" name="colors[]" value="blue" checked>
+            </form>`;
+
+        const values = readFormValues(document.querySelector('form'));
+
+        expect(values.toObject()).toEqual({ colors: ['red', 'blue'] });
+        expect(values.getAll('colors')).toEqual(['red', 'blue']);
+    });
 });

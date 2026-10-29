@@ -117,7 +117,15 @@ function readFieldEntries(
     emptyArrayNames: ReadonlySet<string>
 ): { entries: FormValueLeaf[]; isArrayValue: boolean } {
     const normalizedFieldName = trimArraySuffix(fieldName);
-    if (emptyArrayNames.has(normalizedFieldName)) return { entries: [], isArrayValue: true };
+    if (emptyArrayNames.has(normalizedFieldName)) {
+        // An enabled empty-value input stands for an empty list, and gives way to a real entry of the field:
+        // it is enabled until its control has hydrated.
+        const entries = [
+            ...formData.getAll(normalizedFieldName).filter(entry => entry !== ''),
+            ...formData.getAll(`${normalizedFieldName}[]`),
+        ];
+        return { entries, isArrayValue: true };
+    }
 
     const directEntries = formData.getAll(normalizedFieldName);
     const bracketEntries = formData.getAll(`${normalizedFieldName}[]`);
