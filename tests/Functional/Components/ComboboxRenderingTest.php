@@ -377,11 +377,12 @@ final class ComboboxRenderingTest extends FunctionalTestCase
      */
     public static function hiddenInputs(): iterable
     {
-        // nothing selected still submits the name, like a native input does, and gives a field's focus something to land on
-        yield 'nothing selected' => ['country', '', null, ['']];
-        yield 'an empty list' => ['country', '', [], ['']];
+        // nothing selected renders no input here: the empty-value input submits the name
+        yield 'nothing selected' => ['country', '', null, []];
+        yield 'an empty list' => ['country', '', [], []];
         yield 'one value' => ['country', '', 'us', ['us']];
         yield 'several values' => ['countries[]', 'multiple="{true}"', ['us', 'fr'], ['us', 'fr']];
+        yield 'nothing selected of several' => ['countries[]', 'multiple="{true}"', null, []];
     }
 
     /**

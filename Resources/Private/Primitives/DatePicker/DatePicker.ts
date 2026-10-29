@@ -224,8 +224,8 @@ export class DatePicker extends FieldAwareComponent<datePicker.Props, datePicker
         }
     }
 
-    // One hidden input per selected date, and one empty one when there is none: the name is always
-    // submitted. A date goes as the W3C date-time of its midnight in the server's time zone, the
+    // One hidden input per selected date: while there is none, the empty-value input submits the name.
+    // A date goes as the W3C date-time of its midnight in the server's time zone, the
     // format Extbase maps to a DateTime as it is, see DatePickerContext::getHiddenInputValues().
     private renderHiddenInputs() {
         const { serverTimeZone } = this.userProps as datePicker.Props & { serverTimeZone: string };
@@ -236,7 +236,7 @@ export class DatePicker extends FieldAwareComponent<datePicker.Props, datePicker
                           .toString()
                           .replace(/\[.*\]$/, '')
                   )
-                : [''];
+                : [];
         const inputEls = this.hydrator.queryAll<HTMLInputElement>('hiddenInput');
         inputEls.slice(values.length).forEach(inputEl => inputEl.remove());
 
@@ -259,6 +259,8 @@ export class DatePicker extends FieldAwareComponent<datePicker.Props, datePicker
                 })
             );
         });
+
+        this.syncEmptyValueInput(values.length > 0, this.api.disabled);
     }
 
     // The grid is not part of the server markup: its size depends on the locale, the calendar and

@@ -1,3 +1,5 @@
+<f:comment>A select with nothing selected submits nothing: the empty-value input submits `''` for it.</f:comment>
+<ui:emptyValueInput />
 <select
     {f:if(condition: class, then: 'class="{class}"' )}
     {f:if(condition: context.form, then: 'form="{context.form}"' )}

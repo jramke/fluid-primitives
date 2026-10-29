@@ -91,9 +91,13 @@ export class Slider extends FieldAwareComponent<slider.Props, slider.Api> {
             });
             this.spreadProps(thumbEl, thumbProps);
 
+            // The name goes as it is: Zag would add a `[]` of its own to a range's root name.
             const hiddenInputEl = this.hydrator.query<HTMLInputElement>('hiddenInput', thumbEl);
             if (hiddenInputEl) {
-                this.spreadProps(hiddenInputEl, this.api.getHiddenInputProps({ index, name }));
+                this.spreadProps(
+                    hiddenInputEl,
+                    this.api.getHiddenInputProps({ index, name: name ?? this.machine.prop('name') })
+                );
             }
         });
 

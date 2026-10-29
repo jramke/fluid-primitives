@@ -7,7 +7,7 @@ import {
     registerFieldMachineForForm,
     unregisterFieldMachineForForm,
 } from '../Form/src/form.registry';
-import { createFormValues } from '../Form/src/form.values';
+import { readFormValues } from '../Form/src/form.values';
 import { FIELD_VALUE_CHANGE_EVENT } from './src/field.dom';
 import {
     FIELD_DEPENDENCY_CHANGE_EVENT,
@@ -190,7 +190,7 @@ export class Field extends Component<FieldProps, FieldClientApi> {
             const detail: FieldDependencyChangeDetail = {
                 name: this.fieldMachine.prop('name'),
                 dependencies,
-                values: createFormValues(new FormData(formEl)),
+                values: readFormValues(formEl),
             };
             rootEl.dispatchEvent(
                 new CustomEvent(FIELD_DEPENDENCY_CHANGE_EVENT, { bubbles: true, detail })

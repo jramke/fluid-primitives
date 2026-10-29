@@ -1,4 +1,4 @@
-import { Component } from '.';
+import { Component, normalizeProps } from '.';
 import {
     connectField,
     createFieldHandleExtras,
@@ -9,6 +9,7 @@ import {
     type FieldMachine,
 } from '../../../Primitives/Field/src/field.registry';
 import type { FieldConstraint } from '../../../Primitives/Field/src/field.types';
+import { trimArraySuffix } from '../../../Primitives/Form/src/form.path';
 
 const booleanFieldProps = ['invalid', 'disabled', 'readOnly', 'required'] as const;
 // `name` is tracked reactively too (not just merged once at mount) so that
@@ -39,6 +40,32 @@ export abstract class FieldAwareComponent<Props, Api> extends Component<Props, A
      */
     protected getFieldConstraint(): FieldConstraint | undefined {
         return undefined;
+    }
+
+    /**
+     * Disables the empty-value input (`<ui:emptyValueInput />`) while the control has a value or is
+     * disabled, so the form data holds the value or the empty one, never both, and keeps its name,
+     * `data-empty-value` and form on those of the control, which a renamed field or an `updateProps()`
+     * changes. Call it from `render()`.
+     *
+     * @param hasValue - Whether the control holds a value right now.
+     * @param disabled - Whether the control is disabled, which disables the input as well.
+     */
+    protected syncEmptyValueInput(hasValue: boolean, disabled?: boolean) {
+        const emptyValueInputEl = this.hydrator.query('emptyValueInput');
+        if (emptyValueInputEl) {
+            const name: string | undefined = this.machine.prop('name');
+            const form: string | undefined = this.machine.prop('form');
+            this.spreadProps(
+                emptyValueInputEl,
+                normalizeProps.input({
+                    name: name && trimArraySuffix(name),
+                    'data-empty-value': name,
+                    form,
+                    disabled: hasValue || !!disabled,
+                })
+            );
+        }
     }
 
     /** The field's current api, for what a primitive merges into its own props when it renders. */

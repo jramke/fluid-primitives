@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest';
 import {
     createFormValues,
     getFieldErrorValue,
+    readFormValues,
 } from '../../../Resources/Private/Primitives/Form/src/form.values';
 
 function formData(entries: Array<[string, string]>) {
@@ -67,5 +68,37 @@ describe('createFormValues', () => {
         expect(getFieldErrorValue(values, 'tags')).toEqual(['a', 'b']);
         expect(getFieldErrorValue(values, 'address')).toBeNull();
         expect(getFieldErrorValue(values, 'missing')).toBeNull();
+    });
+});
+
+describe('readFormValues', () => {
+    test('reads the enabled empty-value input of a `name[]` field as an empty list, a disabled one as nothing', () => {
+        document.body.innerHTML = `
+            <form>
+                <input type="hidden" name="tags" value="" data-empty-value="tags[]">
+                <input type="hidden" name="agree" value="" data-empty-value="agree">
+                <input type="hidden" name="colors" value="" data-empty-value="colors[]" disabled>
+                <input type="checkbox" name="colors[]" value="red" checked>
+            </form>`;
+
+        const values = readFormValues(document.querySelector('form'));
+
+        expect(values.toObject()).toEqual({ tags: [], agree: '', colors: ['red'] });
+        expect(values.getAll('tags[]')).toEqual([]);
+        expect(values.pick('tags')).toEqual([]);
+    });
+
+    test('keeps the entries of a field next to its enabled empty-value input, as before the control has hydrated', () => {
+        document.body.innerHTML = `
+            <form>
+                <input type="hidden" name="colors" value="" data-empty-value="colors[]">
+                <input type="checkbox" name="colors[]" value="red" checked>
+                <input type="checkbox" name="colors[]" value="blue" checked>
+            </form>`;
+
+        const values = readFormValues(document.querySelector('form'));
+
+        expect(values.toObject()).toEqual({ colors: ['red', 'blue'] });
+        expect(values.getAll('colors')).toEqual(['red', 'blue']);
     });
 });

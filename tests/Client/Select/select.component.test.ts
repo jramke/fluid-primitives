@@ -33,3 +33,53 @@ test('shows the selected label and the placeholder as text, never as markup', ()
             expect(valueText.querySelector('i')).toBeNull();
         });
 });
+
+const items = [
+    { label: 'A', value: 'a' },
+    { label: 'B', value: 'b' },
+];
+
+function renderHiddenSelect(name: string, multiple: boolean) {
+    document.body.innerHTML = `
+        <form><div data-select-root="s1">
+            <input type="hidden" name="${name.replace(/\[\]$/, '')}" value="" data-empty-value="${name}" data-select-empty-value-input="s1">
+            <select name="${name}" ${multiple ? 'multiple' : ''} data-select-hidden-select="s1">
+                <option value="" hidden></option>
+                ${items.map(item => `<option value="${item.value}">${item.label}</option>`).join('')}
+            </select>
+        </div></form>`;
+    return () => [...new FormData(document.querySelector('form')!).entries()];
+}
+
+test('an empty single select submits its empty value through the empty-value input, and only while empty', async () => {
+    const entries = renderHiddenSelect('tag', false);
+
+    instance = new Select({ id: 's1', collection: select.collection({ items }), name: 'tag' });
+    instance.init();
+    expect(entries()).toEqual([['tag', '']]);
+
+    instance.api.setValue(['a']);
+    await expect.poll(entries).toEqual([['tag', 'a']]);
+
+    instance.api.clearValue();
+    await expect.poll(entries).toEqual([['tag', '']]);
+});
+
+test('a multiple select submits its empty value without the brackets, and only while empty', async () => {
+    const entries = renderHiddenSelect('tags[]', true);
+
+    instance = new Select({
+        id: 's1',
+        collection: select.collection({ items }),
+        name: 'tags[]',
+        multiple: true,
+    });
+    instance.init();
+    expect(entries()).toEqual([['tags', '']]);
+
+    instance.api.setValue(['a']);
+    await expect.poll(entries).toEqual([['tags[]', 'a']]);
+
+    instance.api.clearValue();
+    await expect.poll(entries).toEqual([['tags', '']]);
+});

@@ -181,6 +181,8 @@ export class Checkbox extends FieldAwareComponent<checkbox.Props, checkbox.Api> 
             });
             this.spreadProps(hiddenInputEl, mergedProps);
         }
+
+        this.syncEmptyValueInput(this.api.checked, this.api.disabled);
     }
 
     /**

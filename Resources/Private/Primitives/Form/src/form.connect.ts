@@ -6,7 +6,7 @@ import * as dom from './form.dom';
 import { getRegisteredFieldMachines, renameFieldMachine } from './form.fields';
 import { trimArraySuffix } from './form.path';
 import type { FormApi, FormDirty, FormErrors, FormSchema, FormTouched } from './form.types';
-import { createFormValues } from './form.values';
+import { readFormValues } from './form.values';
 
 export function connect<T extends PropTypes>(
     service: Service<FormSchema>,
@@ -26,7 +26,7 @@ export function connect<T extends PropTypes>(
     }
 
     function getValues() {
-        return createFormValues(formEl ? new FormData(formEl) : new FormData());
+        return readFormValues(formEl);
     }
 
     function getErrors(): FormErrors {

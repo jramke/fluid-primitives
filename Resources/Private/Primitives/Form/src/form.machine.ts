@@ -5,7 +5,6 @@ import * as dom from './form.dom';
 import {
     focusField,
     getFirstInvalidField,
-    getFormData,
     hasInvalidFieldMachines,
     hasUnownedErrors,
     pruneStaleFieldMachines,
@@ -20,7 +19,7 @@ import {
     mapServerErrors,
     validateWithValidation,
 } from './form.validation';
-import { createFormValues } from './form.values';
+import { readFormValues } from './form.values';
 
 export const machine = createMachine<FormSchema>({
     initialState() {
@@ -69,8 +68,7 @@ export const machine = createMachine<FormSchema>({
                 const validation = prop('validation');
                 pruneStaleFieldMachines(scope);
 
-                const submittedFormData = getFormData(scope);
-                const submittedValues = createFormValues(submittedFormData);
+                const submittedValues = readFormValues(dom.getFormEl(scope));
 
                 const cachedServerErrors = filterErrorsForCurrentValues(
                     refs.get('serverErrors'),

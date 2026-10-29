@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Contexts;
 
+use Jramke\FluidPrimitives\Traits\HasEmptyValueInputTrait;
 use Jramke\FluidPrimitives\Utility\Typed;
 
 class CheckboxGroupContext extends AbstractComponentContext
 {
+    use HasEmptyValueInputTrait;
+
     /**
      * Provides variables to be merged into child Checkbox components.
      * Similar to how FieldContext provides variables to child components.

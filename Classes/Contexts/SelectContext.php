@@ -7,6 +7,7 @@ namespace Jramke\FluidPrimitives\Contexts;
 use Jramke\FluidPrimitives\Attributes\ExposeToClient;
 use Jramke\FluidPrimitives\Domain\Dto\ListCollectionItem;
 use Jramke\FluidPrimitives\Service\TranslatorService;
+use Jramke\FluidPrimitives\Traits\HasEmptyValueInputTrait;
 use Jramke\FluidPrimitives\Traits\HasListCollectionTrait;
 use Jramke\FluidPrimitives\Traits\HasPopupTypeTrait;
 use Jramke\FluidPrimitives\Traits\HasTranslationsTrait;
@@ -16,6 +17,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 #[Autoconfigure(public: true)]
 class SelectContext extends AbstractComponentContext
 {
+    use HasEmptyValueInputTrait;
     use HasListCollectionTrait;
     use HasPopupTypeTrait;
     use HasTranslationsTrait;
@@ -35,7 +37,7 @@ class SelectContext extends AbstractComponentContext
      */
     public function getDefaultValue(): ?array
     {
-        // `defaultValue` is declared type="mixed" and genuinely accepts either shape checked below.
+        // `defaultValue` is declared `string|string[]`, and a Field sets it on the context unchecked.
         // @mago-expect analysis:mixed-assignment
         $defaultValue = $this->get('defaultValue');
         if (in_array($defaultValue, [null, [], ''], strict: true)) {

@@ -248,7 +248,7 @@ final class FieldRenderingTest extends FunctionalTestCase
             </primitives:combobox.root>',
             'data-combobox-input',
             'data-combobox-label',
-            'data-combobox-hidden-input',
+            'data-combobox-empty-value-input',
         ];
         yield 'a file upload' => [
             '<primitives:fileUpload.root>

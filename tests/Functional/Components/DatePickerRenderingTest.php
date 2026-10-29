@@ -158,8 +158,8 @@ final class DatePickerRenderingTest extends FunctionalTestCase
 
         try {
             $expectations = [
-                // An empty date picker still submits its name.
-                'no date' => ['', ['']],
+                // An empty date picker renders no input here: the empty-value input submits its name.
+                'no date' => ['', []],
                 'one date' => ['defaultValue="2024-01-15"', ['2024-01-15T00:00:00+01:00']],
                 // Summer and winter time, as the offset follows the date.
                 'several dates' => [
@@ -361,9 +361,10 @@ final class DatePickerRenderingTest extends FunctionalTestCase
         $input = $this->elementWith($html, 'data-date-picker-input');
         $this->assertTrue($input->has('required'));
         $this->assertTrue($input->has('disabled'));
-        $hiddenInput = $this->elementWith($html, 'data-date-picker-hidden-input');
-        $this->assertSame('birthDate', $hiddenInput->get('name'));
-        $this->assertTrue($hiddenInput->has('disabled'));
+        // nothing picked: the empty-value input is what submits the name
+        $emptyValueInput = $this->elementWith($html, 'data-date-picker-empty-value-input');
+        $this->assertSame('birthDate', $emptyValueInput->get('name'));
+        $this->assertTrue($emptyValueInput->has('disabled'));
 
         // The Field's label and control ids have to land on the label and input part, which Zag
         // reads from `ids` - FieldIdMapping names them.
