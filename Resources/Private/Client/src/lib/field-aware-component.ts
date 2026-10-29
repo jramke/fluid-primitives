@@ -44,9 +44,9 @@ export abstract class FieldAwareComponent<Props, Api> extends Component<Props, A
 
     /**
      * Disables the empty-value input (`<ui:emptyValueInput />`) while the control has a value or is
-     * disabled, so the form data holds the value or the empty one, never both, and keeps its name
-     * and `data-empty-value` on the name of the control, which a renamed field changes. Call it from
-     * `render()`.
+     * disabled, so the form data holds the value or the empty one, never both, and keeps its name,
+     * `data-empty-value` and form on those of the control, which a renamed field or an `updateProps()`
+     * changes. Call it from `render()`.
      *
      * @param hasValue - Whether the control holds a value right now.
      * @param disabled - Whether the control is disabled, which disables the input as well.
@@ -55,11 +55,13 @@ export abstract class FieldAwareComponent<Props, Api> extends Component<Props, A
         const emptyValueInputEl = this.hydrator.query('emptyValueInput');
         if (emptyValueInputEl) {
             const name: string | undefined = this.machine.prop('name');
+            const form: string | undefined = this.machine.prop('form');
             this.spreadProps(
                 emptyValueInputEl,
                 normalizeProps.input({
                     name: name && trimArraySuffix(name),
                     'data-empty-value': name,
+                    form,
                     disabled: hasValue || !!disabled,
                 })
             );

@@ -40,3 +40,20 @@ test('keeps the name of its empty-value input on the name of the field after a r
     await expect.poll(() => emptyValueInput.name).toBe('rows[1][agree]');
     expect(emptyValueInput.dataset.emptyValue).toBe('rows[1][agree]');
 });
+
+test('keeps its empty-value input in the form of the checkbox', async () => {
+    document.body.innerHTML = `
+        <label data-checkbox-root="c1">
+            <input type="hidden" name="agree" value="" form="first" data-empty-value="agree" data-checkbox-empty-value-input="c1">
+            <input type="checkbox" name="agree" value="1" form="first" data-checkbox-hidden-input="c1">
+        </label>
+        <form id="first"></form><form id="second"></form>`;
+    const emptyValueInput = document.querySelector<HTMLInputElement>('[data-empty-value]')!;
+
+    instance = new Checkbox({ id: 'c1', name: 'agree', value: '1', form: 'first' });
+    instance.init();
+    expect(emptyValueInput.getAttribute('form')).toBe('first');
+
+    instance.updateProps({ form: 'second' });
+    await expect.poll(() => emptyValueInput.getAttribute('form')).toBe('second');
+});
