@@ -8,10 +8,13 @@ import {
     type ConverterMachineProps,
 } from '../../Client';
 
-// The scroll container is a CSS selector on the wire and the function Zag expects once converted.
 const tocPropConverters = {
+    // The scroll container is a CSS selector on the wire and the function Zag expects once converted.
     scrollEl: (selector: string | undefined) =>
         selector ? () => document.querySelector<HTMLElement>(selector) : undefined,
+    // PHP can't distinguish a list of objects from any other array for a bare `type="array"` prop,
+    // so this only tells TS what the wire value actually is.
+    items: (items: toc.TocItem[]) => items,
 } satisfies ClientPropConverterMap;
 
 registerClientPropConverters('toc', tocPropConverters);
@@ -22,32 +25,23 @@ declare module 'fluid-primitives' {
     }
 }
 
-/**
- * The props of the machine, with `items` left out: without it the machine runs on the rendered
- * `item` parts, so a template lists a heading only once.
- */
-export type TocProps = Omit<toc.Props, 'items'> & { items?: toc.TocItem[] };
-
-export class Toc extends Component<TocProps, toc.Api> {
+export class Toc extends Component<toc.Props, toc.Api> {
     static componentName = 'toc';
 
-    initMachine(props: TocProps): Machine<any> {
-        const [machineProps] = toc.splitProps(props as toc.Props);
+    initMachine(props: toc.Props): Machine<any> {
+        const [machineProps] = toc.splitProps(props);
         return new Machine(toc.machine, {
             ...machineProps,
-            items: props.items ?? this.readItems(),
+            // the machine scrolls the list and the page with this behavior, so a visitor who
+            // prefers reduced motion gets no animation whatever the prop says
+            ...(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches && {
+                scrollBehavior: 'instant',
+            }),
         });
     }
 
     initApi() {
         return toc.connect(this.machine.service, normalizeProps);
-    }
-
-    private readItems(): toc.TocItem[] {
-        return this.hydrator.queryAll<HTMLElement>('item').flatMap(el => {
-            const value = el.dataset.value;
-            return value === undefined ? [] : [{ value, depth: Number(el.dataset.depth) }];
-        });
     }
 
     private itemOf(value: string): toc.TocItem | undefined {

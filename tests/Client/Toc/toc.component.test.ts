@@ -60,7 +60,15 @@ function mountToc(props: Partial<ConstructorParameters<typeof Toc>[0]> = {}) {
         <div id="content">
             <h2 id="intro">Intro</h2><h3 id="install">Install</h3><h2 id="usage">Usage</h2><h2 id="unlisted">Unlisted</h2>
         </div>`;
-    toc = new Toc({ id: 't1', ...props }).init();
+    toc = new Toc({
+        id: 't1',
+        items: [
+            { value: 'intro', depth: 2 },
+            { value: 'install', depth: 3 },
+            { value: 'usage', depth: 2 },
+        ],
+        ...props,
+    }).init();
     const item = (value: string) =>
         document.querySelector<HTMLElement>(`[data-toc-item][data-value="${value}"]`)!;
     const link = (value: string) =>
@@ -76,14 +84,9 @@ function mountToc(props: Partial<ConstructorParameters<typeof Toc>[0]> = {}) {
     return { item, link, see };
 }
 
-test('lists the rendered item parts and highlights the ones whose heading is visible', async () => {
+test('highlights the items whose heading is visible', async () => {
     const { item, link, see } = mountToc();
 
-    expect(toc!.api.items).toEqual([
-        { value: 'intro', depth: 2 },
-        { value: 'install', depth: 3 },
-        { value: 'usage', depth: 2 },
-    ]);
     // only the headings of the listed items are observed
     expect(observers[0].observed.map(el => el.id)).toEqual(['intro', 'install', 'usage']);
     expect(item('install').style.getPropertyValue('--depth')).toBe('3');
@@ -99,16 +102,35 @@ test('lists the rendered item parts and highlights the ones whose heading is vis
 });
 
 test('observes inside the scroll container once its selector is converted', () => {
-    const wire = applyClientPropConverters('toc', { id: 't1', scrollEl: '#content' });
+    const wire = applyClientPropConverters('toc', {
+        id: 't1',
+        items: [{ value: 'intro', depth: 2 }],
+        scrollEl: '#content',
+    });
     mountToc(wire);
 
     expect(observers[0].options?.root).toBe(document.getElementById('content'));
-    expect(applyClientPropConverters('toc', { id: 't1' }).scrollEl).toBeUndefined();
+    expect(applyClientPropConverters('toc', { id: 't1', items: [] }).scrollEl).toBeUndefined();
 });
 
-test('runs on the items it is given instead of the rendered ones', () => {
-    mountToc({ items: [{ value: 'usage', depth: 2 }] });
+test('scrolls without animation for a visitor who prefers reduced motion', () => {
+    const scrolls: ScrollIntoViewOptions[] = [];
+    Element.prototype.scrollIntoView = function (options?: boolean | ScrollIntoViewOptions) {
+        scrolls.push(options as ScrollIntoViewOptions);
+    };
+    const prefersReducedMotion = (reduce: boolean) =>
+        vi.stubGlobal('matchMedia', (query: string) => ({
+            matches: reduce && query === '(prefers-reduced-motion: reduce)',
+        }));
 
-    expect(toc!.api.items).toEqual([{ value: 'usage', depth: 2 }]);
-    expect(observers[0].observed.map(el => el.id)).toEqual(['usage']);
+    prefersReducedMotion(true);
+    mountToc();
+    toc!.api.scrollTo('usage');
+    toc!.destroy();
+
+    prefersReducedMotion(false);
+    mountToc();
+    toc!.api.scrollTo('usage');
+
+    expect(scrolls.map(options => options.behavior)).toEqual(['instant', 'smooth']);
 });

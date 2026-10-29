@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Tests\Functional\Components;
 
+use Jramke\FluidPrimitives\Exception\InvalidPropValueException;
 use Jramke\FluidPrimitives\Exception\TemplateErrorException;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
@@ -14,15 +15,13 @@ final class TocRenderingTest extends FunctionalTestCase
     #[Test]
     public function rendersEveryPartAsItsElementWithTheRootId(): void
     {
-        $html = $this->renderTemplate(
-            '<primitives:toc.root rootId="my-toc">' .
-            '<primitives:toc.title>On this page</primitives:toc.title>' .
-            '<primitives:toc.list>' .
-            '<primitives:toc.indicator />' .
-            '<primitives:toc.item value="intro"><primitives:toc.link>Intro</primitives:toc.link></primitives:toc.item>' .
-            '</primitives:toc.list>' .
-            '</primitives:toc.root>',
-        );
+        $html = $this->renderTemplate('<primitives:toc.root rootId="my-toc" items="{items}">' .
+        '<primitives:toc.title>On this page</primitives:toc.title>' .
+        '<primitives:toc.list>' .
+        '<primitives:toc.indicator />' .
+        '<primitives:toc.item value="intro"><primitives:toc.link>Intro</primitives:toc.link></primitives:toc.item>' .
+        '</primitives:toc.list>' .
+        '</primitives:toc.root>', ['items' => [['value' => 'intro', 'depth' => 2]]]);
 
         $tags = [
             'root' => 'nav',
@@ -45,7 +44,8 @@ final class TocRenderingTest extends FunctionalTestCase
     public function rendersTheTitleAsTheHeadingOfItsLevel(): void
     {
         $html = $this->renderTemplate(
-            '<primitives:toc.root><primitives:toc.title level="4">Contents</primitives:toc.title></primitives:toc.root>',
+            '<primitives:toc.root items="{items}"><primitives:toc.title level="4">Contents</primitives:toc.title></primitives:toc.root>',
+            ['items' => []],
         );
 
         $this->assertSame('h4', $this->elementWith($html, 'data-toc-title')->tag);
@@ -55,7 +55,7 @@ final class TocRenderingTest extends FunctionalTestCase
     #[Test]
     public function carriesTheValueAndTheDepthOfAnItemAndLinksToItsHeading(): void
     {
-        $html = $this->renderTemplate($this->toc('', ['intro' => null, 'install' => 3, 'a-b' => 4]));
+        $html = $this->renderToc('', ['intro' => 2, 'install' => 3, 'a-b' => 4]);
 
         $items = $this->elementsByValue($html, 'data-toc-item');
         $this->assertSame(['intro', 'install', 'a-b'], array_keys($items));
@@ -72,12 +72,12 @@ final class TocRenderingTest extends FunctionalTestCase
     #[Test]
     public function marksTheDefaultActiveItemsWithTheirPositionAmongThem(): void
     {
-        $html = $this->renderTemplate($this->toc('defaultActiveIds="{0: \'b\', 1: \'c\'}"', [
-            'a' => null,
-            'b' => null,
-            'c' => null,
-            'd' => null,
-        ]));
+        $html = $this->renderToc('defaultActiveIds="{0: \'b\', 1: \'c\'}"', [
+            'a' => 2,
+            'b' => 2,
+            'c' => 2,
+            'd' => 2,
+        ]);
 
         $states = [];
         foreach (['data-toc-item', 'data-toc-link'] as $attribute) {
@@ -104,24 +104,35 @@ final class TocRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function anItemThatIsNotInTheItemsOfTheRootThrows(): void
+    {
+        $this->assertRenderThrows(
+            InvalidPropValueException::class,
+            'The toc item "missing" is not one of the items',
+            fn() => $this->renderTemplate('<primitives:toc.root items="{items}">' .
+            '<primitives:toc.item value="missing" /></primitives:toc.root>', [
+                'items' => [['value' => 'intro', 'depth' => 2]],
+            ]),
+        );
+    }
+
+    #[Test]
     public function aLinkOutsideAnItemThrows(): void
     {
         $this->assertRenderThrows(
             TemplateErrorException::class,
             'must only be used inside a toc.item component',
-            fn() => $this->renderTemplate(
-                '<primitives:toc.root><primitives:toc.link>x</primitives:toc.link></primitives:toc.root>',
-            ),
+            fn() => $this->renderTemplate('<primitives:toc.root items="{items}"><primitives:toc.link>x</primitives:toc.link></primitives:toc.root>', ['items' => []]),
         );
     }
 
     #[Test]
     public function registersOneRootWithItsClientProps(): void
     {
-        $this->renderTemplate($this->toc('scrollEl="#content" rootMargin="0px" threshold="0.5" autoScroll="{false}" defaultActiveIds="{0: \'a\'}"', [
-            'a' => null,
+        $this->renderToc('scrollEl="#content" rootMargin="0px" threshold="0.5" autoScroll="{false}" defaultActiveIds="{0: \'a\'}"', [
+            'a' => 2,
             'b' => 3,
-        ]));
+        ]);
 
         $tocs = HydrationRegistry::getInstance()->getAll()['primitives']['toc'];
 
@@ -134,31 +145,30 @@ final class TocRenderingTest extends FunctionalTestCase
         $this->assertFalse($props['autoScroll']);
         $this->assertSame('smooth', $props['scrollBehavior']);
         $this->assertSame(['a'], $props['defaultActiveIds']);
+        $this->assertSame([['value' => 'a', 'depth' => 2], ['value' => 'b', 'depth' => 3]], $props['items']);
     }
 
     /**
-     * @param array<string, int|null> $items heading id => depth (null for the default)
+     * @param array<string, int> $items heading id => depth
      */
-    private function toc(string $rootArguments, array $items): string
+    private function renderToc(string $rootArguments, array $items): string
     {
+        $entries = [];
         $markup = '';
         foreach ($items as $value => $depth) {
+            $entries[] = ['value' => $value, 'depth' => $depth];
             $markup .=
                 '<primitives:toc.item value="' .
                 $value .
-                '"' .
-                ($depth === null ? '' : ' depth="' . $depth . '"') .
-                '><primitives:toc.link>' .
+                '"><primitives:toc.link>' .
                 $value .
                 '</primitives:toc.link></primitives:toc.item>';
         }
 
-        return (
-            '<primitives:toc.root ' .
-            $rootArguments .
-            '><primitives:toc.list>' .
-            $markup .
-            '</primitives:toc.list></primitives:toc.root>'
-        );
+        return $this->renderTemplate('<primitives:toc.root items="{items}" ' .
+        $rootArguments .
+        '><primitives:toc.list>' .
+        $markup .
+        '</primitives:toc.list></primitives:toc.root>', ['items' => $entries]);
     }
 }

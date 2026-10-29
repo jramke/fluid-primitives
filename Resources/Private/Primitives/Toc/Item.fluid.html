@@ -1,12 +1,11 @@
-<ui:prop name="value" type="string" optional="{true}" context="{true}" requiredAtRuntime="{true}" description="The id of the heading the item points to." />
-<ui:prop name="depth" type="integer" optional="{true}" context="{true}" default="2" description="The nesting depth of the heading, e.g. `2` for an `h2` and `3` for an `h3`. It is available as the `--depth` CSS variable to indent the item." />
+<ui:prop name="value" type="string" optional="{true}" context="{true}" requiredAtRuntime="{true}" description="The id of the heading the item points to. It has to be one of the `items` of the root, which also set the depth of the item. The depth is available as the `--depth` CSS variable to indent the item." />
 
 <f:variable name="itemState">{context -> ui:call(method: 'getItemState', arguments: {0: {value: value}})}</f:variable>
 
-<f:variable name="refData" value="{depth: depth, active: itemState.active, first: itemState.first, last: itemState.last}" />
+<f:variable name="refData" value="{depth: itemState.depth, active: itemState.active, first: itemState.first, last: itemState.last}" />
 
 <li
-    style="--depth: {depth};"
+    style="--depth: {itemState.depth};"
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'item' , value: value, data: refData )}
     {ui:attributes()}
