@@ -9,6 +9,7 @@ import {
     type ConverterMachineProps,
 } from '../../Client';
 import type { FieldClientApi } from '../Field/src/field.handle';
+import { resolveTranslations } from './src/number-input.translations';
 
 // PHP can't distinguish a list-shaped array from an object-shaped one for a bare `type="array"`
 // prop (see WireTypeResolver), so `formatOptions` resolves to `unknown` on the wire - this converter
@@ -16,6 +17,8 @@ import type { FieldClientApi } from '../Field/src/field.handle';
 // transforming the value itself.
 const numberInputPropConverters = {
     formatOptions: (formatOptions: numberInput.Props['formatOptions']) => formatOptions,
+    // `valueText` is a function in Zag, a text with a `%value%` placeholder on the wire.
+    translations: resolveTranslations,
 } satisfies ClientPropConverterMap;
 
 registerClientPropConverters('numberInput', numberInputPropConverters);

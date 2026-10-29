@@ -17,6 +17,12 @@
             <trans-unit id="select.clearTriggerLabel" approved="yes">
                 <target>Wert löschen</target>
             </trans-unit>
+            <trans-unit id="select.itemAnnouncement" approved="yes">
+                <target>%label%</target>
+            </trans-unit>
+            <trans-unit id="select.itemAnnouncementSelected" approved="yes">
+                <target>%label%, ausgewählt</target>
+            </trans-unit>
             <trans-unit id="popover.closeTriggerLabel" approved="yes">
                 <target>Schließen</target>
             </trans-unit>

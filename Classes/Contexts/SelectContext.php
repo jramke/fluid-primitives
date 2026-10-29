@@ -66,12 +66,14 @@ class SelectContext extends AbstractComponentContext
 
     #[ExposeToClient]
     /**
-     * @return array{clearTriggerLabel: string}
+     * @return array{clearTriggerLabel: string, itemAnnouncement: string, itemAnnouncementSelected: string}
      */
     public function getTranslations(): array
     {
         return $this->translationsWithDefaults([
             'clearTriggerLabel' => 'select.clearTriggerLabel',
+            'itemAnnouncement' => 'select.itemAnnouncement',
+            'itemAnnouncementSelected' => 'select.itemAnnouncementSelected',
         ]);
     }
 

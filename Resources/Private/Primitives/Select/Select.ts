@@ -10,6 +10,7 @@ import {
 } from '../../Client';
 import { getListCollectionFromHydrationData } from '../../Client/src/lib/hydration';
 import type { FieldClientApi } from '../Field/src/field.handle';
+import { resolveTranslations } from './src/select.translations';
 
 // Wire shape -> real @zag-js/collection ListCollection instance. Registered here (not in
 // transformProps) so mountAll/mount convert it before the component is even constructed - see
@@ -22,6 +23,8 @@ const selectPropConverters = {
     // prop (see WireTypeResolver), so `positioning` resolves to `unknown` on the wire - this just
     // tells TS what it actually is (a real @zag-js/popper PositioningOptions object).
     positioning: (positioning: select.Props['positioning']) => positioning,
+    // `itemAnnouncement` is a function in Zag, a text with placeholders on the wire.
+    translations: resolveTranslations,
 } satisfies ClientPropConverterMap;
 
 registerClientPropConverters('select', selectPropConverters);

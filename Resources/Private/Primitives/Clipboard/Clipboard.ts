@@ -1,23 +1,20 @@
 import * as clipboard from '@zag-js/clipboard';
-import { Component, Machine, mergeProps, normalizeProps } from '../../Client';
+import { Component, Machine, normalizeProps } from '../../Client';
+import { resolveTranslations, type ClipboardTranslationTexts } from './src/clipboard.translations';
 
-// Zag's own `translations` is a single `triggerLabel: (copied) => string` callback - Fluid can't
-// author a callback, so `ClipboardContext::getTranslations()` sends two plain strings instead
-// (`triggerLabelIdle`/`triggerLabelCopied`), picked between in render() below rather than forwarded
-// to Zag's machine as-is.
 type ClipboardProps = Omit<clipboard.Props, 'translations'> & {
-    translations?: { triggerLabelIdle?: string; triggerLabelCopied?: string };
+    translations?: ClipboardTranslationTexts;
 };
 
 export class Clipboard extends Component<ClipboardProps, clipboard.Api> {
     static componentName = 'clipboard';
 
-    private translations: ClipboardProps['translations'];
-
     initMachine(props: ClipboardProps): Machine<any> {
         const { translations, ...rest } = props;
-        this.translations = translations;
-        const [machineProps] = clipboard.contextProps(rest);
+        const [machineProps] = clipboard.contextProps({
+            ...rest,
+            translations: resolveTranslations(translations),
+        });
         return new Machine(clipboard.machine, machineProps);
     }
 
@@ -43,15 +40,6 @@ export class Clipboard extends Component<ClipboardProps, clipboard.Api> {
         );
 
         const triggerEl = this.hydrator.query('trigger');
-        if (triggerEl) {
-            const translations = this.translations;
-            const mergedProps = mergeProps(this.api.getTriggerProps(), {
-                'aria-label': this.api.copied
-                    ? translations?.triggerLabelCopied || null
-                    : translations?.triggerLabelIdle || null,
-            });
-
-            this.spreadProps(triggerEl, mergedProps);
-        }
+        if (triggerEl) this.spreadProps(triggerEl, this.api.getTriggerProps());
     }
 }

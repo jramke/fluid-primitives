@@ -1,3 +1,4 @@
+import { fillPlaceholders, type TranslationText } from '../../../Client';
 import type { FieldConstraintViolation } from '../../Field/src/field.types';
 
 /**
@@ -8,10 +9,20 @@ import type { FieldConstraintViolation } from '../../Field/src/field.types';
  */
 export type MaxLengthBehavior = 'block' | 'warn' | 'invalid';
 
+/** What the word count part is built from. */
+export interface CountDetails {
+    /** The number of characters. */
+    count: number;
+    /** The `maxLength`. */
+    max: number;
+    /** The number of characters over `maxLength`, `0` when within it. */
+    over: number;
+}
+
 /** The texts of the word count part, shared by the Input and the Textarea. */
 export interface CountTranslations {
-    wordCount?: string;
-    wordCountOver?: string;
+    wordCount?: TranslationText<CountDetails>;
+    wordCountOver?: TranslationText<CountDetails>;
 }
 
 export function getOverLimit(
@@ -32,11 +43,9 @@ export function formatCountText(
     const template = translations?.wordCount;
     if (!template || maxLength == null) return null;
 
-    const text = over > 0 && translations?.wordCountOver ? translations.wordCountOver : template;
-    return text
-        .replaceAll('%count%', String(count))
-        .replaceAll('%max%', String(maxLength))
-        .replaceAll('%over%', String(over));
+    const entry = over > 0 && translations?.wordCountOver ? translations.wordCountOver : template;
+    const details = { count, max: maxLength, over };
+    return typeof entry === 'function' ? entry(details) : fillPlaceholders(entry, details);
 }
 
 /** The `tooLong` violation a surrounding field reports for `maxLengthBehavior="invalid"`, else `null`. */

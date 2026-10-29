@@ -30,4 +30,6 @@ export { normalizeProps } from './normalize-props';
 export { spreadProps, spreadTextControlProps } from './spread-props';
 export { Template } from './template';
 export type { TemplateOptions } from './template';
+export { fillPlaceholders, resolveTranslations } from './translations';
+export type { PlaceholderValues, TranslationText } from './translations';
 export { uid } from './uid';
