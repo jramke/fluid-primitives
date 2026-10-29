@@ -22,19 +22,27 @@ declare module 'fluid-primitives' {
     }
 }
 
-export class Toc extends Component<toc.Props, toc.Api> {
+/**
+ * The props of the machine, with `items` left out: without it the machine runs on the rendered
+ * `item` parts, so a template lists a heading only once.
+ */
+export type TocProps = Omit<toc.Props, 'items'> & { items?: toc.TocItem[] };
+
+export class Toc extends Component<TocProps, toc.Api> {
     static componentName = 'toc';
 
-    initMachine(props: toc.Props): Machine<any> {
-        const [machineProps] = toc.splitProps(props);
-        return new Machine(toc.machine, { ...machineProps, items: this.readItems() });
+    initMachine(props: TocProps): Machine<any> {
+        const [machineProps] = toc.splitProps(props as toc.Props);
+        return new Machine(toc.machine, {
+            ...machineProps,
+            items: props.items ?? this.readItems(),
+        });
     }
 
     initApi() {
         return toc.connect(this.machine.service, normalizeProps);
     }
 
-    // The items are the rendered `item` parts, so a template lists a heading only once.
     private readItems(): toc.TocItem[] {
         return this.hydrator.queryAll<HTMLElement>('item').flatMap(el => {
             const value = el.dataset.value;

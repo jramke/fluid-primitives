@@ -60,7 +60,7 @@ function mountToc(props: Partial<ConstructorParameters<typeof Toc>[0]> = {}) {
         <div id="content">
             <h2 id="intro">Intro</h2><h3 id="install">Install</h3><h2 id="usage">Usage</h2><h2 id="unlisted">Unlisted</h2>
         </div>`;
-    toc = new Toc({ id: 't1', items: [], ...props }).init();
+    toc = new Toc({ id: 't1', ...props }).init();
     const item = (value: string) =>
         document.querySelector<HTMLElement>(`[data-toc-item][data-value="${value}"]`)!;
     const link = (value: string) =>
@@ -104,4 +104,11 @@ test('observes inside the scroll container once its selector is converted', () =
 
     expect(observers[0].options?.root).toBe(document.getElementById('content'));
     expect(applyClientPropConverters('toc', { id: 't1' }).scrollEl).toBeUndefined();
+});
+
+test('runs on the items it is given instead of the rendered ones', () => {
+    mountToc({ items: [{ value: 'usage', depth: 2 }] });
+
+    expect(toc!.api.items).toEqual([{ value: 'usage', depth: 2 }]);
+    expect(observers[0].observed.map(el => el.id)).toEqual(['usage']);
 });

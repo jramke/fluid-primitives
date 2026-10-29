@@ -3,7 +3,7 @@
 <ui:prop name="threshold" type="float|float[]" optional="{true}" client="{true}" default="0" description="The threshold of the IntersectionObserver. `0` makes a heading active as soon as a single pixel of it is inside the root margin." />
 <ui:prop name="scrollEl" type="string" optional="{true}" client="{true}" description="A CSS selector of the scroll container the headings sit in. Defaults to the viewport of the document." />
 <ui:prop name="autoScroll" type="boolean" optional="{true}" client="{true}" default="{true}" description="Whether the table of contents scrolls the first active item into view when the active headings change." />
-<ui:prop name="scrollBehavior" type="Jramke\FluidPrimitives\Enum\ScrollBehavior" optional="{true}" client="{true}" default="{f:constant(name: 'Jramke\FluidPrimitives\Enum\ScrollBehavior::Smooth')}" description="The scroll behavior of the auto-scroll and of a click on a link, when `scrollEl` is set." />
+<ui:prop name="scrollBehavior" type="Jramke\FluidPrimitives\Enum\ScrollBehavior" optional="{true}" client="{true}" default="{f:constant(name: 'Jramke\FluidPrimitives\Enum\ScrollBehavior::Smooth')}" description="The scroll behavior of the auto-scroll of the list and of a click on a link. A link only scrolls by itself when `scrollEl` is set, otherwise the browser follows its hash." />
 
 <nav
     {f:if(condition: class, then: 'class="{class}"' )}
