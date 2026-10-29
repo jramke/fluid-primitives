@@ -33,3 +33,28 @@ test('shows the selected label and the placeholder as text, never as markup', ()
             expect(valueText.querySelector('i')).toBeNull();
         });
 });
+
+const items = [
+    { label: 'A', value: 'a' },
+    { label: 'B', value: 'b' },
+];
+
+function renderHiddenSelect(name: string) {
+    document.body.innerHTML = `
+        <form><div data-select-root="s1">
+            <select name="${name}" data-select-hidden-select="s1">
+                <option value="" hidden></option>
+                ${items.map(item => `<option value="${item.value}">${item.label}</option>`).join('')}
+            </select>
+        </div></form>`;
+    return () => [...new FormData(document.querySelector('form')!).entries()];
+}
+
+test('an empty select submits its name with an empty value right after it hydrates', () => {
+    const entries = renderHiddenSelect('tag');
+
+    instance = new Select({ id: 's1', collection: select.collection({ items }), name: 'tag' });
+    instance.init();
+
+    expect(entries()).toEqual([['tag', '']]);
+});

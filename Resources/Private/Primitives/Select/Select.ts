@@ -55,6 +55,14 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
         return select.connect(this.machine.service, normalizeProps);
     }
 
+    // Zag's entry action empties an empty single select (`selectedIndex = -1`) after the first
+    // render, which drops its name from the form: render again to select the placeholder option.
+    init(): this {
+        super.init();
+        this.render();
+        return this;
+    }
+
     render = () => {
         this.subscribeToFieldService();
 
