@@ -42,7 +42,7 @@ const items = [
 function renderHiddenSelect(name: string, multiple: boolean) {
     document.body.innerHTML = `
         <form><div data-select-root="s1">
-            ${multiple ? `<input type="hidden" name="tags" value="" data-empty-value="${name}" data-select-empty-value-input="s1">` : ''}
+            <input type="hidden" name="${name.replace(/\[\]$/, '')}" value="" data-empty-value="${name}" data-select-empty-value-input="s1">
             <select name="${name}" ${multiple ? 'multiple' : ''} data-select-hidden-select="s1">
                 <option value="" hidden></option>
                 ${items.map(item => `<option value="${item.value}">${item.label}</option>`).join('')}
@@ -51,13 +51,18 @@ function renderHiddenSelect(name: string, multiple: boolean) {
     return () => [...new FormData(document.querySelector('form')!).entries()];
 }
 
-test('an empty select submits its name with an empty value right after it hydrates', () => {
+test('an empty single select submits its empty value through the empty-value input, and only while empty', async () => {
     const entries = renderHiddenSelect('tag', false);
 
     instance = new Select({ id: 's1', collection: select.collection({ items }), name: 'tag' });
     instance.init();
-
     expect(entries()).toEqual([['tag', '']]);
+
+    instance.api.setValue(['a']);
+    await expect.poll(entries).toEqual([['tag', 'a']]);
+
+    instance.api.clearValue();
+    await expect.poll(entries).toEqual([['tag', '']]);
 });
 
 test('a multiple select submits its empty value without the brackets, and only while empty', async () => {

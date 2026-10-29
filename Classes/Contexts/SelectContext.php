@@ -31,14 +31,6 @@ class SelectContext extends AbstractComponentContext
         return $this->translator;
     }
 
-    /**
-     * A single select submits `''` through its placeholder option, only a multiple one needs the input.
-     */
-    protected function rendersEmptyValueInput(): bool
-    {
-        return Typed::bool($this->get('multiple'));
-    }
-
     #[ExposeToClient(excludeIfNull: true)]
     /**
      * @return list<string>|null

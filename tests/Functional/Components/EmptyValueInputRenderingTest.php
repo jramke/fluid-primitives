@@ -56,8 +56,8 @@ final class EmptyValueInputRenderingTest extends FunctionalTestCase
             ['tags', true],
             'data-checkbox-hidden-input',
         ];
-        // a single select submits `''` through its placeholder option
-        yield 'select' => [sprintf($select, 'name="tag"'), null, 'data-select-hidden-select'];
+        // Zag leaves an empty single select without a selected option, so it needs the input as well
+        yield 'select' => [sprintf($select, 'name="tag"'), ['tag', false], 'data-select-hidden-select'];
         yield 'empty multiple select' => [
             sprintf($select, 'name="tags[]" multiple="{true}"'),
             ['tags', false],
