@@ -1,20 +1,32 @@
 import * as clipboard from '@zag-js/clipboard';
-import { Component, Machine, normalizeProps } from '../../Client';
+import {
+    Component,
+    Machine,
+    normalizeProps,
+    registerClientPropConverters,
+    type ClientPropConverterMap,
+    type ConverterMachineProps,
+} from '../../Client';
 import { resolveTranslations, type ClipboardTranslationTexts } from './src/clipboard.translations';
 
-type ClipboardProps = Omit<clipboard.Props, 'translations'> & {
-    translations?: ClipboardTranslationTexts;
-};
+// `triggerLabel` is a function of the copied state in Zag, a text per state on the wire.
+const clipboardPropConverters = {
+    translations: (texts: ClipboardTranslationTexts | undefined) => resolveTranslations(texts),
+} satisfies ClientPropConverterMap;
 
-export class Clipboard extends Component<ClipboardProps, clipboard.Api> {
+registerClientPropConverters('clipboard', clipboardPropConverters);
+
+declare module 'fluid-primitives' {
+    interface HydrationPropsOverrides {
+        clipboard: ConverterMachineProps<typeof clipboardPropConverters>;
+    }
+}
+
+export class Clipboard extends Component<clipboard.Props, clipboard.Api> {
     static componentName = 'clipboard';
 
-    initMachine(props: ClipboardProps): Machine<any> {
-        const { translations, ...rest } = props;
-        const [machineProps] = clipboard.contextProps({
-            ...rest,
-            translations: resolveTranslations(translations),
-        });
+    initMachine(props: clipboard.Props): Machine<any> {
+        const [machineProps] = clipboard.contextProps(props);
         return new Machine(clipboard.machine, machineProps);
     }
 
