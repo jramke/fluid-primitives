@@ -14,9 +14,13 @@ function getArgumentPrefix(url: string): string | null {
     return null;
 }
 
-/** Bracket notation (`demand[city]`, `ids[0]`) is what Extbase's argument mapper reads. */
+/**
+ * Bracket notation (`demand[city]`, `ids[0]`) is what Extbase's argument mapper reads. An empty array
+ * goes as `''`, which Extbase maps to an empty array or ObjectStorage: no entry would leave it unchanged.
+ */
 function flatten(value: unknown, key: string): [string, string | Blob][] {
     if (value == null) return [];
+    if (Array.isArray(value) && value.length === 0) return key ? [[key, '']] : [];
     if (Array.isArray(value) || value.constructor === Object) {
         return Object.entries(value).flatMap(([k, v]) => flatten(v, key ? `${key}[${k}]` : k));
     }

@@ -79,12 +79,18 @@ export function getFieldValueFromContainer(container: ParentNode, fieldName: str
         `textarea[name="${CSS.escape(normalizedFieldName)}"]`,
         `textarea[name="${CSS.escape(normalizedFieldName)}[]"]`,
     ].join(', ');
-    const elements = Array.from(container.querySelectorAll(selector)) as Array<
+    const matches = Array.from(container.querySelectorAll(selector)) as Array<
         HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
     >;
 
-    if (elements.length === 0) {
+    if (matches.length === 0) {
         return null;
+    }
+
+    // An empty-value input (see HasEmptyValueInputTrait) stands for "nothing" next to the control.
+    const elements = matches.filter(el => !el.hasAttribute('data-empty-value'));
+    if (elements.length === 0) {
+        return matches[0].getAttribute('data-empty-value')?.endsWith('[]') ? [] : '';
     }
 
     if (elements.every(el => el instanceof HTMLInputElement && el.type === 'checkbox')) {

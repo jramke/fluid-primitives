@@ -7,12 +7,7 @@ import { trimArraySuffix } from './form.path';
 import { getFieldMachinesFor, renameFieldMachineForForm } from './form.registry';
 import type { FormErrors, FormSchema } from './form.types';
 import { getCurrentErrorForField, validateWithValidation } from './form.validation';
-import { createFormValues } from './form.values';
-
-export function getFormData(scope: Scope) {
-    const form = dom.getFormEl(scope);
-    return form ? new FormData(form) : new FormData();
-}
+import { readFormValues } from './form.values';
 
 /**
  * The messages the form has for one field right now: a server error whose captured value still
@@ -23,7 +18,7 @@ export function getFieldMessages(
     fieldName: string
 ): string[] {
     const normalizedFieldName = trimArraySuffix(fieldName);
-    const values = createFormValues(getFormData(form.scope));
+    const values = readFormValues(dom.getFormEl(form.scope));
 
     const serverError = getCurrentErrorForField(
         form.refs.get('serverErrors'),

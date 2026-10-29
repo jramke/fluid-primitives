@@ -122,3 +122,14 @@ test('a 422 with a JSON object throws the messages by property path, any other r
         expect(await extbase.post(ACTION_URL, {})).toBe(response);
     }
 });
+
+test('post sends an empty list as an empty value, which Extbase maps to an empty array', async () => {
+    const calls = stubFetch(() => new Response('{}'));
+    await extbase.post('https://example.com/api', { tags: [], people: [{ tags: [] }] });
+
+    const body = calls[0].init.body as FormData;
+    expect([...body.entries()]).toEqual([
+        ['tags', ''],
+        ['people[0][tags]', ''],
+    ]);
+});

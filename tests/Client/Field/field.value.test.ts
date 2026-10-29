@@ -29,6 +29,21 @@ describe('toComparableString', () => {
 });
 
 describe('field value from the DOM', () => {
+    test('reads an empty-value input as nothing next to its control, and as empty on its own', () => {
+        root.innerHTML = `
+            <input type="hidden" name="terms" value="" data-empty-value="terms">
+            <input type="checkbox" name="terms" value="1">
+            <input type="hidden" name="tags" value="" data-empty-value="tags[]">
+        `;
+        const checkbox = root.querySelector<HTMLInputElement>('input[type="checkbox"]')!;
+
+        expect(getCurrentFieldValue(root, 'terms', undefined)).toBeNull();
+        checkbox.checked = true;
+        expect(getCurrentFieldValue(root, 'terms', undefined)).toBe('1');
+        // not the default value: the field is empty now
+        expect(getCurrentFieldValue(root, 'tags[]', ['a'])).toEqual([]);
+    });
+
     test('reads a checkbox by its checked state, not by its constant value', () => {
         root.innerHTML = '<input type="checkbox" name="terms" value="1">';
         const checkbox = root.querySelector('input')!;

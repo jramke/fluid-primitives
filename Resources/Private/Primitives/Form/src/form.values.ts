@@ -6,12 +6,36 @@ import {
 } from './form.path';
 import type { FormValueLeaf, FormValues, FormValuesObject, FormValueTree } from './form.types';
 
-export function createFormValues(formData: FormData): FormValues {
+/**
+ * The values of a form. An enabled empty-value input of a `name[]` field (`data-empty-value`, see
+ * HasEmptyValueInputTrait) submits `''` under `name`, which Extbase maps to an empty array: here it is `[]`.
+ */
+export function readFormValues(formEl: HTMLFormElement | null): FormValues {
+    if (!formEl) return createFormValues(new FormData());
+
+    const emptyArrayNames = new Set(
+        Array.from(formEl.elements)
+            .filter(
+                (el): el is HTMLInputElement =>
+                    el instanceof HTMLInputElement &&
+                    !el.disabled &&
+                    !!el.dataset.emptyValue?.endsWith('[]')
+            )
+            .map(el => el.name)
+    );
+
+    return createFormValues(new FormData(formEl), emptyArrayNames);
+}
+
+export function createFormValues(
+    formData: FormData,
+    emptyArrayNames: ReadonlySet<string> = new Set()
+): FormValues {
     let cachedObject: FormValuesObject | null = null;
 
     const getObject = () => {
         if (cachedObject === null) {
-            cachedObject = formDataToObject(formData);
+            cachedObject = formDataToObject(formData, emptyArrayNames);
         }
 
         return cachedObject;
@@ -19,11 +43,11 @@ export function createFormValues(formData: FormData): FormValues {
 
     return {
         get(path) {
-            return getFieldValues(formData, path)[0] ?? null;
+            return getFieldValues(formData, path, emptyArrayNames)[0] ?? null;
         },
 
         getAll(path) {
-            return [...getFieldValues(formData, path)];
+            return [...getFieldValues(formData, path, emptyArrayNames)];
         },
 
         has(path) {
@@ -47,7 +71,10 @@ export function getFieldErrorValue(
     return toFieldErrorValue(values.pick(fieldName));
 }
 
-function formDataToObject(formData: FormData): FormValuesObject {
+function formDataToObject(
+    formData: FormData,
+    emptyArrayNames: ReadonlySet<string>
+): FormValuesObject {
     const fieldNames = new Set(Array.from(formData.keys(), trimArraySuffix));
 
     const dataObject: FormValuesObject = {};
@@ -56,20 +83,28 @@ function formDataToObject(formData: FormData): FormValuesObject {
         setValueAtFieldPath(
             dataObject,
             fieldName,
-            getFieldFormDataValue(formData, fieldName) ?? ''
+            getFieldFormDataValue(formData, fieldName, emptyArrayNames) ?? ''
         );
     }
 
     return dataObject;
 }
 
-function getFieldFormDataValue(formData: FormData, fieldName: string) {
-    const { entries, isArrayValue } = readFieldEntries(formData, fieldName);
+function getFieldFormDataValue(
+    formData: FormData,
+    fieldName: string,
+    emptyArrayNames: ReadonlySet<string>
+) {
+    const { entries, isArrayValue } = readFieldEntries(formData, fieldName, emptyArrayNames);
     return isArrayValue ? entries : (entries[0] ?? null);
 }
 
-function getFieldValues(formData: FormData, fieldName: string): FormValueLeaf[] {
-    return readFieldEntries(formData, fieldName).entries;
+function getFieldValues(
+    formData: FormData,
+    fieldName: string,
+    emptyArrayNames: ReadonlySet<string>
+): FormValueLeaf[] {
+    return readFieldEntries(formData, fieldName, emptyArrayNames).entries;
 }
 
 /**
@@ -78,9 +113,12 @@ function getFieldValues(formData: FormData, fieldName: string): FormValueLeaf[] 
  */
 function readFieldEntries(
     formData: FormData,
-    fieldName: string
+    fieldName: string,
+    emptyArrayNames: ReadonlySet<string>
 ): { entries: FormValueLeaf[]; isArrayValue: boolean } {
     const normalizedFieldName = trimArraySuffix(fieldName);
+    if (emptyArrayNames.has(normalizedFieldName)) return { entries: [], isArrayValue: true };
+
     const directEntries = formData.getAll(normalizedFieldName);
     const bracketEntries = formData.getAll(`${normalizedFieldName}[]`);
     const entries = directEntries.length > 0 ? directEntries : bracketEntries;
