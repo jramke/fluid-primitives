@@ -14,7 +14,7 @@ class TocContext extends AbstractComponentContext
      */
     public function getItemState(array $item): object
     {
-        $activeIds = array_values(Typed::arrayOrNull($this->get('defaultActiveIds')) ?? []);
+        $activeIds = array_values(Typed::array($this->get('defaultActiveIds')));
         $active = in_array($item['value'], $activeIds, strict: true);
 
         return (object)[
@@ -29,11 +29,18 @@ class TocContext extends AbstractComponentContext
     {
         // The entries of the items prop are template data, Typed narrows each one below.
         // @mago-expect analysis:mixed-assignment
-        foreach (Typed::arrayOrNull($this->get('items')) ?? [] as $entry) {
-            $entry = Typed::arrayOrNull($entry) ?? [];
-            if (Typed::stringOrNull($entry['value'] ?? null) === $value) {
-                return Typed::int($entry['depth'] ?? null, 2);
+        foreach (Typed::array($this->get('items')) as $entry) {
+            $entry = Typed::array($entry);
+            if (Typed::string($entry['value'] ?? null) !== $value) {
+                continue;
             }
+
+            return (
+                Typed::intOrNull($entry['depth'] ?? null) ?? throw new InvalidPropValueException(
+                    sprintf('The entry "%s" of the toc items needs an integer depth, like 2 for an h2.', $value),
+                    1_788_100_053,
+                )
+            );
         }
 
         throw new InvalidPropValueException(

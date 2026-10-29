@@ -117,6 +117,17 @@ final class TocRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function anItemWhoseEntryHasNoDepthThrows(): void
+    {
+        $this->assertRenderThrows(
+            InvalidPropValueException::class,
+            'The entry "intro" of the toc items needs an integer depth',
+            fn() => $this->renderTemplate('<primitives:toc.root items="{items}">' .
+            '<primitives:toc.item value="intro" /></primitives:toc.root>', ['items' => [['value' => 'intro']]]),
+        );
+    }
+
+    #[Test]
     public function aLinkOutsideAnItemThrows(): void
     {
         $this->assertRenderThrows(
