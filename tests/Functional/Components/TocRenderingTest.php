@@ -42,6 +42,17 @@ final class TocRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function rendersTheTitleAsTheHeadingOfItsLevel(): void
+    {
+        $html = $this->renderTemplate(
+            '<primitives:toc.root><primitives:toc.title level="4">Contents</primitives:toc.title></primitives:toc.root>',
+        );
+
+        $this->assertSame('h4', $this->elementWith($html, 'data-toc-title')->tag);
+        $this->assertStringContainsString('</h4>', $html);
+    }
+
+    #[Test]
     public function carriesTheValueAndTheDepthOfAnItemAndLinksToItsHeading(): void
     {
         $html = $this->renderTemplate($this->toc('', ['intro' => null, 'install' => 3, 'a-b' => 4]));
