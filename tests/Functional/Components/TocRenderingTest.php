@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Tests\Functional\Components;
 
+use Jramke\FluidPrimitives\Domain\Dto\TocItem;
 use Jramke\FluidPrimitives\Exception\InvalidPropValueException;
 use Jramke\FluidPrimitives\Exception\TemplateErrorException;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
@@ -121,7 +122,7 @@ final class TocRenderingTest extends FunctionalTestCase
     {
         $this->assertRenderThrows(
             InvalidPropValueException::class,
-            'The entry "intro" of the toc items needs an integer depth',
+            'Entry 0 of the toc items is not valid: The toc item "intro" needs an integer depth',
             fn() => $this->renderTemplate('<primitives:toc.root items="{items}">' .
             '<primitives:toc.item value="intro" /></primitives:toc.root>', ['items' => [['value' => 'intro']]]),
         );
@@ -157,6 +158,24 @@ final class TocRenderingTest extends FunctionalTestCase
         $this->assertSame('smooth', $props['scrollBehavior']);
         $this->assertSame(['a'], $props['defaultActiveIds']);
         $this->assertSame([['value' => 'a', 'depth' => 2], ['value' => 'b', 'depth' => 3]], $props['items']);
+    }
+
+    #[Test]
+    public function takesTocItemObjectsAndSendsOnlyTheirValueAndDepth(): void
+    {
+        $html = $this->renderTemplate('<primitives:toc.root items="{items}"><primitives:toc.list>' .
+        '<primitives:toc.item value="a" /><primitives:toc.item value="b" />' .
+        '</primitives:toc.list></primitives:toc.root>', ['items' => [
+            new TocItem('a', 2, 'Delivery'),
+            new TocItem('b', 3, 'Returns'),
+        ]]);
+
+        $items = $this->elementsByValue($html, 'data-toc-item');
+        $this->assertSame('2', $items['a']->get('data-depth'));
+        $this->assertSame('3', $items['b']->get('data-depth'));
+
+        $props = array_values(HydrationRegistry::getInstance()->getAll()['primitives']['toc'])[0]['props'];
+        $this->assertSame('[{"value":"a","depth":2},{"value":"b","depth":3}]', json_encode($props['items']));
     }
 
     /**
