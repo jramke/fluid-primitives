@@ -36,7 +36,7 @@ class ComboboxContext extends AbstractComponentContext
     #[ExposeToClient(excludeIfNull: true)]
     public function getDefaultValue(): ?array
     {
-        // `defaultValue` is declared type="mixed" and genuinely accepts either shape checked below.
+        // `defaultValue` is declared `string|string[]`, and a Field sets it on the context unchecked.
         // @mago-expect analysis:mixed-assignment
         $defaultValue = $this->get('defaultValue');
 
