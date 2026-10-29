@@ -1,0 +1,12 @@
+<ui:useProps name="primitives:toc.link" as="linkProps" />
+
+<primitives:toc.link
+    spreadProps="{linkProps}"
+    class="{ui:cn(value: '
+        block py-1 text-muted-foreground transition-colors outline-none
+        hover:text-foreground focus-visible:text-foreground focus-visible:underline
+        data-[active]:text-foreground
+        {class}
+    ')}">
+    <f:slot />
+</primitives:toc.link>

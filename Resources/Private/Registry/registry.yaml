@@ -334,6 +334,18 @@ tabs:
     - Content.fluid.html
     - Tabs.entry.ts
 
+toc:
+  name: Toc
+  description: A table of contents that highlights the headings you are reading
+  files:
+    - Root.fluid.html
+    - Title.fluid.html
+    - List.fluid.html
+    - Item.fluid.html
+    - Link.fluid.html
+    - Indicator.fluid.html
+    - Toc.entry.ts
+
 toggle:
   name: Toggle
   description: A button that toggles between pressed and unpressed

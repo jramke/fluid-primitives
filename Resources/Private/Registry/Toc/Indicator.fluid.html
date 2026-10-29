@@ -1,0 +1,7 @@
+<ui:useProps name="primitives:toc.indicator" as="indicatorProps" />
+
+<primitives:toc.indicator
+    spreadProps="{indicatorProps}"
+    class="{ui:cn(value: 'start-0 top-(--top) h-(--height) w-0.5 rounded-full bg-foreground transition-[top,height] duration-200 motion-reduce:transition-none {class}')}">
+    <f:slot />
+</primitives:toc.indicator>
