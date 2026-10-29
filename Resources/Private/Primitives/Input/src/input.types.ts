@@ -1,19 +1,22 @@
 import type { EventObject } from '@zag-js/core';
 import type { JSX, PropTypes } from '@zag-js/types';
-import type { MaxLengthBehavior } from './input.count';
+import type { TranslationText } from '../../../Client';
+import type { CountDetails, MaxLengthBehavior } from './input.count';
 
 export interface InputTranslations {
     /**
      * The text of the word count part. `%count%` is replaced with the number of characters, `%max%`
-     * with `maxLength`, e.g. `%count% / %max% characters`.
+     * with `maxLength`, e.g. `%count% / %max% characters`. A function builds the text from
+     * `{ count, max, over }` instead.
      */
-    wordCount?: string;
+    wordCount?: TranslationText<CountDetails>;
     /**
      * The text of the word count part while the value is over `maxLength`, for a `maxLengthBehavior`
      * other than `block`. `%over%` is replaced with the number of characters too many, `%count%` and
      * `%max%` work as in `wordCount`, e.g. `Characters over the limit: %over%`.
+     * A function works as for `wordCount`.
      */
-    wordCountOver?: string;
+    wordCountOver?: TranslationText<CountDetails>;
 }
 
 export interface InputProps {

@@ -1,23 +1,32 @@
 import * as clipboard from '@zag-js/clipboard';
-import { Component, Machine, mergeProps, normalizeProps } from '../../Client';
+import {
+    Component,
+    Machine,
+    normalizeProps,
+    registerClientPropConverters,
+    type ClientPropConverterMap,
+    type ConverterMachineProps,
+} from '../../Client';
+import { resolveTranslations, type ClipboardTranslationTexts } from './src/clipboard.translations';
 
-// Zag's own `translations` is a single `triggerLabel: (copied) => string` callback - Fluid can't
-// author a callback, so `ClipboardContext::getTranslations()` sends two plain strings instead
-// (`triggerLabelIdle`/`triggerLabelCopied`), picked between in render() below rather than forwarded
-// to Zag's machine as-is.
-type ClipboardProps = Omit<clipboard.Props, 'translations'> & {
-    translations?: { triggerLabelIdle?: string; triggerLabelCopied?: string };
-};
+// `triggerLabel` is a function of the copied state in Zag, a text per state on the wire.
+const clipboardPropConverters = {
+    translations: (texts: ClipboardTranslationTexts | undefined) => resolveTranslations(texts),
+} satisfies ClientPropConverterMap;
 
-export class Clipboard extends Component<ClipboardProps, clipboard.Api> {
+registerClientPropConverters('clipboard', clipboardPropConverters);
+
+declare module 'fluid-primitives' {
+    interface HydrationPropsOverrides {
+        clipboard: ConverterMachineProps<typeof clipboardPropConverters>;
+    }
+}
+
+export class Clipboard extends Component<clipboard.Props, clipboard.Api> {
     static componentName = 'clipboard';
 
-    private translations: ClipboardProps['translations'];
-
-    initMachine(props: ClipboardProps): Machine<any> {
-        const { translations, ...rest } = props;
-        this.translations = translations;
-        const [machineProps] = clipboard.contextProps(rest);
+    initMachine(props: clipboard.Props): Machine<any> {
+        const [machineProps] = clipboard.contextProps(props);
         return new Machine(clipboard.machine, machineProps);
     }
 
@@ -43,15 +52,6 @@ export class Clipboard extends Component<ClipboardProps, clipboard.Api> {
         );
 
         const triggerEl = this.hydrator.query('trigger');
-        if (triggerEl) {
-            const translations = this.translations;
-            const mergedProps = mergeProps(this.api.getTriggerProps(), {
-                'aria-label': this.api.copied
-                    ? translations?.triggerLabelCopied || null
-                    : translations?.triggerLabelIdle || null,
-            });
-
-            this.spreadProps(triggerEl, mergedProps);
-        }
+        if (triggerEl) this.spreadProps(triggerEl, this.api.getTriggerProps());
     }
 }

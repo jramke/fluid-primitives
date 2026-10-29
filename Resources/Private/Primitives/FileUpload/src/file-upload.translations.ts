@@ -1,13 +1,17 @@
 import type * as fileUpload from '@zag-js/file-upload';
+import { resolveTranslations as resolve, type TranslationText } from '../../../Client';
 
-const FILE_NAME_PLACEHOLDER = '%fileName%';
-
-/** The translations as PHP ships them: plain strings, `itemPreview` and `deleteFile` with a `%fileName%` placeholder. */
+/**
+ * The translations as a template or a client script writes them: plain strings, `itemPreview` and
+ * `deleteFile` with a `%fileName%` placeholder or as a function of the `File`.
+ */
 export type FileUploadTranslationTexts = {
     dropzone?: string;
-    itemPreview?: string;
-    deleteFile?: string;
+    itemPreview?: TranslationText<File>;
+    deleteFile?: TranslationText<File>;
 };
+
+const fileName = (file: File) => ({ fileName: file.name });
 
 /**
  * zag-js's `itemPreview`/`deleteFile` translations are functions (`(file: File) => string`) that
@@ -17,21 +21,14 @@ export type FileUploadTranslationTexts = {
  * own inline array/object syntax already treats a bare `{...}` inside a string as a nested variable
  * expression, so a curly-brace placeholder breaks the moment someone overrides `translations` from a
  * template); this wraps such a string into the function zag-js actually expects, substituting the
- * placeholder per file. An entry that is not a string is left to Zag's default.
+ * placeholder per file. A function from a client script is kept. An entry that is neither is left
+ * to Zag's default.
  */
 export function resolveTranslations(
     translations: FileUploadTranslationTexts | undefined
 ): fileUpload.Props['translations'] {
-    if (!translations) return undefined;
-
-    const resolved: Record<string, unknown> = {};
-    for (const [key, text] of Object.entries(translations)) {
-        if (typeof text !== 'string') continue;
-        resolved[key] =
-            key === 'itemPreview' || key === 'deleteFile'
-                ? (file: File) => text.replaceAll(FILE_NAME_PLACEHOLDER, () => file.name)
-                : text;
-    }
-
-    return resolved as fileUpload.Props['translations'];
+    return resolve<fileUpload.Props['translations']>(translations, {
+        itemPreview: fileName,
+        deleteFile: fileName,
+    });
 }

@@ -12,7 +12,7 @@
 <ui:prop name="preventDocumentDrop" type="boolean" optional="{true}" client="{true}" default="{true}" description="Whether to prevent a file drop outside of the dropzone from navigating the document." />
 <ui:prop name="capture" type="Jramke\FluidPrimitives\Enum\FileUploadCapture" optional="{true}" client="{true}" description="The camera to use to capture media on mobile devices." />
 <ui:prop name="directory" type="boolean" optional="{true}" client="{true}" default="{false}" description="Whether to accept whole directories instead of files. Only works in webkit based browsers." />
-<ui:prop name="translations" type="array" optional="{true}" client="{true}" description="Localized file upload labels. Use `f:translate` for per-template localization overrides when needed." />
+<ui:prop name="translations" type="array" optional="{true}" client="{true}" description="Localized file upload labels. `itemPreview` and `deleteFile` take a `%fileName%` placeholder, and are functions of the `File` in a client script. Use `f:translate` for per-template localization overrides when needed." />
 
 <f:variable name="refData" value="{disabled: disabled, readonly: readOnly}" />
 

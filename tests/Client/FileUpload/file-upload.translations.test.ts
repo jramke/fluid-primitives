@@ -39,6 +39,13 @@ describe('file upload translations', () => {
         expect(Object.keys(t)).toEqual(['itemPreview']);
     });
 
+    test('keeps an itemPreview or deleteFile function from a client script', () => {
+        const itemPreview = (file: File) => `Look at ${file.name}`;
+        const t = resolveTranslations({ itemPreview }) as Record<string, unknown>;
+
+        expect(t.itemPreview).toBe(itemPreview);
+    });
+
     test('has nothing to resolve without translations', () => {
         expect(resolveTranslations(undefined)).toBeUndefined();
     });

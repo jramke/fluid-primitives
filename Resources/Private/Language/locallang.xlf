@@ -17,6 +17,12 @@
             <trans-unit id="select.clearTriggerLabel" approved="yes">
                 <source>Clear value</source>
             </trans-unit>
+            <trans-unit id="select.itemAnnouncement" approved="yes">
+                <source>%label%</source>
+            </trans-unit>
+            <trans-unit id="select.itemAnnouncementSelected" approved="yes">
+                <source>%label%, selected</source>
+            </trans-unit>
             <trans-unit id="popover.closeTriggerLabel" approved="yes">
                 <source>Close</source>
             </trans-unit>

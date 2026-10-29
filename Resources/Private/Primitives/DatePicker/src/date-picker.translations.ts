@@ -1,4 +1,5 @@
 import type { DateView, IntlTranslations } from '@zag-js/date-picker';
+import { fillPlaceholders } from '../../../Client';
 
 /**
  * The labels as PHP ships them: texts, with `%placeholders%` for what is only known when the
@@ -20,7 +21,7 @@ export interface DatePickerTranslations extends IntlTranslations {
 const capitalize = (word: string) => word.charAt(0).toUpperCase() + word.slice(1);
 
 const fill = (text: string | undefined, values: Record<string, string | number>) =>
-    text ? text.replace(/%(\w+)%/g, (_, key: string) => String(values[key] ?? '')) : undefined;
+    text ? fillPlaceholders(text, values) : undefined;
 
 /** `Date.toDateString()`, which is what Zag hands over for a preset, in the language of the locale. */
 const formatDay = (dateString: string, locale: string) => {

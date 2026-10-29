@@ -14,7 +14,7 @@
 <ui:prop name="defaultOpen" type="boolean" optional="{true}" client="{true}" default="{false}" description="Whether the select's open state is controlled by the user." />
 <ui:prop name="popupType" type="Jramke\FluidPrimitives\Enum\PopupType" optional="{true}" client="{true}" default="{f:constant(name: 'Jramke\FluidPrimitives\Enum\PopupType::Listbox')}" description="The kind of popup the select's content is: `listbox` for a regular select, `dialog` when it holds other interactive content." />
 <ui:prop name="deselectable" type="boolean" optional="{true}" client="{true}" description="Whether the value can be cleared by clicking the selected item." />
-<ui:prop name="translations" type="array" optional="{true}" client="{true}" description="Localized select labels. Use `f:translate` for per-template localization overrides when needed." />
+<ui:prop name="translations" type="array" optional="{true}" client="{true}" description="Localized select labels. `itemAnnouncement` (the live region text of a highlighted item) and `itemAnnouncementSelected` (the same for a selected item) take `%label%` and `%value%` placeholders, and `itemAnnouncement` is a function of the item in a client script. Use `f:translate` for per-template localization overrides when needed." />
 <div
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'root' , data: {invalid: invalid, readonly: readOnly} )}

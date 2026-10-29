@@ -23,6 +23,9 @@ import {
 // value itself.
 const fileUploadPropConverters = {
     accept: (accept: fileUpload.Props['accept']) => accept,
+    // `itemPreview` and `deleteFile` are functions in Zag, texts with a `%fileName%` placeholder on
+    // the wire.
+    translations: (texts: FileUploadTranslationTexts | undefined) => resolveTranslations(texts),
 } satisfies ClientPropConverterMap;
 
 registerClientPropConverters('fileUpload', fileUploadPropConverters);
@@ -48,12 +51,8 @@ interface ItemEntry {
  * `maxFiles` instead gets the same "remaining slots" UX (and the machine's own `TOO_MANY_FILES`
  * rejection) without ever touching a real `File`.
  */
-// Zag's own `itemPreview`/`deleteFile` translations are functions (`(file: File) => string`) -
-// Fluid can't author a callback, so `FileUploadContext::getTranslations()` sends plain strings
-// (with a `%fileName%` placeholder) instead, converted by `resolveTranslations()`.
-type FileUploadPrimitiveProps = Omit<fileUpload.Props, 'translations'> & {
+type FileUploadPrimitiveProps = fileUpload.Props & {
     existingFilesCount?: number;
-    translations?: FileUploadTranslationTexts;
 };
 
 function resolveMaxFiles(props: FileUploadPrimitiveProps): number | undefined {
@@ -117,12 +116,10 @@ export class FileUpload extends FieldAwareComponent<FileUploadPrimitiveProps, fi
 
     initMachine(props: FileUploadPrimitiveProps): Machine<any> {
         props = this.withFieldProps(props);
-        const { translations, ...rest } = props;
-        const [machineProps] = fileUpload.splitProps(rest);
+        const [machineProps] = fileUpload.splitProps(props);
         return new Machine(fileUpload.machine, {
             ...machineProps,
             maxFiles: resolveMaxFiles(props),
-            translations: resolveTranslations(translations),
         });
     }
 
