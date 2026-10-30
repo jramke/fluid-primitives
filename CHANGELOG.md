@@ -106,6 +106,12 @@ _2026-11-06_
 
 - `ui:toc.root` takes `multiple`. It is `true` by default and keeps every visible heading active, set `multiple="{false}"` to keep only the topmost visible heading active.
 
+## Unreleased
+
+**Breaking changes**
+
+- The indicator of `Tabs` and `RadioGroup` carries no inline transition any more, your CSS animates it: add `transition: left 0.2s, width 0.2s` (and `top` and `height` for vertical tabs) to `[data-tabs-indicator]` or `[data-radio-group-indicator]`, and turn it off with `[data-instant]`. The indicator gets `data-instant` while it moves for another reason than a new selection: the first render, a resize, a changed `dir` or `orientation`. The `--transition-property`, `--transition-duration` and `--transition-timing-function` variables are gone, and `data-ssr` on the tab triggers and radio items is `data-indicator-pending`: it is also set until the indicator is measured, as inside a hidden panel.
+
 ## 1.0.0-beta.6
 
 _2026-10-30_
