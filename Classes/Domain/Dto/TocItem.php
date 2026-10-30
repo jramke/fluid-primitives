@@ -10,14 +10,13 @@ use JsonSerializable;
 
 /**
  * A heading of a page for a table of contents: the id of its element, its level and the text to link it with.
- * Only the value and the depth reach the client.
  */
 final readonly class TocItem implements JsonSerializable
 {
     /**
      * @param string $value The id of the heading element
      * @param int $depth The level of the heading, 2 for an h2
-     * @param string $label The text of the link, for the template that renders it
+     * @param string $label The text of the link, for the template and the client script that render it
      */
     public function __construct(
         public string $value,
@@ -54,10 +53,10 @@ final readonly class TocItem implements JsonSerializable
     }
 
     /**
-     * @return array{value: string, depth: int}
+     * @return array{value: string, depth: int, label: string}
      */
     public function jsonSerialize(): array
     {
-        return ['value' => $this->value, 'depth' => $this->depth];
+        return ['value' => $this->value, 'depth' => $this->depth, 'label' => $this->label];
     }
 }

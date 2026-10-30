@@ -12,12 +12,12 @@ use PHPUnit\Framework\Attributes\Test;
 final class TocItemTest extends TestCase
 {
     #[Test]
-    public function buildsFromAnArrayAndSerializesOnlyWhatTheClientNeeds(): void
+    public function buildsFromAnArrayAndSerializesItsValueDepthAndLabel(): void
     {
         $item = TocItem::fromArray(['value' => 'delivery', 'depth' => '3', 'label' => 'Delivery', 'text' => 'ignored']);
 
         $this->assertSame(['delivery', 3, 'Delivery'], [$item->value, $item->depth, $item->label]);
-        $this->assertSame(['value' => 'delivery', 'depth' => 3], $item->jsonSerialize());
+        $this->assertSame(['value' => 'delivery', 'depth' => 3, 'label' => 'Delivery'], $item->jsonSerialize());
     }
 
     #[Test]

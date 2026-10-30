@@ -161,7 +161,7 @@ final class TocRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
-    public function takesTocItemObjectsAndSendsOnlyTheirValueAndDepth(): void
+    public function takesTocItemObjectsAndSendsThemToTheClient(): void
     {
         $html = $this->renderTemplate('<primitives:toc.root items="{items}"><primitives:toc.list>' .
         '<primitives:toc.item value="a" /><primitives:toc.item value="b" />' .
@@ -175,7 +175,10 @@ final class TocRenderingTest extends FunctionalTestCase
         $this->assertSame('3', $items['b']->get('data-depth'));
 
         $props = array_values(HydrationRegistry::getInstance()->getAll()['primitives']['toc'])[0]['props'];
-        $this->assertSame('[{"value":"a","depth":2},{"value":"b","depth":3}]', json_encode($props['items']));
+        $this->assertSame(
+            '[{"value":"a","depth":2,"label":"Delivery"},{"value":"b","depth":3,"label":"Returns"}]',
+            json_encode($props['items']),
+        );
     }
 
     /**
