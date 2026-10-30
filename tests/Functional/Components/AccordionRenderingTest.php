@@ -62,6 +62,23 @@ final class AccordionRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function keepsClosedItemsFindableWithTheBrowserSearchWhenHiddenUntilFoundIsSet(): void
+    {
+        $contentsOf = fn(string $rootArguments): array => $this->elementsByValue(
+            $this->renderTemplate($this->accordion($rootArguments, 'item-1', 'item-2')),
+            'data-accordion-item-content',
+        );
+
+        $found = $contentsOf('hiddenUntilFound="{true}" defaultValue="{0: \'item-1\'}"');
+        $this->assertFalse($found['item-1']->has('hidden'));
+        $this->assertSame('until-found', $found['item-2']->get('hidden'));
+
+        $plain = $contentsOf('defaultValue="{0: \'item-1\'}"');
+        $this->assertTrue($plain['item-2']->has('hidden'));
+        $this->assertNotSame('until-found', $plain['item-2']->get('hidden'));
+    }
+
+    #[Test]
     public function disablesAnItemNativelyOnItsOwnOrThroughTheRootAndLetsItOverrideTheRoot(): void
     {
         $item = static fn(string $value, string $arguments = ''): string => (

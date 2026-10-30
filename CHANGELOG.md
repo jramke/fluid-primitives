@@ -112,6 +112,16 @@ _2026-11-06_
 
 - The indicator of `Tabs` and `RadioGroup` carries no inline transition any more, your CSS animates it: add `transition: left 0.2s, width 0.2s` (and `top` and `height` for vertical tabs) to `[data-tabs-indicator]` or `[data-radio-group-indicator]`, and turn it off with `[data-instant]`. The indicator gets `data-instant` while it moves for another reason than a new selection: the first render, a resize, a changed `dir` or `orientation`. The `--transition-property`, `--transition-duration` and `--transition-timing-function` variables are gone, and `data-ssr` on the tab triggers and radio items is `data-indicator-pending`: it is also set until the indicator is measured, as inside a hidden panel.
 
+## Unreleased
+
+**Breaking changes**
+
+- The arrow keys, `Home` and `End` no longer move focus between the triggers of an `Accordion`, as in the WAI-ARIA accordion pattern: `Tab` reaches every trigger.
+
+**Features**
+
+- `ui:accordion.root` and `ui:collapsible.root` take `hiddenUntilFound`. Closed content stays searchable with the browser's find in page, and a match opens it. A style that resets `[hidden]` has to leave `[hidden='until-found']` alone.
+
 ## 1.0.0-beta.6
 
 _2026-10-30_
