@@ -102,6 +102,15 @@ final class Typed
     }
 
     /**
+     * @param array<mixed> $default
+     * @return array<mixed>
+     */
+    public static function array(mixed $value, array $default = []): array
+    {
+        return self::arrayOrNull($value) ?? $default;
+    }
+
+    /**
      * @return array<mixed>|null
      */
     public static function arrayOrNull(mixed $value): ?array

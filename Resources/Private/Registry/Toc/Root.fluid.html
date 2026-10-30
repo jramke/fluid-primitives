@@ -1,0 +1,7 @@
+<ui:useProps name="primitives:toc.root" as="rootProps" />
+
+<primitives:toc.root spreadProps="{rootProps}" class="{ui:cn(value: 'text-sm {class}')}">
+    <f:slot />
+</primitives:toc.root>
+
+<vite:asset entry="%componentPath%/Toc.entry.ts" />

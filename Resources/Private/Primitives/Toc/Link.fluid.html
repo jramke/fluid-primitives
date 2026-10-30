@@ -1,0 +1,17 @@
+<ui:error when="!{context.item.value}" message="The {component.fullName} must only be used inside a toc.item component" />
+<ui:prop name="href" type="string" optional="{true}" description="The target of the link. Defaults to the hash of the item's heading, `#value`." />
+
+<f:variable name="value" value="{context.item.value}" />
+<f:variable name="itemState">{context -> ui:call(method: 'getItemState', arguments: {0: context.item})}</f:variable>
+
+<f:variable name="refData" value="{active: itemState.active}" />
+
+<a
+    href="{f:if(condition: href, then: href, else: '#{value}')}"
+    {f:if(condition: itemState.active, then: 'aria-current="location"' )}
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'link' , value: value, data: refData )}
+    {ui:attributes()}
+    {ui:asChild()}>
+    <f:slot />
+</a>

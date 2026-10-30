@@ -1,0 +1,5 @@
+<ui:useProps name="primitives:toc.item" as="itemProps" />
+
+<primitives:toc.item spreadProps="{itemProps}" class="{ui:cn(value: 'ps-[calc((var(--depth)-2)*0.75rem)] {class}')}">
+    <f:slot />
+</primitives:toc.item>

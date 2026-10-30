@@ -1,0 +1,9 @@
+<div
+    hidden
+    style="position: absolute;"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'indicator' )}
+    {ui:attributes()}
+    {ui:asChild()}>
+    <f:slot />
+</div>
