@@ -6,7 +6,7 @@ What changed in each release of Fluid Primitives, newest first. Breaking changes
 
 **Breaking changes**
 
-- `ui:slotFilled` is gone. Store the slot in a variable and test that: `<f:variable name="note" value="{f:slot() -> f:spaceless()}" />`, then `<f:if condition="{note}">`. This renders the slot once, where `{ui:slotFilled()}` followed by `<f:slot />` rendered it twice. Pass `name` to `f:slot` for a named slot.
+- `ui:slotFilled` is gone. Store the slot in a variable and test that: `<f:variable name="note" value="{f:slot() -> f:spaceless()}" />`, then `<f:if condition="{note}">`. This renders the slot once, where `{ui:slotFilled()}` followed by `<f:slot />` rendered it twice. Pass `name` to `f:slot` for a named slot. ([#101](https://github.com/jramke/fluid-primitives/pull/101))
 
 ## 1.0.0-beta.6
 
