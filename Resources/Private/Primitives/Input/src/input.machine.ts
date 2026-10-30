@@ -61,10 +61,14 @@ export const machine = createMachine<InputSchema>({
             },
         },
         effects: {
-            manageLiveRegion({ refs, prop, computed }) {
+            manageLiveRegion({ refs, prop, computed, scope }) {
                 if (prop('announce') === false || computed('countText') === null) return undefined;
 
-                const liveRegion = createLiveRegion({ level: 'polite' });
+                // inside the component, as a modal dialog around it would hide a region in the body from screen readers
+                const liveRegion = createLiveRegion({
+                    level: 'polite',
+                    root: () => dom.getRootEl(scope),
+                });
                 const debounceMs = prop('announceDebounce') ?? 600;
                 const announce =
                     debounceMs > 0

@@ -18,7 +18,7 @@ afterEach(() => {
 describe.each([
     ['Input', inputMachine],
     ['Textarea', textareaMachine],
-])('%s word count announcements', (_name, definition) => {
+])('%s word count announcements', (name, definition) => {
     function start(props: Record<string, unknown>) {
         const m = new Machine(definition as any, { id: 'c1', ...props });
         m.start();
@@ -39,6 +39,20 @@ describe.each([
         // Zag's own announce() schedules through the jsdom window's timers, which fake timers leave alone.
         await vi.advanceTimersByTimeAsync(1);
         await vi.waitFor(() => expect(region()?.textContent).toBe('5 / 250 characters'));
+    });
+
+    test('keeps the live region inside the root of the component, and in the body without one', async () => {
+        document.body.innerHTML = `<dialog><div data-${name.toLowerCase()}-root="c1"></div></dialog>`;
+        start({ maxLength: 250, translations });
+        expect(region()?.parentElement).toBe(
+            document.querySelector(`[data-${name.toLowerCase()}-root]`)
+        );
+
+        running.forEach(m => m.stop());
+        running = [];
+        document.body.innerHTML = '';
+        start({ maxLength: 250, translations });
+        expect(region()?.parentElement).toBe(document.body);
     });
 
     test.each([

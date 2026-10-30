@@ -164,6 +164,12 @@ _2026-11-06_
 - A `slider.marker` inside the filled range carries `data-in-range`, in the server render too, and the registry marker colors its dot with it instead of only at the value of the thumb. Run `ui:add` again to pick it up.
 - `thumbSize` of `ui:slider.root` takes a single number for a square thumb.
 
+## Unreleased
+
+**Fixes**
+
+- The word count of `Input` and `Textarea` and the row announcements of `FieldArray` are spoken from a live region inside the component, not at the end of the `<body>`. Inside a modal `Dialog` the screen reader skipped the region outside of it, so nothing was announced.
+
 ## 1.0.0-beta.6
 
 _2026-10-30_
