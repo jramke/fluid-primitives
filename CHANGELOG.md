@@ -150,6 +150,12 @@ _2026-11-06_
 - A `Combobox` announces the number of results to screen readers while you type, and "No results" when nothing matches. The texts ship in English and German (`combobox.resultsCount`, `combobox.resultsCountOne`, `combobox.noResults`, `combobox.loading`), and `translations` overrides them: `resultsCount` takes a `%count%` placeholder, an empty text turns an announcement off.
 - `ui:combobox.root` takes `loading`. While it is set, the list gets `aria-busy` and screen readers hear the loading text instead of "No results".
 
+## Unreleased
+
+**Features**
+
+- The registry `Dialog` content renders the backdrop only while the dialog is modal, so `modal="{false}"` gives a dialog without a backdrop. Run `ui:add` again to pick it up.
+
 ## 1.0.0-beta.6
 
 _2026-10-30_
