@@ -324,7 +324,7 @@ final class DatePickerRenderingTest extends FunctionalTestCase
         $content = $this->elementWith($html, 'data-date-picker-content');
         // The per-instance override wins over the language file.
         $this->assertSame('Kalender', $content->get('aria-label'));
-        $this->assertSame('Datumsauswahl', $content->get('aria-roledescription'));
+        $this->assertFalse($content->has('aria-roledescription'));
 
         // The client builds Zag's function labels from these texts and fills in the placeholders.
         $props = $this->firstHydrationProps();

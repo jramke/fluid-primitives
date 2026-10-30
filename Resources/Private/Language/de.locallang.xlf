@@ -158,18 +158,6 @@
             <trans-unit id="datePicker.dayCellUnavailable" approved="yes">
                 <target>Nicht verfügbar: %date%</target>
             </trans-unit>
-            <trans-unit id="datePicker.contentRoleDescription" approved="yes">
-                <target>Datumsauswahl</target>
-            </trans-unit>
-            <trans-unit id="datePicker.tableRoleDescriptionDay" approved="yes">
-                <target>Kalendermonat</target>
-            </trans-unit>
-            <trans-unit id="datePicker.tableRoleDescriptionMonth" approved="yes">
-                <target>Kalenderjahr</target>
-            </trans-unit>
-            <trans-unit id="datePicker.tableRoleDescriptionYear" approved="yes">
-                <target>Kalenderjahrzehnt</target>
-            </trans-unit>
             <trans-unit id="datePicker.placeholderDay" approved="yes">
                 <target>TT</target>
             </trans-unit>

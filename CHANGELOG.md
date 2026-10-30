@@ -110,6 +110,8 @@ _2026-11-06_
 - `ui:menu.root` takes `popupType` (`menu` or `dialog`) instead of `composite`. Replace `composite="{false}"` with `popupType="{f:constant(name: 'Jramke\FluidPrimitives\Enum\MenuPopupType::Dialog')}"`.
 - The `DatePicker` part `prevTrigger` is `previousTrigger`, as Zag.js spells it out: `primitives:datePicker.previousTrigger`, `ui:datePicker.previousTrigger` (the registry file `PrevTrigger.fluid.html` is `PreviousTrigger.fluid.html`) and `data-date-picker-previous-trigger` for your CSS. The language ids and the `translations` keys `prevTriggerDay`, `prevTriggerMonth` and `prevTriggerYear` are `previousTriggerDay`, `previousTriggerMonth` and `previousTriggerYear`.
 
+- The `DatePicker` sets no `aria-roledescription` on its content and tables any more, as Zag.js dropped it: an invented role name overrides the localized one of the screen reader. The language ids and `translations` keys `contentRoleDescription`, `tableRoleDescriptionDay`, `tableRoleDescriptionMonth` and `tableRoleDescriptionYear` are gone.
+
 **Features**
 
 - `ui:toc.root` takes `multiple`. It is `true` by default and keeps every visible heading active, set `multiple="{false}"` to keep only the topmost visible heading active.

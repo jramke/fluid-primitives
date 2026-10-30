@@ -35,10 +35,6 @@ describe('date picker translations', () => {
         expect(t.viewTrigger!('month', 'year')).toBe('Switch to year view');
         expect(t.viewTrigger!('year', undefined)).toBe('Year view');
         expect(t.weekNumberCell!(41)).toBe('Week 41');
-        expect(t.roleDescription).toEqual({
-            content: 'datepicker',
-            table: { day: 'calendar month', month: 'calendar year', year: 'calendar decade' },
-        });
     });
 
     test('picks the text of a day cell by its state, in the order Zag does', () => {

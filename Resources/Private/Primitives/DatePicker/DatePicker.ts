@@ -14,7 +14,6 @@ import type { FieldClientApi } from '../Field/src/field.handle';
 import {
     buildTranslations,
     getPlaceholder,
-    type DatePickerTranslations,
     type TranslationTexts,
 } from './src/date-picker.translations';
 
@@ -81,7 +80,7 @@ export class DatePicker extends FieldAwareComponent<datePicker.Props, datePicker
             placeholder:
                 props.placeholder ??
                 getPlaceholder(
-                    props.translations as DatePickerTranslations | undefined,
+                    props.translations as datePicker.IntlTranslations | undefined,
                     props.locale
                 ),
             // Zag writes a date picked in the calendar into the input without an event, but a Field
@@ -137,20 +136,8 @@ export class DatePicker extends FieldAwareComponent<datePicker.Props, datePicker
             this.spreadProps(positionerEl, positionerProps);
         }
 
-        // Zag hard-codes English role descriptions for the content and the tables.
-        // TODO: drop this override once chakra-ui/zag#3421 (translatable role descriptions) is released.
-        const roleDescription = (this.userProps.translations as DatePickerTranslations | undefined)
-            ?.roleDescription;
-
         const contentEl = this.hydrator.query('content');
-        if (contentEl) {
-            this.spreadProps(
-                contentEl,
-                mergeProps(this.api.getContentProps(), {
-                    'aria-roledescription': roleDescription?.content,
-                })
-            );
-        }
+        if (contentEl) this.spreadProps(contentEl, this.api.getContentProps());
 
         this.spreadPropsByValue('view', ({ value }) =>
             this.api.getViewProps({ view: value as datePicker.DateView })
@@ -189,7 +176,6 @@ export class DatePicker extends FieldAwareComponent<datePicker.Props, datePicker
                 mergeProps(
                     this.api.getTableProps({ view, id: offset ? String(offset) : undefined }),
                     {
-                        'aria-roledescription': roleDescription?.table?.[view],
                         ...(view === 'day' && {
                             'aria-label': this.api.getOffset({ months: offset }).visibleRangeText
                                 .start,
