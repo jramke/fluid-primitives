@@ -41,3 +41,28 @@ test('submits a range under the name as given, Zag adds no brackets of its own',
         ['range[]', '80'],
     ]);
 });
+
+test('names every thumb of a range by its label, without pointing at the shared label part', () => {
+    document.body.innerHTML = `
+        <div data-slider-root="s1">
+            <label data-slider-label="s1">Price</label>
+            <div data-slider-control="s1">
+                <div data-slider-thumb="s1" data-value="0"></div>
+                <div data-slider-thumb="s1" data-value="1"></div>
+            </div>
+        </div>`;
+
+    instance = new Slider({
+        id: 's1',
+        defaultValue: [20, 80],
+        thumbLabels: ['Minimum price', 'Maximum price'],
+    });
+    instance.init();
+
+    const thumbs = [...document.querySelectorAll<HTMLElement>('[data-slider-thumb]')];
+    expect(thumbs.map(thumb => thumb.getAttribute('aria-label'))).toEqual([
+        'Minimum price',
+        'Maximum price',
+    ]);
+    expect(thumbs.map(thumb => thumb.hasAttribute('aria-labelledby'))).toEqual([false, false]);
+});

@@ -169,6 +169,64 @@ final class SliderRenderingTest extends FunctionalTestCase
         );
     }
 
+    #[Test]
+    public function marksTheMarkersWithinTheFilledRangeAsInRange(): void
+    {
+        $inRange = function (string $rootArguments): array {
+            $html = $this->renderTemplate('
+                <primitives:slider.root ' . $rootArguments . ' min="0" max="100">
+                    <primitives:slider.markerGroup>
+                        <primitives:slider.marker value="10" />
+                        <primitives:slider.marker value="50" />
+                        <primitives:slider.marker value="90" />
+                    </primitives:slider.markerGroup>
+                </primitives:slider.root>
+            ');
+
+            return array_map(
+                static fn($marker): bool => $marker->has('data-in-range'),
+                $this->elementsByValue($html, 'data-slider-marker'),
+            );
+        };
+
+        // between the thumbs of a range, between the thumb and the origin for a single one
+        $this->assertSame([10 => false, 50 => true, 90 => false], $inRange('defaultValue="{0: 30, 1: 70}"'));
+        $this->assertSame([10 => true, 50 => true, 90 => false], $inRange('defaultValue="60"'));
+        $this->assertSame(
+            [10 => false, 50 => false, 90 => true],
+            $inRange(
+                'defaultValue="60" origin="' .
+                "{f:constant(name: 'Jramke\\FluidPrimitives\\Enum\\SliderOrigin::End')}" .
+                '"',
+            ),
+        );
+    }
+
+    #[Test]
+    public function shipsTheThumbSizeAndTheThumbLabelsToTheClient(): void
+    {
+        $propsOf = function (string $rootArguments): array {
+            $html = $this->renderTemplate(
+                '<primitives:slider.root ' .
+                $rootArguments .
+                '><primitives:slider.thumb index="0" /></primitives:slider.root>',
+            );
+            $rootId = (string)$this->elementWith($html, 'data-slider-root')->get('data-slider-root');
+
+            return HydrationRegistry::getInstance()->get('primitives', 'slider', $rootId)['props'];
+        };
+
+        $this->assertSame(20.0, (float)$propsOf('thumbSize="20"')['thumbSize']);
+        $this->assertSame(
+            ['width' => 20, 'height' => 10],
+            $propsOf('thumbSize="{width: 20, height: 10}"')['thumbSize'],
+        );
+        $this->assertSame(
+            ['Minimum', 'Maximum'],
+            $propsOf('thumbLabels="{0: \'Minimum\', 1: \'Maximum\'}"')['thumbLabels'],
+        );
+    }
+
     /**
      * @return iterable<string, array{0: string, 1: string}>
      */

@@ -52,7 +52,7 @@ class SliderContext extends AbstractComponentContext
     }
 
     /**
-     * @return object{state:string, disabled:bool, style:string}
+     * @return object{state:string, disabled:bool, style:string, inRange:bool}
      */
     public function getMarkerState(float $value): object
     {
@@ -71,7 +71,33 @@ class SliderContext extends AbstractComponentContext
             'style' => $this->isVertical()
                 ? "position: absolute; pointer-events: none; bottom: {$offset}; translate: 0% 50%;"
                 : "position: absolute; pointer-events: none; inset-inline-start: {$offset}; translate: -50% 0%;",
+            'inRange' => $this->isInFill($value),
         ];
+    }
+
+    /**
+     * Whether a value lies within the filled range, as the machine's `inRange` marker state: between
+     * the thumbs of a range slider, else between the thumb and the origin.
+     */
+    private function isInFill(float $value): bool
+    {
+        $percents = array_map($this->getPercent(...), $this->resolveValues());
+
+        if (count($percents) > 1) {
+            [$from, $to] = [$percents[0], $percents[count($percents) - 1]];
+        } else {
+            $origin = match (Typed::stringOrNull($this->get('origin'))) {
+                'end' => 100.0,
+                'center' => 50.0,
+                default => 0.0,
+            };
+            $thumb = $percents[0] ?? 0.0;
+            [$from, $to] = $thumb < $origin ? [$thumb, $origin] : [$origin, $thumb];
+        }
+
+        $percent = $this->getPercent($value);
+
+        return $percent >= $from && $percent <= $to;
     }
 
     /**

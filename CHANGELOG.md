@@ -156,6 +156,14 @@ _2026-11-06_
 
 - The registry `Dialog` content renders the backdrop only while the dialog is modal, so `modal="{false}"` gives a dialog without a backdrop. Run `ui:add` again to pick it up.
 
+## Unreleased
+
+**Features**
+
+- `ui:slider.root` takes `thumbLabels`, the accessible name of each thumb by its `index`. Without it every thumb of a range slider is named by the label of the slider.
+- A `slider.marker` inside the filled range carries `data-in-range`, in the server render too, and the registry marker colors its dot with it instead of only at the value of the thumb. Run `ui:add` again to pick it up.
+- `thumbSize` of `ui:slider.root` takes a single number for a square thumb.
+
 ## 1.0.0-beta.6
 
 _2026-10-30_
