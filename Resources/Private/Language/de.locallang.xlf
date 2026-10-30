@@ -38,6 +38,18 @@
             <trans-unit id="combobox.clearTriggerLabel" approved="yes">
                 <target>Wert löschen</target>
             </trans-unit>
+            <trans-unit id="combobox.resultsCount" approved="yes">
+                <target>%count% Ergebnisse</target>
+            </trans-unit>
+            <trans-unit id="combobox.resultsCountOne" approved="yes">
+                <target>1 Ergebnis</target>
+            </trans-unit>
+            <trans-unit id="combobox.noResults" approved="yes">
+                <target>Keine Ergebnisse</target>
+            </trans-unit>
+            <trans-unit id="combobox.loading" approved="yes">
+                <target>Ergebnisse werden geladen</target>
+            </trans-unit>
             <trans-unit id="fileUpload.dropzoneLabel" approved="yes">
                 <target>Dateien hierher ziehen oder zum Durchsuchen klicken</target>
             </trans-unit>

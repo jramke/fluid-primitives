@@ -38,6 +38,18 @@
             <trans-unit id="combobox.clearTriggerLabel" approved="yes">
                 <source>Clear value</source>
             </trans-unit>
+            <trans-unit id="combobox.resultsCount" approved="yes">
+                <source>%count% results</source>
+            </trans-unit>
+            <trans-unit id="combobox.resultsCountOne" approved="yes">
+                <source>1 result</source>
+            </trans-unit>
+            <trans-unit id="combobox.noResults" approved="yes">
+                <source>No results</source>
+            </trans-unit>
+            <trans-unit id="combobox.loading" approved="yes">
+                <source>Loading results</source>
+            </trans-unit>
             <trans-unit id="fileUpload.dropzoneLabel" approved="yes">
                 <source>Drag and drop files here or click to browse</source>
             </trans-unit>

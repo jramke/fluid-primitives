@@ -13,6 +13,7 @@ import {
 
 import { getListCollectionFromHydrationData } from '../../Client/src/lib/list-collection';
 import type { FieldClientApi } from '../Field/src/field.handle';
+import { resolveTranslations } from './src/combobox.translations';
 
 // Wire shape -> real @zag-js/collection ListCollection instance, registered here (not in
 // transformProps) so mountAll/mount convert it before the component is even constructed - see
@@ -29,6 +30,8 @@ const comboboxPropConverters = {
     // prop (see WireTypeResolver), so `positioning` resolves to `unknown` on the wire - this just
     // tells TS what it actually is (a real @zag-js/popper PositioningOptions object).
     positioning: (positioning: combobox.Props['positioning']) => positioning,
+    // `resultsCount` is a function in Zag, a text with a placeholder on the wire.
+    translations: resolveTranslations,
 } satisfies ClientPropConverterMap;
 
 registerClientPropConverters('combobox', comboboxPropConverters);

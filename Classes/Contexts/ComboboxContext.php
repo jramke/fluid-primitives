@@ -148,13 +148,17 @@ class ComboboxContext extends AbstractComponentContext
 
     #[ExposeToClient]
     /**
-     * @return array{triggerLabel: string, clearTriggerLabel: string}
+     * @return array{triggerLabel: string, clearTriggerLabel: string, resultsCount: string, resultsCountOne: string, noResults: string, loading: string}
      */
     public function getTranslations(): array
     {
         return $this->translationsWithDefaults([
             'triggerLabel' => 'combobox.triggerLabel',
             'clearTriggerLabel' => 'combobox.clearTriggerLabel',
+            'resultsCount' => 'combobox.resultsCount',
+            'resultsCountOne' => 'combobox.resultsCountOne',
+            'noResults' => 'combobox.noResults',
+            'loading' => 'combobox.loading',
         ]);
     }
 }

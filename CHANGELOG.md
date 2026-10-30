@@ -143,6 +143,13 @@ _2026-11-06_
 
 - The `DatePicker` part `prevTrigger` is `previousTrigger`, as Zag.js spells it out: `primitives:datePicker.previousTrigger`, `ui:datePicker.previousTrigger` (the registry file `PrevTrigger.fluid.html` is `PreviousTrigger.fluid.html`) and `data-date-picker-previous-trigger` for your CSS. The language ids and the `translations` keys `prevTriggerDay`, `prevTriggerMonth` and `prevTriggerYear` are `previousTriggerDay`, `previousTriggerMonth` and `previousTriggerYear`.
 
+## Unreleased
+
+**Features**
+
+- A `Combobox` announces the number of results to screen readers while you type, and "No results" when nothing matches. The texts ship in English and German (`combobox.resultsCount`, `combobox.resultsCountOne`, `combobox.noResults`, `combobox.loading`), and `translations` overrides them: `resultsCount` takes a `%count%` placeholder, an empty text turns an announcement off.
+- `ui:combobox.root` takes `loading`. While it is set, the list gets `aria-busy` and screen readers hear the loading text instead of "No results".
+
 ## 1.0.0-beta.6
 
 _2026-10-30_
