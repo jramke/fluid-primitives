@@ -81,23 +81,30 @@ class SliderContext extends AbstractComponentContext
      */
     private function isInFill(float $value): bool
     {
-        $percents = array_map($this->getPercent(...), $this->resolveValues());
-
-        if (count($percents) > 1) {
-            [$from, $to] = [$percents[0], $percents[count($percents) - 1]];
-        } else {
-            $origin = match (Typed::stringOrNull($this->get('origin'))) {
-                'end' => 100.0,
-                'center' => 50.0,
-                default => 0.0,
-            };
-            $thumb = $percents[0] ?? 0.0;
-            [$from, $to] = $thumb < $origin ? [$thumb, $origin] : [$origin, $thumb];
-        }
-
+        [$from, $to] = $this->getFillSpan();
         $percent = $this->getPercent($value);
 
         return $percent >= $from && $percent <= $to;
+    }
+
+    /**
+     * @return array{0: float, 1: float}
+     */
+    private function getFillSpan(): array
+    {
+        $percents = array_map($this->getPercent(...), $this->resolveValues());
+        if (count($percents) > 1) {
+            return [$percents[0], $percents[count($percents) - 1]];
+        }
+
+        $origin = match (Typed::stringOrNull($this->get('origin'))) {
+            'end' => 100.0,
+            'center' => 50.0,
+            default => 0.0,
+        };
+        $thumb = $percents[0] ?? 0.0;
+
+        return $thumb < $origin ? [$thumb, $origin] : [$origin, $thumb];
     }
 
     /**
