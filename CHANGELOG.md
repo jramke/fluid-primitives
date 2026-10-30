@@ -61,7 +61,7 @@ _2026-10-30_
 
 ### Textarea
 
-- A `Textarea` default value that starts with a line break keeps it. The template wrote the value right behind the opening tag, where the HTML parser drops a first line break, so the value lost it and the count of the server render was one off. ([#96](https://github.com/jramke/fluid-primitives/pull/96))
+- A `Textarea` default value that starts with a line break keeps it. The template wrote the value right behind the opening tag, where the HTML parser drops a first line break, so the value lost it and the count of the server-side render was one off. ([#96](https://github.com/jramke/fluid-primitives/pull/96))
 
 ### Toc
 

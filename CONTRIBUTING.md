@@ -15,11 +15,11 @@ docs(select): show a grouped list
 
 **Type** decides whether the change shows up in the changelog, and where:
 
-| Type                                                        | Changelog                                              |
-| ----------------------------------------------------------- | ------------------------------------------------------ |
-| `feat`, `fix`, `perf`                                       | An entry under the heading of its scope                |
-| `feat!`, `fix!`, or a `BREAKING CHANGE:` footer             | An entry under **Breaking changes**, whatever the type |
-| `docs`, `test`, `refactor`, `style`, `build`, `ci`, `chore` | No entry, unless a user would notice it                |
+| Type                                                                    | Changelog                                              |
+| ----------------------------------------------------------------------- | ------------------------------------------------------ |
+| `feat`, `fix`, `perf`                                                   | An entry under the heading of its scope                |
+| A `!` before the `:` (`feat!`, `perf!`), or a `BREAKING CHANGE:` footer | An entry under **Breaking changes**, whatever the type |
+| `docs`, `test`, `refactor`, `style`, `build`, `ci`, `chore`             | No entry, unless a user would notice it                |
 
 **Scope** names the part of the library the change is about. It is the heading of the changelog entry, so you pick
 it once:
@@ -44,10 +44,11 @@ is for the why.
 Every change a user would notice gets an entry under `## Unreleased` in [`CHANGELOG.md`](CHANGELOG.md), in the
 same commit or pull request. When you use Claude Code in this repository, the `changelog` skill writes it.
 
-A release has `### Breaking changes` first, then `### General changes`, then one heading per scope in alphabetical
-order. An entry goes under exactly one heading, the table above says which. Under a scope heading the bullet does
-not repeat the scope. Under **Breaking changes** and **General changes** it starts with the bold scope, because
-the heading no longer names it: `**Select, Combobox:** ...`. Features come before fixes inside a heading.
+A release lists the headings it needs: `### Breaking changes` first, then `### General changes`, then one heading per
+scope in alphabetical order. An entry goes under exactly one heading, the table above says which. Under a scope heading the bullet does
+not repeat the scope. Under **Breaking changes** it starts with the bold scope, because the heading no longer names it. The same goes
+for an entry under **General changes** that is about specific components: `**Select, Combobox:** ...`. An entry about
+the package as a whole has no prefix. Features come before fixes inside a heading.
 
 ```md
 ### Breaking changes
