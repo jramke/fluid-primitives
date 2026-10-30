@@ -1,0 +1,11 @@
+<input
+    type="text"
+    role="searchbox"
+    autocomplete="off"
+    autocorrect="off"
+    spellcheck="false"
+    aria-autocomplete="list"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'input' )}
+    {ui:attributes()}
+    {ui:asChild()} />

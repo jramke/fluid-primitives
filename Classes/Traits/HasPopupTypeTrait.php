@@ -8,7 +8,7 @@ use Jramke\FluidPrimitives\Enum\PopupType;
 use Jramke\FluidPrimitives\Utility\EnumUtility;
 
 /**
- * Shared by Context classes of components with a `popupType` prop (Select, Combobox), so templates
+ * Shared by Context classes of components with a `popupType` prop (Select, Combobox, Menu), so templates
  * can mirror what Zag renders for the popup on the server: the trigger's `aria-haspopup` and the
  * content's `role`. Requires the using class to have a `get(string $key): mixed` method.
  */

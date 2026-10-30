@@ -1,3 +1,4 @@
+import type { CollectionItem, ListCollection } from '@zag-js/collection';
 import * as select from '@zag-js/select';
 import {
     FieldAwareComponent,
@@ -35,10 +36,59 @@ declare module 'fluid-primitives' {
     }
 }
 
-export class Select extends FieldAwareComponent<select.Props, select.Api> {
+/** The props of the machine and the callbacks of the component around it. */
+export interface SelectProps extends select.Props {
+    /**
+     * Called with the text of the filter `input` whenever it changes, and with `''` when the select closes.
+     * Filter the collection from {@link Select.getSourceCollection} and pass it to `updateProps`.
+     */
+    onInputValueChange?: (details: { inputValue: string }) => void;
+}
+
+export class Select extends FieldAwareComponent<SelectProps, select.Api> {
     static componentName = 'select';
 
-    propsWithField(props: select.Props, field: FieldClientApi): select.Props {
+    private sourceCollection?: ListCollection<any>;
+
+    /**
+     * The full, unfiltered collection as it was first passed in. A filter starts from it, and `render()`
+     * tells the items the current collection no longer holds from it to hide them.
+     *
+     * @returns The collection the select was created with.
+     */
+    getSourceCollection<T extends CollectionItem = CollectionItem>(): ListCollection<T> {
+        this.sourceCollection ??= this.machine.prop('collection');
+        return this.sourceCollection as ListCollection<T>;
+    }
+
+    transformProps(props: SelectProps): SelectProps {
+        return {
+            ...props,
+            onOpenChange: details => {
+                if (!details.open) this.resetFilter();
+                props.onOpenChange?.(details);
+            },
+        };
+    }
+
+    init() {
+        super.init();
+        this.hydrator.query<HTMLInputElement>('input')?.addEventListener('input', event => {
+            this.userProps.onInputValueChange?.({
+                inputValue: (event.target as HTMLInputElement).value,
+            });
+        });
+        return this;
+    }
+
+    private resetFilter() {
+        const inputEl = this.hydrator.query<HTMLInputElement>('input');
+        if (!inputEl || inputEl.value === '') return;
+        inputEl.value = '';
+        this.userProps.onInputValueChange?.({ inputValue: '' });
+    }
+
+    propsWithField(props: SelectProps, field: FieldClientApi): SelectProps {
         return {
             ...props,
             disabled: props.disabled ?? field.disabled,
@@ -49,7 +99,7 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
         };
     }
 
-    initMachine(props: select.Props): Machine<any> {
+    initMachine(props: SelectProps): Machine<any> {
         const [machineProps] = select.splitProps(this.withFieldProps(props));
         return new Machine(select.machine, machineProps);
     }
@@ -98,6 +148,9 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
         const contentEl = this.hydrator.query('content');
         if (contentEl) this.spreadProps(contentEl, this.api.getContentProps());
 
+        const inputEl = this.hydrator.query('input');
+        if (inputEl) this.spreadProps(inputEl, this.api.getInputProps());
+
         const listEl = this.hydrator.query('list');
         if (listEl) this.spreadProps(listEl, this.api.getListProps());
 
@@ -133,9 +186,13 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
             return this.api.getItemGroupLabelProps({ htmlFor: value });
         });
 
-        this.spreadPropsByValue('item', ({ value }) => {
-            const item = this.api.collection.find(value);
-            return item ? this.api.getItemProps({ item }) : null;
+        const sourceCollection = this.getSourceCollection();
+        this.spreadPropsByValue('item', ({ el, value }) => {
+            const item = sourceCollection.find(value);
+            if (!item) return null;
+            // An item the filtered collection no longer holds stays in the DOM, hidden
+            el.hidden = !this.api.collection.has(value);
+            return this.api.getItemProps({ item });
         });
 
         this.spreadPropsByValue('itemText', ({ value }) => {
@@ -147,6 +204,22 @@ export class Select extends FieldAwareComponent<select.Props, select.Api> {
             const item = this.api.collection.find(value);
             return item ? this.api.getItemIndicatorProps({ item }) : null;
         });
+
+        this.hydrator.queryAll('itemGroup').forEach(itemGroupEl => {
+            itemGroupEl.hidden = !this.hydrator
+                .queryAll('item', itemGroupEl)
+                .some(itemEl => !itemEl.hidden);
+        });
+
+        const hasVisibleItems = this.hydrator.queryAll('item').some(itemEl => !itemEl.hidden);
+        contentEl?.toggleAttribute('data-empty', !hasVisibleItems);
+        listEl?.toggleAttribute('data-empty', !hasVisibleItems);
+
+        const emptyEl = this.hydrator.query('empty');
+        if (emptyEl) {
+            this.spreadProps(emptyEl, this.api.getEmptyProps());
+            emptyEl.hidden = hasVisibleItems;
+        }
 
         const clearTriggerEl = this.hydrator.query('clearTrigger');
         if (clearTriggerEl) this.spreadProps(clearTriggerEl, this.api.getClearTriggerProps());

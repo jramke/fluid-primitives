@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Contexts;
 
+use Jramke\FluidPrimitives\Traits\HasPopupTypeTrait;
 use Jramke\FluidPrimitives\Utility\Typed;
 
 class MenuContext extends AbstractComponentContext
 {
+    use HasPopupTypeTrait;
+
     /**
      * State for a `menu.trigger`/`menu.contextTrigger`, derived from the root's `defaultOpen`/
      * `defaultTriggerValue` - the same values a menu with a single trigger (`$value === null`)

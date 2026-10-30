@@ -1,0 +1,8 @@
+<div
+    role="{f:if(condition: context.dialogPopup, then: 'menu', else: 'presentation')}"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'list' )}
+    {ui:attributes()}
+    {ui:asChild()}>
+    <f:slot />
+</div>

@@ -1,6 +1,8 @@
+import { createFilter } from '@zag-js/i18n-utils';
 import * as menu from '@zag-js/menu';
 import {
     Component,
+    getGlobal,
     Machine,
     normalizeProps,
     registerClientPropConverters,
@@ -34,6 +36,19 @@ export class Menu extends Component<menu.Props, menu.Api> {
      */
     private submenus = new Set<Menu>();
 
+    /** The items a filter took out of the DOM, each with the comment that marks where it belongs. */
+    private filteredOut = new Map<HTMLElement, Comment>();
+
+    transformProps(props: menu.Props): menu.Props {
+        return {
+            ...props,
+            onOpenChange: details => {
+                if (!details.open) this.resetFilter();
+                props.onOpenChange?.(details);
+            },
+        };
+    }
+
     initMachine(props: menu.Props): Machine<any> {
         const [menuProps] = menu.splitProps(props);
         return new Machine(menu.machine, menuProps);
@@ -46,7 +61,64 @@ export class Menu extends Component<menu.Props, menu.Api> {
     init() {
         super.init();
         this.linkToParent();
+        this.hydrator
+            .query<HTMLInputElement>('input')
+            ?.addEventListener('input', event =>
+                this.filterItems((event.target as HTMLInputElement).value)
+            );
         return this;
+    }
+
+    /**
+     * Shows the items whose text contains the query, ignoring case and accents, and takes the others
+     * out of the DOM, because the keyboard navigation of the machine reads the items from there. An
+     * empty query brings all of them back. Groups without items and the `empty` part follow.
+     *
+     * @param query - The text to look for in the `valueText` of each item, or in its own text.
+     */
+    filterItems(query: string) {
+        const text = query.trim();
+        const filter = createFilter({ sensitivity: 'base', locale: getGlobal('locale') });
+        let visible = 0;
+
+        for (const el of [...this.hydrator.queryAll('item'), ...this.filteredOut.keys()]) {
+            const matches =
+                !text || filter.contains(el.dataset.valuetext ?? el.textContent ?? '', text);
+            const marker = this.filteredOut.get(el);
+
+            if (matches) {
+                visible++;
+                if (marker) {
+                    marker.replaceWith(el);
+                    this.filteredOut.delete(el);
+                }
+            } else if (!marker) {
+                const placeholder = this.doc.createComment('');
+                el.replaceWith(placeholder);
+                this.filteredOut.set(el, placeholder);
+            }
+        }
+
+        this.hydrator.queryAll('itemGroup').forEach(group => {
+            group.hidden = this.hydrator.queryAll('item', group).length === 0;
+        });
+        this.hydrator.queryAll('separator').forEach(separator => {
+            separator.hidden = text !== '';
+        });
+        for (const part of ['content', 'list'] as const) {
+            this.hydrator.query(part)?.toggleAttribute('data-empty', visible === 0);
+        }
+        const emptyEl = this.hydrator.query('empty');
+        if (emptyEl) emptyEl.hidden = visible > 0;
+
+        this.render();
+    }
+
+    private resetFilter() {
+        const inputEl = this.hydrator.query<HTMLInputElement>('input');
+        if (!inputEl) return;
+        inputEl.value = '';
+        this.filterItems('');
     }
 
     // Not a machine prop (`splitProps` drops it), so it's read from the props the instance was created with.
@@ -111,6 +183,15 @@ export class Menu extends Component<menu.Props, menu.Api> {
 
         const contentEl = this.hydrator.query('content');
         if (contentEl) this.spreadProps(contentEl, this.api.getContentProps());
+
+        const inputEl = this.hydrator.query('input');
+        if (inputEl) this.spreadProps(inputEl, this.api.getInputProps());
+
+        const listEl = this.hydrator.query('list');
+        if (listEl) this.spreadProps(listEl, this.api.getListProps());
+
+        const emptyEl = this.hydrator.query('empty');
+        if (emptyEl) this.spreadProps(emptyEl, this.api.getEmptyProps());
 
         this.spreadPropsByValue('itemGroup', ({ value }) =>
             this.api.getItemGroupProps({ id: value })

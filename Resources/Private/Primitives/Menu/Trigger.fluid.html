@@ -5,7 +5,7 @@
 
 <button
     type="button"
-    aria-haspopup="{f:if(condition: context.composite, then: 'menu', else: 'dialog')}"
+    aria-haspopup="{f:if(condition: context.dialogPopup, then: 'dialog', else: 'menu')}"
     aria-expanded="{f:if(condition: triggerState.expanded, then: 'true', else: 'false')}"
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'trigger' , value: value, data: {state: triggerState.state} )}

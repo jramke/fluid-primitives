@@ -208,6 +208,9 @@ menu:
     - Trigger.fluid.html
     - ContextTrigger.fluid.html
     - Content.fluid.html
+    - Input.fluid.html
+    - List.fluid.html
+    - Empty.fluid.html
     - Item.fluid.html
     - CheckboxItem.fluid.html
     - RadioItem.fluid.html
@@ -315,7 +318,9 @@ select:
     - Trigger.fluid.html
     - ValueText.fluid.html
     - Content.fluid.html
+    - Input.fluid.html
     - List.fluid.html
+    - Empty.fluid.html
     - Item.fluid.html
     - ItemText.fluid.html
     - ItemIndicator.fluid.html

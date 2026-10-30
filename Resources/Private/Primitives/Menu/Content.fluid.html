@@ -3,8 +3,8 @@
 <f:variable name="refData" value="{state: state}" />
 
 <div
-    role="{f:if(condition: context.composite, then: 'menu', else: 'dialog')}"
-    tabindex="0"
+    role="{f:if(condition: context.dialogPopup, then: 'dialog', else: 'menu')}"
+    tabindex="{f:if(condition: context.dialogPopup, then: '-1', else: '0')}"
     {f:if(condition: context.ariaLabel, then: 'aria-label="{context.ariaLabel}"' )}
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'content' , data: refData )}

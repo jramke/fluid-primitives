@@ -1,0 +1,9 @@
+<div
+    role="presentation"
+    hidden
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'empty' )}
+    {ui:attributes()}
+    {ui:asChild()}>
+    <f:slot />
+</div>

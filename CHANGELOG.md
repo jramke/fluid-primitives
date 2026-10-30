@@ -122,6 +122,17 @@ _2026-11-06_
 
 - `ui:accordion.root` and `ui:collapsible.root` take `hiddenUntilFound`. Closed content stays searchable with the browser's find in page, and a match opens it. A style that resets `[hidden]` has to leave `[hidden='until-found']` alone.
 
+## Unreleased
+
+**Breaking changes**
+
+- `ui:menu.root` takes `popupType` (`menu` or `dialog`) instead of `composite`. Replace `composite="{false}"` with `popupType="{f:constant(name: 'Jramke\FluidPrimitives\Enum\MenuPopupType::Dialog')}"`.
+
+**Features**
+
+- A `Select` can filter its items. With the `dialog` popup type, put a `select.input` and a `select.empty` ("no results") into the content. The input keeps focus while the arrow keys move the highlight, and the new `onInputValueChange` option of the `Select` class takes your own filter: pass the result of `getSourceCollection().filter(...)` to `updateProps({ collection })`. The registry `Select` filters by label in its entry file, run `ui:add` again to pick it up.
+- A `Menu` can filter its items. With `popupType` `dialog`, put a `menu.input`, a `menu.list` around the items and a `menu.empty` into the content: typing shows the items whose text contains the query, ignoring case and accents. `autoHighlight` on `ui:menu.root` highlights the first match as you type.
+
 ## 1.0.0-beta.6
 
 _2026-10-30_
