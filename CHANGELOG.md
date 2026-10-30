@@ -105,10 +105,27 @@ _2026-11-06_
 **Breaking changes**
 
 - `ui:toc.root` renders a `<div>` and the new `ui:toc.nav` renders the `<nav>`: wrap the title and the list in a `ui:toc.nav`, and move the classes that style the navigation from the root to it. The nav carries the label that names it.
+- The indicator of `Tabs` and `RadioGroup` carries no inline transition any more, your CSS animates it: add `transition: left 0.2s, width 0.2s` (and `top` and `height` for vertical tabs) to `[data-tabs-indicator]` or `[data-radio-group-indicator]`, and turn it off with `[data-instant]`. The indicator gets `data-instant` while it moves for another reason than a new selection: the first render, a resize, a changed `dir` or `orientation`. The `--transition-property`, `--transition-duration` and `--transition-timing-function` variables are gone, and `data-ssr` on the tab triggers and radio items is `data-indicator-pending`: it is also set until the indicator is measured, as inside a hidden panel.
+- The arrow keys, `Home` and `End` no longer move focus between the triggers of an `Accordion`, as in the WAI-ARIA accordion pattern: `Tab` reaches every trigger.
+- `ui:menu.root` takes `popupType` (`menu` or `dialog`) instead of `composite`. Replace `composite="{false}"` with `popupType="{f:constant(name: 'Jramke\FluidPrimitives\Enum\MenuPopupType::Dialog')}"`.
+- The `DatePicker` part `prevTrigger` is `previousTrigger`, as Zag.js spells it out: `primitives:datePicker.previousTrigger`, `ui:datePicker.previousTrigger` (the registry file `PrevTrigger.fluid.html` is `PreviousTrigger.fluid.html`) and `data-date-picker-previous-trigger` for your CSS. The language ids and the `translations` keys `prevTriggerDay`, `prevTriggerMonth` and `prevTriggerYear` are `previousTriggerDay`, `previousTriggerMonth` and `previousTriggerYear`.
 
 **Features**
 
 - `ui:toc.root` takes `multiple`. It is `true` by default and keeps every visible heading active, set `multiple="{false}"` to keep only the topmost visible heading active.
+- `ui:accordion.root` and `ui:collapsible.root` take `hiddenUntilFound`. Closed content stays searchable with the browser's find in page, and a match opens it. A style that resets `[hidden]` has to leave `[hidden='until-found']` alone.
+- A `Select` can filter its items. With the `dialog` popup type, put a `select.input` and a `select.empty` ("no results") into the content. The input keeps focus while the arrow keys move the highlight, and the new `onInputValueChange` option of the `Select` class takes your own filter: pass the result of `getSourceCollection().filter(...)` to `updateProps({ collection })`. The registry `Select` filters by label in its entry file, run `ui:add` again to pick it up.
+- A `Menu` can filter its items. With `popupType` `dialog`, put a `menu.input`, a `menu.list` around the items and a `menu.empty` into the content: typing shows the items whose text contains the query, ignoring case and accents. `autoHighlight` on `ui:menu.root` highlights the first match as you type.
+- A `Combobox` announces the number of results to screen readers while you type, and "No results" when nothing matches. The texts ship in English and German (`combobox.resultsCount`, `combobox.resultsCountOne`, `combobox.noResults`, `combobox.loading`), and `translations` overrides them: `resultsCount` takes a `%count%` placeholder, an empty text turns an announcement off.
+- `ui:combobox.root` takes `loading`. While it is set, the list gets `aria-busy` and screen readers hear the loading text instead of "No results".
+- The registry `Dialog` content renders the backdrop only while the dialog is modal, so `modal="{false}"` gives a dialog without a backdrop. Run `ui:add` again to pick it up.
+- `ui:slider.root` takes `thumbLabels`, the accessible name of each thumb by its `index`. Without it every thumb of a range slider is named by the label of the slider.
+- A `slider.marker` inside the filled range carries `data-in-range`, in the server render too, and the registry marker colors its dot with it instead of only at the value of the thumb. Run `ui:add` again to pick it up.
+- `thumbSize` of `ui:slider.root` takes a single number for a square thumb.
+
+**Fixes**
+
+- The word count of `Input` and `Textarea` and the row announcements of `FieldArray` are spoken from a live region inside the component, not at the end of the `<body>`. Inside a modal `Dialog` the screen reader skipped the region outside of it, so nothing was announced.
 
 ## Unreleased
 
