@@ -27,8 +27,8 @@ describe('date picker translations', () => {
 
         expect(t.trigger!(false)).toBe('Open calendar');
         expect(t.trigger!(true)).toBe('Close calendar');
-        expect(t.prevTrigger!('day')).toBe('Switch to previous month');
-        expect(t.prevTrigger!('year')).toBe('Switch to previous decade');
+        expect(t.previousTrigger!('day')).toBe('Switch to previous month');
+        expect(t.previousTrigger!('year')).toBe('Switch to previous decade');
         expect(t.nextTrigger!('month')).toBe('Switch to next year');
         // The view it switches to, else the view it is in.
         expect(t.viewTrigger!('day', 'month')).toBe('Switch to month view');
@@ -78,11 +78,11 @@ describe('date picker translations', () => {
     });
 
     test('leaves a label out whose text is empty', () => {
-        const t = buildTranslations({ ...texts, clearTrigger: '', prevTriggerDay: '' });
+        const t = buildTranslations({ ...texts, clearTrigger: '', previousTriggerDay: '' });
 
         expect(t.clearTrigger).toBeUndefined();
-        expect(t.prevTrigger!('day')).toBeUndefined();
-        expect(t.prevTrigger!('month')).toBe('Switch to previous year');
+        expect(t.previousTrigger!('day')).toBeUndefined();
+        expect(t.previousTrigger!('month')).toBe('Switch to previous year');
     });
 
     test('writes the date pattern of the locale with the letters of the translation', () => {

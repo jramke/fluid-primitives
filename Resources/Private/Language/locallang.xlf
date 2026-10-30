@@ -86,13 +86,13 @@
             <trans-unit id="datePicker.triggerClose" approved="yes">
                 <source>Close calendar</source>
             </trans-unit>
-            <trans-unit id="datePicker.prevTriggerDay" approved="yes">
+            <trans-unit id="datePicker.previousTriggerDay" approved="yes">
                 <source>Switch to previous month</source>
             </trans-unit>
-            <trans-unit id="datePicker.prevTriggerMonth" approved="yes">
+            <trans-unit id="datePicker.previousTriggerMonth" approved="yes">
                 <source>Switch to previous year</source>
             </trans-unit>
-            <trans-unit id="datePicker.prevTriggerYear" approved="yes">
+            <trans-unit id="datePicker.previousTriggerYear" approved="yes">
                 <source>Switch to previous decade</source>
             </trans-unit>
             <trans-unit id="datePicker.nextTriggerDay" approved="yes">

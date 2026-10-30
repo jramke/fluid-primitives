@@ -137,6 +137,12 @@ _2026-11-06_
 - A `Select` can filter its items. With the `dialog` popup type, put a `select.input` and a `select.empty` ("no results") into the content. The input keeps focus while the arrow keys move the highlight, and the new `onInputValueChange` option of the `Select` class takes your own filter: pass the result of `getSourceCollection().filter(...)` to `updateProps({ collection })`. The registry `Select` filters by label in its entry file, run `ui:add` again to pick it up.
 - A `Menu` can filter its items. With `popupType` `dialog`, put a `menu.input`, a `menu.list` around the items and a `menu.empty` into the content: typing shows the items whose text contains the query, ignoring case and accents. `autoHighlight` on `ui:menu.root` highlights the first match as you type.
 
+## Unreleased
+
+**Breaking changes**
+
+- The `DatePicker` part `prevTrigger` is `previousTrigger`, as Zag.js spells it out: `primitives:datePicker.previousTrigger`, `ui:datePicker.previousTrigger` (the registry file `PrevTrigger.fluid.html` is `PreviousTrigger.fluid.html`) and `data-date-picker-previous-trigger` for your CSS. The language ids and the `translations` keys `prevTriggerDay`, `prevTriggerMonth` and `prevTriggerYear` are `previousTriggerDay`, `previousTriggerMonth` and `previousTriggerYear`.
+
 ## 1.0.0-beta.6
 
 _2026-10-30_

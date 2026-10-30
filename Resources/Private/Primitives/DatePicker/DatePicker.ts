@@ -161,8 +161,8 @@ export class DatePicker extends FieldAwareComponent<datePicker.Props, datePicker
         this.spreadPropsByValue('viewTrigger', ({ value }) =>
             this.api.getViewTriggerProps({ view: value as datePicker.DateView })
         );
-        this.spreadPropsByValue('prevTrigger', ({ value }) =>
-            this.api.getPrevTriggerProps({ view: value as datePicker.DateView })
+        this.spreadPropsByValue('previousTrigger', ({ value }) =>
+            this.api.getPreviousTriggerProps({ view: value as datePicker.DateView })
         );
         this.spreadPropsByValue('nextTrigger', ({ value }) =>
             this.api.getNextTriggerProps({ view: value as datePicker.DateView })

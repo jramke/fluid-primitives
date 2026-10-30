@@ -50,7 +50,7 @@ export function buildTranslations(
         content: label('content'),
         weekColumnHeader: label('weekColumnHeader'),
         trigger: open => label(open ? 'triggerClose' : 'triggerOpen'),
-        prevTrigger: view => label(`prevTrigger${capitalize(view)}`),
+        previousTrigger: view => label(`previousTrigger${capitalize(view)}`),
         nextTrigger: view => label(`nextTrigger${capitalize(view)}`),
         // The next view when there is one to switch to, else the view itself.
         viewTrigger: (view, nextView) =>

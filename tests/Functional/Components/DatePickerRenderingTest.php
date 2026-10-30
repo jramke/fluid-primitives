@@ -269,7 +269,7 @@ final class DatePickerRenderingTest extends FunctionalTestCase
             <primitives:datePicker.root>
                 <primitives:datePicker.view view="day">
                     <primitives:datePicker.viewControl view="day">
-                        <primitives:datePicker.prevTrigger view="day" />
+                        <primitives:datePicker.previousTrigger view="day" />
                         <primitives:datePicker.viewTrigger view="day" />
                         <primitives:datePicker.nextTrigger view="day" />
                     </primitives:datePicker.viewControl>
@@ -283,7 +283,7 @@ final class DatePickerRenderingTest extends FunctionalTestCase
             </primitives:datePicker.root>
         ');
 
-        foreach (['view', 'view-control', 'prev-trigger', 'view-trigger', 'next-trigger'] as $part) {
+        foreach (['view', 'view-control', 'previous-trigger', 'view-trigger', 'next-trigger'] as $part) {
             $this->assertSame('day', $this->elementWith($html, 'data-date-picker-' . $part)->get('data-value'), $part);
         }
         $tables = $this->elementsWith($html, 'data-date-picker-table');
@@ -330,7 +330,7 @@ final class DatePickerRenderingTest extends FunctionalTestCase
         $props = $this->firstHydrationProps();
         $this->assertSame('Wert löschen', $props['translations']['clearTrigger']);
         $this->assertSame('Kalender', $props['translations']['content']);
-        $this->assertSame('Zum vorherigen Monat wechseln', $props['translations']['prevTriggerDay']);
+        $this->assertSame('Zum vorherigen Monat wechseln', $props['translations']['previousTriggerDay']);
         $this->assertSame('%date% auswählen', $props['translations']['dayCell']);
     }
 
