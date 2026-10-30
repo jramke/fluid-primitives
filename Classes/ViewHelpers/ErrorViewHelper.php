@@ -15,7 +15,7 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
  * Use it in a component for a misconfiguration that argument definitions cannot express, such as missing slot content:
  *
  * ```html
- * <f:variable name="reviewText" value="{ui:slotFilled()}" />
+ * <f:variable name="reviewText" value="{f:slot() -> f:spaceless()}" />
  * <ui:error when="!{reviewText}" message="ui:productReview needs the review text as slot content." />
  * ```
  *
