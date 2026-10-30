@@ -100,6 +100,12 @@ _2026-11-06_
 - Components of an uncached plugin (`USER_INT`) hydrate on a page from the page cache, next to the components of its cached content. Before, the hydration data of the uncached content replaced that of the page, so the cached components found none and `mount()` returned `undefined`. ([#111](https://github.com/jramke/fluid-primitives/pull/111))
 - The hydration data is a `<script type="application/json">` block, so a Content-Security-Policy needs no nonce or hash for it. ([#111](https://github.com/jramke/fluid-primitives/pull/111))
 
+## Unreleased
+
+**Features**
+
+- `ui:toc.root` takes `multiple`. It is `true` by default and keeps every visible heading active, set `multiple="{false}"` to keep only the topmost visible heading active.
+
 ## 1.0.0-beta.6
 
 _2026-10-30_

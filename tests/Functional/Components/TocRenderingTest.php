@@ -42,6 +42,21 @@ final class TocRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function activatesEveryVisibleHeadingUnlessMultipleIsTurnedOff(): void
+    {
+        $multipleOf = function (string $rootArguments): bool {
+            $this->renderToc($rootArguments, ['intro' => 2]);
+
+            return array_values(
+                HydrationRegistry::getInstance()->getAll()['primitives']['toc'],
+            )[0]['props']['multiple'];
+        };
+
+        $this->assertTrue($multipleOf(''));
+        $this->assertFalse($multipleOf('multiple="{false}"'));
+    }
+
+    #[Test]
     public function rendersTheTitleAsTheHeadingOfItsLevel(): void
     {
         $html = $this->renderTemplate(
