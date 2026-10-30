@@ -42,10 +42,11 @@ export class Toc extends Component<toc.Props, toc.Api> {
     }
 
     render() {
-        // The root is the <nav> here, so it takes the nav part of the machine as well: the label that names it
         const rootEl = this.hydrator.query('root');
-        if (rootEl)
-            this.spreadProps(rootEl, { ...this.api.getRootProps(), ...this.api.getNavProps() });
+        if (rootEl) this.spreadProps(rootEl, this.api.getRootProps());
+
+        const navEl = this.hydrator.query('nav');
+        if (navEl) this.spreadProps(navEl, this.api.getNavProps());
 
         const titleEl = this.hydrator.query('title');
         if (titleEl) this.spreadProps(titleEl, this.api.getTitleProps());

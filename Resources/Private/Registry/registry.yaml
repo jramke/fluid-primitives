@@ -394,6 +394,7 @@ toc:
   description: A table of contents that highlights the headings you are reading
   files:
     - Root.fluid.html
+    - Nav.fluid.html
     - Title.fluid.html
     - List.fluid.html
     - Item.fluid.html

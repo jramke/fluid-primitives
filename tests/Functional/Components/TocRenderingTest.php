@@ -16,16 +16,17 @@ final class TocRenderingTest extends FunctionalTestCase
     #[Test]
     public function rendersEveryPartAsItsElementWithTheRootId(): void
     {
-        $html = $this->renderTemplate('<primitives:toc.root rootId="my-toc" items="{items}">' .
+        $html = $this->renderTemplate('<primitives:toc.root rootId="my-toc" items="{items}"><primitives:toc.nav>' .
         '<primitives:toc.title>On this page</primitives:toc.title>' .
         '<primitives:toc.list>' .
         '<primitives:toc.indicator />' .
         '<primitives:toc.item value="intro"><primitives:toc.link>Intro</primitives:toc.link></primitives:toc.item>' .
         '</primitives:toc.list>' .
-        '</primitives:toc.root>', ['items' => [['value' => 'intro', 'depth' => 2]]]);
+        '</primitives:toc.nav></primitives:toc.root>', ['items' => [['value' => 'intro', 'depth' => 2]]]);
 
         $tags = [
-            'root' => 'nav',
+            'root' => 'div',
+            'nav' => 'nav',
             'title' => 'h2',
             'list' => 'ul',
             'indicator' => 'div',

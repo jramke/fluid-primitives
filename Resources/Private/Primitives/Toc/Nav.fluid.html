@@ -1,0 +1,7 @@
+<nav
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'nav' )}
+    {ui:attributes()}
+    {ui:asChild()}>
+    <f:slot />
+</nav>

@@ -56,14 +56,14 @@ afterEach(() => {
 
 function mountToc(props: Partial<ConstructorParameters<typeof Toc>[0]> = {}) {
     document.body.innerHTML = `
-        <nav data-toc-root="t1">
+        <div data-toc-root="t1"><nav data-toc-nav="t1">
             <h2 data-toc-title="t1">On this page</h2>
             <ul data-toc-list="t1">
                 <li data-toc-item="t1" data-value="intro" data-depth="2"><a data-toc-link="t1" data-value="intro" href="#intro">Intro</a></li>
                 <li data-toc-item="t1" data-value="install" data-depth="3"><a data-toc-link="t1" data-value="install" href="#install">Install</a></li>
                 <li data-toc-item="t1" data-value="usage" data-depth="2"><a data-toc-link="t1" data-value="usage" href="#usage">Usage</a></li>
             </ul>
-        </nav>
+        </nav></div>
         <div id="content">
             <h2 id="intro">Intro</h2><h3 id="install">Install</h3><h2 id="usage">Usage</h2><h2 id="unlisted">Unlisted</h2>
         </div>`;
@@ -122,8 +122,6 @@ test('names the nav by its title', () => {
     const title = document.querySelector('[data-toc-title]')!;
     expect(title.id).not.toBe('');
     expect(nav.getAttribute('aria-labelledby')).toBe(title.id);
-    expect(nav.hasAttribute('data-toc-root')).toBe(true);
-    expect(nav.hasAttribute('data-toc-nav')).toBe(true);
 });
 
 test('observes inside the scroll container once its selector is converted', () => {

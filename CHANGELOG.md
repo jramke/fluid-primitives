@@ -102,6 +102,10 @@ _2026-11-06_
 
 ## Unreleased
 
+**Breaking changes**
+
+- `ui:toc.root` renders a `<div>` and the new `ui:toc.nav` renders the `<nav>`: wrap the title and the list in a `ui:toc.nav`, and move the classes that style the navigation from the root to it. The nav carries the label that names it.
+
 **Features**
 
 - `ui:toc.root` takes `multiple`. It is `true` by default and keeps every visible heading active, set `multiple="{false}"` to keep only the topmost visible heading active.
