@@ -2,6 +2,12 @@
 
 What changed in each release of Fluid Primitives, newest first. Breaking changes come first in every release. The library follows [semantic versioning](https://semver.org), and the 1.0 betas may still change between releases.
 
+## Unreleased
+
+**Breaking changes**
+
+- `ui:slotFilled` is gone. Store the slot in a variable and test that: `<f:variable name="note" value="{f:slot() -> f:spaceless()}" />`, then `<f:if condition="{note}">`. This renders the slot once, where `{ui:slotFilled()}` followed by `<f:slot />` rendered it twice. Pass `name` to `f:slot` for a named slot.
+
 ## 1.0.0-beta.6
 
 _2026-10-30_
