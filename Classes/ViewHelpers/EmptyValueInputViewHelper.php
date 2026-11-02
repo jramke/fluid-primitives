@@ -29,6 +29,7 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
  *
  * Call `syncEmptyValueInput()` from the `render()` of the component to disable the input while the control has a value.
  *
+ * @internal Only for the templates of the built-in controls.
  */
 class EmptyValueInputViewHelper extends AbstractViewHelper
 {
