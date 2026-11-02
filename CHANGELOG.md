@@ -31,7 +31,7 @@ What changed in each release of Fluid Primitives, newest first. Every release li
 
 ### Core
 
-- A component's own template sees the components around it, like its slot content does. A Field reaches a control you render inside a component of your own (`name`, `id`, `required` and `disabled` are on the input before hydration), and `ui:context` finds an enclosing component from the template of a nested one.
+- A component's own template sees the components around it, like its slot content does. A Field reaches a control you render inside a component of your own (`name`, `id`, `required` and `disabled` are on the input before hydration), and `ui:context` finds an enclosing component from the template of a nested one. ([#105](https://github.com/jramke/fluid-primitives/pull/105))
 
 ## 1.0.0-beta.6
 
