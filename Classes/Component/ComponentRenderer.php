@@ -111,6 +111,14 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         // Provide slots to SlotViewHelper
         $renderingContext->setViewHelperVariableContainer(new ViewHelperVariableContainer());
         $renderingContext->getViewHelperVariableContainer()->addAll(SlotViewHelper::class, $slots);
+        // The own template sees the components around it, as slot content does (a Field around a
+        // component that renders the control). Copied, not shared: what the template pushes stays
+        // inside the component. Its own name is left out, the component's own context goes there
+        // below, once it is resolved.
+        ContextService::addAllToRenderingContext($renderingContext, $this->getOtherComponentContexts(
+            $parentRenderingContext,
+            $identity->baseName,
+        ));
 
         $view = $this->createView($renderingContext, $viewHelperName, $identity);
 
@@ -224,6 +232,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         // Assign context if available
         if ($ctx instanceof AbstractComponentContext) {
             $view->assign('context', $ctx);
+            ContextService::addToRenderingContext($view->getRenderingContext(), $baseName, $ctx);
         }
 
         // Call beforeRendering lifecycle method only for root or closed components

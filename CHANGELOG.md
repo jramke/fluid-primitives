@@ -29,6 +29,10 @@ What changed in each release of Fluid Primitives, newest first. Every release li
 
 - Thumbs and markers sit where the client puts them before it hydrates, so the slider no longer jumps on load. They used to render hidden and in the flow, which shortened the track and shifted the range. A contained thumb reads its size from `--slider-thumb-width` (`--slider-thumb-height` when vertical) until the client measures it, so set the variable on `ui:slider.root` when you change the size of the thumb, as the registry `Slider` does (run `ui:add` again to pick it up). ([`2a570fc`](https://github.com/jramke/fluid-primitives/commit/2a570fc))
 
+### Core
+
+- A component's own template sees the components around it, like its slot content does. A Field reaches a control you render inside a component of your own (`name`, `id`, `required` and `disabled` are on the input before hydration), and `ui:context` finds an enclosing component from the template of a nested one. ([#105](https://github.com/jramke/fluid-primitives/pull/105))
+
 ## 1.0.0-beta.6
 
 _2026-10-30_
