@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Contexts;
 
+use Jramke\FluidPrimitives\Traits\HasEmptyValueInputTrait;
+
 class RadioGroupContext extends AbstractComponentContext
 {
+    use HasEmptyValueInputTrait;
+
     /**
      * @param array{ value:string, disabled?:bool|null, invalid?:bool|null } $itemProps
      */

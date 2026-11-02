@@ -79,5 +79,7 @@ export class RadioGroup extends FieldAwareComponent<radioGroup.Props, radioGroup
 
         const indicatorEl = this.hydrator.query('indicator');
         if (indicatorEl) this.spreadProps(indicatorEl, this.api.getIndicatorProps());
+
+        this.syncEmptyValueInput(!!this.api.value, this.machine.prop('disabled'));
     }
 }

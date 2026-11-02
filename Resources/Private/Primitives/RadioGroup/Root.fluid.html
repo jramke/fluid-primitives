@@ -19,5 +19,7 @@
     {ui:attributes()}
     {ui:asChild()}
     style="position: relative;">
+    <f:comment>Comes before the radios: with none checked it submits `''`, otherwise PHP keeps the value of the checked radio, the last one under the name.</f:comment>
+    <ui:emptyValueInput />
     <f:slot />
 </div>

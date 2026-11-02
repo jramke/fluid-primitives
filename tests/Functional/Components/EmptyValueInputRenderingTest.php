@@ -30,6 +30,10 @@ final class EmptyValueInputRenderingTest extends FunctionalTestCase
             </primitives:checkboxGroup.root>';
         $select = '<primitives:select.root collection="{collection}" %s><primitives:select.hiddenSelect /></primitives:select.root>';
         $combobox = '<primitives:combobox.root collection="{collection}" %s><primitives:combobox.hiddenInput /></primitives:combobox.root>';
+        $radioGroup = '
+            <primitives:radioGroup.root name="color" %s>
+                <primitives:radioGroup.item value="red"><primitives:radioGroup.itemHiddenInput /></primitives:radioGroup.item>
+            </primitives:radioGroup.root>';
         $datePicker = '<primitives:datePicker.root %s><primitives:datePicker.hiddenInput /></primitives:datePicker.root>';
 
         // checked, it stays enabled: without JavaScript, PHP keeps the value of the checkbox that comes after it
@@ -55,6 +59,16 @@ final class EmptyValueInputRenderingTest extends FunctionalTestCase
             sprintf($checkboxGroup, 'disabled="{true}"'),
             ['tags', true],
             'data-checkbox-hidden-input',
+        ];
+        yield 'radio group' => [
+            sprintf($radioGroup, 'defaultValue="red"'),
+            ['color', false],
+            'data-radio-group-item-hidden-input',
+        ];
+        yield 'disabled radio group' => [
+            sprintf($radioGroup, 'disabled="{true}"'),
+            ['color', true],
+            'data-radio-group-item-hidden-input',
         ];
         // Zag leaves an empty single select without a selected option, so it needs the input as well
         yield 'select' => [sprintf($select, 'name="tag"'), ['tag', false], 'data-select-hidden-select'];
