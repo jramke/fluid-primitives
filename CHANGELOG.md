@@ -25,6 +25,10 @@ What changed in each release of Fluid Primitives, newest first. Every release li
 
 - A radio group with nothing checked submits `''` under its name, like the other controls, so Extbase can clear the property. Before, it submitted nothing. ([`af5ad2d`](https://github.com/jramke/fluid-primitives/commit/af5ad2d))
 
+### Separator
+
+- New `Separator` component: a `<div role="separator">` with `aria-orientation` and `data-orientation`, horizontal or vertical. It renders on the server only and needs no client script. Add it with `ui:add separator`.
+
 ### Slider
 
 - Thumbs and markers sit where the client puts them before it hydrates, so the slider no longer jumps on load. They used to render hidden and in the flow, which shortened the track and shifted the range. A contained thumb reads its size from `--slider-thumb-width` (`--slider-thumb-height` when vertical) until the client measures it, so set the variable on `ui:slider.root` when you change the size of the thumb, as the registry `Slider` does (run `ui:add` again to pick it up). ([`2a570fc`](https://github.com/jramke/fluid-primitives/commit/2a570fc))
