@@ -39,8 +39,9 @@ final class RegistryContentTest extends TestCase
         $registry = Yaml::parseFile($registryDir . 'registry.yaml');
 
         foreach ($registry as $key => $component) {
+            // A server-only component (Separator) lists no entry file and loads none.
             $entry = $component['name'] . '.entry.ts';
-            $this->assertContains($entry, $component['files'], $key);
+            $expected = in_array($entry, $component['files'], strict: true) ? [$entry] : [];
 
             $tags = [];
             foreach ($component['files'] as $file) {
@@ -53,7 +54,7 @@ final class RegistryContentTest extends TestCase
                     array_push($tags, ...$matches[1]);
                 }
             }
-            $this->assertSame([$entry], $tags, $key);
+            $this->assertSame($expected, $tags, $key);
         }
     }
 }

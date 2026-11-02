@@ -310,6 +310,12 @@ select:
     - ItemGroupLabel.fluid.html
     - Select.entry.ts
 
+separator:
+  name: Separator
+  description: A line between groups of content, read by screen readers
+  files:
+    - Separator.fluid.html
+
 slider:
   name: Slider
   description: An input for selecting a value, or a range of values, from a given range

@@ -1,0 +1,13 @@
+<ui:prop name="orientation" type="Jramke\FluidPrimitives\Enum\Orientation" optional="{true}" default="{f:constant(name: 'Jramke\FluidPrimitives\Enum\Orientation::Horizontal')}" description="The orientation of the separator." />
+
+<f:variable name="refData" value="{orientation: orientation}" />
+
+<div
+    role="separator"
+    aria-orientation="{orientation.value}"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'root' , data: refData )}
+    {ui:attributes()}
+    {ui:asChild()}>
+    <f:slot />
+</div>
