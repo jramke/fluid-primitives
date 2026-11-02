@@ -7,6 +7,11 @@ What changed in each release of Fluid Primitives, newest first. Every release li
 ### Breaking changes
 
 - **`ui:slotFilled`:** The ViewHelper is gone. Store the slot in a variable and test that: `<f:variable name="note" value="{f:slot() -> f:spaceless()}" />`, then `<f:if condition="{note}">`. This renders the slot once, where `{ui:slotFilled()}` followed by `<f:slot />` rendered it twice. Pass `name` to `f:slot` for a named slot. ([#101](https://github.com/jramke/fluid-primitives/pull/101))
+- **Toc:** `scrollBehavior` defaults to `auto` instead of `smooth`, and the component no longer forces `instant` for a visitor who prefers reduced motion. `auto` follows the CSS `scroll-behavior` of the element that scrolls, so set `motion-safe:scroll-smooth` on it, or pass `scrollBehavior="smooth"` to keep the old scrolling. ([`c248c76`](https://github.com/jramke/fluid-primitives/commit/c248c76))
+
+### General changes
+
+- **Accordion, Select:** The registry `Accordion` item trigger and the `Select` trigger and items show a pointer cursor. Run `ui:add` again to pick it up. ([`baabad9`](https://github.com/jramke/fluid-primitives/commit/baabad9)) ([`f12663d`](https://github.com/jramke/fluid-primitives/commit/f12663d))
 
 ### Collapsible
 
@@ -15,6 +20,10 @@ What changed in each release of Fluid Primitives, newest first. Every release li
 ### RadioGroup
 
 - A radio group with nothing checked submits `''` under its name, like the other controls, so Extbase can clear the property. Before, it submitted nothing. ([`af5ad2d`](https://github.com/jramke/fluid-primitives/commit/af5ad2d))
+
+### Slider
+
+- Thumbs, markers and the range sit where the client puts them before it hydrates, so the slider no longer jumps on load. Thumbs and markers used to render hidden and in the flow, which shortened the track. A contained thumb reads its size from `--slider-thumb-width` (`--slider-thumb-height` when vertical) until the client measures it, so set the variable on `ui:slider.root` when you change the size of the thumb, as the registry `Slider` does (run `ui:add` again to pick it up). ([`2a570fc`](https://github.com/jramke/fluid-primitives/commit/2a570fc))
 
 ## 1.0.0-beta.6
 
