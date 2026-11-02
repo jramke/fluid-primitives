@@ -6,6 +6,7 @@ namespace Jramke\FluidPrimitives\Tests\Functional\Components;
 
 use Jramke\FluidPrimitives\Exception\TemplateErrorException;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
+use Jramke\FluidPrimitives\Tests\Fixtures\PlainComponentCollection;
 use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -288,5 +289,37 @@ final class FieldRenderingTest extends FunctionalTestCase
         // and a rename of a FieldArray row restamps them by the `field:<rootId>:` prefix
         $this->assertSame('field:my-field:control', $control->get('id'));
         $this->assertSame('field:my-field:label', $this->elementWith($html, $labelMarker)->get('id'));
+    }
+
+    /**
+     * @return iterable<string, array{0: string}>
+     */
+    public static function controlsInAComponentOfTheirOwn(): iterable
+    {
+        yield 'the Field around the component' => [
+            '<primitives:field.root name="password" rootId="my-field" disabled="{true}" required="{true}">
+                <plain:newPassword />
+            </primitives:field.root>',
+        ];
+        yield 'the Field and the component both inside another component' => ['<plain:signupForm />'];
+    }
+
+    #[Test]
+    #[DataProvider('controlsInAComponentOfTheirOwn')]
+    public function handsTheFieldToAControlInsideAComponentOfItsOwn(string $template): void
+    {
+        $this
+            ->getView()
+            ->getRenderingContext()
+            ->getViewHelperResolver()
+            ->addNamespace('plain', new PlainComponentCollection());
+
+        $html = $this->renderTemplate($template);
+
+        $input = $this->elementWith($html, 'data-input-input');
+        $this->assertSame('password', $input->get('name'));
+        $this->assertTrue($input->has('disabled'));
+        $this->assertTrue($input->has('required'));
+        $this->assertSame('field:my-field:control', $input->get('id'));
     }
 }
