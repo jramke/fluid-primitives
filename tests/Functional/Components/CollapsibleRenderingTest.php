@@ -40,7 +40,9 @@ final class CollapsibleRenderingTest extends FunctionalTestCase
         $this->assertSame('open', $trigger->get('data-state'));
         $content = $this->elementWith($open, 'data-collapsible-content');
         $this->assertFalse($content->has('hidden'));
-        $this->assertSame('open', $content->get('data-state'));
+        // open content has no data-state on load, so its open animation does not run before hydration
+        $this->assertNull($content->get('data-state'));
+        $this->assertSame('closed', $this->elementWith($closed, 'data-collapsible-content')->get('data-state'));
     }
 
     #[Test]

@@ -3,7 +3,11 @@
     <f:variable name="hidden" value="{false}" />
 </f:if>
 
-<f:variable name="refData" value="{collapsible: '', state: context.state}" />
+<f:comment>No data-state on content that is open on load, as Zag renders it: the open animation must not run before hydration.</f:comment>
+<f:variable name="refData" value="{collapsible: ''}" />
+<f:if condition="!{context.defaultOpen}">
+    <f:variable name="refData" value="{collapsible: '', state: 'closed'}" />
+</f:if>
 
 <div
     {f:if(condition: class, then: 'class="{class}"' )}
