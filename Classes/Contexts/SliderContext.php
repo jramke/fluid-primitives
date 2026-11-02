@@ -7,10 +7,11 @@ namespace Jramke\FluidPrimitives\Contexts;
 use Jramke\FluidPrimitives\Attributes\ExposeToClient;
 use Jramke\FluidPrimitives\Utility\Typed;
 
+// @mago-expect lint:cyclomatic-complexity
 class SliderContext extends AbstractComponentContext
 {
     /**
-     * @return object{value:float, min:float, max:float, disabled:bool}
+     * @return object{value:float, min:float, max:float, disabled:bool, style:string}
      */
     public function getThumbState(int $index): object
     {
@@ -19,12 +20,17 @@ class SliderContext extends AbstractComponentContext
         $max = Typed::float($this->get('max'), 100.0);
         $gap = Typed::float($this->get('step'), 1.0) * Typed::float($this->get('minStepsBetweenThumbs'));
         $lastIndex = count($values) - 1;
+        $value = $values[$index] ?? $min;
+        $offset = $this->getOffset($this->getPercent($value));
 
         return (object)[
-            'value' => $values[$index] ?? $min,
+            'value' => $value,
             'min' => $index === 0 ? $min : ($values[$index - 1] ?? $min) + $gap,
             'max' => $index === $lastIndex ? $max : ($values[$index + 1] ?? $max) - $gap,
             'disabled' => Typed::bool($this->get('disabled')),
+            'style' => $this->isVertical()
+                ? "position: absolute; bottom: {$offset}; transform: translateY(50%);"
+                : "position: absolute; inset-inline-start: {$offset}; transform: translateX(-50%);",
         ];
     }
 
@@ -46,13 +52,14 @@ class SliderContext extends AbstractComponentContext
     }
 
     /**
-     * @return object{state:string, disabled:bool}
+     * @return object{state:string, disabled:bool, style:string}
      */
     public function getMarkerState(float $value): object
     {
         $values = $this->resolveValues();
         $first = $values[0] ?? Typed::float($this->get('min'));
         $last = $values[count($values) - 1] ?? Typed::float($this->get('max'), 100.0);
+        $offset = $this->getOffset($this->getPercent($value));
 
         return (object)[
             'state' => match (true) {
@@ -61,6 +68,9 @@ class SliderContext extends AbstractComponentContext
                 default => 'at-value',
             },
             'disabled' => Typed::bool($this->get('disabled')),
+            'style' => $this->isVertical()
+                ? "position: absolute; pointer-events: none; bottom: {$offset}; translate: 0% 50%;"
+                : "position: absolute; pointer-events: none; inset-inline-start: {$offset}; translate: -50% 0%;",
         ];
     }
 
@@ -75,43 +85,83 @@ class SliderContext extends AbstractComponentContext
     }
 
     /**
-     * Mirrors the machine's own `getVisibility()`: before hydration the thumb size hasn't been
-     * measured yet, so anything but "center" alignment must render invisible to avoid a flash at
-     * the wrong position/size once the real, measured offset is applied.
+     * Mirrors the machine's offset of a thumb, a marker or a range edge: the percent of the value,
+     * shifted by the inset of a contained thumb. `fromEnd` measures it from the end of the track.
      */
-    public function isUnmeasured(): bool
+    private function getOffset(float $percent, bool $fromEnd = false): string
     {
-        return Typed::stringOrNull($this->get('thumbAlignment')) !== 'center';
+        $edge = $this->formatNumber($fromEnd ? 100 - $percent : $percent);
+        $inset = $this->getInset($percent);
+
+        return match (true) {
+            $inset === null => "{$edge}%",
+            $fromEnd => "calc({$edge}% + {$inset})",
+            default => "calc({$edge}% - {$inset})",
+        };
     }
 
     /**
-     * The range "fill" position is derived purely from `defaultValue`/`min`/`max`/`origin` - unlike
-     * the thumb/marker offsets, it needs no live thumb-size measurement, so it can be precomputed
-     * here instead of leaving the range bar empty until hydration.
+     * A contained thumb stays inside the track, so it moves by up to half its own size. Only the client
+     * measures that size, so the CSS reads `--slider-thumb-width` (or `-height`): the machine sets it
+     * once hydrated, a stylesheet can set it before. `thumbSize` is the fallback.
+     */
+    private function getInset(float $percent): ?string
+    {
+        $factor = ($percent / 100) - 0.5;
+        if (Typed::stringOrNull($this->get('thumbAlignment')) === 'center' || $factor === 0.0) {
+            return null;
+        }
+
+        $dimension = $this->isVertical() ? 'height' : 'width';
+        $thumbSize = Typed::arrayOrNull($this->get('thumbSize')) ?? [];
+        $fallback = $this->formatNumber(Typed::float($thumbSize[$dimension] ?? null));
+
+        return "var(--slider-thumb-{$dimension}, {$fallback}px) * {$this->formatNumber($factor)}";
+    }
+
+    /**
+     * The range "fill" position follows the thumbs, like the machine's: an edge at the end of the
+     * track stays there, any other edge sits at the center of its thumb.
      */
     public function getRangeStyle(): string
+    {
+        $percents = array_map($this->getPercent(...), $this->resolveValues());
+        $first = $percents[0] ?? 0.0;
+        $last = $percents[count($percents) - 1] ?? 0.0;
+        $origin = match (Typed::stringOrNull($this->get('origin'))) {
+            'center' => 50.0,
+            'end' => 100.0,
+            default => 0.0,
+        };
+
+        [$from, $to] = match (true) {
+            count($percents) > 1 => [$first, $last],
+            $first < $origin => [$first, $origin],
+            default => [$origin, $first],
+        };
+        $start = in_array($from, [0.0, 100.0], strict: true)
+            ? "{$this->formatNumber($from)}%"
+            : $this->getOffset($from);
+        $end = in_array($to, [0.0, 100.0], strict: true)
+            ? "{$this->formatNumber(100 - $to)}%"
+            : $this->getOffset($to, fromEnd: true);
+
+        return $this->isVertical()
+            ? "position: absolute; bottom: {$start}; top: {$end};"
+            : "position: absolute; left: {$start}; right: {$end};";
+    }
+
+    private function getPercent(float $value): float
     {
         $min = Typed::float($this->get('min'));
         $max = Typed::float($this->get('max'), 100.0);
 
-        $percent = array_map(static fn(float $value): float => $max === $min
-            ? 0.0
-            : (($value - $min) / ($max - $min)) * 100, $this->resolveValues());
-        $first = $percent[0] ?? 0.0;
-        $last = $percent[count($percent) - 1] ?? 0.0;
+        return $max === $min ? 0.0 : (($value - $min) / ($max - $min)) * 100;
+    }
 
-        [$start, $end] = match (true) {
-            count($percent) > 1 => ["{$this->formatNumber($first)}%", "{$this->formatNumber(100 - $last)}%"],
-            Typed::stringOrNull($this->get('origin')) === 'center' => $first < 50
-                ? ["{$this->formatNumber($first)}%", '50%']
-                : ['50%', "{$this->formatNumber(100 - $first)}%"],
-            Typed::stringOrNull($this->get('origin')) === 'end' => ["{$this->formatNumber($last)}%", '0%'],
-            default => ['0%', "{$this->formatNumber(100 - $last)}%"],
-        };
-
-        return Typed::stringOrNull($this->get('orientation')) === 'vertical'
-            ? "position: absolute; bottom: {$start}; top: {$end};"
-            : "position: absolute; left: {$start}; right: {$end};";
+    private function isVertical(): bool
+    {
+        return Typed::stringOrNull($this->get('orientation')) === 'vertical';
     }
 
     /**

@@ -9,6 +9,6 @@
     {ui:ref(name: 'marker' , value: value, data: refData )}
     {ui:attributes()}
     {ui:asChild()}
-    style="{f:if(condition: context.unmeasured, then: 'visibility: hidden;')}">
+    style="{markerState.style}">
     <f:slot />
 </div>

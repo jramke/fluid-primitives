@@ -105,36 +105,48 @@ final class SliderRenderingTest extends FunctionalTestCase
     }
 
     /**
-     * @return iterable<string, array{0: string, 1: bool}>
+     * @return iterable<string, array{0: string, 1: string, 2: string}>
      */
-    public static function thumbAlignments(): iterable
+    public static function thumbAndMarkerStyles(): iterable
     {
-        yield 'contained by default' => ['', true];
-        // only a thumb that is centered on its value needs no measuring of its size
-        yield 'centered' => ['thumbAlignment="' . self::THUMB_ALIGNMENT_CENTER . '"', false];
+        // a contained thumb is shifted by its own size, which the stylesheet or the machine sets
+        yield 'contained by default' => [
+            '',
+            'position: absolute; inset-inline-start: calc(30% - var(--slider-thumb-width, 0px) * -0.2); transform: translateX(-50%);',
+            'position: absolute; pointer-events: none; inset-inline-start: calc(80% - var(--slider-thumb-width, 0px) * 0.3); translate: -50% 0%;',
+        ];
+        yield 'centered' => [
+            'thumbAlignment="' . self::THUMB_ALIGNMENT_CENTER . '"',
+            'position: absolute; inset-inline-start: 30%; transform: translateX(-50%);',
+            'position: absolute; pointer-events: none; inset-inline-start: 80%; translate: -50% 0%;',
+        ];
+        yield 'vertical with a thumb size' => [
+            'orientation="' . self::ORIENTATION_VERTICAL . '" thumbSize="{width: 20, height: 24}"',
+            'position: absolute; bottom: calc(30% - var(--slider-thumb-height, 24px) * -0.2); transform: translateY(50%);',
+            'position: absolute; pointer-events: none; bottom: calc(80% - var(--slider-thumb-height, 24px) * 0.3); translate: 0% 50%;',
+        ];
     }
 
     #[Test]
-    #[DataProvider('thumbAlignments')]
-    public function hidesThumbsAndMarkersUntilTheClientMeasuredThemUnlessTheyAreCentered(
+    #[DataProvider('thumbAndMarkerStyles')]
+    public function positionsThumbsAndMarkersBeforeTheClientMeasuredThem(
         string $arguments,
-        bool $hidden,
+        string $thumbStyle,
+        string $markerStyle,
     ): void {
         $html = $this->renderTemplate('
             <primitives:slider.root defaultValue="{0: 30}" ' .
         $arguments .
         '>
                 <primitives:slider.markerGroup>
-                    <primitives:slider.marker value="50" />
+                    <primitives:slider.marker value="80" />
                 </primitives:slider.markerGroup>
                 <primitives:slider.thumb index="0" />
             </primitives:slider.root>
         ');
 
-        foreach (['data-slider-thumb', 'data-slider-marker'] as $part) {
-            $style = (string)$this->elementWith($html, $part)->get('style');
-            $this->assertSame($hidden, str_contains($style, 'visibility: hidden;'), $part);
-        }
+        $this->assertSame($thumbStyle, $this->elementWith($html, 'data-slider-thumb')->get('style'));
+        $this->assertSame($markerStyle, $this->elementWith($html, 'data-slider-marker')->get('style'));
     }
 
     #[Test]
@@ -162,23 +174,36 @@ final class SliderRenderingTest extends FunctionalTestCase
      */
     public static function rangeStyles(): iterable
     {
-        yield 'from the start' => ['defaultValue="{0: 30}"', 'position: absolute; left: 0%; right: 70%;'];
-        yield 'between two thumbs' => ['defaultValue="{0: 25, 1: 75}"', 'position: absolute; left: 25%; right: 25%;'];
+        $inset = static fn(string $factor): string => "var(--slider-thumb-width, 0px) * {$factor}";
+
+        // an edge at the end of the track stays there, any other one follows the center of its thumb
+        yield 'from the start' => [
+            'defaultValue="{0: 30}"',
+            "position: absolute; left: 0%; right: calc(70% + {$inset('-0.2')});",
+        ];
+        yield 'between two thumbs' => [
+            'defaultValue="{0: 25, 1: 75}"',
+            "position: absolute; left: calc(25% - {$inset('-0.25')}); right: calc(25% + {$inset('0.25')});",
+        ];
+        yield 'between two centered thumbs' => [
+            'defaultValue="{0: 25, 1: 75}" thumbAlignment="' . self::THUMB_ALIGNMENT_CENTER . '"',
+            'position: absolute; left: 25%; right: 25%;',
+        ];
         yield 'from the center to a lower value' => [
             'defaultValue="{0: 30}" origin="' . self::ORIGIN_CENTER . '"',
-            'position: absolute; left: 30%; right: 50%;',
+            "position: absolute; left: calc(30% - {$inset('-0.2')}); right: 50%;",
         ];
         yield 'from the center to a higher value' => [
             'defaultValue="{0: 70}" origin="' . self::ORIGIN_CENTER . '"',
-            'position: absolute; left: 50%; right: 30%;',
+            "position: absolute; left: 50%; right: calc(30% + {$inset('0.2')});",
         ];
         yield 'from the end' => [
             'defaultValue="{0: 30}" origin="' . self::ORIGIN_END . '"',
-            'position: absolute; left: 30%; right: 0%;',
+            "position: absolute; left: calc(30% - {$inset('-0.2')}); right: 0%;",
         ];
         yield 'vertical' => [
             'defaultValue="{0: 30}" orientation="' . self::ORIENTATION_VERTICAL . '"',
-            'position: absolute; bottom: 0%; top: 70%;',
+            'position: absolute; bottom: 0%; top: calc(70% + var(--slider-thumb-height, 0px) * -0.2);',
         ];
     }
 
