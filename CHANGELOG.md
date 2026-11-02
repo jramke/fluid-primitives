@@ -12,6 +12,9 @@ What changed in each release of Fluid Primitives, newest first. Every release li
 
 - The item content runs on a collapsible, as in [Collapsible](/docs/components/collapsible): it exposes `--height` and `--width` for the `animate-collapsible-*` keyframes, stays visible until its close animation ends, and follows runtime changes of `hiddenUntilFound`. As on Collapsible, the content only carries `data-state="open"` while it animates open, and content open on load gets none, so it no longer animates before hydration.
 
+### Collapsible
+
+- Content that is open on load (`defaultOpen`) gets no `data-state`, so its open animation no longer plays before hydration. It also closes from its full height the first time, instead of from a `--height` of 0.
 
 ## 1.0.0-beta.6
 

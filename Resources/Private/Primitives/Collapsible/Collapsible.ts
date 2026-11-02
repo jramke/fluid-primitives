@@ -9,6 +9,14 @@ export class Collapsible extends Component<collapsible.Props, collapsible.Api> {
         return new Machine(collapsible.machine, machineProps);
     }
 
+    init() {
+        super.init();
+        // Zag measures only when the state changes, so content open on load would close from a
+        // `--height` of 0
+        if (this.api.open) this.api.measureSize();
+        return this;
+    }
+
     initApi() {
         return collapsible.connect(this.machine.service, normalizeProps);
     }
