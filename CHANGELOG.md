@@ -8,6 +8,11 @@ What changed in each release of Fluid Primitives, newest first. Every release li
 
 - **`ui:slotFilled`:** The ViewHelper is gone. Store the slot in a variable and test that: `<f:variable name="note" value="{f:slot() -> f:spaceless()}" />`, then `<f:if condition="{note}">`. This renders the slot once, where `{ui:slotFilled()}` followed by `<f:slot />` rendered it twice. Pass `name` to `f:slot` for a named slot. ([#101](https://github.com/jramke/fluid-primitives/pull/101))
 
+### Accordion
+
+- The item content runs on a collapsible, as in [Collapsible](/docs/components/collapsible): it exposes `--height` and `--width` for the `animate-collapsible-*` keyframes, stays visible until its close animation ends, and follows runtime changes of `hiddenUntilFound`. As on Collapsible, the content only carries `data-state="open"` while it animates open, and content open on load gets none, so it no longer animates before hydration.
+
+
 ## 1.0.0-beta.6
 
 _2026-10-30_

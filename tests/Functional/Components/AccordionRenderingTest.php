@@ -47,7 +47,7 @@ final class AccordionRenderingTest extends FunctionalTestCase
             'item-3',
         ));
 
-        foreach (['item', 'item-header', 'item-trigger', 'item-content'] as $part) {
+        foreach (['item', 'item-header', 'item-trigger'] as $part) {
             foreach ($this->elementsByValue($html, 'data-accordion-' . $part) as $value => $element) {
                 $this->assertSame(
                     $value === 'item-3' ? 'closed' : 'open',
@@ -56,8 +56,10 @@ final class AccordionRenderingTest extends FunctionalTestCase
                 );
             }
         }
+        // open content has no data-state on load, so its open animation does not run before hydration
         foreach ($this->elementsByValue($html, 'data-accordion-item-content') as $value => $content) {
             $this->assertSame($value === 'item-3', $content->has('hidden'), $value);
+            $this->assertSame($value === 'item-3' ? 'closed' : null, $content->get('data-state'), $value);
         }
     }
 
