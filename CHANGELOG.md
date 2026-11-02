@@ -23,7 +23,7 @@ What changed in each release of Fluid Primitives, newest first. Every release li
 
 ### Slider
 
-- Thumbs, markers and the range sit where the client puts them before it hydrates, so the slider no longer jumps on load. Thumbs and markers used to render hidden and in the flow, which shortened the track. A contained thumb reads its size from `--slider-thumb-width` (`--slider-thumb-height` when vertical) until the client measures it, so set the variable on `ui:slider.root` when you change the size of the thumb, as the registry `Slider` does (run `ui:add` again to pick it up). ([`2a570fc`](https://github.com/jramke/fluid-primitives/commit/2a570fc))
+- Thumbs and markers sit where the client puts them before it hydrates, so the slider no longer jumps on load. They used to render hidden and in the flow, which shortened the track and shifted the range. A contained thumb reads its size from `--slider-thumb-width` (`--slider-thumb-height` when vertical) until the client measures it, so set the variable on `ui:slider.root` when you change the size of the thumb, as the registry `Slider` does (run `ui:add` again to pick it up). ([`2a570fc`](https://github.com/jramke/fluid-primitives/commit/2a570fc))
 
 ## 1.0.0-beta.6
 
