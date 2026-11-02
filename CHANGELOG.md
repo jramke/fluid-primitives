@@ -12,6 +12,10 @@ What changed in each release of Fluid Primitives, newest first. Every release li
 
 - Content that is open on load (`defaultOpen`) gets no `data-state`, so its open animation no longer plays before hydration. It also closes from its full height the first time, instead of from a `--height` of 0. ([`26fc2c1`](https://github.com/jramke/fluid-primitives/commit/26fc2c1))
 
+### RadioGroup
+
+- A radio group with nothing checked submits `''` under its name, like the other controls, so Extbase can clear the property. Before, it submitted nothing. ([`af5ad2d`](https://github.com/jramke/fluid-primitives/commit/af5ad2d))
+
 ## 1.0.0-beta.6
 
 _2026-10-30_
