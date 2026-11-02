@@ -124,6 +124,7 @@ _2026-11-06_
 - `ui:slider.root` takes `thumbLabels`, the accessible name of each thumb by its `index`. Without it every thumb of a range slider is named by the label of the slider.
 - A `slider.marker` inside the filled range carries `data-in-range`, in the server render too, and the registry marker colors its dot with it instead of only at the value of the thumb. Run `ui:add` again to pick it up.
 - `thumbSize` of `ui:slider.root` takes a single number for a square thumb.
+- The `Accordion` item content runs on a collapsible, as in [Collapsible](/docs/components/collapsible): it exposes `--height` and `--width` for the `animate-collapsible-*` keyframes, stays visible until its close animation ends, and follows runtime changes of `hiddenUntilFound`. As on Collapsible, the content only carries `data-state="open"` while it animates open, and content open on load gets none, so it no longer animates before hydration.
 
 **Fixes**
 
