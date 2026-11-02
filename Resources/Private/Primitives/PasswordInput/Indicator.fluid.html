@@ -1,0 +1,14 @@
+<ui:prop name="state" type="Jramke\FluidPrimitives\Enum\PasswordInputIndicatorState" optional="{true}" requiredAtRuntime="{true}" description="The visibility state the indicator is shown in." />
+
+<f:variable name="refData" value="{state: context.state, disabled: context.disabled, invalid: context.invalid, readonly: context.readOnly}" />
+<f:variable name="isHidden" value="{context -> ui:call(method: 'isIndicatorHidden', arguments: {0: state})}" />
+
+<span
+    aria-hidden="true"
+    {f:if(condition: isHidden, then: 'hidden' )}
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'indicator' , value: state.value, data: refData )}
+    {ui:attributes()}
+    {ui:asChild()}>
+    <f:slot />
+</span>

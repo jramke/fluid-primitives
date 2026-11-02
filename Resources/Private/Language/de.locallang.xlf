@@ -14,6 +14,12 @@
             <trans-unit id="clipboard.triggerLabelCopied" approved="yes">
                 <target>In Zwischenablage kopiert</target>
             </trans-unit>
+            <trans-unit id="passwordInput.visibilityTriggerLabelHidden" approved="yes">
+                <target>Passwort anzeigen</target>
+            </trans-unit>
+            <trans-unit id="passwordInput.visibilityTriggerLabelVisible" approved="yes">
+                <target>Passwort verbergen</target>
+            </trans-unit>
             <trans-unit id="select.clearTriggerLabel" approved="yes">
                 <target>Wert löschen</target>
             </trans-unit>

@@ -1,0 +1,7 @@
+<ui:useProps name="primitives:passwordInput.root" as="rootProps" />
+
+<primitives:passwordInput.root spreadProps="{rootProps}" class="{ui:cn(value: 'flex flex-col items-start gap-1.5 w-full {class}')}">
+    <f:slot />
+</primitives:passwordInput.root>
+
+<vite:asset entry="%componentPath%/PasswordInput.entry.ts" />

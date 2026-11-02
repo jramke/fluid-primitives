@@ -22,6 +22,7 @@ export default defineConfig({
         menu: './Resources/Private/Primitives/Menu/Menu.ts',
         'navigation-menu': './Resources/Private/Primitives/NavigationMenu/NavigationMenu.ts',
         'number-input': './Resources/Private/Primitives/NumberInput/NumberInput.ts',
+        'password-input': './Resources/Private/Primitives/PasswordInput/PasswordInput.ts',
         popover: './Resources/Private/Primitives/Popover/Popover.ts',
         'radio-group': './Resources/Private/Primitives/RadioGroup/RadioGroup.ts',
         'scroll-area': './Resources/Private/Primitives/ScrollArea/ScrollArea.ts',

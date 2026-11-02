@@ -1,0 +1,19 @@
+<ui:prop name="disabled" type="boolean" optional="{true}" client="{true}" description="Whether the password input is disabled. Inherited from a surrounding field when available." />
+<ui:prop name="invalid" type="boolean" optional="{true}" client="{true}" description="Whether the password input value is invalid. Inherited from a surrounding field when available." />
+<ui:prop name="required" type="boolean" optional="{true}" client="{true}" description="Whether the password input is required. Inherited from a surrounding field when available." />
+<ui:prop name="readOnly" type="boolean" optional="{true}" client="{true}" description="Whether the password input is readonly. Inherited from a surrounding field when available." />
+<ui:prop name="name" type="string" optional="{true}" client="{true}" description="The name attribute of the password input. Useful for form submission. Inherited from a surrounding field when available." />
+<ui:prop name="defaultVisible" type="boolean" optional="{true}" client="{true}" default="{false}" description="Whether the password is shown as plain text when rendered." />
+<ui:prop name="autoComplete" type="Jramke\FluidPrimitives\Enum\PasswordAutoComplete" optional="{true}" client="{true}" default="{f:constant(name: 'Jramke\FluidPrimitives\Enum\PasswordAutoComplete::CurrentPassword')}" description="The autocomplete attribute of the input. Use `new-password` on a sign-up or change-password form, so the browser offers to generate a password." />
+<ui:prop name="ignorePasswordManagers" type="boolean" optional="{true}" client="{true}" default="{false}" description="Whether password managers leave the input alone. Works for 1Password, LastPass, Bitwarden, Dashlane and Proton Pass." />
+<ui:prop name="translations" type="array" optional="{true}" client="{true}" description="Localized labels of the visibility trigger, `visibilityTriggerLabelHidden` and `visibilityTriggerLabelVisible`. A client script can pass a `visibilityTrigger` function of the visible state instead. Use `f:translate` for per-template localization overrides when needed." />
+
+<f:variable name="refData" value="{disabled: context.disabled, invalid: context.invalid, readonly: context.readOnly}" />
+
+<div
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'root' , data: refData )}
+    {ui:attributes()}
+    {ui:asChild()}>
+    <f:slot />
+</div>
