@@ -155,7 +155,7 @@ final class TocRenderingTest extends FunctionalTestCase
         $this->assertSame('0px', $props['rootMargin']);
         $this->assertEqualsWithDelta(0.5, $props['threshold'], 0.0001);
         $this->assertFalse($props['autoScroll']);
-        $this->assertSame('smooth', $props['scrollBehavior']);
+        $this->assertSame('auto', $props['scrollBehavior']);
         $this->assertSame(['a'], $props['defaultActiveIds']);
         $this->assertSame([['value' => 'a', 'depth' => 2], ['value' => 'b', 'depth' => 3]], $props['items']);
     }

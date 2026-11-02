@@ -30,14 +30,7 @@ export class Toc extends Component<toc.Props, toc.Api> {
 
     initMachine(props: toc.Props): Machine<any> {
         const [machineProps] = toc.splitProps(props);
-        return new Machine(toc.machine, {
-            ...machineProps,
-            // the machine scrolls the list and the page with this behavior, so a visitor who
-            // prefers reduced motion gets no animation whatever the prop says
-            ...(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches && {
-                scrollBehavior: 'instant',
-            }),
-        });
+        return new Machine(toc.machine, machineProps);
     }
 
     initApi() {

@@ -112,25 +112,3 @@ test('observes inside the scroll container once its selector is converted', () =
     expect(observers[0].options?.root).toBe(document.getElementById('content'));
     expect(applyClientPropConverters('toc', { id: 't1', items: [] }).scrollEl).toBeUndefined();
 });
-
-test('scrolls without animation for a visitor who prefers reduced motion', () => {
-    const scrolls: ScrollIntoViewOptions[] = [];
-    Element.prototype.scrollIntoView = function (options?: boolean | ScrollIntoViewOptions) {
-        scrolls.push(options as ScrollIntoViewOptions);
-    };
-    const prefersReducedMotion = (reduce: boolean) =>
-        vi.stubGlobal('matchMedia', (query: string) => ({
-            matches: reduce && query === '(prefers-reduced-motion: reduce)',
-        }));
-
-    prefersReducedMotion(true);
-    mountToc();
-    toc!.api.scrollTo('usage');
-    toc!.destroy();
-
-    prefersReducedMotion(false);
-    mountToc();
-    toc!.api.scrollTo('usage');
-
-    expect(scrolls.map(options => options.behavior)).toEqual(['instant', 'smooth']);
-});
