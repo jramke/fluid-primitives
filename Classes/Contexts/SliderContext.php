@@ -21,7 +21,7 @@ class SliderContext extends AbstractComponentContext
         $gap = Typed::float($this->get('step'), 1.0) * Typed::float($this->get('minStepsBetweenThumbs'));
         $lastIndex = count($values) - 1;
         $value = $values[$index] ?? $min;
-        $offset = $this->getOffset($this->getPercent($value));
+        $offset = $this->getOffset($value);
 
         return (object)[
             'value' => $value,
@@ -59,7 +59,7 @@ class SliderContext extends AbstractComponentContext
         $values = $this->resolveValues();
         $first = $values[0] ?? Typed::float($this->get('min'));
         $last = $values[count($values) - 1] ?? Typed::float($this->get('max'), 100.0);
-        $offset = $this->getOffset($this->getPercent($value));
+        $offset = $this->getOffset($value);
 
         return (object)[
             'state' => match (true) {
@@ -85,66 +85,48 @@ class SliderContext extends AbstractComponentContext
     }
 
     /**
-     * Mirrors the machine's offset of a thumb, a marker or a range edge: the percent of the value,
-     * shifted by the inset of a contained thumb. `fromEnd` measures it from the end of the track.
+     * Mirrors the machine's offset of a thumb or a marker. A contained thumb stays inside the track, so
+     * it moves by up to half its own size. Only the client measures that size, so the CSS reads
+     * `--slider-thumb-width` (or `-height`): the machine sets it once hydrated, a stylesheet can set it
+     * before. `thumbSize` is the fallback.
      */
-    private function getOffset(float $percent, bool $fromEnd = false): string
+    private function getOffset(float $value): string
     {
-        $edge = $this->formatNumber($fromEnd ? 100 - $percent : $percent);
-        $inset = $this->getInset($percent);
-
-        return match (true) {
-            $inset === null => "{$edge}%",
-            $fromEnd => "calc({$edge}% + {$inset})",
-            default => "calc({$edge}% - {$inset})",
-        };
-    }
-
-    /**
-     * A contained thumb stays inside the track, so it moves by up to half its own size. Only the client
-     * measures that size, so the CSS reads `--slider-thumb-width` (or `-height`): the machine sets it
-     * once hydrated, a stylesheet can set it before. `thumbSize` is the fallback.
-     */
-    private function getInset(float $percent): ?string
-    {
+        $percent = $this->getPercent($value);
         $factor = ($percent / 100) - 0.5;
         if (Typed::stringOrNull($this->get('thumbAlignment')) === 'center' || $factor === 0.0) {
-            return null;
+            return "{$this->formatNumber($percent)}%";
         }
 
         $dimension = $this->isVertical() ? 'height' : 'width';
         $thumbSize = Typed::arrayOrNull($this->get('thumbSize')) ?? [];
         $fallback = $this->formatNumber(Typed::float($thumbSize[$dimension] ?? null));
 
-        return "var(--slider-thumb-{$dimension}, {$fallback}px) * {$this->formatNumber($factor)}";
+        return "calc({$this->formatNumber(
+            $percent,
+        )}% - var(--slider-thumb-{$dimension}, {$fallback}px) * {$this->formatNumber($factor)})";
     }
 
     /**
-     * The range "fill" position follows the thumbs, like the machine's: an edge at the end of the
-     * track stays there, any other edge sits at the center of its thumb.
+     * The range "fill" position is derived purely from `defaultValue`/`min`/`max`/`origin` - unlike
+     * the thumb/marker offsets, it needs no live thumb-size measurement, so it can be precomputed
+     * here instead of leaving the range bar empty until hydration.
      */
     public function getRangeStyle(): string
     {
-        $percents = array_map($this->getPercent(...), $this->resolveValues());
-        $first = $percents[0] ?? 0.0;
-        $last = $percents[count($percents) - 1] ?? 0.0;
-        $origin = match (Typed::stringOrNull($this->get('origin'))) {
-            'center' => 50.0,
-            'end' => 100.0,
-            default => 0.0,
-        };
+        // @zag-js/slider 2.0.0-next.3 fills by percent only, newer versions inset the edges like getOffset()
+        $percent = array_map($this->getPercent(...), $this->resolveValues());
+        $first = $percent[0] ?? 0.0;
+        $last = $percent[count($percent) - 1] ?? 0.0;
 
-        [$from, $to] = match (true) {
-            count($percents) > 1 => [$first, $last],
-            $first < $origin => [$first, $origin],
-            default => [$origin, $first],
+        [$start, $end] = match (true) {
+            count($percent) > 1 => ["{$this->formatNumber($first)}%", "{$this->formatNumber(100 - $last)}%"],
+            Typed::stringOrNull($this->get('origin')) === 'center' => $first < 50
+                ? ["{$this->formatNumber($first)}%", '50%']
+                : ['50%', "{$this->formatNumber(100 - $first)}%"],
+            Typed::stringOrNull($this->get('origin')) === 'end' => ["{$this->formatNumber($last)}%", '0%'],
+            default => ['0%', "{$this->formatNumber(100 - $last)}%"],
         };
-        $start = in_array($from, [0.0, 100.0], strict: true)
-            ? "{$this->formatNumber($from)}%"
-            : $this->getOffset($from);
-        $end = in_array($to, [0.0, 100.0], strict: true)
-            ? "{$this->formatNumber(100 - $to)}%"
-            : $this->getOffset($to, fromEnd: true);
 
         return $this->isVertical()
             ? "position: absolute; bottom: {$start}; top: {$end};"
