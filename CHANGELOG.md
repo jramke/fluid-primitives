@@ -11,7 +11,7 @@ What changed in each release of Fluid Primitives, newest first. Every release li
 
 ### General changes
 
-- **Accordion, Select:** The registry `Accordion` item trigger and the `Select` trigger and items show a pointer cursor. Run `ui:add` again to pick it up. ([`baabad9`](https://github.com/jramke/fluid-primitives/commit/baabad9)) ([`f12663d`](https://github.com/jramke/fluid-primitives/commit/f12663d))
+- **Accordion, Select, Combobox, Menu:** The registry `Accordion` item trigger, the `Select` trigger and items, and the `Combobox` and `Menu` items show a pointer cursor. Run `ui:add` again to pick it up. ([`baabad9`](https://github.com/jramke/fluid-primitives/commit/baabad9)) ([`f12663d`](https://github.com/jramke/fluid-primitives/commit/f12663d)) ([`8c4c88a`](https://github.com/jramke/fluid-primitives/commit/8c4c88a)) ([`d710c94`](https://github.com/jramke/fluid-primitives/commit/d710c94))
 
 ### Collapsible
 
