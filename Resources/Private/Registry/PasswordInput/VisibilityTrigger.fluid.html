@@ -1,0 +1,28 @@
+<ui:useProps name="primitives:passwordInput.visibilityTrigger" as="visibilityTriggerProps" />
+
+<primitives:passwordInput.visibilityTrigger spreadProps="{visibilityTriggerProps}" class="{ui:cn(value: '
+    inline-flex h-full items-center justify-center px-2.5
+    text-muted-foreground hover:text-foreground
+    transition-colors rounded-r-[calc(var(--radius)-1px)]
+    cursor-pointer disabled:cursor-not-allowed
+    [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*=size-])]:size-4
+    {class}
+')}">
+    <f:variable name="fallback">
+        <primitives:passwordInput.indicator state="{f:constant(name: 'Jramke\FluidPrimitives\Enum\PasswordInputIndicatorState::Hidden')}">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4">
+                <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+        </primitives:passwordInput.indicator>
+        <primitives:passwordInput.indicator state="{f:constant(name: 'Jramke\FluidPrimitives\Enum\PasswordInputIndicatorState::Visible')}">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4">
+                <path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"></path>
+                <path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"></path>
+                <path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"></path>
+                <path d="m2 2 20 20"></path>
+            </svg>
+        </primitives:passwordInput.indicator>
+    </f:variable>
+    {f:slot() -> f:or(alternative: fallback) -> f:spaceless() -> f:format.raw()}
+</primitives:passwordInput.visibilityTrigger>

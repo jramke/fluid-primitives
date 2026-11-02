@@ -40,6 +40,7 @@ class Constants
         'select',
         'input',
         'number-input',
+        'password-input',
         'radio-group',
         'slider',
         'switch',

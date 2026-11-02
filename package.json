@@ -132,6 +132,10 @@
             "import": "./dist/number-input.js",
             "types": "./dist/number-input.d.ts"
         },
+        "./password-input": {
+            "import": "./dist/password-input.js",
+            "types": "./dist/password-input.d.ts"
+        },
         "./navigation-menu": {
             "import": "./dist/navigation-menu.js",
             "types": "./dist/navigation-menu.d.ts"
@@ -192,6 +196,7 @@
         "@zag-js/menu": "^2.0.0-next.3",
         "@zag-js/navigation-menu": "^2.0.0-next.3",
         "@zag-js/number-input": "^2.0.0-next.3",
+        "@zag-js/password-input": "^2.0.0-next.3",
         "@zag-js/popover": "^2.0.0-next.3",
         "@zag-js/radio-group": "^2.0.0-next.3",
         "@zag-js/scroll-area": "^2.0.0-next.3",

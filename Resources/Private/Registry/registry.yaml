@@ -246,6 +246,18 @@ numberInput:
     - Scrubber.fluid.html
     - NumberInput.entry.ts
 
+passwordInput:
+  name: PasswordInput
+  description: A password input with a button to show and hide the password, works with Field
+  files:
+    - Root.fluid.html
+    - Label.fluid.html
+    - Control.fluid.html
+    - Input.fluid.html
+    - VisibilityTrigger.fluid.html
+    - Indicator.fluid.html
+    - PasswordInput.entry.ts
+
 popover:
   name: Popover
   description: An accessible popup anchored to a button

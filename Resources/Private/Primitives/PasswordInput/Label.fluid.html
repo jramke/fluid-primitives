@@ -1,0 +1,9 @@
+<f:variable name="refData" value="{disabled: context.disabled, invalid: context.invalid, readonly: context.readOnly, required: context.required}" />
+
+<label
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'label' , data: refData )}
+    {ui:attributes()}
+    {ui:asChild()}>
+    <f:slot />
+</label>
