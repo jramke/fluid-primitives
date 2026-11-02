@@ -10,7 +10,7 @@ What changed in each release of Fluid Primitives, newest first. Every release li
 
 ### Collapsible
 
-- Content that is open on load (`defaultOpen`) gets no `data-state`, so its open animation no longer plays before hydration. It also closes from its full height the first time, instead of from a `--height` of 0.
+- Content that is open on load (`defaultOpen`) gets no `data-state`, so its open animation no longer plays before hydration. It also closes from its full height the first time, instead of from a `--height` of 0. ([`26fc2c1`](https://github.com/jramke/fluid-primitives/commit/26fc2c1))
 
 ## 1.0.0-beta.6
 
