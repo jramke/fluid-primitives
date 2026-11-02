@@ -27,7 +27,7 @@ What changed in each release of Fluid Primitives, newest first. Every release li
 
 ### Separator
 
-- New `Separator` component: a `<div role="separator">` with `aria-orientation` and `data-orientation`, horizontal or vertical. It renders on the server only and needs no client script. Add it with `ui:add separator`.
+- New `Separator` component: a `<div role="separator">` with `aria-orientation` and `data-orientation`, horizontal or vertical. It renders on the server only and needs no client script. Add it with `ui:add separator`. ([#106](https://github.com/jramke/fluid-primitives/pull/106))
 
 ### Slider
 
