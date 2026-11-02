@@ -19,7 +19,7 @@ What changed in each release of Fluid Primitives, newest first. Every release li
 
 ### PasswordInput
 
-- New `PasswordInput` component on `@zag-js/password-input`: a password input with a visibility trigger and one `indicator` per state, `autoComplete`, `ignorePasswordManagers`, translated trigger labels and Field support. Add it with `ui:add passwordInput`.
+- New `PasswordInput` component on `@zag-js/password-input`: a password input with a visibility trigger and one `indicator` per state, `autoComplete`, `ignorePasswordManagers`, translated trigger labels and Field support. Add it with `ui:add passwordInput`. ([#104](https://github.com/jramke/fluid-primitives/pull/104))
 
 ### RadioGroup
 
