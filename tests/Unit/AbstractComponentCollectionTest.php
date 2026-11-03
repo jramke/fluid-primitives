@@ -79,7 +79,7 @@ final class AbstractComponentCollectionTest extends TestCase
             public function getTemplatePaths(): TemplatePaths
             {
                 $templatePaths = new TemplatePaths();
-                $templatePaths->setTemplateRootPaths([dirname(__DIR__) . '/Fixtures/ReservedProvider']);
+                $templatePaths->setTemplateRootPaths([__DIR__ . '/../Fixtures/ReservedProvider']);
                 return $templatePaths;
             }
         };
