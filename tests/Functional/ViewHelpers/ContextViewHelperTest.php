@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Tests\Functional\ViewHelpers;
 
+use Jramke\FluidPrimitives\Exception\InvalidPropValueException;
 use Jramke\FluidPrimitives\Tests\Fixtures\PlainComponentCollection;
 use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
 use PHPUnit\Framework\Attributes\Test;
@@ -26,5 +27,35 @@ final class ContextViewHelperTest extends FunctionalTestCase
         ');
 
         $this->assertSame('cookie-settings', $this->elementWith($html, 'data-closes')->get('data-closes'));
+    }
+
+    #[Test]
+    public function rejectsTheContextOfAComponentFromAnotherCollection(): void
+    {
+        $this
+            ->getView()
+            ->getRenderingContext()
+            ->getViewHelperResolver()
+            ->addNamespace('plain', new PlainComponentCollection());
+
+        $this->assertRenderThrows(
+            InvalidPropValueException::class,
+            'The closest enclosing dialog is not a plain:dialog.',
+            fn() => $this->renderTemplate('
+                <primitives:dialog.root rootId="cookie-settings">
+                    <plain:foreignDialogReader />
+                </primitives:dialog.root>
+            '),
+        );
+    }
+
+    #[Test]
+    public function rejectsANameWithoutItsNamespace(): void
+    {
+        $this->assertRenderThrows(
+            InvalidPropValueException::class,
+            '"dialog" has none.',
+            fn() => $this->renderTemplate('<ui:context name="dialog" as="dialogContext" />'),
+        );
     }
 }
