@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\ViewHelpers;
 
+use Jramke\FluidPrimitives\Constants;
 use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
 use Jramke\FluidPrimitives\Exception\InvalidPropValueException;
 use Jramke\FluidPrimitives\Exception\MissingContextException;
 use Jramke\FluidPrimitives\Exception\MissingPropException;
+use Jramke\FluidPrimitives\Registry\ProvidedRootRegistry;
 use Jramke\FluidPrimitives\Service\ContextService;
 use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
@@ -27,6 +29,13 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
  *
  * `name` is the component with its namespace, as you write its tag, and `as` the variable that receives its context. A component reads its own context through the `context` variable. Asking `ui:context` for it throws an exception.
  *
+ * With `provider` it reads the context a `<component>.provider` created instead, from anywhere after the provider, also outside a component:
+ *
+ * ```html
+ * <ui:dialog.provider id="contact" />
+ * <ui:context name="ui:dialog" provider="contact" as="contactDialog" />
+ * ```
+ *
  */
 class ContextViewHelper extends AbstractViewHelper
 {
@@ -41,6 +50,13 @@ class ContextViewHelper extends AbstractViewHelper
             true,
         );
         $this->registerArgument('as', 'string', 'Variable name to assign the result to', false, '');
+        $this->registerArgument(
+            Constants::PROP_PROVIDER,
+            'string',
+            'The `id` of a `<component>.provider` to read the context of, instead of the closest enclosing component.',
+            false,
+            '',
+        );
     }
 
     public function render(): ?ComponentContextInterface
@@ -70,9 +86,15 @@ class ContextViewHelper extends AbstractViewHelper
             is_string(...),
         ));
 
+        $providerId = Typed::string($this->arguments[Constants::PROP_PROVIDER]);
+        if ($providerId !== '') {
+            $usedBy = sprintf('<ui:context name="%s">', $name);
+            return $this->assign(ProvidedRootRegistry::require($collections, $baseName, $providerId, $usedBy)->context);
+        }
+
         if (!ComponentUtility::isComponent($renderingContext)) {
             throw new MissingContextException(
-                'The context ViewHelper can only be used inside a component.',
+                'The context ViewHelper can only be used inside a component, or with the id of a provider.',
                 1754253443,
             );
         }

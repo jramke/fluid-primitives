@@ -111,6 +111,18 @@ final class ProviderRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function uiContextReadsAProvidedContextOutsideAnyComponent(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:dialog.provider id="contact" defaultOpen="{true}" />
+            <ui:context name="primitives:dialog" provider="contact" as="contactDialog" />
+            <p data-open="{f:if(condition: contactDialog.defaultOpen, then: \'yes\', else: \'no\')}"></p>
+        ');
+
+        $this->assertSame('yes', $this->elementWith($html, 'data-open')->get('data-open'));
+    }
+
+    #[Test]
     public function rejectsAPartWhoseProviderIsNotRenderedBeforeIt(): void
     {
         $this->assertRenderThrows(
