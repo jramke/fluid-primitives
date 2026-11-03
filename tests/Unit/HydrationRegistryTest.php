@@ -6,7 +6,6 @@ namespace Jramke\FluidPrimitives\Tests\Unit;
 
 use Jramke\FluidPrimitives\Contexts\GlobalContext;
 use Jramke\FluidPrimitives\Domain\Dto\HydrationEntry;
-use Jramke\FluidPrimitives\Exception\HydrationException;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Registry\NestedComponentRegistry;
 use Jramke\FluidPrimitives\Service\TranslatorService;
@@ -70,19 +69,6 @@ final class HydrationRegistryTest extends TestCase
         $this->assertSame('first-accordion', $all['ui']['accordion']['«f1»']['props']['type']);
         $this->assertSame('second-accordion', $all['ui']['accordion']['«f2»']['props']['type']);
         $this->assertSame('dialog', $all['ui']['dialog']['«f3»']['props']['type']);
-    }
-
-    #[Test]
-    public function rejectsARootIdAlreadyRegisteredForTheSameComponentType(): void
-    {
-        $this->registry->add('ui', 'select', new HydrationEntry('same', [], true, []));
-        // the same id on another component type is a different instance
-        $this->registry->add('ui', 'dialog', new HydrationEntry('same', [], true, []));
-
-        $this->expectException(HydrationException::class);
-        $this->expectExceptionMessage('The rootId "same" is already used by another <select> component.');
-
-        $this->registry->add('ui', 'select', new HydrationEntry('same', [], true, []));
     }
 
     #[Test]

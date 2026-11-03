@@ -6,7 +6,6 @@ namespace Jramke\FluidPrimitives\Registry;
 
 use Jramke\FluidPrimitives\Contexts\GlobalContextInterface;
 use Jramke\FluidPrimitives\Domain\Dto\HydrationEntry;
-use Jramke\FluidPrimitives\Exception\HydrationException;
 use Jramke\FluidPrimitives\Utility\ClientPropsContextExtractor;
 use Jramke\FluidPrimitives\Utility\EnumUtility;
 use Psr\Http\Message\ServerRequestInterface;
@@ -78,12 +77,6 @@ class HydrationRegistry
         $bucket[$lastSegment] ??= [];
         /** @var array<string, array<string, mixed>> $leaf */
         $leaf = &$bucket[$lastSegment];
-        if (array_key_exists($entry->id, $leaf)) {
-            throw new HydrationException(
-                sprintf('The rootId "%s" is already used by another <%s> component.', $entry->id, $componentType),
-                1_788_200_003,
-            );
-        }
         $leaf[$entry->id] = $normalizedProps;
 
         // Update the asset collector whenever data changes

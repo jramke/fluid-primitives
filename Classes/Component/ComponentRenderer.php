@@ -10,6 +10,7 @@ use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
 use Jramke\FluidPrimitives\Domain\Dto\ComponentHydrationCandidate;
 use Jramke\FluidPrimitives\Domain\Dto\ComponentIdentity;
 use Jramke\FluidPrimitives\Factory\ComponentRootContextFactory;
+use Jramke\FluidPrimitives\Registry\RenderedRootRegistry;
 use Jramke\FluidPrimitives\Service\Component\AsChildAttributeSpreader;
 use Jramke\FluidPrimitives\Service\Component\CheckboxGroupContextVariableMerger;
 use Jramke\FluidPrimitives\Service\Component\ComponentArgumentResolver;
@@ -90,6 +91,9 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
             $this->componentResolver,
         );
         $isRenderedAsRoot = $identity->isRenderedAsRoot;
+        if ($isRenderedAsRoot) {
+            RenderedRootRegistry::claim($identity->clientBaseName, (string)$identity->rootId);
+        }
 
         $argumentDefinitions = $this->componentResolver
             ->getComponentDefinition($viewHelperName)
@@ -169,7 +173,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
             ContextService::removeFromRenderingContext($parentRenderingContext, $identity->baseName);
 
             // Call afterRendering lifecycle method only for root or closed components
-            if ($ctx instanceof AbstractComponentContext && method_exists($ctx, 'afterRendering')) {
+            if ($ctx instanceof AbstractComponentContext) {
                 $ctx->afterRendering($rendered);
             }
 
@@ -236,7 +240,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         }
 
         // Call beforeRendering lifecycle method only for root or closed components
-        if ($ctx instanceof AbstractComponentContext && $isRenderedAsRoot && method_exists($ctx, 'beforeRendering')) {
+        if ($ctx instanceof AbstractComponentContext && $isRenderedAsRoot) {
             $ctx->beforeRendering();
         }
 
