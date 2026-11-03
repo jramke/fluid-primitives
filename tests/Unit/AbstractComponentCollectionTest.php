@@ -14,6 +14,30 @@ use TYPO3Fluid\Fluid\View\TemplatePaths;
 final class AbstractComponentCollectionTest extends TestCase
 {
     #[Test]
+    public function listsEveryTemplateAndAProviderForEachRootWithParts(): void
+    {
+        $components = (new RootDetectionComponentCollection())->getAvailableComponents();
+        sort($components);
+
+        $this->assertSame(
+            [
+                'gadget',
+                'gadget.part',
+                'gadget.provider',
+                'icon.copy',
+                'icon.menu',
+                'tier.widget.root',
+                'widget.examples.demo',
+                'widget.item',
+                'widget.provider',
+                'widget.root',
+                'widget.trigger',
+            ],
+            $components,
+        );
+    }
+
+    #[Test]
     public function aProviderTakesTheStateOfItsRootAndOnlyDetachablePartsLinkToIt(): void
     {
         $collection = new RootDetectionComponentCollection();

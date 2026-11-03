@@ -8,6 +8,7 @@ use Jramke\FluidPrimitives\Annotations\AdditionalArgumentsAllowedAnnotation;
 use Jramke\FluidPrimitives\Constants;
 use Jramke\FluidPrimitives\Exception\UnresolvableComponentException;
 use Jramke\FluidPrimitives\Factory\ComponentRendererFactory;
+use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
 use Jramke\FluidPrimitives\Utility\ComponentProviderUtility;
 use Jramke\FluidPrimitives\Utility\ComponentRootUtility;
 use Jramke\FluidPrimitives\Utility\PropsUtility;
@@ -228,6 +229,32 @@ abstract class AbstractComponentCollection implements ComponentCollectionInterfa
     final public function isDeclaredRoot(string $viewHelperName): bool
     {
         return array_key_exists('rootId', $this->getComponentDefinition($viewHelperName)->getArgumentDefinitions());
+    }
+
+    /**
+     * Every component of the collection, for Fluid's own tooling (`typo3 fluid:schema:generate`): the
+     * templates whose name resolves back to the same file, plus the `.provider` of every root that has one.
+     *
+     * @return list<string>
+     */
+    final public function getAvailableComponents(): array
+    {
+        $components = [];
+        foreach ($this->getTemplatePaths()->resolveAvailableTemplateFiles(null) as $file) {
+            $name = ComponentNameUtility::getViewHelperNameFromTemplateFile($file, $this);
+            if ($name === null) {
+                continue;
+            }
+
+            ComponentProviderUtility::assertNotReserved($name, $this);
+            $components[$name] = $name;
+            $providerName = ComponentProviderUtility::getProviderName($name, $this);
+            if ($providerName !== null) {
+                $components[$providerName] = $providerName;
+            }
+        }
+
+        return array_values($components);
     }
 
     /**
