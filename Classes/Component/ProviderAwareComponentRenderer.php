@@ -68,6 +68,19 @@ final readonly class ProviderAwareComponentRenderer implements ComponentRenderer
         );
 
         if ($isRoot) {
+            // A root that forwards with spreadProps is the inner call of a wrapper, not a root of its own
+            if ((Typed::arrayOrNull($arguments['spreadProps'] ?? null) ?? []) !== []) {
+                throw new ProvidedRootArgumentException(
+                    sprintf(
+                        'The %s with provider "%s" forwards its props with spreadProps, so the component around it is its root. Give provider="%s" to that component.',
+                        $baseName,
+                        $providerId,
+                        $providerId,
+                    ),
+                    1_789_100_008,
+                );
+            }
+
             if (($arguments[Constants::PROP_ROOT_ID] ?? null) !== null) {
                 throw new ProvidedRootArgumentException(
                     sprintf(

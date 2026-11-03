@@ -71,6 +71,21 @@ final class ProviderRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function rejectsAProviderOnARootThatForwardsItsProps(): void
+    {
+        $this->assertRenderThrows(
+            ProvidedRootArgumentException::class,
+            'forwards its props with spreadProps, so the component around it is its root',
+            fn() => $this->renderTemplate('
+                <primitives:dialog.provider id="contact" />
+                <primitives:dialog.root provider="contact" spreadProps="{0: \'modal\'}">
+                    <primitives:dialog.trigger>Open</primitives:dialog.trigger>
+                </primitives:dialog.root>
+            '),
+        );
+    }
+
+    #[Test]
     public function aDetachedMenuTriggerComputesItsStateFromTheProvidedContext(): void
     {
         $html = $this->renderTemplate('
