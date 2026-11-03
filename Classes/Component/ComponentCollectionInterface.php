@@ -6,6 +6,7 @@ namespace Jramke\FluidPrimitives\Component;
 
 use TYPO3Fluid\Fluid\Core\Component\ComponentDefinition;
 use TYPO3Fluid\Fluid\Core\Component\ComponentDefinitionProviderInterface;
+use TYPO3Fluid\Fluid\Core\Component\ComponentListProviderInterface;
 use TYPO3Fluid\Fluid\Core\Component\ComponentTemplateResolverInterface;
 use TYPO3Fluid\Fluid\Core\ViewHelper\ViewHelperResolverDelegateInterface;
 
@@ -15,6 +16,7 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\ViewHelperResolverDelegateInterface;
 interface ComponentCollectionInterface extends
     ViewHelperResolverDelegateInterface,
     ComponentDefinitionProviderInterface,
+    ComponentListProviderInterface,
     ComponentTemplateResolverInterface
 {
     /**

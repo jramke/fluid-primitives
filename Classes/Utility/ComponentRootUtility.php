@@ -81,25 +81,35 @@ final class ComponentRootUtility
         }
 
         $directory = $lastSlash === false ? '' : substr($templateName, offset: 0, length: $lastSlash);
-        $siblingExists = static fn(string $name): bool => (
-            $templateResolver->getTemplatePaths()->resolveTemplateFileForControllerAndActionAndFormat(
-                'Default',
-                ($directory !== '' ? $directory . '/' : '') . $name,
-            ) !== null
-        );
+        $folderRoot = self::getFolderRootTemplateName($directory, $templateResolver);
 
-        if ($siblingExists('Root')) {
-            return false;
-        }
+        // Only a folder with neither a Root nor a file named like it holds independent roots
+        return $folderRoot === null || strtolower(basename($folderRoot)) === strtolower($ownName);
+    }
 
-        // Without a Root, the file named like its folder (`Button/Button`) is the folder's designated root and
-        // every other file in it one of its parts. Only a folder with neither holds independent roots.
+    /**
+     * The template that is the designated root of `$directory`: its `Root`, else the file named like the
+     * folder (`Button/Button`), whose siblings are then its parts. `null` for a folder of independent roots.
+     */
+    public static function getFolderRootTemplateName(
+        string $directory,
+        ComponentTemplateResolverInterface $templateResolver,
+    ): ?string {
         $folderName = basename($directory);
-        if ($folderName === '' || strtolower($ownName) === strtolower($folderName)) {
-            return true;
+        foreach (['Root', $folderName] as $name) {
+            $templateName = ($directory !== '' ? $directory . '/' : '') . $name;
+            if (
+                $name !== '' &&
+                $templateResolver->getTemplatePaths()->resolveTemplateFileForControllerAndActionAndFormat(
+                    'Default',
+                    $templateName,
+                ) !== null
+            ) {
+                return $templateName;
+            }
         }
 
-        return !$siblingExists($folderName);
+        return null;
     }
 
     /**

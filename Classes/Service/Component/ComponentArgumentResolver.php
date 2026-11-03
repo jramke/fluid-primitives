@@ -6,8 +6,12 @@ namespace Jramke\FluidPrimitives\Service\Component;
 
 use Jramke\FluidPrimitives\Annotations\ClientArgumentAnnotation;
 use Jramke\FluidPrimitives\Annotations\ContextArgumentAnnotation;
+use Jramke\FluidPrimitives\Constants;
+use Jramke\FluidPrimitives\Domain\Dto\ProvidedRoot;
 use Jramke\FluidPrimitives\Domain\Dto\ResolvedComponentArguments;
 use Jramke\FluidPrimitives\Domain\Dto\TagAttributes;
+use Jramke\FluidPrimitives\Exception\ProvidedRootArgumentException;
+use Jramke\FluidPrimitives\Utility\Typed;
 use Jramke\FluidPrimitives\ViewHelpers\AttributesViewHelper;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 use TYPO3Fluid\Fluid\Core\ViewHelper\ArgumentDefinition;
@@ -99,5 +103,59 @@ final readonly class ComponentArgumentResolver
             'attributes',
             new TagAttributes(array_merge($additionalArguments, $attributes)),
         );
+    }
+
+    /**
+     * The arguments of a `<component>.provider`, plus what its root still takes itself: its `rootId`, what
+     * describes its element, its link to the provider and attributes no prop declares. Without a provider, the root's own arguments.
+     *
+     * @param array<string, mixed> $arguments
+     * @param array<string, ArgumentDefinition> $argumentDefinitions
+     * @return array<string, mixed>
+     */
+    public function mergeProvided(
+        ?ProvidedRoot $provided,
+        array $arguments,
+        array $argumentDefinitions,
+        string $baseName,
+    ): array {
+        if (!$provided instanceof ProvidedRoot) {
+            return $arguments;
+        }
+
+        $own = [];
+        // Narrowed per key below; argument values are as untyped as the props they belong to.
+        // @mago-expect analysis:mixed-assignment
+        foreach ($arguments as $name => $value) {
+            $definition = $argumentDefinitions[$name] ?? null;
+            if (
+                !$definition instanceof ArgumentDefinition ||
+                in_array(
+                    $name,
+                    [...Constants::ROOT_ELEMENT_PROPS, Constants::PROP_ROOT_ID, Constants::PROP_PROVIDER],
+                    strict: true,
+                )
+            ) {
+                $own[$name] = $value;
+                continue;
+            }
+
+            // An uncached render gets every default filled in, a compiled one only what the tag sets: a value
+            // that differs from the default is the one sign of a prop the root set itself in both
+            if ($value !== $definition->getDefaultValue()) {
+                throw new ProvidedRootArgumentException(
+                    sprintf(
+                        'The %s with provider "%s" takes its props from its <%s.provider>. Move "%s" there.',
+                        $baseName,
+                        Typed::string($arguments[Constants::PROP_PROVIDER] ?? null),
+                        $baseName,
+                        $name,
+                    ),
+                    1_789_100_004,
+                );
+            }
+        }
+
+        return [...$provided->arguments, ...$own];
     }
 }

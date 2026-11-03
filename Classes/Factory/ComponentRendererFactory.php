@@ -6,6 +6,7 @@ namespace Jramke\FluidPrimitives\Factory;
 
 use Jramke\FluidPrimitives\Component\ComponentCollectionInterface;
 use Jramke\FluidPrimitives\Component\ComponentRenderer;
+use Jramke\FluidPrimitives\Component\ProviderAwareComponentRenderer;
 use Jramke\FluidPrimitives\Service\Component\AsChildAttributeSpreader;
 use Jramke\FluidPrimitives\Service\Component\CheckboxGroupContextVariableMerger;
 use Jramke\FluidPrimitives\Service\Component\ComponentArgumentResolver;
@@ -18,7 +19,8 @@ use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use TYPO3Fluid\Fluid\Core\Component\ComponentRendererInterface;
 
 /**
- * Builds a {@see ComponentRenderer} bound to the given component collection. Public so
+ * Builds a {@see ComponentRenderer} bound to the given component collection, behind a
+ * {@see ProviderAwareComponentRenderer}. Public so
  * {@see \Jramke\FluidPrimitives\Component\AbstractComponentCollection::getComponentRenderer()} can
  * fetch it via GeneralUtility::makeInstance() from outside the container's own graph - unlike
  * ComponentRenderer itself, this factory holds no per-call state (componentResolver is a create()
@@ -41,17 +43,21 @@ final readonly class ComponentRendererFactory
 
     public function create(ComponentCollectionInterface $componentResolver): ComponentRendererInterface
     {
-        return new ComponentRenderer(
+        return new ProviderAwareComponentRenderer(
+            new ComponentRenderer(
+                $componentResolver,
+                $this->identityResolver,
+                $this->argumentResolver,
+                $this->rootContextFactory,
+                $this->contextMarkedPropsExposer,
+                $this->fieldContextVariableMerger,
+                $this->checkboxGroupContextVariableMerger,
+                $this->hydrationCollector,
+                $this->asChildAttributeSpreader,
+                $this->ownedAttributesProcessor,
+            ),
             $componentResolver,
-            $this->identityResolver,
-            $this->argumentResolver,
             $this->rootContextFactory,
-            $this->contextMarkedPropsExposer,
-            $this->fieldContextVariableMerger,
-            $this->checkboxGroupContextVariableMerger,
-            $this->hydrationCollector,
-            $this->asChildAttributeSpreader,
-            $this->ownedAttributesProcessor,
         );
     }
 }

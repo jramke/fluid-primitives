@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Component;
 
 use Jramke\FluidPrimitives\Annotations\AdditionalArgumentsAllowedAnnotation;
+use Jramke\FluidPrimitives\Constants;
 use Jramke\FluidPrimitives\Exception\UnresolvableComponentException;
 use Jramke\FluidPrimitives\Factory\ComponentRendererFactory;
+use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
+use Jramke\FluidPrimitives\Utility\ComponentProviderUtility;
 use Jramke\FluidPrimitives\Utility\ComponentRootUtility;
 use Jramke\FluidPrimitives\Utility\PropsUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -73,6 +76,15 @@ abstract class AbstractComponentCollection implements ComponentCollectionInterfa
     final public function getComponentDefinition(string $viewHelperName): ComponentDefinition
     {
         if (($this->componentDefinitionsCache[$viewHelperName] ?? null) === null) {
+            $providedRoot = ComponentProviderUtility::resolveProvidedRoot($viewHelperName, $this);
+            if ($providedRoot !== null) {
+                return $this->componentDefinitionsCache[$viewHelperName] = $this->createProviderDefinition(
+                    $viewHelperName,
+                    $this->getComponentDefinition($providedRoot),
+                );
+            }
+            ComponentProviderUtility::assertNotReserved($viewHelperName, $this);
+
             $templateName = $this->resolveTemplateName($viewHelperName);
             $renderingContext = new RenderingContext();
             // At this stage, the component template needs to be parsed to gather the component's definition,
@@ -150,6 +162,16 @@ abstract class AbstractComponentCollection implements ComponentCollectionInterfa
                     false,
                     true,
                 );
+
+                if (ComponentProviderUtility::getProviderName($viewHelperName, $this) !== null) {
+                    $argumentDefinitions[Constants::PROP_PROVIDER] = new ArgumentDefinition(
+                        Constants::PROP_PROVIDER,
+                        'string',
+                        'The `id` of the `.provider` this root takes its `rootId` and props from.',
+                        false,
+                        null,
+                    );
+                }
             }
 
             // only add the class argument if the template string uses it. A template that only
@@ -209,6 +231,55 @@ abstract class AbstractComponentCollection implements ComponentCollectionInterfa
         return array_key_exists('rootId', $this->getComponentDefinition($viewHelperName)->getArgumentDefinitions());
     }
 
+    /**
+     * Every component of the collection, for Fluid's own tooling (`typo3 fluid:schema:generate`): the
+     * templates whose name resolves back to the same file, plus the `.provider` of every root that has one.
+     *
+     * @return list<string>
+     */
+    final public function getAvailableComponents(): array
+    {
+        $components = [];
+        foreach ($this->getTemplatePaths()->resolveAvailableTemplateFiles(null) as $file) {
+            $name = ComponentNameUtility::getViewHelperNameFromTemplateFile($file, $this);
+            if ($name === null) {
+                continue;
+            }
+
+            ComponentProviderUtility::assertNotReserved($name, $this);
+            $components[$name] = $name;
+            $providerName = ComponentProviderUtility::getProviderName($name, $this);
+            if ($providerName !== null) {
+                $components[$providerName] = $providerName;
+            }
+        }
+
+        return array_values($components);
+    }
+
+    /**
+     * The root's own definition, without what describes its element (see `Constants::ROOT_ELEMENT_PROPS`)
+     * and the root's own link to it, and with a required `id`: the provider renders nothing, its props are
+     * the root's state.
+     */
+    private function createProviderDefinition(
+        string $viewHelperName,
+        ComponentDefinition $rootDefinition,
+    ): ComponentDefinition {
+        $argumentDefinitions = array_diff_key(
+            $rootDefinition->getArgumentDefinitions(),
+            array_flip([...Constants::ROOT_ELEMENT_PROPS, Constants::PROP_ROOT_ID, Constants::PROP_PROVIDER]),
+        );
+        $argumentDefinitions['id'] = new ArgumentDefinition(
+            'id',
+            'string',
+            'The id the root and its detachable parts reference with `provider`. It is the `rootId` of the root.',
+            true,
+        );
+
+        return new ComponentDefinition($viewHelperName, $argumentDefinitions, false, []);
+    }
+
     final public function getComponentRenderer(): ComponentRendererInterface
     {
         return GeneralUtility::makeInstance(ComponentRendererFactory::class)->create($this);
@@ -221,6 +292,10 @@ abstract class AbstractComponentCollection implements ComponentCollectionInterfa
     // @mago-expect analysis:incompatible-parameter-name
     final public function resolveViewHelperClassName(string $viewHelperName): string
     {
+        if (ComponentProviderUtility::resolveProvidedRoot($viewHelperName, $this) !== null) {
+            return ComponentAdapter::class;
+        }
+
         $expectedTemplateName = $this->resolveTemplateName($viewHelperName);
         if (!$this->getTemplatePaths()->resolveTemplateFileForControllerAndActionAndFormat(
             'Default',

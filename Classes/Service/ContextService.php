@@ -122,6 +122,27 @@ class ContextService
     }
 
     /**
+     * Runs `$render` with `$context` on top of the stack for `$name`, and pops it again afterwards.
+     *
+     * @template T
+     * @param \Closure(): T $render
+     * @return T
+     */
+    public static function withContext(
+        RenderingContextInterface $renderingContext,
+        string $name,
+        ComponentContextInterface $context,
+        \Closure $render,
+    ): mixed {
+        self::addToRenderingContext($renderingContext, $name, $context);
+        try {
+            return $render();
+        } finally {
+            self::removeFromRenderingContext($renderingContext, $name);
+        }
+    }
+
+    /**
      * Pop the topmost context from the stack for a component type.
      * This restores the parent's context if there was one.
      */

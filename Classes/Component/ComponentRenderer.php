@@ -9,7 +9,10 @@ use Jramke\FluidPrimitives\Contexts\AbstractComponentContext;
 use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
 use Jramke\FluidPrimitives\Domain\Dto\ComponentHydrationCandidate;
 use Jramke\FluidPrimitives\Domain\Dto\ComponentIdentity;
+use Jramke\FluidPrimitives\Domain\Dto\ProvidedRoot;
 use Jramke\FluidPrimitives\Factory\ComponentRootContextFactory;
+use Jramke\FluidPrimitives\Registry\ProvidedRootRegistry;
+use Jramke\FluidPrimitives\Registry\RenderedRootRegistry;
 use Jramke\FluidPrimitives\Service\Component\AsChildAttributeSpreader;
 use Jramke\FluidPrimitives\Service\Component\CheckboxGroupContextVariableMerger;
 use Jramke\FluidPrimitives\Service\Component\ComponentArgumentResolver;
@@ -51,7 +54,8 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
      * template name and possible additional variables) are expected to be provided by the component template
      * resolver.
      *
-     * This is the single entry point every component render goes through, coordinating the 10 collaborators
+     * Every component render but a provider's goes through here (behind {@see ProviderAwareComponentRenderer}),
+     * coordinating the 10 collaborators
      * above in sequence; {@see createView}, {@see prepareRenderState} and {@see renderComponentOutput} already
      * carry as much of that sequence as can be extracted without exceeding the 5-parameter guideline on the
      * extracted methods themselves (the remaining steps interleave too many of viewHelperName/arguments/
@@ -91,9 +95,27 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         );
         $isRenderedAsRoot = $identity->isRenderedAsRoot;
 
+        $provided = null;
+        if ($isRenderedAsRoot) {
+            $rootId = (string)$identity->rootId;
+            RenderedRootRegistry::claim($identity->clientBaseName, $rootId);
+            $provided = ProvidedRootRegistry::forArguments(
+                $this->componentResolver->getNamespace(),
+                $identity->baseName,
+                $arguments,
+            );
+        }
+
         $argumentDefinitions = $this->componentResolver
             ->getComponentDefinition($viewHelperName)
             ->getArgumentDefinitions();
+
+        $arguments = $this->argumentResolver->mergeProvided(
+            $provided,
+            $arguments,
+            $argumentDefinitions,
+            $identity->baseName,
+        );
 
         $resolvedArguments = $this->argumentResolver->resolve(
             $arguments,
@@ -134,12 +156,23 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
 
         // Expose variables as context so it can be picked up in other components rendered inside this component.
         if ($isRenderedAsRoot) {
-            $this->rootContextFactory->create(
-                $argumentDefinitions,
-                $view,
-                $viewHelperName,
+            ContextService::addToRenderingContext(
                 $parentRenderingContext,
-                $this->componentResolver,
+                $identity->baseName,
+                $provided instanceof ProvidedRoot
+                    ? $this->rootContextFactory->bind(
+                        $provided,
+                        $view,
+                        $parentRenderingContext,
+                        $this->componentResolver,
+                    )
+                    : $this->rootContextFactory->create(
+                        $argumentDefinitions,
+                        $view,
+                        $viewHelperName,
+                        $parentRenderingContext,
+                        $this->componentResolver,
+                    ),
             );
         }
 
@@ -169,7 +202,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
             ContextService::removeFromRenderingContext($parentRenderingContext, $identity->baseName);
 
             // Call afterRendering lifecycle method only for root or closed components
-            if ($ctx instanceof AbstractComponentContext && method_exists($ctx, 'afterRendering')) {
+            if ($ctx instanceof AbstractComponentContext) {
                 $ctx->afterRendering($rendered);
             }
 
@@ -236,7 +269,7 @@ final readonly class ComponentRenderer implements ComponentRendererInterface
         }
 
         // Call beforeRendering lifecycle method only for root or closed components
-        if ($ctx instanceof AbstractComponentContext && $isRenderedAsRoot && method_exists($ctx, 'beforeRendering')) {
+        if ($ctx instanceof AbstractComponentContext && $isRenderedAsRoot) {
             $ctx->beforeRendering();
         }
 

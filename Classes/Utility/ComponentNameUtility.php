@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Utility;
 
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3Fluid\Fluid\Core\Component\ComponentTemplateResolverInterface;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 
 /**
@@ -158,5 +159,49 @@ class ComponentNameUtility
         $segments = explode('-', $string);
         $firstSegment = array_shift($segments);
         return lcfirst($firstSegment) . implode('', array_map(ucfirst(...), $segments));
+    }
+
+    /**
+     * The ViewHelper name a template file is reached by, the inverse of
+     * {@see \Jramke\FluidPrimitives\Component\AbstractComponentCollection::resolveTemplateName()}
+     * (`Dialog/Root` is `dialog.root`, `Button/Button` is `button`), or `null` when no name resolves back to it.
+     */
+    public static function getViewHelperNameFromTemplateFile(
+        string $file,
+        ComponentTemplateResolverInterface $templateResolver,
+    ): ?string {
+        $templatePaths = $templateResolver->getTemplatePaths();
+        $extension = '/(?:\.fluid)?\.' . preg_quote($templatePaths->getFormat(), delimiter: '/') . '$/';
+
+        foreach ($templatePaths->getTemplateRootPaths() as $rootPath) {
+            $rootPath = rtrim($rootPath, characters: '/') . '/';
+            if (!str_starts_with($file, $rootPath)) {
+                continue;
+            }
+
+            $relativePath = (string)preg_replace(
+                $extension,
+                replacement: '',
+                subject: substr($file, strlen($rootPath)),
+            );
+            $segments = explode('/', $relativePath);
+            $count = count($segments);
+            // Only a single-segment name doubles its folder (`button` is `Button/Button`)
+            if ($count === 2 && $segments[0] === $segments[1]) {
+                array_pop($segments);
+            }
+
+            $name = implode('.', array_map(lcfirst(...), $segments));
+            $resolvedFile = $templatePaths->resolveTemplateFileForControllerAndActionAndFormat(
+                'Default',
+                $templateResolver->resolveTemplateName($name),
+            );
+            // A root path nested in another one (`Components/` and `Components/ui/`) matches both
+            if ($resolvedFile === $file) {
+                return $name;
+            }
+        }
+
+        return null;
     }
 }
