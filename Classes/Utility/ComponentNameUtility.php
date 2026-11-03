@@ -186,7 +186,8 @@ class ComponentNameUtility
             );
             $segments = explode('/', $relativePath);
             $count = count($segments);
-            if ($count > 1 && $segments[$count - 1] === $segments[$count - 2]) {
+            // Only a single-segment name doubles its folder (`button` is `Button/Button`)
+            if ($count === 2 && $segments[0] === $segments[1]) {
                 array_pop($segments);
             }
 

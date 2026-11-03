@@ -19,7 +19,7 @@ final class ComponentProviderUtility
 
     /**
      * The root `$viewHelperName` provides, or `null` when it is no provider: another name, a real
-     * template, or a root without parts.
+     * template, or a folder without a root or without parts.
      */
     public static function resolveProvidedRoot(
         string $viewHelperName,
@@ -37,32 +37,33 @@ final class ComponentProviderUtility
         }
 
         $directory = dirname($templateName);
-        $prefix = implode('.', $segments);
-        foreach ([$prefix . '.root', $prefix] as $candidate) {
-            $candidateTemplateName = $templateResolver->resolveTemplateName($candidate);
-            if (
-                dirname($candidateTemplateName) !== $directory ||
-                !self::templateExists($candidateTemplateName, $templateResolver) ||
-                !ComponentRootUtility::isDeclaredRootFromViewHelperName($candidate, $templateResolver)
-            ) {
-                continue;
-            }
-
-            return count(self::templateNamesIn($directory, $templateResolver)) > 1 ? $candidate : null;
+        $rootTemplateName = ComponentRootUtility::getFolderRootTemplateName($directory, $templateResolver);
+        if ($rootTemplateName === null || count(self::templateNamesIn($directory, $templateResolver)) < 2) {
+            return null;
         }
 
-        return null;
+        // `Button/Button` is `button`, see resolveTemplateName(), every other root `<folder path>.<file>`
+        $rootFile = lcfirst(basename($rootTemplateName));
+        return (
+            count($segments) === 1 && $rootFile === lcfirst($segments[0])
+                ? $segments[0]
+                : implode('.', [...$segments, $rootFile])
+        );
     }
 
     /**
-     * The provider of the declared root `$rootViewHelperName`, or `null` if it has none.
+     * The provider of the declared root `$rootViewHelperName`, or `null` if it has none. It is named after
+     * the folder of the root.
      */
     public static function getProviderName(
         string $rootViewHelperName,
         ComponentTemplateResolverInterface $templateResolver,
     ): ?string {
-        $prefix = preg_replace('/\.root$/i', replacement: '', subject: $rootViewHelperName) ?? $rootViewHelperName;
-        $providerName = $prefix . '.' . self::NAME;
+        $segments = explode('.', $rootViewHelperName);
+        if (count($segments) > 1) {
+            array_pop($segments);
+        }
+        $providerName = implode('.', [...$segments, self::NAME]);
 
         return self::resolveProvidedRoot($providerName, $templateResolver) === $rootViewHelperName
             ? $providerName
@@ -78,14 +79,10 @@ final class ComponentProviderUtility
         ComponentTemplateResolverInterface $templateResolver,
     ): void {
         $templateName = $templateResolver->resolveTemplateName($viewHelperName);
-        if (strtolower(basename($templateName)) !== self::NAME) {
-            return;
-        }
-
         $directory = dirname($templateName);
-        $names = array_map(strtolower(...), self::templateNamesIn($directory, $templateResolver));
         if (
-            !in_array('root', $names, strict: true) && !in_array(strtolower(basename($directory)), $names, strict: true)
+            strtolower(basename($templateName)) !== self::NAME ||
+            ComponentRootUtility::getFolderRootTemplateName($directory, $templateResolver) === null
         ) {
             return;
         }
