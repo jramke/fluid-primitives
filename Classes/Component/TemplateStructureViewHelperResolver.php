@@ -30,6 +30,7 @@ final class TemplateStructureViewHelperResolver extends ViewHelperResolver
         'constant',
         'asChild',
         'attributes',
+        'detachable',
     ];
 
     #[\Override]

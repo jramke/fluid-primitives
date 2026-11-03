@@ -5,12 +5,41 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Tests\Functional\Components;
 
 use Jramke\FluidPrimitives\Exception\DuplicateProviderException;
+use Jramke\FluidPrimitives\Exception\MissingProviderException;
 use Jramke\FluidPrimitives\Exception\ProvidedRootArgumentException;
+use Jramke\FluidPrimitives\Registry\HydrationRegistry;
+use Jramke\FluidPrimitives\Tests\Fixtures\UsePropsForwardingComponentCollection;
 use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
 use PHPUnit\Framework\Attributes\Test;
 
 final class ProviderRenderingTest extends FunctionalTestCase
 {
+    #[Test]
+    public function aTriggerBeforeItsRootTakesTheProvidedStateAndTheRootHydratesWithTheProvidedProps(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:dialog.provider id="contact" defaultOpen="{true}" closeOnEscape="{false}" />
+            <header>
+                <primitives:dialog.trigger provider="contact">Contact</primitives:dialog.trigger>
+            </header>
+            <main>
+                <primitives:dialog.root provider="contact">
+                    <primitives:dialog.content>Form</primitives:dialog.content>
+                </primitives:dialog.root>
+            </main>
+        ');
+
+        $trigger = $this->elementWith($html, 'data-dialog-trigger');
+        $this->assertSame('contact', $trigger->get('data-dialog-trigger'));
+        $this->assertSame('open', $trigger->get('data-state'));
+        $this->assertFalse($this->elementWith($html, 'data-dialog-content')->has('hidden'));
+
+        $props = HydrationRegistry::getInstance()->getAll()['primitives']['dialog']['contact']['props'] ?? null;
+        $this->assertIsArray($props);
+        $this->assertTrue($props['defaultOpen']);
+        $this->assertFalse($props['closeOnEscape']);
+    }
+
     #[Test]
     public function aFolderNamedRootTakesItsPropsFromTheProviderAndKeepsItsElementArguments(): void
     {
@@ -42,6 +71,28 @@ final class ProviderRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function aDetachedMenuTriggerComputesItsStateFromTheProvidedContext(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:menu.provider id="actions" defaultOpen="{true}" defaultTriggerValue="toolbar" />
+            <primitives:menu.trigger provider="actions" value="toolbar">Actions</primitives:menu.trigger>
+            <primitives:menu.trigger provider="actions" value="sidebar">Actions</primitives:menu.trigger>
+            <primitives:menu.root provider="actions">
+                <primitives:menu.positioner>
+                    <primitives:menu.content>
+                        <primitives:menu.item value="edit">Edit</primitives:menu.item>
+                    </primitives:menu.content>
+                </primitives:menu.positioner>
+            </primitives:menu.root>
+        ');
+
+        $triggers = $this->elementsByValue($html, 'data-menu-trigger');
+        $this->assertSame('true', $triggers['toolbar']->get('aria-expanded'));
+        $this->assertSame('false', $triggers['sidebar']->get('aria-expanded'));
+        $this->assertSame('open', $triggers['sidebar']->get('data-state'));
+    }
+
+    #[Test]
     public function aProvidedRootStillTakesTheStateOfTheFieldAroundIt(): void
     {
         $html = $this->renderTemplate('
@@ -57,6 +108,19 @@ final class ProviderRenderingTest extends FunctionalTestCase
         $this->assertSame('terms', $input->get('name'));
         $this->assertSame('yes', $input->get('value'));
         $this->assertSame('true', $input->get('aria-invalid'));
+    }
+
+    #[Test]
+    public function rejectsAPartWhoseProviderIsNotRenderedBeforeIt(): void
+    {
+        $this->assertRenderThrows(
+            MissingProviderException::class,
+            'references the provider "contact", but no <dialog.provider id="contact">',
+            fn() => $this->renderTemplate('
+                <primitives:dialog.trigger provider="contact">Contact</primitives:dialog.trigger>
+                <primitives:dialog.provider id="contact" />
+            '),
+        );
     }
 
     #[Test]
@@ -85,5 +149,62 @@ final class ProviderRenderingTest extends FunctionalTestCase
                 </primitives:dialog.root>
             '),
         );
+    }
+
+    #[Test]
+    public function aStyledWrapperProvidesItsOwnRootAndTheWrappedPrimitiveFollows(): void
+    {
+        $this->useWrapperCollection();
+
+        $html = $this->renderTemplate('
+            <wrapper:menu.provider id="actions" defaultOpen="{true}" />
+            <wrapper:menu.trigger provider="actions">Actions</wrapper:menu.trigger>
+            <wrapper:menu.root provider="actions">
+                <primitives:menu.positioner>
+                    <primitives:menu.content>Edit</primitives:menu.content>
+                </primitives:menu.positioner>
+            </wrapper:menu.root>
+        ');
+
+        $trigger = $this->elementWith($html, 'data-menu-trigger');
+        $this->assertSame('actions', $trigger->get('data-menu-trigger'));
+        $this->assertSame('true', $trigger->get('aria-expanded'));
+        $this->assertTrue(
+            HydrationRegistry::getInstance()->getAll()['wrapper']['menu']['actions']['props']['defaultOpen'],
+        );
+    }
+
+    #[Test]
+    public function aProviderServesOnlyThePartsOfItsOwnCollection(): void
+    {
+        $this->useWrapperCollection();
+
+        $this->assertRenderThrows(
+            MissingProviderException::class,
+            '<menu.trigger> references the provider "actions"',
+            fn() => $this->renderTemplate('
+                <wrapper:menu.provider id="actions" />
+                <primitives:menu.trigger provider="actions">Actions</primitives:menu.trigger>
+            '),
+        );
+    }
+
+    protected function tearDown(): void
+    {
+        unset($GLOBALS['TYPO3_CONF_VARS']['SYS']['fluid']['namespaces']['wrapper']);
+        parent::tearDown();
+    }
+
+    private function useWrapperCollection(): void
+    {
+        // Hydration looks the namespace up globally, the view needs it to resolve the tags
+        $GLOBALS['TYPO3_CONF_VARS']['SYS']['fluid']['namespaces']['wrapper'] = [
+            UsePropsForwardingComponentCollection::class,
+        ];
+        $this
+            ->getView()
+            ->getRenderingContext()
+            ->getViewHelperResolver()
+            ->addNamespace('wrapper', new UsePropsForwardingComponentCollection());
     }
 }

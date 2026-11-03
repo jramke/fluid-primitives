@@ -14,7 +14,7 @@ use TYPO3Fluid\Fluid\View\TemplatePaths;
 final class AbstractComponentCollectionTest extends TestCase
 {
     #[Test]
-    public function aProviderTakesTheStateOfItsRootAndTheRootLinksToIt(): void
+    public function aProviderTakesTheStateOfItsRootAndOnlyDetachablePartsLinkToIt(): void
     {
         $collection = new RootDetectionComponentCollection();
 
@@ -32,6 +32,19 @@ final class AbstractComponentCollectionTest extends TestCase
         $this->assertArrayNotHasKey(
             'provider',
             $collection->getComponentDefinition('tier.widget.root')->getArgumentDefinitions(),
+        );
+
+        $this->assertArrayHasKey(
+            'provider',
+            $collection->getComponentDefinition('widget.trigger')->getArgumentDefinitions(),
+        );
+        $this->assertArrayNotHasKey(
+            'provider',
+            $collection->getComponentDefinition('widget.item')->getArgumentDefinitions(),
+        );
+        $this->assertArrayNotHasKey(
+            'rootId',
+            $collection->getComponentDefinition('widget.item')->getArgumentDefinitions(),
         );
     }
 

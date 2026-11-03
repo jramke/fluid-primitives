@@ -8,6 +8,7 @@ use Jramke\FluidPrimitives\Constants;
 use Jramke\FluidPrimitives\Exception\ProvidedRootArgumentException;
 use Jramke\FluidPrimitives\Factory\ComponentRootContextFactory;
 use Jramke\FluidPrimitives\Registry\ProvidedRootRegistry;
+use Jramke\FluidPrimitives\Service\ContextService;
 use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
 use Jramke\FluidPrimitives\Utility\ComponentProviderUtility;
 use Jramke\FluidPrimitives\Utility\Typed;
@@ -16,8 +17,9 @@ use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 
 /**
  * Handles what decides where a component's context comes from before {@see ComponentRenderer} renders it:
- * a `<component>.provider` registers the context of its root and renders nothing, and a root with
- * `provider` takes its `rootId` from it.
+ * a `<component>.provider` registers the context of its root and renders nothing, a root with `provider`
+ * takes its `rootId` from it, and a detachable part with `provider` renders with that context as if it
+ * were inside its root.
  */
 final readonly class ProviderAwareComponentRenderer implements ComponentRendererInterface
 {
@@ -56,33 +58,47 @@ final readonly class ProviderAwareComponentRenderer implements ComponentRenderer
             return $this->renderer->renderComponent($viewHelperName, $arguments, $slots, $parentRenderingContext);
         }
 
-        // Only a root takes `provider`
-        $baseName = ComponentNameUtility::getComponentBaseNameFromViewHelperName($viewHelperName, isDeclaredRoot: true);
-        ProvidedRootRegistry::require(
+        $isRoot = $this->componentResolver->isDeclaredRoot($viewHelperName);
+        $baseName = ComponentNameUtility::getComponentBaseNameFromViewHelperName($viewHelperName, $isRoot);
+        $provided = ProvidedRootRegistry::require(
             [$this->componentResolver->getNamespace()],
             $baseName,
             $providerId,
             '<' . $viewHelperName . '>',
         );
 
-        if (($arguments[Constants::PROP_ROOT_ID] ?? null) !== null) {
-            throw new ProvidedRootArgumentException(
-                sprintf(
-                    'The %s with provider "%s" takes its rootId from <%s.provider id="%s">. Remove its rootId.',
-                    $baseName,
-                    $providerId,
-                    $baseName,
-                    $providerId,
-                ),
-                1_789_100_007,
+        if ($isRoot) {
+            if (($arguments[Constants::PROP_ROOT_ID] ?? null) !== null) {
+                throw new ProvidedRootArgumentException(
+                    sprintf(
+                        'The %s with provider "%s" takes its rootId from <%s.provider id="%s">. Remove its rootId.',
+                        $baseName,
+                        $providerId,
+                        $baseName,
+                        $providerId,
+                    ),
+                    1_789_100_007,
+                );
+            }
+
+            return $this->renderer->renderComponent(
+                $viewHelperName,
+                [...$arguments, Constants::PROP_ROOT_ID => $providerId],
+                $slots,
+                $parentRenderingContext,
             );
         }
 
-        return $this->renderer->renderComponent(
-            $viewHelperName,
-            [...$arguments, Constants::PROP_ROOT_ID => $providerId],
-            $slots,
+        return ContextService::withContext(
             $parentRenderingContext,
+            $baseName,
+            $provided->context,
+            fn(): string => $this->renderer->renderComponent(
+                $viewHelperName,
+                $arguments,
+                $slots,
+                $parentRenderingContext,
+            ),
         );
     }
 }
