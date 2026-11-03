@@ -4,28 +4,50 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Tests\Unit;
 
+use Jramke\FluidPrimitives\Component\AbstractComponentCollection;
+use Jramke\FluidPrimitives\Exception\ReservedComponentNameException;
 use Jramke\FluidPrimitives\Tests\Fixtures\RootDetectionComponentCollection;
 use Jramke\FluidPrimitives\Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
+use TYPO3Fluid\Fluid\View\TemplatePaths;
 
 final class AbstractComponentCollectionTest extends TestCase
 {
     #[Test]
-    public function getComponentDefinitionAddsRootIdOnlyForRootComponents(): void
+    public function aProviderTakesTheStateOfItsRootAndTheRootLinksToIt(): void
     {
         $collection = new RootDetectionComponentCollection();
 
-        $this->assertArrayHasKey(
-            'rootId',
-            $collection->getComponentDefinition('widget.root')->getArgumentDefinitions(),
-        );
+        $root = $collection->getComponentDefinition('widget.root')->getArgumentDefinitions();
+        $provider = $collection->getComponentDefinition('widget.provider')->getArgumentDefinitions();
+
+        $this->assertTrue($provider['id']->isRequired());
+        $this->assertArrayHasKey('ids', $provider);
+        foreach (['rootId', 'provider', 'spreadProps'] as $name) {
+            $this->assertArrayHasKey($name, $root, $name);
+            $this->assertArrayNotHasKey($name, $provider, $name);
+        }
+        $this->assertFalse($collection->getComponentDefinition('widget.provider')->additionalArgumentsAllowed());
+        // a root without parts has no provider to link to
         $this->assertArrayNotHasKey(
-            'rootId',
-            $collection->getComponentDefinition('widget.item')->getArgumentDefinitions(),
+            'provider',
+            $collection->getComponentDefinition('tier.widget.root')->getArgumentDefinitions(),
         );
-        $this->assertArrayHasKey(
-            'rootId',
-            $collection->getComponentDefinition('widget.examples.demo')->getArgumentDefinitions(),
-        );
+    }
+
+    #[Test]
+    public function rejectsATemplateNamedProviderNextToARoot(): void
+    {
+        $collection = new class extends AbstractComponentCollection {
+            public function getTemplatePaths(): TemplatePaths
+            {
+                $templatePaths = new TemplatePaths();
+                $templatePaths->setTemplateRootPaths([dirname(__DIR__) . '/Fixtures/ReservedProvider']);
+                return $templatePaths;
+            }
+        };
+
+        $this->expectException(ReservedComponentNameException::class);
+        $collection->getComponentDefinition('gadget.provider');
     }
 }

@@ -5,24 +5,31 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Factory;
 
 use Jramke\FluidPrimitives\Component\ComponentCollectionInterface;
-use Jramke\FluidPrimitives\Service\ContextService;
+use Jramke\FluidPrimitives\Constants;
+use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
+use Jramke\FluidPrimitives\Domain\Dto\ProvidedRoot;
+use Jramke\FluidPrimitives\Registry\ProvidedRootRegistry;
+use Jramke\FluidPrimitives\Service\Component\ComponentArgumentResolver;
 use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
+use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 use TYPO3Fluid\Fluid\Core\Variables\VariableProviderInterface;
 use TYPO3Fluid\Fluid\Core\ViewHelper\ArgumentDefinition;
 use TYPO3Fluid\Fluid\Core\ViewHelper\StrictArgumentProcessor;
+use TYPO3Fluid\Fluid\Core\ViewHelper\ViewHelperVariableContainer;
 use TYPO3Fluid\Fluid\View\TemplateView;
 
 /**
- * Creates a root component's own {@see \Jramke\FluidPrimitives\Contexts\ComponentContextInterface}
- * and pushes it onto the {@see ContextService} stack so it can be picked up while rendering the
- * component's own template and any composable subcomponents nested inside it.
+ * Creates a root component's own {@see ComponentContextInterface} from the variables of its view. The
+ * renderer pushes it onto the {@see \Jramke\FluidPrimitives\Service\ContextService} stack, a
+ * `<component>.provider` keeps it for later.
  */
 final readonly class ComponentRootContextFactory
 {
     public function __construct(
         private ComponentContextFactory $contextFactory,
+        private ComponentArgumentResolver $argumentResolver,
     ) {}
 
     /**
@@ -34,11 +41,7 @@ final readonly class ComponentRootContextFactory
         string $viewHelperName,
         RenderingContextInterface $parentRenderingContext,
         ComponentCollectionInterface $componentResolver,
-    ): void {
-        // This factory only ever creates a root component's own context (see its own docblock), so
-        // $viewHelperName here is always a declared root.
-        $baseName = ComponentNameUtility::getComponentBaseNameFromViewHelperName($viewHelperName, isDeclaredRoot: true);
-
+    ): ComponentContextInterface {
         $contextVariables = $this->buildContextVariables(
             $argumentDefinitions,
             $view->getRenderingContext()->getVariableProvider(),
@@ -47,15 +50,84 @@ final readonly class ComponentRootContextFactory
             $componentResolver->resolveTemplateName($viewHelperName),
             $componentResolver->getContextNamespaces(),
         );
-        $context = $this->contextFactory->create(
+        return $this->contextFactory->create(
             $contextClassName,
             $view->getRenderingContext(),
             $parentRenderingContext,
             $componentResolver,
             $contextVariables,
         );
+    }
 
-        ContextService::addToRenderingContext($parentRenderingContext, $baseName, $context);
+    /**
+     * Creates the context of `$rootViewHelperName` from the arguments of its `<component>.provider` and
+     * registers it for the root and its parts, without rendering anything.
+     *
+     * @param array<string, mixed> $arguments
+     */
+    public function provide(
+        string $rootViewHelperName,
+        array $arguments,
+        RenderingContextInterface $parentRenderingContext,
+        ComponentCollectionInterface $componentResolver,
+    ): void {
+        // The provider's `id` is the rootId of its root
+        $rootId = Typed::string($arguments['id'] ?? null);
+        ComponentUtility::assertValidRootId($rootId);
+        unset($arguments['id']);
+        $arguments[Constants::PROP_ROOT_ID] = $rootId;
+
+        $argumentDefinitions = $componentResolver
+            ->getComponentDefinition($rootViewHelperName)
+            ->getArgumentDefinitions();
+        $arguments = $this->argumentResolver->resolve(
+            $arguments,
+            $argumentDefinitions,
+            $parentRenderingContext,
+            $parentRenderingContext,
+        )->arguments;
+
+        $renderingContext = clone $parentRenderingContext;
+        $renderingContext->setVariableProvider($renderingContext
+            ->getVariableProvider()
+            ->getScopeCopy([
+                ...$arguments,
+                ...$componentResolver->getAdditionalVariables($rootViewHelperName),
+            ]));
+        $renderingContext->setViewHelperVariableContainer(new ViewHelperVariableContainer());
+
+        ProvidedRootRegistry::provide(
+            $componentResolver->getNamespace(),
+            ComponentNameUtility::getComponentBaseNameFromViewHelperName($rootViewHelperName, isDeclaredRoot: true),
+            $rootId,
+            new ProvidedRoot($arguments, $this->create(
+                $argumentDefinitions,
+                new TemplateView($renderingContext),
+                $rootViewHelperName,
+                $parentRenderingContext,
+                $componentResolver,
+            )),
+        );
+    }
+
+    /**
+     * A `<component>.provider` created the context where it was rendered. Its root binds it to where the
+     * root is, so what the context reads from around it (a Form, a Fieldset) is what is around the root.
+     */
+    public function bind(
+        ProvidedRoot $provided,
+        TemplateView $view,
+        RenderingContextInterface $parentRenderingContext,
+        ComponentCollectionInterface $componentResolver,
+    ): ComponentContextInterface {
+        $provided->context->initialize(
+            $view->getRenderingContext(),
+            $parentRenderingContext,
+            $componentResolver,
+            $provided->context->getAllVariables(),
+        );
+
+        return $provided->context;
     }
 
     // This is somewhat what is already done by the template view when we call the render method but we need the variables earlier so we can expose them to the context.

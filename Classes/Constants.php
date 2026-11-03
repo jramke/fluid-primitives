@@ -8,10 +8,14 @@ class Constants
 {
     public const PROP_ROOT_ID = 'rootId';
 
+    /** Links a root and its detachable parts to a `<component>.provider`, see `ui:detachable`. */
+    public const PROP_PROVIDER = 'provider';
+
     public const GLOBAL_PROPS = ['ids', 'attributes', 'asChild', 'rootId', 'autoMount', 'spreadProps', 'class'];
 
     public const RESERVED_PROPS = [
         self::PROP_ROOT_ID, // reserved as we declare it manually
+        self::PROP_PROVIDER, // added to roots with a provider, and to parts by ui:detachable
         'context', // reserved for the component context
         'globals', // reserved for the global context, read as {context.globals.x}
         'component', // reserved for the component data
@@ -29,7 +33,13 @@ class Constants
      * `ui:useProps` + `spreadProps` should keep inheriting them, including through any number of
      * further `ui:useProps` layers a userland component might stack on top.
      */
-    public const NON_FORWARDABLE_PROPS = [self::PROP_ROOT_ID, 'context', 'component', 'settings'];
+    public const NON_FORWARDABLE_PROPS = [self::PROP_ROOT_ID, self::PROP_PROVIDER, 'context', 'component', 'settings'];
+
+    /**
+     * Props that describe a root's own element rather than its state: a `<component>.provider` does not
+     * take them, the root it provides still does.
+     */
+    public const ROOT_ELEMENT_PROPS = ['class', 'asChild', 'attributes', 'spreadProps'];
 
     public const COMPONENTS_THAT_SUPPORT_FIELD = [
         'checkbox',
