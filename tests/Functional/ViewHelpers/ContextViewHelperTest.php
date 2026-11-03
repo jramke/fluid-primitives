@@ -50,6 +50,27 @@ final class ContextViewHelperTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function rejectsANamespaceThatOnlyThePageTemplateDeclares(): void
+    {
+        $this
+            ->getView()
+            ->getRenderingContext()
+            ->getViewHelperResolver()
+            ->addNamespace('plain', new PlainComponentCollection());
+
+        $this->assertRenderThrows(
+            InvalidPropValueException::class,
+            'The namespace "local" of "local:dialog" is not known where ui:context renders.',
+            fn() => $this->renderTemplate('
+                {namespace local=Jramke\FluidPrimitives\Component\ComponentPrimitivesCollection}
+                <local:dialog.root rootId="cookie-settings">
+                    <plain:localDialogReader />
+                </local:dialog.root>
+            '),
+        );
+    }
+
+    #[Test]
     public function rejectsANameWithoutItsNamespace(): void
     {
         $this->assertRenderThrows(

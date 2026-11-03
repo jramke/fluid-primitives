@@ -85,6 +85,17 @@ class ContextViewHelper extends AbstractViewHelper
             $renderingContext->getViewHelperResolver()->getNamespaces()[$namespace] ?? [],
             is_string(...),
         ));
+        // A component renders with the global namespaces only, one declared in the page template does not reach it
+        if ($collections === []) {
+            throw new InvalidPropValueException(
+                sprintf(
+                    'The namespace "%s" of "%s" is not known where ui:context renders. Register it globally, or declare it in the template that uses ui:context.',
+                    $namespace,
+                    $name,
+                ),
+                1_789_100_009,
+            );
+        }
 
         $providerId = Typed::string($this->arguments[Constants::PROP_PROVIDER]);
         if ($providerId !== '') {
