@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Component;
 
 use Jramke\FluidPrimitives\Constants;
+use Jramke\FluidPrimitives\Exception\InvalidPropValueException;
 use Jramke\FluidPrimitives\Exception\ProvidedRootArgumentException;
 use Jramke\FluidPrimitives\Factory\ComponentRootContextFactory;
 use Jramke\FluidPrimitives\Registry\ProvidedRootRegistry;
@@ -50,12 +51,20 @@ final readonly class ProviderAwareComponentRenderer implements ComponentRenderer
             return '';
         }
 
-        $definitions = $this->componentResolver->getComponentDefinition($viewHelperName)->getArgumentDefinitions();
-        $providerId = array_key_exists(Constants::PROP_PROVIDER, $definitions)
-            ? Typed::string($arguments[Constants::PROP_PROVIDER] ?? null)
-            : '';
+        $providerId = Typed::string($arguments[Constants::PROP_PROVIDER] ?? null);
         if ($providerId === '') {
             return $this->renderer->renderComponent($viewHelperName, $arguments, $slots, $parentRenderingContext);
+        }
+
+        $definitions = $this->componentResolver->getComponentDefinition($viewHelperName)->getArgumentDefinitions();
+        if (!array_key_exists(Constants::PROP_PROVIDER, $definitions)) {
+            throw new InvalidPropValueException(
+                sprintf(
+                    '<%s> takes no provider. Only a root with parts and a part whose template has <ui:detachable /> link to a provider.',
+                    $viewHelperName,
+                ),
+                1_789_100_010,
+            );
         }
 
         $isRoot = $this->componentResolver->isDeclaredRoot($viewHelperName);

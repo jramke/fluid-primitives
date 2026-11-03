@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Tests\Functional\Components;
 
 use Jramke\FluidPrimitives\Exception\DuplicateProviderException;
+use Jramke\FluidPrimitives\Exception\InvalidPropValueException;
 use Jramke\FluidPrimitives\Exception\MissingProviderException;
 use Jramke\FluidPrimitives\Exception\ProvidedRootArgumentException;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
@@ -146,6 +147,19 @@ final class ProviderRenderingTest extends FunctionalTestCase
             fn() => $this->renderTemplate('
                 <primitives:dialog.trigger provider="contact">Contact</primitives:dialog.trigger>
                 <primitives:dialog.provider id="contact" />
+            '),
+        );
+    }
+
+    #[Test]
+    public function rejectsAProviderOnAPartThatIsNotDetachable(): void
+    {
+        $this->assertRenderThrows(
+            InvalidPropValueException::class,
+            '<dialog.content> takes no provider.',
+            fn() => $this->renderTemplate('
+                <primitives:dialog.provider id="contact" />
+                <primitives:dialog.content provider="contact">Form</primitives:dialog.content>
             '),
         );
     }
