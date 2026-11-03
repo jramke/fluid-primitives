@@ -29,6 +29,8 @@ final class AbstractComponentCollectionTest extends TestCase
                 'tier.gadget.gadget',
                 'tier.gadget.part',
                 'tier.gadget.provider',
+                'tier.widget.item',
+                'tier.widget.provider',
                 'tier.widget.root',
                 'widget.examples.demo',
                 'widget.item',
@@ -57,6 +59,10 @@ final class AbstractComponentCollectionTest extends TestCase
         $this->assertFalse($collection->getComponentDefinition('widget.provider')->additionalArgumentsAllowed());
         // a root without parts has no provider to link to
         $this->assertArrayNotHasKey(
+            'provider',
+            $collection->getComponentDefinition('icon.copy')->getArgumentDefinitions(),
+        );
+        $this->assertArrayHasKey(
             'provider',
             $collection->getComponentDefinition('tier.widget.root')->getArgumentDefinitions(),
         );
