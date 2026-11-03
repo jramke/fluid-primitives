@@ -140,7 +140,8 @@ final readonly class ComponentArgumentResolver
                 continue;
             }
 
-            // Fluid fills in every default, so only a value that differs from it was given to the root
+            // An uncached render gets every default filled in, a compiled one only what the tag sets: a value
+            // that differs from the default is the one sign of a prop the root set itself in both
             if ($value !== $definition->getDefaultValue()) {
                 throw new ProvidedRootArgumentException(
                     sprintf(
