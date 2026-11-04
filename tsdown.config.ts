@@ -30,6 +30,7 @@ export default defineConfig({
         slider: './Resources/Private/Primitives/Slider/Slider.ts',
         switch: './Resources/Private/Primitives/Switch/Switch.ts',
         tabs: './Resources/Private/Primitives/Tabs/Tabs.ts',
+        toast: './Resources/Private/Primitives/Toast/Toast.ts',
         toc: './Resources/Private/Primitives/Toc/Toc.ts',
         toggle: './Resources/Private/Primitives/Toggle/Toggle.ts',
         'toggle-group': './Resources/Private/Primitives/ToggleGroup/ToggleGroup.ts',

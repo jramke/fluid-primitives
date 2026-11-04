@@ -1,0 +1,8 @@
+<button
+    type="button"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'actionTrigger' )}
+    {ui:attributes()}
+    {ui:asChild()}>
+    <f:slot />
+</button>
