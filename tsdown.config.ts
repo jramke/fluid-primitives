@@ -31,6 +31,7 @@ export default defineConfig({
         switch: './Resources/Private/Primitives/Switch/Switch.ts',
         tabs: './Resources/Private/Primitives/Tabs/Tabs.ts',
         toast: './Resources/Private/Primitives/Toast/Toast.ts',
+        toaster: './Resources/Private/Primitives/Toaster/Toaster.ts',
         toc: './Resources/Private/Primitives/Toc/Toc.ts',
         toggle: './Resources/Private/Primitives/Toggle/Toggle.ts',
         'toggle-group': './Resources/Private/Primitives/ToggleGroup/ToggleGroup.ts',

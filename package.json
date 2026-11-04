@@ -116,6 +116,10 @@
             "import": "./dist/toast.js",
             "types": "./dist/toast.d.ts"
         },
+        "./toaster": {
+            "import": "./dist/toaster.js",
+            "types": "./dist/toaster.d.ts"
+        },
         "./toc": {
             "import": "./dist/toc.js",
             "types": "./dist/toc.d.ts"
