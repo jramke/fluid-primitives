@@ -44,7 +44,7 @@ What changed in each release of Fluid Primitives, newest first. Every release li
 
 ### CLI
 
-- `ui:add` takes several components at once (`typo3 ui:add form field`) and `--all` (`-a`) for every component of the registry. It checks all of them before it writes a file, so an unknown name or a file in the way of any of them writes nothing.
+- `ui:add` takes several components at once (`typo3 ui:add form field`) and `--all` (`-a`) for every component of the registry. It checks all of them before it writes a file, so an unknown name or a file in the way of any of them writes nothing. ([#109](https://github.com/jramke/fluid-primitives/pull/109))
 
 ### Core
 
