@@ -1,0 +1,9 @@
+<ui:useProps name="primitives:toaster" as="toasterProps" />
+
+<ui:portal>
+    <primitives:toaster spreadProps="{toasterProps}" class="{class}">
+        <f:slot />
+    </primitives:toaster>
+</ui:portal>
+
+<vite:asset entry="%componentPath%/Toaster.entry.ts" />
