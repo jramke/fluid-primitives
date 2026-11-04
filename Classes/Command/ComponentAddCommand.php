@@ -23,6 +23,7 @@ class ComponentAddCommand extends Command
         protected readonly PackageResolver $packageResolver,
         protected readonly RegistryService $registryService,
         private readonly ComponentTargetExtensionResolver $extensionResolver,
+        private readonly ComponentKeyResolver $componentKeyResolver,
         private readonly ComponentFileWriter $fileWriter,
     ) {
         parent::__construct();
@@ -32,10 +33,11 @@ class ComponentAddCommand extends Command
     {
         $this->setDescription('Add a new component from Fluid Primitives');
         $this->addArgument(
-            'component',
-            InputArgument::REQUIRED,
-            'The name of the component to add (e.g., accordion or scrollArea)',
+            'components',
+            InputArgument::IS_ARRAY,
+            'The names of the components to add (e.g., accordion or scrollArea), separated by spaces',
         );
+        $this->addOption('all', 'a', InputOption::VALUE_NONE, 'Add every component of the registry.');
         $this->addOption(
             'extension',
             '',
@@ -63,7 +65,10 @@ class ComponentAddCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
-        $componentKey = Typed::string($input->getArgument('component'));
+        $componentKeys = $this->componentKeyResolver->resolve($input, $io);
+        if ($componentKeys === null) {
+            return Command::FAILURE;
+        }
 
         $availablePackages = $this->packageResolver->getAvailablePackages();
         if ($availablePackages === []) {
@@ -71,57 +76,106 @@ class ComponentAddCommand extends Command
         }
 
         $extension = $this->extensionResolver->resolve($input, $io, $availablePackages);
-
-        [$error, $manifest] = $this->registryService->fetchComponent($componentKey);
-        if ($error !== null) {
-            $io->error($error['message']);
-            return Command::FAILURE;
-        }
-
-        $componentFolderName = Typed::string($manifest['name'] ?? null);
-        if (!$this->fileWriter->isSafeRelativePath($componentFolderName) || str_contains($componentFolderName, '/')) {
-            $io->error('The registry sent "' . $componentFolderName . '" as the name of the component folder.');
-            return Command::FAILURE;
-        }
-
-        $files = array_map(Typed::string(...), Typed::arrayOrNull($manifest['files'] ?? null) ?? []);
         $path = rtrim(Typed::string($input->getOption('path')), characters: '/');
         $path = $path === '' ? '' : $path . '/';
-        $targetFolder = $availablePackages[$extension]->getPackagePath() . $path . $componentFolderName . '/';
-
         $useFluidSuffix = $input->getOption('fluid-suffix') !== false;
 
-        $existing = $this->fileWriter->existingTargets($files, $targetFolder, $useFluidSuffix);
+        $planned = $this->planComponents(
+            $io,
+            $componentKeys,
+            $availablePackages[$extension]->getPackagePath() . $path,
+            'EXT:' . $extension . '/' . $path,
+            $useFluidSuffix,
+        );
+        if ($planned === null) {
+            return Command::FAILURE;
+        }
+        [$components, $existing] = $planned;
+
         if ($existing !== [] && !Typed::bool($input->getOption('force'))) {
             $io->error([
-                'Component "' . $componentKey . '" already exists in extension "' . $extension . '":',
-                ...array_map(static fn(string $file): string => '- ' . $file, $existing),
-                'Nothing was written. Use --force to overwrite the whole component.',
+                'These files already exist in extension "' . $extension . '":',
+                ...$existing,
+                'Nothing was written. Use --force to overwrite the whole components.',
             ]);
             return Command::FAILURE;
         }
 
-        $writeResult = $this->fileWriter->write($io, $componentKey, $files, [
-            'targetFolder' => $targetFolder,
-            'useFluidSuffix' => $useFluidSuffix,
-            'componentPath' => 'EXT:' . $extension . '/' . $path . $componentFolderName,
-        ]);
+        $results = [];
+        foreach ($components as $componentKey => $component) {
+            $writeResult = $this->fileWriter->write($io, $componentKey, $component['files'], [
+                'targetFolder' => $component['targetFolder'],
+                'useFluidSuffix' => $useFluidSuffix,
+                'componentPath' => $component['componentPath'],
+            ]);
+            $this->fileWriter->reportResult($io, $componentKey, $extension, $writeResult);
+            $results[] = $writeResult;
+        }
+        $any = static fn(string $flag): bool => in_array(true, array_column($results, $flag), strict: true);
+        if ($any('created') || $any('updated')) {
+            $this->fileWriter->flushPageCache();
+        }
 
-        $this->fileWriter->reportResult($io, $componentKey, $extension, $writeResult);
         // @mago-expect lint:no-global
         // @mago-expect analysis:mixed-assignment
         $viteNamespace = $GLOBALS['TYPO3_CONF_VARS']['SYS']['fluid']['namespaces']['vite'] ?? null;
-        if ($writeResult['usesViteAsset'] && $viteNamespace === null) {
+        if ($any('usesViteAsset') && $viteNamespace === null) {
             $io->warning(
                 'The templates contain <vite:asset> to load the entry file, but the "vite" Fluid namespace is not ' .
                 'registered. Install praetorius/vite-asset-collector and register the namespace, or remove the line.',
             );
         }
-        if ($writeResult['failed']) {
-            $io->error('Not every file of the component could be written.');
+        if ($any('failed')) {
+            $io->error('Not every file of the components could be written.');
             return Command::FAILURE;
         }
 
         return Command::SUCCESS;
+    }
+
+    /**
+     * Fetches the manifest of every component and collects the target files that already exist, before the first
+     * file is written, so a failed check writes nothing. `null` after an error was reported.
+     *
+     * @param list<string> $componentKeys
+     * @param string $targetPath Where the component folders go on disk.
+     * @param string $componentPathPrefix The same as an `EXT:` path, for `%componentPath%`.
+     * @return array{0: array<string, array{files: string[], targetFolder: string, componentPath: string}>, 1: list<string>}|null
+     */
+    private function planComponents(
+        SymfonyStyle $io,
+        array $componentKeys,
+        string $targetPath,
+        string $componentPathPrefix,
+        bool $useFluidSuffix,
+    ): ?array {
+        $components = [];
+        $existing = [];
+        foreach ($componentKeys as $componentKey) {
+            [$error, $manifest] = $this->registryService->fetchComponent($componentKey);
+            if ($error !== null) {
+                $io->error($componentKey . ': ' . $error['message']);
+                return null;
+            }
+
+            $folderName = Typed::string($manifest['name'] ?? null);
+            if (!$this->fileWriter->isSafeRelativePath($folderName) || str_contains($folderName, '/')) {
+                $io->error('The registry sent "' . $folderName . '" as the name of the component folder.');
+                return null;
+            }
+
+            $files = array_map(Typed::string(...), Typed::arrayOrNull($manifest['files'] ?? null) ?? []);
+            $targetFolder = $targetPath . $folderName . '/';
+            foreach ($this->fileWriter->existingTargets($files, $targetFolder, $useFluidSuffix) as $file) {
+                $existing[] = '- ' . $folderName . '/' . $file;
+            }
+            $components[$componentKey] = [
+                'files' => $files,
+                'targetFolder' => $targetFolder,
+                'componentPath' => $componentPathPrefix . $folderName,
+            ];
+        }
+
+        return [$components, $existing];
     }
 }

@@ -10,8 +10,8 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Cache\CacheManager;
 
 /**
- * Fetches and writes a component's files to disk for `ui:add`, then reports the outcome and flushes
- * the page cache if anything actually changed.
+ * Fetches and writes the files of a component to disk for `ui:add` and reports the outcome. The command
+ * flushes the page cache once after all components are written.
  */
 final readonly class ComponentFileWriter
 {
@@ -162,10 +162,12 @@ final readonly class ComponentFileWriter
         if ($successMessage !== null) {
             $io->success($successMessage);
         }
+    }
 
-        if ($someCreated || $someUpdated) {
-            $this->cacheManager->flushCachesInGroup('pages');
-        }
+    /** Flushes the page cache, so pages render the new templates: once after all components are written. */
+    public function flushPageCache(): void
+    {
+        $this->cacheManager->flushCachesInGroup('pages');
     }
 
     private function resolveTargetFileName(string $file, bool $useFluidSuffix): string

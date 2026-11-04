@@ -6,6 +6,7 @@ namespace Jramke\FluidPrimitives\Tests\Unit;
 
 use Jramke\FluidPrimitives\Command\ComponentAddCommand;
 use Jramke\FluidPrimitives\Command\ComponentFileWriter;
+use Jramke\FluidPrimitives\Command\ComponentKeyResolver;
 use Jramke\FluidPrimitives\Command\ComponentTargetExtensionResolver;
 use Jramke\FluidPrimitives\Exception\ConfigurationException;
 use Jramke\FluidPrimitives\Service\PackageResolver;
@@ -75,7 +76,13 @@ final class ComponentAddCommandTest extends TestCase
         $extensionResolver = new ComponentTargetExtensionResolver($packageResolver, $extensionConfiguration);
         $fileWriter = new ComponentFileWriter($registryService, $cacheManager);
 
-        $command = new ComponentAddCommand($packageResolver, $registryService, $extensionResolver, $fileWriter);
+        $command = new ComponentAddCommand(
+            $packageResolver,
+            $registryService,
+            $extensionResolver,
+            new ComponentKeyResolver($registryService),
+            $fileWriter,
+        );
 
         return new CommandTester($command);
     }
@@ -97,7 +104,7 @@ final class ComponentAddCommandTest extends TestCase
 
         $tester = $this->createCommandTester($this->createRegistryService(['Root.html']), $cacheManager);
         $tester->execute([
-            'component' => 'accordion',
+            'components' => ['accordion'],
             '--extension' => 'my_ext',
             '--path' => '',
             '--fluid-suffix' => false,
@@ -120,7 +127,7 @@ final class ComponentAddCommandTest extends TestCase
         $this->expectException(ConfigurationException::class);
         $this->expectExceptionMessage('could not be found');
 
-        $tester->execute(['component' => 'accordion', '--extension' => 'unknown_ext']);
+        $tester->execute(['components' => ['accordion'], '--extension' => 'unknown_ext']);
     }
 
     #[Test]
@@ -137,14 +144,14 @@ final class ComponentAddCommandTest extends TestCase
             $cacheManager,
         );
         $tester->execute([
-            'component' => 'accordion',
+            'components' => ['accordion'],
             '--extension' => 'my_ext',
             '--path' => '',
             '--fluid-suffix' => false,
         ]);
 
         $this->assertSame(1, $tester->getStatusCode());
-        $this->assertStringContainsString('- Root.html', $tester->getDisplay());
+        $this->assertStringContainsString('- my-component/Root.html', $tester->getDisplay());
         $this->assertStringContainsString('Nothing was written', $tester->getDisplay());
         $this->assertSame('original content', file_get_contents($this->tempDir . 'my-component/Root.html'));
         $this->assertSame(['Root.html'], $this->writtenFiles());
@@ -161,7 +168,7 @@ final class ComponentAddCommandTest extends TestCase
             $this->createStub(CacheManager::class),
         );
         $tester->execute([
-            'component' => 'accordion',
+            'components' => ['accordion'],
             '--extension' => 'my_ext',
             '--path' => '',
             '--force' => true,
@@ -184,7 +191,7 @@ final class ComponentAddCommandTest extends TestCase
 
         $tester = $this->createCommandTester($this->createRegistryService(['Root.html']), $cacheManager);
         $tester->execute([
-            'component' => 'accordion',
+            'components' => ['accordion'],
             '--extension' => 'my_ext',
             '--path' => '',
             '--force' => true,
@@ -216,7 +223,7 @@ final class ComponentAddCommandTest extends TestCase
             $this->createStub(CacheManager::class),
         );
         $tester->execute([
-            'component' => 'accordion',
+            'components' => ['accordion'],
             '--extension' => 'my_ext',
             '--path' => '',
             $fluidSuffix ? '--fluid-suffix' : '--no-fluid-suffix' => true,
@@ -232,7 +239,7 @@ final class ComponentAddCommandTest extends TestCase
             $this->createRegistryService(['Root.html']),
             $this->createStub(CacheManager::class),
         );
-        $tester->execute(['component' => 'accordion', '--extension' => 'my_ext', '--path' => '']);
+        $tester->execute(['components' => ['accordion'], '--extension' => 'my_ext', '--path' => '']);
 
         $this->assertSame(['Root.fluid.html'], $this->writtenFiles());
     }
@@ -269,7 +276,7 @@ final class ComponentAddCommandTest extends TestCase
             ),
             $this->createStub(CacheManager::class),
         );
-        $tester->execute(['component' => 'accordion', '--extension' => $extension, '--path' => $path]);
+        $tester->execute(['components' => ['accordion'], '--extension' => $extension, '--path' => $path]);
 
         $this->assertSame(0, $tester->getStatusCode());
         $folder = $this->tempDir . ($path === '' ? '' : rtrim($path, '/') . '/') . 'my-component/';
@@ -293,7 +300,7 @@ final class ComponentAddCommandTest extends TestCase
         $execute = fn(): string => (function () use ($registryService): string {
             $tester = $this->createCommandTester($registryService, $this->createStub(CacheManager::class));
             $tester->execute([
-                'component' => 'accordion',
+                'components' => ['accordion'],
                 '--extension' => 'my_ext',
                 '--path' => '',
                 '--force' => true,
@@ -344,7 +351,7 @@ final class ComponentAddCommandTest extends TestCase
         $cacheManager->expects($this->once())->method('flushCachesInGroup')->with('pages');
 
         $tester = $this->createCommandTester($registryService, $cacheManager);
-        $tester->execute(['component' => 'accordion', '--extension' => 'my_ext', '--path' => '']);
+        $tester->execute(['components' => ['accordion'], '--extension' => 'my_ext', '--path' => '']);
 
         $this->assertSame(1, $tester->getStatusCode());
         // the console wraps the message at the width of the terminal
@@ -372,7 +379,7 @@ final class ComponentAddCommandTest extends TestCase
             $this->createStub(CacheManager::class),
         );
         $tester->execute([
-            'component' => 'accordion',
+            'components' => ['accordion'],
             '--extension' => 'my_ext',
             '--path' => '',
             '--fluid-suffix' => false,
@@ -391,7 +398,7 @@ final class ComponentAddCommandTest extends TestCase
         $registryService->expects($this->never())->method('fetchComponentFile');
 
         $tester = $this->createCommandTester($registryService, $this->createStub(CacheManager::class));
-        $tester->execute(['component' => 'accordion', '--extension' => 'my_ext', '--path' => 'components/']);
+        $tester->execute(['components' => ['accordion'], '--extension' => 'my_ext', '--path' => 'components/']);
 
         $this->assertSame(1, $tester->getStatusCode());
         $this->assertSame([], $this->writtenFiles());
@@ -412,7 +419,7 @@ final class ComponentAddCommandTest extends TestCase
         $cacheManager->expects($this->never())->method('flushCachesInGroup');
 
         $tester = $this->createCommandTester($registryService, $cacheManager);
-        $tester->execute(['component' => 'accordion', '--extension' => 'my_ext', '--path' => '']);
+        $tester->execute(['components' => ['accordion'], '--extension' => 'my_ext', '--path' => '']);
 
         $this->assertSame(1, $tester->getStatusCode());
         $this->assertStringContainsString('Failed to fetch component file', $tester->getDisplay());
@@ -436,7 +443,7 @@ final class ComponentAddCommandTest extends TestCase
             $extensionConfiguration,
         );
         $tester->setInputs(['my_ext', 'yes']);
-        $tester->execute(['component' => 'accordion', '--path' => ''], ['interactive' => true]);
+        $tester->execute(['components' => ['accordion'], '--path' => ''], ['interactive' => true]);
 
         $this->assertSame(0, $tester->getStatusCode());
         $this->assertStringContainsString('Default extension "my_ext" saved.', $tester->getDisplay());
@@ -455,7 +462,7 @@ final class ComponentAddCommandTest extends TestCase
             $extensionConfiguration,
         );
         // no input is given: a prompt would abort the run
-        $tester->execute(['component' => 'accordion', '--path' => ''], ['interactive' => true]);
+        $tester->execute(['components' => ['accordion'], '--path' => ''], ['interactive' => true]);
 
         $this->assertSame(0, $tester->getStatusCode());
         $this->assertSame(['Root.fluid.html'], $this->writtenFiles());
@@ -466,6 +473,93 @@ final class ComponentAddCommandTest extends TestCase
      *
      * @return list<string>
      */
+    /**
+     * A registry of `toast` (Toast/Root.html) and `toaster` (Toaster/Toaster.html), nothing else.
+     */
+    private function createTwoComponentRegistryService(): RegistryService
+    {
+        $components = [
+            'toast' => ['key' => 'toast', 'name' => 'Toast', 'files' => ['Root.html']],
+            'toaster' => ['key' => 'toaster', 'name' => 'Toaster', 'files' => ['Toaster.html']],
+        ];
+        $registryService = $this->createStub(RegistryService::class);
+        $registryService->method('fetchComponent')->willReturnCallback(static fn(string $key): array => (
+            array_key_exists($key, $components)
+                ? [null, $components[$key]]
+                : [['message' => 'Component not found in registry.', 'details' => null], []]
+        ));
+        $registryService->method('fetchComponentFile')->willReturn([null, '<div>content</div>']);
+        $registryService->method('fetchComponentList')->willReturn([null, array_values($components)]);
+
+        return $registryService;
+    }
+
+    #[Test]
+    public function addsSeveralComponentsAndFlushesThePageCacheOnce(): void
+    {
+        $cacheManager = $this->createMock(CacheManager::class);
+        $cacheManager->expects($this->once())->method('flushCachesInGroup')->with('pages');
+
+        $tester = $this->createCommandTester($this->createTwoComponentRegistryService(), $cacheManager);
+        $tester->execute([
+            'components' => ['toast', 'toaster'],
+            '--extension' => 'my_ext',
+            '--path' => '',
+            '--fluid-suffix' => false,
+        ]);
+
+        $this->assertSame(0, $tester->getStatusCode());
+        $this->assertFileExists($this->tempDir . 'Toast/Root.html');
+        $this->assertFileExists($this->tempDir . 'Toaster/Toaster.html');
+    }
+
+    #[Test]
+    public function writesNoComponentWhenAnotherOneIsUnknownOrInTheWay(): void
+    {
+        $registryService = $this->createTwoComponentRegistryService();
+        $add = function (array $components) use ($registryService): CommandTester {
+            $tester = $this->createCommandTester($registryService, $this->createStub(CacheManager::class));
+            $tester->execute([
+                'components' => $components,
+                '--extension' => 'my_ext',
+                '--path' => '',
+                '--fluid-suffix' => false,
+            ]);
+            return $tester;
+        };
+
+        $unknown = $add(['toast', 'toastr']);
+        $this->assertSame(1, $unknown->getStatusCode());
+        $this->assertStringContainsString('toastr: Component not found in registry.', $unknown->getDisplay());
+        $this->assertFileDoesNotExist($this->tempDir . 'Toast/Root.html');
+
+        mkdir($this->tempDir . 'Toaster');
+        file_put_contents($this->tempDir . 'Toaster/Toaster.html', 'original content');
+        $inTheWay = $add(['toast', 'toaster']);
+        $this->assertSame(1, $inTheWay->getStatusCode());
+        $this->assertStringContainsString('- Toaster/Toaster.html', $inTheWay->getDisplay());
+        $this->assertFileDoesNotExist($this->tempDir . 'Toast/Root.html');
+    }
+
+    #[Test]
+    public function addsEveryComponentOfTheRegistryWithAllAndTakesNoNamesWithIt(): void
+    {
+        $registryService = $this->createTwoComponentRegistryService();
+        $add = function (array $arguments) use ($registryService): CommandTester {
+            $tester = $this->createCommandTester($registryService, $this->createStub(CacheManager::class));
+            $tester->execute([...$arguments, '--extension' => 'my_ext', '--path' => '', '--fluid-suffix' => false]);
+            return $tester;
+        };
+
+        $this->assertStringContainsString('or --all', $add([])->getDisplay());
+        $this->assertStringContainsString('not both', $add(['components' => ['toast'], '--all' => true])->getDisplay());
+        $this->assertFileDoesNotExist($this->tempDir . 'Toast/Root.html');
+
+        $this->assertSame(0, $add(['--all' => true])->getStatusCode());
+        $this->assertFileExists($this->tempDir . 'Toast/Root.html');
+        $this->assertFileExists($this->tempDir . 'Toaster/Toaster.html');
+    }
+
     private function writtenFiles(): array
     {
         $folder = $this->tempDir . 'my-component';
