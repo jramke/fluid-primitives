@@ -101,6 +101,32 @@ describe('mounting components', () => {
         expect(getComponentInstance('ui:collapsible', 'c1')).toBe(second);
         second!.destroy();
     });
+
+    test('mounts a rootId that is also the name of an Object.prototype member', () => {
+        setGlobals({
+            hydrationData: {
+                ui: {
+                    widget: {
+                        constructor: field('constructor'),
+                        toString: { ...field('toString'), autoMount: false },
+                    },
+                },
+            },
+        });
+        const created: string[] = [];
+        const create = ({ props }: { props: { id: string } }) => {
+            created.push(props.id);
+            return { id: props.id } as unknown as Component<unknown, unknown>;
+        };
+
+        mountAll('ui:widget', create);
+        const manual = mount('ui:widget', 'toString', create);
+        const unrendered = mount('ui:widget', 'valueOf', create);
+
+        expect(created).toEqual(['constructor', 'toString']);
+        expect(unrendered).toBeUndefined();
+        expect(getComponentInstance('ui:widget', 'toString')).toBe(manual);
+    });
 });
 
 describe('ComponentHydrator', () => {

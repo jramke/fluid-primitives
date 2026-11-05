@@ -84,7 +84,8 @@ export function getHydrationData(component?: string, id?: string) {
         return instances;
     }
 
-    return (instances as Record<string, unknown>)[id] || null;
+    // own keys only: a rootId such as "constructor" would read Object.prototype
+    return Object.hasOwn(instances, id) ? (instances as Record<string, unknown>)[id] : null;
 }
 
 /**
@@ -112,9 +113,9 @@ export function getComponentInstance<
     T extends Component<unknown, unknown> = Component<unknown, unknown>,
 >(componentName: string, id: string): T | undefined {
     const { namespace, baseName } = parseNamespacedComponentName(componentName);
-    return window.FluidPrimitives?.componentInstances?.[namespace]?.[toKebabCase(baseName)]?.[
-        id
-    ] as T | undefined;
+    const instances =
+        window.FluidPrimitives?.componentInstances?.[namespace]?.[toKebabCase(baseName)];
+    return instances && Object.hasOwn(instances, id) ? (instances[id] as T) : undefined;
 }
 
 /**
@@ -200,7 +201,7 @@ export function mountAll<K extends KnownComponentName | (string & {})>(
 
     Object.keys(hydrationInstances).forEach(id => {
         if (hydrationInstances[id].autoMount === false) return;
-        if (mountedInstances[id]) return;
+        if (Object.hasOwn(mountedInstances, id)) return;
 
         const instance = callback({
             ...hydrationInstances[id],

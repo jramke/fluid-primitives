@@ -43,6 +43,10 @@ What changed in each release of Fluid Primitives, newest first. Every release li
 
 - New ViewHelper: add `<ui:detachable />` to a part template and the part takes `provider`. A wrapper built with `ui:useProps` adds its own `<ui:detachable />` to take `provider`. ([#107](https://github.com/jramke/fluid-primitives/pull/107))
 
+### Client
+
+- `mountAll()`, `mount()` and `getComponentInstance()` find a component whose `rootId` is also the name of an `Object.prototype` member, such as `constructor` or `toString`. Before, `mountAll()` skipped it as mounted. ([#110](https://github.com/jramke/fluid-primitives/pull/110))
+
 ### CLI
 
 - `ui:add` takes several components at once (`typo3 ui:add form field`) and `--all` (`-a`) for every component of the registry. It checks all of them before it writes a file, so an unknown name or a file in the way of any of them writes nothing. ([#109](https://github.com/jramke/fluid-primitives/pull/109))
