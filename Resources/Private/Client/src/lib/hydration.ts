@@ -84,7 +84,8 @@ function readHydrationDataBlocks(): Window['FluidPrimitives'] | undefined {
 // no prototype, so a component or rootId named like an Object.prototype member ("constructor") is a key like any other.
 function addHydrationEntries(target: Record<string, any>, source: Record<string, any>) {
     for (const [key, value] of Object.entries(source)) {
-        if (Object.hasOwn(value, 'autoMount') && Object.hasOwn(value, 'props')) target[key] = value;
+        // a level can hold a rootId named autoMount, but there its value is an entry, not a boolean
+        if (typeof value.autoMount === 'boolean') target[key] = value;
         else addHydrationEntries((target[key] ??= Object.create(null)), value);
     }
 }

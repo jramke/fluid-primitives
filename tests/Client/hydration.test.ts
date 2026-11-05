@@ -202,6 +202,20 @@ describe('reading the hydration data of the page', () => {
         expect(Object.hasOwn(Object, 'c1')).toBe(false);
         document.head.innerHTML = '';
     });
+
+    test('files rootIds named like the keys of an entry as entries of their component', () => {
+        window.FluidPrimitives = undefined as never;
+        document.head.innerHTML =
+            block({ hydrationData: { ui: { widget: { w1: entry('w1') } } } }) +
+            block({
+                hydrationData: {
+                    ui: { widget: { autoMount: entry('autoMount'), props: entry('props') } },
+                },
+            });
+
+        expect(Object.keys(getHydrationData('ui:widget')!)).toEqual(['w1', 'autoMount', 'props']);
+        document.head.innerHTML = '';
+    });
 });
 
 describe('ComponentHydrator', () => {
