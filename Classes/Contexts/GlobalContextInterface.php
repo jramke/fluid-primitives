@@ -8,8 +8,8 @@ use Psr\Http\Message\ServerRequestInterface;
 
 /**
  * The one request-wide context every component can read through `{context.globals.<key>}` or
- * `$this->getGlobals()`. Its getters marked `#[ExposeToClient]` are written once into
- * `window.FluidPrimitives.globals`.
+ * `$this->getGlobals()`. Its getters marked `#[ExposeToClient]` are written once into the hydration data of
+ * the page, where the client reads them with `getGlobals()`.
  *
  * A project replaces the library default by putting `#[AsAlias(GlobalContextInterface::class, public: true)]`
  * on its own class.

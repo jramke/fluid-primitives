@@ -24,6 +24,7 @@ class HydrationRegistry
     private array $globals = [];
     private bool $globalsResolved = false;
     private bool $globalsRequested = false;
+    private ?string $scriptId = null;
 
     public function __construct(
         private readonly AssetCollector $assetCollector,
@@ -116,7 +117,7 @@ class HydrationRegistry
     }
 
     /**
-     * Makes the inline script carry the globals even when no component hydrates on this page, because
+     * Makes the hydration data block carry the globals even when no component hydrates on this page, because
      * a template read one: the client then finds them with `getGlobal()`. Called by the first
      * `getGlobals()` of a component context per request.
      */
@@ -159,18 +160,47 @@ class HydrationRegistry
             return;
         }
 
+        $this->scriptId ??= $this->unusedScriptId();
+
+        // Only the first block of the page carries the globals. Behind a block restored from the page cache, which
+        // has them, a block is written for components only.
+        $withGlobals = $this->scriptId === self::SCRIPT_ID;
+        if ($this->registry === [] && !$withGlobals) {
+            return;
+        }
+
         $development = $this->scriptBuilder->isDevelopment();
         $nestedComponents = $this->nestedComponentRegistry->getNestedComponentsByScope();
-        $js = $this->scriptBuilder->build($this->registry, $this->getGlobals(), $nestedComponents, $development);
+        $json = $this->scriptBuilder->build(
+            $this->registry,
+            $withGlobals ? $this->getGlobals() : null,
+            $nestedComponents,
+            $development,
+        );
 
-        $scriptAttributes = $development ? ['id' => self::SCRIPT_ID] : [];
+        // A data block: the browser does not run it, so a Content-Security-Policy needs no nonce or hash for it.
+        // The client finds it by the data attribute, see getFluidPrimitives() in hydration.ts.
+        $this->assetCollector->addInlineJavaScript(
+            $this->scriptId,
+            $json,
+            ['type' => 'application/json', 'data-fluid-primitives-hydration-data' => $this->scriptId],
+            ['priority' => true],
+        );
+    }
 
-        // Add or update the script in AssetCollector
-        $this->assetCollector->addInlineJavaScript(self::SCRIPT_ID, $js, $scriptAttributes, [
-            'priority' => true,
-            // a nonce or hash when the site sends a Content-Security-Policy, so it needs no 'unsafe-inline'
-            'csp' => true,
-        ]);
+    /**
+     * A page from the page cache restores the block of its cached content into the AssetCollector, while this
+     * registry only holds the uncached content (USER_INT) rendered in this request. Its block gets an identifier
+     * of its own, so it adds to that block instead of replacing it. The client reads both.
+     */
+    private function unusedScriptId(): string
+    {
+        $scriptId = self::SCRIPT_ID;
+        for ($number = 2; $this->assetCollector->hasInlineJavaScript($scriptId); $number++) {
+            $scriptId = self::SCRIPT_ID . '-' . $number;
+        }
+
+        return $scriptId;
     }
 
     private function resolveGlobals(): void

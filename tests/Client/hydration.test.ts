@@ -3,6 +3,8 @@ import {
     ComponentHydrator,
     destroyComponentsWithin,
     getComponentInstance,
+    getGlobals,
+    getHydrationData,
     mount,
     mountAll,
     registerClientPropConverters,
@@ -145,6 +147,74 @@ describe('mounting components', () => {
 
         instance!.destroy();
         expect(getComponentInstance('ui:constructor', '__proto__')).toBeUndefined();
+    });
+});
+
+describe('reading the hydration data of the page', () => {
+    const block = (data: object) =>
+        `<script type="application/json" data-fluid-primitives-hydration-data>${JSON.stringify(data)}</script>`;
+    const entry = (id: string) => ({ autoMount: true, props: { id, ids: {} } });
+
+    test('combines the block of the cached content and the one of the uncached content, once', () => {
+        window.FluidPrimitives = undefined as never;
+        document.head.innerHTML =
+            block({
+                globals: { locale: 'en_US', debug: false },
+                hydrationData: {
+                    ui: {
+                        button: { b1: entry('b1') },
+                        molecules: { 'checkbox-group': { c1: entry('c1') } },
+                    },
+                },
+                nestedComponents: {
+                    'field-array:fa1:itemTemplate': [{ name: 'ui:field', id: 'f1' }],
+                },
+            }) +
+            block({
+                globals: { locale: 'en_US', debug: true },
+                hydrationData: {
+                    ui: { button: { b2: entry('b2') }, 'flash-messages': { m1: entry('m1') } },
+                },
+                nestedComponents: {},
+            });
+
+        expect(Object.keys(getHydrationData('ui:button')!)).toEqual(['b1', 'b2']);
+        expect(getHydrationData('ui:molecules.checkboxGroup', 'c1')).toEqual(entry('c1'));
+        expect(getHydrationData('ui:flashMessages', 'm1')).toEqual(entry('m1'));
+        expect(getGlobals()?.debug).toBe(true);
+        expect(Object.keys(window.FluidPrimitives.nestedComponents!)).toEqual([
+            'field-array:fa1:itemTemplate',
+        ]);
+
+        // later lookups use what the first one read
+        document.head.innerHTML = '';
+        expect(getHydrationData('ui:button', 'b2')).toEqual(entry('b2'));
+    });
+
+    test('files a component named like an Object.prototype member under its own name', () => {
+        window.FluidPrimitives = undefined as never;
+        document.head.innerHTML = block({
+            hydrationData: { ui: { constructor: { c1: entry('c1'), name: entry('name') } } },
+        });
+
+        expect(getHydrationData('ui:constructor', 'c1')).toEqual(entry('c1'));
+        expect(getHydrationData('ui:constructor', 'name')).toEqual(entry('name'));
+        expect(Object.hasOwn(Object, 'c1')).toBe(false);
+        document.head.innerHTML = '';
+    });
+
+    test('files rootIds named like the keys of an entry as entries of their component', () => {
+        window.FluidPrimitives = undefined as never;
+        document.head.innerHTML =
+            block({ hydrationData: { ui: { widget: { w1: entry('w1') } } } }) +
+            block({
+                hydrationData: {
+                    ui: { widget: { autoMount: entry('autoMount'), props: entry('props') } },
+                },
+            });
+
+        expect(Object.keys(getHydrationData('ui:widget')!)).toEqual(['w1', 'autoMount', 'props']);
+        document.head.innerHTML = '';
     });
 });
 
