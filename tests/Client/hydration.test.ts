@@ -127,6 +127,25 @@ describe('mounting components', () => {
         expect(unrendered).toBeUndefined();
         expect(getComponentInstance('ui:widget', 'toString')).toBe(manual);
     });
+
+    test('keeps a component named like an Object.prototype member, and a __proto__ rootId, in buckets of their own', () => {
+        // JSON.parse keeps "__proto__" as an own key, as a fragment's payload would
+        setGlobals({
+            hydrationData: JSON.parse(
+                '{"ui": {"constructor": {"__proto__": {"autoMount": true, "props": {"id": "__proto__", "ids": {}}}}}}'
+            ),
+        });
+        document.body.innerHTML = '<div data-collapsible-root="__proto__"></div>';
+        const create = vi.fn(({ props }) => new Collapsible(props as never).init());
+
+        const instance = mount('ui:constructor', '__proto__', create);
+        expect(mount('ui:constructor', '__proto__', create)).toBe(instance);
+        expect(create).toHaveBeenCalledOnce();
+        expect(Object.hasOwn(Object, '__proto__')).toBe(false);
+
+        instance!.destroy();
+        expect(getComponentInstance('ui:constructor', '__proto__')).toBeUndefined();
+    });
 });
 
 describe('ComponentHydrator', () => {

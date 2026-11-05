@@ -45,7 +45,7 @@ What changed in each release of Fluid Primitives, newest first. Every release li
 
 ### Client
 
-- `mountAll()`, `mount()` and `getComponentInstance()` find a component whose `rootId` is also the name of an `Object.prototype` member, such as `constructor` or `toString`. Before, `mountAll()` skipped it as mounted. ([#110](https://github.com/jramke/fluid-primitives/pull/110))
+- `mountAll()`, `mount()` and `getComponentInstance()` find a component whose name or `rootId` is also the name of an `Object.prototype` member, such as `constructor` or `toString`. Before, `mountAll()` skipped it as mounted. A `rootId` of `__proto__` throws an `InvalidPropValueException` while rendering. ([#110](https://github.com/jramke/fluid-primitives/pull/110))
 
 ### CLI
 

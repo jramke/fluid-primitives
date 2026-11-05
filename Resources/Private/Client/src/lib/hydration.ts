@@ -113,9 +113,23 @@ export function getComponentInstance<
     T extends Component<unknown, unknown> = Component<unknown, unknown>,
 >(componentName: string, id: string): T | undefined {
     const { namespace, baseName } = parseNamespacedComponentName(componentName);
-    const instances =
-        window.FluidPrimitives?.componentInstances?.[namespace]?.[toKebabCase(baseName)];
-    return instances && Object.hasOwn(instances, id) ? (instances[id] as T) : undefined;
+    const registry = window.FluidPrimitives?.componentInstances;
+    return ownValue(ownValue(ownValue(registry, namespace), toKebabCase(baseName)), id) as
+        T | undefined;
+}
+
+// The instance registry reads own keys only and its buckets have no prototype, so a component or
+// rootId named like an Object.prototype member ("constructor", "__proto__") is a key like any other.
+function ownValue<T>(record: Record<string, T> | undefined, key: string): T | undefined {
+    return record && Object.hasOwn(record, key) ? record[key] : undefined;
+}
+
+function instancesOf(namespace: string, clientBaseName: string) {
+    const registry = window.FluidPrimitives.componentInstances;
+    registry[namespace] = ownValue(registry, namespace) ?? Object.create(null);
+    registry[namespace][clientBaseName] =
+        ownValue(registry[namespace], clientBaseName) ?? Object.create(null);
+    return registry[namespace][clientBaseName];
 }
 
 /**
@@ -194,10 +208,7 @@ export function mountAll<K extends KnownComponentName | (string & {})>(
     const hydrationInstances = getHydrationData(componentName);
     if (!hydrationInstances) return;
 
-    const clientBaseName = toKebabCase(baseName);
-    window.FluidPrimitives.componentInstances[namespace] ??= {};
-    window.FluidPrimitives.componentInstances[namespace][clientBaseName] ??= {};
-    const mountedInstances = window.FluidPrimitives.componentInstances[namespace][clientBaseName];
+    const mountedInstances = instancesOf(namespace, toKebabCase(baseName));
 
     Object.keys(hydrationInstances).forEach(id => {
         if (hydrationInstances[id].autoMount === false) return;
@@ -327,10 +338,7 @@ export function mount<
     if (!instance) return undefined;
 
     instance.namespace = namespace;
-    const clientBaseName = toKebabCase(baseName);
-    window.FluidPrimitives.componentInstances[namespace] ??= {};
-    window.FluidPrimitives.componentInstances[namespace][clientBaseName] ??= {};
-    window.FluidPrimitives.componentInstances[namespace][clientBaseName][rootId] = instance;
+    instancesOf(namespace, toKebabCase(baseName))[rootId] = instance;
 
     return instance;
 }
