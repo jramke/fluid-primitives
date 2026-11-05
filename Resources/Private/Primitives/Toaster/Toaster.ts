@@ -11,6 +11,7 @@ interface MountedToast {
     toast: Toast;
     props: Partial<toast.Props>;
     el: HTMLElement;
+    templatePart: string;
 }
 
 export class Toaster extends Component<ToasterProps, toast.GroupApi> {
@@ -65,6 +66,13 @@ export class Toaster extends Component<ToasterProps, toast.GroupApi> {
                 )
             );
             mounted.props = props;
+            if ('type' in changed) {
+                const templatePart = this.templatePartFor(props.type);
+                if (templatePart !== mounted.templatePart) {
+                    mounted.templatePart = templatePart;
+                    mounted.toast.replaceContent(this.cloneTemplate(templatePart, id));
+                }
+            }
             if (Object.keys(changed).length > 0) mounted.toast.updateProps(changed);
             else mounted.toast.refresh();
         });
@@ -83,8 +91,28 @@ export class Toaster extends Component<ToasterProps, toast.GroupApi> {
     }
 
     private mountToast(rootEl: HTMLElement, id: string, props: Partial<toast.Props>): MountedToast {
-        const template = new Template(this.hydrator, 'toastTemplate');
-        const stencilId = template.root.getAttribute('data-toast-root');
+        const templatePart = this.templatePartFor(props.type);
+        const el = this.cloneTemplate(templatePart, id);
+        // the newest toast comes first, as in the store
+        rootEl.prepend(el);
+
+        return {
+            toast: this.createToast({ ...props, parent: this.machine.service } as toast.Props),
+            props,
+            el,
+            templatePart,
+        };
+    }
+
+    // the template of a type (`toaster.toastTemplate type="error"`), or the one without a type
+    private templatePartFor(type: string | undefined): string {
+        const part = `${type}ToastTemplate`;
+        return this.hydrator.query(part) ? part : 'toastTemplate';
+    }
+
+    private cloneTemplate(part: string, id: string): HTMLElement {
+        const { root } = new Template(this.hydrator, part);
+        const stencilId = root.getAttribute('data-toast-root');
         if (!stencilId) {
             throw new Error(
                 'Toaster: the root element of the toast template has to be a toast.root.'
@@ -92,7 +120,7 @@ export class Toaster extends Component<ToasterProps, toast.GroupApi> {
         }
 
         // the parts of the clone carry the id of the template, the toast finds them by its own id
-        for (const el of [template.root, ...template.root.querySelectorAll('*')]) {
+        for (const el of [root, ...root.querySelectorAll('*')]) {
             for (const attribute of el.attributes) {
                 if (attribute.name.startsWith('data-toast-') && attribute.value === stencilId) {
                     attribute.value = id;
@@ -100,14 +128,7 @@ export class Toaster extends Component<ToasterProps, toast.GroupApi> {
             }
         }
 
-        // the newest toast comes first, as in the store
-        rootEl.prepend(template);
-
-        return {
-            toast: this.createToast({ ...props, parent: this.machine.service } as toast.Props),
-            props,
-            el: template.root,
-        };
+        return root;
     }
 
     destroy() {

@@ -39,7 +39,7 @@ What changed in each release of Fluid Primitives, newest first. Every release li
 
 ### Toaster
 
-- New `Toaster` and `Toast` components on `@zag-js/toast`. Render `ui:toaster` in your page layout with its placement, overlap and timing as props, and create toasts from any script through the `toast` store its entry file exports: with a type, an action, or a loading state that follows a promise. Add them with `ui:add toaster toast`. ([#108](https://github.com/jramke/fluid-primitives/pull/108))
+- New `Toaster` and `Toast` components on `@zag-js/toast`. Render `ui:toaster` in your page layout with its placement, overlap and timing as props, and create toasts from any script through the `toast` store its entry file exports: with a type, an action, or a loading state that follows a promise. `toast.indicator` holds markup for one `ToastType`, such as its icon, and `toaster.toastTemplate` with a `type` the layout of one. A toast that changes its type swaps both in place. Add them with `ui:add toaster toast`. ([#108](https://github.com/jramke/fluid-primitives/pull/108))
 
 ### `ui:context`
 

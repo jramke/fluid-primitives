@@ -42,4 +42,34 @@ final class ToasterRenderingTest extends FunctionalTestCase
         $this->assertSame('top-end', $props['placement']);
         $this->assertSame(['groupLabel' => 'Notifications', 'closeTriggerLabel' => 'Close'], $props['translations']);
     }
+
+    #[Test]
+    public function namesTheTemplateAndMarksTheIndicatorOfATypeForTheClient(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:toaster rootId="toaster">
+                <primitives:toaster.toastTemplate>
+                    <primitives:toast.root>
+                        <primitives:toast.indicator type="{f:constant(name: \'Jramke\\FluidPrimitives\\Enum\\ToastType::Success\')}">ok</primitives:toast.indicator>
+                    </primitives:toast.root>
+                </primitives:toaster.toastTemplate>
+                <primitives:toaster.toastTemplate type="{f:constant(name: \'Jramke\\FluidPrimitives\\Enum\\ToastType::Error\')}">
+                    <primitives:toast.root>
+                        <primitives:toast.title />
+                    </primitives:toast.root>
+                </primitives:toaster.toastTemplate>
+            </primitives:toaster>
+        ');
+
+        // one each: the template of the error type does not count as the one without a type
+        $this->assertSame(
+            'toaster',
+            $this->elementWith($html, 'data-toaster-toast-template')->get('data-toaster-toast-template'),
+        );
+        $this->assertSame(
+            'toaster',
+            $this->elementWith($html, 'data-toaster-error-toast-template')->get('data-toaster-error-toast-template'),
+        );
+        $this->assertSame('success', $this->elementWith($html, 'data-toast-indicator')->get('data-value'));
+    }
 }

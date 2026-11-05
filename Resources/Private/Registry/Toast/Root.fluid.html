@@ -1,7 +1,7 @@
 <ui:useProps name="primitives:toast.root" as="rootProps" />
 
 <primitives:toast.root spreadProps="{rootProps}" class="{ui:cn(value: '
-    group flex w-[min(22rem,calc(100vw-2rem))] items-start gap-3 rounded-lg border bg-popover p-4 pr-10 text-popover-foreground shadow-lg outline-none
+    flex w-[min(22rem,calc(100vw-2rem))] items-start gap-3 rounded-lg border bg-popover p-4 pr-10 text-popover-foreground shadow-lg outline-none
     focus-visible:ring-2 focus-visible:ring-ring
     [translate:var(--x)_var(--y)] [scale:var(--scale)] z-(--z-index) h-(--height) opacity-(--opacity)
     transition-[translate,scale,opacity,height] duration-400 ease-[cubic-bezier(0.21,1.02,0.73,1)]
@@ -10,22 +10,5 @@
     [&>*]:transition-opacity [&[data-overlap][data-sibling]>*]:opacity-0
     {class}
 ')}">
-    <svg class="mt-0.5 hidden size-4 shrink-0 text-success group-data-[type=success]:block" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="10" />
-        <path d="m9 12 2 2 4-4" />
-    </svg>
-    <svg class="mt-0.5 hidden size-4 shrink-0 text-warning group-data-[type=warning]:block" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
-        <path d="M12 9v4" />
-        <path d="M12 17h.01" />
-    </svg>
-    <svg class="mt-0.5 hidden size-4 shrink-0 text-destructive group-data-[type=error]:block" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="10" />
-        <path d="m15 9-6 6" />
-        <path d="m9 9 6 6" />
-    </svg>
-    <svg class="mt-0.5 hidden size-4 shrink-0 animate-spin text-muted-foreground group-data-[type=loading]:block" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-        <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-    </svg>
     <f:slot />
 </primitives:toast.root>

@@ -17,6 +17,7 @@ export class Toast extends Component<toast.Props, toast.Api> {
     // TODO: swipe to dismiss (swipeDirections, data-swiping, --swipe-x/--swipe-y) once @zag-js/toast releases it
 
     private ghosts?: [HTMLElement, HTMLElement];
+    private templateAttributes?: string[];
 
     initMachine(props: toast.Props): Machine<any> {
         return new Machine(toast.machine, props);
@@ -30,6 +31,7 @@ export class Toast extends Component<toast.Props, toast.Api> {
         const rootEl = this.hydrator.query('root');
         if (!rootEl) return;
 
+        this.templateAttributes ??= rootEl.getAttributeNames();
         this.spreadProps(rootEl, this.api.getRootProps());
 
         if (!this.ghosts) {
@@ -39,6 +41,10 @@ export class Toast extends Component<toast.Props, toast.Api> {
         }
         this.spreadProps(this.ghosts[0], this.api.getGhostBeforeProps());
         this.spreadProps(this.ghosts[1], this.api.getGhostAfterProps());
+
+        this.spreadPropsByValue('indicator', ({ value }) => ({
+            hidden: value === this.api.type ? undefined : true,
+        }));
 
         const titleEl = this.hydrator.query('title');
         if (titleEl) {
@@ -67,5 +73,26 @@ export class Toast extends Component<toast.Props, toast.Api> {
             this.spreadProps(closeTriggerEl, this.api.getCloseTriggerProps());
             closeTriggerEl.hidden = !this.api.closable;
         }
+    }
+
+    /**
+     * Swaps the content of the toast for the one of another toast template, for a toast whose type
+     * changes to a type with a template of its own. The toast keeps its root element and its state,
+     * and takes the attributes and the children of `templateRoot`: the root of a clone of the
+     * template whose parts carry the id of this toast.
+     */
+    replaceContent(templateRoot: HTMLElement) {
+        const rootEl = this.hydrator.query('root');
+        if (!rootEl) return;
+
+        this.templateAttributes?.forEach(name => rootEl.removeAttribute(name));
+        for (const { name, value } of templateRoot.attributes) rootEl.setAttribute(name, value);
+        this.templateAttributes = templateRoot.getAttributeNames();
+
+        const children = [...templateRoot.childNodes];
+        if (this.ghosts) rootEl.replaceChildren(this.ghosts[0], ...children, this.ghosts[1]);
+        else rootEl.replaceChildren(...children);
+
+        this.render();
     }
 }

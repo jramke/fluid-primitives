@@ -1,3 +1,14 @@
-<ui:template name="toastTemplate">
-    <f:slot />
-</ui:template>
+<ui:prop name="type" type="Jramke\FluidPrimitives\Enum\ToastType" optional="{true}" description="The type of toast this template is for. A toast takes the template of its type, or the one without a type." />
+
+<f:if condition="{type}">
+    <f:then>
+        <ui:template name="{type.value}ToastTemplate">
+            <f:slot />
+        </ui:template>
+    </f:then>
+    <f:else>
+        <ui:template name="toastTemplate">
+            <f:slot />
+        </ui:template>
+    </f:else>
+</f:if>

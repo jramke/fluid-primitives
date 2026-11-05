@@ -20,11 +20,10 @@ afterEach(() => {
 
 const frames = () => new Promise(resolve => setTimeout(resolve, 50));
 
-function mountToaster() {
-    document.body.innerHTML = `
-        <div data-toaster-root="t1">
-            <template data-toaster-toast-template="t1"><div data-toast-root="stencil"><div data-toast-title="stencil"></div><div data-toast-description="stencil"></div><button data-toast-action-trigger="stencil"></button><button data-toast-close-trigger="stencil">x</button></div></template>
-        </div>`;
+const defaultTemplate = `<template data-toaster-toast-template="t1"><div data-toast-root="stencil"><div data-toast-title="stencil"></div><div data-toast-description="stencil"></div><button data-toast-action-trigger="stencil"></button><button data-toast-close-trigger="stencil">x</button></div></template>`;
+
+function mountToaster(templates = defaultTemplate) {
+    document.body.innerHTML = `<div data-toaster-root="t1">${templates}</div>`;
     toaster = new Toaster({ id: 't1', removeDelay: 0 }).init();
     return {
         toasts: () => Array.from(document.querySelectorAll<HTMLElement>('[data-toast-root]')),
@@ -74,4 +73,47 @@ test('updates a loading toast in place and hides the triggers it has no use for'
     expect(toast.dataset.type).toBe('success');
     expect(part(toast, 'title').textContent).toBe('CV uploaded');
     expect(part(toast, 'close-trigger').hidden).toBe(false);
+});
+
+test('takes the template of its type and swaps it in place when the type changes', async () => {
+    const { toasts, part } = mountToaster(`
+        ${defaultTemplate}
+        <template data-toaster-error-toast-template="t1"><div class="error-layout" data-toast-root="error-stencil"><div data-toast-title="error-stencil"></div><a href="/support">Contact support</a><button data-toast-close-trigger="error-stencil">x</button></div></template>`);
+    const id = toaster!.store.create({ title: 'Sending', type: 'loading' });
+    await frames();
+
+    const [loadingToast] = toasts();
+    expect(part(loadingToast, 'description')).not.toBeNull();
+    expect(loadingToast.querySelector('a')).toBeNull();
+
+    toaster!.store.update(id, { title: 'Sending failed', type: 'error' });
+    await frames();
+
+    const [toast] = toasts();
+    expect(toast).toBe(loadingToast);
+    expect(toast.classList).toContain('error-layout');
+    expect(toast.querySelector('a')?.textContent).toBe('Contact support');
+    expect(toast.querySelector('[data-toast-description]')).toBeNull();
+    expect(part(toast, 'title').textContent).toBe('Sending failed');
+    expect(part(toast, 'close-trigger').getAttribute('aria-label')).toBe('Dismiss notification');
+});
+
+test('shows the indicators of its type and hides the others', async () => {
+    const { toasts } = mountToaster(
+        `<template data-toaster-toast-template="t1"><div data-toast-root="stencil"><span data-toast-indicator="stencil" data-value="success"></span><span data-toast-indicator="stencil" data-value="loading"></span><div data-toast-title="stencil"></div></div></template>`
+    );
+    const shown = () =>
+        Array.from(
+            toasts()[0].querySelectorAll<HTMLElement>('[data-toast-indicator]:not([hidden])'),
+            el => el.dataset.value
+        );
+    const id = toaster!.store.create({ title: 'Saving', type: 'loading' });
+    await frames();
+
+    expect(shown()).toEqual(['loading']);
+
+    toaster!.store.update(id, { title: 'Saved', type: 'success' });
+    await frames();
+
+    expect(shown()).toEqual(['success']);
 });
