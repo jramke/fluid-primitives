@@ -67,7 +67,7 @@ function readHydrationDataBlocks(): Window['FluidPrimitives'] | undefined {
     const fluidPrimitives: Window['FluidPrimitives'] = {
         componentInstances: {},
         globals: {} as FluidPrimitivesGlobals,
-        hydrationData: {},
+        hydrationData: Object.create(null),
         nestedComponents: {},
     };
     for (const block of blocks) {
@@ -80,11 +80,12 @@ function readHydrationDataBlocks(): Window['FluidPrimitives'] | undefined {
 }
 
 // Walks down the namespace and the segments of a component name (one level per dot, as in getHydrationData())
-// to the entries, and files each under its rootId: one component can have entries in both blocks.
+// to the entries, and files each under its rootId: one component can have entries in both blocks. The levels have
+// no prototype, so a component or rootId named like an Object.prototype member ("constructor") is a key like any other.
 function addHydrationEntries(target: Record<string, any>, source: Record<string, any>) {
     for (const [key, value] of Object.entries(source)) {
-        if ('autoMount' in value && 'props' in value) target[key] = value;
-        else addHydrationEntries((target[key] ??= {}), value);
+        if (Object.hasOwn(value, 'autoMount') && Object.hasOwn(value, 'props')) target[key] = value;
+        else addHydrationEntries((target[key] ??= Object.create(null)), value);
     }
 }
 

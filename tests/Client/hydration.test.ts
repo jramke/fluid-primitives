@@ -190,6 +190,18 @@ describe('reading the hydration data of the page', () => {
         document.head.innerHTML = '';
         expect(getHydrationData('ui:button', 'b2')).toEqual(entry('b2'));
     });
+
+    test('files a component named like an Object.prototype member under its own name', () => {
+        window.FluidPrimitives = undefined as never;
+        document.head.innerHTML = block({
+            hydrationData: { ui: { constructor: { c1: entry('c1'), name: entry('name') } } },
+        });
+
+        expect(getHydrationData('ui:constructor', 'c1')).toEqual(entry('c1'));
+        expect(getHydrationData('ui:constructor', 'name')).toEqual(entry('name'));
+        expect(Object.hasOwn(Object, 'c1')).toBe(false);
+        document.head.innerHTML = '';
+    });
 });
 
 describe('ComponentHydrator', () => {
