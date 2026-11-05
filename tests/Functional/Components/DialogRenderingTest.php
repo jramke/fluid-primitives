@@ -9,6 +9,7 @@ use Jramke\FluidPrimitives\Exception\InvalidPropValueException;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\TestWith;
 
 final class DialogRenderingTest extends FunctionalTestCase
 {
@@ -211,16 +212,21 @@ final class DialogRenderingTest extends FunctionalTestCase
     }
 
     /**
-     * The rootId is the value of every part attribute and lands unescaped inside zag's attribute selectors.
+     * The rootId is the value of every part attribute and lands unescaped inside zag's attribute selectors,
+     * and a key of the hydration data, which the page writes as a JavaScript object literal.
      */
     #[Test]
-    public function rejectsARootIdThatWouldBreakThePartSelectors(): void
-    {
+    #[TestWith(['my"dialog', 'must not contain quotes or backslashes'])]
+    #[TestWith(['__proto__', 'is reserved'])]
+    public function rejectsARootIdThatWouldBreakThePartSelectorsOrTheHydrationData(
+        string $rootId,
+        string $message,
+    ): void {
         $this->expectException(InvalidPropValueException::class);
-        $this->expectExceptionMessage('must not contain quotes or backslashes');
+        $this->expectExceptionMessage($message);
 
         $this->renderTemplate(
-            '<primitives:dialog.root rootId=\'my"dialog\'><primitives:dialog.trigger>Open</primitives:dialog.trigger></primitives:dialog.root>',
+            "<primitives:dialog.root rootId='{$rootId}'><primitives:dialog.trigger>Open</primitives:dialog.trigger></primitives:dialog.root>",
         );
     }
 }

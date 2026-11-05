@@ -84,7 +84,8 @@ export function getHydrationData(component?: string, id?: string) {
         return instances;
     }
 
-    return (instances as Record<string, unknown>)[id] || null;
+    // own keys only: a rootId such as "constructor" would read Object.prototype
+    return Object.hasOwn(instances, id) ? (instances as Record<string, unknown>)[id] : null;
 }
 
 /**
@@ -112,9 +113,23 @@ export function getComponentInstance<
     T extends Component<unknown, unknown> = Component<unknown, unknown>,
 >(componentName: string, id: string): T | undefined {
     const { namespace, baseName } = parseNamespacedComponentName(componentName);
-    return window.FluidPrimitives?.componentInstances?.[namespace]?.[toKebabCase(baseName)]?.[
-        id
-    ] as T | undefined;
+    const registry = window.FluidPrimitives?.componentInstances;
+    return ownValue(ownValue(ownValue(registry, namespace), toKebabCase(baseName)), id) as
+        T | undefined;
+}
+
+// The instance registry reads own keys only and its buckets have no prototype, so a component or
+// rootId named like an Object.prototype member ("constructor", "__proto__") is a key like any other.
+function ownValue<T>(record: Record<string, T> | undefined, key: string): T | undefined {
+    return record && Object.hasOwn(record, key) ? record[key] : undefined;
+}
+
+function instancesOf(namespace: string, clientBaseName: string) {
+    const registry = window.FluidPrimitives.componentInstances;
+    registry[namespace] = ownValue(registry, namespace) ?? Object.create(null);
+    registry[namespace][clientBaseName] =
+        ownValue(registry[namespace], clientBaseName) ?? Object.create(null);
+    return registry[namespace][clientBaseName];
 }
 
 /**
@@ -193,14 +208,11 @@ export function mountAll<K extends KnownComponentName | (string & {})>(
     const hydrationInstances = getHydrationData(componentName);
     if (!hydrationInstances) return;
 
-    const clientBaseName = toKebabCase(baseName);
-    window.FluidPrimitives.componentInstances[namespace] ??= {};
-    window.FluidPrimitives.componentInstances[namespace][clientBaseName] ??= {};
-    const mountedInstances = window.FluidPrimitives.componentInstances[namespace][clientBaseName];
+    const mountedInstances = instancesOf(namespace, toKebabCase(baseName));
 
     Object.keys(hydrationInstances).forEach(id => {
         if (hydrationInstances[id].autoMount === false) return;
-        if (mountedInstances[id]) return;
+        if (Object.hasOwn(mountedInstances, id)) return;
 
         const instance = callback({
             ...hydrationInstances[id],
@@ -261,16 +273,35 @@ export function destroyComponentsWithin(root: Element | Document) {
 }
 
 /**
- * Mounts one instance by its `rootId`, also one that was rendered with `autoMount="{false}"`. Unlike
- * `mountAll()`, it creates a new instance on every call, which then replaces the one tracked before.
- * `getComponentInstance()` and `destroyComponentsWithin()` find it like any other.
+ * @internal
+ *
+ * Stops tracking an instance, so `getComponentInstance()` no longer finds it and `mount()` or
+ * `mountAll()` mounts its `rootId` again. `Component.destroy()` calls it.
+ */
+export function forgetComponentInstance(instance: Component<unknown, unknown>) {
+    for (const namespaceBucket of Object.values(window.FluidPrimitives?.componentInstances ?? {})) {
+        for (const instances of Object.values(namespaceBucket)) {
+            for (const [id, tracked] of Object.entries(instances)) {
+                if (tracked === instance) delete instances[id];
+            }
+        }
+    }
+}
+
+/**
+ * Mounts one instance by its `rootId`, also one that was rendered with `autoMount="{false}"`. Like
+ * `mountAll()`, it skips an instance that is already mounted: it returns that one and does not call
+ * `callback`, so a script that runs twice still gets one instance. To mount it again, call
+ * `destroy()` on it first. `getComponentInstance()` and `destroyComponentsWithin()` find it like any
+ * other.
  *
  * The `props` in the callback are typed like those of `mountAll()`.
  *
  * @param componentName - The namespaced name, e.g. `ui:dialog`.
  * @param rootId - The `rootId` the component was rendered with.
  * @param callback - Creates the instance and returns it.
- * @returns The instance, or `undefined` if there is no hydration entry for `rootId`.
+ * @returns The instance, the one already mounted, or `undefined` if there is no hydration entry for
+ * `rootId`.
  */
 export function mount<
     K extends KnownComponentName | (string & {}),
@@ -284,6 +315,9 @@ export function mount<
         createHydrator: () => ComponentHydrator;
     }) => T | void
 ): T | undefined {
+    const mounted = getComponentInstance<T>(componentName, rootId);
+    if (mounted) return mounted;
+
     const { namespace, baseName } = parseNamespacedComponentName(componentName);
     const hydrationData = getHydrationData(componentName, rootId);
     if (!hydrationData) {
@@ -304,17 +338,7 @@ export function mount<
     if (!instance) return undefined;
 
     instance.namespace = namespace;
-    const clientBaseName = toKebabCase(baseName);
-    window.FluidPrimitives.componentInstances[namespace] ??= {};
-    window.FluidPrimitives.componentInstances[namespace][clientBaseName] ??= {};
-    const instances = window.FluidPrimitives.componentInstances[namespace][clientBaseName];
-    if (instances[rootId] && instances[rootId] !== instance) {
-        devWarn(
-            `mount(): ${componentName} "${rootId}" is already mounted and is replaced without being destroyed. ` +
-                'Call destroy() on the old instance first.'
-        );
-    }
-    instances[rootId] = instance;
+    instancesOf(namespace, toKebabCase(baseName))[rootId] = instance;
 
     return instance;
 }

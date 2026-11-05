@@ -29,7 +29,8 @@ class ComponentUtility
 
     /**
      * The rootId is the value of every part attribute and lands unescaped in the attribute selectors of the
-     * client, so a quote or backslash in it would end the selector.
+     * client, so a quote or backslash in it would end the selector. It is also a key of the hydration data,
+     * which the page writes as a JavaScript object literal, where a `__proto__` key sets the prototype.
      */
     public static function assertValidRootId(string $rootId): void
     {
@@ -37,6 +38,13 @@ class ComponentUtility
             throw new InvalidPropValueException(
                 sprintf('The rootId "%s" must not contain quotes or backslashes.', $rootId),
                 1_788_200_009,
+            );
+        }
+
+        if ($rootId === '__proto__') {
+            throw new InvalidPropValueException(
+                'The rootId "__proto__" is reserved: the client could not find the hydration data of the component. Choose another rootId.',
+                1_788_200_010,
             );
         }
     }

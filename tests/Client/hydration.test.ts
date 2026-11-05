@@ -1,12 +1,14 @@
-import { beforeEach, describe, expect, test } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 import {
     ComponentHydrator,
     destroyComponentsWithin,
+    getComponentInstance,
     mount,
     mountAll,
     registerClientPropConverters,
     type Component,
 } from '../../Resources/Private/Client/src/lib';
+import { Collapsible } from '../../Resources/Private/Primitives/Collapsible/Collapsible';
 import partNaming from '../Fixtures/part-naming.json';
 
 const field = (id: string, props: object = {}) => ({
@@ -61,7 +63,13 @@ describe('mounting components', () => {
         });
         setGlobals({
             hydrationData: {
-                ui: { converted: { a: field('a', { size: 'lg' }), b: field('b') } },
+                ui: {
+                    converted: {
+                        a: field('a', { size: 'lg' }),
+                        b: field('b'),
+                        c: { ...field('c'), autoMount: false },
+                    },
+                },
             },
         });
         const sizes: unknown[] = [];
@@ -71,9 +79,72 @@ describe('mounting components', () => {
         };
 
         mountAll('ui:converted', create);
-        mount('ui:converted', 'b', create);
+        mount('ui:converted', 'c', create);
 
         expect(sizes).toEqual(['LG', 'MD', 'MD']);
+    });
+
+    test('mount returns the mounted instance instead of creating a second one, and a new one once it is destroyed', () => {
+        setGlobals({ hydrationData: { ui: { collapsible: { c1: field('c1') } } } });
+        document.body.innerHTML = '<div data-collapsible-root="c1"></div>';
+        const create = vi.fn(({ props }) => new Collapsible(props as never).init());
+
+        const first = mount('ui:collapsible', 'c1', create);
+        expect(mount('ui:collapsible', 'c1', create)).toBe(first);
+        expect(create).toHaveBeenCalledOnce();
+
+        first!.destroy();
+        expect(getComponentInstance('ui:collapsible', 'c1')).toBeUndefined();
+
+        const second = mount('ui:collapsible', 'c1', create);
+        expect(second).not.toBe(first);
+        expect(getComponentInstance('ui:collapsible', 'c1')).toBe(second);
+        second!.destroy();
+    });
+
+    test('mounts a rootId that is also the name of an Object.prototype member', () => {
+        setGlobals({
+            hydrationData: {
+                ui: {
+                    widget: {
+                        constructor: field('constructor'),
+                        toString: { ...field('toString'), autoMount: false },
+                    },
+                },
+            },
+        });
+        const created: string[] = [];
+        const create = ({ props }: { props: { id: string } }) => {
+            created.push(props.id);
+            return { id: props.id } as unknown as Component<unknown, unknown>;
+        };
+
+        mountAll('ui:widget', create);
+        const manual = mount('ui:widget', 'toString', create);
+        const unrendered = mount('ui:widget', 'valueOf', create);
+
+        expect(created).toEqual(['constructor', 'toString']);
+        expect(unrendered).toBeUndefined();
+        expect(getComponentInstance('ui:widget', 'toString')).toBe(manual);
+    });
+
+    test('keeps a component named like an Object.prototype member, and a __proto__ rootId, in buckets of their own', () => {
+        // JSON.parse keeps "__proto__" as an own key, as a fragment's payload would
+        setGlobals({
+            hydrationData: JSON.parse(
+                '{"ui": {"constructor": {"__proto__": {"autoMount": true, "props": {"id": "__proto__", "ids": {}}}}}}'
+            ),
+        });
+        document.body.innerHTML = '<div data-collapsible-root="__proto__"></div>';
+        const create = vi.fn(({ props }) => new Collapsible(props as never).init());
+
+        const instance = mount('ui:constructor', '__proto__', create);
+        expect(mount('ui:constructor', '__proto__', create)).toBe(instance);
+        expect(create).toHaveBeenCalledOnce();
+        expect(Object.hasOwn(Object, '__proto__')).toBe(false);
+
+        instance!.destroy();
+        expect(getComponentInstance('ui:constructor', '__proto__')).toBeUndefined();
     });
 });
 
