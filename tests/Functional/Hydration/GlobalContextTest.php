@@ -71,10 +71,9 @@ final class GlobalContextTest extends FunctionalTestCase
             'server only token and escaped value',
         );
         $script = $this->inlineScript();
-        $this->assertStringContainsString('window.FluidPrimitives', $script);
         $this->assertStringContainsString('"lightbox":{"icons":{"close":"\\u003Csvg/\\u003E"}}', $script);
         $this->assertStringNotContainsString('designTokens', $script, 'a server only getter stays off the client');
-        $this->assertSame(1, substr_count($script, 'window.FluidPrimitives='));
+        $this->assertCount(1, $this->get(AssetCollector::class)->getInlineJavaScripts(), 'one block');
     }
 
     #[Test]

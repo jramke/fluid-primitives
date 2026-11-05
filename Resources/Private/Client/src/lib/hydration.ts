@@ -46,11 +46,53 @@ function parseNamespacedComponentName(componentName: string): {
     };
 }
 
+const HYDRATION_DATA_SELECTOR =
+    'script[type="application/json"][data-fluid-primitives-hydration-data]';
+
+/**
+ * @internal
+ *
+ * The hydration data, globals and mounted instances of the page. The server writes the data as one JSON block
+ * per rendering pass: a page from the page cache has one of its cached content and one of the uncached content
+ * (USER_INT) of the request. The first call reads them into `window.FluidPrimitives`, later calls return it.
+ */
+export function getFluidPrimitives(): Window['FluidPrimitives'] | undefined {
+    return (window.FluidPrimitives ??= readHydrationDataBlocks()!);
+}
+
+function readHydrationDataBlocks(): Window['FluidPrimitives'] | undefined {
+    const blocks = document.querySelectorAll<HTMLScriptElement>(HYDRATION_DATA_SELECTOR);
+    if (blocks.length === 0) return undefined;
+
+    const fluidPrimitives: Window['FluidPrimitives'] = {
+        componentInstances: {},
+        globals: {} as FluidPrimitivesGlobals,
+        hydrationData: {},
+        nestedComponents: {},
+    };
+    for (const block of blocks) {
+        const data = JSON.parse(block.textContent || '{}');
+        Object.assign(fluidPrimitives.globals!, data.globals);
+        addHydrationEntries(fluidPrimitives.hydrationData, data.hydrationData ?? {});
+        Object.assign(fluidPrimitives.nestedComponents!, data.nestedComponents);
+    }
+    return fluidPrimitives;
+}
+
+// Walks down the namespace and the segments of a component name (one level per dot, as in getHydrationData())
+// to the entries, and files each under its rootId: one component can have entries in both blocks.
+function addHydrationEntries(target: Record<string, any>, source: Record<string, any>) {
+    for (const [key, value] of Object.entries(source)) {
+        if ('autoMount' in value && 'props' in value) target[key] = value;
+        else addHydrationEntries((target[key] ??= {}), value);
+    }
+}
+
 /** @internal */
 export function getHydrationData(component: string): Record<string, ComponentHydrationData> | null;
 export function getHydrationData(component: string, id: string): ComponentHydrationData | null;
 export function getHydrationData(component?: string, id?: string) {
-    const hydrationData = window.FluidPrimitives?.hydrationData;
+    const hydrationData = getFluidPrimitives()?.hydrationData;
 
     if (!hydrationData || typeof hydrationData !== 'object') {
         return null;
@@ -96,7 +138,7 @@ export function getHydrationData(component?: string, id?: string) {
  * e.g. `Dialog`'s `Root`, or whose content has since portaled elsewhere).
  */
 function getNestedComponents(scopeId: string): NestedComponentEntry[] {
-    return window.FluidPrimitives?.nestedComponents?.[scopeId] ?? [];
+    return getFluidPrimitives()?.nestedComponents?.[scopeId] ?? [];
 }
 
 /**
@@ -113,7 +155,7 @@ export function getComponentInstance<
     T extends Component<unknown, unknown> = Component<unknown, unknown>,
 >(componentName: string, id: string): T | undefined {
     const { namespace, baseName } = parseNamespacedComponentName(componentName);
-    const registry = window.FluidPrimitives?.componentInstances;
+    const registry = getFluidPrimitives()?.componentInstances;
     return ownValue(ownValue(ownValue(registry, namespace), toKebabCase(baseName)), id) as
         T | undefined;
 }
@@ -136,11 +178,11 @@ function instancesOf(namespace: string, clientBaseName: string) {
  * The request-wide values the server rendered into the page: `locale`, `debug` and whatever the
  * project's global context exposes with `#[ExposeToClient]`.
  *
- * @returns The globals, or `null` when the page has none: `window.FluidPrimitives` only exists when a
+ * @returns The globals, or `null` when the page has none: the server only writes hydration data when a
  * component hydrates or a global was read while rendering.
  */
 export function getGlobals(): FluidPrimitivesGlobals | null {
-    const globals = window.FluidPrimitives?.globals;
+    const globals = getFluidPrimitives()?.globals;
 
     if (!globals || typeof globals !== 'object') {
         return null;

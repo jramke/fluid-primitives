@@ -132,7 +132,7 @@ export type HydrationPropsFor<K extends string> = K extends keyof HydrationProps
     : ComponentHydrationData['props'];
 
 /**
- * What the server renders into `window.FluidPrimitives.globals`: the getters of the global context
+ * The globals the server renders into the hydration data of the page: the getters of the global context
  * marked `#[ExposeToClient]`. `locale` and `debug` come from the library, the rest from the project.
  */
 export interface FluidPrimitivesGlobals {

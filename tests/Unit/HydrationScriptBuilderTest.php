@@ -18,13 +18,11 @@ final class HydrationScriptBuilderTest extends TestCase
 
         $development = $builder->build($registry, ['locale' => 'en_US'], [], development: true);
         $this->assertStringContainsString("\n", $development);
-        $this->assertStringContainsString('window.FluidPrimitives', $development);
         $this->assertStringContainsString('"locale": "en_US"', $development);
 
         $production = $builder->build($registry, ['locale' => 'en_US'], [], development: false);
         $this->assertStringNotContainsString("\n", $production);
-        $this->assertStringContainsString('window.FluidPrimitives', $production);
-        $this->assertStringContainsString('"locale":"en_US"', $production);
+        $this->assertSame(json_decode($development, true), json_decode($production, true));
     }
 
     #[Test]

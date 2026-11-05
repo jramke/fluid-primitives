@@ -10,6 +10,7 @@ What changed in each release of Fluid Primitives, newest first. Every release li
 - **`ui:context`:** `name` takes the component with its namespace, as you write its tag: `<ui:context name="ui:dialog" as="dialogContext" />` instead of `name="dialog"`. A context of the same component from another collection throws an `InvalidPropValueException`. A namespace you declare only in the page template does not reach the template of a component, so register the collection globally or declare its namespace in the template that uses `ui:context`. ([#107](https://github.com/jramke/fluid-primitives/pull/107))
 - **Client:** `mount()` returns the instance that is already mounted for a `rootId` instead of creating a second one, like `mountAll()`, so an entry file that runs twice still mounts one instance. To mount a `rootId` again, call `destroy()` on its instance first, after which `getComponentInstance()` no longer returns it. ([#110](https://github.com/jramke/fluid-primitives/pull/110))
 - **Toc:** `scrollBehavior` defaults to `auto` instead of `smooth`, and the component no longer forces `instant` for a visitor who prefers reduced motion. `auto` follows the CSS `scroll-behavior` of the element that scrolls, so set `motion-safe:scroll-smooth` on it, or pass `scrollBehavior="smooth"` to keep the old scrolling. ([`c248c76`](https://github.com/jramke/fluid-primitives/commit/c248c76))
+- **Core:** `window.FluidPrimitives` exists once a function of the library has read the hydration data of the page. Read it through `getHydrationData()`, `getGlobals()` and `getComponentInstance()`, not from the window object.
 
 ### General changes
 
@@ -57,6 +58,8 @@ What changed in each release of Fluid Primitives, newest first. Every release li
 - Component collections list their components and providers in `getAvailableComponents()`, so `typo3 fluid:schema:generate` includes them for autocompletion in your IDE. ([#107](https://github.com/jramke/fluid-primitives/pull/107))
 - Two roots of one component with the same `rootId` throw a `HydrationException`, server-only ones too, where before only hydrated roots did. ([#107](https://github.com/jramke/fluid-primitives/pull/107))
 - A component's own template sees the components around it, like its slot content does. A Field reaches a control you render inside a component of your own (`name`, `id`, `required` and `disabled` are on the input before hydration), and `ui:context` finds an enclosing component from the template of a nested one. ([#105](https://github.com/jramke/fluid-primitives/pull/105))
+- Components of an uncached plugin (`USER_INT`) hydrate on a page from the page cache, next to the components of its cached content. Before, the hydration data of the uncached content replaced that of the page, so the cached components found none and `mount()` returned `undefined`.
+- The hydration data is a `<script type="application/json">` block, so a Content-Security-Policy needs no nonce or hash for it.
 
 ## 1.0.0-beta.6
 

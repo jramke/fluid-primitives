@@ -3,6 +3,8 @@ import {
     ComponentHydrator,
     destroyComponentsWithin,
     getComponentInstance,
+    getGlobals,
+    getHydrationData,
     mount,
     mountAll,
     registerClientPropConverters,
@@ -145,6 +147,48 @@ describe('mounting components', () => {
 
         instance!.destroy();
         expect(getComponentInstance('ui:constructor', '__proto__')).toBeUndefined();
+    });
+});
+
+describe('reading the hydration data of the page', () => {
+    const block = (data: object) =>
+        `<script type="application/json" data-fluid-primitives-hydration-data>${JSON.stringify(data)}</script>`;
+    const entry = (id: string) => ({ autoMount: true, props: { id, ids: {} } });
+
+    test('combines the block of the cached content and the one of the uncached content, once', () => {
+        window.FluidPrimitives = undefined as never;
+        document.head.innerHTML =
+            block({
+                globals: { locale: 'en_US', debug: false },
+                hydrationData: {
+                    ui: {
+                        button: { b1: entry('b1') },
+                        molecules: { 'checkbox-group': { c1: entry('c1') } },
+                    },
+                },
+                nestedComponents: {
+                    'field-array:fa1:itemTemplate': [{ name: 'ui:field', id: 'f1' }],
+                },
+            }) +
+            block({
+                globals: { locale: 'en_US', debug: true },
+                hydrationData: {
+                    ui: { button: { b2: entry('b2') }, 'flash-messages': { m1: entry('m1') } },
+                },
+                nestedComponents: {},
+            });
+
+        expect(Object.keys(getHydrationData('ui:button')!)).toEqual(['b1', 'b2']);
+        expect(getHydrationData('ui:molecules.checkboxGroup', 'c1')).toEqual(entry('c1'));
+        expect(getHydrationData('ui:flashMessages', 'm1')).toEqual(entry('m1'));
+        expect(getGlobals()?.debug).toBe(true);
+        expect(Object.keys(window.FluidPrimitives.nestedComponents!)).toEqual([
+            'field-array:fa1:itemTemplate',
+        ]);
+
+        // later lookups use what the first one read
+        document.head.innerHTML = '';
+        expect(getHydrationData('ui:button', 'b2')).toEqual(entry('b2'));
     });
 });
 

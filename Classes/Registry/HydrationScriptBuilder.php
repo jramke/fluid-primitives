@@ -7,8 +7,9 @@ namespace Jramke\FluidPrimitives\Registry;
 use TYPO3\CMS\Core\Core\Environment;
 
 /**
- * Builds the `window.FluidPrimitives` inline script payload {@see HydrationRegistry} writes to the
- * page: pretty-printed and unminified in development, compacted to a single line otherwise.
+ * Builds the JSON of the `<script type="application/json">` block {@see HydrationRegistry} writes to the page:
+ * pretty-printed in development, on a single line otherwise. The client library reads every such block of the
+ * page into `window.FluidPrimitives` on first access.
  */
 final class HydrationScriptBuilder
 {
@@ -22,36 +23,13 @@ final class HydrationScriptBuilder
         }
     }
 
-    public function build(array $registry, array $globals, array $nestedComponentsByScope, bool $development): string
+    /**
+     * @param array|null $globals `null` leaves them out, for a block behind the one that carries them.
+     */
+    public function build(array $registry, ?array $globals, array $nestedComponentsByScope, bool $development): string
     {
-        $globalsJson = $this->toJson($globals, $development);
-        $hydrationJson = $this->toJson($registry, $development);
-        $nestedJson = $this->toJson($nestedComponentsByScope, $development);
-
-        if (!$development) {
-            // not a regex over the whole script: it would also rewrite whitespace inside the JSON strings
-            return "(function(){window.FluidPrimitives={componentInstances:{},globals:{$globalsJson},hydrationData:{$hydrationJson},nestedComponents:{$nestedJson}};})();";
-        }
-
-        return <<<JS
-        (function() {
-        window.FluidPrimitives = {
-            componentInstances: {},
-            globals: {$globalsJson},
-            hydrationData: {$hydrationJson},
-            nestedComponents: {$nestedJson}
-        };
-        })();
-        JS;
-    }
-
-    private function toJson(array $data, bool $development): string
-    {
-        // PHP encodes an empty array as [], but every one of these is a map for the client
-        $value = $data === [] ? new \stdClass() : $data;
-
-        // HEX flags prevent a string containing "</script>" from breaking out of the inline
-        // <script> tag this gets embedded into (see HydrationRegistry::updateAssetCollector()).
+        // HEX flags prevent a string containing "</script>" from breaking out of the <script> block
+        // this gets embedded into (see HydrationRegistry::updateAssetCollector()).
         $flags =
             JSON_THROW_ON_ERROR |
             JSON_UNESCAPED_SLASHES |
@@ -61,9 +39,23 @@ final class HydrationScriptBuilder
             JSON_HEX_APOS |
             JSON_HEX_QUOT;
 
-        if ($development) {
-            return json_encode($value, $flags | JSON_PRETTY_PRINT);
+        $data = [
+            'hydrationData' => $this->toMap($registry),
+            'nestedComponents' => $this->toMap($nestedComponentsByScope),
+        ];
+        if ($globals !== null) {
+            $data = ['globals' => $this->toMap($globals)] + $data;
         }
-        return json_encode($value, $flags);
+
+        if ($development) {
+            return json_encode($data, $flags | JSON_PRETTY_PRINT);
+        }
+        return json_encode($data, $flags);
+    }
+
+    private function toMap(array $data): array|\stdClass
+    {
+        // PHP encodes an empty array as [], but every one of these is a map for the client
+        return $data === [] ? new \stdClass() : $data;
     }
 }

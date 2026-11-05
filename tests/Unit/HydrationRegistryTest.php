@@ -49,12 +49,13 @@ final class HydrationRegistryTest extends TestCase
     }
 
     #[Test]
-    public function registersTheScriptForTheContentSecurityPolicyOfTheSite(): void
+    public function writesTheDataAsAJsonBlockTheClientFindsByItsAttribute(): void
     {
         $this->registry->add('ui', 'dialog', new HydrationEntry('«f1»', [], true, []));
 
-        $this->assertNotNull($this->capturedJs);
-        $this->assertTrue($this->capturedOptions['csp'] ?? false);
+        $this->assertSame('application/json', $this->capturedAttributes['type'] ?? null);
+        $this->assertArrayHasKey('data-fluid-primitives-hydration-data', $this->capturedAttributes);
+        $this->assertSame(['priority' => true], $this->capturedOptions);
     }
 
     #[Test]
@@ -138,7 +139,6 @@ final class HydrationRegistryTest extends TestCase
     {
         $this->registry->add('ui', 'accordion', new HydrationEntry('«f1»', [], true, ['multiple' => true]));
 
-        $this->assertStringContainsString('window.FluidPrimitives', $this->capturedJs);
         $this->assertStringContainsString('"accordion"', $this->capturedJs);
         $this->assertStringContainsString('"«f1»"', $this->capturedJs);
         $this->assertStringContainsString('"multiple":true', $this->capturedJs);
@@ -208,9 +208,40 @@ final class HydrationRegistryTest extends TestCase
         $registry->requestGlobals();
 
         $this->assertMatchesRegularExpression(
-            '/globals:\{"debug":false\},\s*hydrationData:\{\},\s*nestedComponents:\{\}/',
+            '/"globals":\{"debug":false\},"hydrationData":\{\},"nestedComponents":\{\}/',
             (string)$this->capturedJs,
         );
+    }
+
+    #[Test]
+    public function addsABlockForTheUncachedContentNextToTheOneOfTheCachedContentWhichKeepsTheGlobals(): void
+    {
+        $assetCollector = new AssetCollector();
+
+        // the request that renders the cached content: its block goes into the page cache
+        $cachedContent = new HydrationRegistry($assetCollector, new GlobalContext());
+        $cachedContent->add('ui', 'toaster', new HydrationEntry('toaster', [], true, []));
+        $cachedContent->add('ui', 'button', new HydrationEntry('«f1»', [], true, []));
+
+        // a later request gets the page from the cache, with that block, and renders only the uncached content
+        $uncachedContent = new HydrationRegistry($assetCollector, new GlobalContext());
+        $uncachedContent->requestGlobals();
+        $this->assertCount(1, $assetCollector->getInlineJavaScripts(), 'a global read alone adds no block');
+        $uncachedContent->add('ui', 'flashMessages', new HydrationEntry('«f2»', [], true, []));
+        $uncachedContent->add('ui', 'flashMessages', new HydrationEntry('«f3»', [], true, []));
+
+        $scripts = $assetCollector->getInlineJavaScripts();
+        $this->assertSame(
+            ['fluid-primitives-hydration-data', 'fluid-primitives-hydration-data-2'],
+            array_keys($scripts),
+        );
+        $cached = json_decode($scripts['fluid-primitives-hydration-data']['source'], true);
+        $uncached = json_decode($scripts['fluid-primitives-hydration-data-2']['source'], true);
+        $this->assertEqualsCanonicalizing(['button', 'toaster'], array_keys($cached['hydrationData']['ui']));
+        $this->assertSame(['flashMessages'], array_keys($uncached['hydrationData']['ui']));
+        $this->assertSame(['«f2»', '«f3»'], array_keys($uncached['hydrationData']['ui']['flashMessages']));
+        $this->assertArrayHasKey('globals', $cached);
+        $this->assertArrayNotHasKey('globals', $uncached);
     }
 
     #[Test]
