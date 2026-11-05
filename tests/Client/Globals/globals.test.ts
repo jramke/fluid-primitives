@@ -143,15 +143,4 @@ describe('dev only output of the hydration helpers', () => {
             expect.stringContaining('no hydration data for ui:widget "nope"')
         );
     });
-
-    test('mount() warns when it replaces a live instance', () => {
-        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-        setGlobals({ debug: true }, { ui: { widget: { a: { autoMount: true, props: {} } } } });
-
-        mount('ui:widget', 'a', () => fakeInstance());
-        expect(warn).not.toHaveBeenCalled();
-
-        mount('ui:widget', 'a', () => fakeInstance());
-        expect(warn).toHaveBeenCalledWith(expect.stringContaining('already mounted'));
-    });
 });

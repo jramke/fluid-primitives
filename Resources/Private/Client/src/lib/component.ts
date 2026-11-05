@@ -8,6 +8,7 @@ import {
     toKebabCase,
 } from '.';
 import type { ComponentInterface } from '../types';
+import { forgetComponentInstance } from './hydration';
 
 /**
  * Base class of every primitive. A subclass builds its machine in `initMachine()`, connects it in
@@ -189,10 +190,14 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
         this.machine.updateProps(newProps);
     }
 
-    /** Stops the machine and releases the hydrator. */
+    /**
+     * Stops the machine, releases the hydrator and forgets the instance: `getComponentInstance()` no
+     * longer finds it, and `mount()` mounts its `rootId` again.
+     */
     destroy() {
         this.machine.stop();
         this.hydrator.destroy();
+        forgetComponentInstance(this);
     }
 
     /** Applies the attributes and event handlers of a part's props to its element. */

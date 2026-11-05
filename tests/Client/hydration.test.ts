@@ -1,12 +1,14 @@
-import { beforeEach, describe, expect, test } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 import {
     ComponentHydrator,
     destroyComponentsWithin,
+    getComponentInstance,
     mount,
     mountAll,
     registerClientPropConverters,
     type Component,
 } from '../../Resources/Private/Client/src/lib';
+import { Collapsible } from '../../Resources/Private/Primitives/Collapsible/Collapsible';
 import partNaming from '../Fixtures/part-naming.json';
 
 const field = (id: string, props: object = {}) => ({
@@ -61,7 +63,13 @@ describe('mounting components', () => {
         });
         setGlobals({
             hydrationData: {
-                ui: { converted: { a: field('a', { size: 'lg' }), b: field('b') } },
+                ui: {
+                    converted: {
+                        a: field('a', { size: 'lg' }),
+                        b: field('b'),
+                        c: { ...field('c'), autoMount: false },
+                    },
+                },
             },
         });
         const sizes: unknown[] = [];
@@ -71,9 +79,27 @@ describe('mounting components', () => {
         };
 
         mountAll('ui:converted', create);
-        mount('ui:converted', 'b', create);
+        mount('ui:converted', 'c', create);
 
         expect(sizes).toEqual(['LG', 'MD', 'MD']);
+    });
+
+    test('mount returns the mounted instance instead of creating a second one, and a new one once it is destroyed', () => {
+        setGlobals({ hydrationData: { ui: { collapsible: { c1: field('c1') } } } });
+        document.body.innerHTML = '<div data-collapsible-root="c1"></div>';
+        const create = vi.fn(({ props }) => new Collapsible(props as never).init());
+
+        const first = mount('ui:collapsible', 'c1', create);
+        expect(mount('ui:collapsible', 'c1', create)).toBe(first);
+        expect(create).toHaveBeenCalledOnce();
+
+        first!.destroy();
+        expect(getComponentInstance('ui:collapsible', 'c1')).toBeUndefined();
+
+        const second = mount('ui:collapsible', 'c1', create);
+        expect(second).not.toBe(first);
+        expect(getComponentInstance('ui:collapsible', 'c1')).toBe(second);
+        second!.destroy();
     });
 });
 
