@@ -112,6 +112,14 @@
             "import": "./dist/tabs.js",
             "types": "./dist/tabs.d.ts"
         },
+        "./toast": {
+            "import": "./dist/toast.js",
+            "types": "./dist/toast.d.ts"
+        },
+        "./toaster": {
+            "import": "./dist/toaster.js",
+            "types": "./dist/toaster.d.ts"
+        },
         "./toc": {
             "import": "./dist/toc.js",
             "types": "./dist/toc.d.ts"
@@ -205,6 +213,7 @@
         "@zag-js/store": "^2.0.0-next.3",
         "@zag-js/switch": "^2.0.0-next.3",
         "@zag-js/tabs": "^2.0.0-next.3",
+        "@zag-js/toast": "^2.0.0-next.3",
         "@zag-js/toc": "^2.0.0-next.3",
         "@zag-js/toggle": "^2.0.0-next.3",
         "@zag-js/toggle-group": "^2.0.0-next.3",

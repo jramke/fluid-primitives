@@ -1,0 +1,22 @@
+<ui:prop name="placement" type="Jramke\FluidPrimitives\Enum\ToastPlacement" optional="{true}" client="{true}" default="{f:constant(name: 'Jramke\FluidPrimitives\Enum\ToastPlacement::BottomEnd')}" description="Where on the screen the toasts appear." />
+<ui:prop name="overlap" type="boolean" optional="{true}" client="{true}" default="{true}" description="Whether the toasts pile up on top of each other and spread out on hover or focus. Set it to `false` to list them one below the other." />
+<ui:prop name="max" type="integer" optional="{true}" client="{true}" default="10" description="How many toasts are visible at once. More toasts wait in a queue, the most important first. When they overlap, each toast behind the front one is 5% smaller than the one before, so far more than 10 turn the pile into an hourglass." />
+<ui:prop name="gap" type="integer" optional="{true}" client="{true}" default="16" description="The space between the toasts, in pixels." />
+<ui:prop name="offsets" type="string|array" optional="{true}" client="{true}" default="1rem" description="The distance from the edges of the viewport, a CSS length or an array with one for each of `top`, `right`, `bottom` and `left`." />
+<ui:prop name="duration" type="integer" optional="{true}" client="{true}" description="How long a toast stays, in milliseconds. Without it, the type of the toast decides: 2 seconds for `success`, 5 seconds for the others, and a `loading` toast stays until it is updated." />
+<ui:prop name="removeDelay" type="integer" optional="{true}" client="{true}" default="200" description="How long a dismissed toast stays in the DOM, in milliseconds, so its exit animation can play." />
+<ui:prop name="pauseOnPageIdle" type="boolean" optional="{true}" client="{true}" default="{true}" description="Whether the toasts wait while the browser tab is in the background." />
+<ui:prop name="hotkey" type="string[]" optional="{true}" client="{true}" description="The keys that move the focus to the toasts, as `KeyboardEvent` modifier properties and codes, `altKey` and `KeyT` (Alt+T) by default." />
+<ui:prop name="translations" type="array" optional="{true}" client="{true}" description="Localized labels: `groupLabel` names the region of the toasts for screen readers, `closeTriggerLabel` the close trigger of each toast. Use `f:translate` for per-template localization overrides when needed." />
+
+<div
+    role="region"
+    tabindex="-1"
+    aria-live="polite"
+    aria-relevant="additions text"
+    aria-atomic="false"
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'root' )}
+    {ui:attributes()}>
+    <f:slot />
+</div>

@@ -1,0 +1,9 @@
+<ui:prop name="type" type="Jramke\FluidPrimitives\Enum\ToastType" optional="{true}" requiredAtRuntime="{true}" description="The type of toast the indicator is shown for." />
+
+<div
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'indicator', value: type.value)}
+    {ui:attributes()}
+    {ui:asChild()}>
+    <f:slot />
+</div>

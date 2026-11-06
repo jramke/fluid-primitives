@@ -1,0 +1,14 @@
+<ui:useProps name="primitives:toast.root" as="rootProps" />
+
+<primitives:toast.root spreadProps="{rootProps}" class="{ui:cn(value: '
+    flex w-[min(22rem,calc(100vw-2rem))] items-start gap-3 rounded-lg border bg-popover p-4 pr-10 text-popover-foreground shadow-lg outline-none
+    focus-visible:ring-2 focus-visible:ring-ring
+    [translate:var(--x)_var(--y)] [scale:var(--scale)] z-(--z-index) h-(--height) opacity-(--opacity)
+    transition-[translate,scale,opacity,height] duration-400 ease-[cubic-bezier(0.21,1.02,0.73,1)]
+    data-[state=closed]:duration-200 data-[state=closed]:ease-[cubic-bezier(0.06,0.71,0.55,1)]
+    motion-reduce:transition-opacity
+    [&>*]:transition-opacity [&[data-overlap][data-sibling]>*]:opacity-0
+    {class}
+')}">
+    <f:slot />
+</primitives:toast.root>

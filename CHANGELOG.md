@@ -37,6 +37,10 @@ What changed in each release of Fluid Primitives, newest first. Every release li
 
 - Thumbs and markers sit where the client puts them before it hydrates, so the slider no longer jumps on load. They used to render hidden and in the flow, which shortened the track and shifted the range. A contained thumb reads its size from `--slider-thumb-width` (`--slider-thumb-height` when vertical) until the client measures it, so set the variable on `ui:slider.root` when you change the size of the thumb, as the registry `Slider` does (run `ui:add` again to pick it up). ([`2a570fc`](https://github.com/jramke/fluid-primitives/commit/2a570fc))
 
+### Toast
+
+- New `Toaster` and `Toast` components on `@zag-js/toast`. Render `<ui:toaster rootId="toaster" />` in your page layout with its placement, overlap and timing as props, and create toasts from any script through the `toast` store its entry file exports: with a type, an action, or a loading state that follows a promise. Without content, the registry toaster renders a toast template with an icon for four types. `toast.indicator` holds markup for one `ToastType`, such as its icon, and `toaster.toastTemplate` with a `type` the layout of one. A toast that changes its type swaps both in place, and a part keeps what its template puts into it while the toast has no text for it. For a toast of your own, extend `Toast` from `fluid-primitives/toast` and return it from `createToast()` of a `Toaster` subclass. Add them with `ui:add toaster toast`. ([#108](https://github.com/jramke/fluid-primitives/pull/108))
+
 ### `ui:context`
 
 - With `provider`, `ui:context` reads the context of a provided root (see Core) from anywhere after its provider, outside a component too. ([#107](https://github.com/jramke/fluid-primitives/pull/107))

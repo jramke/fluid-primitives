@@ -1,0 +1,158 @@
+import * as toast from '@zag-js/toast';
+import { Component, Machine, normalizeProps, Template } from '../../Client';
+import { Toast } from '../Toast/Toast';
+
+type ToasterProps = toast.StoreProps & {
+    id: string;
+    translations?: { groupLabel?: string; closeTriggerLabel?: string };
+};
+
+// the cases of the PHP enum `ToastType`
+const toastTypes = new Set(['info', 'success', 'warning', 'error', 'loading']);
+
+interface MountedToast {
+    toast: Toast;
+    props: Partial<toast.Props>;
+    el: HTMLElement;
+    templatePart: string;
+}
+
+export class Toaster extends Component<ToasterProps, toast.GroupApi> {
+    static componentName = 'toaster';
+
+    /** Creates, updates and dismisses the toasts of this toaster. */
+    store!: toast.Store<string>;
+    private readonly toasts = new Map<string, MountedToast>();
+    private toastTranslations?: toast.IntlTranslations;
+
+    initMachine(props: ToasterProps): Machine<any> {
+        const { id, translations, ...storeProps } = props;
+        // on mount, not with the first toast, which may come long after or on a rare path
+        if (!this.hydrator.query('toastTemplate')) {
+            throw new Error(
+                `Toaster: "${id}" needs a toaster.toastTemplate without a type, for the toasts of every type without a template of its own.`
+            );
+        }
+        this.store = toast.createStore(storeProps);
+        this.toastTranslations = { closeTriggerLabel: translations?.closeTriggerLabel };
+        return new Machine(toast.group.machine, { id, store: this.store });
+    }
+
+    initApi() {
+        return toast.group.connect(this.machine.service, normalizeProps);
+    }
+
+    render() {
+        const rootEl = this.hydrator.query('root');
+        if (!rootEl) return;
+
+        this.spreadProps(
+            rootEl,
+            this.api.getGroupProps({ label: this.userProps.translations?.groupLabel })
+        );
+
+        const ids = new Set<string>();
+        const storeToasts = this.api.getToasts();
+        // oldest first: the store lists the newest first, and a toast mounted later is the front one
+        // TODO: mount in store order once @zag-js/toast keeps the heights in toast order itself (zag#3541)
+        [...storeToasts].reverse().forEach((storeProps, reversedIndex) => {
+            const index = storeToasts.length - 1 - reversedIndex;
+            // the store gives every toast an id
+            const id = storeProps.id as string;
+            ids.add(id);
+            const props = { ...storeProps, index, translations: this.toastTranslations };
+
+            const mounted = this.toasts.get(id);
+            if (!mounted) {
+                this.toasts.set(id, this.mountToast(rootEl, id, props));
+                return;
+            }
+
+            // only what changed: every updateProps() call stays in the machine for its whole life
+            const changed = Object.fromEntries(
+                Object.entries(props).filter(
+                    ([key, value]) => mounted.props[key as keyof toast.Props] !== value
+                )
+            );
+            mounted.props = props;
+            // Known gap: updateProps() patches, it skips an `undefined` and merges objects, so `toast.update()`
+            // can't take away a description, an action or a `meta` key. Zag means it that way (its vanilla
+            // tests pin it). A possible fix: build the toast machine with a props function, which
+            // VanillaMachine takes (our Machine constructor would have to accept it too), and assign the
+            // snapshot of the store here instead of the changed keys.
+            if (Object.keys(changed).length > 0) mounted.toast.updateProps(changed);
+            else mounted.toast.refresh();
+
+            // after the props, so the new content renders and takes the focus with them
+            const templatePart = this.templatePartFor(props.type);
+            if (templatePart !== mounted.templatePart) {
+                mounted.templatePart = templatePart;
+                mounted.toast.replaceContent(this.cloneTemplate(templatePart, id));
+            }
+        });
+
+        this.toasts.forEach((mounted, id) => {
+            if (ids.has(id)) return;
+            mounted.toast.destroy();
+            mounted.el.remove();
+            this.toasts.delete(id);
+        });
+    }
+
+    /** Creates the `Toast` of one toast, after its element is in the DOM. Override it to use a `Toast` of your own. */
+    protected createToast(props: toast.Props): Toast {
+        return new Toast(props).init();
+    }
+
+    private mountToast(rootEl: HTMLElement, id: string, props: Partial<toast.Props>): MountedToast {
+        const templatePart = this.templatePartFor(props.type);
+        const el = this.cloneTemplate(templatePart, id);
+        // the newest toast comes first, as in the store
+        rootEl.prepend(el);
+
+        return {
+            toast: this.createToast({ ...props, parent: this.machine.service } as toast.Props),
+            props,
+            el,
+            templatePart,
+        };
+    }
+
+    // the template of a type (`toaster.toastTemplate type="error"`), or the one without a type. Only the
+    // types of the `ToastType` enum can have one: any other string the store takes stays out of the selector.
+    private templatePartFor(type: string | undefined): string {
+        if (!type || !toastTypes.has(type)) return 'toastTemplate';
+        const part = `${type}ToastTemplate`;
+        return this.hydrator.query(part) ? part : 'toastTemplate';
+    }
+
+    private cloneTemplate(part: string, id: string): HTMLElement {
+        const { root } = new Template(this.hydrator, part);
+        const stencilId = root.getAttribute('data-toast-root');
+        if (!stencilId) {
+            throw new Error(
+                'Toaster: the root element of the toast template has to be a toast.root.'
+            );
+        }
+
+        // the parts of the clone carry the id of the template, the toast finds them by its own id
+        for (const el of [root, ...root.querySelectorAll('*')]) {
+            for (const attribute of el.attributes) {
+                if (attribute.name.startsWith('data-toast-') && attribute.value === stencilId) {
+                    attribute.value = id;
+                }
+            }
+        }
+
+        return root;
+    }
+
+    destroy() {
+        this.toasts.forEach(({ toast, el }) => {
+            toast.destroy();
+            el.remove();
+        });
+        this.toasts.clear();
+        super.destroy();
+    }
+}

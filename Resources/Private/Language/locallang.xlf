@@ -167,6 +167,12 @@
             <trans-unit id="datePicker.placeholderYear" approved="yes">
                 <source>yyyy</source>
             </trans-unit>
+            <trans-unit id="toaster.groupLabel" approved="yes">
+                <source>Notifications</source>
+            </trans-unit>
+            <trans-unit id="toaster.closeTriggerLabel" approved="yes">
+                <source>Dismiss notification</source>
+            </trans-unit>
         </body>
     </file>
 </xliff>

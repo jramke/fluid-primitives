@@ -352,6 +352,25 @@ tabs:
     - Content.fluid.html
     - Tabs.entry.ts
 
+toast:
+  name: Toast
+  description: The styled parts of one toast, for the template of a toaster
+  files:
+    - Root.fluid.html
+    - Title.fluid.html
+    - Description.fluid.html
+    - Indicator.fluid.html
+    - ActionTrigger.fluid.html
+    - CloseTrigger.fluid.html
+
+toaster:
+  name: Toaster
+  description: A region for short messages that close on their own, with a store your scripts import to create them
+  files:
+    - Toaster.fluid.html
+    - ToastTemplate.fluid.html
+    - Toaster.entry.ts
+
 toc:
   name: Toc
   description: A table of contents that highlights the headings you are reading
