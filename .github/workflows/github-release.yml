@@ -1,0 +1,45 @@
+name: GitHub release
+
+on:
+  push:
+    tags:
+      - '**'
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+
+      - name: Take the notes from the changelog
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          # the section of the tag, without its heading and the date line below it
+          awk -v tag="$TAG" '
+            /^## / { found = ($2 == tag); next }
+            found && !/^_.*_$/ { print }
+          ' CHANGELOG.md | sed '/./,$!d' > notes.md
+          if [ ! -s notes.md ]; then
+            echo "CHANGELOG.md has no entry for $TAG." >&2
+            exit 1
+          fi
+
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          if [[ "$TAG" == *-* ]]; then
+            FLAG=--prerelease
+          else
+            FLAG=--latest
+          fi
+          gh release create "$TAG" --title "$TAG" --notes-file notes.md "$FLAG" --verify-tag
