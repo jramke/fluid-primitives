@@ -27,6 +27,12 @@ export class Toaster extends Component<ToasterProps, toast.GroupApi> {
 
     initMachine(props: ToasterProps): Machine<any> {
         const { id, translations, ...storeProps } = props;
+        // on mount, not with the first toast, which may come long after or on a rare path
+        if (!this.hydrator.query('toastTemplate')) {
+            throw new Error(
+                `Toaster: "${id}" needs a toaster.toastTemplate without a type, for the toasts of every type without a template of its own.`
+            );
+        }
         this.store = toast.createStore(storeProps);
         this.toastTranslations = { closeTriggerLabel: translations?.closeTriggerLabel };
         return new Machine(toast.group.machine, { id, store: this.store });

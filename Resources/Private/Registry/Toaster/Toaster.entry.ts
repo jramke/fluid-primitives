@@ -8,8 +8,8 @@ toaster();
 
 /**
  * The store of the toaster, to create toasts from any script: `toast.success({ title: 'Saved' })`.
- * It finds the toaster on every call, so it still works after the toaster mounts again, and on a page
- * without one it warns instead of throwing.
+ * It finds the toaster on every call, so it still works after the toaster mounts again. On a page
+ * without one it warns, and its methods do nothing and return `undefined`.
  */
 export const toast = new Proxy({} as Toaster['store'], {
     get(_, key) {

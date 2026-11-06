@@ -2,7 +2,7 @@
 
 <ui:portal>
     <primitives:toaster spreadProps="{toasterProps}" class="{class}">
-        <f:variable name="toastTemplates" value="{f:slot() -> f:spaceless()}" />
+        <f:variable name="toastTemplates" value="{f:slot() -> f:format.trim()}" />
         <f:if condition="{toastTemplates}">
             <f:then>{toastTemplates -> f:format.raw()}</f:then>
             <f:else>

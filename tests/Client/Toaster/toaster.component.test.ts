@@ -117,6 +117,14 @@ test('takes the template of its type and swaps it in place when the type changes
     expect(part(toast, 'description')).not.toBeNull();
 });
 
+test('throws on mount without a template for the types without one of their own', () => {
+    document.body.innerHTML = `<div data-toaster-root="t1">${errorTemplate}</div>`;
+
+    expect(() => new Toaster({ id: 't1' }).init()).toThrow(
+        'needs a toaster.toastTemplate without a type'
+    );
+});
+
 test('moves the focus to the same part of the new template, or to the toast', async () => {
     const { toasts, part } = mountToaster(defaultTemplate + errorTemplate);
     const id = toaster!.store.create({ title: 'Sending', type: 'info' });
