@@ -22,6 +22,7 @@ export {
     getHydrationData,
     mount,
     mountAll,
+    mountWithin,
     toKebabCase,
 } from './hydration';
 export { Machine } from './machine';

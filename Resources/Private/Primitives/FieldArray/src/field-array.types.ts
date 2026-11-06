@@ -54,8 +54,8 @@ export interface FieldArrayProps {
         rowRemoved?: FieldArrayAnnounceTranslation;
     };
     /**
-     * Called after a row was added by the add trigger, with its index. `mountAll()` mounts the
-     * components inside the row on its own, right after this callback.
+     * Called after a row was added by the add trigger, with its index. The components inside the row
+     * are mounted by then, with the callbacks of their `mountAll()`.
      */
     onItemAdded?: (detail: { index: number }) => void;
     /**

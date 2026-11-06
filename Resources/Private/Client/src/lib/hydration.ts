@@ -85,20 +85,32 @@ function mergeHydrationDataBlocks(
     blocks: Iterable<HTMLScriptElement>
 ) {
     for (const block of blocks) {
-        const data = JSON.parse(block.textContent || '{}');
+        // removed first, so a block that does not parse is not read again with every later change
+        block.remove();
+        let data;
+        try {
+            data = JSON.parse(block.textContent || '{}');
+        } catch (error) {
+            console.error('[fluid-primitives] A hydration data block is no valid JSON.', error);
+            continue;
+        }
         if (data.globals) target.globals = { ...target.globals, ...data.globals };
         addHydrationEntries(target.hydrationData, data.hydrationData ?? {});
         target.nestedComponents = { ...target.nestedComponents, ...data.nestedComponents };
-        block.remove();
     }
 }
 
-/** Reads the blocks that arrived after the first read, e.g. with HTML that Turbo swapped in. */
-function readNewHydrationDataBlocks() {
+/**
+ * Reads the blocks that arrived after the first read, e.g. with HTML that Turbo swapped in.
+ *
+ * @returns Whether there was one.
+ */
+function readNewHydrationDataBlocks(): boolean {
     const blocks = document.querySelectorAll<HTMLScriptElement>(HYDRATION_DATA_SELECTOR);
-    if (blocks.length === 0) return;
+    if (blocks.length === 0) return false;
 
     mergeHydrationDataBlocks((window.FluidPrimitives ??= emptyFluidPrimitives()), blocks);
+    return true;
 }
 
 // Walks down the namespace and the segments of a component name (one level per dot, as in getHydrationData())
@@ -249,9 +261,10 @@ export function getGlobal<T>(path: string, fallback?: T): T | undefined {
 /**
  * Mounts every instance of a component that is not mounted yet and was not rendered with
  * `autoMount="{false}"`, and keeps doing so for markup that is added to the page later: a row of a
- * FieldArray, a clone of a `Template`, HTML that Turbo or a `fetch()` swapped in. An instance whose
- * root element leaves the page is destroyed. Calling it again replaces the callback, mounted
- * instances are skipped.
+ * FieldArray, a clone of a `Template`, HTML that Turbo or a `fetch()` swapped in. An instance is
+ * destroyed once every element it rendered onto has left the page, and mounts again when its markup
+ * comes back. A callback that returns no instance runs once per hydration entry. Calling `mountAll()`
+ * again replaces the callback and skips what is mounted.
  *
  * The `props` in the callback are typed from `componentName` via `HydrationPropsFor`. A component
  * without generated types gets an untyped bag.
@@ -281,27 +294,105 @@ export function mountAll<K extends KnownComponentName | (string & {})>(
     mountEntries(componentName, callback);
 }
 
+/**
+ * Mounts the components inside `element` right away, with the callbacks of `mountAll()`, and reads
+ * the hydration data blocks that arrived with them. `mountAll()` mounts them anyway, a microtask
+ * after the markup arrived, so call it only when you need the instances on your next line, e.g.
+ * right after you insert the clone of a `Template`.
+ *
+ * @param element - An element in the page that holds the new markup.
+ */
+export function mountWithin(element: Element) {
+    readNewHydrationDataBlocks();
+    mountParts(partAttributesByRootId([element]));
+}
+
+type PartAttributes = Map<string, string[]>;
+
+/** The `data-*` attribute names of `elements` and everything inside them, by attribute value. */
+function partAttributesByRootId(elements: Iterable<Element>): PartAttributes {
+    const parts: PartAttributes = new Map();
+    for (const element of elements) {
+        for (const el of [element, ...element.querySelectorAll('*')]) {
+            for (const { name, value } of el.attributes) {
+                if (!name.startsWith('data-')) continue;
+                const names = parts.get(value) ?? [];
+                names.push(name);
+                parts.set(value, names);
+            }
+        }
+    }
+    return parts;
+}
+
+function mountParts(parts: PartAttributes) {
+    if (parts.size === 0) return;
+    for (const [componentName, callback] of Object.entries(
+        window.FluidPrimitives?.mounters ?? {}
+    )) {
+        mountEntries(componentName, callback, parts);
+    }
+}
+
+// On the hydration entry and the instance, not in module state: the page can hold two copies of this
+// module. Not enumerable, so the copy of a stencil's entry for a clone does not take it along.
+const MOUNT_STATE = Symbol.for('fluid-primitives.mount-state');
+const MOUNTED_FROM = Symbol.for('fluid-primitives.mounted-from');
+
+/** `mounted`: the callback ran. `left`: the instance was destroyed because its markup left the page. */
+type MountState = 'mounted' | 'left' | undefined;
+
+function mountStateOf(entry: ComponentHydrationData): MountState {
+    return (entry as any)[MOUNT_STATE];
+}
+
+function setMountState(entry: ComponentHydrationData | undefined, state: MountState) {
+    if (entry) Object.defineProperty(entry, MOUNT_STATE, { value: state, configurable: true });
+}
+
+function entryOf(instance: object): ComponentHydrationData | undefined {
+    return (instance as any)[MOUNTED_FROM];
+}
+
+function markMounted(entry: ComponentHydrationData, instance: object | void) {
+    setMountState(entry, 'mounted');
+    if (instance)
+        Object.defineProperty(instance, MOUNTED_FROM, { value: entry, configurable: true });
+}
+
+/**
+ * Mounts the entries of `componentName`. With `parts`, only those whose parts are in it, as for
+ * markup that arrived: the data of markup that left the page stays, and the stencil of a `<template>`
+ * has data but no markup on the page. Without, every entry but one whose markup left the page: a
+ * callback can set up a component that renders no part of its own.
+ */
 function mountEntries(
     componentName: string,
     callback: (data: any) => Component<unknown, unknown> | void,
-    isOnPage: (id: string) => boolean = () => true
+    parts?: PartAttributes
 ) {
     const { namespace, baseName } = parseNamespacedComponentName(componentName);
     const hydrationInstances = getHydrationData(componentName);
     if (!hydrationInstances) return;
 
     const mountedInstances = instancesOf(namespace, toKebabCase(baseName));
+    const prefix = partAttributePrefix(toKebabCase(baseName));
 
     Object.keys(hydrationInstances).forEach(id => {
-        if (hydrationInstances[id].autoMount === false) return;
-        if (Object.hasOwn(mountedInstances, id)) return;
-        if (!isOnPage(id)) return;
+        const entry = hydrationInstances[id];
+        if (entry.autoMount === false) return;
+        if (Object.hasOwn(mountedInstances, id) || mountStateOf(entry) === 'mounted') return;
+        // ponytail: a prefix match, so a FieldArray part (`data-field-array-*`) counts for a Field of
+        // the same id too; match the part names of the anatomy if ids ever repeat across components
+        const hasArrived = parts?.get(id)?.some(name => name.startsWith(prefix));
+        if (parts ? !hasArrived : mountStateOf(entry) === 'left') return;
 
         const instance = callback({
-            ...hydrationInstances[id],
-            props: applyClientPropConverters(baseName, hydrationInstances[id].props),
+            ...entry,
+            props: applyClientPropConverters(baseName, entry.props),
             createHydrator: () => new ComponentHydrator(baseName, id),
         });
+        markMounted(entry, instance);
         if (!instance) return;
 
         instance.namespace = namespace;
@@ -310,10 +401,10 @@ function mountEntries(
 }
 
 /**
- * Destroys every mounted instance whose parts are all inside `root`, its portaled content included,
- * and forgets it, its hydration data included. `mountAll()` already does this for markup that leaves
- * the page, so call it only when the instances must be gone before your next line runs, e.g. before
- * you rename the fields of the rows after a removed one.
+ * Destroys every mounted instance whose parts are inside `root`, its portaled content included, and
+ * forgets it, its hydration data included. `mountAll()` already does this for markup that leaves the
+ * page, so call it only when the instances must be gone before your next line runs, e.g. before you
+ * rename the fields of the rows after a removed one.
  *
  * @param root - The element that is about to be removed.
  */
@@ -327,36 +418,49 @@ export function destroyComponentsWithin(root: Element | Document) {
     );
 }
 
-function destroyInstancesWhere(
-    isGone: (instance: Component<unknown, unknown>) => boolean,
-    { forgetHydrationData }: { forgetHydrationData: boolean }
-) {
-    if (!window.FluidPrimitives) return;
-
+function* trackedInstances() {
     for (const [namespace, namespaceBucket] of Object.entries(
-        window.FluidPrimitives.componentInstances
+        window.FluidPrimitives?.componentInstances ?? {}
     )) {
         for (const [name, instances] of Object.entries(namespaceBucket)) {
             for (const [id, instance] of Object.entries(instances)) {
                 // Not instanceof: an instance of the other copy of this module is a Component too.
-                if (typeof instance.isRenderedOnlyInside !== 'function' || !isGone(instance)) {
-                    continue;
-                }
-
-                if (isDebug()) {
-                    console.log(
-                        `[fluid-primitives] Destroying component instance: ${instance.getClientName()}:${id}`
-                    );
-                }
-                instance.destroy();
-                delete instances[id];
-                if (forgetHydrationData) {
-                    const hydrationInstances = getHydrationData(`${namespace}:${name}`);
-                    if (hydrationInstances) delete hydrationInstances[id];
-                }
+                if (typeof instance.isRenderedOnlyInside !== 'function') continue;
+                yield { namespace, name, id, instance, instances };
             }
         }
     }
+}
+
+function instancesWhere(test: (instance: Component<unknown, unknown>) => boolean) {
+    return Array.from(trackedInstances(), ({ instance }) => instance).filter(test);
+}
+
+/** @returns How many instances it destroyed. */
+function destroyInstancesWhere(
+    isGone: (instance: Component<unknown, unknown>) => boolean,
+    { forgetHydrationData }: { forgetHydrationData: boolean }
+): number {
+    let destroyed = 0;
+    for (const { namespace, name, id, instance, instances } of trackedInstances()) {
+        if (!isGone(instance)) continue;
+        destroyed++;
+
+        if (isDebug()) {
+            console.log(
+                `[fluid-primitives] Destroying component instance: ${instance.getClientName()}:${id}`
+            );
+        }
+        instance.destroy();
+        delete instances[id];
+        if (forgetHydrationData) {
+            const hydrationInstances = getHydrationData(`${namespace}:${name}`);
+            if (hydrationInstances) delete hydrationInstances[id];
+        } else {
+            setMountState(entryOf(instance), 'left');
+        }
+    }
+    return destroyed;
 }
 
 let pageObserver: MutationObserver | undefined;
@@ -374,51 +478,41 @@ function observePage() {
 
         // A node that was moved, e.g. into a portal, is removed and added in the same batch.
         const gone = Array.from(removed).filter(el => !el.isConnected);
-        if (gone.length > 0) {
-            gone.forEach(removePortalsWithin);
-            // The hydration data stays: the markup can come back, e.g. from the cache of Turbo.
-            destroyInstancesWhere(instance => instance.isRenderedOnlyInside(), {
-                forgetHydrationData: false,
-            });
-        }
+        if (gone.length > 0) destroyLater(gone);
 
         const arrived = Array.from(added).filter(el => el.isConnected);
         if (arrived.length > 0) {
-            readNewHydrationDataBlocks();
-            mountArrived(arrived);
+            // the data can arrive after its markup, so new data looks at the whole page
+            mountParts(
+                partAttributesByRootId(
+                    readNewHydrationDataBlocks() ? [document.documentElement] : arrived
+                )
+            );
         }
     });
     pageObserver.observe(document.documentElement, { childList: true, subtree: true });
 }
 
 /**
- * Mounts the entries of every `mountAll()` callback whose parts are inside `elements`. The parts
- * decide and not the hydration data alone: data stays after its markup left the page, and the
- * stencil of a `<template>` has data but no markup on the page.
+ * Destroys the instances that left the page with `gone` a task later, when they are still gone: an
+ * element that is detached and put back across an `await`, as Turbo does with a
+ * `data-turbo-permanent` element, keeps its instance and its state. The hydration data stays, the
+ * markup can come back, e.g. from the cache of Turbo.
  */
-function mountArrived(elements: Element[]) {
-    const partAttributesByRootId = new Map<string, string[]>();
-    for (const element of elements) {
-        for (const el of [element, ...element.querySelectorAll('*')]) {
-            for (const { name, value } of el.attributes) {
-                if (!name.startsWith('data-')) continue;
-                const names = partAttributesByRootId.get(value) ?? [];
-                names.push(name);
-                partAttributesByRootId.set(value, names);
-            }
-        }
-    }
-
-    for (const [componentName, callback] of Object.entries(
-        window.FluidPrimitives?.mounters ?? {}
-    )) {
-        const prefix = partAttributePrefix(
-            toKebabCase(parseNamespacedComponentName(componentName).baseName)
+function destroyLater(gone: Element[]) {
+    const candidates = new Set(instancesWhere(instance => instance.isRenderedOnlyInside()));
+    setTimeout(() => {
+        // the portals of an element still gone; removing them is a change the observer sees, so
+        // a component with its content in a portal is destroyed with the next round
+        gone.filter(el => !el.isConnected).forEach(removePortalsWithin);
+        const destroyed = destroyInstancesWhere(
+            instance => candidates.has(instance) && instance.isRenderedOnlyInside(),
+            { forgetHydrationData: false }
         );
-        mountEntries(componentName, callback, id =>
-            (partAttributesByRootId.get(id) ?? []).some(name => name.startsWith(prefix))
-        );
-    }
+        // markup that arrived while an instance of the same rootId was still mounted, e.g. a
+        // navigation in the layout of every page Turbo visits
+        if (destroyed > 0) mountParts(partAttributesByRootId([document.documentElement]));
+    });
 }
 
 function partAttributePrefix(clientComponentName: string): string {
@@ -432,6 +526,7 @@ function partAttributePrefix(clientComponentName: string): string {
  * `mountAll()` mounts its `rootId` again. `Component.destroy()` calls it.
  */
 export function forgetComponentInstance(instance: Component<unknown, unknown>) {
+    setMountState(entryOf(instance), undefined);
     for (const namespaceBucket of Object.values(window.FluidPrimitives?.componentInstances ?? {})) {
         for (const instances of Object.values(namespaceBucket)) {
             for (const [id, tracked] of Object.entries(instances)) {
@@ -488,6 +583,7 @@ export function mount<
         >,
         createHydrator: () => new ComponentHydrator(baseName, rootId),
     });
+    markMounted(hydrationData, instance);
     if (!instance) return undefined;
 
     instance.namespace = namespace;

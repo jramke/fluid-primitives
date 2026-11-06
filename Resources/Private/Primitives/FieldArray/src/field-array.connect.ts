@@ -1,6 +1,6 @@
 import { nextTick } from '@zag-js/dom-query';
 import type { NormalizeProps, PropTypes } from '@zag-js/types';
-import { destroyComponentsWithin } from '../../../Client/src/lib/hydration';
+import { destroyComponentsWithin, mountWithin } from '../../../Client/src/lib/hydration';
 import { Template } from '../../../Client/src/lib/template';
 import { getFieldValueFromContainer, type FieldValue } from '../../Field/src/field.value';
 import { parseFieldPath, stringifyFieldPathAsBrackets } from '../../Form/src/form.path';
@@ -80,8 +80,9 @@ function canRemove(component: FieldArray): boolean {
 
 /**
  * Clones the `itemTemplate` stencil for a new row and appends it to `itemGroup`. `Template` gives the
- * root components inside the row (Field, Input, Select, ...) ids and hydration data of their own, and
- * `mountAll()` mounts them once the row is in the page.
+ * root components inside the row (Field, Input, Select, ...) ids and hydration data of their own.
+ * They mount right away, so a `remove()` in the same task renames their fields, and `onItemAdded`
+ * finds their instances.
  */
 function append(component: FieldArray): void {
     if (!canAppend(component)) return;
@@ -93,6 +94,7 @@ function append(component: FieldArray): void {
     const clone = new Template(component.hydrator, 'itemTemplate', { value: String(index) });
 
     itemGroupEl.appendChild(clone);
+    mountWithin(clone.root);
 
     component.machine.prop('onItemAdded')?.({ index });
 

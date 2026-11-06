@@ -7,6 +7,7 @@ import {
     getHydrationData,
     mount,
     mountAll,
+    mountWithin,
     registerClientPropConverters,
     type Component,
 } from '../../Resources/Private/Client/src/lib';
@@ -74,6 +75,9 @@ describe('mounting components', () => {
                 },
             },
         });
+        document.body.innerHTML = ['a', 'b', 'c']
+            .map(id => `<i data-converted-root="${id}"></i>`)
+            .join('');
         const sizes: unknown[] = [];
         const create = ({ props }: { props: Record<string, unknown> }) => {
             sizes.push(props.size);
@@ -115,6 +119,7 @@ describe('mounting components', () => {
                 },
             },
         });
+        document.body.innerHTML = '<i data-widget-root="constructor"></i>';
         const created: string[] = [];
         const create = ({ props }: { props: { id: string } }) => {
             created.push(props.id);
@@ -162,14 +167,20 @@ describe('markup that arrives or leaves after mountAll', () => {
                 ui: { collapsible: Object.fromEntries(ids.map(id => [id, field(id)])) },
             },
         })}</script>`;
-    // MutationObserver callbacks run as a microtask, a macrotask runs after them
-    const settled = () => new Promise(resolve => setTimeout(resolve));
+    // The observer runs in a microtask, a removal is destroyed in the task after that.
+    const nextTask = () => new Promise(resolve => setTimeout(resolve));
+    const settled = async () => {
+        await nextTask();
+        await nextTask();
+    };
+    const mountCollapsibles = () =>
+        mountAll('ui:collapsible', ({ props }) => new Collapsible(props as never).init());
     const instance = (id: string) => getComponentInstance<Collapsible>('ui:collapsible', id);
 
     test('a swapped-in region mounts with its own data block, the swapped-out one is destroyed and mounts again when it comes back', async () => {
         setGlobals({ hydrationData: { ui: { collapsible: { c1: field('c1') } } } });
         document.body.innerHTML = `<main>${collapsible('c1')}</main>`;
-        mountAll('ui:collapsible', ({ props }) => new Collapsible(props as never).init());
+        mountCollapsibles();
         const first = instance('c1')!;
         const destroyFirst = vi.spyOn(first, 'destroy');
         const main = document.querySelector('main')!;
@@ -190,9 +201,11 @@ describe('markup that arrives or leaves after mountAll', () => {
             ).toBe('open')
         );
 
-        // the data of c1 stayed, but c1 mounts only once its markup is back
+        // the data of c1 stayed, but c1 mounts only once its markup is back, also from a second
+        // mountAll(), as one on `turbo:load` would be
         document.body.append(document.createElement('p'));
         await settled();
+        mountCollapsibles();
         expect(instance('c1')).toBeUndefined();
 
         main.innerHTML = oldContent;
@@ -205,7 +218,7 @@ describe('markup that arrives or leaves after mountAll', () => {
     test('a root that moves to another parent keeps its instance', async () => {
         setGlobals({ hydrationData: { ui: { collapsible: { c1: field('c1') } } } });
         document.body.innerHTML = `<section>${collapsible('c1')}</section><aside></aside>`;
-        mountAll('ui:collapsible', ({ props }) => new Collapsible(props as never).init());
+        mountCollapsibles();
         const mounted = instance('c1');
 
         document
@@ -216,13 +229,65 @@ describe('markup that arrives or leaves after mountAll', () => {
         expect(instance('c1')).toBe(mounted);
     });
 
+    test('a root that is detached and put back across an await keeps its instance', async () => {
+        setGlobals({ hydrationData: { ui: { collapsible: { c1: field('c1') } } } });
+        document.body.innerHTML = `<section>${collapsible('c1')}</section>`;
+        mountCollapsibles();
+        const mounted = instance('c1');
+        const root = document.querySelector('[data-collapsible-root="c1"]')!;
+
+        // as Turbo does with a data-turbo-permanent element: the observer sees it gone in between
+        root.remove();
+        await Promise.resolve();
+        document.body.append(root);
+        await settled();
+
+        expect(instance('c1')).toBe(mounted);
+    });
+
+    test('the markup of the next page with the rootId of a mounted component mounts once the old one is destroyed', async () => {
+        setGlobals({ hydrationData: { ui: { collapsible: { nav: field('nav') } } } });
+        document.body.innerHTML = `<main>${collapsible('nav')}</main>`;
+        mountCollapsibles();
+        const first = instance('nav');
+
+        // a layout component of every page that Turbo Drive swaps in with the next body
+        const next = document.createElement('main');
+        next.innerHTML = collapsible('nav');
+        document.querySelector('main')!.replaceWith(next);
+        await settled();
+        await settled();
+
+        expect(instance('nav')).toBeDefined();
+        expect(instance('nav')).not.toBe(first);
+        next.querySelector<HTMLElement>('[data-collapsible-trigger]')!.click();
+        await vi.waitFor(() =>
+            expect(next.firstElementChild!.getAttribute('data-state')).toBe('open')
+        );
+    });
+
+    test('a callback that returns no instance sets up a component without parts, once', async () => {
+        setGlobals({ hydrationData: { ui: { 'command-menu': { m1: field('m1') } } } });
+        const setUp = vi.fn();
+        mountAll('ui:commandMenu', setUp);
+        expect(setUp).toHaveBeenCalledOnce();
+
+        const part = document.createElement('div');
+        part.setAttribute('data-command-menu-status', 'm1');
+        document.body.append(part);
+        await settled();
+        mountAll('ui:commandMenu', setUp);
+
+        expect(setUp).toHaveBeenCalledOnce();
+    });
+
     test('a component without a root element is destroyed once the last of its parts left the page, its portaled content too', async () => {
         setGlobals({ hydrationData: { ui: { collapsible: { c1: field('c1') } } } });
         // like a Popover: the trigger in the content, the content portaled to the end of the body
         document.body.innerHTML = `
             <section><button type="button" data-collapsible-trigger="c1">Toggle</button></section>
             <div data-portal><div data-collapsible-content="c1">Content</div></div>`;
-        mountAll('ui:collapsible', ({ props }) => new Collapsible(props as never).init());
+        mountCollapsibles();
         const destroy = vi.spyOn(instance('c1')!, 'destroy');
 
         document.querySelector('section')!.remove();
@@ -232,6 +297,22 @@ describe('markup that arrives or leaves after mountAll', () => {
         document.querySelector('[data-portal]')!.remove();
         await settled();
         expect(destroy).toHaveBeenCalledOnce();
+    });
+
+    test('mountWithin mounts inserted markup before the next line runs', () => {
+        setGlobals({ hydrationData: { ui: { collapsible: { c1: field('c1') } } } });
+        document.body.innerHTML = collapsible('c1');
+        mountCollapsibles();
+        // copied for a clone, as a Template does
+        window.FluidPrimitives.hydrationData.ui.collapsible.c2 = field('c2');
+
+        const holder = document.createElement('div');
+        holder.innerHTML = collapsible('c2');
+        document.body.append(holder);
+        expect(instance('c2')).toBeUndefined();
+
+        mountWithin(holder);
+        expect(instance('c2')).toBeDefined();
     });
 });
 
@@ -274,6 +355,18 @@ describe('reading the hydration data of the page', () => {
         // later lookups use what the first one read, which took the blocks out of the page
         expect(document.head.innerHTML).toBe('');
         expect(getHydrationData('ui:button', 'b2')).toEqual(entry('b2'));
+    });
+
+    test('reports a block that is no valid JSON, takes it out of the page and reads the others', () => {
+        const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+        window.FluidPrimitives = undefined as never;
+        document.head.innerHTML =
+            '<script type="application/json" data-fluid-primitives-hydration-data>{"hydra</script>' +
+            block({ hydrationData: { ui: { button: { b1: entry('b1') } } } });
+
+        expect(getHydrationData('ui:button', 'b1')).toEqual(entry('b1'));
+        expect(error).toHaveBeenCalledOnce();
+        expect(document.head.innerHTML).toBe('');
     });
 
     test('files a component named like an Object.prototype member under its own name', () => {
@@ -458,35 +551,29 @@ describe('ComponentHydrator nested components of a row', () => {
         expect(fields['fld:1'].props.name).toBe('people[$&][name]');
     });
 
-    test('destroyComponentsWithin forgets the hydration data of what it destroys, so mountAll cannot mount it again', () => {
-        const destroyed: string[] = [];
-        const instance = (id: string) =>
-            ({
-                isRenderedOnlyInside: (root: Node) =>
-                    root.contains(document.querySelector(`[data-field-root="${id}"]`)),
-                destroy: () => destroyed.push(id),
-                getClientName: () => 'field',
-            }) as unknown as Component<unknown, unknown>;
+    test('destroyComponentsWithin destroys what renders inside the element and forgets its data, nothing already detached elsewhere', () => {
+        const collapsible = (id: string) => `
+            <div data-collapsible-root="${id}">
+                <button type="button" data-collapsible-trigger="${id}">Toggle</button>
+            </div>`;
         setGlobals({
             hydrationData: {
-                primitives: {
-                    field: { 'fld:1': fieldEntry('fld:1', 'a'), 'fld:2': fieldEntry('fld:2', 'b') },
-                },
-            },
-            componentInstances: {
-                primitives: { field: { 'fld:1': instance('fld:1'), 'fld:2': instance('fld:2') } },
+                primitives: { collapsible: { c1: field('c1'), c2: field('c2'), c3: field('c3') } },
             },
         });
-        document.body.innerHTML = row('0', 'fld:1') + row('1', 'fld:2');
+        document.body.innerHTML = `<section>${collapsible('c1')}</section>${collapsible('c2')}${collapsible('c3')}`;
+        mountAll('primitives:collapsible', ({ props }) => new Collapsible(props as never).init());
+        // detached to be moved somewhere else
+        document.querySelector('[data-collapsible-root="c3"]')!.remove();
 
-        destroyComponentsWithin(document.querySelector('[data-field-array-item]')!);
+        destroyComponentsWithin(document.querySelector('section')!);
 
-        expect(destroyed).toEqual(['fld:1']);
-        expect(Object.keys(window.FluidPrimitives.componentInstances.primitives.field)).toEqual([
-            'fld:2',
-        ]);
-        expect(Object.keys(window.FluidPrimitives.hydrationData.primitives.field)).toEqual([
-            'fld:2',
+        expect(
+            Object.keys(window.FluidPrimitives.componentInstances.primitives.collapsible)
+        ).toEqual(['c2', 'c3']);
+        expect(Object.keys(window.FluidPrimitives.hydrationData.primitives.collapsible)).toEqual([
+            'c2',
+            'c3',
         ]);
     });
 });

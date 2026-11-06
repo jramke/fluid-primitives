@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import { mountAll } from '../../../Resources/Private/Client';
+import { getComponentInstance, mountAll } from '../../../Resources/Private/Client';
 import { Collapsible } from '../../../Resources/Private/Primitives/Collapsible/Collapsible';
 import { Field } from '../../../Resources/Private/Primitives/Field/Field';
 import {
@@ -124,9 +124,6 @@ const rowIndexes = () =>
 const inputs = () =>
     Array.from(document.querySelectorAll<HTMLInputElement>('[data-field-array-item-group] input'));
 
-// The components of an added row mount in the MutationObserver callback of mountAll(), a microtask.
-const settled = () => new Promise(resolve => setTimeout(resolve));
-
 afterEach(() => {
     instances.splice(0).forEach(instance => instance.destroy());
     document.body.innerHTML = '';
@@ -152,12 +149,11 @@ describe('FieldArray rows', () => {
         expect(Object.keys(fieldInstances).filter(id => id !== 'fs')).toEqual(['f0', 'f2']);
     });
 
-    test('a row added after a removal continues the numbering, cannot collide with an existing field and mounts on its own', async () => {
+    test('a row added after a removal continues the numbering, cannot collide with an existing field and mounts on its own', () => {
         const { form, fieldArray, onItemAdded } = mountPeople();
         document.querySelectorAll<HTMLElement>('[data-field-array-remove-trigger]')[0].click();
 
         fieldArray.api.append();
-        await settled();
 
         expect(onItemAdded).toHaveBeenCalledWith({ index: 2 });
         expect(rowIndexes()).toEqual(['0', '1', '2']);
@@ -184,10 +180,8 @@ describe('FieldArray rows', () => {
                 [index].click();
 
         fieldArray.api.append();
-        await settled();
         remove(0);
         fieldArray.api.append();
-        await settled();
 
         expect(rowIndexes()).toEqual(['0', '1', '2', '3']);
         expect(inputs().map(input => input.name)).toEqual([
@@ -218,16 +212,39 @@ describe('FieldArray rows', () => {
         await vi.waitFor(() => expect(states()).toEqual(['closed', 'closed', 'open', 'closed']));
     });
 
-    test('a removed row does not come back as a component when the next row is mounted', async () => {
+    test('a row removed in the same task as an added one renames the added row, whose field is mounted by then', () => {
+        const { form, fieldArray, onItemAdded } = mountPeople();
+        onItemAdded.mockImplementation(({ index }) => {
+            const rowEl = document.querySelector(`[data-field-array-item][data-value="${index}"]`)!;
+            const fieldId = rowEl
+                .querySelector('[data-field-root]')!
+                .getAttribute('data-field-root')!;
+            expect(getComponentInstance('primitives:field', fieldId)).toBeDefined();
+        });
+
+        fieldArray.api.append();
+        inputs()[3].value = 'Linus';
+        fieldArray.api.remove(0);
+
+        expect(onItemAdded).toHaveBeenCalledOnce();
+        expect(inputs().map(input => input.name)).toEqual([
+            'people[0][name]',
+            'people[1][name]',
+            'people[2][name]',
+        ]);
+        expect(form!.api.getValues().toObject()).toEqual({
+            people: [{ name: 'Alan' }, { name: 'Grace' }, { name: 'Linus' }],
+        });
+    });
+
+    test('a removed row does not come back as a component when the next row is mounted', () => {
         const { fieldArray } = mountPeople();
         const collapsibles = () => window.FluidPrimitives.hydrationData.primitives.collapsible;
 
         fieldArray.api.append();
-        await settled();
         expect(Object.keys(collapsibles())).toHaveLength(5);
 
         fieldArray.api.remove(3);
-        await settled();
 
         expect(Object.keys(collapsibles())).toHaveLength(4);
         expect(
