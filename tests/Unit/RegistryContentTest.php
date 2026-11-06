@@ -32,6 +32,28 @@ final class RegistryContentTest extends TestCase
     }
 
     #[Test]
+    public function everyFileInARegistryFolderIsListedSoUiAddCopiesIt(): void
+    {
+        $registryDir = dirname(__DIR__, 2) . '/Resources/Private/Registry/';
+        /** @var array<string, array{name: string, files: list<string>}> $registry */
+        $registry = Yaml::parseFile($registryDir . 'registry.yaml');
+
+        $listed = [];
+        foreach ($registry as $component) {
+            foreach ($component['files'] as $file) {
+                $listed[] = $component['name'] . '/' . $file;
+            }
+        }
+
+        $onDisk = array_map(
+            static fn(string $path): string => substr($path, strlen($registryDir)),
+            glob($registryDir . '*/*') ?: [],
+        );
+        $this->assertNotEmpty($onDisk);
+        $this->assertSame([], array_values(array_diff($onDisk, $listed)));
+    }
+
+    #[Test]
     public function everyComponentLoadsItsListedEntryFileThroughExactlyOneComponentPathToken(): void
     {
         $registryDir = dirname(__DIR__, 2) . '/Resources/Private/Registry/';

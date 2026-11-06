@@ -359,6 +359,7 @@ toast:
     - Root.fluid.html
     - Title.fluid.html
     - Description.fluid.html
+    - Indicator.fluid.html
     - ActionTrigger.fluid.html
     - CloseTrigger.fluid.html
 
