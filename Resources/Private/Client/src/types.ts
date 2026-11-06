@@ -42,6 +42,14 @@ declare global {
             nestedComponents?: {
                 [scopeId: string]: NestedComponentEntry[];
             };
+            /**
+             * The callback of every `mountAll()` call, by its namespaced component name, so the page
+             * observer can mount instances whose markup arrives later. Lives here and not in the
+             * module, because the page can hold two copies of the module.
+             */
+            mounters?: {
+                [componentName: string]: (data: any) => Component<unknown, unknown> | void;
+            };
         };
     }
 }

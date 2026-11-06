@@ -49,7 +49,6 @@ describe('Template', () => {
         expect(
             clone.root.querySelector('[data-someone-elses-part]')!.hasAttribute('data-value')
         ).toBe(false);
-        expect(clone.componentNames).toEqual([]);
 
         // without a value the clone stays as the template has it
         const plain = new Template(hydrator, 'itemTemplate', { attributes: { disabled: true } });

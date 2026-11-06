@@ -134,6 +134,13 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
         this.render();
         this.#machine.subscribe(() => {
             this.#api = this.initApi();
+            // a removed item of a list: keeps the set from growing for the life of the instance.
+            // Not while every part is detached, that instance is about to be destroyed.
+            if ([...this.#renderedElements].some(el => el.isConnected)) {
+                for (const el of this.#renderedElements) {
+                    if (!el.isConnected) this.#renderedElements.delete(el);
+                }
+            }
             this.render();
         });
         this.#machine.start();
@@ -202,12 +209,35 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
 
     /** Applies the attributes and event handlers of a part's props to its element. */
     spreadProps(node: HTMLElement, attrs: Attrs) {
+        this.#renderedElements.add(node);
         spreadProps(node, attrs, this.machine.scope.id);
     }
 
     /** {@see spreadTextControlProps}: for a text control that mirrors what the user typed. */
     spreadTextControlProps(node: HTMLInputElement | HTMLTextAreaElement, attrs: Attrs) {
+        this.#renderedElements.add(node);
         spreadTextControlProps(node, attrs, this.machine.scope.id);
+    }
+
+    // Every part the instance rendered onto, so it can be destroyed once all of them left the page.
+    // That covers a component without a root element (Dialog, Popover) like any other.
+    #renderedElements = new Set<Element>();
+
+    /**
+     * @internal
+     *
+     * Without `root`: whether every element the instance rendered onto has left the page. With
+     * `root`: whether the ones still in the page are all inside `root`, and there is one. False for an
+     * instance that has no element to tell.
+     */
+    isRenderedOnlyInside(root?: Node): boolean {
+        let isInside = root === undefined;
+        for (const el of this.#renderedElements) {
+            if (!el.isConnected) continue;
+            if (!root?.contains(el)) return false;
+            isInside = true;
+        }
+        return this.#renderedElements.size > 0 && isInside;
     }
 
     /**

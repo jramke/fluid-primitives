@@ -54,7 +54,8 @@ const HYDRATION_DATA_SELECTOR =
  *
  * The hydration data, globals and mounted instances of the page. The server writes the data as one JSON block
  * per rendering pass: a page from the page cache has one of its cached content and one of the uncached content
- * (USER_INT) of the request. The first call reads them into `window.FluidPrimitives`, later calls return it.
+ * (USER_INT) of the request. The first call reads them into `window.FluidPrimitives` and removes them from
+ * the page, later calls return it.
  */
 export function getFluidPrimitives(): Window['FluidPrimitives'] | undefined {
     return (window.FluidPrimitives ??= readHydrationDataBlocks()!);
@@ -64,29 +65,72 @@ function readHydrationDataBlocks(): Window['FluidPrimitives'] | undefined {
     const blocks = document.querySelectorAll<HTMLScriptElement>(HYDRATION_DATA_SELECTOR);
     if (blocks.length === 0) return undefined;
 
-    const fluidPrimitives: Window['FluidPrimitives'] = {
+    const fluidPrimitives = { ...emptyFluidPrimitives(), globals: {} as FluidPrimitivesGlobals };
+    mergeHydrationDataBlocks(fluidPrimitives, blocks);
+    return fluidPrimitives;
+}
+
+function emptyFluidPrimitives(): Window['FluidPrimitives'] {
+    return {
         componentInstances: {},
-        globals: {} as FluidPrimitivesGlobals,
         hydrationData: Object.create(null),
         nestedComponents: {},
     };
+}
+
+// A block is removed once read: the next one Turbo merges into the head does not pile up next to it,
+// and every block left in the page is one that was not read yet.
+/** @returns The rootIds of the entries the blocks hold. */
+function mergeHydrationDataBlocks(
+    target: Window['FluidPrimitives'],
+    blocks: Iterable<HTMLScriptElement>
+): Set<string> {
+    const rootIds = new Set<string>();
     for (const block of blocks) {
-        const data = JSON.parse(block.textContent || '{}');
-        Object.assign(fluidPrimitives.globals!, data.globals);
-        addHydrationEntries(fluidPrimitives.hydrationData, data.hydrationData ?? {});
-        Object.assign(fluidPrimitives.nestedComponents!, data.nestedComponents);
+        // removed first, so a block that does not parse is not read again with every later change
+        block.remove();
+        let data;
+        try {
+            data = JSON.parse(block.textContent || '{}');
+        } catch (error) {
+            console.error('[fluid-primitives] A hydration data block is no valid JSON.', error);
+            continue;
+        }
+        if (data.globals) target.globals = { ...target.globals, ...data.globals };
+        addHydrationEntries(target.hydrationData, data.hydrationData ?? {}, rootIds);
+        target.nestedComponents = { ...target.nestedComponents, ...data.nestedComponents };
     }
-    return fluidPrimitives;
+    return rootIds;
+}
+
+/**
+ * Reads the blocks that arrived after the first read, e.g. with HTML that Turbo swapped in.
+ *
+ * @returns The rootIds of their entries.
+ */
+function readNewHydrationDataBlocks(): Set<string> {
+    const blocks = document.querySelectorAll<HTMLScriptElement>(HYDRATION_DATA_SELECTOR);
+    if (blocks.length === 0) return new Set();
+
+    return mergeHydrationDataBlocks((window.FluidPrimitives ??= emptyFluidPrimitives()), blocks);
 }
 
 // Walks down the namespace and the segments of a component name (one level per dot, as in getHydrationData())
 // to the entries, and files each under its rootId: one component can have entries in both blocks. The levels have
 // no prototype, so a component or rootId named like an Object.prototype member ("constructor") is a key like any other.
-function addHydrationEntries(target: Record<string, any>, source: Record<string, any>) {
+function addHydrationEntries(
+    target: Record<string, any>,
+    source: Record<string, any>,
+    rootIds?: Set<string>
+) {
     for (const [key, value] of Object.entries(source)) {
         // a level can hold a rootId named autoMount, but there its value is an entry, not a boolean
-        if (typeof value.autoMount === 'boolean') target[key] = value;
-        else addHydrationEntries((target[key] ??= Object.create(null)), value);
+        if (typeof value.autoMount === 'boolean') {
+            target[key] = value;
+            rootIds?.add(key);
+        } else {
+            addHydrationEntries((target[key] ??= Object.create(null)), value, rootIds);
+        }
     }
 }
 
@@ -226,8 +270,11 @@ export function getGlobal<T>(path: string, fallback?: T): T | undefined {
 
 /**
  * Mounts every instance of a component that is not mounted yet and was not rendered with
- * `autoMount="{false}"`. It is safe to call more than once, e.g. after lazily inserted DOM adds new
- * instances: mounted ones are skipped.
+ * `autoMount="{false}"`, and keeps doing so for markup that is added to the page later: a row of a
+ * FieldArray, a clone of a `Template`, HTML that Turbo or a `fetch()` swapped in. An instance is
+ * destroyed once every element it rendered onto has left the page, and mounts again when its markup
+ * comes back. A callback that returns no instance runs once per hydration entry. Calling `mountAll()`
+ * again replaces the callback and skips what is mounted.
  *
  * The `props` in the callback are typed from `componentName` via `HydrationPropsFor`. A component
  * without generated types gets an untyped bag.
@@ -248,24 +295,129 @@ export function mountAll<K extends KnownComponentName | (string & {})>(
         createHydrator: () => ComponentHydrator;
     }) => Component<unknown, unknown> | void
 ) {
+    parseNamespacedComponentName(componentName);
+    const fluidPrimitives = (window.FluidPrimitives =
+        getFluidPrimitives() ?? emptyFluidPrimitives());
+    fluidPrimitives.mounters = { ...fluidPrimitives.mounters, [componentName]: callback };
+    observePage();
+
+    mountEntries(componentName, callback);
+}
+
+/**
+ * Mounts the components inside `element` right away, with the callbacks of `mountAll()`, and reads
+ * the hydration data blocks that arrived with them. `mountAll()` mounts them anyway, a microtask
+ * after the markup arrived, so call it only when you need the instances on your next line, e.g.
+ * right after you insert the clone of a `Template`.
+ *
+ * @param element - An element in the page that holds the new markup.
+ */
+export function mountWithin(element: Element) {
+    if (!element.isConnected) {
+        // its parts would not be found in the document, and its instances never rendered
+        devWarn('mountWithin(): the element is not in the page. Insert it first.');
+        return;
+    }
+    readNewHydrationDataBlocks();
+    mountParts(partAttributesByRootId([element]));
+}
+
+type PartAttributes = Map<string, string[]>;
+
+/** The `data-*` attribute names of `elements` and everything inside them, by attribute value. */
+function partAttributesByRootId(elements: Iterable<Element>): PartAttributes {
+    const parts: PartAttributes = new Map();
+    for (const element of elements) {
+        for (const el of [element, ...element.querySelectorAll('*')]) {
+            for (const { name, value } of el.attributes) {
+                if (!name.startsWith('data-')) continue;
+                const names = parts.get(value) ?? [];
+                names.push(name);
+                parts.set(value, names);
+            }
+        }
+    }
+    return parts;
+}
+
+/**
+ * Mounts what `parts` holds, with every `mountAll()` callback. With `rootIds`, only those: a scan of
+ * the whole page would also mount again what someone destroyed on purpose.
+ */
+function mountParts(parts: PartAttributes, rootIds?: Set<string>) {
+    if (rootIds) parts = new Map([...parts].filter(([rootId]) => rootIds.has(rootId)));
+    if (parts.size === 0) return;
+    for (const [componentName, callback] of Object.entries(
+        window.FluidPrimitives?.mounters ?? {}
+    )) {
+        // one callback that throws leaves the others to mount
+        try {
+            mountEntries(componentName, callback, parts);
+        } catch (error) {
+            console.error(`[fluid-primitives] Mounting ${componentName} failed.`, error);
+        }
+    }
+}
+
+// On the hydration entry and the instance, not in module state: the page can hold two copies of this
+// module. Not enumerable, so the copy of a stencil's entry for a clone does not take it along.
+const MOUNT_STATE = Symbol.for('fluid-primitives.mount-state');
+const MOUNTED_FROM = Symbol.for('fluid-primitives.mounted-from');
+
+/** `mounted`: the callback ran. `left`: the instance was destroyed because its markup left the page. */
+type MountState = 'mounted' | 'left' | undefined;
+
+function mountStateOf(entry: ComponentHydrationData): MountState {
+    return (entry as any)[MOUNT_STATE];
+}
+
+function setMountState(entry: ComponentHydrationData | undefined, state: MountState) {
+    if (entry) Object.defineProperty(entry, MOUNT_STATE, { value: state, configurable: true });
+}
+
+function entryOf(instance: object): ComponentHydrationData | undefined {
+    return (instance as any)[MOUNTED_FROM];
+}
+
+function markMounted(entry: ComponentHydrationData, instance: object | void) {
+    setMountState(entry, 'mounted');
+    if (instance)
+        Object.defineProperty(instance, MOUNTED_FROM, { value: entry, configurable: true });
+}
+
+/**
+ * Mounts the entries of `componentName`. With `parts`, only those whose parts are in it, as for
+ * markup that arrived: the data of markup that left the page stays, and the stencil of a `<template>`
+ * has data but no markup on the page. Without, every entry but one whose markup left the page: a
+ * callback can set up a component that renders no part of its own.
+ */
+function mountEntries(
+    componentName: string,
+    callback: (data: any) => Component<unknown, unknown> | void,
+    parts?: PartAttributes
+) {
     const { namespace, baseName } = parseNamespacedComponentName(componentName);
     const hydrationInstances = getHydrationData(componentName);
     if (!hydrationInstances) return;
 
     const mountedInstances = instancesOf(namespace, toKebabCase(baseName));
+    const prefix = partAttributePrefix(toKebabCase(baseName));
 
     Object.keys(hydrationInstances).forEach(id => {
-        if (hydrationInstances[id].autoMount === false) return;
-        if (Object.hasOwn(mountedInstances, id)) return;
+        const entry = hydrationInstances[id];
+        if (entry.autoMount === false) return;
+        if (Object.hasOwn(mountedInstances, id) || mountStateOf(entry) === 'mounted') return;
+        // ponytail: a prefix match, so a FieldArray part (`data-field-array-*`) counts for a Field of
+        // the same id too; match the part names of the anatomy if ids ever repeat across components
+        const hasArrived = parts?.get(id)?.some(name => name.startsWith(prefix));
+        if (parts ? !hasArrived : mountStateOf(entry) === 'left') return;
 
         const instance = callback({
-            ...hydrationInstances[id],
-            props: applyClientPropConverters(
-                baseName,
-                hydrationInstances[id].props
-            ) as HydrationPropsFor<Extract<K, string>>,
+            ...entry,
+            props: applyClientPropConverters(baseName, entry.props),
             createHydrator: () => new ComponentHydrator(baseName, id),
         });
+        markMounted(entry, instance);
         if (!instance) return;
 
         instance.namespace = namespace;
@@ -274,46 +426,126 @@ export function mountAll<K extends KnownComponentName | (string & {})>(
 }
 
 /**
- * Destroys every mounted instance whose root element is `root` or inside it, and forgets it, its
- * hydration data included. Call it before you remove a subtree from the DOM, e.g. a row of a
- * FieldArray.
- *
- * Only the `root` part of an instance counts. A component without one, such as Dialog, is never
- * matched.
+ * Destroys every mounted instance whose parts are inside `root`, its portaled content included, and
+ * forgets it, its hydration data included. `mountAll()` already does this for markup that leaves the
+ * page, so call it only when the instances must be gone before your next line runs, e.g. before you
+ * rename the fields of the rows after a removed one.
  *
  * @param root - The element that is about to be removed.
  */
 export function destroyComponentsWithin(root: Element | Document) {
     if (root instanceof Element) removePortalsWithin(root);
 
-    if (!window.FluidPrimitives) return;
+    destroyInstancesWhere(
+        instance =>
+            instance.isRenderedOnlyInside(root) ||
+            (root instanceof Document && instance.isRenderedOnlyInside()),
+        // else the next mountAll() mounts it again, without any DOM
+        { forgetHydrationData: true }
+    );
+}
 
+function* trackedInstances() {
     for (const [namespace, namespaceBucket] of Object.entries(
-        window.FluidPrimitives.componentInstances
+        window.FluidPrimitives?.componentInstances ?? {}
     )) {
         for (const [name, instances] of Object.entries(namespaceBucket)) {
             for (const [id, instance] of Object.entries(instances)) {
-                const rootPartSelector = instance.hydrator.selector('root');
-                if (!rootPartSelector) continue;
-
-                const isRootItself = root instanceof Element && root.matches(rootPartSelector);
-                const hasRootPartInNode = root.querySelector(rootPartSelector) !== null;
-
-                if (isRootItself || hasRootPartInNode) {
-                    if (isDebug()) {
-                        console.log(
-                            `[fluid-primitives] Destroying component instance: ${instance.getClientName()}:${id}`
-                        );
-                    }
-                    instance.destroy();
-                    delete instances[id];
-                    // else the next mountAll() mounts it again, without any DOM
-                    const hydrationInstances = getHydrationData(`${namespace}:${name}`);
-                    if (hydrationInstances) delete hydrationInstances[id];
-                }
+                // Not instanceof: an instance of the other copy of this module is a Component too.
+                if (typeof instance.isRenderedOnlyInside !== 'function') continue;
+                yield { namespace, name, id, instance, instances };
             }
         }
     }
+}
+
+function instancesWhere(test: (instance: Component<unknown, unknown>) => boolean) {
+    return Array.from(trackedInstances(), ({ instance }) => instance).filter(test);
+}
+
+/** @returns The rootIds of the instances it destroyed. */
+function destroyInstancesWhere(
+    isGone: (instance: Component<unknown, unknown>) => boolean,
+    { forgetHydrationData }: { forgetHydrationData: boolean }
+): Set<string> {
+    const destroyed = new Set<string>();
+    for (const { namespace, name, id, instance, instances } of trackedInstances()) {
+        if (!isGone(instance)) continue;
+        destroyed.add(id);
+
+        if (isDebug()) {
+            console.log(
+                `[fluid-primitives] Destroying component instance: ${instance.getClientName()}:${id}`
+            );
+        }
+        instance.destroy();
+        delete instances[id];
+        if (forgetHydrationData) {
+            const hydrationInstances = getHydrationData(`${namespace}:${name}`);
+            if (hydrationInstances) delete hydrationInstances[id];
+        } else {
+            setMountState(entryOf(instance), 'left');
+        }
+    }
+    return destroyed;
+}
+
+let pageObserver: MutationObserver | undefined;
+
+// Watches the whole document, not the body: Turbo Drive replaces the body element, and merges the
+// hydration data block of the next page into the head.
+function observePage() {
+    pageObserver ??= new MutationObserver(records => {
+        const removed = new Set<Element>();
+        const added = new Set<Element>();
+        for (const record of records) {
+            record.removedNodes.forEach(node => node instanceof Element && removed.add(node));
+            record.addedNodes.forEach(node => node instanceof Element && added.add(node));
+        }
+
+        // A node that was moved, e.g. into a portal, is removed and added in the same batch.
+        const gone = Array.from(removed).filter(el => !el.isConnected);
+        if (gone.length > 0) destroyLater(gone);
+
+        const arrived = Array.from(added).filter(el => el.isConnected);
+        if (arrived.length > 0) {
+            // the data can arrive after its markup, so new data looks at the whole page
+            const newRootIds = readNewHydrationDataBlocks();
+            if (newRootIds.size > 0) {
+                mountParts(partAttributesByRootId([document.documentElement]), newRootIds);
+            }
+            mountParts(partAttributesByRootId(arrived));
+        }
+    });
+    pageObserver.observe(document.documentElement, { childList: true, subtree: true });
+}
+
+/**
+ * Destroys the instances that left the page with `gone` a task later, when they are still gone: an
+ * element that is detached and put back across an `await`, as Turbo does with a
+ * `data-turbo-permanent` element, keeps its instance and its state. The hydration data stays, the
+ * markup can come back, e.g. from the cache of Turbo.
+ */
+function destroyLater(gone: Element[]) {
+    const candidates = new Set(instancesWhere(instance => instance.isRenderedOnlyInside()));
+    setTimeout(() => {
+        // the portals of an element still gone; removing them is a change the observer sees, so
+        // a component with its content in a portal is destroyed with the next round
+        gone.filter(el => !el.isConnected).forEach(removePortalsWithin);
+        const destroyed = destroyInstancesWhere(
+            instance => candidates.has(instance) && instance.isRenderedOnlyInside(),
+            { forgetHydrationData: false }
+        );
+        // markup that arrived while an instance of the same rootId was still mounted, e.g. a
+        // navigation in the layout of every page Turbo visits
+        if (destroyed.size > 0) {
+            mountParts(partAttributesByRootId([document.documentElement]), destroyed);
+        }
+    });
+}
+
+function partAttributePrefix(clientComponentName: string): string {
+    return `data-${clientComponentName.replaceAll('.', '-')}-`;
 }
 
 /**
@@ -323,6 +555,7 @@ export function destroyComponentsWithin(root: Element | Document) {
  * `mountAll()` mounts its `rootId` again. `Component.destroy()` calls it.
  */
 export function forgetComponentInstance(instance: Component<unknown, unknown>) {
+    setMountState(entryOf(instance), undefined);
     for (const namespaceBucket of Object.values(window.FluidPrimitives?.componentInstances ?? {})) {
         for (const instances of Object.values(namespaceBucket)) {
             for (const [id, tracked] of Object.entries(instances)) {
@@ -379,6 +612,7 @@ export function mount<
         >,
         createHydrator: () => new ComponentHydrator(baseName, rootId),
     });
+    markMounted(hydrationData, instance);
     if (!instance) return undefined;
 
     instance.namespace = namespace;
@@ -418,7 +652,7 @@ export class ComponentHydrator {
     }
 
     private get attrPrefix(): string {
-        return `data-${this.clientComponentName.replaceAll('.', '-')}-`;
+        return partAttributePrefix(this.clientComponentName);
     }
 
     // Keep in sync with: Classes/Utility/ComponentRefUtility.php getAttributeName()
@@ -530,18 +764,16 @@ export class ComponentHydrator {
      * A component keeps the id it gets here until it is destroyed. The id does not contain `value`:
      * `value` says where the item is now, and that changes (a FieldArray reindexes its rows) while a
      * Zag machine cannot change its id.
-     *
-     * @returns The client names of the root components found and prepared, empty when there are none.
-     * Call the `mountAll()` of each after inserting the clone.
+     * `mountAll()` mounts them once the clone is in the page.
      */
     restampValue(
         root: Element,
         value: string,
         stencilKey: string,
         attributes?: Record<string, boolean | string>
-    ): string[] {
+    ): void {
         this.setValue(root, value, attributes);
-        return prepareNestedRootComponents(stencilKey, root, value);
+        prepareNestedRootComponents(stencilKey, root, value);
     }
 
     /** Nothing to release yet, it exists so every instance can be destroyed alike. */
@@ -627,7 +859,6 @@ function remapIdsProp(ids: Record<string, string>, remaps: RootIdRemap[]): Recor
  * A `[]` "append" placeholder in a string `name` prop becomes `[value]`, the same trailing-`[]`
  * convention `form.path.ts`'s `appendFieldPathSegment` and `FieldContext.php` use.
  *
- * @returns Whether the stencil had an entry to copy.
  */
 function copyNestedComponentEntry(
     componentName: string,
@@ -635,9 +866,9 @@ function copyNestedComponentEntry(
     newRootId: string,
     remaps: RootIdRemap[],
     value: string
-): boolean {
+) {
     const stencilData = getHydrationData(componentName, stencilRootId);
-    if (!stencilData) return false;
+    if (!stencilData) return;
 
     const rewrittenProps: ComponentHydrationData['props'] = {
         ...stencilData.props,
@@ -656,7 +887,6 @@ function copyNestedComponentEntry(
         ...stencilData,
         props: rewrittenProps,
     };
-    return true;
 }
 
 /**
@@ -682,25 +912,18 @@ function nestedRootRemaps(stencilKey: string): RootIdRemap[] {
  * {@see ComponentHydrator.restampValue}. Every element that references one of their root ids is
  * re-stamped, not just the root elements: a part may reference the id of a different nested
  * component (Input's label and input reuse Field's ids), and so may their `ids` props. The
- * hydration data is copied for each, so the next `mountAll()` can construct them. It does not
- * construct instances itself: no registry maps a component name to its constructor, each entry
- * file brings its own.
+ * hydration data is copied for each, so `mountAll()` constructs them once the clone is in the page.
  */
-function prepareNestedRootComponents(stencilKey: string, root: Element, value: string): string[] {
+function prepareNestedRootComponents(stencilKey: string, root: Element, value: string) {
     const remaps = nestedRootRemaps(stencilKey);
-    if (remaps.length === 0) return [];
+    if (remaps.length === 0) return;
 
     // every mapping is known before the first rewrite, see remapIdsProp
     restampIdReferences(root, remaps);
 
-    const componentNames = new Set<string>();
     for (const { componentName, oldRootId, newRootId } of remaps) {
-        if (copyNestedComponentEntry(componentName, oldRootId, newRootId, remaps, value)) {
-            componentNames.add(componentName);
-        }
+        copyNestedComponentEntry(componentName, oldRootId, newRootId, remaps, value);
     }
-
-    return Array.from(componentNames);
 }
 
 // A key names a property of the item, or a path of them joined by dots (`meta.id`).
