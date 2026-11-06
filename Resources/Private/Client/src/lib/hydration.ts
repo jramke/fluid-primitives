@@ -80,10 +80,12 @@ function emptyFluidPrimitives(): Window['FluidPrimitives'] {
 
 // A block is removed once read: the next one Turbo merges into the head does not pile up next to it,
 // and every block left in the page is one that was not read yet.
+/** @returns The rootIds of the entries the blocks hold. */
 function mergeHydrationDataBlocks(
     target: Window['FluidPrimitives'],
     blocks: Iterable<HTMLScriptElement>
-) {
+): Set<string> {
+    const rootIds = new Set<string>();
     for (const block of blocks) {
         // removed first, so a block that does not parse is not read again with every later change
         block.remove();
@@ -95,32 +97,40 @@ function mergeHydrationDataBlocks(
             continue;
         }
         if (data.globals) target.globals = { ...target.globals, ...data.globals };
-        addHydrationEntries(target.hydrationData, data.hydrationData ?? {});
+        addHydrationEntries(target.hydrationData, data.hydrationData ?? {}, rootIds);
         target.nestedComponents = { ...target.nestedComponents, ...data.nestedComponents };
     }
+    return rootIds;
 }
 
 /**
  * Reads the blocks that arrived after the first read, e.g. with HTML that Turbo swapped in.
  *
- * @returns Whether there was one.
+ * @returns The rootIds of their entries.
  */
-function readNewHydrationDataBlocks(): boolean {
+function readNewHydrationDataBlocks(): Set<string> {
     const blocks = document.querySelectorAll<HTMLScriptElement>(HYDRATION_DATA_SELECTOR);
-    if (blocks.length === 0) return false;
+    if (blocks.length === 0) return new Set();
 
-    mergeHydrationDataBlocks((window.FluidPrimitives ??= emptyFluidPrimitives()), blocks);
-    return true;
+    return mergeHydrationDataBlocks((window.FluidPrimitives ??= emptyFluidPrimitives()), blocks);
 }
 
 // Walks down the namespace and the segments of a component name (one level per dot, as in getHydrationData())
 // to the entries, and files each under its rootId: one component can have entries in both blocks. The levels have
 // no prototype, so a component or rootId named like an Object.prototype member ("constructor") is a key like any other.
-function addHydrationEntries(target: Record<string, any>, source: Record<string, any>) {
+function addHydrationEntries(
+    target: Record<string, any>,
+    source: Record<string, any>,
+    rootIds?: Set<string>
+) {
     for (const [key, value] of Object.entries(source)) {
         // a level can hold a rootId named autoMount, but there its value is an entry, not a boolean
-        if (typeof value.autoMount === 'boolean') target[key] = value;
-        else addHydrationEntries((target[key] ??= Object.create(null)), value);
+        if (typeof value.autoMount === 'boolean') {
+            target[key] = value;
+            rootIds?.add(key);
+        } else {
+            addHydrationEntries((target[key] ??= Object.create(null)), value, rootIds);
+        }
     }
 }
 
@@ -303,6 +313,11 @@ export function mountAll<K extends KnownComponentName | (string & {})>(
  * @param element - An element in the page that holds the new markup.
  */
 export function mountWithin(element: Element) {
+    if (!element.isConnected) {
+        // its parts would not be found in the document, and its instances never rendered
+        devWarn('mountWithin(): the element is not in the page. Insert it first.');
+        return;
+    }
     readNewHydrationDataBlocks();
     mountParts(partAttributesByRootId([element]));
 }
@@ -325,12 +340,22 @@ function partAttributesByRootId(elements: Iterable<Element>): PartAttributes {
     return parts;
 }
 
-function mountParts(parts: PartAttributes) {
+/**
+ * Mounts what `parts` holds, with every `mountAll()` callback. With `rootIds`, only those: a scan of
+ * the whole page would also mount again what someone destroyed on purpose.
+ */
+function mountParts(parts: PartAttributes, rootIds?: Set<string>) {
+    if (rootIds) parts = new Map([...parts].filter(([rootId]) => rootIds.has(rootId)));
     if (parts.size === 0) return;
     for (const [componentName, callback] of Object.entries(
         window.FluidPrimitives?.mounters ?? {}
     )) {
-        mountEntries(componentName, callback, parts);
+        // one callback that throws leaves the others to mount
+        try {
+            mountEntries(componentName, callback, parts);
+        } catch (error) {
+            console.error(`[fluid-primitives] Mounting ${componentName} failed.`, error);
+        }
     }
 }
 
@@ -412,7 +437,9 @@ export function destroyComponentsWithin(root: Element | Document) {
     if (root instanceof Element) removePortalsWithin(root);
 
     destroyInstancesWhere(
-        instance => instance.isRenderedOnlyInside(root),
+        instance =>
+            instance.isRenderedOnlyInside(root) ||
+            (root instanceof Document && instance.isRenderedOnlyInside()),
         // else the next mountAll() mounts it again, without any DOM
         { forgetHydrationData: true }
     );
@@ -436,15 +463,15 @@ function instancesWhere(test: (instance: Component<unknown, unknown>) => boolean
     return Array.from(trackedInstances(), ({ instance }) => instance).filter(test);
 }
 
-/** @returns How many instances it destroyed. */
+/** @returns The rootIds of the instances it destroyed. */
 function destroyInstancesWhere(
     isGone: (instance: Component<unknown, unknown>) => boolean,
     { forgetHydrationData }: { forgetHydrationData: boolean }
-): number {
-    let destroyed = 0;
+): Set<string> {
+    const destroyed = new Set<string>();
     for (const { namespace, name, id, instance, instances } of trackedInstances()) {
         if (!isGone(instance)) continue;
-        destroyed++;
+        destroyed.add(id);
 
         if (isDebug()) {
             console.log(
@@ -483,11 +510,11 @@ function observePage() {
         const arrived = Array.from(added).filter(el => el.isConnected);
         if (arrived.length > 0) {
             // the data can arrive after its markup, so new data looks at the whole page
-            mountParts(
-                partAttributesByRootId(
-                    readNewHydrationDataBlocks() ? [document.documentElement] : arrived
-                )
-            );
+            const newRootIds = readNewHydrationDataBlocks();
+            if (newRootIds.size > 0) {
+                mountParts(partAttributesByRootId([document.documentElement]), newRootIds);
+            }
+            mountParts(partAttributesByRootId(arrived));
         }
     });
     pageObserver.observe(document.documentElement, { childList: true, subtree: true });
@@ -511,7 +538,9 @@ function destroyLater(gone: Element[]) {
         );
         // markup that arrived while an instance of the same rootId was still mounted, e.g. a
         // navigation in the layout of every page Turbo visits
-        if (destroyed > 0) mountParts(partAttributesByRootId([document.documentElement]));
+        if (destroyed.size > 0) {
+            mountParts(partAttributesByRootId([document.documentElement]), destroyed);
+        }
     });
 }
 

@@ -2,6 +2,16 @@
 
 What changed in each release of Fluid Primitives, newest first. Every release lists its breaking changes first, then the other changes under one heading per part of the library. The library follows [semantic versioning](https://semver.org), and the 1.0 betas may still change between releases.
 
+## Unreleased
+
+### Breaking changes
+
+- **Client, FieldArray:** `Template.componentNames` and the `componentNames` in the detail of `onItemAdded` are gone, and `ComponentHydrator.restampValue()` returns nothing. `mountAll()` mounts the components of a FieldArray row or a `Template` clone on its own, so remove the `mountAll()` calls from your `onItemAdded`.
+
+### Client
+
+- `mountAll()` also mounts the components whose markup arrives later, such as a FieldArray row, a `Template` clone or HTML that Turbo or a `fetch()` swapped in, and destroys an instance once every element it rendered onto has left the page, a Popover or Dialog without a root element included. `mountWithin()` mounts inserted markup before your next line runs, and `destroyComponentsWithin()` destroys a Popover or Dialog in the element too. The library removes each hydration data block from the page once it read it.
+
 ## 1.0.0-beta.7
 
 _2026-11-06_

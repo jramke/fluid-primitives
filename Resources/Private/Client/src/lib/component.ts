@@ -134,9 +134,12 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
         this.render();
         this.#machine.subscribe(() => {
             this.#api = this.initApi();
-            // a removed item of a list: keeps the set from growing for the life of the instance
-            for (const el of this.#renderedElements) {
-                if (!el.isConnected) this.#renderedElements.delete(el);
+            // a removed item of a list: keeps the set from growing for the life of the instance.
+            // Not while every part is detached, that instance is about to be destroyed.
+            if ([...this.#renderedElements].some(el => el.isConnected)) {
+                for (const el of this.#renderedElements) {
+                    if (!el.isConnected) this.#renderedElements.delete(el);
+                }
             }
             this.render();
         });

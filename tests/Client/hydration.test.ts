@@ -266,6 +266,39 @@ describe('markup that arrives or leaves after mountAll', () => {
         );
     });
 
+    test('a component whose state changes after its markup left is destroyed all the same', async () => {
+        setGlobals({ hydrationData: { ui: { collapsible: { c1: field('c1') } } } });
+        document.body.innerHTML = `<section>${collapsible('c1')}</section>`;
+        mountCollapsibles();
+        const mounted = instance('c1')!;
+        const destroy = vi.spyOn(mounted, 'destroy');
+
+        document.querySelector('section')!.remove();
+        await Promise.resolve();
+        mounted.api.setOpen(true);
+        await settled();
+
+        expect(destroy).toHaveBeenCalledOnce();
+    });
+
+    test('an instance destroyed on purpose stays destroyed when other markup leaves or new data arrives', async () => {
+        setGlobals({
+            hydrationData: { ui: { collapsible: { c1: field('c1'), c2: field('c2') } } },
+        });
+        document.body.innerHTML = collapsible('c1') + `<section>${collapsible('c2')}</section>`;
+        mountCollapsibles();
+        await settled();
+        instance('c1')!.destroy();
+
+        document.querySelector('section')!.remove();
+        document.body.insertAdjacentHTML('beforeend', collapsible('c3') + dataBlock(['c3']));
+        await settled();
+
+        expect(instance('c2')).toBeUndefined();
+        expect(instance('c3')).toBeDefined();
+        expect(instance('c1')).toBeUndefined();
+    });
+
     test('a callback that returns no instance sets up a component without parts, once', async () => {
         setGlobals({ hydrationData: { ui: { 'command-menu': { m1: field('m1') } } } });
         const setUp = vi.fn();
