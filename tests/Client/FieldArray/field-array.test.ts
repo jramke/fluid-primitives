@@ -102,7 +102,7 @@ function mountPeople(options: Partial<FieldArrayProps> = {}, { inForm = true } =
         instances.push(form);
     }
 
-    const onItemAdded = vi.fn(() => mountFields());
+    const onItemAdded = vi.fn();
     const onItemRemoved = vi.fn();
     const fieldArray = new FieldArray({
         id: 'fa1',
@@ -123,6 +123,9 @@ const rowIndexes = () =>
     ).map(el => el.getAttribute('data-value'));
 const inputs = () =>
     Array.from(document.querySelectorAll<HTMLInputElement>('[data-field-array-item-group] input'));
+
+// The components of an added row mount in the MutationObserver callback of mountAll(), a microtask.
+const settled = () => new Promise(resolve => setTimeout(resolve));
 
 afterEach(() => {
     instances.splice(0).forEach(instance => instance.destroy());
@@ -149,16 +152,14 @@ describe('FieldArray rows', () => {
         expect(Object.keys(fieldInstances).filter(id => id !== 'fs')).toEqual(['f0', 'f2']);
     });
 
-    test('a row added after a removal continues the numbering and cannot collide with an existing field', () => {
+    test('a row added after a removal continues the numbering, cannot collide with an existing field and mounts on its own', async () => {
         const { form, fieldArray, onItemAdded } = mountPeople();
         document.querySelectorAll<HTMLElement>('[data-field-array-remove-trigger]')[0].click();
 
         fieldArray.api.append();
+        await settled();
 
-        expect(onItemAdded).toHaveBeenCalledWith({
-            index: 2,
-            componentNames: ['primitives:field', 'primitives:collapsible'],
-        });
+        expect(onItemAdded).toHaveBeenCalledWith({ index: 2 });
         expect(rowIndexes()).toEqual(['0', '1', '2']);
         const added = inputs()[2];
         expect(added.name).toBe('people[2][name]');
@@ -183,8 +184,10 @@ describe('FieldArray rows', () => {
                 [index].click();
 
         fieldArray.api.append();
+        await settled();
         remove(0);
         fieldArray.api.append();
+        await settled();
 
         expect(rowIndexes()).toEqual(['0', '1', '2', '3']);
         expect(inputs().map(input => input.name)).toEqual([
@@ -215,14 +218,16 @@ describe('FieldArray rows', () => {
         await vi.waitFor(() => expect(states()).toEqual(['closed', 'closed', 'open', 'closed']));
     });
 
-    test('a removed row does not come back as a component when the next row is mounted', () => {
+    test('a removed row does not come back as a component when the next row is mounted', async () => {
         const { fieldArray } = mountPeople();
         const collapsibles = () => window.FluidPrimitives.hydrationData.primitives.collapsible;
 
         fieldArray.api.append();
+        await settled();
         expect(Object.keys(collapsibles())).toHaveLength(5);
 
         fieldArray.api.remove(3);
+        await settled();
 
         expect(Object.keys(collapsibles())).toHaveLength(4);
         expect(

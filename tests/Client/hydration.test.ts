@@ -150,6 +150,91 @@ describe('mounting components', () => {
     });
 });
 
+describe('markup that arrives or leaves after mountAll', () => {
+    const collapsible = (id: string) => `
+        <div data-collapsible-root="${id}">
+            <button type="button" data-collapsible-trigger="${id}">Toggle</button>
+            <div data-collapsible-content="${id}">Content</div>
+        </div>`;
+    const dataBlock = (ids: string[]) =>
+        `<script type="application/json" data-fluid-primitives-hydration-data>${JSON.stringify({
+            hydrationData: {
+                ui: { collapsible: Object.fromEntries(ids.map(id => [id, field(id)])) },
+            },
+        })}</script>`;
+    // MutationObserver callbacks run as a microtask, a macrotask runs after them
+    const settled = () => new Promise(resolve => setTimeout(resolve));
+    const instance = (id: string) => getComponentInstance<Collapsible>('ui:collapsible', id);
+
+    test('a swapped-in region mounts with its own data block, the swapped-out one is destroyed and mounts again when it comes back', async () => {
+        setGlobals({ hydrationData: { ui: { collapsible: { c1: field('c1') } } } });
+        document.body.innerHTML = `<main>${collapsible('c1')}</main>`;
+        mountAll('ui:collapsible', ({ props }) => new Collapsible(props as never).init());
+        const first = instance('c1')!;
+        const destroyFirst = vi.spyOn(first, 'destroy');
+        const main = document.querySelector('main')!;
+        const oldContent = main.innerHTML;
+
+        // what Turbo does with a frame: new markup, and the data block of its components
+        main.innerHTML = collapsible('c2') + dataBlock(['c2']);
+        await settled();
+
+        expect(destroyFirst).toHaveBeenCalledOnce();
+        expect(instance('c1')).toBeUndefined();
+        // read and removed, so the block of the next swap does not pile up next to it
+        expect(document.querySelector('[data-fluid-primitives-hydration-data]')).toBeNull();
+        document.querySelector<HTMLElement>('[data-collapsible-trigger="c2"]')!.click();
+        await vi.waitFor(() =>
+            expect(
+                document.querySelector('[data-collapsible-root="c2"]')!.getAttribute('data-state')
+            ).toBe('open')
+        );
+
+        // the data of c1 stayed, but c1 mounts only once its markup is back
+        document.body.append(document.createElement('p'));
+        await settled();
+        expect(instance('c1')).toBeUndefined();
+
+        main.innerHTML = oldContent;
+        await settled();
+        expect(instance('c1')).toBeDefined();
+        expect(instance('c1')).not.toBe(first);
+        expect(instance('c2')).toBeUndefined();
+    });
+
+    test('a root that moves to another parent keeps its instance', async () => {
+        setGlobals({ hydrationData: { ui: { collapsible: { c1: field('c1') } } } });
+        document.body.innerHTML = `<section>${collapsible('c1')}</section><aside></aside>`;
+        mountAll('ui:collapsible', ({ props }) => new Collapsible(props as never).init());
+        const mounted = instance('c1');
+
+        document
+            .querySelector('aside')!
+            .append(document.querySelector('[data-collapsible-root="c1"]')!);
+        await settled();
+
+        expect(instance('c1')).toBe(mounted);
+    });
+
+    test('a component without a root element is destroyed once the last of its parts left the page, its portaled content too', async () => {
+        setGlobals({ hydrationData: { ui: { collapsible: { c1: field('c1') } } } });
+        // like a Popover: the trigger in the content, the content portaled to the end of the body
+        document.body.innerHTML = `
+            <section><button type="button" data-collapsible-trigger="c1">Toggle</button></section>
+            <div data-portal><div data-collapsible-content="c1">Content</div></div>`;
+        mountAll('ui:collapsible', ({ props }) => new Collapsible(props as never).init());
+        const destroy = vi.spyOn(instance('c1')!, 'destroy');
+
+        document.querySelector('section')!.remove();
+        await settled();
+        expect(destroy).not.toHaveBeenCalled();
+
+        document.querySelector('[data-portal]')!.remove();
+        await settled();
+        expect(destroy).toHaveBeenCalledOnce();
+    });
+});
+
 describe('reading the hydration data of the page', () => {
     const block = (data: object) =>
         `<script type="application/json" data-fluid-primitives-hydration-data>${JSON.stringify(data)}</script>`;
@@ -186,8 +271,8 @@ describe('reading the hydration data of the page', () => {
             'field-array:fa1:itemTemplate',
         ]);
 
-        // later lookups use what the first one read
-        document.head.innerHTML = '';
+        // later lookups use what the first one read, which took the blocks out of the page
+        expect(document.head.innerHTML).toBe('');
         expect(getHydrationData('ui:button', 'b2')).toEqual(entry('b2'));
     });
 
@@ -304,9 +389,8 @@ describe('ComponentHydrator nested components of a row', () => {
         const clone = document.querySelector('template')!.content.firstElementChild!;
         const hydrator = new ComponentHydrator('fieldArray', 'fa1');
 
-        const names = hydrator.restampValue(clone, '3', hydrator.scopeKey('itemTemplate'));
+        hydrator.restampValue(clone, '3', hydrator.scopeKey('itemTemplate'));
 
-        expect(names).toEqual(['primitives:field']);
         // the row's own parts take the value, the nested Field is another component's scope
         expect(clone.getAttribute('data-value')).toBe('3');
         expect(attr(clone, '[data-field-array-remove-trigger]', 'data-value')).toBe('3');
@@ -378,7 +462,8 @@ describe('ComponentHydrator nested components of a row', () => {
         const destroyed: string[] = [];
         const instance = (id: string) =>
             ({
-                hydrator: new ComponentHydrator('field', id),
+                isRenderedOnlyInside: (root: Node) =>
+                    root.contains(document.querySelector(`[data-field-root="${id}"]`)),
                 destroy: () => destroyed.push(id),
                 getClientName: () => 'field',
             }) as unknown as Component<unknown, unknown>;

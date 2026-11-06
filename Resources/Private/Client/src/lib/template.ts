@@ -6,8 +6,8 @@ export interface TemplateOptions {
     /**
      * Makes the clone represent one real item: sets `data-value` on its root and on every part
      * inside it that exists once per item, and prepares independent root components inside it, such
-     * as a `Field` with an `Input`, so `mountAll()` can mount them. Leave it out for a template
-     * without a per-item value.
+     * as a `Field` with an `Input`, so `mountAll()` mounts them once the clone is in the page. Leave
+     * it out for a template without a per-item value.
      */
     value?: string;
     /**
@@ -29,13 +29,6 @@ export interface TemplateOptions {
 export class Template extends DocumentFragment {
     /** The one root element of the clone. */
     readonly root: HTMLElement;
-    /**
-     * The client names of the independent root components found inside the clone, empty without
-     * `options.value` or when there are none. Call their `mountAll()` after you insert the clone into
-     * the document.
-     */
-    readonly componentNames: string[] = [];
-
     /**
      * @param hydrator - The hydrator of the component that owns the `<template>`.
      * @param part - The name of the `<template>` part.
@@ -64,7 +57,7 @@ export class Template extends DocumentFragment {
         this.root = this.firstElementChild as HTMLElement;
 
         if (options.value !== undefined) {
-            this.componentNames = hydrator.restampValue(
+            hydrator.restampValue(
                 this.root,
                 options.value,
                 hydrator.scopeKey(part),

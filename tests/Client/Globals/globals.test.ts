@@ -118,6 +118,7 @@ describe('dev only output of the hydration helpers', () => {
         ({
             hydrator: new ComponentHydrator('widget', 'a'),
             getClientName: () => 'widget',
+            isRenderedOnlyInside: () => true,
             destroy: vi.fn(),
         }) as unknown as Component<unknown, unknown>;
 

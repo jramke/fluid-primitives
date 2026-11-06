@@ -80,9 +80,8 @@ function canRemove(component: FieldArray): boolean {
 
 /**
  * Clones the `itemTemplate` stencil for a new row and appends it to `itemGroup`. `Template` gives the
- * root components inside the row (Field, Input, Select, ...) ids and hydration data of their own, but
- * does not construct them: `onItemAdded` carries `clone.componentNames`, so consumer code can call
- * `mountAll()` for each of them.
+ * root components inside the row (Field, Input, Select, ...) ids and hydration data of their own, and
+ * `mountAll()` mounts them once the row is in the page.
  */
 function append(component: FieldArray): void {
     if (!canAppend(component)) return;
@@ -95,7 +94,7 @@ function append(component: FieldArray): void {
 
     itemGroupEl.appendChild(clone);
 
-    component.machine.prop('onItemAdded')?.({ index, componentNames: clone.componentNames });
+    component.machine.prop('onItemAdded')?.({ index });
 
     announce(component, 'rowAdded', index, clone.root);
     component.refresh();

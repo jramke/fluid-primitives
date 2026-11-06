@@ -202,12 +202,39 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
 
     /** Applies the attributes and event handlers of a part's props to its element. */
     spreadProps(node: HTMLElement, attrs: Attrs) {
+        this.#rendersOnto(node);
         spreadProps(node, attrs, this.machine.scope.id);
     }
 
     /** {@see spreadTextControlProps}: for a text control that mirrors what the user typed. */
     spreadTextControlProps(node: HTMLInputElement | HTMLTextAreaElement, attrs: Attrs) {
+        this.#rendersOnto(node);
         spreadTextControlProps(node, attrs, this.machine.scope.id);
+    }
+
+    // Every part the instance rendered onto, so it can be destroyed once all of them left the page.
+    // That covers a component without a root element (Dialog, Popover) like any other.
+    #renderedElements = new Set<Element>();
+    #hasRendered = false;
+
+    #rendersOnto(node: Element) {
+        this.#renderedElements.add(node);
+        this.#hasRendered = true;
+    }
+
+    /**
+     * @internal
+     *
+     * Whether every element the instance rendered onto is inside `root`, or no longer in the page.
+     * False for an instance that never rendered onto an element.
+     */
+    isRenderedOnlyInside(root?: Node): boolean {
+        for (const el of this.#renderedElements) {
+            // a removed item of a list: keeps the set from growing for the life of the instance
+            if (!el.isConnected) this.#renderedElements.delete(el);
+            else if (!root?.contains(el)) return false;
+        }
+        return this.#hasRendered;
     }
 
     /**
