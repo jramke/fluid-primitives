@@ -14,5 +14,5 @@
             <path d="M5 12h14"></path>
         </svg>
     </f:variable>
-    {f:slot() -> f:or(alternative: fallback) -> f:spaceless() -> f:format.raw()}
+    {f:slot() -> f:or(alternative: fallback) -> f:format.trim() -> f:format.raw()}
 </primitives:numberInput.decrementTrigger>
