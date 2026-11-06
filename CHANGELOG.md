@@ -2,7 +2,9 @@
 
 What changed in each release of Fluid Primitives, newest first. Every release lists its breaking changes first, then the other changes under one heading per part of the library. The library follows [semantic versioning](https://semver.org), and the 1.0 betas may still change between releases.
 
-## Unreleased
+## 1.0.0-beta.7
+
+_2026-11-06_
 
 ### Breaking changes
 
