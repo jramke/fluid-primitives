@@ -7,6 +7,9 @@ type ToasterProps = toast.StoreProps & {
     translations?: { groupLabel?: string; closeTriggerLabel?: string };
 };
 
+// the cases of the PHP enum `ToastType`
+const toastTypes = new Set(['info', 'success', 'warning', 'error', 'loading']);
+
 interface MountedToast {
     toast: Toast;
     props: Partial<toast.Props>;
@@ -66,15 +69,20 @@ export class Toaster extends Component<ToasterProps, toast.GroupApi> {
                 )
             );
             mounted.props = props;
-            if ('type' in changed) {
-                const templatePart = this.templatePartFor(props.type);
-                if (templatePart !== mounted.templatePart) {
-                    mounted.templatePart = templatePart;
-                    mounted.toast.replaceContent(this.cloneTemplate(templatePart, id));
-                }
-            }
+            // Known gap: updateProps() patches, it skips an `undefined` and merges objects, so `toast.update()`
+            // can't take away a description, an action or a `meta` key. Zag means it that way (its vanilla
+            // tests pin it). A possible fix: build the toast machine with a props function, which
+            // VanillaMachine takes (our Machine constructor would have to accept it too), and assign the
+            // snapshot of the store here instead of the changed keys.
             if (Object.keys(changed).length > 0) mounted.toast.updateProps(changed);
             else mounted.toast.refresh();
+
+            // after the props, so the new content renders and takes the focus with them
+            const templatePart = this.templatePartFor(props.type);
+            if (templatePart !== mounted.templatePart) {
+                mounted.templatePart = templatePart;
+                mounted.toast.replaceContent(this.cloneTemplate(templatePart, id));
+            }
         });
 
         this.toasts.forEach((mounted, id) => {
@@ -104,8 +112,10 @@ export class Toaster extends Component<ToasterProps, toast.GroupApi> {
         };
     }
 
-    // the template of a type (`toaster.toastTemplate type="error"`), or the one without a type
+    // the template of a type (`toaster.toastTemplate type="error"`), or the one without a type. Only the
+    // types of the `ToastType` enum can have one: any other string the store takes stays out of the selector.
     private templatePartFor(type: string | undefined): string {
+        if (!type || !toastTypes.has(type)) return 'toastTemplate';
         const part = `${type}ToastTemplate`;
         return this.hydrator.query(part) ? part : 'toastTemplate';
     }
