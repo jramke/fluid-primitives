@@ -8,7 +8,8 @@ import {
     toKebabCase,
 } from '.';
 import type { ComponentInterface } from '../types';
-import { forgetComponentInstance } from './hydration';
+import { trackRenderedElement, untrackRenderedElement } from './auto-mount';
+import { forgetComponentInstance } from './mount';
 
 /**
  * Base class of every primitive. A subclass builds its machine in `initMachine()`, connects it in
@@ -134,6 +135,7 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
         this.render();
         this.#machine.subscribe(() => {
             this.#api = this.initApi();
+            this.#forgetDetachedElements();
             this.render();
         });
         this.#machine.start();
@@ -197,17 +199,58 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
     destroy() {
         this.machine.stop();
         this.hydrator.destroy();
+        this.#renderedElements.forEach(el => this.#forgetRenderedElement(el));
         forgetComponentInstance(this);
     }
 
     /** Applies the attributes and event handlers of a part's props to its element. */
     spreadProps(node: HTMLElement, attrs: Attrs) {
+        this.#rendersOnto(node);
         spreadProps(node, attrs, this.machine.scope.id);
     }
 
     /** {@see spreadTextControlProps}: for a text control that mirrors what the user typed. */
     spreadTextControlProps(node: HTMLInputElement | HTMLTextAreaElement, attrs: Attrs) {
+        this.#rendersOnto(node);
         spreadTextControlProps(node, attrs, this.machine.scope.id);
+    }
+
+    // Every part the instance rendered onto, so it can be destroyed once all of them left the page.
+    // That covers a component without a root element (Dialog, Popover) like any other.
+    #renderedElements = new Set<Element>();
+
+    #rendersOnto(el: Element) {
+        if (this.#renderedElements.has(el)) return;
+        this.#renderedElements.add(el);
+        trackRenderedElement(el, this);
+    }
+
+    #forgetRenderedElement(el: Element) {
+        this.#renderedElements.delete(el);
+        untrackRenderedElement(el, this);
+    }
+
+    // A removed item of a list, so the set does not grow for the life of the instance. Not while
+    // every part is detached: that instance is about to be destroyed, see isRenderedOnlyInside().
+    #forgetDetachedElements() {
+        const detached = [...this.#renderedElements].filter(el => !el.isConnected);
+        if (detached.length < this.#renderedElements.size) {
+            detached.forEach(el => this.#forgetRenderedElement(el));
+        }
+    }
+
+    /**
+     * @internal
+     *
+     * Without `root`: whether every element the instance rendered onto has left the page. With
+     * `root`: whether the ones still in the page are all inside `root`. False for an instance that
+     * has no element to tell.
+     */
+    isRenderedOnlyInside(root?: Node): boolean {
+        for (const el of this.#renderedElements) {
+            if (el.isConnected && !root?.contains(el)) return false;
+        }
+        return this.#renderedElements.size > 0;
     }
 
     /**

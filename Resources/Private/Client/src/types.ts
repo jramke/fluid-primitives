@@ -42,8 +42,36 @@ declare global {
             nestedComponents?: {
                 [scopeId: string]: NestedComponentEntry[];
             };
+            /**
+             * The callback of every `mountAll()` call, by its namespaced component name, so the page
+             * observer can mount instances whose markup arrives later. Lives here and not in the
+             * module, because the page can hold two copies of the module.
+             */
+            mounters?: {
+                [componentName: string]: (data: any) => Component<unknown, unknown> | void;
+            };
+            /** @internal Whether the callback of a hydration entry ran, or its markup left the page. */
+            mountStates?: WeakMap<ComponentHydrationData, 'mounted' | 'left'>;
+            /** @internal Where each mounted instance came from. */
+            mountRecords?: WeakMap<object, MountRecord>;
+            /** @internal The instances that rendered onto an element. */
+            renderers?: WeakMap<Element, Set<Component<unknown, unknown>>>;
         };
     }
+}
+
+/** @internal Where a mounted instance came from, see `mountAll()` and `mount()`. */
+export interface MountRecord {
+    /** The namespaced name it was mounted with, e.g. `ui:select`. */
+    componentName: string;
+    /** Its rootId. */
+    id: string;
+    /** The bucket of `componentInstances` that holds it. */
+    instances: Record<string, Component<unknown, unknown>>;
+    /** The instance. */
+    instance: Component<unknown, unknown>;
+    /** The hydration entry it was mounted from. */
+    entry: ComponentHydrationData;
 }
 
 /** @internal */

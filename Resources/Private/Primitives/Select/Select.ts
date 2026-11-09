@@ -8,7 +8,7 @@ import {
     type ClientPropConverterMap,
     type ConverterMachineProps,
 } from '../../Client';
-import { getListCollectionFromHydrationData } from '../../Client/src/lib/hydration';
+import { getListCollectionFromHydrationData } from '../../Client/src/lib/list-collection';
 import type { FieldClientApi } from '../Field/src/field.handle';
 import { resolveTranslations } from './src/select.translations';
 

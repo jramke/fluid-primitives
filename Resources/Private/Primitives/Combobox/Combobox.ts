@@ -11,7 +11,7 @@ import {
     type ConverterMachineProps,
 } from '../../Client';
 
-import { getListCollectionFromHydrationData } from '../../Client/src/lib/hydration';
+import { getListCollectionFromHydrationData } from '../../Client/src/lib/list-collection';
 import type { FieldClientApi } from '../Field/src/field.handle';
 
 // Wire shape -> real @zag-js/collection ListCollection instance, registered here (not in

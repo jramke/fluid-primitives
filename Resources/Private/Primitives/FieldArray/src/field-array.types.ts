@@ -54,11 +54,10 @@ export interface FieldArrayProps {
         rowRemoved?: FieldArrayAnnounceTranslation;
     };
     /**
-     * Called after a row was added by the add trigger, with its index and the client names of the
-     * components inside it, e.g. `['field', 'input']`. Call their `mountAll()` here: the field
-     * array doesn't know what the template of a row contains.
+     * Called after a row was added by the add trigger, with its index. The components inside the row
+     * are mounted by then, with the callbacks of their `mountAll()`.
      */
-    onItemAdded?: (detail: { index: number; componentNames: string[] }) => void;
+    onItemAdded?: (detail: { index: number }) => void;
     /**
      * Called after a row was removed by its remove trigger, with the index it had. The later rows
      * have already moved up by then.
