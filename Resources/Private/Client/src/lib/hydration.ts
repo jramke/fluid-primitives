@@ -4,6 +4,7 @@ import type {
     FluidPrimitivesGlobals,
     HydrationPropsFor,
     KnownComponentName,
+    MountRecord,
     NestedComponentEntry,
 } from '../types';
 import { applyClientPropConverters } from './client-prop-converters';
@@ -322,18 +323,18 @@ export function mountWithin(element: Element) {
     mountParts(partAttributesByRootId([element]));
 }
 
-type PartAttributes = Map<string, string[]>;
+/** The `data-*` attributes found in a piece of the page, by their value: a rootId for a part. */
+type PartAttributes = Map<string, { name: string; el: Element }[]>;
 
-/** The `data-*` attribute names of `elements` and everything inside them, by attribute value. */
 function partAttributesByRootId(elements: Iterable<Element>): PartAttributes {
     const parts: PartAttributes = new Map();
     for (const element of elements) {
         for (const el of [element, ...element.querySelectorAll('*')]) {
             for (const { name, value } of el.attributes) {
                 if (!name.startsWith('data-')) continue;
-                const names = parts.get(value) ?? [];
-                names.push(name);
-                parts.set(value, names);
+                let found = parts.get(value);
+                if (!found) parts.set(value, (found = []));
+                found.push({ name, el });
             }
         }
     }
@@ -359,30 +360,59 @@ function mountParts(parts: PartAttributes, rootIds?: Set<string>) {
     }
 }
 
-// On the hydration entry and the instance, not in module state: the page can hold two copies of this
-// module. Not enumerable, so the copy of a stencil's entry for a clone does not take it along.
-const MOUNT_STATE = Symbol.for('fluid-primitives.mount-state');
-const MOUNTED_FROM = Symbol.for('fluid-primitives.mounted-from');
-
-/** `mounted`: the callback ran. `left`: the instance was destroyed because its markup left the page. */
-type MountState = 'mounted' | 'left' | undefined;
-
-function mountStateOf(entry: ComponentHydrationData): MountState {
-    return (entry as any)[MOUNT_STATE];
+// On window.FluidPrimitives, not in module state: the page can hold two copies of this module.
+function bookkeeping() {
+    const fluidPrimitives = window.FluidPrimitives;
+    return {
+        states: (fluidPrimitives.mountStates ??= new WeakMap()),
+        records: (fluidPrimitives.mountRecords ??= new WeakMap()),
+    };
 }
 
-function setMountState(entry: ComponentHydrationData | undefined, state: MountState) {
-    if (entry) Object.defineProperty(entry, MOUNT_STATE, { value: state, configurable: true });
+function recordMount(
+    record: Omit<MountRecord, 'instance' | 'entry'> & { entry: ComponentHydrationData },
+    instance: Component<unknown, unknown> | void
+) {
+    const { states, records } = bookkeeping();
+    states.set(record.entry, 'mounted');
+    if (instance) records.set(instance, { ...record, instance });
 }
 
-function entryOf(instance: object): ComponentHydrationData | undefined {
-    return (instance as any)[MOUNTED_FROM];
+/**
+ * @internal
+ *
+ * Remembers that `instance` rendered onto `el`, so the instances a removed piece of the page takes
+ * along are found from its elements, not by walking every instance.
+ */
+export function trackRenderedElement(el: Element, instance: Component<unknown, unknown>) {
+    const renderers =
+        window.FluidPrimitives && (window.FluidPrimitives.renderers ??= new WeakMap());
+    if (!renderers) return;
+    let instances = renderers.get(el);
+    if (!instances) renderers.set(el, (instances = new Set()));
+    instances.add(instance);
 }
 
-function markMounted(entry: ComponentHydrationData, instance: object | void) {
-    setMountState(entry, 'mounted');
-    if (instance)
-        Object.defineProperty(instance, MOUNTED_FROM, { value: entry, configurable: true });
+/** @internal */
+export function untrackRenderedElement(el: Element, instance: Component<unknown, unknown>) {
+    window.FluidPrimitives?.renderers?.get(el)?.delete(instance);
+}
+
+/** The mounted instances that rendered onto `elements` or anything inside them. */
+function instancesRenderedInside(elements: Iterable<Element>): Set<MountRecord> {
+    const found = new Set<MountRecord>();
+    const renderers = window.FluidPrimitives?.renderers;
+    const records = window.FluidPrimitives?.mountRecords;
+    if (!renderers || !records) return found;
+    for (const element of elements) {
+        for (const el of [element, ...element.querySelectorAll('*')]) {
+            for (const instance of renderers.get(el) ?? []) {
+                const record = records.get(instance);
+                if (record) found.add(record);
+            }
+        }
+    }
+    return found;
 }
 
 /**
@@ -400,30 +430,52 @@ function mountEntries(
     const hydrationInstances = getHydrationData(componentName);
     if (!hydrationInstances) return;
 
+    const { states } = bookkeeping();
     const mountedInstances = instancesOf(namespace, toKebabCase(baseName));
     const prefix = partAttributePrefix(toKebabCase(baseName));
+    // the few rootIds that arrived, not every entry of the page
+    const ids = parts
+        ? [...parts.keys()].filter(id => Object.hasOwn(hydrationInstances, id))
+        : Object.keys(hydrationInstances);
 
-    Object.keys(hydrationInstances).forEach(id => {
+    for (const id of ids) {
         const entry = hydrationInstances[id];
-        if (entry.autoMount === false) return;
-        if (Object.hasOwn(mountedInstances, id) || mountStateOf(entry) === 'mounted') return;
-        // ponytail: a prefix match, so a FieldArray part (`data-field-array-*`) counts for a Field of
-        // the same id too; match the part names of the anatomy if ids ever repeat across components
-        const hasArrived = parts?.get(id)?.some(name => name.startsWith(prefix));
-        if (parts ? !hasArrived : mountStateOf(entry) === 'left') return;
+        if (entry.autoMount === false) continue;
+
+        if (parts) {
+            // ponytail: a prefix match, so a FieldArray part (`data-field-array-*`) counts for a
+            // Field of the same id too; match the part names of the anatomy if ids ever repeat
+            const arrived = parts.get(id)!.filter(({ name }) => name.startsWith(prefix));
+            if (arrived.length === 0) continue;
+            const mounted = ownValue(mountedInstances, id);
+            if (mounted) {
+                // the instance of the markup that left, destroyed a task later, see destroyLater()
+                if (mounted.isRenderedOnlyInside?.()) waitingForDestroy.set(id, arrived);
+                continue;
+            }
+            if (states.get(entry) === 'mounted') continue;
+        } else if (Object.hasOwn(mountedInstances, id) || states.has(entry)) {
+            continue;
+        }
 
         const instance = callback({
             ...entry,
             props: applyClientPropConverters(baseName, entry.props),
             createHydrator: () => new ComponentHydrator(baseName, id),
         });
-        markMounted(entry, instance);
-        if (!instance) return;
+        recordMount({ componentName, id, instances: mountedInstances, entry }, instance);
+        if (!instance) continue;
 
         instance.namespace = namespace;
         mountedInstances[id] = instance;
-    });
+    }
 }
+
+/**
+ * Markup that arrived while the instance of its rootId was still mounted, though about to be
+ * destroyed: the markup of the next page with the rootId of a layout component, for example.
+ */
+const waitingForDestroy = new Map<string, { el: Element }[]>();
 
 /**
  * Destroys every mounted instance whose parts are inside `root`, its portaled content included, and
@@ -434,18 +486,29 @@ function mountEntries(
  * @param root - The element that is about to be removed.
  */
 export function destroyComponentsWithin(root: Element | Document) {
-    if (root instanceof Element) removePortalsWithin(root);
+    if (root instanceof Document) {
+        destroyRecords(
+            [...trackedInstances()].filter(
+                ({ instance }) =>
+                    instance.isRenderedOnlyInside(root) || instance.isRenderedOnlyInside()
+            ),
+            { forgetHydrationData: true }
+        );
+        return;
+    }
 
-    destroyInstancesWhere(
-        instance =>
-            instance.isRenderedOnlyInside(root) ||
-            (root instanceof Document && instance.isRenderedOnlyInside()),
+    removePortalsWithin(root);
+    destroyRecords(
+        [...instancesRenderedInside([root])].filter(({ instance }) =>
+            instance.isRenderedOnlyInside(root)
+        ),
         // else the next mountAll() mounts it again, without any DOM
         { forgetHydrationData: true }
     );
 }
 
-function* trackedInstances() {
+function* trackedInstances(): Generator<MountRecord> {
+    const records = window.FluidPrimitives?.mountRecords;
     for (const [namespace, namespaceBucket] of Object.entries(
         window.FluidPrimitives?.componentInstances ?? {}
     )) {
@@ -453,38 +516,37 @@ function* trackedInstances() {
             for (const [id, instance] of Object.entries(instances)) {
                 // Not instanceof: an instance of the other copy of this module is a Component too.
                 if (typeof instance.isRenderedOnlyInside !== 'function') continue;
-                yield { namespace, name, id, instance, instances };
+                yield records?.get(instance) ?? {
+                    componentName: `${namespace}:${name}`,
+                    id,
+                    instances,
+                    instance,
+                };
             }
         }
     }
 }
 
-function instancesWhere(test: (instance: Component<unknown, unknown>) => boolean) {
-    return Array.from(trackedInstances(), ({ instance }) => instance).filter(test);
-}
-
 /** @returns The rootIds of the instances it destroyed. */
-function destroyInstancesWhere(
-    isGone: (instance: Component<unknown, unknown>) => boolean,
+function destroyRecords(
+    records: Iterable<MountRecord>,
     { forgetHydrationData }: { forgetHydrationData: boolean }
 ): Set<string> {
     const destroyed = new Set<string>();
-    for (const { namespace, name, id, instance, instances } of trackedInstances()) {
-        if (!isGone(instance)) continue;
+    for (const { componentName, id, instances, instance, entry } of records) {
         destroyed.add(id);
-
         if (isDebug()) {
             console.log(
                 `[fluid-primitives] Destroying component instance: ${instance.getClientName()}:${id}`
             );
         }
         instance.destroy();
-        delete instances[id];
+        if (instances[id] === instance) delete instances[id];
         if (forgetHydrationData) {
-            const hydrationInstances = getHydrationData(`${namespace}:${name}`);
+            const hydrationInstances = getHydrationData(componentName);
             if (hydrationInstances) delete hydrationInstances[id];
-        } else {
-            setMountState(entryOf(instance), 'left');
+        } else if (entry) {
+            bookkeeping().states.set(entry, 'left');
         }
     }
     return destroyed;
@@ -527,20 +589,27 @@ function observePage() {
  * markup can come back, e.g. from the cache of Turbo.
  */
 function destroyLater(gone: Element[]) {
-    const candidates = new Set(instancesWhere(instance => instance.isRenderedOnlyInside()));
+    const candidates = [...instancesRenderedInside(gone)].filter(({ instance }) =>
+        instance.isRenderedOnlyInside()
+    );
+    const hasPortals = gone.some(el => el.querySelector('template[data-portal-origin]'));
+    if (candidates.length === 0 && !hasPortals) return;
+
     setTimeout(() => {
         // the portals of an element still gone; removing them is a change the observer sees, so
         // a component with its content in a portal is destroyed with the next round
         gone.filter(el => !el.isConnected).forEach(removePortalsWithin);
-        const destroyed = destroyInstancesWhere(
-            instance => candidates.has(instance) && instance.isRenderedOnlyInside(),
+        const destroyed = destroyRecords(
+            candidates.filter(({ instance }) => instance.isRenderedOnlyInside()),
             { forgetHydrationData: false }
         );
-        // markup that arrived while an instance of the same rootId was still mounted, e.g. a
-        // navigation in the layout of every page Turbo visits
-        if (destroyed.size > 0) {
-            mountParts(partAttributesByRootId([document.documentElement]), destroyed);
-        }
+
+        const waiting = candidates.flatMap(({ id }) => {
+            const arrived = waitingForDestroy.get(id) ?? [];
+            waitingForDestroy.delete(id);
+            return destroyed.has(id) ? arrived.map(({ el }) => el) : [];
+        });
+        mountParts(partAttributesByRootId(waiting.filter(el => el.isConnected)), destroyed);
     });
 }
 
@@ -555,14 +624,11 @@ function partAttributePrefix(clientComponentName: string): string {
  * `mountAll()` mounts its `rootId` again. `Component.destroy()` calls it.
  */
 export function forgetComponentInstance(instance: Component<unknown, unknown>) {
-    setMountState(entryOf(instance), undefined);
-    for (const namespaceBucket of Object.values(window.FluidPrimitives?.componentInstances ?? {})) {
-        for (const instances of Object.values(namespaceBucket)) {
-            for (const [id, tracked] of Object.entries(instances)) {
-                if (tracked === instance) delete instances[id];
-            }
-        }
-    }
+    const record = window.FluidPrimitives?.mountRecords?.get(instance);
+    if (!record) return;
+    window.FluidPrimitives.mountRecords!.delete(instance);
+    window.FluidPrimitives.mountStates?.delete(record.entry!);
+    if (record.instances[record.id] === instance) delete record.instances[record.id];
 }
 
 /**
@@ -612,11 +678,12 @@ export function mount<
         >,
         createHydrator: () => new ComponentHydrator(baseName, rootId),
     });
-    markMounted(hydrationData, instance);
+    const instances = instancesOf(namespace, toKebabCase(baseName));
+    recordMount({ componentName, id: rootId, instances, entry: hydrationData }, instance);
     if (!instance) return undefined;
 
     instance.namespace = namespace;
-    instancesOf(namespace, toKebabCase(baseName))[rootId] = instance;
+    instances[rootId] = instance;
 
     return instance;
 }
