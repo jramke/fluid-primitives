@@ -1,14 +1,14 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import {
-    ComponentHydrator,
     destroyComponentsWithin,
     devWarn,
     getGlobal,
     getGlobals,
     isDebug,
     mount,
-    type Component,
+    mountAll,
 } from '../../../Resources/Private/Client/src/lib';
+import { Collapsible } from '../../../Resources/Private/Primitives/Collapsible/Collapsible';
 
 function setGlobals(globals: Record<string, unknown> | undefined, hydrationData = {}) {
     window.FluidPrimitives = {
@@ -114,21 +114,17 @@ describe('devWarn', () => {
 });
 
 describe('dev only output of the hydration helpers', () => {
-    const fakeInstance = () =>
-        ({
-            hydrator: new ComponentHydrator('widget', 'a'),
-            getClientName: () => 'widget',
-            isRenderedOnlyInside: () => true,
-            destroy: vi.fn(),
-        }) as unknown as Component<unknown, unknown>;
-
     test('the destroy log only shows with debug', () => {
         const log = vi.spyOn(console, 'log').mockImplementation(() => {});
-        document.body.innerHTML = '<div data-widget-root="a"></div>';
 
         for (const debug of [false, true]) {
-            setGlobals({ debug });
-            window.FluidPrimitives.componentInstances = { ui: { widget: { a: fakeInstance() } } };
+            document.body.innerHTML =
+                '<div data-collapsible-root="c1"><div data-collapsible-content="c1"></div></div>';
+            setGlobals(
+                { debug },
+                { ui: { collapsible: { c1: { autoMount: true, props: { id: 'c1', ids: {} } } } } }
+            );
+            mountAll('ui:collapsible', ({ props }) => new Collapsible(props as never).init());
             destroyComponentsWithin(document);
         }
 
@@ -139,7 +135,7 @@ describe('dev only output of the hydration helpers', () => {
         const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
         setGlobals({ debug: true });
 
-        expect(mount('ui:widget', 'nope', () => fakeInstance())).toBeUndefined();
+        expect(mount('ui:widget', 'nope', () => undefined)).toBeUndefined();
         expect(warn).toHaveBeenCalledWith(
             expect.stringContaining('no hydration data for ui:widget "nope"')
         );

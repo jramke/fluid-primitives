@@ -14,7 +14,7 @@ class ComponentRefUtility
      * The one attribute a part is marked with, mirroring zag's own `parts.<part>.attr`
      * (`data-<component>-<part>`), whose value is the component's root id. Dots of a tiered
      * `$clientBaseName` (`molecules.checkbox-group`) become dashes - a dot isn't valid in a CSS
-     * attribute selector. Keep in sync with: Resources/Private/Client/src/lib/hydration.ts `attr()`.
+     * attribute selector. Keep in sync with: Resources/Private/Client/src/lib/component-hydrator.ts `attr()`.
      */
     public static function getAttributeName(string $clientBaseName, string $part): string
     {
@@ -29,7 +29,7 @@ class ComponentRefUtility
     /**
      * Identifies one stencil (`ui:template`) or one repeated row (a `FieldArray` item) as a key of the
      * nested-component tracking registry, without needing an element id. Keep in sync with:
-     * Resources/Private/Client/src/lib/hydration.ts `scopeKey()`.
+     * Resources/Private/Client/src/lib/component-hydrator.ts `scopeKey()`.
      */
     public static function getScopeKey(
         string $clientBaseName,

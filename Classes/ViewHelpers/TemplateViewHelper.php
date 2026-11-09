@@ -112,7 +112,7 @@ class TemplateViewHelper extends AbstractViewHelper
             // registers itself while rendering our children (however it renders - see
             // NestedComponentRegistry::recordNestedComponent()'s own docblock) is recorded as nested
             // inside this stencil. The client reads that list instead of inferring nesting from
-            // rendered DOM shape (see ComponentHydrator.restampValue in Client/src/lib/hydration.ts).
+            // rendered DOM shape (see ComponentHydrator.restampValue in Client/src/lib/component-hydrator.ts).
             NestedComponentRegistry::getInstance()->pushTrackingScope($stencilKey);
             try {
                 $renderedChildren = (string)$this->renderChildren();

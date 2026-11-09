@@ -1,6 +1,6 @@
 import { nextTick } from '@zag-js/dom-query';
 import type { NormalizeProps, PropTypes } from '@zag-js/types';
-import { destroyComponentsWithin, mountWithin } from '../../../Client/src/lib/hydration';
+import { destroyComponentsWithin, mountWithin } from '../../../Client/src/lib/mount';
 import { Template } from '../../../Client/src/lib/template';
 import { getFieldValueFromContainer, type FieldValue } from '../../Field/src/field.value';
 import { parseFieldPath, stringifyFieldPathAsBrackets } from '../../Form/src/form.path';

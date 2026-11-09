@@ -1,4 +1,4 @@
-import { toKebabCase } from './hydration';
+import { toKebabCase } from './component-name';
 
 /**
  * Converts a prop from the shape it has on the wire (JSON) to the one the component needs. It gets

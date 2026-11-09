@@ -1,4 +1,4 @@
-import type { ComponentHydrator } from './hydration';
+import type { ComponentHydrator } from './component-hydrator';
 import { movePortals } from './portal';
 
 /** The options of a {@link Template}. */

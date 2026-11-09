@@ -8,7 +8,8 @@ import {
     toKebabCase,
 } from '.';
 import type { ComponentInterface } from '../types';
-import { forgetComponentInstance, trackRenderedElement, untrackRenderedElement } from './hydration';
+import { trackRenderedElement, untrackRenderedElement } from './auto-mount';
+import { forgetComponentInstance } from './mount';
 
 /**
  * Base class of every primitive. A subclass builds its machine in `initMachine()`, connects it in
@@ -134,13 +135,7 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
         this.render();
         this.#machine.subscribe(() => {
             this.#api = this.initApi();
-            // a removed item of a list: keeps the set from growing for the life of the instance.
-            // Not while every part is detached, that instance is about to be destroyed.
-            if ([...this.#renderedElements].some(el => el.isConnected)) {
-                for (const el of this.#renderedElements) {
-                    if (!el.isConnected) this.#forgetRenderedElement(el);
-                }
-            }
+            this.#forgetDetachedElements();
             this.render();
         });
         this.#machine.start();
@@ -204,9 +199,8 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
     destroy() {
         this.machine.stop();
         this.hydrator.destroy();
-        // first: it reads whether the instance has left the page
-        forgetComponentInstance(this);
         this.#renderedElements.forEach(el => this.#forgetRenderedElement(el));
+        forgetComponentInstance(this);
     }
 
     /** Applies the attributes and event handlers of a part's props to its element. */
@@ -236,45 +230,27 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
         untrackRenderedElement(el, this);
     }
 
-    /**
-     * @internal
-     *
-     * Whether one of the elements the instance rendered onto has left the page.
-     */
-    isLeavingPage(): boolean {
-        for (const rendered of this.#renderedElements) {
-            if (!rendered.isConnected) return true;
+    // A removed item of a list, so the set does not grow for the life of the instance. Not while
+    // every part is detached: that instance is about to be destroyed, see isRenderedOnlyInside().
+    #forgetDetachedElements() {
+        const detached = [...this.#renderedElements].filter(el => !el.isConnected);
+        if (detached.length < this.#renderedElements.size) {
+            detached.forEach(el => this.#forgetRenderedElement(el));
         }
-        return false;
-    }
-
-    /**
-     * @internal
-     *
-     * Whether `el` is one of the elements the instance rendered onto, or inside one.
-     */
-    ownsElement(el: Node): boolean {
-        for (const rendered of this.#renderedElements) {
-            if (rendered.contains(el)) return true;
-        }
-        return false;
     }
 
     /**
      * @internal
      *
      * Without `root`: whether every element the instance rendered onto has left the page. With
-     * `root`: whether the ones still in the page are all inside `root`, and there is one. False for an
-     * instance that has no element to tell.
+     * `root`: whether the ones still in the page are all inside `root`. False for an instance that
+     * has no element to tell.
      */
     isRenderedOnlyInside(root?: Node): boolean {
-        let isInside = root === undefined;
         for (const el of this.#renderedElements) {
-            if (!el.isConnected) continue;
-            if (!root?.contains(el)) return false;
-            isInside = true;
+            if (el.isConnected && !root?.contains(el)) return false;
         }
-        return this.#renderedElements.size > 0 && isInside;
+        return this.#renderedElements.size > 0;
     }
 
     /**

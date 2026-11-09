@@ -35,8 +35,8 @@ class FieldContext extends AbstractComponentContext
         // `name` and the item's row index (e.g. `people` + row 0 -> `people[0][firstName]`), or
         // with an empty index segment (`people[][firstName]`) inside the unfilled `itemTemplate`
         // stencil, where no real index exists yet - the client rewrites that placeholder to a real
-        // index on each clone (see `ComponentHydrator.restampValue` in `Client/src/lib/
-        // hydration.ts`). The child's own name is re-parsed rather than spliced in as a raw string,
+        // index on each clone (see `prepareNestedRootComponents` in `Client/src/lib/
+        // nested-components.ts`). The child's own name is re-parsed rather than spliced in as a raw string,
         // so a dotted child name (`address.city`) canonicalizes to full brackets
         // (`people[0][address][city]`) instead of leaking a literal dot into one bracket segment.
         // Consumers set each row's `defaultValue` explicitly (see the FieldArray docs), so the

@@ -1,7 +1,5 @@
 import { describe, expect, test } from 'vitest';
-// the library first: its modules import each other in a circle that only resolves when it is entered from its index
-import '../../Resources/Private/Client/src/lib';
-import { getListCollectionFromHydrationData } from '../../Resources/Private/Client/src/lib/hydration';
+import { getListCollectionFromHydrationData } from '../../Resources/Private/Client/src/lib/list-collection';
 import cases from '../Fixtures/list-collection.json';
 
 // The same cases `Unit/ListCollectionTest::agreesWithTheClientOnWhatTheWireShapeMeans` runs through the PHP

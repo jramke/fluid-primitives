@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, test } from 'vitest';
-// the library first: its modules import each other in a circle that only resolves when it is entered from its index
-import { ComponentHydrator } from '../../Resources/Private/Client/src/lib';
-import { destroyComponentsWithin } from '../../Resources/Private/Client/src/lib/hydration';
+import { ComponentHydrator } from '../../Resources/Private/Client/src/lib/component-hydrator';
+import { destroyComponentsWithin } from '../../Resources/Private/Client/src/lib/mount';
 import { Template } from '../../Resources/Private/Client/src/lib/template';
 
 const wrapper = (name: string, inner: string) =>

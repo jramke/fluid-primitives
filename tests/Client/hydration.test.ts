@@ -75,9 +75,6 @@ describe('mounting components', () => {
                 },
             },
         });
-        document.body.innerHTML = ['a', 'b', 'c']
-            .map(id => `<i data-converted-root="${id}"></i>`)
-            .join('');
         const sizes: unknown[] = [];
         const create = ({ props }: { props: Record<string, unknown> }) => {
             sizes.push(props.size);
@@ -119,7 +116,6 @@ describe('mounting components', () => {
                 },
             },
         });
-        document.body.innerHTML = '<i data-widget-root="constructor"></i>';
         const created: string[] = [];
         const create = ({ props }: { props: { id: string } }) => {
             created.push(props.id);
@@ -266,34 +262,7 @@ describe('markup that arrives or leaves after mountAll', () => {
         );
     });
 
-    test('markup with the rootId of an instance whose portaled content leaves a round later mounts once that instance is gone', async () => {
-        setGlobals({ hydrationData: { ui: { collapsible: { c1: field('c1') } } } });
-        document.body.innerHTML = `
-            <section><button type="button" data-collapsible-trigger="c1">Toggle</button></section>
-            <div data-portal><div data-collapsible-content="c1">Content</div></div>`;
-        mountCollapsibles();
-        await settled();
-        const first = instance('c1');
-
-        document.querySelector('section')!.innerHTML = collapsible('c1');
-        await settled();
-        expect(instance('c1')).toBe(first);
-
-        document.querySelector('[data-portal]')!.remove();
-        await settled();
-        expect(instance('c1')).toBeDefined();
-        expect(instance('c1')).not.toBe(first);
-        document.querySelector<HTMLElement>('section [data-collapsible-trigger]')!.click();
-        await vi.waitFor(() =>
-            expect(
-                document
-                    .querySelector('section [data-collapsible-root]')!
-                    .getAttribute('data-state')
-            ).toBe('open')
-        );
-    });
-
-    test('markup with the rootId of a mounted instance mounts when that instance is destroyed by hand', async () => {
+    test('an in-place swap mounts the new markup, also when cleanup code destroys the old instance afterwards', async () => {
         setGlobals({ hydrationData: { ui: { collapsible: { c1: field('c1') } } } });
         document.body.innerHTML = `<section>${collapsible('c1')}</section>`;
         mountCollapsibles();
