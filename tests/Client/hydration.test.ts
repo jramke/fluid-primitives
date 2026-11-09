@@ -583,6 +583,38 @@ describe('ComponentHydrator nested components of a row', () => {
         });
     });
 
+    test('restampValue remaps a rootId that also occurs inside an earlier segment of an id', () => {
+        // `f` is also the first letter of the `field:` prefix
+        setGlobals({
+            hydrationData: {
+                primitives: {
+                    field: {
+                        f: field('f', {
+                            name: 'people[][name]',
+                            ids: { control: 'field:f:control', description: 'contact-f' },
+                        }),
+                    },
+                },
+            },
+            nestedComponents: {
+                'field-array:fa1:item-template': [{ name: 'primitives:field', id: 'f' }],
+            },
+        });
+        document.body.innerHTML = `<template>${row('', 'f')}</template>`;
+        const clone = document.querySelector('template')!.content.firstElementChild!;
+        const hydrator = new ComponentHydrator('fieldArray', 'fa1');
+
+        hydrator.restampValue(clone, '0', hydrator.scopeKey('itemTemplate'));
+
+        expect(attr(clone, 'label', 'id')).toBe('field:f:1:label');
+        expect(attr(clone, 'input', 'id')).toBe('field:f:1:control');
+        // an id of the project's own that contains the rootId, joined by something else than `:`
+        expect(window.FluidPrimitives.hydrationData.primitives.field['f:1'].props.ids).toEqual({
+            control: 'field:f:1:control',
+            description: 'contact-f:1',
+        });
+    });
+
     test('every clone of a stencil gets ids no other clone has, whatever its value', () => {
         setGlobals({
             hydrationData: {

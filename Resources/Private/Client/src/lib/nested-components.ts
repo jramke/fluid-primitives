@@ -12,15 +12,27 @@ interface RootIdRemap {
 }
 
 /**
- * True when `id` references `rootId` as a whole id-segment - i.e. `id` either *is* `rootId`, or
- * contains it immediately followed by `:` - not merely as a substring. A plain `.includes()`
- * would false-positive match row `2`'s root id against row `20`'s (both contain the digit `2`).
+ * `id` with the first old root id of `remaps` that stands on its own in it replaced by its new one,
+ * or `null` when `id` references none. On its own means no letter, digit or `_` right before or
+ * after it, as in `field:<rootId>:control` or `contact-<rootId>`: a plain substring would also match
+ * the `2` of `12`, and only the first occurrence would miss the rootId `f` of `field:f:control`.
+ *
+ * Which segment matches when a rootId occurs twice (`field:field:control`) does not matter: the DOM
+ * ids and the `ids` prop go through this same function, so they stay the same and unique per clone.
  */
-function referencesRootId(id: string, rootId: string): boolean {
-    const index = id.indexOf(rootId);
-    if (index === -1) return false;
-    const charAfter = id[index + rootId.length];
-    return charAfter === undefined || charAfter === ':';
+function remapId(id: string, remaps: RootIdRemap[]): string | null {
+    const isWordChar = (char: string | undefined) => char !== undefined && /\w/.test(char);
+    for (const { oldRootId, newRootId } of remaps) {
+        let index = id.indexOf(oldRootId);
+        while (index !== -1) {
+            const end = index + oldRootId.length;
+            if (!isWordChar(id[index - 1]) && !isWordChar(id[end])) {
+                return id.slice(0, index) + newRootId + id.slice(end);
+            }
+            index = id.indexOf(oldRootId, index + 1);
+        }
+    }
+    return null;
 }
 
 /**
@@ -38,12 +50,8 @@ function restampIdReferences(root: Element, remaps: RootIdRemap[]): void {
     const restamp = (el: Element) => {
         for (const { name, value } of Array.from(el.attributes)) {
             if (name === 'id') {
-                const match = remaps.find(({ oldRootId }) => referencesRootId(value, oldRootId));
-                if (match)
-                    el.setAttribute(
-                        name,
-                        value.replace(match.oldRootId, () => match.newRootId)
-                    );
+                const remapped = remapId(value, remaps);
+                if (remapped !== null) el.setAttribute(name, remapped);
             } else if (name.startsWith('data-')) {
                 const match = remaps.find(({ oldRootId }) => oldRootId === value);
                 if (match) el.setAttribute(name, match.newRootId);
@@ -66,8 +74,7 @@ function restampIdReferences(root: Element, remaps: RootIdRemap[]): void {
 function remapIdsProp(ids: Record<string, string>, remaps: RootIdRemap[]): Record<string, string> {
     const remapped: Record<string, string> = {};
     for (const [key, value] of Object.entries(ids)) {
-        const match = remaps.find(({ oldRootId }) => referencesRootId(value, oldRootId));
-        remapped[key] = match ? value.replace(match.oldRootId, () => match.newRootId) : value;
+        remapped[key] = remapId(value, remaps) ?? value;
     }
     return remapped;
 }

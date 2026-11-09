@@ -11,6 +11,7 @@ What changed in each release of Fluid Primitives, newest first. Every release li
 ### Client
 
 - `mountAll()` also mounts the components whose markup arrives later, such as a FieldArray row, a `Template` clone or HTML that Turbo or a `fetch()` swapped in, and destroys an instance once every element it rendered onto has left the page, a Popover or Dialog without a root element included. `mountWithin()` mounts inserted markup before your next line runs, and `destroyComponentsWithin()` destroys a Popover or Dialog in the element too. The library removes each hydration data block from the page once it read it. ([#113](https://github.com/jramke/fluid-primitives/pull/113))
+- A component in a FieldArray row or a `Template` clone whose `rootId` also occurs inside an earlier part of its ids, such as `f` in `field:f:control`, gets ids no other clone has, so the label of each row belongs to the control of its own row. ([#113](https://github.com/jramke/fluid-primitives/pull/113))
 
 ## 1.0.0-beta.7
 
