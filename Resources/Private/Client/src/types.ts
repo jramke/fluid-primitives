@@ -54,6 +54,11 @@ declare global {
             mountStates?: WeakMap<ComponentHydrationData, 'mounted' | 'left'>;
             /** @internal Where each mounted instance came from. */
             mountRecords?: WeakMap<object, MountRecord>;
+            /**
+             * @internal Markup that arrived with the rootId of a mounted instance and is not its own,
+             * by that instance: it mounts once the instance is destroyed.
+             */
+            waitingForDestroy?: WeakMap<object, Set<Element>>;
             /** @internal The instances that rendered onto an element. */
             renderers?: WeakMap<Element, Set<Component<unknown, unknown>>>;
         };

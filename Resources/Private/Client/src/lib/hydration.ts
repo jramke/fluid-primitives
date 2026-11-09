@@ -366,6 +366,7 @@ function bookkeeping() {
     return {
         states: (fluidPrimitives.mountStates ??= new WeakMap()),
         records: (fluidPrimitives.mountRecords ??= new WeakMap()),
+        waiting: (fluidPrimitives.waitingForDestroy ??= new WeakMap()),
     };
 }
 
@@ -430,7 +431,7 @@ function mountEntries(
     const hydrationInstances = getHydrationData(componentName);
     if (!hydrationInstances) return;
 
-    const { states } = bookkeeping();
+    const { states, waiting } = bookkeeping();
     const mountedInstances = instancesOf(namespace, toKebabCase(baseName));
     const prefix = partAttributePrefix(toKebabCase(baseName));
     // the few rootIds that arrived, not every entry of the page
@@ -449,8 +450,18 @@ function mountEntries(
             if (arrived.length === 0) continue;
             const mounted = ownValue(mountedInstances, id);
             if (mounted) {
-                // the instance of the markup that left, destroyed a task later, see destroyLater()
-                if (mounted.isRenderedOnlyInside?.()) waitingForDestroy.set(id, arrived);
+                // Markup with the rootId of an instance on its way out, e.g. the next page of
+                // Turbo while the old one is still being destroyed: it mounts once that is done.
+                // A part the instance only queries, rendered next to an intact instance, is not.
+                if (
+                    mounted.isLeavingPage?.() &&
+                    !arrived.some(({ el }) => mounted.ownsElement?.(el))
+                ) {
+                    let elements = waiting.get(mounted);
+                    if (!elements) waiting.set(mounted, (elements = new Set()));
+                    for (const el of elements) if (!el.isConnected) elements.delete(el);
+                    arrived.forEach(({ el }) => elements.add(el));
+                }
                 continue;
             }
             if (states.get(entry) === 'mounted') continue;
@@ -472,16 +483,11 @@ function mountEntries(
 }
 
 /**
- * Markup that arrived while the instance of its rootId was still mounted, though about to be
- * destroyed: the markup of the next page with the rootId of a layout component, for example.
- */
-const waitingForDestroy = new Map<string, { el: Element }[]>();
-
-/**
  * Destroys every mounted instance whose parts are inside `root`, its portaled content included, and
  * forgets it, its hydration data included. `mountAll()` already does this for markup that leaves the
  * page, so call it only when the instances must be gone before your next line runs, e.g. before you
- * rename the fields of the rows after a removed one.
+ * rename the fields of the rows after a removed one. Call it before you insert markup that replaces
+ * `root` with the same rootIds: their hydration data is forgotten.
  *
  * @param root - The element that is about to be removed.
  */
@@ -599,17 +605,10 @@ function destroyLater(gone: Element[]) {
         // the portals of an element still gone; removing them is a change the observer sees, so
         // a component with its content in a portal is destroyed with the next round
         gone.filter(el => !el.isConnected).forEach(removePortalsWithin);
-        const destroyed = destroyRecords(
+        destroyRecords(
             candidates.filter(({ instance }) => instance.isRenderedOnlyInside()),
             { forgetHydrationData: false }
         );
-
-        const waiting = candidates.flatMap(({ id }) => {
-            const arrived = waitingForDestroy.get(id) ?? [];
-            waitingForDestroy.delete(id);
-            return destroyed.has(id) ? arrived.map(({ el }) => el) : [];
-        });
-        mountParts(partAttributesByRootId(waiting.filter(el => el.isConnected)), destroyed);
     });
 }
 
@@ -624,11 +623,25 @@ function partAttributePrefix(clientComponentName: string): string {
  * `mountAll()` mounts its `rootId` again. `Component.destroy()` calls it.
  */
 export function forgetComponentInstance(instance: Component<unknown, unknown>) {
-    const record = window.FluidPrimitives?.mountRecords?.get(instance);
+    const fluidPrimitives = window.FluidPrimitives;
+    const record = fluidPrimitives?.mountRecords?.get(instance);
     if (!record) return;
-    window.FluidPrimitives.mountRecords!.delete(instance);
-    window.FluidPrimitives.mountStates?.delete(record.entry!);
+    fluidPrimitives.mountRecords!.delete(instance);
+    fluidPrimitives.mountStates?.delete(record.entry!);
     if (record.instances[record.id] === instance) delete record.instances[record.id];
+
+    // Markup with its rootId that arrived while it was leaving mounts now, however it was destroyed,
+    // but only once nothing of it is on the page: destroying an instance that stays is a choice.
+    // A microtask later, so destroyComponentsWithin() forgets the data first.
+    const waiting = fluidPrimitives.waitingForDestroy?.get(instance);
+    fluidPrimitives.waitingForDestroy?.delete(instance);
+    if (!waiting || !instance.isRenderedOnlyInside()) return;
+    queueMicrotask(() =>
+        mountParts(
+            partAttributesByRootId([...waiting].filter(el => el.isConnected)),
+            new Set([record.id])
+        )
+    );
 }
 
 /**

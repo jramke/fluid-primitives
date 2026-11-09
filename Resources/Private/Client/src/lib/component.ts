@@ -204,8 +204,9 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
     destroy() {
         this.machine.stop();
         this.hydrator.destroy();
-        this.#renderedElements.forEach(el => this.#forgetRenderedElement(el));
+        // first: it reads whether the instance has left the page
         forgetComponentInstance(this);
+        this.#renderedElements.forEach(el => this.#forgetRenderedElement(el));
     }
 
     /** Applies the attributes and event handlers of a part's props to its element. */
@@ -233,6 +234,30 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
     #forgetRenderedElement(el: Element) {
         this.#renderedElements.delete(el);
         untrackRenderedElement(el, this);
+    }
+
+    /**
+     * @internal
+     *
+     * Whether one of the elements the instance rendered onto has left the page.
+     */
+    isLeavingPage(): boolean {
+        for (const rendered of this.#renderedElements) {
+            if (!rendered.isConnected) return true;
+        }
+        return false;
+    }
+
+    /**
+     * @internal
+     *
+     * Whether `el` is one of the elements the instance rendered onto, or inside one.
+     */
+    ownsElement(el: Node): boolean {
+        for (const rendered of this.#renderedElements) {
+            if (rendered.contains(el)) return true;
+        }
+        return false;
     }
 
     /**

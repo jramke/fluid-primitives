@@ -266,6 +266,65 @@ describe('markup that arrives or leaves after mountAll', () => {
         );
     });
 
+    test('markup with the rootId of an instance whose portaled content leaves a round later mounts once that instance is gone', async () => {
+        setGlobals({ hydrationData: { ui: { collapsible: { c1: field('c1') } } } });
+        document.body.innerHTML = `
+            <section><button type="button" data-collapsible-trigger="c1">Toggle</button></section>
+            <div data-portal><div data-collapsible-content="c1">Content</div></div>`;
+        mountCollapsibles();
+        await settled();
+        const first = instance('c1');
+
+        document.querySelector('section')!.innerHTML = collapsible('c1');
+        await settled();
+        expect(instance('c1')).toBe(first);
+
+        document.querySelector('[data-portal]')!.remove();
+        await settled();
+        expect(instance('c1')).toBeDefined();
+        expect(instance('c1')).not.toBe(first);
+        document.querySelector<HTMLElement>('section [data-collapsible-trigger]')!.click();
+        await vi.waitFor(() =>
+            expect(
+                document
+                    .querySelector('section [data-collapsible-root]')!
+                    .getAttribute('data-state')
+            ).toBe('open')
+        );
+    });
+
+    test('markup with the rootId of a mounted instance mounts when that instance is destroyed by hand', async () => {
+        setGlobals({ hydrationData: { ui: { collapsible: { c1: field('c1') } } } });
+        document.body.innerHTML = `<section>${collapsible('c1')}</section>`;
+        mountCollapsibles();
+        await settled();
+        const first = instance('c1')!;
+
+        // a swap whose cleanup runs after the new markup is in, as htmx or a turbo:load handler does
+        document.querySelector('section')!.innerHTML = collapsible('c1');
+        await Promise.resolve();
+        first.destroy();
+        await settled();
+
+        expect(instance('c1')).toBeDefined();
+        expect(instance('c1')).not.toBe(first);
+    });
+
+    test('a part of an intact instance added elsewhere does not mount it again once it leaves', async () => {
+        setGlobals({ hydrationData: { ui: { collapsible: { c1: field('c1') } } } });
+        document.body.innerHTML = `<section>${collapsible('c1')}</section>`;
+        mountCollapsibles();
+        await settled();
+
+        // a part the component only queries, like the status text of a FieldArray
+        document.body.insertAdjacentHTML('beforeend', '<p data-collapsible-status="c1">2 of 3</p>');
+        await settled();
+        document.querySelector('section')!.remove();
+        await settled();
+
+        expect(instance('c1')).toBeUndefined();
+    });
+
     test('a component whose state changes after its markup left is destroyed all the same', async () => {
         setGlobals({ hydrationData: { ui: { collapsible: { c1: field('c1') } } } });
         document.body.innerHTML = `<section>${collapsible('c1')}</section>`;
@@ -279,6 +338,24 @@ describe('markup that arrives or leaves after mountAll', () => {
         await settled();
 
         expect(destroy).toHaveBeenCalledOnce();
+    });
+
+    test('an instance that stays on the page and is destroyed by hand does not mount the parts that arrived for it', async () => {
+        setGlobals({ hydrationData: { ui: { collapsible: { c1: field('c1') } } } });
+        const trigger = '<button type="button" data-collapsible-trigger="c1">Toggle</button>';
+        document.body.innerHTML = `${collapsible('c1')}<ul><li>${trigger}</li></ul>`;
+        mountCollapsibles();
+        await settled();
+        const mounted = instance('c1')!;
+
+        // one trigger of a list leaves and a new one arrives, as an htmx filter does
+        document.querySelector('li')!.remove();
+        document.querySelector('ul')!.insertAdjacentHTML('beforeend', `<li>${trigger}</li>`);
+        await settled();
+        mounted.destroy();
+        await settled();
+
+        expect(instance('c1')).toBeUndefined();
     });
 
     test('an instance destroyed on purpose stays destroyed when other markup leaves or new data arrives', async () => {
