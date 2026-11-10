@@ -19,6 +19,8 @@ use TYPO3\CMS\Core\Cache\CacheManager;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Package\MetaData;
 use TYPO3\CMS\Core\Package\PackageInterface;
+use TYPO3\CMS\Fluid\Core\ViewHelper\ViewHelperResolver;
+use TYPO3\CMS\Fluid\Core\ViewHelper\ViewHelperResolverFactoryInterface;
 
 final class ComponentAddCommandTest extends TestCase
 {
@@ -56,6 +58,7 @@ final class ComponentAddCommandTest extends TestCase
         RegistryService $registryService,
         CacheManager $cacheManager,
         ?ExtensionConfiguration $extensionConfiguration = null,
+        array $fluidNamespaces = [],
     ): CommandTester {
         $package = $this->createStub(PackageInterface::class);
         $package->method('getPackagePath')->willReturn($this->tempDir);
@@ -76,12 +79,18 @@ final class ComponentAddCommandTest extends TestCase
         $extensionResolver = new ComponentTargetExtensionResolver($packageResolver, $extensionConfiguration);
         $fileWriter = new ComponentFileWriter($registryService, $cacheManager);
 
+        $resolver = $this->createStub(ViewHelperResolver::class);
+        $resolver->method('getNamespaces')->willReturn($fluidNamespaces);
+        $viewHelperResolverFactory = $this->createStub(ViewHelperResolverFactoryInterface::class);
+        $viewHelperResolverFactory->method('create')->willReturn($resolver);
+
         $command = new ComponentAddCommand(
             $packageResolver,
             $registryService,
             $extensionResolver,
             new ComponentKeyResolver($registryService),
             $fileWriter,
+            $viewHelperResolverFactory,
         );
 
         return new CommandTester($command);
@@ -297,8 +306,12 @@ final class ComponentAddCommandTest extends TestCase
             ['Root.html'],
             '<vite:asset entry="%componentPath%/Root.entry.ts" />',
         );
-        $execute = fn(): string => (function () use ($registryService): string {
-            $tester = $this->createCommandTester($registryService, $this->createStub(CacheManager::class));
+        $execute = fn(array $fluidNamespaces): string => (function () use ($registryService, $fluidNamespaces): string {
+            $tester = $this->createCommandTester(
+                $registryService,
+                $this->createStub(CacheManager::class),
+                fluidNamespaces: $fluidNamespaces,
+            );
             $tester->execute([
                 'components' => ['accordion'],
                 '--extension' => 'my_ext',
@@ -309,13 +322,10 @@ final class ComponentAddCommandTest extends TestCase
             return (string)preg_replace('/\s+/', ' ', $tester->getDisplay());
         })();
 
-        unset($GLOBALS['TYPO3_CONF_VARS']['SYS']['fluid']['namespaces']['vite']);
-        $this->assertStringContainsString('"vite" Fluid namespace is not registered', $execute());
-
-        $GLOBALS['TYPO3_CONF_VARS']['SYS']['fluid']['namespaces']['vite'] = [
+        $this->assertStringContainsString('"vite" Fluid namespace is not registered', $execute([]));
+        $this->assertStringNotContainsString('namespace is not registered', $execute(['vite' => [
             'Praetorius\\ViteAssetCollector\\ViewHelpers',
-        ];
-        $this->assertStringNotContainsString('namespace is not registered', $execute());
+        ]]));
     }
 
     /**

@@ -15,6 +15,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use TYPO3\CMS\Fluid\Core\ViewHelper\ViewHelperResolverFactoryInterface;
 
 #[AsCommand(name: 'ui:add', description: 'Add a new component from Fluid Primitives')]
 class ComponentAddCommand extends Command
@@ -25,6 +26,7 @@ class ComponentAddCommand extends Command
         private readonly ComponentTargetExtensionResolver $extensionResolver,
         private readonly ComponentKeyResolver $componentKeyResolver,
         private readonly ComponentFileWriter $fileWriter,
+        private readonly ViewHelperResolverFactoryInterface $viewHelperResolverFactory,
     ) {
         parent::__construct();
     }
@@ -116,10 +118,10 @@ class ComponentAddCommand extends Command
             $this->fileWriter->flushPageCache();
         }
 
-        // @mago-expect lint:no-global
-        // @mago-expect analysis:mixed-assignment
-        $viteNamespace = $GLOBALS['TYPO3_CONF_VARS']['SYS']['fluid']['namespaces']['vite'] ?? null;
-        if ($any('usesViteAsset') && $viteNamespace === null) {
+        if (
+            $any('usesViteAsset') &&
+            !array_key_exists('vite', $this->viewHelperResolverFactory->create()->getNamespaces())
+        ) {
             $io->warning(
                 'The templates contain <vite:asset> to load the entry file, but the "vite" Fluid namespace is not ' .
                 'registered. Install praetorius/vite-asset-collector and register the namespace, or remove the line.',

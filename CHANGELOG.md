@@ -6,7 +6,7 @@ What changed in each release of Fluid Primitives, newest first. Every release li
 
 ### Breaking changes
 
-- **Core:** TYPO3 14.1 or newer is required. The `ui` and `primitives` Fluid namespaces come from `Configuration/Fluid/Namespaces.php` instead of the deprecated `$GLOBALS['TYPO3_CONF_VARS']['SYS']['fluid']['namespaces']`, which TYPO3 14.1 deprecated. A sitepackage that registers its own collection for `ui` in its `Namespaces.php` now reliably comes after the library, so its components win. ([#114](https://github.com/jramke/fluid-primitives/issues/114))
+- **Core:** TYPO3 14.1 or newer is required. The library registers the `ui` and `primitives` Fluid namespaces in `Configuration/Fluid/Namespaces.php`, because TYPO3 14.1 deprecated `$GLOBALS['TYPO3_CONF_VARS']['SYS']['fluid']['namespaces']`. Move your own `ui` entry there too, and require `jramke/fluid-primitives` in your sitepackage so its collection loads after the library's and wins. Entries left in `TYPO3_CONF_VARS` still load after both. `ui:add` finds a `vite` namespace registered in `Namespaces.php`. ([#114](https://github.com/jramke/fluid-primitives/issues/114))
 - **Client, FieldArray:** `Template.componentNames` and the `componentNames` in the detail of `onItemAdded` are gone, and `ComponentHydrator.restampValue()` returns nothing. `mountAll()` mounts the components of a FieldArray row or a `Template` clone on its own, so remove the `mountAll()` calls from your `onItemAdded`. ([#113](https://github.com/jramke/fluid-primitives/pull/113))
 
 ### Client
