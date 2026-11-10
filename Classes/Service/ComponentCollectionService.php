@@ -112,7 +112,7 @@ class ComponentCollectionService
      * under - the first one found if it's ever registered under more than one (no collection in
      * this codebase currently is). Returns `null` if it isn't registered globally at all (e.g. a
      * collection only ever added to one render's own local resolver via `addNamespace()`, never
-     * through `$GLOBALS['TYPO3_CONF_VARS']['SYS']['fluid']['namespaces']`).
+     * through `Configuration/Fluid/Namespaces.php`).
      *
      * Memoized per class per request - {@see ViewHelperResolverFactoryInterface::create()} merges
      * and re-resolves the whole namespace list on every call, and this is called once per rendered
