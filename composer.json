@@ -14,9 +14,9 @@
     ],
     "require": {
         "php": ">=8.3",
-        "typo3/cms-core": "^14",
-        "typo3/cms-extbase": "^14",
-        "typo3/cms-fluid": "^14",
+        "typo3/cms-core": "^14.1",
+        "typo3/cms-extbase": "^14.1",
+        "typo3/cms-fluid": "^14.1",
         "typo3fluid/fluid": "^5.2"
     },
     "require-dev": {
