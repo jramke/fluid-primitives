@@ -6,10 +6,9 @@ namespace Jramke\FluidPrimitives\Contexts;
 
 use Jramke\FluidPrimitives\Attributes\ExposeToClient;
 use Jramke\FluidPrimitives\Enum\PaginationType;
-use Jramke\FluidPrimitives\Service\PaginationLinkBuilder;
+use Jramke\FluidPrimitives\Pagination\UrlAwarePaginator;
 use Jramke\FluidPrimitives\Service\TranslatorService;
 use Jramke\FluidPrimitives\Traits\HasTranslationsTrait;
-use Jramke\FluidPrimitives\Utility\EnumUtility;
 use Jramke\FluidPrimitives\Utility\PaginationRange;
 use Jramke\FluidPrimitives\Utility\Typed;
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
@@ -28,7 +27,6 @@ class PaginationContext extends AbstractComponentContext
 
     public function __construct(
         private readonly TranslatorService $translator,
-        private readonly PaginationLinkBuilder $linkBuilder,
     ) {}
 
     protected function getTranslator(): TranslatorService
@@ -99,34 +97,36 @@ class PaginationContext extends AbstractComponentContext
     }
 
     /**
-     * The URL of every page, for links that the client renders from the item template: a URL with a
-     * cHash can only come from the server.
+     * The URL of every page, for the links the client renders from the `itemTemplate`: from the
+     * `pageUrls` prop or a {@see UrlAwarePaginator}. Pages that reload with every click need them only
+     * in the HTML.
      *
      * @return array<int, string>|null By page
      */
     #[ExposeToClient(excludeIfNull: true)]
     public function getPageUrls(): ?array
     {
-        if (!$this->rendersPagesOnClient || !$this->isLink()) {
+        if (!$this->rendersPagesOnClient) {
             return null;
         }
 
-        // ponytail: one typolink per page on an uncached render; send a window of pages instead if
-        // lists with thousands of pages need it
-        $urls = [];
-        foreach (range(1, max(1, $this->getTotalPages())) as $page) {
-            $url = $this->getPageUrl($page);
-            if ($url !== null) {
-                $urls[$page] = $url;
-            }
+        $paginator = $this->getPaginator();
+        if ($paginator instanceof UrlAwarePaginator) {
+            return $paginator->getPageUrls();
         }
 
-        return $urls;
+        return $this->getPageUrlsProp();
+    }
+
+    #[ExposeToClient]
+    public function getType(): PaginationType
+    {
+        return $this->isLink() ? PaginationType::Link : PaginationType::Button;
     }
 
     public function isLink(): bool
     {
-        return Typed::stringOrNull(EnumUtility::normalize($this->get('type'))) === PaginationType::Link->value;
+        return $this->getPaginator() instanceof UrlAwarePaginator || $this->getPageUrlsProp() !== null;
     }
 
     /**
@@ -170,8 +170,7 @@ class PaginationContext extends AbstractComponentContext
                 [(string)$value, (string)$this->getTotalPages()],
                 $this->getTranslations()['itemLabel'],
             ),
-            // An item of a template has no page yet
-            'url' => $value > 0 ? $this->getPageUrl($value) : null,
+            'url' => $this->getPageUrl($value),
         ];
     }
 
@@ -202,19 +201,27 @@ class PaginationContext extends AbstractComponentContext
         ];
     }
 
-    /**
-     * The URL of `$page` with `type` `link`, see {@see PaginationLinkBuilder::build()}.
-     */
     public function getPageUrl(int $page): ?string
     {
-        return $this->isLink()
-            ? $this->linkBuilder->build(
-                $this->getRequest(),
-                Typed::stringOrNull($this->get('pageArgument')) ?? 'currentPage',
-                $page,
-                Typed::stringOrNull($this->get('section')),
-            )
-            : null;
+        if ($page < 1 || $page > $this->getTotalPages()) {
+            return null;
+        }
+
+        $paginator = $this->getPaginator();
+
+        return $paginator instanceof UrlAwarePaginator
+            ? $paginator->getPageUrl($page)
+            : Typed::stringOrNull($this->getPageUrlsProp()[$page] ?? null);
+    }
+
+    /**
+     * @return array<int, string>|null
+     */
+    private function getPageUrlsProp(): ?array
+    {
+        // A Fluid array of the template carries no type
+        // @mago-expect analysis:less-specific-return-statement
+        return Typed::arrayOrNull($this->get('pageUrls')) ?: null;
     }
 
     private function getPaginator(): ?PaginatorInterface

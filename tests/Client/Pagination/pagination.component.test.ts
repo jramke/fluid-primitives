@@ -14,15 +14,16 @@ const item = (page: number, selected = false) =>
 const ellipsis = (index: number) =>
     `<li><span data-pagination-ellipsis="p" data-index="${index}">…</span></li>`;
 
-// The server markup of page 1 of 12, the pages wrapped in a list item each.
-function mount() {
+// The server markup of page 1 of 12, the pages wrapped in a list item each. Without ellipses, the
+// template leaves them out.
+function mount({ ellipses = true } = {}) {
     document.body.innerHTML = `
         <nav data-pagination-root="p">
             <ul>
                 <li><button type="button" disabled data-disabled data-pagination-prev-trigger="p">Previous</button></li>
-                ${[1, 2, 3, 4, 5].map(page => item(page, page === 1)).join('')}${ellipsis(5)}${item(12)}
+                ${[1, 2, 3, 4, 5].map(page => item(page, page === 1)).join('')}${ellipses ? ellipsis(5) : ''}${item(12)}
                 <template data-pagination-item-template="p"><li><button type="button" data-pagination-item="p"></button></li></template>
-                <template data-pagination-ellipsis-template="p"><li><span data-pagination-ellipsis="p">…</span></li></template>
+                ${ellipses ? '<template data-pagination-ellipsis-template="p"><li><span data-pagination-ellipsis="p">…</span></li></template>' : ''}
                 <li><button type="button" data-pagination-next-trigger="p">Next</button></li>
             </ul>
         </nav>`;
@@ -56,6 +57,14 @@ test('renders the pages it shows from the templates, in the place of the server 
     expect(
         document.querySelector('[data-pagination-prev-trigger]')!.hasAttribute('data-disabled')
     ).toBe(false);
+});
+
+test('leaves out the ellipses without an ellipsis template', async () => {
+    mount({ ellipses: false });
+    expect(shown()).toBe('[1] 2 3 4 5 12');
+
+    itemEl(5).click();
+    await expect.poll(shown).toBe('1 4 [5] 6 12');
 });
 
 test('keeps the element of a page while it is shown, so a clicked item keeps the focus', async () => {

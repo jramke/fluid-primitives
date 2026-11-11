@@ -11,7 +11,7 @@ What changed in each release of Fluid Primitives, newest first. Every release li
 
 ### Pagination
 
-- New `Pagination` component on `@zag-js/pagination`. Pass the TYPO3 paginator of your list to `paginator`, or `count` and `defaultPageSize`, and loop over `pages` of its context. With `type` `link`, every page is a link built by typolink, with a cHash and through your route enhancers, that sets `pageArgument` (`currentPage`) in the namespace of your plugin and jumps to the id in `section`. The client renders the pages it shows from an `itemTemplate` and an `ellipsisTemplate`; with links, the server then sends the URL of every page as the default `getPageUrl`. Add it with `ui:add pagination`.
+- New `Pagination` component on `@zag-js/pagination`. Pass the TYPO3 paginator of your list to `paginator`, or `count` and `defaultPageSize`, and loop over `pages` of its context. For links, wrap the paginator in the new `UrlAwarePaginator` with a function that returns the URL of a page, for example built with the `UriBuilder` of your controller, or pass the URLs to `pageUrls`. The root builds the URLs of the pages it shows, and sends all of them to the client only with an `itemTemplate`, as the default `getPageUrl`. The client renders the pages it shows from the `itemTemplate` and `ellipsisTemplate` parts, and leaves out the ellipses without an `ellipsisTemplate`. Add it with `ui:add pagination`.
 
 ### `ui:context`
 

@@ -38,8 +38,8 @@ interface PageElement {
 /** The props of {@link Pagination}: the machine's, and the URLs the server built. */
 export type PaginationProps = pagination.Props & {
     /**
-     * The URL of every page, by page number. The server sends it for links that the client renders
-     * from the item template. It is the default `getPageUrl`.
+     * The URL of every page, by page number. The server sends it for links the client renders from
+     * the `itemTemplate`. It is the default `getPageUrl`.
      */
     pageUrls?: Record<number, string>;
 };
@@ -117,18 +117,23 @@ export class Pagination extends Component<PaginationProps, pagination.Api> {
         const items = new Map(inList('item').map(entry => [Number(entry.el.dataset.value), entry]));
         const ellipses = inList('ellipsis');
 
-        const entries = this.api.pages.map((page, index): PageElement => {
-            if (page.type === 'page') {
-                const entry = items.get(page.value) ?? this.cloneItem(page.value);
-                items.delete(page.value);
-                this.spreadProps(entry.el, this.api.getItemProps(page));
-                return entry;
-            }
+        const entries = this.api.pages
+            .map((page, index): PageElement | undefined => {
+                if (page.type === 'page') {
+                    const entry = items.get(page.value) ?? this.cloneItem(page.value);
+                    items.delete(page.value);
+                    this.spreadProps(entry.el, this.api.getItemProps(page));
+                    return entry;
+                }
 
-            const entry = ellipses.shift() ?? this.clone('ellipsisTemplate', 'ellipsis');
-            this.spreadProps(entry.el, this.api.getEllipsisProps({ index }));
-            return entry;
-        });
+                // Without an ellipsis template, the pages leave out the ellipses
+                const entry =
+                    ellipses.shift() ??
+                    (ellipsisTemplateEl ? this.clone('ellipsisTemplate', 'ellipsis') : undefined);
+                if (entry) this.spreadProps(entry.el, this.api.getEllipsisProps({ index }));
+                return entry;
+            })
+            .filter(entry => entry !== undefined);
 
         [...items.values(), ...ellipses].forEach(({ unit }) => unit.remove());
 

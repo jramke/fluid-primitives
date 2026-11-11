@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Tests\Functional\Components;
 
+use Jramke\FluidPrimitives\Pagination\UrlAwarePaginator;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
 use PHPUnit\Framework\Attributes\Test;
@@ -59,25 +60,52 @@ final class PaginationRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
-    public function sendsThePageUrlsOnlyForLinksTheClientRendersFromTheItemTemplate(): void
+    public function buildsTheUrlsOfTheShownPagesWithAUrlAwarePaginatorAndSendsAllOnlyForAnItemTemplate(): void
     {
-        $link = 'type="{f:constant(name: \'Jramke\\FluidPrimitives\\Enum\\PaginationType::Link\')}"';
-        $template = '<ui:template name="itemTemplate" context="pagination"><primitives:pagination.item /></ui:template>';
+        $builtPages = [];
+        $paginator = new UrlAwarePaginator(new ArrayPaginator(range(1, 300), 2, 10), static function (int $page) use (
+            &$builtPages,
+        ): string {
+            $builtPages[] = $page;
+            return '/events?page=' . $page;
+        });
         $props = static fn(): array => array_values(
             HydrationRegistry::getInstance()->getAll()['primitives']['pagination'],
         )[0]['props'];
 
-        $this->renderTemplate($this->pagination('count="30" ' . $link, 1));
-        $this->assertArrayNotHasKey('pageUrls', $props());
+        $html = $this->renderTemplate($this->pagination('paginator="{paginator}"', 1, 2, 3), [
+            'paginator' => $paginator,
+        ]);
 
-        $this->renderTemplate(
-            '<primitives:pagination.root count="30" ' . $link . '>' . $template . '</primitives:pagination.root>',
-        );
-        // Typolink has no site to link to here, so the map stays empty: only whether it is sent is tested
-        $this->assertArrayHasKey('pageUrls', $props());
-
-        $this->renderTemplate('<primitives:pagination.root count="30">' . $template . '</primitives:pagination.root>');
+        $items = $this->elementsByValue($html, 'data-pagination-item');
+        $this->assertSame('/events?page=3', $items['3']->get('href'));
+        $this->assertFalse($items['3']->has('type'));
+        $this->assertSame('/events?page=1', $this->elementWith($html, 'data-pagination-prev-trigger')->get('href'));
+        $this->assertSame('link', $props()['type']);
         $this->assertArrayNotHasKey('pageUrls', $props());
+        $this->assertNotContains(15, $builtPages);
+
+        $this->renderTemplate('<primitives:pagination.root paginator="{paginator}"><primitives:pagination.itemTemplate>' .
+        '<primitives:pagination.item /></primitives:pagination.itemTemplate></primitives:pagination.root>', [
+            'paginator' => $paginator,
+        ]);
+        $this->assertCount(30, $props()['pageUrls']);
+        $this->assertSame('/events?page=15', $props()['pageUrls'][15]);
+    }
+
+    #[Test]
+    public function rendersLinksToThePageUrlsOfTheProp(): void
+    {
+        $html = $this->renderTemplate($this->pagination('count="30" defaultPage="2" pageUrls="{pageUrls}"', 3), [
+            'pageUrls' => ['1' => '/events', '2' => '/events?page=2', '3' => '/events?page=3'],
+        ]);
+
+        $this->assertSame('/events?page=3', $this->elementWith($html, 'data-pagination-item')->get('href'));
+        $this->assertSame('/events', $this->elementWith($html, 'data-pagination-prev-trigger')->get('href'));
+
+        $this->renderTemplate($this->pagination('count="30"', 1));
+        $props = array_values(HydrationRegistry::getInstance()->getAll()['primitives']['pagination'])[0]['props'];
+        $this->assertSame('button', $props['type']);
     }
 
     private function pagination(string $rootArguments, int ...$pages): string

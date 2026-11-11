@@ -1,12 +1,10 @@
-<ui:prop name="paginator" type="TYPO3\CMS\Core\Pagination\PaginatorInterface" optional="{true}" description="The TYPO3 paginator of the list, e.g. an `ArrayPaginator` or a `QueryResultPaginator`. It sets the current page and the number of pages." />
+<ui:prop name="paginator" type="TYPO3\CMS\Core\Pagination\PaginatorInterface" optional="{true}" description="The TYPO3 paginator of the list, e.g. an `ArrayPaginator` or a `QueryResultPaginator`. Wrap it in a `UrlAwarePaginator` for links. It sets the current page and the number of pages." />
 <ui:prop name="count" type="integer" optional="{true}" description="The total number of items. Without a `paginator`, it sets the number of pages together with `defaultPageSize`." />
 <ui:prop name="defaultPage" type="integer" optional="{true}" default="1" description="The page that is current when rendered. A `paginator` sets it instead." />
 <ui:prop name="defaultPageSize" type="integer" optional="{true}" client="{true}" default="10" description="The number of items per page." />
 <ui:prop name="siblingCount" type="integer" optional="{true}" client="{true}" default="1" description="The number of pages shown on each side of the current page." />
 <ui:prop name="boundaryCount" type="integer" optional="{true}" client="{true}" default="1" description="The number of pages always shown at the start and at the end." />
-<ui:prop name="type" type="Jramke\FluidPrimitives\Enum\PaginationType" optional="{true}" client="{true}" default="{f:constant(name: 'Jramke\FluidPrimitives\Enum\PaginationType::Button')}" description="Whether the items and triggers are buttons that change the page on the client, or links to the URL of their page." />
-<ui:prop name="pageArgument" type="string" optional="{true}" default="currentPage" description="The name of the query argument the links set to their page, in the namespace of the plugin inside an Extbase plugin. Only used with `type` `link`." />
-<ui:prop name="section" type="string" optional="{true}" description="The id of an element the links jump to, such as the list they page through, so the next page opens where the list is. Only used with `type` `link`." />
+<ui:prop name="pageUrls" type="array" optional="{true}" description="The URL of every page, by page number, for links without a `UrlAwarePaginator`. With it, the items and triggers are links to their page." />
 <ui:prop name="translations" type="array" optional="{true}" client="{true}" description="Localized labels: `rootLabel`, `firstTriggerLabel`, `prevTriggerLabel`, `nextTriggerLabel`, `lastTriggerLabel` and `itemLabel`, which takes a `%page%` and a `%totalPages%` placeholder. A client script can pass Zag's `itemLabel` function instead." />
 
 <nav
