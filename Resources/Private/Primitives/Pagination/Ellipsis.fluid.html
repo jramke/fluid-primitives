@@ -1,0 +1,12 @@
+<ui:prop name="index" type="integer" optional="{true}" description="The position of the ellipsis among the pages, the `index` of its entry in `pages`." />
+
+<f:variable name="content"><f:slot /></f:variable>
+<f:variable name="refData" value="{index: index}" />
+
+<span
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'ellipsis' , data: refData )}
+    {ui:attributes()}
+    {ui:asChild()}>
+    <f:if condition="{content -> f:format.trim()}"><f:then>{content -> f:format.raw()}</f:then><f:else>…</f:else></f:if>
+</span>

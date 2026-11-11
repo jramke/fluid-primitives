@@ -9,6 +9,10 @@ What changed in each release of Fluid Primitives, newest first. Every release li
 - **Core:** TYPO3 14.1 or newer is required. The library registers the `ui` and `primitives` Fluid namespaces in `Configuration/Fluid/Namespaces.php`, because TYPO3 14.1 deprecated `$GLOBALS['TYPO3_CONF_VARS']['SYS']['fluid']['namespaces']`. Move your own `ui` entry there too, and require `jramke/fluid-primitives` in your sitepackage so its collection loads after the library's and wins. Entries left in `TYPO3_CONF_VARS` still load after both. `ui:add` finds a `vite` namespace registered in `Namespaces.php`. ([#114](https://github.com/jramke/fluid-primitives/issues/114))
 - **Client, FieldArray:** `Template.componentNames` and the `componentNames` in the detail of `onItemAdded` are gone, and `ComponentHydrator.restampValue()` returns nothing. `mountAll()` mounts the components of a FieldArray row or a `Template` clone on its own, so remove the `mountAll()` calls from your `onItemAdded`. ([#113](https://github.com/jramke/fluid-primitives/pull/113))
 
+### Pagination
+
+- New `Pagination` component on `@zag-js/pagination`. Pass the TYPO3 paginator of your list to `paginator`, or `count` and `defaultPageSize`, and loop over `pages` of its context. With `type` `link`, every page is a link built by typolink, with a cHash and through your route enhancers, that sets `pageArgument` (`currentPage`) in the namespace of your plugin and jumps to the id in `section`. The client renders the pages it shows from an `itemTemplate` and an `ellipsisTemplate`; with links, the server then sends the URL of every page as the default `getPageUrl`. Add it with `ui:add pagination`.
+
 ### `ui:context`
 
 - Works in a plain template too, such as a partial or the slot of a part with `asChild` in the template of a controller action, and reads the closest enclosing root there. ([#116](https://github.com/jramke/fluid-primitives/pull/116))

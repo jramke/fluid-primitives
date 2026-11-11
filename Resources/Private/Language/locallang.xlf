@@ -173,6 +173,24 @@
             <trans-unit id="toaster.closeTriggerLabel" approved="yes">
                 <source>Dismiss notification</source>
             </trans-unit>
+            <trans-unit id="pagination.rootLabel" approved="yes">
+                <source>Pagination</source>
+            </trans-unit>
+            <trans-unit id="pagination.firstTriggerLabel" approved="yes">
+                <source>First page</source>
+            </trans-unit>
+            <trans-unit id="pagination.prevTriggerLabel" approved="yes">
+                <source>Previous page</source>
+            </trans-unit>
+            <trans-unit id="pagination.nextTriggerLabel" approved="yes">
+                <source>Next page</source>
+            </trans-unit>
+            <trans-unit id="pagination.lastTriggerLabel" approved="yes">
+                <source>Last page</source>
+            </trans-unit>
+            <trans-unit id="pagination.itemLabel" approved="yes">
+                <source>Page %page%</source>
+            </trans-unit>
         </body>
     </file>
 </xliff>

@@ -1,0 +1,74 @@
+[
+    {
+        "name": "no pages",
+        "page": 1,
+        "totalPages": 0,
+        "siblingCount": 1,
+        "boundaryCount": 1,
+        "expected": []
+    },
+    {
+        "name": "a single page",
+        "page": 1,
+        "totalPages": 1,
+        "siblingCount": 1,
+        "boundaryCount": 1,
+        "expected": [1]
+    },
+    {
+        "name": "every page when they fit",
+        "page": 3,
+        "totalPages": 7,
+        "siblingCount": 1,
+        "boundaryCount": 1,
+        "expected": [1, 2, 3, 4, 5, 6, 7]
+    },
+    {
+        "name": "an ellipsis at the end on the first page",
+        "page": 1,
+        "totalPages": 12,
+        "siblingCount": 1,
+        "boundaryCount": 1,
+        "expected": [1, 2, 3, 4, 5, null, 12]
+    },
+    {
+        "name": "ellipses on both sides in the middle",
+        "page": 6,
+        "totalPages": 12,
+        "siblingCount": 1,
+        "boundaryCount": 1,
+        "expected": [1, null, 5, 6, 7, null, 12]
+    },
+    {
+        "name": "an ellipsis at the start on the last page",
+        "page": 12,
+        "totalPages": 12,
+        "siblingCount": 1,
+        "boundaryCount": 1,
+        "expected": [1, null, 8, 9, 10, 11, 12]
+    },
+    {
+        "name": "no ellipsis before a page close to the start",
+        "page": 4,
+        "totalPages": 12,
+        "siblingCount": 1,
+        "boundaryCount": 1,
+        "expected": [1, 2, 3, 4, 5, null, 12]
+    },
+    {
+        "name": "more siblings and boundaries",
+        "page": 25,
+        "totalPages": 50,
+        "siblingCount": 2,
+        "boundaryCount": 2,
+        "expected": [1, 2, null, 23, 24, 25, 26, 27, null, 49, 50]
+    },
+    {
+        "name": "no boundary pages",
+        "page": 6,
+        "totalPages": 12,
+        "siblingCount": 1,
+        "boundaryCount": 0,
+        "expected": [null, 5, 6, 7, null]
+    }
+]

@@ -1,0 +1,10 @@
+<ui:useProps name="primitives:pagination.item" as="itemProps" />
+
+<primitives:pagination.item spreadProps="{itemProps}" class="{ui:cn(value: '
+    inline-flex size-8 cursor-pointer items-center justify-center rounded-md border border-transparent text-sm tabular-nums transition-colors
+    hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
+    data-selected:border-border data-selected:bg-background data-selected:shadow-xs
+    {class}
+')}">
+    <f:slot />
+</primitives:pagination.item>

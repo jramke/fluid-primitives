@@ -246,6 +246,19 @@ numberInput:
     - Scrubber.fluid.html
     - NumberInput.entry.ts
 
+pagination:
+  name: Pagination
+  description: Page links or buttons for a list that is split into pages
+  files:
+    - Root.fluid.html
+    - Item.fluid.html
+    - Ellipsis.fluid.html
+    - FirstTrigger.fluid.html
+    - PrevTrigger.fluid.html
+    - NextTrigger.fluid.html
+    - LastTrigger.fluid.html
+    - Pagination.entry.ts
+
 passwordInput:
   name: PasswordInput
   description: A password input with a button to show and hide the password, works with Field
