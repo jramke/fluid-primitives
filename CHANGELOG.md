@@ -11,7 +11,7 @@ What changed in each release of Fluid Primitives, newest first. Every release li
 
 ### `ui:context`
 
-- Works in a plain template too, such as a partial or the slot of a part with `asChild` in the template of a controller action, and reads the closest enclosing root there.
+- Works in a plain template too, such as a partial or the slot of a part with `asChild` in the template of a controller action, and reads the closest enclosing root there. ([#116](https://github.com/jramke/fluid-primitives/pull/116))
 
 ### Client
 
