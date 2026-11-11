@@ -72,11 +72,7 @@ export class Pagination extends Component<PaginationProps, pagination.Api> {
             ['lastTrigger', this.api.getLastTriggerProps],
         ];
         for (const [part, getProps] of triggers) {
-            const props = getProps();
-            // Zag removes only what it set itself: the server disables the triggers when the count
-            // comes from a client script.
-            props['data-disabled'] ??= null;
-            this.hydrator.queryAll(part).forEach(el => this.spreadProps(el, props));
+            this.hydrator.queryAll(part).forEach(el => this.spreadProps(el, getProps()));
         }
 
         const itemTemplateEl = this.hydrator.query<HTMLTemplateElement>('itemTemplate');
