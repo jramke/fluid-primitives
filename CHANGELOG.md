@@ -9,6 +9,10 @@ What changed in each release of Fluid Primitives, newest first. Every release li
 - **Core:** TYPO3 14.1 or newer is required. The library registers the `ui` and `primitives` Fluid namespaces in `Configuration/Fluid/Namespaces.php`, because TYPO3 14.1 deprecated `$GLOBALS['TYPO3_CONF_VARS']['SYS']['fluid']['namespaces']`. Move your own `ui` entry there too, and require `jramke/fluid-primitives` in your sitepackage so its collection loads after the library's and wins. Entries left in `TYPO3_CONF_VARS` still load after both. `ui:add` finds a `vite` namespace registered in `Namespaces.php`. ([#114](https://github.com/jramke/fluid-primitives/issues/114))
 - **Client, FieldArray:** `Template.componentNames` and the `componentNames` in the detail of `onItemAdded` are gone, and `ComponentHydrator.restampValue()` returns nothing. `mountAll()` mounts the components of a FieldArray row or a `Template` clone on its own, so remove the `mountAll()` calls from your `onItemAdded`. ([#113](https://github.com/jramke/fluid-primitives/pull/113))
 
+### `ui:context`
+
+- Works in a plain template too, such as a partial or the slot of a part with `asChild` in the template of a controller action, and reads the closest enclosing root there. ([#116](https://github.com/jramke/fluid-primitives/pull/116))
+
 ### Client
 
 - `mountAll()` also mounts the components whose markup arrives later, such as a FieldArray row, a `Template` clone or HTML that Turbo or a `fetch()` swapped in, and destroys an instance once every element it rendered onto has left the page, a Popover or Dialog without a root element included. `mountWithin()` mounts inserted markup before your next line runs, and `destroyComponentsWithin()` destroys a Popover or Dialog in the element too. The library removes each hydration data block from the page once it read it. ([#113](https://github.com/jramke/fluid-primitives/pull/113))

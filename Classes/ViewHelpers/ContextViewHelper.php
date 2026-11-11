@@ -7,7 +7,6 @@ namespace Jramke\FluidPrimitives\ViewHelpers;
 use Jramke\FluidPrimitives\Constants;
 use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
 use Jramke\FluidPrimitives\Exception\InvalidPropValueException;
-use Jramke\FluidPrimitives\Exception\MissingContextException;
 use Jramke\FluidPrimitives\Exception\MissingPropException;
 use Jramke\FluidPrimitives\Registry\ProvidedRootRegistry;
 use Jramke\FluidPrimitives\Service\ContextService;
@@ -19,7 +18,7 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
 /**
  *
- * Reads the context of the closest enclosing component of another type.
+ * Reads the context of the closest enclosing component.
  *
  * Use it when a nested component needs something from an ancestor, for example a custom button inside a dialog:
  *
@@ -27,13 +26,30 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
  * <ui:context name="ui:dialog" as="dialogContext" />
  * ```
  *
- * `name` is the component with its namespace, as you write its tag, and `as` the variable that receives its context. A component reads its own context through the `context` variable. Asking `ui:context` for it throws an exception.
+ * It works anywhere inside the root, in the template of a component and in a plain template alike. That covers a
+ * partial that does not get the data of the root, and the slot of a part with `asChild`:
+ *
+ * ```html
+ * <!-- Partials/DeliveryOptions.html, rendered inside <ui:collapsible.root disabled="{product.soldOut}"> -->
+ * <ui:collapsible.trigger asChild="{true}">
+ *     <ui:context name="ui:collapsible" as="collapsibleContext" />
+ *     <button type="button">Delivery options{f:if(condition: collapsibleContext.disabled, then: ' (sold out)')}</button>
+ * </ui:collapsible.trigger>
+ * ```
+ *
+ * Inside a part, the context also holds the props the part exposes with `context="{true}"`, such as
+ * `{accordionContext.item.value}` inside an accordion item. Without an enclosing component of that name, the variable is
+ * `null`. Like `f:variable`, it stays set after the root.
+ *
+ * `name` is the component with its namespace, as you write its tag, and `as` the variable that receives its context.
+ * The template of a component reads its own context through the `context` variable: asking `ui:context` for it there
+ * throws an exception.
  *
  * With `provider` it reads the context a `<component>.provider` created instead, from anywhere after the provider, also outside a component:
  *
  * ```html
  * <ui:dialog.provider id="contact" />
- * <ui:context name="ui:dialog" provider="contact" as="contactDialog" />
+ * <ui:context name="ui:dialog" provider="contact" as="contactDialogContext" />
  * ```
  *
  */
@@ -103,14 +119,11 @@ class ContextViewHelper extends AbstractViewHelper
             return $this->assign(ProvidedRootRegistry::require($collections, $baseName, $providerId, $usedBy)->context);
         }
 
-        if (!ComponentUtility::isComponent($renderingContext)) {
-            throw new MissingContextException(
-                'The context ViewHelper can only be used inside a component, or with the id of a provider.',
-                1754253443,
-            );
-        }
-
-        if ($baseName === ComponentNameUtility::getComponentBaseNameFromContext($renderingContext)) {
+        // A plain template reads the closest enclosing root too, e.g. inside the slot of an asChild part
+        if (
+            ComponentUtility::isComponent($renderingContext) &&
+            $baseName === ComponentNameUtility::getComponentBaseNameFromContext($renderingContext)
+        ) {
             throw new InvalidPropValueException(
                 'You cannot access the context of the current component using the context ViewHelper. Use the exposed "context" variable instead.',
                 1754253445,
