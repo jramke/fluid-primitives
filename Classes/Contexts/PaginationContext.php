@@ -112,6 +112,8 @@ class PaginationContext extends AbstractComponentContext
             return null;
         }
 
+        // ponytail: one URL per page on an uncached render; send a window of pages instead if lists
+        // with thousands of pages need it (a URL pattern would break with the cHash)
         $pageUrls = [];
         foreach (range(1, max(1, $this->getTotalPages())) as $page) {
             $url = $this->getPageUrl($page);
