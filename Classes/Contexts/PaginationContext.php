@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Contexts;
 
 use Jramke\FluidPrimitives\Attributes\ExposeToClient;
-use Jramke\FluidPrimitives\Constants;
 use Jramke\FluidPrimitives\Domain\Dto\TagAttributes;
 use Jramke\FluidPrimitives\Enum\PaginationType;
 use Jramke\FluidPrimitives\Pagination\UrlAwarePaginator;
@@ -86,17 +85,16 @@ class PaginationContext extends AbstractComponentContext
     }
 
     /**
-     * The URL of every page, for the links the client renders from the `itemTemplate`: from the
-     * `pageUrls` prop or a {@see UrlAwarePaginator}. Pages that reload with every click need them only
-     * in the HTML.
+     * The URL of every page, from the `pageUrls` prop or a {@see UrlAwarePaginator}, for a root with a
+     * `fetchUrl`: the client pushes them to the history and renders them into new links. Pages that
+     * reload with every click need them only in the HTML.
      *
      * @return array<int, string>|null By page
      */
     #[ExposeToClient(excludeIfNull: true)]
     public function getPageUrls(): ?array
     {
-        $renderedTemplates = Typed::arrayOrNull($this->get(Constants::RENDERED_TEMPLATES)) ?? [];
-        if (!$this->isLink() || !array_key_exists('itemTemplate', $renderedTemplates)) {
+        if (!$this->isLink() || $this->get('fetchUrl') === null) {
             return null;
         }
 

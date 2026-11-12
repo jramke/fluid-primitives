@@ -61,7 +61,7 @@ final class PaginationRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
-    public function buildsTheUrlsOfTheShownPagesWithAUrlAwarePaginatorAndSendsAllOnlyToLinksWithAnItemTemplate(): void
+    public function buildsTheUrlsOfTheShownPagesWithAUrlAwarePaginatorAndSendsAllOnlyToLinksWithAFetchUrl(): void
     {
         $builtPages = [];
         $paginator = new UrlAwarePaginator(new ArrayPaginator(range(1, 300), 2, 10), static function (int $page) use (
@@ -86,17 +86,14 @@ final class PaginationRenderingTest extends FunctionalTestCase
         $this->assertArrayNotHasKey('pageUrls', $props());
         $this->assertNotContains(15, $builtPages);
 
-        $this->renderTemplate('<primitives:pagination.root paginator="{paginator}"><primitives:pagination.itemTemplate>' .
-        '<primitives:pagination.item /></primitives:pagination.itemTemplate></primitives:pagination.root>', [
+        $this->renderTemplate($this->pagination('paginator="{paginator}" fetchUrl="/events.json"', 1), [
             'paginator' => $paginator,
         ]);
+        $this->assertSame('/events.json', $props()['fetchUrl']);
         $this->assertCount(30, $props()['pageUrls']);
         $this->assertSame('/events?page=15', $props()['pageUrls'][15]);
 
-        $this->renderTemplate(
-            '<primitives:pagination.root count="300"><primitives:pagination.itemTemplate>' .
-            '<primitives:pagination.item /></primitives:pagination.itemTemplate></primitives:pagination.root>',
-        );
+        $this->renderTemplate($this->pagination('count="300" fetchUrl="/events.json"', 1));
         $this->assertSame('button', $props()['type']);
         $this->assertArrayNotHasKey('pageUrls', $props());
     }

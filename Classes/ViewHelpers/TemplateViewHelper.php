@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\ViewHelpers;
 
-use Jramke\FluidPrimitives\Constants;
 use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
 use Jramke\FluidPrimitives\Domain\Dto\ComponentIdentity;
 use Jramke\FluidPrimitives\Domain\Dto\TagAttributes;
@@ -15,7 +14,6 @@ use Jramke\FluidPrimitives\Service\ContextService;
 use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
 use Jramke\FluidPrimitives\Utility\ComponentRefUtility;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
-use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3Fluid\Fluid\Core\Variables\VariableProviderInterface;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
@@ -45,23 +43,6 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
  * ## Set the context
  *
  * `context` is the camelCase name of the enclosing component. Pass it when the template is slot content of another component, as above. That includes the plain Fluid template of a content element. Omit it in the template body of a component, where it defaults to the active component. A native `<template>` element is enough for a one-off client-rendered list that has no enclosing component.
- *
- * ## Send data only for a template
- *
- * Every `ui:template` adds its `name` to the `renderedTemplates` variable of the root context, as a key with the value `true`. A context can read it to send data only the client renders with, as the Pagination sends the URL of every page only with an `itemTemplate`:
- *
- * ```php
- * #[ExposeToClient(excludeIfNull: true)]
- * public function getPageUrls(): ?array
- * {
- *     if (!array_key_exists('itemTemplate', $this->get(Constants::RENDERED_TEMPLATES) ?? [])) {
- *         return null;
- *     }
- *     // ...
- * }
- * ```
- *
- * The variable is complete once the root rendered: read it in `afterRendering()` or in a value exposed to the client, not in a part. It holds the templates inside the root and in parts before it, not those in a detachable part after the root.
  *
  */
 class TemplateViewHelper extends AbstractViewHelper
@@ -126,10 +107,6 @@ class TemplateViewHelper extends AbstractViewHelper
                 ComponentRefUtility::getAttributeName($clientBaseName, $part) => $rootId,
             ]);
             ReferencedRootRegistry::mark($clientBaseName, $rootId);
-            $context->set(Constants::RENDERED_TEMPLATES, [
-                ...(Typed::arrayOrNull($context->get(Constants::RENDERED_TEMPLATES)) ?? []),
-                $part => true,
-            ]);
 
             // Opens a tracking scope keyed by this stencil's own key, so every root component that
             // registers itself while rendering our children (however it renders - see

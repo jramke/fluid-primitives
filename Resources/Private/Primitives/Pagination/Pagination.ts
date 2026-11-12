@@ -36,21 +36,70 @@ interface PageElement {
     el: HTMLElement;
 }
 
-/** The props of {@link Pagination}: the machine's, and the URLs the server built. */
+/** What {@link PaginationProps.loadPage} receives. */
+export interface PageLoadDetails {
+    /** The page to load. */
+    page: number;
+    /** The number of items per page. */
+    pageSize: number;
+    /** The `fetchUrl` of the root. */
+    fetchUrl: string;
+    /** Aborted once the page changes again, so a response of a page that is no longer current is dropped. Pass it to `fetch()`. */
+    signal: AbortSignal;
+}
+
+/** The props of {@link Pagination}: the machine's, the URLs the server built and the page loading. */
 export type PaginationProps = pagination.Props & {
     /**
-     * The URL of every page, by page number. The server sends it for links the client renders from
-     * the `itemTemplate`. It is the default `getPageUrl`.
+     * The URL of every page, by page number. The server sends it for a root with a `fetchUrl`. It is
+     * the default `getPageUrl`.
      */
     pageUrls?: Record<number, string>;
+    /** The endpoint of the `fetchUrl` prop of the root. */
+    fetchUrl?: string;
+    /**
+     * Loads and shows the content of a page, after every page change of a root with a `fetchUrl`. An
+     * error after its signal aborted is dropped.
+     */
+    loadPage?: (details: PageLoadDetails) => unknown;
 };
 
 export class Pagination extends Component<PaginationProps, pagination.Api> {
     static componentName = 'pagination';
 
+    #loading: AbortController | undefined;
+
     transformProps({ pageUrls, ...props }: PaginationProps): PaginationProps {
-        if (!pageUrls || props.getPageUrl) return props;
-        return { ...props, getPageUrl: ({ page }) => pageUrls[page] };
+        const getPageUrl =
+            props.getPageUrl ??
+            (pageUrls ? ({ page }: { page: number }) => pageUrls[page] : undefined);
+        if (!props.fetchUrl) return { ...props, getPageUrl };
+
+        return {
+            ...props,
+            getPageUrl,
+            onPageChange: details => {
+                props.onPageChange?.(details);
+                this.#loadPage(details);
+            },
+        };
+    }
+
+    init(): this {
+        super.init();
+        if (this.#syncsHistory()) {
+            this.#replaceHistoryPage(this.api.page);
+            this.hydrator.query('root')?.addEventListener('click', this.#keepLinkClick, true);
+            window.addEventListener('popstate', this.#showHistoryPage);
+        }
+        return this;
+    }
+
+    destroy() {
+        this.#loading?.abort();
+        this.hydrator.query('root')?.removeEventListener('click', this.#keepLinkClick, true);
+        window.removeEventListener('popstate', this.#showHistoryPage);
+        super.destroy();
     }
 
     initMachine(props: pagination.Props): Machine<any> {
@@ -102,6 +151,70 @@ export class Pagination extends Component<PaginationProps, pagination.Api> {
                 `Pagination "${this.machine.scope.id}" shows page ${missing.value}, which has no item. Add an itemTemplate and an ellipsisTemplate, so the client renders the pages it shows.`
             );
         }
+    }
+
+    #syncsHistory(): boolean {
+        return Boolean(this.userProps.fetchUrl && this.userProps.type === 'link');
+    }
+
+    #loadPage({ page, pageSize }: pagination.PageChangeDetails) {
+        this.#loading?.abort();
+        const loading = new AbortController();
+        this.#loading = loading;
+
+        // Back and forward set the page of their entry, which then needs no new one
+        if (this.#syncsHistory() && this.#historyPage() !== page) {
+            const url = this.userProps.getPageUrl?.({ page, pageSize });
+            if (url) history.pushState(this.#historyState(page), '', url);
+        }
+
+        const { loadPage, fetchUrl } = this.userProps;
+        if (!loadPage || !fetchUrl) return;
+        Promise.resolve()
+            .then(() => loadPage({ page, pageSize, fetchUrl, signal: loading.signal }))
+            .catch(error => {
+                if (!loading.signal.aborted) throw error;
+            });
+    }
+
+    // A link click changes the page through the machine instead of loading it. A click with a
+    // modifier key opens the link elsewhere and leaves this page as it is.
+    #keepLinkClick = (event: MouseEvent) => {
+        if (!(event.target instanceof Element) || !event.target.closest('a[href]')) return;
+        if (
+            event.button !== 0 ||
+            event.metaKey ||
+            event.ctrlKey ||
+            event.shiftKey ||
+            event.altKey
+        ) {
+            event.stopPropagation();
+            return;
+        }
+        event.preventDefault();
+    };
+
+    #showHistoryPage = () => {
+        const page = this.#historyPage();
+        if (page !== undefined && page !== this.api.page) this.api.setPage(page);
+    };
+
+    // Several paginations can share one history entry, each under its own key
+    get #historyKey() {
+        return `fluid-primitives:pagination:${this.machine.scope.id}`;
+    }
+
+    #historyPage(): number | undefined {
+        const page = history.state?.[this.#historyKey];
+        return typeof page === 'number' ? page : undefined;
+    }
+
+    #historyState(page: number) {
+        return { ...(history.state ?? {}), [this.#historyKey]: page };
+    }
+
+    #replaceHistoryPage(page: number) {
+        history.replaceState(this.#historyState(page), '');
     }
 
     // The pages go where the templates are. An item keeps its element while its page is shown, so a

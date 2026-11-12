@@ -11,15 +11,11 @@ What changed in each release of Fluid Primitives, newest first. Every release li
 
 ### Pagination
 
-- New `Pagination` component on `@zag-js/pagination`. Pass the TYPO3 paginator of your list to `paginator`, or `count` and `defaultPageSize`, and loop over `pages` of its context. For links, wrap the paginator in the new `UrlAwarePaginator` with a function that returns the URL of a page, for example built with the `UriBuilder` of your controller, or pass the URLs to `pageUrls`. The root builds the URLs of the pages it shows, and sends all of them to the client only with an `itemTemplate`, as the default `getPageUrl`. The client renders the pages it shows from the `itemTemplate` and `ellipsisTemplate` parts, and leaves out the ellipses without an `ellipsisTemplate`. A `count` or `defaultPage` next to a `paginator`, or `pageUrls` next to a `UrlAwarePaginator`, throws an error, and so does a `pageUrls` array keyed from 0, because its keys are the page numbers. Add it with `ui:add pagination`. ([#118](https://github.com/jramke/fluid-primitives/pull/118))
+- New `Pagination` component on `@zag-js/pagination`. Pass the TYPO3 paginator of your list to `paginator`, or `count` and `defaultPageSize`, and loop over `pages` of its context. For links, wrap the paginator in the new `UrlAwarePaginator` with a function that returns the URL of a page, for example built with the `UriBuilder` of your controller, or pass the URLs to `pageUrls`. The root builds the URLs of the pages it shows. To load pages without a reload, pass your endpoint to `fetchUrl` and load the page in `loadPage` of the client script, which gets an abort signal for responses that are no longer current: the root then sends every URL to the client, as the default `getPageUrl`, and a link click changes the page and the URL in the address bar, back and forward included. The client renders the pages it shows from the `itemTemplate` and `ellipsisTemplate` parts, and leaves out the ellipses without an `ellipsisTemplate`. A `count` or `defaultPage` next to a `paginator`, or `pageUrls` next to a `UrlAwarePaginator`, throws an error, and so does a `pageUrls` array keyed from 0, because its keys are the page numbers. Add it with `ui:add pagination`. ([#118](https://github.com/jramke/fluid-primitives/pull/118))
 
 ### `ui:context`
 
 - Works in a plain template too, such as a partial or the slot of a part with `asChild` in the template of a controller action, and reads the closest enclosing root there. ([#116](https://github.com/jramke/fluid-primitives/pull/116))
-
-### `ui:template`
-
-- Adds its name to the `renderedTemplates` variable of the root context, so a context can send data only the client renders with. Read it in `afterRendering()` or in a value exposed to the client. ([#118](https://github.com/jramke/fluid-primitives/pull/118))
 
 ### Client
 

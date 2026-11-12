@@ -5,6 +5,7 @@
 <ui:prop name="siblingCount" type="integer" optional="{true}" client="{true}" default="1" description="The number of pages shown on each side of the current page." />
 <ui:prop name="boundaryCount" type="integer" optional="{true}" client="{true}" default="1" description="The number of pages always shown at the start and at the end." />
 <ui:prop name="pageUrls" type="array" optional="{true}" description="The URL of every page, keyed by the page number starting at 1, for links without a `UrlAwarePaginator`. Leave it out with one. With it, the items and triggers are links to their page." />
+<ui:prop name="fetchUrl" type="string" optional="{true}" client="{true}" description="The endpoint a client script loads the content of a page from, passed to its `loadPage`. With links, a click on a page no longer loads it: the URL in the address bar follows the page, and back and forward change it." />
 <ui:prop name="translations" type="array" optional="{true}" client="{true}" description="Localized labels: `rootLabel`, `firstTriggerLabel`, `prevTriggerLabel`, `nextTriggerLabel`, `lastTriggerLabel` and `itemLabel`, which takes a `%page%` and a `%totalPages%` placeholder. A client script can pass Zag's `itemLabel` function instead." />
 
 <ui:error when="{context.propsOverriddenByPaginator -> f:count()}" message="Leave out {context.propsOverriddenByPaginator -> f:join(separator: ', ')} next to the paginator of {component.fullName}: the paginator sets the page and the number of pages, a UrlAwarePaginator also the URLs." />
