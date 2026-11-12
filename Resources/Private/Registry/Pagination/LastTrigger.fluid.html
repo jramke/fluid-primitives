@@ -1,0 +1,11 @@
+<ui:useProps name="primitives:pagination.lastTrigger" as="lastTriggerProps" />
+
+<primitives:pagination.lastTrigger spreadProps="{lastTriggerProps}" class="{ui:cn(value: '
+    inline-flex h-8 min-w-8 cursor-pointer items-center justify-center gap-1 rounded-md px-2 text-sm transition-colors
+    hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
+    disabled:pointer-events-none disabled:opacity-50 data-disabled:pointer-events-none data-disabled:opacity-50
+    {class}
+')}">
+    <f:slot />
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4" aria-hidden="true"><path d="m6 17 5-5-5-5"></path><path d="m13 17 5-5-5-5"></path></svg>
+</primitives:pagination.lastTrigger>

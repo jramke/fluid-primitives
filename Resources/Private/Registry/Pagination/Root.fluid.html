@@ -1,0 +1,7 @@
+<ui:useProps name="primitives:pagination.root" as="rootProps" />
+
+<primitives:pagination.root spreadProps="{rootProps}" class="{ui:cn(value: 'flex flex-wrap items-center gap-1 {class}')}">
+    <f:slot />
+</primitives:pagination.root>
+
+<vite:asset entry="%componentPath%/Pagination.entry.ts" />

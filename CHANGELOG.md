@@ -9,6 +9,10 @@ What changed in each release of Fluid Primitives, newest first. Every release li
 - **Core:** TYPO3 14.1 or newer is required. The library registers the `ui` and `primitives` Fluid namespaces in `Configuration/Fluid/Namespaces.php`, because TYPO3 14.1 deprecated `$GLOBALS['TYPO3_CONF_VARS']['SYS']['fluid']['namespaces']`. Move your own `ui` entry there too, and require `jramke/fluid-primitives` in your sitepackage so its collection loads after the library's and wins. Entries left in `TYPO3_CONF_VARS` still load after both. `ui:add` finds a `vite` namespace registered in `Namespaces.php`. ([#114](https://github.com/jramke/fluid-primitives/issues/114))
 - **Client, FieldArray:** `Template.componentNames` and the `componentNames` in the detail of `onItemAdded` are gone, and `ComponentHydrator.restampValue()` returns nothing. `mountAll()` mounts the components of a FieldArray row or a `Template` clone on its own, so remove the `mountAll()` calls from your `onItemAdded`. ([#113](https://github.com/jramke/fluid-primitives/pull/113))
 
+### Pagination
+
+- New `Pagination` component on `@zag-js/pagination`. Pass the TYPO3 paginator of your list to `paginator`, or `count` and `defaultPageSize`, and loop over `pages` of its context. For links, wrap the paginator in the new `UrlAwarePaginator` with a function that returns the URL of a page, for example built with the `UriBuilder` of your controller, or pass the URLs to `pageUrls`. To load pages without a reload, pass your endpoint to `fetchUrl` and load each page in `loadPage` of your client script: the address bar follows the page. The client renders the pages it shows from the `itemTemplate` and `ellipsisTemplate` parts. Add it with `ui:add pagination`. ([#118](https://github.com/jramke/fluid-primitives/pull/118))
+
 ### `ui:context`
 
 - Works in a plain template too, such as a partial or the slot of a part with `asChild` in the template of a controller action, and reads the closest enclosing root there. ([#116](https://github.com/jramke/fluid-primitives/pull/116))

@@ -1,0 +1,34 @@
+<ui:prop name="value" type="integer" optional="{true}" description="The page number of the item. Without content, the item shows it. Left out in the `itemTemplate`, where the client sets it." />
+
+<ui:error when="!{context.isRenderStencil} && !{value}" message="The {component.fullName} requires a value prop outside the itemTemplate" />
+
+<f:variable name="itemState">{context -> ui:call(method: 'getItemState', arguments: {0: {value: value}})}</f:variable>
+<f:variable name="content"><f:slot /></f:variable>
+<f:variable name="refData" value="{index: value, selected: itemState.current}" />
+
+<f:if condition="{context.link}">
+    <f:then>
+        <a
+            {f:if(condition: itemState.url, then: 'href="{itemState.url}"' )}
+            {f:if(condition: itemState.current, then: 'aria-current="page"' )}
+            {f:if(condition: value, then: 'aria-label="{itemState.label}"' )}
+            {f:if(condition: class, then: 'class="{class}"' )}
+            {ui:ref(name: 'item' , value: value, data: refData )}
+            {ui:attributes()}
+            {ui:asChild()}>
+            <f:if condition="{content -> f:format.trim()}"><f:then>{content -> f:format.raw()}</f:then><f:else>{value}</f:else></f:if>
+        </a>
+    </f:then>
+    <f:else>
+        <button
+            type="button"
+            {f:if(condition: itemState.current, then: 'aria-current="page"' )}
+            {f:if(condition: value, then: 'aria-label="{itemState.label}"' )}
+            {f:if(condition: class, then: 'class="{class}"' )}
+            {ui:ref(name: 'item' , value: value, data: refData )}
+            {ui:attributes()}
+            {ui:asChild()}>
+            <f:if condition="{content -> f:format.trim()}"><f:then>{content -> f:format.raw()}</f:then><f:else>{value}</f:else></f:if>
+        </button>
+    </f:else>
+</f:if>
