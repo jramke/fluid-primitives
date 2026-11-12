@@ -82,13 +82,25 @@ export class Pagination extends Component<PaginationProps, pagination.Api> {
                 props.onPageChange?.(details);
                 this.#loadPage(details);
             },
+            // A new page size shows other items on the page, which may also change
+            onPageSizeChange: details => {
+                props.onPageSizeChange?.(details);
+                queueMicrotask(() =>
+                    this.#loadPage({ page: this.api.page, pageSize: details.pageSize })
+                );
+            },
         };
     }
 
     init(): this {
         super.init();
+        const { fetchUrl, loadPage } = this.userProps;
+        if (fetchUrl && !loadPage) {
+            devWarn(
+                `Pagination "${this.machine.scope.id}" has a fetchUrl but no loadPage, so its pages never load. Render the root with autoMount="{false}" and mount it with a loadPage.`
+            );
+        }
         if (this.#syncsHistory()) {
-            this.#replaceHistoryPage(this.api.page);
             this.hydrator.query('root')?.addEventListener('click', this.#keepLinkClick, true);
             window.addEventListener('popstate', this.#showHistoryPage);
         }
@@ -162,25 +174,33 @@ export class Pagination extends Component<PaginationProps, pagination.Api> {
         const loading = new AbortController();
         this.#loading = loading;
 
-        // Back and forward set the page of their entry, which then needs no new one
-        if (this.#syncsHistory() && this.#historyPage() !== page) {
-            const url = this.userProps.getPageUrl?.({ page, pageSize });
-            if (url) history.pushState(this.#historyState(page), '', url);
-        }
+        // Back and forward set the page of their URL, which then needs no new history entry
+        const url = this.#syncsHistory()
+            ? this.userProps.getPageUrl?.({ page, pageSize })
+            : undefined;
+        if (url && !this.#isCurrentUrl(url)) history.pushState(history.state, '', url);
 
         const { loadPage, fetchUrl } = this.userProps;
         if (!loadPage || !fetchUrl) return;
-        Promise.resolve()
-            .then(() => loadPage({ page, pageSize, fetchUrl, signal: loading.signal }))
-            .catch(error => {
+        Promise.resolve(loadPage({ page, pageSize, fetchUrl, signal: loading.signal })).catch(
+            error => {
                 if (!loading.signal.aborted) throw error;
-            });
+            }
+        );
     }
 
-    // A link click changes the page through the machine instead of loading it. A click with a
-    // modifier key opens the link elsewhere and leaves this page as it is.
+    // A click on a link of the pagination changes the page through the machine instead of loading
+    // it. A click with a modifier key opens the link elsewhere and leaves this page as it is. Other
+    // links in the root, such as those of the list, are left alone.
     #keepLinkClick = (event: MouseEvent) => {
-        if (!(event.target instanceof Element) || !event.target.closest('a[href]')) return;
+        const link = event.target instanceof Element ? event.target.closest('a[href]') : null;
+        const parts = ['item', 'firstTrigger', 'prevTrigger', 'nextTrigger', 'lastTrigger'];
+        if (
+            !link ||
+            !parts.some(part => this.hydrator.queryAll(part).includes(link as HTMLElement))
+        ) {
+            return;
+        }
         if (
             event.button !== 0 ||
             event.metaKey ||
@@ -194,27 +214,24 @@ export class Pagination extends Component<PaginationProps, pagination.Api> {
         event.preventDefault();
     };
 
+    // The page comes from the URL, not from the history state: that also holds after a reload, and
+    // for entries of in-page anchors or of other scripts. A URL of no page leaves the page as it is.
     #showHistoryPage = () => {
-        const page = this.#historyPage();
-        if (page !== undefined && page !== this.api.page) this.api.setPage(page);
+        const { getPageUrl } = this.userProps;
+        const { pageSize, totalPages } = this.api;
+        for (let page = 1; page <= totalPages; page++) {
+            const url = getPageUrl?.({ page, pageSize });
+            if (url && this.#isCurrentUrl(url)) {
+                if (page !== this.api.page) this.api.setPage(page);
+                return;
+            }
+        }
     };
 
-    // Several paginations can share one history entry, each under its own key
-    get #historyKey() {
-        return `fluid-primitives:pagination:${this.machine.scope.id}`;
-    }
-
-    #historyPage(): number | undefined {
-        const page = history.state?.[this.#historyKey];
-        return typeof page === 'number' ? page : undefined;
-    }
-
-    #historyState(page: number) {
-        return { ...(history.state ?? {}), [this.#historyKey]: page };
-    }
-
-    #replaceHistoryPage(page: number) {
-        history.replaceState(this.#historyState(page), '');
+    // The hash is left out: page URLs often jump to the list, and an anchor in the page stays on it
+    #isCurrentUrl(url: string): boolean {
+        const target = new URL(url, location.href);
+        return target.pathname === location.pathname && target.search === location.search;
     }
 
     // The pages go where the templates are. An item keeps its element while its page is shown, so a

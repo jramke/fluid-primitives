@@ -94,7 +94,7 @@ class PaginationContext extends AbstractComponentContext
     #[ExposeToClient(excludeIfNull: true)]
     public function getPageUrls(): ?array
     {
-        if (!$this->isLink() || $this->get('fetchUrl') === null) {
+        if (!$this->isLink() || (Typed::stringOrNull($this->get('fetchUrl')) ?? '') === '') {
             return null;
         }
 

@@ -105,9 +105,12 @@ test('gives the links it renders on the client the URLs the server sent', async 
     await expect.poll(() => prevEl().hasAttribute('href')).toBe(false);
 });
 
-function mountWithFetchUrl(loadPage: PaginationProps['loadPage']) {
+function mountWithFetchUrl(props: Partial<PaginationProps>) {
+    // The server renders the page of the URL it was requested with
+    history.replaceState(null, '', '/events?page=1');
     document.body.innerHTML = `
         <nav data-pagination-root="h">
+            <a href="/events/42" id="event">Event</a>
             ${[1, 2, 3, 4, 5].map(page => `<a href="/events?page=${page}" data-pagination-item="h" data-value="${page}">${page}</a>`).join('')}
             <span data-pagination-ellipsis="h" data-index="5">…</span>
             <a href="/events?page=12" data-pagination-item="h" data-value="12">12</a>
@@ -123,7 +126,7 @@ function mountWithFetchUrl(loadPage: PaginationProps['loadPage']) {
         type: 'link',
         pageUrls,
         fetchUrl: '/events.json',
-        loadPage,
+        ...props,
     }).init();
 }
 
@@ -138,7 +141,11 @@ const click = (el: HTMLElement, init: MouseEventInit = {}) => {
 
 test('with a fetchUrl, a link click loads the page through loadPage, and the URL and the history follow the page', async () => {
     const loadPage = vi.fn();
-    mountWithFetchUrl(loadPage);
+    const onPageChange = vi.fn();
+    mountWithFetchUrl({ loadPage, onPageChange });
+
+    // a link of the list in the root is not one of the pagination
+    expect(click(document.getElementById('event')!).defaultPrevented).toBe(false);
 
     // a click with a modifier key opens the link elsewhere and leaves the page as it is
     expect(click(linkEl(5), { ctrlKey: true }).defaultPrevented).toBe(false);
@@ -148,6 +155,7 @@ test('with a fetchUrl, a link click loads the page through loadPage, and the URL
     await expect.poll(() => loadPage.mock.calls.length).toBe(1);
     expect(loadPage.mock.calls[0][0]).toMatchObject({ page: 5, fetchUrl: '/events.json' });
     expect(location.search).toBe('?page=5');
+    expect(onPageChange).toHaveBeenCalledWith(expect.objectContaining({ page: 5 }));
 
     history.back();
     await expect.poll(() => pagination!.api.page).toBe(1);
@@ -157,17 +165,24 @@ test('with a fetchUrl, a link click loads the page through loadPage, and the URL
     // back set the page of its entry and pushed none: forward still leads to page 5
     history.forward();
     await expect.poll(() => pagination!.api.page).toBe(5);
+
+    // an entry of an in-page anchor has no state: the page comes from the URL
+    location.hash = 'list';
+    click(linkEl(6));
+    await expect.poll(() => location.search).toBe('?page=6');
+    history.back();
+    await expect.poll(() => pagination!.api.page).toBe(5);
 });
 
 test('aborts the signal of a page that is no longer current and drops its error', async () => {
     const signals: AbortSignal[] = [];
-    mountWithFetchUrl(
-        ({ signal }) =>
+    mountWithFetchUrl({
+        loadPage: ({ signal }) =>
             new Promise((_, reject) => {
                 signals.push(signal);
                 signal.addEventListener('abort', () => reject(signal.reason));
-            })
-    );
+            }),
+    });
 
     click(linkEl(5));
     await expect.poll(() => signals.length).toBe(1);
