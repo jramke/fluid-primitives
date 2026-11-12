@@ -12,13 +12,11 @@ use Jramke\FluidPrimitives\Service\TranslatorService;
 use Jramke\FluidPrimitives\Traits\HasTranslationsTrait;
 use Jramke\FluidPrimitives\Utility\PaginationRange;
 use Jramke\FluidPrimitives\Utility\Typed;
-use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use TYPO3\CMS\Core\Pagination\PaginatorInterface;
 
 // A context with a getter per value the parts read
 // @mago-expect lint:too-many-methods
 // @mago-expect lint:cyclomatic-complexity
-#[Autoconfigure(public: true)]
 class PaginationContext extends AbstractComponentContext
 {
     use HasTranslationsTrait;
