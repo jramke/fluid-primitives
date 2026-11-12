@@ -58,14 +58,12 @@ class PaginationContext extends AbstractComponentContext
     #[ExposeToClient]
     public function getCount(): int
     {
-        $count = Typed::intOrNull($this->get('count'));
-        if ($count !== null) {
-            return max(0, $count);
+        $paginator = $this->getPaginator();
+        if ($paginator instanceof PaginatorInterface) {
+            return $paginator->getNumberOfPages() * $this->getPageSize();
         }
 
-        $paginator = $this->getPaginator();
-
-        return $paginator instanceof PaginatorInterface ? $paginator->getNumberOfPages() * $this->getPageSize() : 0;
+        return max(0, Typed::intOrNull($this->get('count')) ?? 0);
     }
 
     #[ExposeToClient(name: 'defaultPage')]
@@ -211,6 +209,14 @@ class PaginationContext extends AbstractComponentContext
 
         // A script URL is left out, as in every other attribute the library renders
         return $url === null || $url === '' || TagAttributes::isScriptUrl('href', $url) ? null : $url;
+    }
+
+    /**
+     * A `count` next to a `paginator` would contradict the number of pages of the paginator.
+     */
+    public function isCountNextToPaginator(): bool
+    {
+        return $this->getPaginator() instanceof PaginatorInterface && $this->get('count') !== null;
     }
 
     /**

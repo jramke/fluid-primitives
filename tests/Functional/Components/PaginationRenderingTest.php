@@ -139,7 +139,7 @@ final class PaginationRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
-    public function rendersLinksToThePageUrlsOfThePropKeyedByPage(): void
+    public function rendersLinksToThePageUrlsOfTheProp(): void
     {
         $html = $this->renderTemplate($this->pagination('count="30" defaultPage="2" pageUrls="{pageUrls}"', 3), [
             'pageUrls' => ['1' => '/events', '2' => '/events?page=2', '3' => '/events?page=3'],
@@ -151,7 +151,23 @@ final class PaginationRenderingTest extends FunctionalTestCase
         $this->renderTemplate($this->pagination('count="30"', 1));
         $props = array_values(HydrationRegistry::getInstance()->getAll()['primitives']['pagination'])[0]['props'];
         $this->assertSame('button', $props['type']);
+    }
 
+    #[Test]
+    public function rejectsACountNextToAPaginator(): void
+    {
+        $this->assertRenderThrows(
+            TemplateErrorException::class,
+            'Pass either a paginator or a count to pagination.root',
+            fn() => $this->renderTemplate($this->pagination('paginator="{paginator}" count="30"', 1), [
+                'paginator' => new ArrayPaginator(range(1, 30), 1, 10),
+            ]),
+        );
+    }
+
+    #[Test]
+    public function rejectsPageUrlsKeyedFromZero(): void
+    {
         $this->assertRenderThrows(
             TemplateErrorException::class,
             'The keys of the pageUrls prop of pagination.root are the page numbers starting at 1',
