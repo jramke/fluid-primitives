@@ -14,12 +14,12 @@ use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
 final class ContextServiceConfigurationTest extends TestCase
 {
     #[Test]
-    public function givesAContextOfAnotherExtensionANewInstanceForEveryRoot(): void
+    public function givesAContextOfAnotherExtensionANewInstanceFromTheContainerForEveryRoot(): void
     {
         $container = new ContainerBuilder();
         (new PhpFileLoader($container, new FileLocator(dirname(__DIR__, 2) . '/Configuration')))->load('Services.php');
-        // registered the way a project's own Services.yaml registers its context and any other service
-        $container->register(MenuContext::class)->setAutoconfigured(true)->setPublic(true);
+        // registered the way a project's own Services.yaml registers its context: private by default, no attribute
+        $container->register(MenuContext::class)->setAutoconfigured(true);
         $container
             ->register('service', \ArrayObject::class)
             ->setAutoconfigured(true)

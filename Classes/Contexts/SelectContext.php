@@ -12,9 +12,7 @@ use Jramke\FluidPrimitives\Traits\HasListCollectionTrait;
 use Jramke\FluidPrimitives\Traits\HasPopupTypeTrait;
 use Jramke\FluidPrimitives\Traits\HasTranslationsTrait;
 use Jramke\FluidPrimitives\Utility\Typed;
-use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 
-#[Autoconfigure(public: true)]
 class SelectContext extends AbstractComponentContext
 {
     use HasEmptyValueInputTrait;

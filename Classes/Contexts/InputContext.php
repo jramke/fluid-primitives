@@ -8,9 +8,7 @@ use Jramke\FluidPrimitives\Attributes\ExposeToClient;
 use Jramke\FluidPrimitives\Service\TranslatorService;
 use Jramke\FluidPrimitives\Traits\HasCharacterCountTrait;
 use Jramke\FluidPrimitives\Traits\HasTranslationsTrait;
-use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 
-#[Autoconfigure(public: true)]
 class InputContext extends AbstractComponentContext
 {
     use HasCharacterCountTrait;

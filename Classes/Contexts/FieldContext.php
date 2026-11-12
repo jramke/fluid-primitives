@@ -9,10 +9,8 @@ use Jramke\FluidPrimitives\Enum\ValidityMatch;
 use Jramke\FluidPrimitives\Service\ContextService;
 use Jramke\FluidPrimitives\Utility\ExtbaseFormFieldNamer;
 use Jramke\FluidPrimitives\Utility\Typed;
-use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use TYPO3\CMS\Extbase\Reflection\ObjectAccess;
 
-#[Autoconfigure(public: true)]
 class FieldContext extends AbstractComponentContext
 {
     // Only what this render outputs follows from it: the machine reads an enclosing fieldset from

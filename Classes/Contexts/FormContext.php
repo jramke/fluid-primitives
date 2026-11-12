@@ -14,13 +14,11 @@ use Jramke\FluidPrimitives\Utility\ExtbasePersistedObjectResolver;
 use Jramke\FluidPrimitives\Utility\ExtbaseRequestResolver;
 use Jramke\FluidPrimitives\Utility\Typed;
 use Psr\Http\Message\ServerRequestInterface;
-use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use TYPO3\CMS\Core\Type\DocType;
 use TYPO3\CMS\Extbase\Mvc\RequestInterface;
 use TYPO3\CMS\Extbase\Mvc\Web\Routing\UriBuilder;
 use TYPO3\CMS\Extbase\Service\ExtensionService;
 
-#[Autoconfigure(public: true)]
 class FormContext extends AbstractComponentContext
 {
     use HasIndicatorStateTrait;
