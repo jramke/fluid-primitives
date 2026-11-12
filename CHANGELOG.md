@@ -20,7 +20,7 @@ What changed in each release of Fluid Primitives, newest first. Every release li
 
 ### Core
 
-- Every component root gets its own context instance, your own context classes included. A root of the same component inside another one no longer overwrites the outer root's variables, so its parts after the inner root render with their own `rootId` and props, and a context can keep state in its own fields. The constructor of a context takes services without `#[Autoconfigure(public: true)]` on the class, so you can remove that attribute from your contexts. ([#117](https://github.com/jramke/fluid-primitives/issues/117))
+- Every component root gets its own context instance, your own context classes included. A root of the same component inside another one no longer overwrites the outer root's variables, so its parts after the inner root render with their own `rootId` and props, and a context can keep state in its own fields. The constructor of a context takes services without `#[Autoconfigure(public: true)]` on the class, so you can remove that attribute from your contexts. ([#119](https://github.com/jramke/fluid-primitives/pull/119))
 
 ## 1.0.0-beta.7
 
