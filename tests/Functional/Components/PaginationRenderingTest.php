@@ -154,15 +154,33 @@ final class PaginationRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
-    public function rejectsACountNextToAPaginator(): void
+    public function rejectsThePropsThePaginatorOverrides(): void
     {
         $this->assertRenderThrows(
             TemplateErrorException::class,
-            'Pass either a paginator or a count to pagination.root',
-            fn() => $this->renderTemplate($this->pagination('paginator="{paginator}" count="30"', 1), [
-                'paginator' => new ArrayPaginator(range(1, 30), 1, 10),
-            ]),
+            'Leave out count, defaultPage, pageUrls next to the paginator of pagination.root',
+            fn() => $this->renderTemplate(
+                $this->pagination('paginator="{paginator}" count="30" defaultPage="2" pageUrls="{pageUrls}"', 1),
+                [
+                    'paginator' => new UrlAwarePaginator(
+                        new ArrayPaginator(range(1, 30), 1, 10),
+                        static fn(int $page): string => '/events?page=' . $page,
+                    ),
+                    'pageUrls' => [1 => '/events'],
+                ],
+            ),
         );
+    }
+
+    #[Test]
+    public function acceptsPageUrlsNextToAPaginatorWithoutUrls(): void
+    {
+        $html = $this->renderTemplate($this->pagination('paginator="{paginator}" pageUrls="{pageUrls}"', 2), [
+            'paginator' => new ArrayPaginator(range(1, 30), 1, 10),
+            'pageUrls' => [1 => '/events', 2 => '/events?page=2', 3 => '/events?page=3'],
+        ]);
+
+        $this->assertSame('/events?page=2', $this->elementWith($html, 'data-pagination-item')->get('href'));
     }
 
     #[Test]

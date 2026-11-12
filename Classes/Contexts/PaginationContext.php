@@ -212,11 +212,23 @@ class PaginationContext extends AbstractComponentContext
     }
 
     /**
-     * A `count` next to a `paginator` would contradict the number of pages of the paginator.
+     * The props passed next to a `paginator` that it overrides: it sets the page and the number of pages, and a
+     * {@see UrlAwarePaginator} the URLs.
+     *
+     * @return list<string>
      */
-    public function isCountNextToPaginator(): bool
+    public function getPropsOverriddenByPaginator(): array
     {
-        return $this->getPaginator() instanceof PaginatorInterface && $this->get('count') !== null;
+        $paginator = $this->getPaginator();
+        if (!$paginator instanceof PaginatorInterface) {
+            return [];
+        }
+
+        $overridden = $paginator instanceof UrlAwarePaginator
+            ? ['count', 'defaultPage', 'pageUrls']
+            : ['count', 'defaultPage'];
+
+        return array_values(array_filter($overridden, fn(string $prop): bool => $this->get($prop) !== null));
     }
 
     /**
