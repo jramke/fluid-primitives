@@ -146,7 +146,7 @@ class TagAttributes implements \Countable, \Stringable
                 $value = json_encode($value);
             }
 
-            if ($this->isScriptUrl($key, (string)$value)) {
+            if (self::isScriptUrl($key, (string)$value)) {
                 continue;
             }
 
@@ -172,7 +172,7 @@ class TagAttributes implements \Countable, \Stringable
      * `f:link` does. The browser drops tabs, newlines and leading control characters inside a URL, so they are
      * dropped here before the scheme is compared.
      */
-    private function isScriptUrl(string $name, string $value): bool
+    public static function isScriptUrl(string $name, string $value): bool
     {
         $name = strtolower($name);
         if (!in_array(

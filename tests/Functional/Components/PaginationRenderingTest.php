@@ -94,6 +94,43 @@ final class PaginationRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function rendersThePagesOfItsContextInALoop(): void
+    {
+        $html = $this->renderTemplate(
+            '<primitives:pagination.root count="120" defaultPage="6">' .
+            '<ui:context name="primitives:pagination" as="paginationContext" />' .
+            '<f:for each="{paginationContext.pages}" as="page"><f:if condition="{page.type} == \'page\'">' .
+            '<f:then><primitives:pagination.item value="{page.value}" /></f:then>' .
+            '<f:else><primitives:pagination.ellipsis index="{page.index}" /></f:else>' .
+            '</f:if></f:for></primitives:pagination.root>',
+        );
+
+        $this->assertSame(
+            ['1', '5', '6', '7', '12'],
+            array_map(strval(...), array_keys($this->elementsByValue($html, 'data-pagination-item'))),
+        );
+        $this->assertSame(
+            ['1', '5'],
+            array_map(
+                static fn($ellipsis): ?string => $ellipsis->get('data-index'),
+                $this->elementsWith($html, 'data-pagination-ellipsis'),
+            ),
+        );
+    }
+
+    #[Test]
+    public function leavesOutAScriptUrl(): void
+    {
+        $html = $this->renderTemplate($this->pagination('count="30" pageUrls="{pageUrls}"', 1, 2), [
+            'pageUrls' => ['1' => '/events', '2' => ' javascript:alert(1)'],
+        ]);
+
+        $items = $this->elementsByValue($html, 'data-pagination-item');
+        $this->assertSame('/events', $items['1']->get('href'));
+        $this->assertFalse($items['2']->has('href'));
+    }
+
+    #[Test]
     public function rendersLinksToThePageUrlsOfTheProp(): void
     {
         $html = $this->renderTemplate($this->pagination('count="30" defaultPage="2" pageUrls="{pageUrls}"', 3), [

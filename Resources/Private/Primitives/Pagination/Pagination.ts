@@ -2,6 +2,7 @@ import * as pagination from '@zag-js/pagination';
 import type { Attrs } from '@zag-js/vanilla';
 import {
     Component,
+    devWarn,
     Machine,
     normalizeProps,
     registerClientPropConverters,
@@ -88,6 +89,19 @@ export class Pagination extends Component<PaginationProps, pagination.Api> {
         this.hydrator.queryAll('ellipsis').forEach(el => {
             this.spreadProps(el, this.api.getEllipsisProps({ index: Number(el.dataset.index) }));
         });
+
+        // Links load the page they lead to, buttons rely on the markup having every page they show
+        if (this.userProps.type === 'link') return;
+        const shown = new Set(this.hydrator.queryAll('item').map(el => Number(el.dataset.value)));
+        const missing = this.api.pages.find(
+            (page): page is { type: 'page'; value: number } =>
+                page.type === 'page' && !shown.has(page.value)
+        );
+        if (missing) {
+            devWarn(
+                `Pagination "${this.machine.scope.id}" shows page ${missing.value}, which has no item. Add an itemTemplate and an ellipsisTemplate, so the client renders the pages it shows.`
+            );
+        }
     }
 
     // The pages go where the templates are. An item keeps its element while its page is shown, so a

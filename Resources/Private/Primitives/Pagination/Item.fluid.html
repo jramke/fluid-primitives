@@ -1,4 +1,6 @@
-<ui:prop name="value" type="integer" optional="{true}" requiredAtRuntime="{true}" description="The page number of the item. Without content, the item shows it." />
+<ui:prop name="value" type="integer" optional="{true}" description="The page number of the item. Without content, the item shows it. Left out in the `itemTemplate`, where the client sets it." />
+
+<ui:error when="!{context.isRenderStencil} && !{value}" message="The {component.fullName} requires a value prop outside the itemTemplate" />
 
 <f:variable name="itemState">{context -> ui:call(method: 'getItemState', arguments: {0: {value: value}})}</f:variable>
 <f:variable name="content"><f:slot /></f:variable>

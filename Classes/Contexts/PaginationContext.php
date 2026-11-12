@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Contexts;
 
 use Jramke\FluidPrimitives\Attributes\ExposeToClient;
+use Jramke\FluidPrimitives\Domain\Dto\TagAttributes;
 use Jramke\FluidPrimitives\Enum\PaginationType;
 use Jramke\FluidPrimitives\Pagination\UrlAwarePaginator;
 use Jramke\FluidPrimitives\Service\TranslatorService;
@@ -16,6 +17,7 @@ use TYPO3\CMS\Core\Pagination\PaginatorInterface;
 
 // A context with a getter per value the parts read
 // @mago-expect lint:too-many-methods
+// @mago-expect lint:cyclomatic-complexity
 #[Autoconfigure(public: true)]
 class PaginationContext extends AbstractComponentContext
 {
@@ -110,12 +112,15 @@ class PaginationContext extends AbstractComponentContext
             return null;
         }
 
-        $paginator = $this->getPaginator();
-        if ($paginator instanceof UrlAwarePaginator) {
-            return $paginator->getPageUrls();
+        $pageUrls = [];
+        foreach (range(1, max(1, $this->getTotalPages())) as $page) {
+            $url = $this->getPageUrl($page);
+            if ($url !== null) {
+                $pageUrls[$page] = $url;
+            }
         }
 
-        return $this->getPageUrlsProp();
+        return $pageUrls;
     }
 
     #[ExposeToClient]
@@ -208,10 +213,12 @@ class PaginationContext extends AbstractComponentContext
         }
 
         $paginator = $this->getPaginator();
-
-        return $paginator instanceof UrlAwarePaginator
+        $url = $paginator instanceof UrlAwarePaginator
             ? $paginator->getPageUrl($page)
             : Typed::stringOrNull($this->getPageUrlsProp()[$page] ?? null);
+
+        // A script URL is left out, as in every other attribute the library renders
+        return $url === null || $url === '' || TagAttributes::isScriptUrl('href', $url) ? null : $url;
     }
 
     /**
