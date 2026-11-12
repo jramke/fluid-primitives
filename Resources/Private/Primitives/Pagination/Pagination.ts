@@ -152,7 +152,7 @@ export class Pagination extends Component<PaginationProps, pagination.Api> {
         });
 
         // Links load the page they lead to, buttons rely on the markup having every page they show
-        if (this.userProps.type === 'link') return;
+        if (this.machine.prop('type') === 'link') return;
         const shown = new Set(this.hydrator.queryAll('item').map(el => Number(el.dataset.value)));
         const missing = this.api.pages.find(
             (page): page is { type: 'page'; value: number } =>
@@ -166,7 +166,7 @@ export class Pagination extends Component<PaginationProps, pagination.Api> {
     }
 
     #syncsHistory(): boolean {
-        return Boolean(this.userProps.fetchUrl && this.userProps.type === 'link');
+        return Boolean(this.userProps.fetchUrl && this.machine.prop('type') === 'link');
     }
 
     #loadPage({ page, pageSize }: pagination.PageChangeDetails) {
@@ -176,7 +176,7 @@ export class Pagination extends Component<PaginationProps, pagination.Api> {
 
         // Back and forward set the page of their URL, which then needs no new history entry
         const url = this.#syncsHistory()
-            ? this.userProps.getPageUrl?.({ page, pageSize })
+            ? this.machine.prop('getPageUrl')?.({ page, pageSize })
             : undefined;
         if (url && !this.#isCurrentUrl(url)) history.pushState(history.state, '', url);
 
@@ -217,7 +217,7 @@ export class Pagination extends Component<PaginationProps, pagination.Api> {
     // The page comes from the URL, not from the history state: that also holds after a reload, and
     // for entries of in-page anchors or of other scripts. A URL of no page leaves the page as it is.
     #showHistoryPage = () => {
-        const { getPageUrl } = this.userProps;
+        const getPageUrl = this.machine.prop('getPageUrl');
         const { pageSize, totalPages } = this.api;
         for (let page = 1; page <= totalPages; page++) {
             const url = getPageUrl?.({ page, pageSize });
