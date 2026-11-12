@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Contexts;
 
 use Jramke\FluidPrimitives\Attributes\ExposeToClient;
+use Jramke\FluidPrimitives\Constants;
 use Jramke\FluidPrimitives\Domain\Dto\TagAttributes;
 use Jramke\FluidPrimitives\Enum\PaginationType;
 use Jramke\FluidPrimitives\Pagination\UrlAwarePaginator;
@@ -22,8 +23,6 @@ class PaginationContext extends AbstractComponentContext
     use HasTranslationsTrait;
 
     private const int DEFAULT_PAGE_SIZE = 10;
-
-    private bool $rendersPagesOnClient = false;
 
     public function __construct(
         private readonly TranslatorService $translator,
@@ -88,14 +87,6 @@ class PaginationContext extends AbstractComponentContext
         return (int)ceil($this->getCount() / $this->getPageSize());
     }
 
-    public function afterRendering(string &$html): void
-    {
-        $this->rendersPagesOnClient = str_contains($html, sprintf(
-            'data-pagination-item-template="%s"',
-            htmlspecialchars(Typed::string($this->get('rootId'))),
-        ));
-    }
-
     /**
      * The URL of every page, for the links the client renders from the `itemTemplate`: from the
      * `pageUrls` prop or a {@see UrlAwarePaginator}. Pages that reload with every click need them only
@@ -106,7 +97,8 @@ class PaginationContext extends AbstractComponentContext
     #[ExposeToClient(excludeIfNull: true)]
     public function getPageUrls(): ?array
     {
-        if (!$this->rendersPagesOnClient) {
+        $renderedTemplates = Typed::arrayOrNull($this->get(Constants::RENDERED_TEMPLATES)) ?? [];
+        if (!$this->isLink() || !in_array('itemTemplate', $renderedTemplates, strict: true)) {
             return null;
         }
 
@@ -219,6 +211,20 @@ class PaginationContext extends AbstractComponentContext
 
         // A script URL is left out, as in every other attribute the library renders
         return $url === null || $url === '' || TagAttributes::isScriptUrl('href', $url) ? null : $url;
+    }
+
+    /**
+     * The `pageUrls` prop is keyed by page number: a list from 0 would link every page to the next one.
+     */
+    public function isPageUrlsKeyedByPage(): bool
+    {
+        foreach (array_keys($this->getPageUrlsProp() ?? []) as $key) {
+            if ($key < 1) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

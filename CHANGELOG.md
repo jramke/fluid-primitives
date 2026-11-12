@@ -11,7 +11,7 @@ What changed in each release of Fluid Primitives, newest first. Every release li
 
 ### Pagination
 
-- New `Pagination` component on `@zag-js/pagination`. Pass the TYPO3 paginator of your list to `paginator`, or `count` and `defaultPageSize`, and loop over `pages` of its context. For links, wrap the paginator in the new `UrlAwarePaginator` with a function that returns the URL of a page, for example built with the `UriBuilder` of your controller, or pass the URLs to `pageUrls`. The root builds the URLs of the pages it shows, and sends all of them to the client only with an `itemTemplate`, as the default `getPageUrl`. The client renders the pages it shows from the `itemTemplate` and `ellipsisTemplate` parts, and leaves out the ellipses without an `ellipsisTemplate`. Add it with `ui:add pagination`. ([#118](https://github.com/jramke/fluid-primitives/pull/118))
+- New `Pagination` component on `@zag-js/pagination`. Pass the TYPO3 paginator of your list to `paginator`, or `count` and `defaultPageSize`, and loop over `pages` of its context. For links, wrap the paginator in the new `UrlAwarePaginator` with a function that returns the URL of a page, for example built with the `UriBuilder` of your controller, or pass the URLs to `pageUrls`. The root builds the URLs of the pages it shows, and sends all of them to the client only with an `itemTemplate`, as the default `getPageUrl`. The client renders the pages it shows from the `itemTemplate` and `ellipsisTemplate` parts, and leaves out the ellipses without an `ellipsisTemplate`. A `pageUrls` array keyed from 0 throws an error, because its keys are the page numbers. Add it with `ui:add pagination`. ([#118](https://github.com/jramke/fluid-primitives/pull/118))
 
 ### `ui:context`
 
@@ -25,6 +25,7 @@ What changed in each release of Fluid Primitives, newest first. Every release li
 ### Core
 
 - Every component root gets its own context instance, your own context classes included. A root of the same component inside another one no longer overwrites the outer root's variables, so its parts after the inner root render with their own `rootId` and props, and a context can keep state in its own fields. The constructor of a context takes services without `#[Autoconfigure(public: true)]` on the class, so you can remove that attribute from your contexts. ([#119](https://github.com/jramke/fluid-primitives/pull/119))
+- `ui:template` adds its name to the `renderedTemplates` variable of the root context, so a context can send data only the client renders with. Read it in `afterRendering()` or in a value exposed to the client. ([#118](https://github.com/jramke/fluid-primitives/pull/118))
 
 ## 1.0.0-beta.7
 

@@ -7,6 +7,8 @@
 <ui:prop name="pageUrls" type="array" optional="{true}" description="The URL of every page, keyed by the page number starting at 1, for links without a `UrlAwarePaginator`. With it, the items and triggers are links to their page." />
 <ui:prop name="translations" type="array" optional="{true}" client="{true}" description="Localized labels: `rootLabel`, `firstTriggerLabel`, `prevTriggerLabel`, `nextTriggerLabel`, `lastTriggerLabel` and `itemLabel`, which takes a `%page%` and a `%totalPages%` placeholder. A client script can pass Zag's `itemLabel` function instead." />
 
+<ui:error when="!{context.pageUrlsKeyedByPage}" message="The keys of the pageUrls prop of {component.fullName} are the page numbers starting at 1, as the page values are. An array from 0 links every page to the next one." />
+
 <nav
     aria-label="{context.translations.rootLabel}"
     {f:if(condition: class, then: 'class="{class}"' )}

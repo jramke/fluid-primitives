@@ -11,6 +11,9 @@ class Constants
     /** Links a root and its detachable parts to a `<component>.provider`, see `ui:detachable`. */
     public const PROP_PROVIDER = 'provider';
 
+    /** The context variable with the names of the `ui:template`s a root rendered, known once they rendered: read it in `afterRendering()` or in a value exposed to the client. */
+    public const RENDERED_TEMPLATES = 'renderedTemplates';
+
     public const GLOBAL_PROPS = ['ids', 'attributes', 'asChild', 'rootId', 'autoMount', 'spreadProps', 'class'];
 
     public const RESERVED_PROPS = [
@@ -24,6 +27,7 @@ class Constants
         'asChild',
         'spreadProps', // reserved and added automatically for every component, see AbstractComponentCollection::getComponentDefinition()
         'isRenderStencil', // reserved for ui:template's own stencil-detection flag on the context
+        self::RENDERED_TEMPLATES,
     ];
 
     /**

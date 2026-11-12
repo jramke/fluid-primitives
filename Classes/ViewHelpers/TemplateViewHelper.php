@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\ViewHelpers;
 
+use Jramke\FluidPrimitives\Constants;
 use Jramke\FluidPrimitives\Contexts\ComponentContextInterface;
 use Jramke\FluidPrimitives\Domain\Dto\ComponentIdentity;
 use Jramke\FluidPrimitives\Domain\Dto\TagAttributes;
@@ -14,6 +15,7 @@ use Jramke\FluidPrimitives\Service\ContextService;
 use Jramke\FluidPrimitives\Utility\ComponentNameUtility;
 use Jramke\FluidPrimitives\Utility\ComponentRefUtility;
 use Jramke\FluidPrimitives\Utility\ComponentUtility;
+use Jramke\FluidPrimitives\Utility\Typed;
 use TYPO3Fluid\Fluid\Core\Variables\VariableProviderInterface;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
@@ -107,6 +109,10 @@ class TemplateViewHelper extends AbstractViewHelper
                 ComponentRefUtility::getAttributeName($clientBaseName, $part) => $rootId,
             ]);
             ReferencedRootRegistry::mark($clientBaseName, $rootId);
+            $context->set(Constants::RENDERED_TEMPLATES, [
+                ...(Typed::arrayOrNull($context->get(Constants::RENDERED_TEMPLATES)) ?? []),
+                $part,
+            ]);
 
             // Opens a tracking scope keyed by this stencil's own key, so every root component that
             // registers itself while rendering our children (however it renders - see

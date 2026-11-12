@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Tests\Functional\Components;
 
+use Jramke\FluidPrimitives\Exception\TemplateErrorException;
 use Jramke\FluidPrimitives\Pagination\UrlAwarePaginator;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
@@ -143,6 +144,14 @@ final class PaginationRenderingTest extends FunctionalTestCase
         $this->renderTemplate($this->pagination('count="30"', 1));
         $props = array_values(HydrationRegistry::getInstance()->getAll()['primitives']['pagination'])[0]['props'];
         $this->assertSame('button', $props['type']);
+
+        $this->assertRenderThrows(
+            TemplateErrorException::class,
+            'The keys of the pageUrls prop of pagination.root are the page numbers starting at 1',
+            fn() => $this->renderTemplate($this->pagination('count="30" pageUrls="{pageUrls}"', 1), [
+                'pageUrls' => ['/events', '/events?page=2', '/events?page=3'],
+            ]),
+        );
     }
 
     private function pagination(string $rootArguments, int ...$pages): string
