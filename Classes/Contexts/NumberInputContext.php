@@ -8,9 +8,7 @@ use Jramke\FluidPrimitives\Attributes\ExposeToClient;
 use Jramke\FluidPrimitives\Service\TranslatorService;
 use Jramke\FluidPrimitives\Traits\HasTranslationsTrait;
 use Jramke\FluidPrimitives\Utility\Typed;
-use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 
-#[Autoconfigure(public: true)]
 class NumberInputContext extends AbstractComponentContext
 {
     use HasTranslationsTrait;

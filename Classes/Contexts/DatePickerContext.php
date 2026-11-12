@@ -11,11 +11,9 @@ use Jramke\FluidPrimitives\Traits\HasEmptyValueInputTrait;
 use Jramke\FluidPrimitives\Traits\HasTranslationsTrait;
 use Jramke\FluidPrimitives\Utility\DateUtility;
 use Jramke\FluidPrimitives\Utility\Typed;
-use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 
 // Every public method is a getter a template or the client reads by name, so there is nothing to split off.
 // @mago-expect lint:too-many-methods
-#[Autoconfigure(public: true)]
 class DatePickerContext extends AbstractComponentContext
 {
     use HasEmptyValueInputTrait;

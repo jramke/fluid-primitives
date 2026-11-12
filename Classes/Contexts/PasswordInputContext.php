@@ -9,9 +9,7 @@ use Jramke\FluidPrimitives\Service\TranslatorService;
 use Jramke\FluidPrimitives\Traits\HasIndicatorStateTrait;
 use Jramke\FluidPrimitives\Traits\HasTranslationsTrait;
 use Jramke\FluidPrimitives\Utility\Typed;
-use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 
-#[Autoconfigure(public: true)]
 class PasswordInputContext extends AbstractComponentContext
 {
     use HasIndicatorStateTrait;
