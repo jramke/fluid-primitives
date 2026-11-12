@@ -61,7 +61,7 @@ final class PaginationRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
-    public function buildsTheUrlsOfTheShownPagesWithAUrlAwarePaginatorAndSendsAllOnlyForAnItemTemplate(): void
+    public function buildsTheUrlsOfTheShownPagesWithAUrlAwarePaginatorAndSendsAllOnlyToLinksWithAnItemTemplate(): void
     {
         $builtPages = [];
         $paginator = new UrlAwarePaginator(new ArrayPaginator(range(1, 300), 2, 10), static function (int $page) use (
@@ -92,6 +92,13 @@ final class PaginationRenderingTest extends FunctionalTestCase
         ]);
         $this->assertCount(30, $props()['pageUrls']);
         $this->assertSame('/events?page=15', $props()['pageUrls'][15]);
+
+        $this->renderTemplate(
+            '<primitives:pagination.root count="300"><primitives:pagination.itemTemplate>' .
+            '<primitives:pagination.item /></primitives:pagination.itemTemplate></primitives:pagination.root>',
+        );
+        $this->assertSame('button', $props()['type']);
+        $this->assertArrayNotHasKey('pageUrls', $props());
     }
 
     #[Test]
@@ -132,7 +139,7 @@ final class PaginationRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
-    public function rendersLinksToThePageUrlsOfTheProp(): void
+    public function rendersLinksToThePageUrlsOfThePropKeyedByPage(): void
     {
         $html = $this->renderTemplate($this->pagination('count="30" defaultPage="2" pageUrls="{pageUrls}"', 3), [
             'pageUrls' => ['1' => '/events', '2' => '/events?page=2', '3' => '/events?page=3'],

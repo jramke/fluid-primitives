@@ -11,7 +11,11 @@ class Constants
     /** Links a root and its detachable parts to a `<component>.provider`, see `ui:detachable`. */
     public const PROP_PROVIDER = 'provider';
 
-    /** The context variable with the names of the `ui:template`s a root rendered, known once they rendered: read it in `afterRendering()` or in a value exposed to the client. */
+    /**
+     * The context variable with the names of the `ui:template`s a root rendered, as keys with the value `true`.
+     * Complete once the root rendered: read it in `afterRendering()` or in a value exposed to the client. A template
+     * in a detachable part after the root is not in it.
+     */
     public const RENDERED_TEMPLATES = 'renderedTemplates';
 
     public const GLOBAL_PROPS = ['ids', 'attributes', 'asChild', 'rootId', 'autoMount', 'spreadProps', 'class'];

@@ -98,7 +98,7 @@ class PaginationContext extends AbstractComponentContext
     public function getPageUrls(): ?array
     {
         $renderedTemplates = Typed::arrayOrNull($this->get(Constants::RENDERED_TEMPLATES)) ?? [];
-        if (!$this->isLink() || !in_array('itemTemplate', $renderedTemplates, strict: true)) {
+        if (!$this->isLink() || !array_key_exists('itemTemplate', $renderedTemplates)) {
             return null;
         }
 

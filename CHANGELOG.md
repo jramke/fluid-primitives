@@ -17,6 +17,10 @@ What changed in each release of Fluid Primitives, newest first. Every release li
 
 - Works in a plain template too, such as a partial or the slot of a part with `asChild` in the template of a controller action, and reads the closest enclosing root there. ([#116](https://github.com/jramke/fluid-primitives/pull/116))
 
+### `ui:template`
+
+- Adds its name to the `renderedTemplates` variable of the root context, so a context can send data only the client renders with. Read it in `afterRendering()` or in a value exposed to the client. ([#118](https://github.com/jramke/fluid-primitives/pull/118))
+
 ### Client
 
 - `mountAll()` also mounts the components whose markup arrives later, such as a FieldArray row, a `Template` clone or HTML that Turbo or a `fetch()` swapped in, and destroys an instance once every element it rendered onto has left the page, a Popover or Dialog without a root element included. `mountWithin()` mounts inserted markup before your next line runs, and `destroyComponentsWithin()` destroys a Popover or Dialog in the element too. The library removes each hydration data block from the page once it read it. ([#113](https://github.com/jramke/fluid-primitives/pull/113))
@@ -25,7 +29,6 @@ What changed in each release of Fluid Primitives, newest first. Every release li
 ### Core
 
 - Every component root gets its own context instance, your own context classes included. A root of the same component inside another one no longer overwrites the outer root's variables, so its parts after the inner root render with their own `rootId` and props, and a context can keep state in its own fields. The constructor of a context takes services without `#[Autoconfigure(public: true)]` on the class, so you can remove that attribute from your contexts. ([#119](https://github.com/jramke/fluid-primitives/pull/119))
-- `ui:template` adds its name to the `renderedTemplates` variable of the root context, so a context can send data only the client renders with. Read it in `afterRendering()` or in a value exposed to the client. ([#118](https://github.com/jramke/fluid-primitives/pull/118))
 
 ## 1.0.0-beta.7
 
