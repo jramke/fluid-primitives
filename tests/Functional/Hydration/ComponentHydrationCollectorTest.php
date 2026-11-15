@@ -7,8 +7,9 @@ namespace Jramke\FluidPrimitives\Tests\Functional\Hydration;
 use Jramke\FluidPrimitives\Domain\Dto\ListCollection;
 use Jramke\FluidPrimitives\Exception\HydrationException;
 use Jramke\FluidPrimitives\Registry\HydrationRegistry;
+use Jramke\FluidPrimitives\Tests\Fixtures\CircularObject;
 use Jramke\FluidPrimitives\Tests\Fixtures\HydrationEdgeCasesCollection;
-use Jramke\FluidPrimitives\Tests\Fixtures\NonConvertibleObject;
+use Jramke\FluidPrimitives\Tests\Fixtures\PlainObject;
 use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
 use PHPUnit\Framework\Attributes\Test;
 use TYPO3Fluid\Fluid\Core\ViewHelper\InvalidArgumentValueException;
@@ -99,7 +100,7 @@ final class ComponentHydrationCollectorTest extends FunctionalTestCase
     }
 
     #[Test]
-    public function throwsWhenAClientPropIsAnUnconvertibleObject(): void
+    public function sendsAPlainObjectAsItsPublicPropertiesAndFailsScopedWhenAnObjectCannotBeEncoded(): void
     {
         $view = $this->getView();
         $view
@@ -107,12 +108,18 @@ final class ComponentHydrationCollectorTest extends FunctionalTestCase
             ->getViewHelperResolver()
             ->addNamespace('hydrationFixture', new HydrationEdgeCasesCollection());
 
+        $this->renderTemplate('<hydrationFixture:edgeCases requiredProp="value" objectProp="{obj}" rootId="plain" />', [
+            'obj' => new PlainObject(),
+        ]);
+        $props = HydrationRegistry::getInstance()->getAll()['hydrationFixture']['edge-cases']['plain']['props'];
+        $this->assertSame('{"value":"shipped"}', json_encode($props['objectProp']));
+
         $this->expectException(HydrationException::class);
         $this->expectExceptionMessage('objectProp');
-        $this->expectExceptionMessage(NonConvertibleObject::class);
+        $this->expectExceptionMessage(CircularObject::class);
 
-        $this->renderTemplate('<hydrationFixture:edgeCases requiredProp="value" objectProp="{obj}" />', [
-            'obj' => new NonConvertibleObject(),
+        $this->renderTemplate('<hydrationFixture:edgeCases requiredProp="value" objectProp="{obj}" rootId="loop" />', [
+            'obj' => new CircularObject(),
         ]);
     }
 

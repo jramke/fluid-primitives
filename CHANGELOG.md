@@ -2,6 +2,12 @@
 
 What changed in each release of Fluid Primitives, newest first. Every release lists its breaking changes first, then the other changes under one heading per part of the library. The library follows [semantic versioning](https://semver.org), and the 1.0 betas may still change between releases.
 
+## Unreleased
+
+### Core
+
+- An object passed as a `client` prop no longer has to implement `JsonSerializable`: a plain object reaches the client as its public properties. An object that cannot be encoded as JSON, such as one that refers to itself, stops that component from rendering with an error that names the prop.
+
 ## 1.0.0-beta.8
 
 _2026-11-13_
