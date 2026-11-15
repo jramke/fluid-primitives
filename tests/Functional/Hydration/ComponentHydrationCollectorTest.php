@@ -10,6 +10,7 @@ use Jramke\FluidPrimitives\Registry\HydrationRegistry;
 use Jramke\FluidPrimitives\Tests\Fixtures\CircularObject;
 use Jramke\FluidPrimitives\Tests\Fixtures\HydrationEdgeCasesCollection;
 use Jramke\FluidPrimitives\Tests\Fixtures\PlainObject;
+use Jramke\FluidPrimitives\Tests\Fixtures\PrivateStateObject;
 use Jramke\FluidPrimitives\Tests\Functional\FunctionalTestCase;
 use PHPUnit\Framework\Attributes\Test;
 use TYPO3Fluid\Fluid\Core\ViewHelper\InvalidArgumentValueException;
@@ -100,27 +101,64 @@ final class ComponentHydrationCollectorTest extends FunctionalTestCase
     }
 
     #[Test]
-    public function sendsAPlainObjectAsItsPublicPropertiesAndFailsScopedWhenAnObjectCannotBeEncoded(): void
+    public function sendsAPlainObjectAsItsPublicProperties(): void
     {
-        $view = $this->getView();
-        $view
-            ->getRenderingContext()
-            ->getViewHelperResolver()
-            ->addNamespace('hydrationFixture', new HydrationEdgeCasesCollection());
+        $this->useEdgeCasesCollection();
 
         $this->renderTemplate('<hydrationFixture:edgeCases requiredProp="value" objectProp="{obj}" rootId="plain" />', [
             'obj' => new PlainObject(),
         ]);
+
         $props = HydrationRegistry::getInstance()->getAll()['hydrationFixture']['edge-cases']['plain']['props'];
         $this->assertSame('{"value":"shipped"}', json_encode($props['objectProp']));
+    }
 
-        $this->expectException(HydrationException::class);
-        $this->expectExceptionMessage('objectProp');
-        $this->expectExceptionMessage(CircularObject::class);
+    #[Test]
+    public function rejectsAnObjectTheClientCouldNotUse(): void
+    {
+        $this->useEdgeCasesCollection();
 
-        $this->renderTemplate('<hydrationFixture:edgeCases requiredProp="value" objectProp="{obj}" rootId="loop" />', [
-            'obj' => new CircularObject(),
-        ]);
+        foreach ([new PrivateStateObject(), new \DateTimeImmutable()] as $object) {
+            $this->assertRenderThrows(
+                HydrationException::class,
+                sprintf('"objectProp" for component "edge-cases" is a "%s" instance', $object::class),
+                fn() => $this->renderTemplate('<hydrationFixture:edgeCases requiredProp="value" objectProp="{obj}" />', [
+                    'obj' => $object,
+                ]),
+            );
+        }
+    }
+
+    #[Test]
+    public function aValueJsonCannotEncodeFailsWithItsPropAndLeavesTheRegistryUsable(): void
+    {
+        $this->useEdgeCasesCollection();
+
+        $template = '<hydrationFixture:edgeCases requiredProp="{required}" objectProp="{object}" />';
+        $cases = [
+            'requiredProp' => ['required' => "\xB1\x31", 'object' => null],
+            'objectProp' => ['required' => 'value', 'object' => new CircularObject()],
+        ];
+        foreach ($cases as $prop => $variables) {
+            $this->assertRenderThrows(
+                HydrationException::class,
+                sprintf('prop "%s" of the component "hydrationFixture:edge-cases" cannot be encoded as JSON', $prop),
+                fn() => $this->renderTemplate($template, $variables),
+            );
+        }
+
+        // Positive control: the failed entries are not stored, so a later component still renders.
+        $this->renderTemplate($template, ['required' => 'fine', 'object' => null]);
+        $this->assertCount(1, HydrationRegistry::getInstance()->getAll()['hydrationFixture']['edge-cases']);
+    }
+
+    private function useEdgeCasesCollection(): void
+    {
+        $this
+            ->getView()
+            ->getRenderingContext()
+            ->getViewHelperResolver()
+            ->addNamespace('hydrationFixture', new HydrationEdgeCasesCollection());
     }
 
     /**

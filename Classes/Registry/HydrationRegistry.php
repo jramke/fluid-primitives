@@ -62,6 +62,7 @@ class HydrationRegistry
     {
         /** @var array<string, mixed> $normalizedProps */
         $normalizedProps = EnumUtility::normalize($entry->toArray());
+        $this->scriptBuilder->assertEncodable($namespace, $componentType, $normalizedProps);
 
         $segments = explode('.', $componentType);
         $lastSegment = array_pop($segments);

@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace Jramke\FluidPrimitives\Service\Component;
 
 use Jramke\FluidPrimitives\Exception\HydrationException;
-use JsonException;
 use JsonSerializable;
+use ReflectionClass;
+use stdClass;
 use TYPO3Fluid\Fluid\Core\ViewHelper\ArgumentDefinition;
 
 /**
- * The null-safety and object-conversion rules {@see ComponentHydrationCollector} applies to each
+ * The null-safety and object rules {@see ComponentHydrationCollector} applies to each
  * client-marked prop's resolved value, before it's placed into the JSON hydration payload - split
  * out into its own collaborator purely to keep the collector's own class-level complexity down.
  */
@@ -44,31 +45,27 @@ final readonly class ClientPropValueResolver
 
     /**
      * An object reaches the client as JSON: a `JsonSerializable` one as whatever it returns, any other one as its
-     * public properties. A plain object is encoded once here, so one that cannot be encoded (a circular reference)
-     * fails scoped to this one component/prop, rather than in the page-wide `HydrationScriptBuilder::build()` call,
-     * where the `JsonException` would break hydration for every component on the page. Non-object values pass
-     * through unchanged.
+     * public properties. An object without public properties (an Extbase model, a closure) would reach it as `{}`,
+     * and an internal class such as `DateTime` as the internal shape of PHP, so both fail here, scoped to this one
+     * component/prop. Non-object values pass through unchanged.
      */
     public function resolveClientValue(mixed $value, string $propName, string $clientBaseName): mixed
     {
-        if (!is_object($value) || $value instanceof JsonSerializable) {
+        if (!is_object($value) || $value instanceof JsonSerializable || $value instanceof stdClass) {
             return $value;
         }
 
-        try {
-            json_encode($value, JSON_THROW_ON_ERROR);
-        } catch (JsonException $exception) {
+        if ((new ReflectionClass($value))->isInternal() || get_object_vars($value) === []) {
             throw new HydrationException(
                 sprintf(
-                    'The prop "%s" for component "%s" is a "%s" instance that cannot be encoded as JSON (%s). ' .
-                    'Implement JsonSerializable on it to control what the client receives.',
+                    'The prop "%s" for component "%s" is a "%s" instance, which has no public properties the client ' .
+                    'could use. Pass a plain value, such as a formatted date string, or an object with public ' .
+                    'properties or one that implements JsonSerializable.',
                     $propName,
                     $clientBaseName,
                     $value::class,
-                    $exception->getMessage(),
                 ),
                 1_788_300_002,
-                $exception,
             );
         }
 

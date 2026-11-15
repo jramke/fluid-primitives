@@ -6,7 +6,7 @@ What changed in each release of Fluid Primitives, newest first. Every release li
 
 ### Core
 
-- An object passed as a `client` prop no longer has to implement `JsonSerializable`: a plain object reaches the client as its public properties. An object that cannot be encoded as JSON, such as one that refers to itself, stops that component from rendering with an error that names the prop.
+- An object passed as a `client` prop no longer has to implement `JsonSerializable`: a plain object reaches the client with all of its public properties. An object without public properties or an internal class such as `DateTime` stops that component with an error, and so does any value JSON cannot encode, with the name of the prop.
 
 ## 1.0.0-beta.8
 
