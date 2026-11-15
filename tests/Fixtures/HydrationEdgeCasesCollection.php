@@ -9,8 +9,7 @@ use TYPO3Fluid\Fluid\View\TemplatePaths;
 
 /**
  * A single root component exercising {@see \Jramke\FluidPrimitives\Service\Component\ClientPropValueResolver}'s
- * fail-fast paths: a required (no default, `optional="{false}"`) client prop, and an object-typed
- * client prop with no {@see \Jramke\FluidPrimitives\Contracts\ClientTypeAwareInterface}/converter.
+ * fail-fast paths: a required (no default, `optional="{false}"`) client prop, and an object-typed client prop.
  */
 final class HydrationEdgeCasesCollection extends AbstractComponentCollection
 {

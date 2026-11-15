@@ -92,7 +92,6 @@ final readonly class ComponentHydrationCollector
                 $value,
                 $name,
                 $candidate->clientBaseName,
-                $argumentDefinition,
             );
         }
 

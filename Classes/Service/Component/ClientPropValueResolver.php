@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace Jramke\FluidPrimitives\Service\Component;
 
-use Jramke\FluidPrimitives\Contracts\ClientTypeAwareInterface;
 use Jramke\FluidPrimitives\Exception\HydrationException;
 use JsonSerializable;
+use ReflectionClass;
+use stdClass;
 use TYPO3Fluid\Fluid\Core\ViewHelper\ArgumentDefinition;
 
 /**
- * The null-safety and object-conversion rules {@see ComponentHydrationCollector} applies to each
+ * The null-safety and object rules {@see ComponentHydrationCollector} applies to each
  * client-marked prop's resolved value, before it's placed into the JSON hydration payload - split
  * out into its own collaborator purely to keep the collector's own class-level complexity down.
  */
@@ -43,41 +44,31 @@ final readonly class ClientPropValueResolver
     }
 
     /**
-     * Resolves how a client-marked object prop value actually reaches the JSON hydration payload -
-     * left untouched if it implements {@see ClientTypeAwareInterface} (presumed to also handle its
-     * own JSON encoding, e.g. via `JsonSerializable`, same as {@see \Jramke\FluidPrimitives\Domain\Dto\ListCollection}),
-     * converted via a matching {@see \Jramke\FluidPrimitives\Contracts\ClientPropConverterInterface}
-     * if the registry finds one, or - for anything else - left untouched only if it's at least
-     * `JsonSerializable` itself (today's pre-existing, "works by accident" behavior). Anything else
-     * throws immediately, scoped to this one component/prop, rather than reaching the page-wide
-     * `HydrationScriptBuilder::toJson()` call, where a `JsonException` would break hydration for
-     * every component on the page, not just the offending one. Non-object values pass through
-     * unchanged - this is only about the object-prop hole described in the plan.
+     * An object reaches the client as JSON: a `JsonSerializable` one as whatever it returns, any other one as its
+     * public properties. An object without public properties (an Extbase model, a closure) would reach it as `{}`,
+     * and an internal class such as `DateTime` as the internal shape of PHP, so both fail here, scoped to this one
+     * component/prop. Non-object values pass through unchanged.
      */
-    public function resolveClientValue(
-        mixed $value,
-        string $propName,
-        string $clientBaseName,
-        ?ArgumentDefinition $argumentDefinition,
-    ): mixed {
-        if (!is_object($value)) {
+    public function resolveClientValue(mixed $value, string $propName, string $clientBaseName): mixed
+    {
+        if (!is_object($value) || $value instanceof JsonSerializable || $value instanceof stdClass) {
             return $value;
         }
 
-        if ($value instanceof JsonSerializable) {
-            return $value;
+        if ((new ReflectionClass($value))->isInternal() || get_object_vars($value) === []) {
+            throw new HydrationException(
+                sprintf(
+                    'The prop "%s" for component "%s" is a "%s" instance, which has no public properties the client ' .
+                    'could use. Pass a plain value, such as a formatted date string, or an object with public ' .
+                    'properties or one that implements JsonSerializable.',
+                    $propName,
+                    $clientBaseName,
+                    $value::class,
+                ),
+                1_788_300_002,
+            );
         }
 
-        throw new HydrationException(
-            sprintf(
-                'The prop "%s" for component "%s" is a "%s" instance, which is neither JSON-serializable ' .
-                'nor convertible for client hydration. Implement ClientTypeAwareInterface on it, or ' .
-                'register a ClientPropConverterInterface for it.',
-                $propName,
-                $clientBaseName,
-                $value::class,
-            ),
-            1_788_300_002,
-        );
+        return $value;
     }
 }
