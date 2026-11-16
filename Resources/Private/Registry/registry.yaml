@@ -375,6 +375,7 @@ toast:
   description: The styled parts of one toast, for the template of a toaster
   files:
     - Root.fluid.html
+    - Content.fluid.html
     - Title.fluid.html
     - Description.fluid.html
     - Indicator.fluid.html

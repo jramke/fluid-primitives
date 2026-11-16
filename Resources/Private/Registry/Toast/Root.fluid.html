@@ -6,7 +6,7 @@
     [translate:var(--x)_var(--y)] [scale:var(--scale)] z-(--z-index) h-(--height) opacity-(--opacity)
     transition-[translate,scale,opacity,height] duration-400 ease-[cubic-bezier(0.21,1.02,0.73,1)]
     data-[state=closed]:duration-200 data-[state=closed]:ease-[cubic-bezier(0.06,0.71,0.55,1)]
-    motion-reduce:transition-opacity
+    motion-reduce:transition-opacity data-[swiping]:transition-none
     [&>*]:transition-opacity [&[data-overlap][data-sibling]>*]:opacity-0
     {class}
 ')}">

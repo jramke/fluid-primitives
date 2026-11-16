@@ -20,7 +20,7 @@ afterEach(() => {
 
 const frames = () => new Promise(resolve => setTimeout(resolve, 50));
 
-const defaultTemplate = `<template data-toaster-toast-template="t1"><div data-toast-root="stencil"><div data-toast-title="stencil"></div><div data-toast-description="stencil"></div><button data-toast-action-trigger="stencil"></button><button data-toast-close-trigger="stencil">x</button></div></template>`;
+const defaultTemplate = `<template data-toaster-toast-template="t1"><div data-toast-root="stencil"><div data-toast-content="stencil"><div data-toast-title="stencil"></div><div data-toast-description="stencil"></div></div><button data-toast-action-trigger="stencil"></button><button data-toast-close-trigger="stencil">x</button></div></template>`;
 
 function mountToaster(templates = defaultTemplate) {
     document.body.innerHTML = `<div data-toaster-root="t1">${templates}</div>`;
@@ -40,6 +40,8 @@ test('fills a clone of the toast template from the store and removes it once it 
 
     const [toast] = toasts();
     expect(toast.dataset.toastRoot).toBe(id);
+    // the machine observes the content to follow the height of the toast
+    expect(part(toast, 'content').dataset.state).toBe('open');
     expect(part(toast, 'title').textContent).toBe('Deleted');
     expect(toast.getAttribute('aria-labelledby')).toBe(part(toast, 'title').id);
     expect(part(toast, 'description').hidden).toBe(true);

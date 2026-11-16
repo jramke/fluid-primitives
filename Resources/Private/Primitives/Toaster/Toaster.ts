@@ -53,8 +53,7 @@ export class Toaster extends Component<ToasterProps, toast.GroupApi> {
 
         const ids = new Set<string>();
         const storeToasts = this.api.getToasts();
-        // oldest first: the store lists the newest first, and a toast mounted later is the front one
-        // TODO: mount in store order once @zag-js/toast keeps the heights in toast order itself (zag#3541)
+        // oldest first: the store lists the newest first, and mountToast() prepends, so the newest comes first
         [...storeToasts].reverse().forEach((storeProps, reversedIndex) => {
             const index = storeToasts.length - 1 - reversedIndex;
             // the store gives every toast an id
