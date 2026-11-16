@@ -218,7 +218,7 @@ export class Select extends FieldAwareComponent<SelectProps, select.Api> {
         const emptyEl = this.hydrator.query('empty');
         if (emptyEl) {
             this.spreadProps(emptyEl, this.api.getEmptyProps());
-            emptyEl.hidden = hasVisibleItems;
+            emptyEl.firstElementChild?.toggleAttribute('hidden', hasVisibleItems);
         }
 
         const clearTriggerEl = this.hydrator.query('clearTrigger');

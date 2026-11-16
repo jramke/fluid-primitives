@@ -264,6 +264,9 @@ export class Combobox extends FieldAwareComponent<combobox.Props, combobox.Api> 
         }
 
         const emptyEl = this.hydrator.query('empty');
-        if (emptyEl) emptyEl.hidden = hasVisibleItems;
+        if (emptyEl) {
+            this.spreadProps(emptyEl, this.api.getEmptyProps());
+            emptyEl.firstElementChild?.toggleAttribute('hidden', hasVisibleItems);
+        }
     }
 }

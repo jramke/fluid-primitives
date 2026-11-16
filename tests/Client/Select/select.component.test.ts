@@ -96,7 +96,7 @@ function mountFilterableSelect() {
                     </div>
                     <div data-select-item="s1" data-value="carrot">Carrot</div>
                 </div>
-                <div data-select-empty="s1" hidden>No results</div>
+                <div data-select-empty="s1"><div hidden>No results</div></div>
             </div>
         </div>`;
     const collection = select.collection({
@@ -130,7 +130,8 @@ function mountFilterableSelect() {
 test('hides the items the filtered collection no longer holds, their group and shows the empty part', async () => {
     const { item, type } = mountFilterableSelect();
     const group = document.querySelector<HTMLElement>('[data-select-item-group]')!;
-    const empty = document.querySelector<HTMLElement>('[data-select-empty]')!;
+    const part = document.querySelector<HTMLElement>('[data-select-empty]')!;
+    const empty = part.firstElementChild as HTMLElement;
     expect(item('apple').hidden).toBe(false);
 
     type('car');
@@ -142,6 +143,9 @@ test('hides the items the filtered collection no longer holds, their group and s
 
     type('zzz');
     await expect.poll(() => empty.hidden).toBe(false);
+    // the part stays a live region on the page, so the message that shows is announced
+    expect(part.hidden).toBe(false);
+    expect(part.getAttribute('role')).toBe('status');
     expect(item('carrot').hidden).toBe(true);
     expect(document.querySelector('[data-select-list]')!.hasAttribute('data-empty')).toBe(true);
 

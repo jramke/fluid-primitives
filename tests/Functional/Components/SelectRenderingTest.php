@@ -274,7 +274,7 @@ final class SelectRenderingTest extends FunctionalTestCase
                     <primitives:select.content>
                         <primitives:select.input placeholder="Search" />
                         <primitives:select.list>List</primitives:select.list>
-                        <primitives:select.empty>No results</primitives:select.empty>
+                        <primitives:select.empty data-message="">No results</primitives:select.empty>
                     </primitives:select.content>
                 </primitives:select.positioner>
             </primitives:select.root>
@@ -287,9 +287,10 @@ final class SelectRenderingTest extends FunctionalTestCase
         $this->assertSame('input', $input->tag);
         $this->assertSame('searchbox', $input->get('role'));
         $this->assertSame('Search', $input->get('placeholder'));
-        $this->assertTrue($this->elementWith($html, 'data-select-empty')->has('hidden'));
+        $this->assertFalse($this->elementWith($html, 'data-select-empty')->has('hidden'));
+        $this->assertTrue($this->elementWith($html, 'data-message')->has('hidden'));
 
-        $this->assertFalse($this->elementWith($render(new ListCollection([])), 'data-select-empty')->has('hidden'));
+        $this->assertFalse($this->elementWith($render(new ListCollection([])), 'data-message')->has('hidden'));
     }
 
     /**

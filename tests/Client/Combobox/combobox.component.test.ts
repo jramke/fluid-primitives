@@ -1,5 +1,5 @@
 import * as combobox from '@zag-js/combobox';
-import { afterEach, expect, test } from 'vitest';
+import { afterEach, expect, test, vi } from 'vitest';
 import { Combobox } from '../../../Resources/Private/Primitives/Combobox/Combobox';
 
 let instance: Combobox | undefined;
@@ -50,4 +50,48 @@ test('a disabled combobox submits nothing', () => {
     instance.init();
 
     expect(entries()).toEqual([]);
+});
+
+test('keeps the empty part on the page as a live region and shows its message only while no item matches', async () => {
+    // the open popup is positioned, which observes its size
+    vi.stubGlobal(
+        'ResizeObserver',
+        class {
+            observe() {}
+            unobserve() {}
+            disconnect() {}
+        }
+    );
+    document.body.innerHTML = `
+        <div data-combobox-root="c1">
+            <div data-combobox-control="c1"><input data-combobox-input="c1"></div>
+            <div data-combobox-positioner="c1"><div data-combobox-content="c1">
+                <div data-combobox-list="c1">
+                    <div data-combobox-item="c1" data-value="a">A</div>
+                    <div data-combobox-item="c1" data-value="b">B</div>
+                </div>
+                <div data-combobox-empty="c1"><div hidden>No results found</div></div>
+            </div></div>
+        </div>`;
+    instance = new Combobox({
+        id: 'c1',
+        collection: collection(),
+        onInputValueChange: ({ inputValue }) => {
+            const source = instance!.getSourceCollection();
+            instance!.updateProps({ collection: source.filter(label => label === inputValue) });
+        },
+    });
+    instance.init();
+    instance.api.setOpen(true);
+    const part = document.querySelector<HTMLElement>('[data-combobox-empty]')!;
+    const message = part.firstElementChild as HTMLElement;
+
+    instance.api.setInputValue('zzz');
+    await expect.poll(() => message.hidden).toBe(false);
+    expect(part.getAttribute('role')).toBe('status');
+    expect(part.getAttribute('aria-live')).toBe('polite');
+
+    instance.api.setInputValue('A');
+    await expect.poll(() => message.hidden).toBe(true);
+    expect(part.hidden).toBe(false);
 });

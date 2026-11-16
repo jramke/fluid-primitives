@@ -399,12 +399,14 @@ final class ComboboxRenderingTest extends FunctionalTestCase
         $html = $this->renderTemplate('
             <primitives:combobox.root collection="{collection}">
                 <primitives:combobox.content>
-                    <primitives:combobox.empty>No results found</primitives:combobox.empty>
+                    <primitives:combobox.empty data-message="">No results found</primitives:combobox.empty>
                 </primitives:combobox.content>
             </primitives:combobox.root>
         ', ['collection' => new ListCollection($items)]);
 
-        $this->assertSame($hidden, $this->elementWith($html, 'data-combobox-empty')->has('hidden'));
+        // the part is a live region that stays, the message inside it shows and hides
+        $this->assertFalse($this->elementWith($html, 'data-combobox-empty')->has('hidden'));
+        $this->assertSame($hidden, $this->elementWith($html, 'data-message')->has('hidden'));
         $this->assertSame(!$hidden, $this->elementWith($html, 'data-combobox-content')->has('data-empty'));
     }
 
