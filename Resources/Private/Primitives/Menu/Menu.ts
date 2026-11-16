@@ -188,8 +188,12 @@ export class Menu extends Component<menu.Props, menu.Api> {
         const arrowTipEl = this.hydrator.query('arrowTip');
         if (arrowTipEl) this.spreadProps(arrowTipEl, this.api.getArrowTipProps());
 
-        const contentEl = this.hydrator.query('content');
-        if (contentEl) this.spreadProps(contentEl, this.api.getContentProps());
+        const viewportEl = this.hydrator.query('viewport');
+        if (viewportEl) this.spreadProps(viewportEl, this.api.getViewportProps());
+
+        this.spreadPropsByOptionalValue('content', ({ value }) =>
+            this.api.getContentProps({ value })
+        );
 
         const inputEl = this.hydrator.query('input');
         if (inputEl) this.spreadProps(inputEl, this.api.getInputProps());

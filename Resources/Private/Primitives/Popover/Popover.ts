@@ -56,14 +56,26 @@ export class Popover extends Component<popover.Props, popover.Api> {
         const arrowTipEl = this.hydrator.query('arrowTip');
         if (arrowTipEl) this.spreadProps(arrowTipEl, this.api.getArrowTipProps());
 
-        const contentEl = this.hydrator.query('content');
-        if (contentEl) this.spreadProps(contentEl, this.api.getContentProps());
+        const viewportEl = this.hydrator.query('viewport');
+        if (viewportEl) this.spreadProps(viewportEl, this.api.getViewportProps());
 
-        const titleEl = this.hydrator.query('title');
-        if (titleEl) this.spreadProps(titleEl, this.api.getTitleProps());
+        this.spreadPropsByOptionalValue('content', ({ value }) =>
+            this.api.getContentProps({ value })
+        );
 
-        const descriptionEl = this.hydrator.query('description');
-        if (descriptionEl) this.spreadProps(descriptionEl, this.api.getDescriptionProps());
+        // a title and a description belong to the content around them, the one of their trigger
+        const contentValueOf = (el: HTMLElement) =>
+            el.closest<HTMLElement>(this.hydrator.selector('content'))?.dataset.value;
+        this.hydrator
+            .queryAll('title')
+            .forEach(el =>
+                this.spreadProps(el, this.api.getTitleProps({ value: contentValueOf(el) }))
+            );
+        this.hydrator
+            .queryAll('description')
+            .forEach(el =>
+                this.spreadProps(el, this.api.getDescriptionProps({ value: contentValueOf(el) }))
+            );
 
         this.hydrator.queryAll('closeTrigger').forEach(closeTriggerEl => {
             this.spreadProps(closeTriggerEl, this.api.getCloseTriggerProps());
