@@ -31,7 +31,10 @@ export function resolveTranslations(
         resultsCount: (count: number) => ({ count }),
     });
     const many = resolved?.resultsCount;
-    if (typeof resultsCountOne !== 'string' || !resolved || !many) return resolved;
+    // an empty `resultsCount` turns off the count, for one result too
+    if (typeof resultsCountOne !== 'string' || !resolved || !many || rest.resultsCount === '') {
+        return resolved;
+    }
 
     return { ...resolved, resultsCount: count => (count === 1 ? resultsCountOne : many(count)) };
 }

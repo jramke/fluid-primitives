@@ -33,4 +33,11 @@ describe('combobox translations', () => {
         expect(t?.noResults).toBe('');
         expect(t).not.toHaveProperty('loading');
     });
+
+    test('an empty resultsCount turns off the count for one result too', () => {
+        const t = resolveTranslations({ resultsCount: '', resultsCountOne: '1 result' });
+
+        expect(t?.resultsCount?.(1)).toBe('');
+        expect(t?.resultsCount?.(5)).toBe('');
+    });
 });
