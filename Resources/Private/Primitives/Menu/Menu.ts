@@ -17,12 +17,12 @@ import {
 const menuPropConverters = {
     positioning: (positioning: menu.Props['positioning']) => positioning,
     // `boolean|string` on the wire: a boolean or `always`
-    autoHighlight: (autoHighlight: boolean | string | undefined): menu.Props['autoHighlight'] =>
-        autoHighlight === 'always'
-            ? 'always'
-            : autoHighlight === undefined
-              ? undefined
-              : !!autoHighlight,
+    autoHighlight: (autoHighlight: boolean | string | undefined): menu.Props['autoHighlight'] => {
+        if (typeof autoHighlight !== 'string') return autoHighlight;
+        // Fluid coerces no boolean for a union type, so `autoHighlight="false"` arrives as text
+        if (autoHighlight === 'always') return 'always';
+        return !['', '0', 'false'].includes(autoHighlight);
+    },
 } satisfies ClientPropConverterMap;
 
 registerClientPropConverters('menu', menuPropConverters);
@@ -68,13 +68,13 @@ export class Menu extends Component<menu.Props, menu.Api> {
     init() {
         super.init();
         this.linkToParent();
-        this.hydrator
-            .query<HTMLInputElement>('input')
-            ?.addEventListener('input', event =>
-                this.filterItems((event.target as HTMLInputElement).value)
-            );
+        this.hydrator.query('input')?.addEventListener('input', this.filterOnInput);
         return this;
     }
+
+    private filterOnInput = (event: Event) => {
+        this.filterItems((event.target as HTMLInputElement).value);
+    };
 
     /**
      * Shows the items whose text contains the query, ignoring case and accents, and takes the others
@@ -115,8 +115,7 @@ export class Menu extends Component<menu.Props, menu.Api> {
         for (const part of ['content', 'list'] as const) {
             this.hydrator.query(part)?.toggleAttribute('data-empty', visible === 0);
         }
-        const emptyEl = this.hydrator.query('empty');
-        if (emptyEl) emptyEl.hidden = visible > 0;
+        this.hydrator.query('empty')?.firstElementChild?.toggleAttribute('hidden', visible > 0);
 
         this.render();
     }
@@ -165,6 +164,10 @@ export class Menu extends Component<menu.Props, menu.Api> {
 
     destroy() {
         this.getParentInstance()?.submenus.delete(this);
+        this.hydrator.query('input')?.removeEventListener('input', this.filterOnInput);
+        // a later mount on the same markup finds every item again
+        this.filteredOut.forEach((marker, el) => marker.replaceWith(el));
+        this.filteredOut.clear();
         super.destroy();
     }
 

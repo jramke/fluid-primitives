@@ -82,7 +82,7 @@ final class MenuRenderingTest extends FunctionalTestCase
                         <primitives:menu.list>
                             <primitives:menu.item value="a">A</primitives:menu.item>
                         </primitives:menu.list>
-                        <primitives:menu.empty>No results</primitives:menu.empty>
+                        <primitives:menu.empty data-message="">No results</primitives:menu.empty>
                     </primitives:menu.content>
                 </primitives:menu.positioner>
             </primitives:menu.root>
@@ -111,7 +111,11 @@ final class MenuRenderingTest extends FunctionalTestCase
         $this->assertSame('input', $input->tag);
         $this->assertSame('searchbox', $input->get('role'));
         $this->assertSame('Filter', $input->get('placeholder'));
-        $this->assertTrue($this->elementWith($dialogPopup, 'data-menu-empty')->has('hidden'));
+        // the part stays on the page as a live region, its message is hidden until a filter matches nothing
+        $empty = $this->elementWith($dialogPopup, 'data-menu-empty');
+        $this->assertFalse($empty->has('hidden'));
+        $this->assertSame('status', $empty->get('role'));
+        $this->assertTrue($this->elementWith($dialogPopup, 'data-message')->has('hidden'));
     }
 
     #[Test]

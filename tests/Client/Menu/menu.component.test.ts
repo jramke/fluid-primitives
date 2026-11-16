@@ -1,4 +1,5 @@
 import { afterEach, expect, test } from 'vitest';
+import { applyClientPropConverters } from '../../../Resources/Private/Client';
 import { Menu } from '../../../Resources/Private/Primitives/Menu/Menu';
 
 let instance: Menu | undefined;
@@ -20,12 +21,14 @@ function mountFilterableMenu() {
                 </div>
                 <div data-menu-separator="m1"></div>
                 <div data-menu-item="m1" data-value="cafe" data-valuetext="Café au lait">Order a coffee</div>
-                <div data-menu-empty="m1" hidden>No results</div>
+                <div data-menu-empty="m1"><div hidden>No results</div></div>
             </div>
         </div>`;
     instance = new Menu({ id: 'm1', popupType: 'dialog' }).init();
 
     const query = (selector: string) => document.querySelector<HTMLElement>(selector)!;
+    // the part stays on the page as a live region, its content shows and hides
+    const emptyMessage = () => query('[data-menu-empty]').firstElementChild as HTMLElement;
     const values = () =>
         [...document.querySelectorAll<HTMLElement>('[data-menu-item]')].map(el => el.dataset.value);
     const type = (text: string) => {
@@ -33,13 +36,13 @@ function mountFilterableMenu() {
         input.value = text;
         input.dispatchEvent(new Event('input', { bubbles: true }));
     };
-    return { query, values, type };
+    return { query, values, type, emptyMessage };
 }
 
 test('filters the items while you type and brings them back in order', () => {
-    const { query, values, type } = mountFilterableMenu();
+    const { query, values, type, emptyMessage } = mountFilterableMenu();
     expect(values()).toEqual(['copy', 'cut', 'cafe']);
-    expect(query('[data-menu-empty]').hidden).toBe(true);
+    expect(emptyMessage().hidden).toBe(true);
 
     type('CU');
     expect(values()).toEqual(['cut']);
@@ -53,12 +56,13 @@ test('filters the items while you type and brings them back in order', () => {
 
     type('zzz');
     expect(values()).toEqual([]);
+    expect(emptyMessage().hidden).toBe(false);
     expect(query('[data-menu-empty]').hidden).toBe(false);
     expect(query('[data-menu-list]').hasAttribute('data-empty')).toBe(true);
 
     type('');
     expect(values()).toEqual(['copy', 'cut', 'cafe']);
-    expect(query('[data-menu-empty]').hidden).toBe(true);
+    expect(emptyMessage().hidden).toBe(true);
     expect(query('[data-menu-separator]').hidden).toBe(false);
     expect(query('[data-menu-list]').hasAttribute('data-empty')).toBe(false);
 });
@@ -71,4 +75,27 @@ test('marks the input, the list and the empty part for the machine', () => {
     expect(list.id).not.toBe('');
     expect(list.getAttribute('role')).toBe('menu');
     expect(query('[data-menu-empty]').getAttribute('aria-live')).toBe('polite');
+});
+
+test('destroy brings the filtered items back and stops filtering', () => {
+    const { values, type } = mountFilterableMenu();
+    type('CU');
+    expect(values()).toEqual(['cut']);
+
+    instance!.destroy();
+    instance = undefined;
+    expect(values()).toEqual(['copy', 'cut', 'cafe']);
+
+    type('zzz');
+    expect(values()).toEqual(['copy', 'cut', 'cafe']);
+});
+
+test('autoHighlight takes a boolean, the text of one or always', () => {
+    const autoHighlight = (value: unknown) =>
+        applyClientPropConverters('menu', { autoHighlight: value }).autoHighlight;
+
+    expect([true, 'true', '1'].map(autoHighlight)).toEqual([true, true, true]);
+    expect([false, 'false', '0', ''].map(autoHighlight)).toEqual([false, false, false, false]);
+    expect(autoHighlight('always')).toBe('always');
+    expect(autoHighlight(undefined)).toBeUndefined();
 });
