@@ -1,6 +1,28 @@
 import * as toast from '@zag-js/toast';
-import { Component, Machine, normalizeProps, Template } from '../../Client';
+import {
+    Component,
+    Machine,
+    normalizeProps,
+    registerClientPropConverters,
+    Template,
+    type ClientPropConverterMap,
+    type ConverterMachineProps,
+} from '../../Client';
 import { Toast } from '../Toast/Toast';
+
+const toasterPropConverters = {
+    // a `string[]` prop on the wire, only `up`, `down`, `left` and `right` mean something to Zag
+    swipeDirections: (directions: string[] | undefined) =>
+        directions as toast.SwipeDirection[] | undefined,
+} satisfies ClientPropConverterMap;
+
+registerClientPropConverters('toaster', toasterPropConverters);
+
+declare module 'fluid-primitives' {
+    interface HydrationPropsOverrides {
+        toaster: ConverterMachineProps<typeof toasterPropConverters>;
+    }
+}
 
 type ToasterProps = toast.StoreProps & {
     id: string;

@@ -16,6 +16,13 @@ import {
 // transforming the value itself.
 const menuPropConverters = {
     positioning: (positioning: menu.Props['positioning']) => positioning,
+    // `boolean|string` on the wire: a boolean or `always`
+    autoHighlight: (autoHighlight: boolean | string | undefined): menu.Props['autoHighlight'] =>
+        autoHighlight === 'always'
+            ? 'always'
+            : autoHighlight === undefined
+              ? undefined
+              : !!autoHighlight,
 } satisfies ClientPropConverterMap;
 
 registerClientPropConverters('menu', menuPropConverters);
