@@ -1,5 +1,5 @@
 import * as select from '@zag-js/select';
-import { afterEach, expect, test } from 'vitest';
+import { afterEach, expect, test, vi } from 'vitest';
 import { Select } from '../../../Resources/Private/Primitives/Select/Select';
 
 let instance: Select | undefined;
@@ -164,4 +164,18 @@ test('labels the input for the listbox it filters', () => {
     expect(list.id).not.toBe('');
     expect(input.getAttribute('aria-controls')).toBe(list.id);
     expect(input.getAttribute('role')).toBe('searchbox');
+});
+
+test('a destroyed select stops reacting to its filter input', async () => {
+    const { item, type } = mountFilterableSelect();
+    type('car');
+    await expect.poll(() => item('apple').hidden).toBe(true);
+
+    instance!.destroy();
+    // the filter callback of the mount reads `instance`, so a leaked listener would call this
+    const getSourceCollection = vi.fn(() => ({ filter: () => [] }));
+    instance = { getSourceCollection, updateProps: vi.fn(), destroy: () => {} } as never;
+    type('zzz');
+
+    expect(getSourceCollection).not.toHaveBeenCalled();
 });

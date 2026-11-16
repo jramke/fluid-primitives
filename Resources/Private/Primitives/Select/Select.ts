@@ -73,13 +73,20 @@ export class Select extends FieldAwareComponent<SelectProps, select.Api> {
 
     init() {
         super.init();
-        this.hydrator.query<HTMLInputElement>('input')?.addEventListener('input', event => {
-            this.userProps.onInputValueChange?.({
-                inputValue: (event.target as HTMLInputElement).value,
-            });
-        });
+        this.hydrator.query('input')?.addEventListener('input', this.handleInput);
         return this;
     }
+
+    destroy() {
+        this.hydrator.query('input')?.removeEventListener('input', this.handleInput);
+        super.destroy();
+    }
+
+    private handleInput = (event: Event) => {
+        this.userProps.onInputValueChange?.({
+            inputValue: (event.target as HTMLInputElement).value,
+        });
+    };
 
     private resetFilter() {
         const inputEl = this.hydrator.query<HTMLInputElement>('input');
