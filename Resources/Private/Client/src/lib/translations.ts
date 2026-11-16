@@ -39,10 +39,10 @@ export function fillPlaceholders(text: string, values: PlaceholderValues): strin
  * @returns The translations for the machine, or `undefined` without any.
  * @example
  * resolveTranslations(
- *     { valueText: '%value% items', incrementLabel: 'More' },
- *     { valueText: (value: string) => ({ value }) }
+ *     { itemLabel: 'Page %page% of %totalPages%', rootLabel: 'Pages' },
+ *     { itemLabel: (details: { page: number; totalPages: number }) => ({ ...details }) }
  * );
- * // { valueText: value => `${value} items`, incrementLabel: 'More' }
+ * // { itemLabel: ({ page, totalPages }) => `Page ${page} of ${totalPages}`, rootLabel: 'Pages' }
  */
 export function resolveTranslations<T = Record<string, unknown>>(
     translations: Record<string, unknown> | undefined,
