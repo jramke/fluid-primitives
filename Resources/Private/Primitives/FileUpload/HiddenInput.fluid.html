@@ -10,7 +10,7 @@
     {f:if(condition: context.directory, then: 'webkitdirectory' )}
     {f:if(condition: context.capture, then: 'capture="{context.capture}"' )}
     {f:if(condition: context.required, then: 'required' )}
-    {f:if(condition: '{context.disabled} || {context.readOnly}' , then: 'disabled' )}
+    {f:if(condition: context.disabled, then: 'disabled' )}
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'hiddenInput' )}
     style="{settings.visuallyHiddenStyles}"

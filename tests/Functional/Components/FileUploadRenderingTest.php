@@ -50,13 +50,13 @@ final class FileUploadRenderingTest extends FunctionalTestCase
     {
         yield 'neither' => ['', false, false];
         yield 'disabled' => ['disabled="{true}"', true, false];
-        // a file input has no readonly state: the one the user could not open is disabled
+        // a read-only upload still submits its files, the machine keeps the picker closed
         yield 'read only' => ['readOnly="{true}"', false, true];
     }
 
     #[Test]
     #[DataProvider('flags')]
-    public function carriesTheFlagsOnTheRootAndDisablesTheNativeInputWhenDisabledOrReadOnly(
+    public function carriesTheFlagsOnTheRootAndDisablesTheNativeInputOnlyWhenDisabled(
         string $arguments,
         bool $disabled,
         bool $readOnly,
@@ -70,10 +70,7 @@ final class FileUploadRenderingTest extends FunctionalTestCase
         $root = $this->elementWith($html, 'data-file-upload-root');
         $this->assertSame($disabled, $root->has('data-disabled'));
         $this->assertSame($readOnly, $root->has('data-readonly'));
-        $this->assertSame(
-            $disabled || $readOnly,
-            $this->elementWith($html, 'data-file-upload-hidden-input')->has('disabled'),
-        );
+        $this->assertSame($disabled, $this->elementWith($html, 'data-file-upload-hidden-input')->has('disabled'));
     }
 
     /**
