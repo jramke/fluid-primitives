@@ -74,18 +74,15 @@ describe('focusField', () => {
     function mountField(html: string) {
         document.body.innerHTML = `<form><div data-field-root="f1">${html}</div></form>`;
         const rootEl = document.querySelector<HTMLElement>('[data-field-root]')!;
-        const fieldMachine = { refs: { get: () => rootEl } } as unknown as Parameters<
-            typeof focusField
-        >[2];
-        return { form: document.querySelector('form')!, fieldMachine };
+        return { form: document.querySelector('form')!, rootEl };
     }
 
     test('focuses the control with the name, or wherever that control hands the focus on to', () => {
-        const { form, fieldMachine } = mountField(
+        const { form, rootEl } = mountField(
             '<input name="email" value="a@b.c"><input name="fruit" aria-hidden="true" tabindex="-1"><input id="visible">'
         );
 
-        focusField(form, 'email', fieldMachine);
+        focusField(form, 'email', rootEl);
         const email = document.querySelector<HTMLInputElement>('[name="email"]')!;
         expect(document.activeElement).toBe(email);
         expect([email.selectionStart, email.selectionEnd]).toEqual([0, 5]);
@@ -94,16 +91,16 @@ describe('focusField', () => {
         document
             .querySelector('[name="fruit"]')!
             .addEventListener('focus', () => document.getElementById('visible')!.focus());
-        focusField(form, 'fruit', fieldMachine);
+        focusField(form, 'fruit', rootEl);
         expect(document.activeElement).toBe(document.getElementById('visible'));
     });
 
     test('falls back to the first thing in the field that takes focus when the control cannot', () => {
-        const { form, fieldMachine } = mountField(
+        const { form, rootEl } = mountField(
             '<input type="hidden" name="volume"><div aria-hidden="true"></div><div id="thumb" tabindex="0"></div>'
         );
 
-        focusField(form, 'volume', fieldMachine);
+        focusField(form, 'volume', rootEl);
 
         expect(document.activeElement).toBe(document.getElementById('thumb'));
     });

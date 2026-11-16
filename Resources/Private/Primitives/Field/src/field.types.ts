@@ -40,7 +40,15 @@ export interface ValidateDetails {
      * Snapshot of the control's native validity, taken before custom validation runs.
      */
     validity: ValiditySnapshot;
+    /**
+     * The values of the form of the control by name, a name with several values as a list. Empty
+     * without a form. Use it to validate against another field, such as a repeated password.
+     */
+    formValues: FormValues;
 }
+
+/** The values of a form by name, as `FormData` holds them. */
+export type FormValues = Record<string, FormDataEntryValue | FormDataEntryValue[]>;
 
 /**
  * Return a string or list of strings to mark the field invalid; anything else means valid.
@@ -171,6 +179,7 @@ export interface FieldSchema {
         errors: string[];
         validity: ValiditySnapshot | null;
         errorTextIds: string[];
+        fieldsetErrorTextId: string | null;
         hasHelperText: boolean;
         fieldsetDisabled: boolean;
         submitAttempted: boolean;

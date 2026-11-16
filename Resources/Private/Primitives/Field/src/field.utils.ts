@@ -5,6 +5,7 @@
  */
 
 import type {
+    FormValues,
     ValidateResult,
     ValidationMode,
     ValidityMatch,
@@ -121,17 +122,40 @@ export interface DescribedByOptions {
     helperTextId: string;
     hasHelperText: boolean;
     errorTextIds: string[];
+    fieldsetErrorTextId?: string | null | undefined;
 }
 
 /**
- * Description first, then visible error ids in DOM order.
+ * Description first, then visible error ids in DOM order, then the error of the enclosing fieldset.
  * Hidden error texts must not be referenced — screen readers still announce them.
  */
 export function composeDescribedBy(options: DescribedByOptions): string | undefined {
     const ids: string[] = [];
     if (options.hasHelperText) ids.push(options.helperTextId);
     ids.push(...options.errorTextIds);
+    if (options.fieldsetErrorTextId) ids.push(options.fieldsetErrorTextId);
     return ids.length > 0 ? ids.join(' ') : undefined;
+}
+
+/** The values of the form, by name, a name with several values as a list. Empty without a form. */
+export function getFormValues(el: { form: HTMLFormElement | null }): FormValues {
+    const values: FormValues = {};
+    if (!el.form) return values;
+    for (const [name, value] of new FormData(el.form)) {
+        const prev = values[name];
+        values[name] =
+            prev === undefined ? value : Array.isArray(prev) ? [...prev, value] : [prev, value];
+    }
+    return values;
+}
+
+/** The first control of the form that fails its constraints, in DOM order. */
+export function getFirstInvalidControl(form: HTMLFormElement) {
+    for (const el of Array.from(form.elements)) {
+        const control = el as HTMLInputElement;
+        if (control.willValidate && !control.validity.valid) return control;
+    }
+    return null;
 }
 
 export interface ErrorMatchOptions {

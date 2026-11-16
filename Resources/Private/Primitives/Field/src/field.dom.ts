@@ -34,6 +34,20 @@ export const getVisibleErrorTextIds = (rootEl: HTMLElement) =>
         .filter(el => !el.hidden && el.id)
         .map(el => el.id);
 
+/** The closest fieldset around the field, its parts carry the id of its machine: `data-fieldset-root="<id>"`. */
+export const getFieldsetEl = (rootEl: HTMLElement) =>
+    rootEl.parentElement?.closest<HTMLElement>('[data-fieldset-root]') ?? null;
+
+/** The visible error text of the fieldset itself, not of one nested in it. */
+export function getFieldsetErrorTextId(fieldsetEl: HTMLElement) {
+    const fieldsetId = fieldsetEl.getAttribute('data-fieldset-root');
+    for (const el of fieldsetEl.querySelectorAll<HTMLElement>('[data-fieldset-error-text]')) {
+        if (el.getAttribute('data-fieldset-error-text') !== fieldsetId) continue;
+        if (!el.hidden && el.id) return el.id;
+    }
+    return null;
+}
+
 const componentRootAttribute = /^(data-.+-)root$/;
 
 /**

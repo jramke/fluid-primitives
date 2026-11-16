@@ -1,6 +1,5 @@
 import { MachineStatus, type Params, type Scope } from '@zag-js/core';
 import { isInsideField } from '../../Field/src/field.dom';
-import type { FieldMachine } from '../../Field/src/field.registry';
 import { getFieldElement } from '../../Field/src/field.value';
 import * as dom from './form.dom';
 import { trimArraySuffix } from './form.path';
@@ -106,8 +105,7 @@ const FOCUSABLE = [
  * Select and the hidden input of a Combobox hand it on to their visible control) and, when that
  * cannot take focus (a Slider's input is `display: none`), to the first thing inside the field that can.
  */
-export function focusField(form: HTMLFormElement, name: string, fieldMachine: FieldMachine) {
-    const rootEl = fieldMachine.refs.get('rootEl');
+export function focusField(form: HTMLFormElement, name: string, rootEl: HTMLElement | null) {
     const target = getFieldElement(form, name);
 
     target?.focus();

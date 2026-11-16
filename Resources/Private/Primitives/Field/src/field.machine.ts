@@ -7,6 +7,7 @@
 import { setup } from '@zag-js/core';
 import { observeChildren, trackFormControl } from '@zag-js/dom-query';
 import { isEqual } from '@zag-js/utils';
+import { focusField } from '../../Form/src/form.fields';
 import { trimArraySuffix } from '../../Form/src/form.path';
 import { getFormMachineFor } from '../../Form/src/form.registry';
 import * as dom from './field.dom';
@@ -19,6 +20,8 @@ import type {
 } from './field.types';
 import {
     VALID_SNAPSHOT,
+    getFirstInvalidControl,
+    getFormValues,
     getValiditySnapshot,
     resolveValidation,
     shouldCommit,
@@ -63,6 +66,7 @@ export const machine = createMachine({
             validity: bindable<ValiditySnapshot | null>(() => ({ defaultValue: null })),
             errorTextIds: bindable<string[]>(() => ({ defaultValue: [] })),
             hasHelperText: bindable<boolean>(() => ({ defaultValue: false })),
+            fieldsetErrorTextId: bindable<string | null>(() => ({ defaultValue: null })),
             fieldsetDisabled: bindable<boolean>(() => ({ defaultValue: false })),
             submitAttempted: bindable<boolean>(() => ({ defaultValue: false })),
         };
@@ -103,7 +107,13 @@ export const machine = createMachine({
         });
     },
 
-    effects: ['trackRoot', 'trackControlState', 'trackTextParts', 'trackFieldEvents'],
+    effects: [
+        'trackRoot',
+        'trackControlState',
+        'trackTextParts',
+        'trackFieldsetError',
+        'trackFieldEvents',
+    ],
 
     on: {
         'CONTROL.FOCUS': {
@@ -119,7 +129,7 @@ export const machine = createMachine({
         ],
         // Native `invalid` event fired at submit time (bubble suppressed in connect)
         'SUBMIT.INVALID': {
-            actions: ['markSubmitAttempted', 'commitValidation'],
+            actions: ['markSubmitAttempted', 'commitValidation', 'focusIfFirstInvalid'],
         },
         VALIDATE: {
             actions: ['forceDirty', 'commitValidation'],
@@ -203,6 +213,22 @@ export const machine = createMachine({
                 });
             },
 
+            // The fieldset owns no live region: its error reaches screen readers through the fields in it.
+            trackFieldsetError({ context, refs }) {
+                const rootEl = refs.get('rootEl');
+                const fieldsetEl = rootEl ? dom.getFieldsetEl(rootEl) : null;
+                if (!fieldsetEl) return;
+                const sync = () =>
+                    context.set('fieldsetErrorTextId', dom.getFieldsetErrorTextId(fieldsetEl));
+                sync();
+                return observeChildren(fieldsetEl, {
+                    defer: true,
+                    callback: sync,
+                    attributes: true,
+                    attributeFilter: ['hidden'],
+                });
+            },
+
             // Our controls are composite (focus on a Select's trigger, value in a hidden <select>, a
             // portaled listbox, groups of inputs), so instead of handlers on one control the field
             // listens on its root: capture phase also sees the non-bubbling `invalid` event.
@@ -261,10 +287,13 @@ export const machine = createMachine({
                     click: (event: Event) => {
                         if (!event.isTrusted && isChoiceInput(event.target)) schedule();
                     },
-                    // suppress the native browser bubble; the field surfaces the error itself
+                    // suppress the native browser bubble; the field surfaces the error itself. That also
+                    // cancels the focus of the browser, so the field moves it, unless a listener before
+                    // it already took the event over.
                     invalid: (event: Event) => {
+                        const focus = !event.defaultPrevented;
                         event.preventDefault();
-                        send({ type: 'SUBMIT.INVALID', value: read() });
+                        send({ type: 'SUBMIT.INVALID', value: read(), focus });
                     },
                 };
                 for (const [type, listener] of Object.entries(listeners)) {
@@ -321,6 +350,14 @@ export const machine = createMachine({
                     value: event.value,
                     nativeMessage: '',
                 });
+            },
+
+            focusIfFirstInvalid(params) {
+                const { event, refs, prop } = params;
+                if (!event.focus) return;
+                const hostEl = getHostEl(params);
+                if (!hostEl?.form || getFirstInvalidControl(hostEl.form) !== hostEl) return;
+                focusField(hostEl.form, prop('name'), refs.get('rootEl'));
             },
 
             markSubmitAttempted({ context, refs }) {
@@ -400,7 +437,11 @@ function commitValidation(params: FieldParams, options: CommitOptions = {}) {
     const seq = refs.get('seq') + 1;
     refs.set('seq', seq);
 
-    const result = prop('validate')?.({ value, validity });
+    const result = prop('validate')?.({
+        value,
+        validity,
+        formValues: getFormValues({ form: refs.get('rootEl')?.closest('form') ?? null }),
+    });
 
     if (isPromise(result)) {
         context.set('validating', true);

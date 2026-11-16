@@ -215,7 +215,8 @@ export const machine = createMachine<FormSchema>({
                     const form = dom.getFormEl(scope);
                     if (!firstInvalidField || !form) return;
 
-                    focusField(form, ...firstInvalidField);
+                    const [name, fieldMachine] = firstInvalidField;
+                    focusField(form, name, fieldMachine.refs.get('rootEl'));
                 });
             },
 
