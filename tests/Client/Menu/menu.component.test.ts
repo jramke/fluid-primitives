@@ -77,14 +77,18 @@ test('marks the input, the list and the empty part for the machine', () => {
     expect(query('[data-menu-empty]').getAttribute('aria-live')).toBe('polite');
 });
 
-test('destroy brings the filtered items back and stops filtering', () => {
-    const { values, type } = mountFilterableMenu();
-    type('CU');
-    expect(values()).toEqual(['cut']);
+test('destroy leaves the menu unfiltered and stops filtering', () => {
+    const { query, values, type, emptyMessage } = mountFilterableMenu();
+    type('zzz');
+    expect(values()).toEqual([]);
 
     instance!.destroy();
     instance = undefined;
     expect(values()).toEqual(['copy', 'cut', 'cafe']);
+    expect(emptyMessage().hidden).toBe(true);
+    expect(query('[data-menu-list]').hasAttribute('data-empty')).toBe(false);
+    expect(query('[data-menu-separator]').hidden).toBe(false);
+    expect((query('[data-menu-input]') as HTMLInputElement).value).toBe('');
 
     type('zzz');
     expect(values()).toEqual(['copy', 'cut', 'cafe']);
@@ -98,4 +102,16 @@ test('autoHighlight takes a boolean, the text of one or always', () => {
     expect([false, 'false', '0', ''].map(autoHighlight)).toEqual([false, false, false, false]);
     expect(autoHighlight('always')).toBe('always');
     expect(autoHighlight(undefined)).toBeUndefined();
+});
+
+test('a filterable menu without items shows its empty part right away', () => {
+    document.body.innerHTML = `
+        <div data-menu-content="m1" role="dialog">
+            <input data-menu-input="m1">
+            <div data-menu-list="m1"></div>
+            <div data-menu-empty="m1"><div hidden>No actions</div></div>
+        </div>`;
+    instance = new Menu({ id: 'm1', popupType: 'dialog' }).init();
+
+    expect(document.querySelector<HTMLElement>('[data-menu-empty] > div')!.hidden).toBe(false);
 });

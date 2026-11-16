@@ -68,7 +68,12 @@ export class Menu extends Component<menu.Props, menu.Api> {
     init() {
         super.init();
         this.linkToParent();
-        this.hydrator.query('input')?.addEventListener('input', this.filterOnInput);
+        const inputEl = this.hydrator.query<HTMLInputElement>('input');
+        if (inputEl) {
+            inputEl.addEventListener('input', this.filterOnInput);
+            // shows the empty part of a menu without items before the first keystroke
+            this.filterItems(inputEl.value);
+        }
         return this;
     }
 
@@ -164,10 +169,9 @@ export class Menu extends Component<menu.Props, menu.Api> {
 
     destroy() {
         this.getParentInstance()?.submenus.delete(this);
+        // a later mount on the same markup finds it unfiltered
+        this.resetFilter();
         this.hydrator.query('input')?.removeEventListener('input', this.filterOnInput);
-        // a later mount on the same markup finds every item again
-        this.filteredOut.forEach((marker, el) => marker.replaceWith(el));
-        this.filteredOut.clear();
         super.destroy();
     }
 
