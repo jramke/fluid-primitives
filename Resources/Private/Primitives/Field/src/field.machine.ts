@@ -354,10 +354,13 @@ export const machine = createMachine({
 
             focusIfFirstInvalid(params) {
                 const { event, refs, prop } = params;
-                if (!event.focus) return;
-                const hostEl = getHostEl(params);
-                if (!hostEl?.form || getFirstInvalidControl(hostEl.form) !== hostEl) return;
-                focusField(hostEl.form, prop('name'), refs.get('rootEl'));
+                const rootEl = refs.get('rootEl');
+                const form = getFormEl(params);
+                if (!event.focus || !rootEl || !form) return;
+                // composite fields (a radio group, a combobox) have no single host control
+                const firstInvalid = getFirstInvalidControl(form);
+                if (!firstInvalid || !rootEl.contains(firstInvalid)) return;
+                focusField(form, prop('name'), rootEl);
             },
 
             markSubmitAttempted({ context, refs }) {
@@ -440,7 +443,7 @@ function commitValidation(params: FieldParams, options: CommitOptions = {}) {
     const result = prop('validate')?.({
         value,
         validity,
-        formValues: getFormValues({ form: refs.get('rootEl')?.closest('form') ?? null }),
+        formValues: getFormValues({ form: getFormEl(params) }),
     });
 
     if (isPromise(result)) {
@@ -535,6 +538,11 @@ function clearValidation(params: FieldParams) {
  * is one: the element the control id points at, if it is the one carrying the field's name. Looked
  * up at call time, and absent for groups, a Slider, or a Combobox's visible input (no name).
  */
+/** The form of the control, which its `form` attribute may point elsewhere, else the one around the field. */
+function getFormEl({ scope, refs }: Pick<FieldParams, 'scope' | 'refs'>) {
+    return dom.getControlEl(scope)?.form ?? refs.get('rootEl')?.closest('form') ?? null;
+}
+
 function getHostEl({ scope, prop }: Pick<FieldParams, 'scope' | 'prop'>) {
     const controlEl = dom.getControlEl(scope);
     if (!controlEl || typeof controlEl.setCustomValidity !== 'function') return null;

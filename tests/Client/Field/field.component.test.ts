@@ -134,6 +134,52 @@ test('without a Form the first invalid field takes the focus the suppressed brow
     fields.slice(1).forEach(f => f.destroy());
 });
 
+test('a composite field without a single control takes the focus when it holds the first invalid control', async () => {
+    document.body.innerHTML = `
+        <form>
+            <div data-field-root="f1" data-name="plan">
+                <div id="field:f1:control" data-field-control="f1" role="radiogroup">
+                    <input type="radio" name="plan" value="free" required>
+                    <input type="radio" name="plan" value="pro" required>
+                </div>
+            </div>
+            <div data-field-root="f2" data-name="email">
+                <input id="field:f2:control" data-field-control="f2" name="email" required>
+            </div>
+        </form>`;
+    const fields = ['plan', 'email'].map((name, i) =>
+        new Field({ id: `f${i + 1}`, name, required: true }).init()
+    );
+    field = fields[0];
+
+    document.querySelector('form')!.checkValidity();
+
+    await vi.waitFor(() =>
+        expect(document.activeElement).toBe(document.querySelector('input[value="free"]'))
+    );
+    fields[1].destroy();
+});
+
+test('validate gets the values of the form its control belongs to, also through the form attribute', async () => {
+    document.body.innerHTML = `
+        <form id="signup"><input name="password" value="secret"></form>
+        <form>
+            <div data-field-root="f1" data-name="repeat">
+                <input id="field:f1:control" data-field-control="f1" name="repeat" value="secret" form="signup">
+            </div>
+        </form>`;
+    const validate = vi.fn(({ value, formValues }) =>
+        value === formValues.password ? null : 'Does not match'
+    );
+    field = new Field({ id: 'f1', name: 'repeat', validate } as never);
+    field.init();
+
+    field.api.validate();
+
+    await vi.waitFor(() => expect(validate).toHaveBeenCalled());
+    expect(validate.mock.calls[0][0].formValues).toEqual({ password: 'secret', repeat: 'secret' });
+});
+
 test('validate gets the values of the whole form, to compare with another field', async () => {
     document.body.innerHTML = `
         <form>
