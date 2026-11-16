@@ -22,10 +22,16 @@ class NumberInputContext extends AbstractComponentContext
         return $this->translator;
     }
 
-    #[ExposeToClient]
-    public function getDefaultValue(): string
+    /**
+     * The value as a number, `null` for an empty input. Zag takes a number, and a template can pass
+     * the value as text, as a form field keeps it.
+     */
+    #[ExposeToClient(excludeIfNull: true)]
+    public function getDefaultValue(): ?float
     {
-        return Typed::string($this->get('defaultValue'));
+        $value = Typed::stringOrNull($this->get('defaultValue'));
+
+        return $value === null || trim($value) === '' || !is_numeric(trim($value)) ? null : (float)trim($value);
     }
 
     // excludeIfNull: no locale override should mean "key absent" (Zag falls back to its own
@@ -40,20 +46,21 @@ class NumberInputContext extends AbstractComponentContext
 
     #[ExposeToClient]
     /**
-     * @return array{incrementLabel: string, decrementLabel: string}
+     * @return array{incrementLabel: string, decrementLabel: string, roleDescription: string}
      */
     public function getTranslations(): array
     {
         return $this->translationsWithDefaults([
             'incrementLabel' => 'numberInput.incrementLabel',
             'decrementLabel' => 'numberInput.decrementLabel',
+            'roleDescription' => 'numberInput.roleDescription',
         ]);
     }
 
     // `f:if` treats a `0` as false, so the template cannot ask for the value, `min` or `max` itself
     public function getHasDefaultValue(): bool
     {
-        return $this->getDefaultValue() !== '';
+        return $this->getDefaultValue() !== null;
     }
 
     public function getHasMin(): bool
@@ -66,11 +73,12 @@ class NumberInputContext extends AbstractComponentContext
         return Typed::floatOrNull($this->get('max')) !== null;
     }
 
+    // unformatted: the client formats it with `formatOptions` on its first render
     public function getFormattedValue(): string
     {
-        // For server-side rendering, we just return the raw value
-        // The client will format it according to formatOptions
-        return $this->getDefaultValue();
+        $value = $this->getDefaultValue();
+
+        return $value === null ? '' : Typed::string($value);
     }
 
     public function getCanDecrement(): bool
@@ -78,11 +86,7 @@ class NumberInputContext extends AbstractComponentContext
         $value = $this->getDefaultValue();
         $min = Typed::floatOrNull($this->get('min'));
 
-        if ($value === '' || $min === null) {
-            return true;
-        }
-
-        return (float)$value > $min;
+        return $value === null || $min === null || $value > $min;
     }
 
     public function getCanIncrement(): bool
@@ -90,10 +94,6 @@ class NumberInputContext extends AbstractComponentContext
         $value = $this->getDefaultValue();
         $max = Typed::floatOrNull($this->get('max'));
 
-        if ($value === '' || $max === null) {
-            return true;
-        }
-
-        return (float)$value < $max;
+        return $value === null || $max === null || $value < $max;
     }
 }

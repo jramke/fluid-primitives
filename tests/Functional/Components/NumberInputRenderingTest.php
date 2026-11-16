@@ -16,6 +16,7 @@ final class NumberInputRenderingTest extends FunctionalTestCase
             <primitives:numberInput.control>
                 <primitives:numberInput.incrementTrigger>+</primitives:numberInput.incrementTrigger>
                 <primitives:numberInput.input />
+                <primitives:numberInput.hiddenInput />
                 <primitives:numberInput.decrementTrigger>-</primitives:numberInput.decrementTrigger>
             </primitives:numberInput.control>
         </primitives:numberInput.root>
@@ -70,7 +71,7 @@ final class NumberInputRenderingTest extends FunctionalTestCase
         $numberInputData = array_values(HydrationRegistry::getInstance()->getAll()['primitives']['number-input'])[0];
 
         $this->assertSame(
-            ['incrementLabel' => 'Steigern', 'decrementLabel' => 'Wert verringern'],
+            ['incrementLabel' => 'Steigern', 'decrementLabel' => 'Wert verringern', 'roleDescription' => 'Zahlenfeld'],
             $numberInputData['props']['translations'],
         );
     }
@@ -97,52 +98,53 @@ final class NumberInputRenderingTest extends FunctionalTestCase
     }
 
     /**
-     * @return iterable<string, array{0: string, 1: array<string, ?string>, 2: bool, 3: bool}>
+     * @return iterable<string, array{0: string, 1: ?string, 2: array<string, ?string>, 3: bool, 4: bool}>
      */
     public static function values(): iterable
     {
         yield 'inside the range' => [
             'defaultValue="5" min="0" max="10"',
-            ['value' => '5', 'aria-valuenow' => '5', 'aria-valuemin' => '0', 'aria-valuemax' => '10'],
+            '5',
+            ['min' => '0', 'max' => '10'],
             false,
             false,
         ];
         yield 'a zero at the minimum' => [
             'defaultValue="0" min="0" max="10"',
-            ['value' => '0', 'aria-valuenow' => '0', 'aria-valuemin' => '0', 'aria-valuemax' => '10'],
+            '0',
+            ['min' => '0', 'max' => '10'],
             false,
             true,
         ];
         yield 'at the maximum' => [
             'defaultValue="10" min="0" max="10"',
-            ['value' => '10', 'aria-valuenow' => '10', 'aria-valuemin' => '0', 'aria-valuemax' => '10'],
+            '10',
+            ['min' => '0', 'max' => '10'],
             true,
             false,
         ];
-        yield 'no value and no range' => [
-            '',
-            ['value' => null, 'aria-valuenow' => null, 'aria-valuemin' => null, 'aria-valuemax' => null],
-            false,
-            false,
-        ];
+        yield 'no value and no range' => ['', null, ['min' => null, 'max' => null], false, false];
     }
 
     /**
-     * @param array<string, ?string> $expectedAttributes
+     * @param array<string, ?string> $range
      */
     #[Test]
     #[DataProvider('values')]
     public function rendersTheValueAndTheRangeBeforeHydrationAndDisablesTheTriggerThatCannotMoveFurther(
         string $arguments,
-        array $expectedAttributes,
+        ?string $value,
+        array $range,
         bool $incrementDisabled,
         bool $decrementDisabled,
     ): void {
         $html = $this->renderTemplate(sprintf(self::NUMBER_INPUT, $arguments));
 
-        $input = $this->elementWith($html, 'data-number-input-input');
-        foreach ($expectedAttributes as $name => $value) {
-            $this->assertSame($value, $input->get($name), $name);
+        $this->assertSame($value, $this->elementWith($html, 'data-number-input-input')->get('value'));
+        $hiddenInput = $this->elementWith($html, 'data-number-input-hidden-input');
+        $this->assertSame($value, $hiddenInput->get('value'));
+        foreach ($range as $name => $expected) {
+            $this->assertSame($expected, $hiddenInput->get($name), $name);
         }
         $this->assertSame(
             $incrementDisabled,
@@ -152,6 +154,25 @@ final class NumberInputRenderingTest extends FunctionalTestCase
             $decrementDisabled,
             $this->elementWith($html, 'data-number-input-decrement-trigger')->has('disabled'),
         );
+    }
+
+    #[Test]
+    public function submitsTheNameThroughTheHiddenInputAndNamesTheInputAsANumberField(): void
+    {
+        $this->setRequestLocale('de_DE');
+
+        $html = $this->renderTemplate(sprintf(self::NUMBER_INPUT, 'name="price" defaultValue="1.5"'));
+
+        $input = $this->elementWith($html, 'data-number-input-input');
+        // a text field, so VoiceOver on iOS reaches the triggers: no spinbutton and its aria-value*
+        $this->assertFalse($input->has('role'));
+        $this->assertFalse($input->has('aria-valuenow'));
+        $this->assertFalse($input->has('name'));
+        $this->assertSame('Zahlenfeld', $input->get('aria-roledescription'));
+        $hiddenInput = $this->elementWith($html, 'data-number-input-hidden-input');
+        $this->assertSame('price', $hiddenInput->get('name'));
+        $this->assertSame('1.5', $hiddenInput->get('value'));
+        $this->assertSame(1.5, $this->numberInputProps()['defaultValue']);
     }
 
     #[Test]

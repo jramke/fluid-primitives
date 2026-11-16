@@ -1,0 +1,17 @@
+<input
+    type="number"
+    step="any"
+    aria-hidden="true"
+    tabindex="-1"
+    style="border: 0; clip: rect(0 0 0 0); height: 1px; margin: -1px; overflow: hidden; padding: 0; position: absolute; width: 1px; white-space: nowrap; word-wrap: normal;"
+    {f:if(condition: context.name, then: 'name="{context.name}"' )}
+    {f:if(condition: context.form, then: 'form="{context.form}"' )}
+    {f:if(condition: context.hasMin, then: 'min="{context.min}"' )}
+    {f:if(condition: context.hasMax, then: 'max="{context.max}"' )}
+    {f:if(condition: context.hasDefaultValue, then: 'value="{context.formattedValue}"' )}
+    {f:if(condition: context.disabled, then: 'disabled' )}
+    {f:if(condition: context.required, then: 'required' )}
+    {f:if(condition: context.readOnly, then: 'readonly' )}
+    {f:if(condition: class, then: 'class="{class}"' )}
+    {ui:ref(name: 'hiddenInput' )}
+    {ui:attributes()} />

@@ -8,6 +8,9 @@
             <trans-unit id="numberInput.decrementLabel" approved="yes">
                 <target>Wert verringern</target>
             </trans-unit>
+            <trans-unit id="numberInput.roleDescription" approved="yes">
+                <target>Zahlenfeld</target>
+            </trans-unit>
             <trans-unit id="clipboard.triggerLabelIdle" approved="yes">
                 <target>In Zwischenablage kopieren</target>
             </trans-unit>

@@ -8,6 +8,9 @@
             <trans-unit id="numberInput.decrementLabel" approved="yes">
                 <source>Decrement value</source>
             </trans-unit>
+            <trans-unit id="numberInput.roleDescription" approved="yes">
+                <source>number field</source>
+            </trans-unit>
             <trans-unit id="clipboard.triggerLabelIdle" approved="yes">
                 <source>Copy to clipboard</source>
             </trans-unit>
