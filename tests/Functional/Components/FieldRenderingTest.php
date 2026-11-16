@@ -204,7 +204,7 @@ final class FieldRenderingTest extends FunctionalTestCase
                     <primitives:numberInput.hiddenInput />
                 </primitives:numberInput.control>
             </primitives:numberInput.root>',
-            'data-number-input-input',
+            'data-number-input-hidden-input',
             'data-number-input-label',
             'data-number-input-hidden-input',
         ];
