@@ -106,10 +106,6 @@ What changed in each release of Fluid Primitives, newest first. Every release li
 
 - New `tooltip.viewport` part, and `tooltip.content` takes a `value`: render one content per trigger value inside the viewport, and the tooltip animates between them when you move from one trigger to the next, with `data-activation-direction` and `data-transitioning` to style the move.
 
-### Client
-
-- `Machine` has a public `notify()`: it renders the component again without a prop change, as `Component.refresh()` does.
-
 ### Core
 
 - An object passed as a `client` prop no longer has to implement `JsonSerializable`: a plain object reaches the client with all of its public properties. An object without public properties or an internal class such as `DateTime` stops that component with an error, and so does any value JSON cannot encode, with the name of the prop. ([#123](https://github.com/jramke/fluid-primitives/pull/123))
