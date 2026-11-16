@@ -203,6 +203,21 @@ final class SliderRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function namesEachThumbByItsLabelBeforeTheClientHydrates(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:slider.root defaultValue="{0: 20, 1: 80}" thumbLabels="{0: \'Minimum\'}">
+                <primitives:slider.thumb index="0" />
+                <primitives:slider.thumb index="1" />
+            </primitives:slider.root>
+        ');
+
+        $thumbs = $this->elementsByValue($html, 'data-slider-thumb');
+        $this->assertSame('Minimum', $thumbs['0']->get('aria-label'));
+        $this->assertFalse($thumbs['1']->has('aria-label'));
+    }
+
+    #[Test]
     public function shipsTheThumbSizeAndTheThumbLabelsToTheClient(): void
     {
         $propsOf = function (string $rootArguments): array {

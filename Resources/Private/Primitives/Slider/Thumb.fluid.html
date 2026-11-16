@@ -14,6 +14,7 @@
     aria-valuemin="{thumbState.min}"
     aria-valuemax="{thumbState.max}"
     aria-valuenow="{thumbState.value}"
+    {f:if(condition: thumbState.label, then: 'aria-label="{thumbState.label}"' )}
     {f:if(condition: '!{thumbState.disabled}' , then: 'tabindex="0"' )}
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'thumb' , value: index, data: refData )}

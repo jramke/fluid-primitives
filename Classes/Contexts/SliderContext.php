@@ -11,7 +11,7 @@ use Jramke\FluidPrimitives\Utility\Typed;
 class SliderContext extends AbstractComponentContext
 {
     /**
-     * @return object{value:float, min:float, max:float, disabled:bool, style:string}
+     * @return object{value:float, min:float, max:float, disabled:bool, label:?string, style:string}
      */
     public function getThumbState(int $index, bool $disabled = false): object
     {
@@ -28,6 +28,7 @@ class SliderContext extends AbstractComponentContext
             'min' => $index === 0 ? $min : ($values[$index - 1] ?? $min) + $gap,
             'max' => $index === $lastIndex ? $max : ($values[$index + 1] ?? $max) - $gap,
             'disabled' => $disabled || Typed::bool($this->get('disabled')),
+            'label' => Typed::stringOrNull((Typed::arrayOrNull($this->get('thumbLabels')) ?? [])[$index] ?? null),
             'style' => $this->isVertical()
                 ? "position: absolute; bottom: {$offset}; transform: translateY(50%);"
                 : "position: absolute; inset-inline-start: {$offset}; transform: translateX(-50%);",
