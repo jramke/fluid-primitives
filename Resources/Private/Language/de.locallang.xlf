@@ -62,6 +62,12 @@
             <trans-unit id="fileUpload.deleteFileLabel" approved="yes">
                 <target>Datei %fileName% löschen</target>
             </trans-unit>
+            <trans-unit id="fileUpload.filesAdded" approved="yes">
+                <target>%fileNames% hinzugefügt</target>
+            </trans-unit>
+            <trans-unit id="fileUpload.fileDeleted" approved="yes">
+                <target>%fileName% gelöscht</target>
+            </trans-unit>
             <trans-unit id="input.wordCount" approved="yes">
                 <target>%count% / %max% Zeichen</target>
             </trans-unit>

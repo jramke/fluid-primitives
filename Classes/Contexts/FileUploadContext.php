@@ -35,7 +35,7 @@ class FileUploadContext extends AbstractComponentContext
      */
     #[ExposeToClient]
     /**
-     * @return array{dropzone: string, itemPreview: string, deleteFile: string}
+     * @return array{dropzone: string, itemPreview: string, deleteFile: string, filesAdded: string, fileDeleted: string}
      */
     public function getTranslations(): array
     {
@@ -43,6 +43,8 @@ class FileUploadContext extends AbstractComponentContext
             'dropzone' => 'fileUpload.dropzoneLabel',
             'itemPreview' => 'fileUpload.itemPreviewLabel',
             'deleteFile' => 'fileUpload.deleteFileLabel',
+            'filesAdded' => 'fileUpload.filesAdded',
+            'fileDeleted' => 'fileUpload.fileDeleted',
         ]);
     }
 

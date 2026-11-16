@@ -141,7 +141,12 @@ final class FileUploadRenderingTest extends FunctionalTestCase
         // `%fileName%` is what the client substitutes with the name of each file: zag's own labels are functions of the file
         yield 'the defaults' => [
             '',
-            ['itemPreview' => 'Preview of %fileName%', 'deleteFile' => 'Delete file %fileName%'],
+            [
+                'itemPreview' => 'Preview of %fileName%',
+                'deleteFile' => 'Delete file %fileName%',
+                'filesAdded' => '%fileNames% added',
+                'fileDeleted' => '%fileName% deleted',
+            ],
         ];
         yield 'one of them overridden' => [
             'translations="{deleteFile: \'Remove %fileName%\'}"',

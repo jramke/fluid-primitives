@@ -9,6 +9,8 @@ describe('file upload translations', () => {
             dropzone: 'Drop files here',
             itemPreview: 'Preview of %fileName%',
             deleteFile: 'Remove %fileName% (%fileName%)',
+            filesAdded: '%fileNames% added',
+            fileDeleted: '%fileName% deleted',
         }) as Record<string, unknown>;
 
         expect(t.dropzone).toBe('Drop files here');
@@ -16,6 +18,11 @@ describe('file upload translations', () => {
         expect((t.deleteFile as (file: File) => string)(file('a.png'))).toBe(
             'Remove a.png (a.png)'
         );
+        // the screen reader hears every file of one drop in one announcement
+        expect((t.filesAdded as (files: File[]) => string)([file('a.png'), file('b.pdf')])).toBe(
+            'a.png, b.pdf added'
+        );
+        expect((t.fileDeleted as (file: File) => string)(file('a.png'))).toBe('a.png deleted');
     });
 
     test('writes a file name with a replacement pattern like $& as it is', () => {
