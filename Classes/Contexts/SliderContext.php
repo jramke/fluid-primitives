@@ -13,7 +13,7 @@ class SliderContext extends AbstractComponentContext
     /**
      * @return object{value:float, min:float, max:float, disabled:bool, style:string}
      */
-    public function getThumbState(int $index): object
+    public function getThumbState(int $index, bool $disabled = false): object
     {
         $values = $this->resolveValues();
         $min = Typed::float($this->get('min'));
@@ -27,7 +27,7 @@ class SliderContext extends AbstractComponentContext
             'value' => $value,
             'min' => $index === 0 ? $min : ($values[$index - 1] ?? $min) + $gap,
             'max' => $index === $lastIndex ? $max : ($values[$index + 1] ?? $max) - $gap,
-            'disabled' => Typed::bool($this->get('disabled')),
+            'disabled' => $disabled || Typed::bool($this->get('disabled')),
             'style' => $this->isVertical()
                 ? "position: absolute; bottom: {$offset}; transform: translateY(50%);"
                 : "position: absolute; inset-inline-start: {$offset}; transform: translateX(-50%);",
@@ -35,8 +35,8 @@ class SliderContext extends AbstractComponentContext
     }
 
     /**
-     * @param array{index?:int, name?:string|null} $thumb
-     * @return object{name:?string, value:float}
+     * @param array{index?:int, name?:string|null, disabled?:bool} $thumb
+     * @return object{name:?string, value:float, disabled:bool}
      */
     public function getHiddenInputState(array $thumb): object
     {
@@ -48,6 +48,8 @@ class SliderContext extends AbstractComponentContext
         return (object)[
             'name' => $name ?? Typed::stringOrNull($this->get('name')),
             'value' => $values[$index] ?? Typed::float($this->get('min')),
+            // a disabled slider or thumb leaves its value out of the form, like a native input
+            'disabled' => Typed::bool($thumb['disabled'] ?? null) || Typed::bool($this->get('disabled')),
         ];
     }
 

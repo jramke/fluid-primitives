@@ -1,8 +1,9 @@
 <ui:prop name="index" type="integer" optional="{true}" default="0" context="{true}" description="The index of the thumb. Use a distinct index per `slider.thumb` for a range slider with multiple thumbs." />
 <ui:prop name="name" type="string" optional="{true}" context="{true}" description="The name of the thumb. Defaults to the root `name`." />
+<ui:prop name="disabled" type="boolean" optional="{true}" default="{false}" context="{true}" description="Whether this thumb is disabled, while the other thumbs of a range slider stay usable. A disabled thumb leaves its value out of the form." />
 
-<f:variable name="thumbState">{context -> ui:call(method: 'getThumbState', arguments: {0: index})}</f:variable>
-<f:variable name="refData" value="{disabled: thumbState.disabled, orientation: context.orientation, name: name}" />
+<f:variable name="thumbState">{context -> ui:call(method: 'getThumbState', arguments: {0: index, 1: disabled})}</f:variable>
+<f:variable name="refData" value="{disabled: thumbState.disabled, thumb-disabled: disabled, orientation: context.orientation, name: name}" />
 
 <div
     role="slider"

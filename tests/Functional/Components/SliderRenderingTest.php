@@ -300,6 +300,31 @@ final class SliderRenderingTest extends FunctionalTestCase
         }
     }
 
+    #[Test]
+    public function disablesOneThumbAndLeavesItsValueOutOfTheForm(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:slider.root name="range[]" defaultValue="{0: 20, 1: 80}">
+                <primitives:slider.thumb index="0" disabled="{true}">
+                    <primitives:slider.hiddenInput />
+                </primitives:slider.thumb>
+                <primitives:slider.thumb index="1">
+                    <primitives:slider.hiddenInput />
+                </primitives:slider.thumb>
+            </primitives:slider.root>
+        ');
+
+        $thumbs = $this->elementsByValue($html, 'data-slider-thumb');
+        $this->assertSame('true', $thumbs[0]->get('aria-disabled'));
+        $this->assertFalse($thumbs[0]->has('tabindex'));
+        $this->assertTrue($thumbs[0]->has('data-thumb-disabled'));
+        $this->assertSame('false', $thumbs[1]->get('aria-disabled'));
+        $this->assertSame('0', $thumbs[1]->get('tabindex'));
+        $inputs = $this->elementsByValue($html, 'data-slider-hidden-input');
+        $this->assertTrue($inputs[0]->has('disabled'));
+        $this->assertFalse($inputs[1]->has('disabled'));
+    }
+
     /**
      * @return iterable<string, array{0: string, 1: string}>
      */

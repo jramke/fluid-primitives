@@ -66,3 +66,18 @@ test('names every thumb of a range by its label, without pointing at the shared 
     ]);
     expect(thumbs.map(thumb => thumb.hasAttribute('aria-labelledby'))).toEqual([false, false]);
 });
+
+test('keeps a disabled thumb disabled and out of the form, while the other one stays usable', () => {
+    const entries = renderRange('range[]');
+    document
+        .querySelector('[data-slider-thumb][data-value="0"]')!
+        .setAttribute('data-thumb-disabled', '');
+
+    instance = new Slider({ id: 's1', name: 'range[]', defaultValue: [20, 80] });
+    instance.init();
+
+    const [first, second] = document.querySelectorAll<HTMLElement>('[data-slider-thumb]');
+    expect(first.hasAttribute('data-disabled')).toBe(true);
+    expect(second.hasAttribute('data-disabled')).toBe(false);
+    expect(entries()).toEqual([['range[]', '80']]);
+});

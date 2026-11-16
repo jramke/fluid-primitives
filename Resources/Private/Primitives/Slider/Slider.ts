@@ -97,7 +97,8 @@ export class Slider extends FieldAwareComponent<SliderProps, slider.Api> {
         this.hydrator.queryAll('thumb').forEach(thumbEl => {
             const index = Number(thumbEl.dataset.value ?? 0);
             const name = thumbEl.dataset.name;
-            const thumbProps = mergeProps(this.api.getThumbProps({ index, name }), {
+            const disabled = thumbEl.hasAttribute('data-thumb-disabled') || undefined;
+            const thumbProps = mergeProps(this.api.getThumbProps({ index, name, disabled }), {
                 'aria-describedby': this.field?.ariaDescribedby,
                 'aria-invalid': this.field?.invalid || undefined,
             });
@@ -108,7 +109,11 @@ export class Slider extends FieldAwareComponent<SliderProps, slider.Api> {
             if (hiddenInputEl) {
                 this.spreadProps(
                     hiddenInputEl,
-                    this.api.getHiddenInputProps({ index, name: name ?? this.machine.prop('name') })
+                    this.api.getHiddenInputProps({
+                        index,
+                        name: name ?? this.machine.prop('name'),
+                        disabled,
+                    })
                 );
             }
         });
