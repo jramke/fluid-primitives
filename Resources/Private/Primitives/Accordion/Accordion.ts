@@ -50,6 +50,13 @@ export class Accordion extends Component<accordion.Props, accordion.Api> {
         this.spreadPropsByValue('itemHeader', ({ el, value }) =>
             this.api.getItemHeaderProps({ value, disabled: el.hasAttribute('data-disabled') })
         );
+
+        // an item removed from the page takes its collapsible with it
+        this.#collapsibles.forEach(({ machine }, el) => {
+            if (el.isConnected) return;
+            machine.stop();
+            this.#collapsibles.delete(el);
+        });
     }
 
     #syncCollapsible(el: HTMLElement, itemState: accordion.ItemState) {
