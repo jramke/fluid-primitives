@@ -2,9 +2,9 @@
 <ui:useProps name="primitives:menu.content" as="contentProps" />
 
 <ui:portal disabled="!{portalled}">
-    <primitives:menu.positioner class="[--arrow-size:8px] [--arrow-background:var(--color-popover)]">
+    <primitives:menu.positioner class="z-[calc(50_+_var(--layer-index,0))] [--arrow-size:8px] [--arrow-background:var(--color-popover)]">
         <primitives:menu.content spreadProps="{contentProps}" class="{ui:cn(value: '
-            outline-none bg-popover text-popover-foreground relative z-[var(--layer-index,0)]
+            outline-none bg-popover text-popover-foreground relative
             max-h-(--available-height) min-w-[8rem] w-fit
             origin-(--transform-origin) overflow-x-hidden overflow-y-auto
             rounded-md border shadow-md scroll-my-1 p-1

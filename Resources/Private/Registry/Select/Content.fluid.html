@@ -1,9 +1,9 @@
 <ui:useProps name="primitives:select.content" as="contentProps" />
 
 <ui:portal>
-    <primitives:select.positioner>
+    <primitives:select.positioner class="z-[calc(50_+_var(--layer-index,0))]">
         <primitives:select.content spreadProps="{contentProps}" class="{ui:cn(value: '
-            outline-none bg-popover text-popover-foreground relative z-50
+            outline-none bg-popover text-popover-foreground relative
             flex flex-col max-h-(--available-height) min-w-[8rem] w-(--reference-width)
             origin-(--transform-origin) overflow-hidden
             rounded-md border shadow-md
