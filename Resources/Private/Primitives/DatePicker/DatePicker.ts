@@ -11,11 +11,7 @@ import {
     type ConverterMachineProps,
 } from '../../Client';
 import type { FieldClientApi } from '../Field/src/field.handle';
-import {
-    buildTranslations,
-    getPlaceholder,
-    type TranslationTexts,
-} from './src/date-picker.translations';
+import { buildTranslations, type TranslationTexts } from './src/date-picker.translations';
 
 const parseDate = (date?: string) => (date ? datePicker.parse(date) : undefined);
 
@@ -75,14 +71,6 @@ export class DatePicker extends FieldAwareComponent<datePicker.Props, datePicker
     transformProps(props: datePicker.Props): datePicker.Props {
         return {
             ...props,
-            // TODO: Zag only knows the English placeholder letters, drop this once chakra-ui/zag#3421
-            // (translatable placeholder) is released and `translations.placeholder` is used as it is.
-            placeholder:
-                props.placeholder ??
-                getPlaceholder(
-                    props.translations as datePicker.IntlTranslations | undefined,
-                    props.locale
-                ),
             // Zag writes a date picked in the calendar into the input without an event, but a Field
             // and a Form only learn of a change from one (and read the value once it has settled).
             onValueChange: details => {

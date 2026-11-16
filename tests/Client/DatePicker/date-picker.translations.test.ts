@@ -1,9 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import * as datePicker from '@zag-js/date-picker';
 import { describe, expect, test } from 'vitest';
+import { Machine, normalizeProps } from '../../../Resources/Private/Client';
 import {
     buildTranslations,
-    getPlaceholder,
     type TranslationTexts,
 } from '../../../Resources/Private/Primitives/DatePicker/src/date-picker.translations';
 
@@ -81,18 +82,21 @@ describe('date picker translations', () => {
         expect(t.previousTrigger!('month')).toBe('Switch to previous year');
     });
 
-    test('writes the date pattern of the locale with the letters of the translation', () => {
-        expect(getPlaceholder(buildTranslations(texts, 'en-US'), 'en-US')).toBe('mm/dd/yyyy');
+    test('gives the input the date pattern of the locale with the letters of the translation', () => {
+        const placeholder = (locale: string, translations: datePicker.IntlTranslations) => {
+            const machine = new Machine(datePicker.machine, { id: 'd', locale, translations });
+            return datePicker.connect(machine.service, normalizeProps).getInputProps().placeholder;
+        };
+
+        expect(placeholder('en-US', buildTranslations(texts, 'en-US'))).toBe('mm/dd/yyyy');
         expect(
-            getPlaceholder(
+            placeholder(
+                'de-DE',
                 buildTranslations(
                     { placeholderDay: 'TT', placeholderMonth: 'MM', placeholderYear: 'JJJJ' },
                     'de-DE'
-                ),
-                'de-DE'
+                )
             )
         ).toBe('TT.MM.JJJJ');
-        // Translations of an entry file that bring no placeholder leave it to Zag.
-        expect(getPlaceholder({}, 'de-DE')).toBeUndefined();
     });
 });

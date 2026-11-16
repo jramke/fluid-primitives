@@ -74,20 +74,3 @@ export function buildTranslations(
         }),
     };
 }
-
-/**
- * The placeholder of the input: the date pattern of the locale written with the letters of the
- * translation, e.g. `TT.MM.JJJJ`. Zag only knows the English ones.
- */
-export function getPlaceholder(
-    translations: IntlTranslations | undefined,
-    locale = 'en-US'
-): string | undefined {
-    const letters: Record<string, string> | undefined = translations?.placeholder?.(locale);
-    if (!letters) return undefined;
-
-    return new Intl.DateTimeFormat(locale)
-        .formatToParts(new Date())
-        .map(part => letters[part.type] ?? part.value)
-        .join('');
-}
