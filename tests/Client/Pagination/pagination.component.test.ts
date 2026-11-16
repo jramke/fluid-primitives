@@ -23,7 +23,7 @@ function mount({ ellipses = true } = {}) {
     document.body.innerHTML = `
         <nav data-pagination-root="p">
             <ul>
-                <li><button type="button" disabled data-disabled data-pagination-prev-trigger="p">Previous</button></li>
+                <li><button type="button" disabled data-disabled data-pagination-previous-trigger="p">Previous</button></li>
                 ${[1, 2, 3, 4, 5].map(page => item(page, page === 1)).join('')}${ellipses ? ellipsis(5) : ''}${item(12)}
                 <template data-pagination-item-template="p"><li><button type="button" data-pagination-item="p"></button></li></template>
                 ${ellipses ? '<template data-pagination-ellipsis-template="p"><li><span data-pagination-ellipsis="p">…</span></li></template>' : ''}
@@ -43,7 +43,7 @@ const shown = () =>
         })
         .join(' ');
 
-const prevEl = () => document.querySelector<HTMLElement>('[data-pagination-prev-trigger]')!;
+const prevEl = () => document.querySelector<HTMLElement>('[data-pagination-previous-trigger]')!;
 const itemEl = (page: number) =>
     document.querySelector<HTMLElement>(`[data-pagination-item][data-value="${page}"]`)!;
 
@@ -59,7 +59,7 @@ test('renders the pages it shows from the templates, in the place of the server 
     document.querySelector<HTMLElement>('[data-pagination-next-trigger]')!.click();
     await expect.poll(shown).toBe('1 … 5 [6] 7 … 12');
     expect(
-        document.querySelector('[data-pagination-prev-trigger]')!.hasAttribute('data-disabled')
+        document.querySelector('[data-pagination-previous-trigger]')!.hasAttribute('data-disabled')
     ).toBe(false);
 });
 
@@ -88,7 +88,7 @@ test('gives the links it renders on the client the URLs the server sent', async 
             ${[1, 2, 3, 4, 5].map(page => `<a href="/events?page=${page}" data-pagination-item="p" data-value="${page}">${page}</a>`).join('')}
             <span data-pagination-ellipsis="p" data-index="5">…</span>
             <a href="/events?page=12" data-pagination-item="p" data-value="12">12</a>
-            <a data-pagination-prev-trigger="p"></a>
+            <a data-pagination-previous-trigger="p"></a>
             <template data-pagination-item-template="p"><a data-pagination-item="p"></a></template>
             <template data-pagination-ellipsis-template="p"><span data-pagination-ellipsis="p">…</span></template>
         </nav>`;

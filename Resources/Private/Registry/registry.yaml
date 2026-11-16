@@ -257,7 +257,7 @@ pagination:
     - Item.fluid.html
     - Ellipsis.fluid.html
     - FirstTrigger.fluid.html
-    - PrevTrigger.fluid.html
+    - PreviousTrigger.fluid.html
     - NextTrigger.fluid.html
     - LastTrigger.fluid.html
     - Pagination.entry.ts

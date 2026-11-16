@@ -5,6 +5,7 @@
     <f:then>
         <a
             {f:if(condition: triggerState.url, then: 'href="{triggerState.url}"' )}
+            {f:if(condition: triggerState.disabled, then: 'role="link" aria-disabled="true"' )}
             aria-label="{context.translations.nextTriggerLabel}"
             {f:if(condition: class, then: 'class="{class}"' )}
             {ui:ref(name: 'nextTrigger' , data: refData )}

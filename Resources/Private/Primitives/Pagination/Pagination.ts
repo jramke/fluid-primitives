@@ -129,7 +129,7 @@ export class Pagination extends Component<PaginationProps, pagination.Api> {
 
         const triggers: [string, () => Attrs][] = [
             ['firstTrigger', this.api.getFirstTriggerProps],
-            ['prevTrigger', this.api.getPrevTriggerProps],
+            ['previousTrigger', this.api.getPreviousTriggerProps],
             ['nextTrigger', this.api.getNextTriggerProps],
             ['lastTrigger', this.api.getLastTriggerProps],
         ];
@@ -194,7 +194,7 @@ export class Pagination extends Component<PaginationProps, pagination.Api> {
     // links in the root, such as those of the list, are left alone.
     #keepLinkClick = (event: MouseEvent) => {
         const link = event.target instanceof Element ? event.target.closest('a[href]') : null;
-        const parts = ['item', 'firstTrigger', 'prevTrigger', 'nextTrigger', 'lastTrigger'];
+        const parts = ['item', 'firstTrigger', 'previousTrigger', 'nextTrigger', 'lastTrigger'];
         if (
             !link ||
             !parts.some(part => this.hydrator.queryAll(part).includes(link as HTMLElement))

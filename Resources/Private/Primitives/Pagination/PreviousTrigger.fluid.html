@@ -1,13 +1,14 @@
-<f:variable name="triggerState">{context -> ui:call(method: 'getTriggerState', arguments: {0: 'prev'})}</f:variable>
+<f:variable name="triggerState">{context -> ui:call(method: 'getTriggerState', arguments: {0: 'previous'})}</f:variable>
 <f:variable name="refData" value="{disabled: triggerState.disabled}" />
 
 <f:if condition="{context.link}">
     <f:then>
         <a
             {f:if(condition: triggerState.url, then: 'href="{triggerState.url}"' )}
-            aria-label="{context.translations.prevTriggerLabel}"
+            {f:if(condition: triggerState.disabled, then: 'role="link" aria-disabled="true"' )}
+            aria-label="{context.translations.previousTriggerLabel}"
             {f:if(condition: class, then: 'class="{class}"' )}
-            {ui:ref(name: 'prevTrigger' , data: refData )}
+            {ui:ref(name: 'previousTrigger' , data: refData )}
             {ui:attributes()}
             {ui:asChild()}>
             <f:slot />
@@ -17,9 +18,9 @@
         <button
             type="button"
             {f:if(condition: triggerState.disabled, then: 'disabled' )}
-            aria-label="{context.translations.prevTriggerLabel}"
+            aria-label="{context.translations.previousTriggerLabel}"
             {f:if(condition: class, then: 'class="{class}"' )}
-            {ui:ref(name: 'prevTrigger' , data: refData )}
+            {ui:ref(name: 'previousTrigger' , data: refData )}
             {ui:attributes()}
             {ui:asChild()}>
             <f:slot />

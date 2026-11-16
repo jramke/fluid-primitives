@@ -179,7 +179,7 @@
             <trans-unit id="pagination.firstTriggerLabel" approved="yes">
                 <source>First page</source>
             </trans-unit>
-            <trans-unit id="pagination.prevTriggerLabel" approved="yes">
+            <trans-unit id="pagination.previousTriggerLabel" approved="yes">
                 <source>Previous page</source>
             </trans-unit>
             <trans-unit id="pagination.nextTriggerLabel" approved="yes">
