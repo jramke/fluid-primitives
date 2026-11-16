@@ -16,7 +16,7 @@
     as="class" />
 
 <ui:portal disabled="{context.inline}">
-    <primitives:datePicker.positioner class="z-[calc(50_+_var(--layer-index,0))]">
+    <primitives:datePicker.positioner class="z-[var(--layer-index,0)]">
         <primitives:datePicker.content spreadProps="{contentProps}" class="{class}">
             <f:slot />
         </primitives:datePicker.content>

@@ -2,7 +2,7 @@
 <ui:prop name="showCloseButton" type="boolean" default="{false}" />
 
 <ui:portal>
-    <primitives:popover.positioner class="z-[calc(50_+_var(--layer-index,0))] [--arrow-size:8px] [--arrow-background:var(--color-popover)]">
+    <primitives:popover.positioner class="z-[var(--layer-index,0)] [--arrow-size:8px] [--arrow-background:var(--color-popover)]">
         <primitives:popover.content spreadProps="{contentProps}" class="{ui:cn(value: '
             bg-popover text-popover-foreground w-72 rounded-md border p-3 pt-3.5 shadow-md outline-none
             origin-(--transform-origin)
