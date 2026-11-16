@@ -405,7 +405,10 @@ final class ComboboxRenderingTest extends FunctionalTestCase
         ', ['collection' => new ListCollection($items)]);
 
         // the part is a live region that stays, the message inside it shows and hides
-        $this->assertFalse($this->elementWith($html, 'data-combobox-empty')->has('hidden'));
+        $part = $this->elementWith($html, 'data-combobox-empty');
+        $this->assertFalse($part->has('hidden'));
+        $this->assertSame('status', $part->get('role'));
+        $this->assertSame('polite', $part->get('aria-live'));
         $this->assertSame($hidden, $this->elementWith($html, 'data-message')->has('hidden'));
         $this->assertSame(!$hidden, $this->elementWith($html, 'data-combobox-content')->has('data-empty'));
     }

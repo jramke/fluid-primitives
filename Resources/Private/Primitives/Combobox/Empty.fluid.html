@@ -1,7 +1,7 @@
 <f:variable name="isEmpty">{f:if(condition: context.collection.size, then: '{false}', else: '{true}')}</f:variable>
 
 <f:comment>The part is a live region that stays on the page, so a screen reader announces its content when it shows. The inner element is the one you style.</f:comment>
-<div {ui:ref(name: 'empty' )}>
+<div role="status" aria-live="polite" aria-atomic="true" {ui:ref(name: 'empty' )}>
     <div
         {f:if(condition: isEmpty, then: '' , else: 'hidden' )}
         {f:if(condition: class, then: 'class="{class}"' )}
