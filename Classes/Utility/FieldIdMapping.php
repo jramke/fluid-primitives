@@ -18,7 +18,7 @@ class FieldIdMapping
         'combobox' => ['label' => 'label', 'control' => 'input'],
         'date-picker' => ['label' => 'label', 'control' => 'input'],
         'input' => ['label' => 'label', 'control' => 'input'],
-        'number-input' => ['label' => 'label', 'control' => 'hiddenInput'],
+        'number-input' => ['label' => 'label', 'control' => 'input'],
         'password-input' => ['label' => 'label', 'control' => 'input'],
         'textarea' => ['label' => 'label', 'control' => 'textarea'],
         'switch' => ['label' => 'label', 'control' => 'hiddenInput'],

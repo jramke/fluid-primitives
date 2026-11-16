@@ -10,6 +10,7 @@ import { isEqual } from '@zag-js/utils';
 import { focusField } from '../../Form/src/form.fields';
 import { trimArraySuffix } from '../../Form/src/form.path';
 import { getFormMachineFor } from '../../Form/src/form.registry';
+import type { FieldControlElement } from './field.dom';
 import * as dom from './field.dom';
 import type {
     FieldParams,
@@ -533,20 +534,29 @@ function clearValidation(params: FieldParams) {
     getHostEl(params)?.setCustomValidity('');
 }
 
-/**
- * The native control that hosts constraint validation (`setCustomValidity`, `validity`), when there
- * is one: the element the control id points at, if it is the one carrying the field's name. Looked
- * up at call time, and absent for groups, a Slider, or a Combobox's visible input (no name).
- */
 /** The form of the control, which its `form` attribute may point elsewhere, else the one around the field. */
 function getFormEl({ scope, refs }: Pick<FieldParams, 'scope' | 'refs'>) {
     return dom.getControlEl(scope)?.form ?? refs.get('rootEl')?.closest('form') ?? null;
 }
 
-function getHostEl({ scope, prop }: Pick<FieldParams, 'scope' | 'prop'>) {
+/**
+ * The native control that hosts constraint validation (`setCustomValidity`, `validity`), when there
+ * is one: the control, if it carries the field's name, else the one input inside the field that does
+ * (the hidden input of a NumberInput or a Combobox). Looked up at call time, and absent for groups.
+ */
+function getHostEl({ scope, prop, refs }: Pick<FieldParams, 'scope' | 'prop' | 'refs'>) {
+    const name = trimArraySuffix(prop('name') ?? '');
+    const carriesName = (el: FieldControlElement | null | undefined): el is FieldControlElement =>
+        !!el && typeof el.setCustomValidity === 'function' && trimArraySuffix(el.name) === name;
+
     const controlEl = dom.getControlEl(scope);
-    if (!controlEl || typeof controlEl.setCustomValidity !== 'function') return null;
-    return trimArraySuffix(controlEl.name) === trimArraySuffix(prop('name')) ? controlEl : null;
+    if (carriesName(controlEl)) return controlEl;
+    if (!name) return null;
+
+    const named = Array.from(
+        refs.get('rootEl')?.querySelectorAll<FieldControlElement>('input, select, textarea') ?? []
+    ).filter(el => el.type !== 'hidden' && carriesName(el));
+    return named.length === 1 ? named[0] : null;
 }
 
 /** Makes the current value the baseline for `dirty`, unless the user already changed it. */

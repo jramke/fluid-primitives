@@ -180,6 +180,26 @@ test('validate gets the values of the form its control belongs to, also through 
     expect(validate.mock.calls[0][0].formValues).toEqual({ password: 'secret', repeat: 'secret' });
 });
 
+test('a control without the name hands the validity to the one input inside the field that carries it', async () => {
+    document.body.innerHTML = `
+        <form>
+            <div data-field-root="f1" data-name="tickets">
+                <input id="field:f1:control" value="12">
+                <input name="tickets" type="number" value="12" aria-hidden="true" tabindex="-1">
+            </div>
+        </form>`;
+    field = new Field({ id: 'f1', name: 'tickets', validate: () => 'At most 10' } as never);
+    field.init();
+
+    field.api.validate();
+
+    await vi.waitFor(() => expect(field!.api.invalid).toBe(true));
+    expect(document.querySelector<HTMLInputElement>('[name="tickets"]')!.validationMessage).toBe(
+        'At most 10'
+    );
+    expect(document.querySelector('form')!.checkValidity()).toBe(false);
+});
+
 test('validate gets the values of the whole form, to compare with another field', async () => {
     document.body.innerHTML = `
         <form>
