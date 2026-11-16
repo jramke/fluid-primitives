@@ -4,6 +4,110 @@ What changed in each release of Fluid Primitives, newest first. Every release li
 
 ## Unreleased
 
+### Breaking changes
+
+- The library runs on Zag.js 2.0.0-next.4. The entries below list what that changes for you.
+- **Toc:** `ui:toc.root` renders a `<div>` and the new `ui:toc.nav` renders the `<nav>`: wrap the title and the list in a `ui:toc.nav`, and move the classes that style the navigation from the root to it. The nav carries the label that names it.
+- **Tabs, RadioGroup:** The indicator carries no inline transition any more, your CSS animates it: add `transition: left 0.2s, width 0.2s` (and `top` and `height` for vertical tabs) to `[data-tabs-indicator]` or `[data-radio-group-indicator]`, and turn it off with `[data-instant]`. The indicator gets `data-instant` while it moves for another reason than a new selection: the first render, a resize, a changed `dir` or `orientation`. The `--transition-property`, `--transition-duration` and `--transition-timing-function` variables are gone, and `data-ssr` on the tab triggers and radio items is `data-indicator-pending`: it is also set until the indicator is measured, as inside a hidden panel.
+- **Accordion:** The arrow keys, `Home` and `End` no longer move focus between the triggers, as in the WAI-ARIA accordion pattern: `Tab` reaches every trigger.
+- **Menu:** `ui:menu.root` takes `popupType` (`menu` or `dialog`) instead of `composite`. Replace `composite="{false}"` with `popupType="{f:constant(name: 'Jramke\FluidPrimitives\Enum\MenuPopupType::Dialog')}"`.
+- **DatePicker:** The part `prevTrigger` is `previousTrigger`, as Zag.js spells it out: `primitives:datePicker.previousTrigger`, `ui:datePicker.previousTrigger` (the registry file `PrevTrigger.fluid.html` is `PreviousTrigger.fluid.html`) and `data-date-picker-previous-trigger` for your CSS. The language ids and the `translations` keys `prevTriggerDay`, `prevTriggerMonth` and `prevTriggerYear` are `previousTriggerDay`, `previousTriggerMonth` and `previousTriggerYear`.
+- **DatePicker:** The content and the tables have no `aria-roledescription` any more, as Zag.js dropped it: an invented role name overrides the localized one of the screen reader. The language ids and `translations` keys `contentRoleDescription`, `tableRoleDescriptionDay`, `tableRoleDescriptionMonth` and `tableRoleDescriptionYear` are gone.
+- **Pagination:** The part `prevTrigger` is `previousTrigger`: `primitives:pagination.previousTrigger`, `ui:pagination.previousTrigger` (the registry file is `PreviousTrigger.fluid.html`) and `data-pagination-previous-trigger` for your CSS. The `translations` key and language id `prevTriggerLabel` is `previousTriggerLabel`.
+- **Toast:** A toast template needs the new `ui:toast.content` around the title and the description: the toast follows the height of its content, so without it a toast that grows after it appears overlaps the next one. The registry `Toaster` has it, run `ui:add` again to pick it up.
+- **Select, Combobox, Menu, Popover, Tooltip, DatePicker:** Zag.js no longer copies the `z-index` of the content onto the positioner, and the positioner is a stacking context of its own, so a `z-index` on the content has no effect. Set it on the positioner, with `--layer-index` for the place of the popup in the stack, as the registry does: `z-[calc(50_+_var(--layer-index,0))]`. Run `ui:add` again to pick it up.
+- **NumberInput:** The value is a number: `defaultValue` takes one, the `onValueChange` details carry `value` as a number (or `null` for an empty input) and the text as `formattedValue`, and `valueAsNumber` is gone. The change reasons `increment-press` and `decrement-press` are `increment-trigger` and `decrement-trigger`.
+- **NumberInput:** The new `numberInput.hiddenInput` submits the value, the number itself instead of the formatted text, so render it inside the root of a number input in a form. The registry `ui:numberInput.input` renders it, run `ui:add` again to pick it up. The input has no `name` any more.
+- **NumberInput:** The input is a text field instead of a spinbutton, so VoiceOver on iOS reaches the triggers: it has no `role`, no `aria-value*` and no `translations.valueText` any more, and the new `roleDescription` translation names it ("number field", "Zahlenfeld").
+- **NumberInput:** `allowOverflow` and `clampValueOnBlur` are replaced by `allowOutOfRange`: the input refuses a typed value outside of `min` and `max`, and with `allowOutOfRange="{true}"` it keeps the value and marks the input invalid. Without `min` and `max` the value has no range, `Home` and `End` do nothing then.
+- **Clipboard:** Copying needs the Clipboard API, which browsers only offer on https pages and on localhost: Zag.js dropped the `execCommand` fallback. A failed copy no longer shows the copied state.
+
+### General changes
+
+- **RadioGroup, FileUpload, Slider:** A read-only `RadioGroup` or `FileUpload` submits its value, and a disabled `Slider` doesn't, like native inputs, as Zag.js does now. The server render matches it.
+- **Select, Combobox, Menu, Popover, Tooltip, Dialog, DatePicker:** Every `onOpenChange` and `onValueChange` of a client script gets a `reason` in its details, such as `trigger-click`, `escape-key`, `interact-outside`, `item-select` or `script`, and `api.setOpen(open, reason)` takes one.
+
+### Accordion
+
+- `ui:accordion.root` takes `hiddenUntilFound`. Closed content stays searchable with the browser's find in page, and a match opens it. A style that resets `[hidden]` has to leave `[hidden='until-found']` alone.
+- The item content runs on a collapsible, as in [Collapsible](/docs/components/collapsible): it exposes `--height` and `--width` for the `animate-collapsible-*` keyframes, stays visible until its close animation ends, and follows runtime changes of `hiddenUntilFound`. As on Collapsible, the content only carries `data-state="open"` while it animates open, and content open on load gets none, so it no longer animates before hydration.
+
+### Collapsible
+
+- `ui:collapsible.root` takes `hiddenUntilFound`. Closed content stays searchable with the browser's find in page, and a match opens it.
+
+### Combobox
+
+- A `Combobox` announces the number of results to screen readers while you type, and "No results" when nothing matches. The texts ship in English and German (`combobox.resultsCount`, `combobox.resultsCountOne`, `combobox.noResults`, `combobox.loading`), and `translations` overrides them: `resultsCount` takes a `%count%` placeholder, an empty text turns an announcement off.
+- `ui:combobox.root` takes `loading`. While it is set, the list gets `aria-busy` and screen readers hear the loading text instead of "No results".
+
+### Dialog
+
+- The registry `Dialog` content renders the backdrop only while the dialog is modal, so `modal="{false}"` gives a dialog without a backdrop. Run `ui:add` again to pick it up.
+
+### Field
+
+- The function you pass as `validate` receives the `formValues` of the form by name, to compare with another field.
+- In a form that is not a `Form`, a submit moves the focus to the first invalid field. The field suppresses the error bubble of the browser, and with it the focus the browser would have moved.
+- The control of a field inside a `Fieldset` is described by the error text of the fieldset while it shows, as Zag.js does.
+
+### FieldArray
+
+- The row announcements are spoken from a live region inside the component, not at the end of the `<body>`. Inside a modal `Dialog` the screen reader skipped the region outside of it, so nothing was announced.
+
+### Fieldset
+
+- The root has no `aria-invalid` and the error text no `aria-live` any more, as in Zag.js: a fieldset can't be invalid for assistive technology, the root names the error text in `aria-describedby` instead. `data-invalid` stays for your styles.
+
+### FileUpload
+
+- Screen readers hear which files were added and which one was removed. The texts ship in English and German (`fileUpload.filesAdded`, `fileUpload.fileDeleted`), and `translations` overrides them: `filesAdded` takes `%fileNames%`, `fileDeleted` takes `%fileName%`.
+
+### Input
+
+- The word count is spoken from a live region inside the component, so a screen reader announces it inside a modal `Dialog` too. `Textarea` does the same.
+
+### Menu
+
+- New `menu.viewport` part, and `menu.content` takes a `value`: render one content per trigger value inside the viewport, and the menu animates between them when you move from one trigger to the next, with `data-activation-direction` and `data-transitioning` to style the move.
+- A `Menu` can filter its items. With `popupType` `dialog`, put a `menu.input`, a `menu.list` around the items and a `menu.empty` into the content: typing shows the items whose text contains the query, ignoring case and accents. `autoHighlight` on `ui:menu.root` highlights the first match as you type.
+
+### Pagination
+
+- A link trigger that can't move to another page, such as the first trigger on the first page, has no `href` and carries `role="link"` and `aria-disabled="true"`, in the server render too. Before, the first and last trigger linked to the page that was already open.
+
+### Popover
+
+- New `popover.viewport` part, and `popover.content` takes a `value`: render one content per trigger value inside the viewport, and the popover animates between them when you move from one trigger to the next, with `data-activation-direction` and `data-transitioning` to style the move.
+
+### Select
+
+- `ui:select.root` takes `alignItemWithTrigger`: the list opens over the trigger, with the selected item on top of the value of the trigger.
+- A `Select` can filter its items. With the `dialog` popup type, put a `select.input` and a `select.empty` ("no results") into the content. The input keeps focus while the arrow keys move the highlight, and the new `onInputValueChange` option of the `Select` class takes your own filter: pass the result of `getSourceCollection().filter(...)` to `updateProps({ collection })`. The registry `Select` filters by label in its entry file, run `ui:add` again to pick it up.
+
+### Slider
+
+- `slider.thumb` takes `disabled`, to disable one thumb of a range slider. A disabled thumb, and every thumb of a disabled slider, leaves its value out of the form.
+- `ui:slider.root` takes `thumbLabels`, the accessible name of each thumb by its `index`. Without it every thumb of a range slider is named by the label of the slider.
+- A `slider.marker` inside the filled range carries `data-in-range`, in the server render too, and the registry marker colors its dot with it instead of only at the value of the thumb. Run `ui:add` again to pick it up.
+- `thumbSize` of `ui:slider.root` takes a single number for a square thumb.
+
+### Toast
+
+- A toast can be swiped away toward the nearest edges of its placement. Turn its transition off while it has `data-swiping`, as the registry `Toast` does, and pass `swipeDirections` to the toaster to choose the directions, `[]` turns swiping off. The registry `Toaster` gives its region a `z-index`, which Zag.js no longer sets. Run `ui:add` again to pick both up.
+
+### Toc
+
+- `ui:toc.root` takes `multiple`. It is `true` by default and keeps every visible heading active, set `multiple="{false}"` to keep only the topmost visible heading active.
+
+### Tooltip
+
+- New `tooltip.viewport` part, and `tooltip.content` takes a `value`: render one content per trigger value inside the viewport, and the tooltip animates between them when you move from one trigger to the next, with `data-activation-direction` and `data-transitioning` to style the move.
+
+### Client
+
+- `Machine` has a public `notify()`: it renders the component again without a prop change, as `Component.refresh()` does.
+
 ### Core
 
 - An object passed as a `client` prop no longer has to implement `JsonSerializable`: a plain object reaches the client with all of its public properties. An object without public properties or an internal class such as `DateTime` stops that component with an error, and so does any value JSON cannot encode, with the name of the prop. ([#123](https://github.com/jramke/fluid-primitives/pull/123))
@@ -99,96 +203,6 @@ _2026-11-06_
 - A component's own template sees the components around it, like its slot content does. A Field reaches a control you render inside a component of your own (`name`, `id`, `required` and `disabled` are on the input before hydration), and `ui:context` finds an enclosing component from the template of a nested one. ([#105](https://github.com/jramke/fluid-primitives/pull/105))
 - Components of an uncached plugin (`USER_INT`) hydrate on a page from the page cache, next to the components of its cached content. Before, the hydration data of the uncached content replaced that of the page, so the cached components found none and `mount()` returned `undefined`. ([#111](https://github.com/jramke/fluid-primitives/pull/111))
 - The hydration data is a `<script type="application/json">` block, so a Content-Security-Policy needs no nonce or hash for it. ([#111](https://github.com/jramke/fluid-primitives/pull/111))
-
-## Unreleased
-
-**Breaking changes**
-
-- `ui:toc.root` renders a `<div>` and the new `ui:toc.nav` renders the `<nav>`: wrap the title and the list in a `ui:toc.nav`, and move the classes that style the navigation from the root to it. The nav carries the label that names it.
-- The indicator of `Tabs` and `RadioGroup` carries no inline transition any more, your CSS animates it: add `transition: left 0.2s, width 0.2s` (and `top` and `height` for vertical tabs) to `[data-tabs-indicator]` or `[data-radio-group-indicator]`, and turn it off with `[data-instant]`. The indicator gets `data-instant` while it moves for another reason than a new selection: the first render, a resize, a changed `dir` or `orientation`. The `--transition-property`, `--transition-duration` and `--transition-timing-function` variables are gone, and `data-ssr` on the tab triggers and radio items is `data-indicator-pending`: it is also set until the indicator is measured, as inside a hidden panel.
-- The arrow keys, `Home` and `End` no longer move focus between the triggers of an `Accordion`, as in the WAI-ARIA accordion pattern: `Tab` reaches every trigger.
-- `ui:menu.root` takes `popupType` (`menu` or `dialog`) instead of `composite`. Replace `composite="{false}"` with `popupType="{f:constant(name: 'Jramke\FluidPrimitives\Enum\MenuPopupType::Dialog')}"`.
-- The `DatePicker` part `prevTrigger` is `previousTrigger`, as Zag.js spells it out: `primitives:datePicker.previousTrigger`, `ui:datePicker.previousTrigger` (the registry file `PrevTrigger.fluid.html` is `PreviousTrigger.fluid.html`) and `data-date-picker-previous-trigger` for your CSS. The language ids and the `translations` keys `prevTriggerDay`, `prevTriggerMonth` and `prevTriggerYear` are `previousTriggerDay`, `previousTriggerMonth` and `previousTriggerYear`.
-
-- The `DatePicker` sets no `aria-roledescription` on its content and tables any more, as Zag.js dropped it: an invented role name overrides the localized one of the screen reader. The language ids and `translations` keys `contentRoleDescription`, `tableRoleDescriptionDay`, `tableRoleDescriptionMonth` and `tableRoleDescriptionYear` are gone.
-
-**Features**
-
-- `ui:toc.root` takes `multiple`. It is `true` by default and keeps every visible heading active, set `multiple="{false}"` to keep only the topmost visible heading active.
-- `ui:accordion.root` and `ui:collapsible.root` take `hiddenUntilFound`. Closed content stays searchable with the browser's find in page, and a match opens it. A style that resets `[hidden]` has to leave `[hidden='until-found']` alone.
-- A `Select` can filter its items. With the `dialog` popup type, put a `select.input` and a `select.empty` ("no results") into the content. The input keeps focus while the arrow keys move the highlight, and the new `onInputValueChange` option of the `Select` class takes your own filter: pass the result of `getSourceCollection().filter(...)` to `updateProps({ collection })`. The registry `Select` filters by label in its entry file, run `ui:add` again to pick it up.
-- A `Menu` can filter its items. With `popupType` `dialog`, put a `menu.input`, a `menu.list` around the items and a `menu.empty` into the content: typing shows the items whose text contains the query, ignoring case and accents. `autoHighlight` on `ui:menu.root` highlights the first match as you type.
-- A `Combobox` announces the number of results to screen readers while you type, and "No results" when nothing matches. The texts ship in English and German (`combobox.resultsCount`, `combobox.resultsCountOne`, `combobox.noResults`, `combobox.loading`), and `translations` overrides them: `resultsCount` takes a `%count%` placeholder, an empty text turns an announcement off.
-- `ui:combobox.root` takes `loading`. While it is set, the list gets `aria-busy` and screen readers hear the loading text instead of "No results".
-- The registry `Dialog` content renders the backdrop only while the dialog is modal, so `modal="{false}"` gives a dialog without a backdrop. Run `ui:add` again to pick it up.
-- `ui:slider.root` takes `thumbLabels`, the accessible name of each thumb by its `index`. Without it every thumb of a range slider is named by the label of the slider.
-- A `slider.marker` inside the filled range carries `data-in-range`, in the server render too, and the registry marker colors its dot with it instead of only at the value of the thumb. Run `ui:add` again to pick it up.
-- `thumbSize` of `ui:slider.root` takes a single number for a square thumb.
-- The `Accordion` item content runs on a collapsible, as in [Collapsible](/docs/components/collapsible): it exposes `--height` and `--width` for the `animate-collapsible-*` keyframes, stays visible until its close animation ends, and follows runtime changes of `hiddenUntilFound`. As on Collapsible, the content only carries `data-state="open"` while it animates open, and content open on load gets none, so it no longer animates before hydration.
-
-**Fixes**
-
-- The word count of `Input` and `Textarea` and the row announcements of `FieldArray` are spoken from a live region inside the component, not at the end of the `<body>`. Inside a modal `Dialog` the screen reader skipped the region outside of it, so nothing was announced.
-
-## Unreleased
-
-**Breaking changes**
-
-- The indicator of `Tabs` and `RadioGroup` carries no inline transition any more, your CSS animates it: add `transition: left 0.2s, width 0.2s` (and `top` and `height` for vertical tabs) to `[data-tabs-indicator]` or `[data-radio-group-indicator]`, and turn it off with `[data-instant]`. The indicator gets `data-instant` while it moves for another reason than a new selection: the first render, a resize, a changed `dir` or `orientation`. The `--transition-property`, `--transition-duration` and `--transition-timing-function` variables are gone, and `data-ssr` on the tab triggers and radio items is `data-indicator-pending`: it is also set until the indicator is measured, as inside a hidden panel.
-
-## Unreleased
-
-**Breaking changes**
-
-- The arrow keys, `Home` and `End` no longer move focus between the triggers of an `Accordion`, as in the WAI-ARIA accordion pattern: `Tab` reaches every trigger.
-
-**Features**
-
-- `ui:accordion.root` and `ui:collapsible.root` take `hiddenUntilFound`. Closed content stays searchable with the browser's find in page, and a match opens it. A style that resets `[hidden]` has to leave `[hidden='until-found']` alone.
-
-## Unreleased
-
-**Breaking changes**
-
-- `ui:menu.root` takes `popupType` (`menu` or `dialog`) instead of `composite`. Replace `composite="{false}"` with `popupType="{f:constant(name: 'Jramke\FluidPrimitives\Enum\MenuPopupType::Dialog')}"`.
-
-**Features**
-
-- A `Select` can filter its items. With the `dialog` popup type, put a `select.input` and a `select.empty` ("no results") into the content. The input keeps focus while the arrow keys move the highlight, and the new `onInputValueChange` option of the `Select` class takes your own filter: pass the result of `getSourceCollection().filter(...)` to `updateProps({ collection })`. The registry `Select` filters by label in its entry file, run `ui:add` again to pick it up.
-- A `Menu` can filter its items. With `popupType` `dialog`, put a `menu.input`, a `menu.list` around the items and a `menu.empty` into the content: typing shows the items whose text contains the query, ignoring case and accents. `autoHighlight` on `ui:menu.root` highlights the first match as you type.
-
-## Unreleased
-
-**Breaking changes**
-
-- The `DatePicker` part `prevTrigger` is `previousTrigger`, as Zag.js spells it out: `primitives:datePicker.previousTrigger`, `ui:datePicker.previousTrigger` (the registry file `PrevTrigger.fluid.html` is `PreviousTrigger.fluid.html`) and `data-date-picker-previous-trigger` for your CSS. The language ids and the `translations` keys `prevTriggerDay`, `prevTriggerMonth` and `prevTriggerYear` are `previousTriggerDay`, `previousTriggerMonth` and `previousTriggerYear`.
-
-## Unreleased
-
-**Features**
-
-- A `Combobox` announces the number of results to screen readers while you type, and "No results" when nothing matches. The texts ship in English and German (`combobox.resultsCount`, `combobox.resultsCountOne`, `combobox.noResults`, `combobox.loading`), and `translations` overrides them: `resultsCount` takes a `%count%` placeholder, an empty text turns an announcement off.
-- `ui:combobox.root` takes `loading`. While it is set, the list gets `aria-busy` and screen readers hear the loading text instead of "No results".
-
-## Unreleased
-
-**Features**
-
-- The registry `Dialog` content renders the backdrop only while the dialog is modal, so `modal="{false}"` gives a dialog without a backdrop. Run `ui:add` again to pick it up.
-
-## Unreleased
-
-**Features**
-
-- `ui:slider.root` takes `thumbLabels`, the accessible name of each thumb by its `index`. Without it every thumb of a range slider is named by the label of the slider.
-- A `slider.marker` inside the filled range carries `data-in-range`, in the server render too, and the registry marker colors its dot with it instead of only at the value of the thumb. Run `ui:add` again to pick it up.
-- `thumbSize` of `ui:slider.root` takes a single number for a square thumb.
-
-## Unreleased
-
-**Fixes**
-
-- The word count of `Input` and `Textarea` and the row announcements of `FieldArray` are spoken from a live region inside the component, not at the end of the `<body>`. Inside a modal `Dialog` the screen reader skipped the region outside of it, so nothing was announced.
 
 ## 1.0.0-beta.6
 
