@@ -19,7 +19,7 @@ export function getListCollectionFromHydrationData<T extends CollectionItem>(hyd
     groupSort?: 'asc' | 'desc' | Array<string> | null;
 }): ListCollection<T> {
     if (hydrationCollection instanceof ListCollection) {
-        return hydrationCollection;
+        return hydrationCollection as ListCollection<T>;
     }
 
     const { itemToValueKey, itemToStringKey, isItemDisabledKey, groupByKey, groupSort } =

@@ -19,4 +19,10 @@ export class Machine<T extends MachineSchema> extends VanillaMachine<T> {
     ) {
         super.updateProps(newProps as InputProps<T>);
     }
+
+    /** Tells the subscribers to render again, without a prop change behind it. */
+    notify() {
+        // Zag's VanillaMachine has no public publish, but updateProps() publishes synchronously
+        super.updateProps({} as InputProps<T>);
+    }
 }

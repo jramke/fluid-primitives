@@ -149,8 +149,6 @@ export abstract class FieldAwareComponent<Props, Api> extends Component<Props, A
                         this.updateProps(propsToUpdate as Partial<Props>);
                     } else {
                         // the field's aria-describedby (its visible error texts) may have changed
-                        // notify is marked as private but that does not prevent runtime access
-                        // @ts-expect-error
                         this.machine.notify();
                     }
                 });
