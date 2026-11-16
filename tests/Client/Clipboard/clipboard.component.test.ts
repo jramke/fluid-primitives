@@ -10,8 +10,11 @@ afterEach(() => {
     document.body.innerHTML = '';
 });
 
-// jsdom has no clipboard: Zag falls back to `execCommand('copy')`
-document.execCommand = () => true;
+// jsdom has no Clipboard API, which Zag needs to copy
+Object.defineProperty(navigator, 'clipboard', {
+    value: { writeText: () => Promise.resolve() },
+    configurable: true,
+});
 
 // What `mountAll` does before it calls the entry file: the wire props go through the converters
 function mountClipboard(translations: Record<string, unknown>) {
