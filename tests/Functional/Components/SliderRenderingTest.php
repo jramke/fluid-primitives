@@ -232,23 +232,33 @@ final class SliderRenderingTest extends FunctionalTestCase
      */
     public static function rangeStyles(): iterable
     {
-        yield 'from the start' => ['defaultValue="{0: 30}"', 'position: absolute; left: 0%; right: 70%;'];
-        yield 'between two thumbs' => ['defaultValue="{0: 25, 1: 75}"', 'position: absolute; left: 25%; right: 25%;'];
+        yield 'from the start' => [
+            'defaultValue="{0: 30}"',
+            'position: absolute; left: 0%; right: calc(70% + var(--slider-thumb-width, 0px) * -0.2);',
+        ];
+        yield 'between two thumbs' => [
+            'defaultValue="{0: 25, 1: 75}"',
+            'position: absolute; left: calc(25% - var(--slider-thumb-width, 0px) * -0.25); right: calc(25% + var(--slider-thumb-width, 0px) * 0.25);',
+        ];
         yield 'from the center to a lower value' => [
             'defaultValue="{0: 30}" origin="' . self::ORIGIN_CENTER . '"',
-            'position: absolute; left: 30%; right: 50%;',
+            'position: absolute; left: calc(30% - var(--slider-thumb-width, 0px) * -0.2); right: 50%;',
         ];
         yield 'from the center to a higher value' => [
             'defaultValue="{0: 70}" origin="' . self::ORIGIN_CENTER . '"',
-            'position: absolute; left: 50%; right: 30%;',
+            'position: absolute; left: 50%; right: calc(30% + var(--slider-thumb-width, 0px) * 0.2);',
         ];
         yield 'from the end' => [
             'defaultValue="{0: 30}" origin="' . self::ORIGIN_END . '"',
-            'position: absolute; left: 30%; right: 0%;',
+            'position: absolute; left: calc(30% - var(--slider-thumb-width, 0px) * -0.2); right: 0%;',
         ];
         yield 'vertical' => [
             'defaultValue="{0: 30}" orientation="' . self::ORIENTATION_VERTICAL . '"',
-            'position: absolute; bottom: 0%; top: 70%;',
+            'position: absolute; bottom: 0%; top: calc(70% + var(--slider-thumb-height, 0px) * -0.2);',
+        ];
+        yield 'centered thumbs' => [
+            'defaultValue="{0: 30}" thumbAlignment="' . self::THUMB_ALIGNMENT_CENTER . '"',
+            'position: absolute; left: 0%; right: 70%;',
         ];
     }
 

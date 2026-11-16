@@ -21,7 +21,7 @@ class SliderContext extends AbstractComponentContext
         $gap = Typed::float($this->get('step'), 1.0) * Typed::float($this->get('minStepsBetweenThumbs'));
         $lastIndex = count($values) - 1;
         $value = $values[$index] ?? $min;
-        $offset = $this->getOffset($value);
+        $offset = $this->getOffset($this->getPercent($value));
 
         return (object)[
             'value' => $value,
@@ -61,7 +61,9 @@ class SliderContext extends AbstractComponentContext
         $values = $this->resolveValues();
         $first = $values[0] ?? Typed::float($this->get('min'));
         $last = $values[count($values) - 1] ?? Typed::float($this->get('max'), 100.0);
-        $offset = $this->getOffset($value);
+        $percent = $this->getPercent($value);
+        $offset = $this->getOffset($percent);
+        [$from, $to] = $this->getFillSpan();
 
         return (object)[
             'state' => match (true) {
@@ -73,20 +75,21 @@ class SliderContext extends AbstractComponentContext
             'style' => $this->isVertical()
                 ? "position: absolute; pointer-events: none; bottom: {$offset}; translate: 0% 50%;"
                 : "position: absolute; pointer-events: none; inset-inline-start: {$offset}; translate: -50% 0%;",
-            'inRange' => $this->isInFill($value),
+            'inRange' => $percent >= $from && $percent <= $to,
         ];
     }
 
     /**
-     * Whether a value lies within the filled range, as the machine's `inRange` marker state: between
-     * the thumbs of a range slider, else between the thumb and the origin.
+     * The filled span in percent, as the machine's: between the thumbs of a range slider, else between
+     * the thumb and the origin.
+     *
+     * @return array{float, float}
      */
-    private function isInFill(float $value): bool
+    private function getFillSpan(): array
     {
-        $percent = $this->getPercent($value);
         $percents = array_map($this->getPercent(...), $this->resolveValues());
         if (count($percents) > 1) {
-            return $percent >= $percents[0] && $percent <= $percents[count($percents) - 1];
+            return [$percents[0], $percents[count($percents) - 1]];
         }
 
         $origin = match (Typed::stringOrNull($this->get('origin'))) {
@@ -96,7 +99,7 @@ class SliderContext extends AbstractComponentContext
         };
         $thumb = $percents[0] ?? 0.0;
 
-        return $percent >= min($thumb, $origin) && $percent <= max($thumb, $origin);
+        return [min($thumb, $origin), max($thumb, $origin)];
     }
 
     /**
@@ -110,48 +113,41 @@ class SliderContext extends AbstractComponentContext
     }
 
     /**
-     * Mirrors the machine's offset of a thumb or a marker. A contained thumb stays inside the track, so
-     * it moves by up to half its own size. Only the client measures that size, so the CSS reads
-     * `--slider-thumb-width` (or `-height`): the machine sets it once hydrated, a stylesheet can set it
-     * before. `thumbSize` is the fallback.
+     * Mirrors the machine's offset of a thumb, a marker or an edge of the range. A contained thumb stays
+     * inside the track, so it moves by up to half its own size. Only the client measures that size, so
+     * the CSS reads `--slider-thumb-width` (or `-height`): the machine sets it once hydrated, a stylesheet
+     * can set it before. `thumbSize` is the fallback. `$fromEnd` measures from the far end of the track.
      */
-    private function getOffset(float $value): string
+    private function getOffset(float $percent, bool $fromEnd = false): string
     {
-        $percent = $this->getPercent($value);
+        $edge = $this->formatNumber($fromEnd ? 100 - $percent : $percent);
         $factor = ($percent / 100) - 0.5;
         if (Typed::stringOrNull($this->get('thumbAlignment')) === 'center' || $factor === 0.0) {
-            return "{$this->formatNumber($percent)}%";
+            return "{$edge}%";
         }
 
         $dimension = $this->isVertical() ? 'height' : 'width';
         $thumbSize = Typed::arrayOrNull($this->get('thumbSize')) ?? [];
         $fallback = $this->formatNumber(Typed::float($thumbSize[$dimension] ?? null));
+        $sign = $fromEnd ? '+' : '-';
 
-        return "calc({$this->formatNumber(
-            $percent,
-        )}% - var(--slider-thumb-{$dimension}, {$fallback}px) * {$this->formatNumber($factor)})";
+        return "calc({$edge}% {$sign} var(--slider-thumb-{$dimension}, {$fallback}px) * {$this->formatNumber(
+            $factor,
+        )})";
     }
 
     /**
-     * The range "fill" position is derived purely from `defaultValue`/`min`/`max`/`origin` - unlike
-     * the thumb/marker offsets, it needs no live thumb-size measurement, so it can be precomputed
-     * here instead of leaving the range bar empty until hydration.
+     * The range runs to the centers of the thumbs, so its edges move like them, except at the very ends
+     * of the track.
      */
     public function getRangeStyle(): string
     {
-        // @zag-js/slider 2.0.0-next.3 fills by percent only, newer versions inset the edges like getOffset()
-        $percent = array_map($this->getPercent(...), $this->resolveValues());
-        $first = $percent[0] ?? 0.0;
-        $last = $percent[count($percent) - 1] ?? 0.0;
-
-        [$start, $end] = match (true) {
-            count($percent) > 1 => ["{$this->formatNumber($first)}%", "{$this->formatNumber(100 - $last)}%"],
-            Typed::stringOrNull($this->get('origin')) === 'center' => $first < 50
-                ? ["{$this->formatNumber($first)}%", '50%']
-                : ['50%', "{$this->formatNumber(100 - $first)}%"],
-            Typed::stringOrNull($this->get('origin')) === 'end' => ["{$this->formatNumber($last)}%", '0%'],
-            default => ['0%', "{$this->formatNumber(100 - $last)}%"],
-        };
+        $edge = fn(float $percent, bool $fromEnd = false): string => $percent === 0.0 || $percent === 100.0
+            ? $this->formatNumber($fromEnd ? 100 - $percent : $percent) . '%'
+            : $this->getOffset($percent, $fromEnd);
+        [$from, $to] = $this->getFillSpan();
+        $start = $edge($from);
+        $end = $edge($to, fromEnd: true);
 
         return $this->isVertical()
             ? "position: absolute; bottom: {$start}; top: {$end};"
