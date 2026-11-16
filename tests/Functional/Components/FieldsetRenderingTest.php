@@ -25,7 +25,8 @@ final class FieldsetRenderingTest extends FunctionalTestCase
         $root = $this->elementWith($html, 'data-fieldset-root');
         $this->assertSame('fieldset', $root->tag);
         $this->assertTrue($root->has('disabled'));
-        $this->assertSame('true', $root->get('aria-invalid'));
+        // a group role takes no aria-invalid, data-invalid carries the state
+        $this->assertFalse($root->has('aria-invalid'));
 
         foreach (['legend', 'helper-text', 'error-text', 'root'] as $part) {
             $element = $this->elementWith($html, 'data-fieldset-' . $part);
@@ -53,10 +54,8 @@ final class FieldsetRenderingTest extends FunctionalTestCase
 
         $this->assertTrue($validText->has('hidden'));
         $this->assertFalse($invalidText->has('hidden'));
-        // a live region has to exist before its content changes
-        foreach ([$validText, $invalidText] as $errorText) {
-            $this->assertSame('polite', $errorText->get('aria-live'));
-        }
+        // the root names the error text in aria-describedby, so it is no live region of its own
+        $this->assertFalse($invalidText->has('aria-live'));
     }
 
     #[Test]
