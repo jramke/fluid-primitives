@@ -101,7 +101,7 @@ What changed in each release of Fluid Primitives, newest first. Every release li
 
 ### Toast
 
-- A toast can be swiped away toward the nearest edges of its placement. Turn its transition and text selection off while it has `data-swiping`, as the registry `Toast` does, and pass `swipeDirections` to the toaster to choose the directions, `[]` turns swiping off. The registry `Toaster` gives its region a `z-index`, which Zag.js no longer sets. Run `ui:add` again to pick both up. ([#125](https://github.com/jramke/fluid-primitives/pull/125))
+- A toast can be swiped away toward the nearest edges of its placement. Turn its transition and text selection off while it has `data-swiping`, as the registry `Toast` does, and pass `swipeDirections` to the toaster to choose the directions. The registry `Toaster` gives its region a `z-index`, which Zag.js no longer sets. Run `ui:add` again to pick both up. ([#125](https://github.com/jramke/fluid-primitives/pull/125))
 
 ### Toc
 
