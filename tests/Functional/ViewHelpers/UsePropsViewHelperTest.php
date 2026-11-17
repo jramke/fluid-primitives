@@ -93,6 +93,21 @@ final class UsePropsViewHelperTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function aDefaultFromUsePropsStillReachesTheClient(): void
+    {
+        // The default of a client prop replaced through `defaults` must keep the client marking,
+        // which lives in the annotations of its argument definition.
+        $this->renderTemplate('
+            <wrapper:tooltip.root rootId="default-tooltip">Trigger</wrapper:tooltip.root>
+            <wrapper:tooltip.root rootId="own-tooltip" openDelay="50">Trigger</wrapper:tooltip.root>
+        ');
+
+        $tooltips = HydrationRegistry::getInstance()->getAll()['wrapper']['tooltip'];
+        $this->assertSame(200, $tooltips['default-tooltip']['props']['openDelay']);
+        $this->assertSame(50, $tooltips['own-tooltip']['props']['openDelay']);
+    }
+
+    #[Test]
     public function asBindingMakesAdditionalArgumentsAllowedWhenTheImportedComponentAllowsThem(): void
     {
         // DelegatesToAllowsExtra.root genuinely delegates (ui:useProps ... as="rootProps" paired

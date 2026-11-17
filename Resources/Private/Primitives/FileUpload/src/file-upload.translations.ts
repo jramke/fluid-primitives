@@ -2,16 +2,20 @@ import type * as fileUpload from '@zag-js/file-upload';
 import { resolveTranslations as resolve, type TranslationText } from '../../../Client';
 
 /**
- * The translations as a template or a client script writes them: plain strings, `itemPreview` and
- * `deleteFile` with a `%fileName%` placeholder or as a function of the `File`.
+ * The translations as a template or a client script writes them: plain strings, `itemPreview`,
+ * `deleteFile` and `fileDeleted` with a `%fileName%` placeholder or as a function of the `File`,
+ * `filesAdded` with `%fileNames%` or as a function of the added files.
  */
 export type FileUploadTranslationTexts = {
     dropzone?: string;
     itemPreview?: TranslationText<File>;
     deleteFile?: TranslationText<File>;
+    filesAdded?: TranslationText<File[]>;
+    fileDeleted?: TranslationText<File>;
 };
 
 const fileName = (file: File) => ({ fileName: file.name });
+const fileNames = (files: File[]) => ({ fileNames: files.map(file => file.name).join(', ') });
 
 /**
  * zag-js's `itemPreview`/`deleteFile` translations are functions (`(file: File) => string`) that
@@ -30,5 +34,7 @@ export function resolveTranslations(
     return resolve<fileUpload.Props['translations']>(translations, {
         itemPreview: fileName,
         deleteFile: fileName,
+        filesAdded: fileNames,
+        fileDeleted: fileName,
     });
 }

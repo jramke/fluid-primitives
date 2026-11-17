@@ -88,7 +88,7 @@ datePicker:
     - Content.fluid.html
     - View.fluid.html
     - ViewControl.fluid.html
-    - PrevTrigger.fluid.html
+    - PreviousTrigger.fluid.html
     - ViewTrigger.fluid.html
     - NextTrigger.fluid.html
     - RangeText.fluid.html
@@ -208,6 +208,9 @@ menu:
     - Trigger.fluid.html
     - ContextTrigger.fluid.html
     - Content.fluid.html
+    - Input.fluid.html
+    - List.fluid.html
+    - Empty.fluid.html
     - Item.fluid.html
     - CheckboxItem.fluid.html
     - RadioItem.fluid.html
@@ -254,7 +257,7 @@ pagination:
     - Item.fluid.html
     - Ellipsis.fluid.html
     - FirstTrigger.fluid.html
-    - PrevTrigger.fluid.html
+    - PreviousTrigger.fluid.html
     - NextTrigger.fluid.html
     - LastTrigger.fluid.html
     - Pagination.entry.ts
@@ -315,7 +318,9 @@ select:
     - Trigger.fluid.html
     - ValueText.fluid.html
     - Content.fluid.html
+    - Input.fluid.html
     - List.fluid.html
+    - Empty.fluid.html
     - Item.fluid.html
     - ItemText.fluid.html
     - ItemIndicator.fluid.html
@@ -370,6 +375,7 @@ toast:
   description: The styled parts of one toast, for the template of a toaster
   files:
     - Root.fluid.html
+    - Content.fluid.html
     - Title.fluid.html
     - Description.fluid.html
     - Indicator.fluid.html
@@ -389,6 +395,7 @@ toc:
   description: A table of contents that highlights the headings you are reading
   files:
     - Root.fluid.html
+    - Nav.fluid.html
     - Title.fluid.html
     - List.fluid.html
     - Item.fluid.html

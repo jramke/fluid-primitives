@@ -149,8 +149,6 @@ export abstract class Component<Props, Api> implements ComponentInterface<Api> {
      * its own. Combobox and Select don't need it: `updateProps({ collection })` already renders.
      */
     refresh(): void {
-        // notify is marked as private but that does not prevent runtime access
-        // @ts-expect-error
         this.machine.notify();
     }
 

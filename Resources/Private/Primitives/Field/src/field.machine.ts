@@ -7,8 +7,10 @@
 import { setup } from '@zag-js/core';
 import { observeChildren, trackFormControl } from '@zag-js/dom-query';
 import { isEqual } from '@zag-js/utils';
+import { focusField } from '../../Form/src/form.fields';
 import { trimArraySuffix } from '../../Form/src/form.path';
 import { getFormMachineFor } from '../../Form/src/form.registry';
+import type { FieldControlElement } from './field.dom';
 import * as dom from './field.dom';
 import type {
     FieldParams,
@@ -19,6 +21,8 @@ import type {
 } from './field.types';
 import {
     VALID_SNAPSHOT,
+    getFirstInvalidControl,
+    getFormValues,
     getValiditySnapshot,
     resolveValidation,
     shouldCommit,
@@ -63,6 +67,7 @@ export const machine = createMachine({
             validity: bindable<ValiditySnapshot | null>(() => ({ defaultValue: null })),
             errorTextIds: bindable<string[]>(() => ({ defaultValue: [] })),
             hasHelperText: bindable<boolean>(() => ({ defaultValue: false })),
+            fieldsetErrorTextId: bindable<string | null>(() => ({ defaultValue: null })),
             fieldsetDisabled: bindable<boolean>(() => ({ defaultValue: false })),
             submitAttempted: bindable<boolean>(() => ({ defaultValue: false })),
         };
@@ -103,7 +108,13 @@ export const machine = createMachine({
         });
     },
 
-    effects: ['trackRoot', 'trackControlState', 'trackTextParts', 'trackFieldEvents'],
+    effects: [
+        'trackRoot',
+        'trackControlState',
+        'trackTextParts',
+        'trackFieldsetError',
+        'trackFieldEvents',
+    ],
 
     on: {
         'CONTROL.FOCUS': {
@@ -119,7 +130,7 @@ export const machine = createMachine({
         ],
         // Native `invalid` event fired at submit time (bubble suppressed in connect)
         'SUBMIT.INVALID': {
-            actions: ['markSubmitAttempted', 'commitValidation'],
+            actions: ['markSubmitAttempted', 'commitValidation', 'focusIfFirstInvalid'],
         },
         VALIDATE: {
             actions: ['forceDirty', 'commitValidation'],
@@ -203,6 +214,22 @@ export const machine = createMachine({
                 });
             },
 
+            // The fieldset owns no live region: its error reaches screen readers through the fields in it.
+            trackFieldsetError({ context, refs }) {
+                const rootEl = refs.get('rootEl');
+                const fieldsetEl = rootEl ? dom.getFieldsetEl(rootEl) : null;
+                if (!fieldsetEl) return;
+                const sync = () =>
+                    context.set('fieldsetErrorTextId', dom.getFieldsetErrorTextId(fieldsetEl));
+                sync();
+                return observeChildren(fieldsetEl, {
+                    defer: true,
+                    callback: sync,
+                    attributes: true,
+                    attributeFilter: ['hidden'],
+                });
+            },
+
             // Our controls are composite (focus on a Select's trigger, value in a hidden <select>, a
             // portaled listbox, groups of inputs), so instead of handlers on one control the field
             // listens on its root: capture phase also sees the non-bubbling `invalid` event.
@@ -261,10 +288,13 @@ export const machine = createMachine({
                     click: (event: Event) => {
                         if (!event.isTrusted && isChoiceInput(event.target)) schedule();
                     },
-                    // suppress the native browser bubble; the field surfaces the error itself
+                    // suppress the native browser bubble; the field surfaces the error itself. That also
+                    // cancels the focus of the browser, so the field moves it, unless a listener before
+                    // it already took the event over.
                     invalid: (event: Event) => {
+                        const focus = !event.defaultPrevented;
                         event.preventDefault();
-                        send({ type: 'SUBMIT.INVALID', value: read() });
+                        send({ type: 'SUBMIT.INVALID', value: read(), focus });
                     },
                 };
                 for (const [type, listener] of Object.entries(listeners)) {
@@ -321,6 +351,17 @@ export const machine = createMachine({
                     value: event.value,
                     nativeMessage: '',
                 });
+            },
+
+            focusIfFirstInvalid(params) {
+                const { event, refs, prop } = params;
+                const rootEl = refs.get('rootEl');
+                const form = getFormEl(params);
+                if (!event.focus || !rootEl || !form) return;
+                // composite fields (a radio group, a combobox) have no single host control
+                const firstInvalid = getFirstInvalidControl(form);
+                if (!firstInvalid || !rootEl.contains(firstInvalid)) return;
+                focusField(form, prop('name'), rootEl);
             },
 
             markSubmitAttempted({ context, refs }) {
@@ -400,7 +441,11 @@ function commitValidation(params: FieldParams, options: CommitOptions = {}) {
     const seq = refs.get('seq') + 1;
     refs.set('seq', seq);
 
-    const result = prop('validate')?.({ value, validity });
+    const result = prop('validate')?.({
+        value,
+        validity,
+        formValues: getFormValues({ form: getFormEl(params) }),
+    });
 
     if (isPromise(result)) {
         context.set('validating', true);
@@ -489,15 +534,29 @@ function clearValidation(params: FieldParams) {
     getHostEl(params)?.setCustomValidity('');
 }
 
+/** The form of the control, which its `form` attribute may point elsewhere, else the one around the field. */
+function getFormEl({ scope, refs }: Pick<FieldParams, 'scope' | 'refs'>) {
+    return dom.getControlEl(scope)?.form ?? refs.get('rootEl')?.closest('form') ?? null;
+}
+
 /**
  * The native control that hosts constraint validation (`setCustomValidity`, `validity`), when there
- * is one: the element the control id points at, if it is the one carrying the field's name. Looked
- * up at call time, and absent for groups, a Slider, or a Combobox's visible input (no name).
+ * is one: the control, if it carries the field's name, else the one input inside the field that does
+ * (the hidden input of a NumberInput or a Combobox). Looked up at call time, and absent for groups.
  */
-function getHostEl({ scope, prop }: Pick<FieldParams, 'scope' | 'prop'>) {
+function getHostEl({ scope, prop, refs }: Pick<FieldParams, 'scope' | 'prop' | 'refs'>) {
+    const name = trimArraySuffix(prop('name') ?? '');
+    const carriesName = (el: FieldControlElement | null | undefined): el is FieldControlElement =>
+        !!el && typeof el.setCustomValidity === 'function' && trimArraySuffix(el.name) === name;
+
     const controlEl = dom.getControlEl(scope);
-    if (!controlEl || typeof controlEl.setCustomValidity !== 'function') return null;
-    return trimArraySuffix(controlEl.name) === trimArraySuffix(prop('name')) ? controlEl : null;
+    if (carriesName(controlEl)) return controlEl;
+    if (!name) return null;
+
+    const named = Array.from(
+        refs.get('rootEl')?.querySelectorAll<FieldControlElement>('input, select, textarea') ?? []
+    ).filter(el => el.type !== 'hidden' && carriesName(el));
+    return named.length === 1 ? named[0] : null;
 }
 
 /** Makes the current value the baseline for `dirty`, unless the user already changed it. */

@@ -33,7 +33,7 @@ class PaginationContext extends AbstractComponentContext
     }
 
     /**
-     * @return array{rootLabel: string, firstTriggerLabel: string, prevTriggerLabel: string, nextTriggerLabel: string, lastTriggerLabel: string, itemLabel: string}
+     * @return array{rootLabel: string, firstTriggerLabel: string, previousTriggerLabel: string, nextTriggerLabel: string, lastTriggerLabel: string, itemLabel: string}
      */
     #[ExposeToClient]
     public function getTranslations(): array
@@ -43,7 +43,7 @@ class PaginationContext extends AbstractComponentContext
         return $this->translationsWithDefaults([
             'rootLabel' => 'pagination.rootLabel',
             'firstTriggerLabel' => 'pagination.firstTriggerLabel',
-            'prevTriggerLabel' => 'pagination.prevTriggerLabel',
+            'previousTriggerLabel' => 'pagination.previousTriggerLabel',
             'nextTriggerLabel' => 'pagination.nextTriggerLabel',
             'lastTriggerLabel' => 'pagination.lastTriggerLabel',
             'itemLabel' => 'pagination.itemLabel',
@@ -168,10 +168,10 @@ class PaginationContext extends AbstractComponentContext
     }
 
     /**
-     * Mirrors the trigger props of the machine: the first and last trigger link to their page even
-     * while disabled, the previous and next trigger only when that page exists.
+     * Mirrors the trigger props of the machine: a trigger links to its page only while it can move
+     * there, a disabled link trigger has no `href`.
      *
-     * @param 'first'|'prev'|'next'|'last' $trigger
+     * @param 'first'|'previous'|'next'|'last' $trigger
      * @return object{disabled: bool, url: string|null}
      */
     public function getTriggerState(string $trigger): object
@@ -183,14 +183,14 @@ class PaginationContext extends AbstractComponentContext
 
         [$disabled, $target] = match ($trigger) {
             'first' => [$isFirstPage, 1],
-            'prev' => [$isFirstPage, $isFirstPage ? null : $page - 1],
-            'next' => [$isLastPage, $isLastPage ? null : $page + 1],
+            'previous' => [$isFirstPage, $page - 1],
+            'next' => [$isLastPage, $page + 1],
             'last' => [$isLastPage, $totalPages],
         };
 
         return (object)[
             'disabled' => $disabled,
-            'url' => $target === null ? null : $this->getPageUrl($target),
+            'url' => $disabled ? null : $this->getPageUrl($target),
         ];
     }
 

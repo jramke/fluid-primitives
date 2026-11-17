@@ -29,8 +29,13 @@ beforeEach(() => {
             disconnect() {}
         }
     );
-    // scrollIntoView and the ResizeObserver of the indicator don't exist in jsdom
+    // scrollIntoView, the ResizeObserver of the indicator and the scrollingElement (single mode reads
+    // the layout of it) don't exist in jsdom
     Element.prototype.scrollIntoView = () => {};
+    Object.defineProperty(document, 'scrollingElement', {
+        value: document.documentElement,
+        configurable: true,
+    });
     vi.stubGlobal(
         'ResizeObserver',
         class {
@@ -45,18 +50,20 @@ afterEach(() => {
     toc?.destroy();
     toc = undefined;
     vi.unstubAllGlobals();
+    delete (document as { scrollingElement?: unknown }).scrollingElement;
     document.body.innerHTML = '';
 });
 
 function mountToc(props: Partial<ConstructorParameters<typeof Toc>[0]> = {}) {
     document.body.innerHTML = `
-        <nav data-toc-root="t1">
+        <div data-toc-root="t1"><nav data-toc-nav="t1">
+            <h2 data-toc-title="t1">On this page</h2>
             <ul data-toc-list="t1">
                 <li data-toc-item="t1" data-value="intro" data-depth="2"><a data-toc-link="t1" data-value="intro" href="#intro">Intro</a></li>
                 <li data-toc-item="t1" data-value="install" data-depth="3"><a data-toc-link="t1" data-value="install" href="#install">Install</a></li>
                 <li data-toc-item="t1" data-value="usage" data-depth="2"><a data-toc-link="t1" data-value="usage" href="#usage">Usage</a></li>
             </ul>
-        </nav>
+        </nav></div>
         <div id="content">
             <h2 id="intro">Intro</h2><h3 id="install">Install</h3><h2 id="usage">Usage</h2><h2 id="unlisted">Unlisted</h2>
         </div>`;
@@ -85,7 +92,7 @@ function mountToc(props: Partial<ConstructorParameters<typeof Toc>[0]> = {}) {
 }
 
 test('highlights the items whose heading is visible', async () => {
-    const { item, link, see } = mountToc();
+    const { item, link, see } = mountToc({ multiple: true });
 
     // only the headings of the listed items are observed
     expect(observers[0].observed.map(el => el.id)).toEqual(['intro', 'install', 'usage']);
@@ -99,6 +106,22 @@ test('highlights the items whose heading is visible', async () => {
     expect(item('install').hasAttribute('data-first')).toBe(true);
     expect(item('usage').hasAttribute('data-last')).toBe(true);
     expect(link('usage').getAttribute('aria-current')).toBe('location');
+});
+
+test('keeps only the topmost visible heading active unless multiple is set', async () => {
+    const { see } = mountToc({ multiple: false });
+
+    see('install', 'usage');
+    await expect.poll(() => toc!.api.activeIds).toEqual(['install']);
+});
+
+test('names the nav by its title', () => {
+    mountToc();
+
+    const nav = document.querySelector('nav')!;
+    const title = document.querySelector('[data-toc-title]')!;
+    expect(title.id).not.toBe('');
+    expect(nav.getAttribute('aria-labelledby')).toBe(title.id);
 });
 
 test('observes inside the scroll container once its selector is converted', () => {

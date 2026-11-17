@@ -5,7 +5,6 @@
 
 <fieldset
     {f:if(condition: refData.disabled, then: 'disabled' )}
-    {f:if(condition: refData.invalid, then: 'aria-invalid="true"' )}
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'root' , data: refData )}
     {ui:attributes()}

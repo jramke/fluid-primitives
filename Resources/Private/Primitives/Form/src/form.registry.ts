@@ -32,13 +32,10 @@ export function registerFieldMachineForForm(el: Element | null, fieldMachine: Fi
 
         // trigger initial form render when all fields are registered
         if (entry.fields.size === entry.expectedFieldCount) {
-            // notify is marked as private but that does not prevent runtime access
-            // @ts-expect-error
             entry.machine.notify();
         } else if (entry.fields.size > entry.expectedFieldCount) {
             // Support dynamically added fields (e.g. recurring array rows added client-side)
-            // @ts-expect-error
-            entry.machine.notify?.();
+            entry.machine.notify();
         }
     };
 

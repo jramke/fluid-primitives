@@ -1,6 +1,8 @@
+import { createFilter } from '@zag-js/i18n-utils';
 import * as menu from '@zag-js/menu';
 import {
     Component,
+    getGlobal,
     Machine,
     normalizeProps,
     registerClientPropConverters,
@@ -14,6 +16,13 @@ import {
 // transforming the value itself.
 const menuPropConverters = {
     positioning: (positioning: menu.Props['positioning']) => positioning,
+    // `boolean|string` on the wire: a boolean or `always`
+    autoHighlight: (autoHighlight: boolean | string | undefined): menu.Props['autoHighlight'] => {
+        if (typeof autoHighlight !== 'string') return autoHighlight;
+        // Fluid coerces no boolean for a union type, so `autoHighlight="false"` arrives as text
+        if (autoHighlight === 'always') return 'always';
+        return !['', '0', 'false'].includes(autoHighlight);
+    },
 } satisfies ClientPropConverterMap;
 
 registerClientPropConverters('menu', menuPropConverters);
@@ -34,6 +43,19 @@ export class Menu extends Component<menu.Props, menu.Api> {
      */
     private submenus = new Set<Menu>();
 
+    /** The items a filter took out of the DOM, each with the comment that marks where it belongs. */
+    private filteredOut = new Map<HTMLElement, Comment>();
+
+    transformProps(props: menu.Props): menu.Props {
+        return {
+            ...props,
+            onOpenChange: details => {
+                if (!details.open) this.resetFilter();
+                props.onOpenChange?.(details);
+            },
+        };
+    }
+
     initMachine(props: menu.Props): Machine<any> {
         const [menuProps] = menu.splitProps(props);
         return new Machine(menu.machine, menuProps);
@@ -46,7 +68,68 @@ export class Menu extends Component<menu.Props, menu.Api> {
     init() {
         super.init();
         this.linkToParent();
+        const inputEl = this.hydrator.query<HTMLInputElement>('input');
+        if (inputEl) {
+            inputEl.addEventListener('input', this.filterOnInput);
+            // shows the empty part of a menu without items before the first keystroke
+            this.filterItems(inputEl.value);
+        }
         return this;
+    }
+
+    private filterOnInput = (event: Event) => {
+        this.filterItems((event.target as HTMLInputElement).value);
+    };
+
+    /**
+     * Shows the items whose text contains the query, ignoring case and accents, and takes the others
+     * out of the DOM, because the keyboard navigation of the machine reads the items from there. An
+     * empty query brings all of them back. Groups without items and the `empty` part follow.
+     *
+     * @param query - The text to look for in the `valueText` of each item, or in its own text.
+     */
+    filterItems(query: string) {
+        const text = query.trim();
+        const filter = createFilter({ sensitivity: 'base', locale: getGlobal('locale') });
+        let visible = 0;
+
+        for (const el of [...this.hydrator.queryAll('item'), ...this.filteredOut.keys()]) {
+            const matches =
+                !text || filter.contains(el.dataset.valuetext ?? el.textContent ?? '', text);
+            const marker = this.filteredOut.get(el);
+
+            if (matches) {
+                visible++;
+                if (marker) {
+                    marker.replaceWith(el);
+                    this.filteredOut.delete(el);
+                }
+            } else if (!marker) {
+                const placeholder = this.doc.createComment('');
+                el.replaceWith(placeholder);
+                this.filteredOut.set(el, placeholder);
+            }
+        }
+
+        this.hydrator.queryAll('itemGroup').forEach(group => {
+            group.hidden = this.hydrator.queryAll('item', group).length === 0;
+        });
+        this.hydrator.queryAll('separator').forEach(separator => {
+            separator.hidden = text !== '';
+        });
+        for (const part of ['content', 'list'] as const) {
+            this.hydrator.query(part)?.toggleAttribute('data-empty', visible === 0);
+        }
+        this.hydrator.query('empty')?.firstElementChild?.toggleAttribute('hidden', visible > 0);
+
+        this.render();
+    }
+
+    private resetFilter() {
+        const inputEl = this.hydrator.query<HTMLInputElement>('input');
+        if (!inputEl) return;
+        inputEl.value = '';
+        this.filterItems('');
     }
 
     // Not a machine prop (`splitProps` drops it), so it's read from the props the instance was created with.
@@ -86,6 +169,9 @@ export class Menu extends Component<menu.Props, menu.Api> {
 
     destroy() {
         this.getParentInstance()?.submenus.delete(this);
+        // a later mount on the same markup finds it unfiltered
+        this.resetFilter();
+        this.hydrator.query('input')?.removeEventListener('input', this.filterOnInput);
         super.destroy();
     }
 
@@ -109,8 +195,21 @@ export class Menu extends Component<menu.Props, menu.Api> {
         const arrowTipEl = this.hydrator.query('arrowTip');
         if (arrowTipEl) this.spreadProps(arrowTipEl, this.api.getArrowTipProps());
 
-        const contentEl = this.hydrator.query('content');
-        if (contentEl) this.spreadProps(contentEl, this.api.getContentProps());
+        const viewportEl = this.hydrator.query('viewport');
+        if (viewportEl) this.spreadProps(viewportEl, this.api.getViewportProps());
+
+        this.spreadPropsByOptionalValue('content', ({ value }) =>
+            this.api.getContentProps({ value })
+        );
+
+        const inputEl = this.hydrator.query('input');
+        if (inputEl) this.spreadProps(inputEl, this.api.getInputProps());
+
+        const listEl = this.hydrator.query('list');
+        if (listEl) this.spreadProps(listEl, this.api.getListProps());
+
+        const emptyEl = this.hydrator.query('empty');
+        if (emptyEl) this.spreadProps(emptyEl, this.api.getEmptyProps());
 
         this.spreadPropsByValue('itemGroup', ({ value }) =>
             this.api.getItemGroupProps({ id: value })

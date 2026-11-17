@@ -49,6 +49,7 @@ export function connect<T extends PropTypes>(
         helperTextId: ids.helperText,
         hasHelperText: context.get('hasHelperText'),
         errorTextIds: context.get('errorTextIds'),
+        fieldsetErrorTextId: context.get('fieldsetErrorTextId'),
     });
 
     // -----------------------------------------------------------------------------

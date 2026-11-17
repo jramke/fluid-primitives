@@ -9,6 +9,7 @@
     value="{inputState.value}"
     {f:if(condition: inputState.name, then: 'name="{inputState.name}"' )}
     {f:if(condition: context.form, then: 'form="{context.form}"' )}
+    {f:if(condition: inputState.disabled, then: 'disabled' )}
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'hiddenInput' , value: index )}
     {ui:attributes()}

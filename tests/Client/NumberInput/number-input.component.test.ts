@@ -21,7 +21,7 @@ test('formats the value on blur, not while the user types', async () => {
         </div>`;
     numberInput = new NumberInput({
         id: 'n1',
-        defaultValue: '9.99',
+        defaultValue: 9.99,
         formatOptions: { style: 'currency', currency: 'USD' },
     } as never);
     numberInput.init();
@@ -50,7 +50,7 @@ test('announces the changes the machine makes with a change event, but not the t
         </div>`;
     numberInput = new NumberInput({
         id: 'n1',
-        defaultValue: '5',
+        defaultValue: 5,
         formatOptions: { style: 'currency', currency: 'USD' },
     } as never);
     numberInput.init();
@@ -92,7 +92,7 @@ test('a change listener reads the text the machine wrote', async () => {
         </div>`;
     numberInput = new NumberInput({
         id: 'n1',
-        defaultValue: '5',
+        defaultValue: 5,
         formatOptions: { style: 'currency', currency: 'USD' },
     } as never);
     numberInput.init();
@@ -108,11 +108,12 @@ test('a change listener reads the text the machine wrote', async () => {
     await settle();
     expect(read).toEqual(['$6.00']);
 
-    // blur formats what was typed, the listener must not see it half way
+    // typing reports itself with its input event, and blur only formats the text, so no change follows
     type(input, '3');
     input.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
     await settle();
-    expect(read).toEqual(['$6.00', '$3.00']);
+    expect(input.value).toBe('$3.00');
+    expect(read).toEqual(['$6.00']);
 });
 
 test('announces several steps of one frame with one change event', async () => {
@@ -122,7 +123,7 @@ test('announces several steps of one frame with one change event', async () => {
         </div>`;
     numberInput = new NumberInput({
         id: 'n1',
-        defaultValue: '5',
+        defaultValue: 5,
         formatOptions: { style: 'currency', currency: 'USD' },
     } as never);
     numberInput.init();
@@ -149,7 +150,7 @@ test('announces the last of several steps, also when a microtask separates them'
         </div>`;
     numberInput = new NumberInput({
         id: 'n1',
-        defaultValue: '5',
+        defaultValue: 5,
         formatOptions: { style: 'currency', currency: 'USD' },
     } as never);
     numberInput.init();
@@ -165,4 +166,28 @@ test('announces the last of several steps, also when a microtask separates them'
     // an event that fires between the two writes would stop at $6.00 and never announce $7.00
     expect(input.value).toBe('$7.00');
     expect(read).toEqual(['$7.00']);
+});
+
+test('submits the raw number through the hidden input, not the formatted text', async () => {
+    document.body.innerHTML = `
+        <form>
+            <div data-number-input-root="n1">
+                <input data-number-input-input="n1" type="text" value="5" />
+                <input data-number-input-hidden-input="n1" type="number" value="5" />
+            </div>
+        </form>`;
+    numberInput = new NumberInput({
+        id: 'n1',
+        name: 'price',
+        defaultValue: 5,
+        formatOptions: { style: 'currency', currency: 'USD' },
+    } as never);
+    numberInput.init();
+    const input = document.querySelector<HTMLInputElement>('[data-number-input-input]')!;
+
+    numberInput.api.increment();
+    await expect.poll(() => input.value).toBe('$6.00');
+
+    expect(input.name).toBe('');
+    expect(new FormData(document.querySelector('form')!).get('price')).toBe('6');
 });

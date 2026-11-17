@@ -201,11 +201,12 @@ final class FieldRenderingTest extends FunctionalTestCase
                 <primitives:numberInput.label>Label</primitives:numberInput.label>
                 <primitives:numberInput.control>
                     <primitives:numberInput.input />
+                    <primitives:numberInput.hiddenInput />
                 </primitives:numberInput.control>
             </primitives:numberInput.root>',
             'data-number-input-input',
             'data-number-input-label',
-            'data-number-input-input',
+            'data-number-input-hidden-input',
         ];
         yield 'a switch' => [
             '<primitives:switch.root>

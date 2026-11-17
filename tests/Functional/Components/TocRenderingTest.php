@@ -16,16 +16,17 @@ final class TocRenderingTest extends FunctionalTestCase
     #[Test]
     public function rendersEveryPartAsItsElementWithTheRootId(): void
     {
-        $html = $this->renderTemplate('<primitives:toc.root rootId="my-toc" items="{items}">' .
+        $html = $this->renderTemplate('<primitives:toc.root rootId="my-toc" items="{items}"><primitives:toc.nav>' .
         '<primitives:toc.title>On this page</primitives:toc.title>' .
         '<primitives:toc.list>' .
         '<primitives:toc.indicator />' .
         '<primitives:toc.item value="intro"><primitives:toc.link>Intro</primitives:toc.link></primitives:toc.item>' .
         '</primitives:toc.list>' .
-        '</primitives:toc.root>', ['items' => [['value' => 'intro', 'depth' => 2]]]);
+        '</primitives:toc.nav></primitives:toc.root>', ['items' => [['value' => 'intro', 'depth' => 2]]]);
 
         $tags = [
-            'root' => 'nav',
+            'root' => 'div',
+            'nav' => 'nav',
             'title' => 'h2',
             'list' => 'ul',
             'indicator' => 'div',
@@ -39,6 +40,21 @@ final class TocRenderingTest extends FunctionalTestCase
         }
         // hidden until the machine has a rect to point at
         $this->assertTrue($this->elementWith($html, 'data-toc-indicator')->has('hidden'));
+    }
+
+    #[Test]
+    public function activatesEveryVisibleHeadingUnlessMultipleIsTurnedOff(): void
+    {
+        $multipleOf = function (string $rootArguments): bool {
+            $this->renderToc($rootArguments, ['intro' => 2]);
+
+            return array_values(
+                HydrationRegistry::getInstance()->getAll()['primitives']['toc'],
+            )[0]['props']['multiple'];
+        };
+
+        $this->assertTrue($multipleOf(''));
+        $this->assertFalse($multipleOf('multiple="{false}"'));
     }
 
     #[Test]

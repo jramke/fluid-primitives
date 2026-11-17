@@ -58,7 +58,11 @@ export class Tooltip extends Component<tooltip.Props, tooltip.Api> {
         const arrowTipEl = this.hydrator.query('arrowTip');
         if (arrowTipEl) this.spreadProps(arrowTipEl, this.api.getArrowTipProps());
 
-        const contentEl = this.hydrator.query('content');
-        if (contentEl) this.spreadProps(contentEl, this.api.getContentProps());
+        const viewportEl = this.hydrator.query('viewport');
+        if (viewportEl) this.spreadProps(viewportEl, this.api.getViewportProps());
+
+        this.spreadPropsByOptionalValue('content', ({ value }) =>
+            this.api.getContentProps({ value })
+        );
     }
 }

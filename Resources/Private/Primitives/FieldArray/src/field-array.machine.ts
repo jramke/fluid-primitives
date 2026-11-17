@@ -1,5 +1,6 @@
 import { createMachine } from '@zag-js/core';
 import { createLiveRegion } from '@zag-js/live-region';
+import * as dom from './field-array.dom';
 import type { FieldArraySchema } from './field-array.types';
 
 // FieldArray has no upstream Zag.js package to wrap (nothing to port - this is a hand-rolled
@@ -8,8 +9,8 @@ import type { FieldArraySchema } from './field-array.types';
 // state-less machine exists only to satisfy that contract; `Component.refresh()` (via
 // `machine.notify()`) is what actually triggers a re-render. The one piece of real behavior it
 // does own is the row announcer, via the same `refs`/`effects` lifecycle Textarea/Input's own
-// `manageLiveRegion` effect uses. It speaks through Zag's page-wide polite live region (see
-// `@zag-js/live-region`), which Zag appends to `<body>` itself - `machine.stop()` (called from
+// `manageLiveRegion` effect uses. It speaks through Zag's shared polite live region (see
+// `@zag-js/live-region`), which Zag keeps inside the root of the component - `machine.stop()` (called from
 // `Component.destroy()`) runs this effect's cleanup automatically, so `FieldArray.ts` needs no
 // `destroy()` override for it. Everything else (`append`/`remove`) operates directly on
 // `Component`-level DOM helpers (`hydrator`) instead, since managing
@@ -33,8 +34,12 @@ export const machine = createMachine<FieldArraySchema>({
     },
     implementations: {
         effects: {
-            manageLiveRegion({ refs }) {
-                const liveRegion = createLiveRegion({ level: 'polite' });
+            manageLiveRegion({ refs, scope }) {
+                // inside the component, as a modal dialog around it would hide a region in the body from screen readers
+                const liveRegion = createLiveRegion({
+                    level: 'polite',
+                    root: () => dom.getRootEl(scope),
+                });
                 refs.set('liveRegion', liveRegion);
 
                 return () => {

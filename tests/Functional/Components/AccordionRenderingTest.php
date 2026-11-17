@@ -47,7 +47,7 @@ final class AccordionRenderingTest extends FunctionalTestCase
             'item-3',
         ));
 
-        foreach (['item', 'item-header', 'item-trigger', 'item-content'] as $part) {
+        foreach (['item', 'item-header', 'item-trigger'] as $part) {
             foreach ($this->elementsByValue($html, 'data-accordion-' . $part) as $value => $element) {
                 $this->assertSame(
                     $value === 'item-3' ? 'closed' : 'open',
@@ -56,9 +56,28 @@ final class AccordionRenderingTest extends FunctionalTestCase
                 );
             }
         }
+        // open content has no data-state on load, so its open animation does not run before hydration
         foreach ($this->elementsByValue($html, 'data-accordion-item-content') as $value => $content) {
             $this->assertSame($value === 'item-3', $content->has('hidden'), $value);
+            $this->assertSame($value === 'item-3' ? 'closed' : null, $content->get('data-state'), $value);
         }
+    }
+
+    #[Test]
+    public function keepsClosedItemsFindableWithTheBrowserSearchWhenHiddenUntilFoundIsSet(): void
+    {
+        $contentsOf = fn(string $rootArguments): array => $this->elementsByValue(
+            $this->renderTemplate($this->accordion($rootArguments, 'item-1', 'item-2')),
+            'data-accordion-item-content',
+        );
+
+        $found = $contentsOf('hiddenUntilFound="{true}" defaultValue="{0: \'item-1\'}"');
+        $this->assertFalse($found['item-1']->has('hidden'));
+        $this->assertSame('until-found', $found['item-2']->get('hidden'));
+
+        $plain = $contentsOf('defaultValue="{0: \'item-1\'}"');
+        $this->assertTrue($plain['item-2']->has('hidden'));
+        $this->assertNotSame('until-found', $plain['item-2']->get('hidden'));
     }
 
     #[Test]

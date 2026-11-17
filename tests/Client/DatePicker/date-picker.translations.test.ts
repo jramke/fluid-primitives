@@ -1,9 +1,10 @@
+import * as datePicker from '@zag-js/date-picker';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, test } from 'vitest';
+import { Machine, normalizeProps } from '../../../Resources/Private/Client';
 import {
     buildTranslations,
-    getPlaceholder,
     type TranslationTexts,
 } from '../../../Resources/Private/Primitives/DatePicker/src/date-picker.translations';
 
@@ -27,18 +28,14 @@ describe('date picker translations', () => {
 
         expect(t.trigger!(false)).toBe('Open calendar');
         expect(t.trigger!(true)).toBe('Close calendar');
-        expect(t.prevTrigger!('day')).toBe('Switch to previous month');
-        expect(t.prevTrigger!('year')).toBe('Switch to previous decade');
+        expect(t.previousTrigger!('day')).toBe('Switch to previous month');
+        expect(t.previousTrigger!('year')).toBe('Switch to previous decade');
         expect(t.nextTrigger!('month')).toBe('Switch to next year');
         // The view it switches to, else the view it is in.
         expect(t.viewTrigger!('day', 'month')).toBe('Switch to month view');
         expect(t.viewTrigger!('month', 'year')).toBe('Switch to year view');
         expect(t.viewTrigger!('year', undefined)).toBe('Year view');
         expect(t.weekNumberCell!(41)).toBe('Week 41');
-        expect(t.roleDescription).toEqual({
-            content: 'datepicker',
-            table: { day: 'calendar month', month: 'calendar year', year: 'calendar decade' },
-        });
     });
 
     test('picks the text of a day cell by its state, in the order Zag does', () => {
@@ -78,25 +75,28 @@ describe('date picker translations', () => {
     });
 
     test('leaves a label out whose text is empty', () => {
-        const t = buildTranslations({ ...texts, clearTrigger: '', prevTriggerDay: '' });
+        const t = buildTranslations({ ...texts, clearTrigger: '', previousTriggerDay: '' });
 
         expect(t.clearTrigger).toBeUndefined();
-        expect(t.prevTrigger!('day')).toBeUndefined();
-        expect(t.prevTrigger!('month')).toBe('Switch to previous year');
+        expect(t.previousTrigger!('day')).toBeUndefined();
+        expect(t.previousTrigger!('month')).toBe('Switch to previous year');
     });
 
-    test('writes the date pattern of the locale with the letters of the translation', () => {
-        expect(getPlaceholder(buildTranslations(texts, 'en-US'), 'en-US')).toBe('mm/dd/yyyy');
+    test('gives the input the date pattern of the locale with the letters of the translation', () => {
+        const placeholder = (locale: string, translations: datePicker.IntlTranslations) => {
+            const machine = new Machine(datePicker.machine, { id: 'd', locale, translations });
+            return datePicker.connect(machine.service, normalizeProps).getInputProps().placeholder;
+        };
+
+        expect(placeholder('en-US', buildTranslations(texts, 'en-US'))).toBe('mm/dd/yyyy');
         expect(
-            getPlaceholder(
+            placeholder(
+                'de-DE',
                 buildTranslations(
                     { placeholderDay: 'TT', placeholderMonth: 'MM', placeholderYear: 'JJJJ' },
                     'de-DE'
-                ),
-                'de-DE'
+                )
             )
         ).toBe('TT.MM.JJJJ');
-        // Translations of an entry file that bring no placeholder leave it to Zag.
-        expect(getPlaceholder({}, 'de-DE')).toBeUndefined();
     });
 });

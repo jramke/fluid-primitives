@@ -1,4 +1,5 @@
 <f:variable name="hidden">{f:if(condition: context.defaultOpen, then: '{false}', else: '{true}')}</f:variable>
+<f:variable name="hiddenValue" value="{f:if(condition: context.hiddenUntilFound, then: 'until-found', else: 'hidden')}" />
 <f:if condition="{context.hasCollapsedSize}">
     <f:variable name="hidden" value="{false}" />
 </f:if>
@@ -14,7 +15,7 @@
     {ui:ref(name: 'content' , data: refData )}
     {ui:attributes()}
     {ui:asChild()}
-    {f:if(condition: hidden, then: 'hidden' )}
+    {f:if(condition: hidden, then: 'hidden="{hiddenValue}"' )}
     style="{context.contentStyleString}">
     <f:slot />
 </div>

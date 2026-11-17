@@ -3,12 +3,16 @@
 
 <f:variable name="itemState">{context -> ui:call(method: 'getItemState', arguments: {0: context.item})}</f:variable>
 
-<f:variable name="state">{itemState.expanded ? 'open' : 'closed'}</f:variable>
-<f:variable name="refData" value="{disabled: itemState.disabled, orientation: context.orientation, state: state}" />
+<f:variable name="hiddenValue" value="{f:if(condition: context.hiddenUntilFound, then: 'until-found', else: 'hidden')}" />
+<f:comment>No data-state on content that is open on load, as the collapsible renders it: the open animation must not run before hydration.</f:comment>
+<f:variable name="refData" value="{disabled: itemState.disabled, orientation: context.orientation}" />
+<f:if condition="!{itemState.expanded}">
+    <f:variable name="refData" value="{disabled: itemState.disabled, orientation: context.orientation, state: 'closed'}" />
+</f:if>
 
 <div
     role="region"
-    {f:if(condition: '!{itemState.expanded}' , then: 'hidden' )}
+    {f:if(condition: '!{itemState.expanded}' , then: 'hidden="{hiddenValue}"' )}
     {f:if(condition: class, then: 'class="{class}"' )}
     {ui:ref(name: 'itemContent' , value: value, data: refData )}
     {ui:attributes()}

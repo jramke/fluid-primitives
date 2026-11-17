@@ -9,7 +9,6 @@ import {
     type ConverterMachineProps,
 } from '../../Client';
 import type { FieldClientApi } from '../Field/src/field.handle';
-import { resolveTranslations } from './src/number-input.translations';
 
 // PHP can't distinguish a list-shaped array from an object-shaped one for a bare `type="array"`
 // prop (see WireTypeResolver), so `formatOptions` resolves to `unknown` on the wire - this converter
@@ -17,8 +16,6 @@ import { resolveTranslations } from './src/number-input.translations';
 // transforming the value itself.
 const numberInputPropConverters = {
     formatOptions: (formatOptions: numberInput.Props['formatOptions']) => formatOptions,
-    // `valueText` is a function in Zag, a text with a `%value%` placeholder on the wire.
-    translations: resolveTranslations,
 } satisfies ClientPropConverterMap;
 
 registerClientPropConverters('numberInput', numberInputPropConverters);
@@ -50,7 +47,7 @@ export class NumberInput extends FieldAwareComponent<numberInput.Props, numberIn
             ...props,
             onValueChange: details => {
                 // Typing fires a native input event itself, so only the changes the machine makes on
-                // its own (steppers, arrow keys, blur formatting) need an event for the Field. It is
+                // its own (steppers, arrow keys, the clamp on blur) need an event for the Field. It is
                 // a change, not an input event: the machine would read the not yet updated text of
                 // the input back as typed. The machine writes that text in an animation frame it
                 // requests after this callback, so a listener would read the old text any sooner.
@@ -101,6 +98,9 @@ export class NumberInput extends FieldAwareComponent<numberInput.Props, numberIn
             });
             this.spreadProps(inputEl, mergedProps);
         }
+
+        const hiddenInputEl = this.hydrator.query('hiddenInput');
+        if (hiddenInputEl) this.spreadProps(hiddenInputEl, this.api.getHiddenInputProps());
 
         const incrementTriggerEl = this.hydrator.query('incrementTrigger');
         if (incrementTriggerEl)

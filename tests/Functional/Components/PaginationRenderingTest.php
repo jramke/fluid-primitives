@@ -28,7 +28,7 @@ final class PaginationRenderingTest extends FunctionalTestCase
         $this->assertSame('Page 2', $items['2']->get('aria-label'));
         $this->assertSame('button', $items['2']->get('type'));
 
-        foreach (['first', 'prev'] as $trigger) {
+        foreach (['first', 'previous'] as $trigger) {
             $element = $this->elementWith($html, 'data-pagination-' . $trigger . '-trigger');
             $this->assertTrue($element->has('disabled'), $trigger);
             $this->assertTrue($element->has('data-disabled'), $trigger);
@@ -51,7 +51,7 @@ final class PaginationRenderingTest extends FunctionalTestCase
         $this->assertSame('page', $items['10']->get('aria-current'));
         $this->assertFalse($items['9']->has('aria-current'));
         $this->assertTrue($this->elementWith($html, 'data-pagination-next-trigger')->has('disabled'));
-        $this->assertFalse($this->elementWith($html, 'data-pagination-prev-trigger')->has('disabled'));
+        $this->assertFalse($this->elementWith($html, 'data-pagination-previous-trigger')->has('disabled'));
 
         // A paginator has no public total, the machine gets one that makes the same number of pages
         $props = array_values(HydrationRegistry::getInstance()->getAll()['primitives']['pagination'])[0]['props'];
@@ -81,7 +81,7 @@ final class PaginationRenderingTest extends FunctionalTestCase
         $items = $this->elementsByValue($html, 'data-pagination-item');
         $this->assertSame('/events?page=3', $items['3']->get('href'));
         $this->assertFalse($items['3']->has('type'));
-        $this->assertSame('/events?page=1', $this->elementWith($html, 'data-pagination-prev-trigger')->get('href'));
+        $this->assertSame('/events?page=1', $this->elementWith($html, 'data-pagination-previous-trigger')->get('href'));
         $this->assertSame('link', $props()['type']);
         $this->assertArrayNotHasKey('pageUrls', $props());
         $this->assertNotContains(15, $builtPages);
@@ -143,7 +143,19 @@ final class PaginationRenderingTest extends FunctionalTestCase
         ]);
 
         $this->assertSame('/events?page=3', $this->elementWith($html, 'data-pagination-item')->get('href'));
-        $this->assertSame('/events', $this->elementWith($html, 'data-pagination-prev-trigger')->get('href'));
+        $this->assertSame('/events', $this->elementWith($html, 'data-pagination-previous-trigger')->get('href'));
+
+        // On the first page the first trigger can't move, so it is a disabled link without an href
+        $html = $this->renderTemplate($this->pagination('count="30" pageUrls="{pageUrls}"'), [
+            'pageUrls' => ['1' => '/events', '2' => '/events?page=2', '3' => '/events?page=3'],
+        ]);
+        $first = $this->elementWith($html, 'data-pagination-first-trigger');
+        $this->assertFalse($first->has('href'));
+        $this->assertSame('link', $first->get('role'));
+        $this->assertSame('true', $first->get('aria-disabled'));
+        $last = $this->elementWith($html, 'data-pagination-last-trigger');
+        $this->assertSame('/events?page=3', $last->get('href'));
+        $this->assertFalse($last->has('aria-disabled'));
 
         $this->renderTemplate($this->pagination('count="30"', 1));
         $props = array_values(HydrationRegistry::getInstance()->getAll()['primitives']['pagination'])[0]['props'];
@@ -204,7 +216,7 @@ final class PaginationRenderingTest extends FunctionalTestCase
             $rootArguments .
             '>' .
             '<primitives:pagination.firstTrigger>First</primitives:pagination.firstTrigger>' .
-            '<primitives:pagination.prevTrigger>Previous</primitives:pagination.prevTrigger>' .
+            '<primitives:pagination.previousTrigger>Previous</primitives:pagination.previousTrigger>' .
             $items .
             '<primitives:pagination.nextTrigger>Next</primitives:pagination.nextTrigger>' .
             '<primitives:pagination.lastTrigger>Last</primitives:pagination.lastTrigger>' .

@@ -1,6 +1,28 @@
 import * as toast from '@zag-js/toast';
-import { Component, Machine, normalizeProps, Template } from '../../Client';
+import {
+    Component,
+    Machine,
+    normalizeProps,
+    registerClientPropConverters,
+    Template,
+    type ClientPropConverterMap,
+    type ConverterMachineProps,
+} from '../../Client';
 import { Toast } from '../Toast/Toast';
+
+const toasterPropConverters = {
+    // a `string[]` prop on the wire, only `up`, `down`, `left` and `right` mean something to Zag
+    swipeDirections: (directions: string[] | undefined) =>
+        directions as toast.SwipeDirection[] | undefined,
+} satisfies ClientPropConverterMap;
+
+registerClientPropConverters('toaster', toasterPropConverters);
+
+declare module 'fluid-primitives' {
+    interface HydrationPropsOverrides {
+        toaster: ConverterMachineProps<typeof toasterPropConverters>;
+    }
+}
 
 type ToasterProps = toast.StoreProps & {
     id: string;
@@ -53,8 +75,7 @@ export class Toaster extends Component<ToasterProps, toast.GroupApi> {
 
         const ids = new Set<string>();
         const storeToasts = this.api.getToasts();
-        // oldest first: the store lists the newest first, and a toast mounted later is the front one
-        // TODO: mount in store order once @zag-js/toast keeps the heights in toast order itself (zag#3541)
+        // oldest first: the store lists the newest first, and mountToast() prepends, so the newest comes first
         [...storeToasts].reverse().forEach((storeProps, reversedIndex) => {
             const index = storeToasts.length - 1 - reversedIndex;
             // the store gives every toast an id

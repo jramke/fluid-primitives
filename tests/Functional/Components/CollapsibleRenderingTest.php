@@ -46,6 +46,26 @@ final class CollapsibleRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function keepsTheClosedContentFindableWithTheBrowserSearchWhenHiddenUntilFoundIsSet(): void
+    {
+        $contentOf = fn(string $arguments) => $this->elementWith(
+            $this->renderTemplate(
+                '<primitives:collapsible.root ' .
+                $arguments .
+                '><primitives:collapsible.content>Content</primitives:collapsible.content></primitives:collapsible.root>',
+            ),
+            'data-collapsible-content',
+        );
+
+        $this->assertSame('until-found', $contentOf('hiddenUntilFound="{true}"')->get('hidden'));
+        $this->assertFalse($contentOf('hiddenUntilFound="{true}" defaultOpen="{true}"')->has('hidden'));
+
+        $plain = $contentOf('');
+        $this->assertTrue($plain->has('hidden'));
+        $this->assertNotSame('until-found', $plain->get('hidden'));
+    }
+
+    #[Test]
     public function keepsTheCollapsedSizeOfAClosedCollapsibleInsteadOfHidingIt(): void
     {
         $collapsible = static fn(string $arguments): string => (

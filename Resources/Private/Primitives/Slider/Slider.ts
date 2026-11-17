@@ -26,12 +26,24 @@ declare module 'fluid-primitives' {
     }
 }
 
-export class Slider extends FieldAwareComponent<slider.Props, slider.Api> {
+/** The props of the machine and the ones the component turns into machine props. */
+export interface SliderProps extends slider.Props {
+    /** The accessible name of each thumb, by its index. Zag takes a function, a template a list. */
+    thumbLabels?: string[];
+}
+
+export class Slider extends FieldAwareComponent<SliderProps, slider.Api> {
     static componentName = 'slider';
+
+    transformProps({ thumbLabels, ...props }: SliderProps): SliderProps {
+        return thumbLabels
+            ? { getAriaLabel: ({ index }) => thumbLabels[index] ?? '', ...props }
+            : props;
+    }
 
     // No `required` here - @zag-js/slider has no such prop (a slider always carries some
     // value, so "required" has no meaningful unset state to enforce).
-    propsWithField(props: slider.Props, field: FieldClientApi): slider.Props {
+    propsWithField(props: SliderProps, field: FieldClientApi): SliderProps {
         return {
             ...props,
             disabled: props.disabled ?? field.disabled,
@@ -41,7 +53,7 @@ export class Slider extends FieldAwareComponent<slider.Props, slider.Api> {
         };
     }
 
-    initMachine(props: slider.Props): Machine<any> {
+    initMachine(props: SliderProps): Machine<any> {
         props = this.withFieldProps(props);
         const [machineProps] = slider.splitProps(props);
         return new Machine(slider.machine, machineProps);
@@ -85,7 +97,8 @@ export class Slider extends FieldAwareComponent<slider.Props, slider.Api> {
         this.hydrator.queryAll('thumb').forEach(thumbEl => {
             const index = Number(thumbEl.dataset.value ?? 0);
             const name = thumbEl.dataset.name;
-            const thumbProps = mergeProps(this.api.getThumbProps({ index, name }), {
+            const disabled = thumbEl.hasAttribute('data-thumb-disabled') || undefined;
+            const thumbProps = mergeProps(this.api.getThumbProps({ index, name, disabled }), {
                 'aria-describedby': this.field?.ariaDescribedby,
                 'aria-invalid': this.field?.invalid || undefined,
             });
@@ -96,7 +109,11 @@ export class Slider extends FieldAwareComponent<slider.Props, slider.Api> {
             if (hiddenInputEl) {
                 this.spreadProps(
                     hiddenInputEl,
-                    this.api.getHiddenInputProps({ index, name: name ?? this.machine.prop('name') })
+                    this.api.getHiddenInputProps({
+                        index,
+                        name: name ?? this.machine.prop('name'),
+                        disabled,
+                    })
                 );
             }
         });

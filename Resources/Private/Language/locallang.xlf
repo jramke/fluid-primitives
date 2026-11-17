@@ -8,6 +8,9 @@
             <trans-unit id="numberInput.decrementLabel" approved="yes">
                 <source>Decrement value</source>
             </trans-unit>
+            <trans-unit id="numberInput.roleDescription" approved="yes">
+                <source>number field</source>
+            </trans-unit>
             <trans-unit id="clipboard.triggerLabelIdle" approved="yes">
                 <source>Copy to clipboard</source>
             </trans-unit>
@@ -38,6 +41,18 @@
             <trans-unit id="combobox.clearTriggerLabel" approved="yes">
                 <source>Clear value</source>
             </trans-unit>
+            <trans-unit id="combobox.resultsCount" approved="yes">
+                <source>%count% results</source>
+            </trans-unit>
+            <trans-unit id="combobox.resultsCountOne" approved="yes">
+                <source>1 result</source>
+            </trans-unit>
+            <trans-unit id="combobox.noResults" approved="yes">
+                <source>No results</source>
+            </trans-unit>
+            <trans-unit id="combobox.loading" approved="yes">
+                <source>Loading results</source>
+            </trans-unit>
             <trans-unit id="fileUpload.dropzoneLabel" approved="yes">
                 <source>Drag and drop files here or click to browse</source>
             </trans-unit>
@@ -46,6 +61,12 @@
             </trans-unit>
             <trans-unit id="fileUpload.deleteFileLabel" approved="yes">
                 <source>Delete file %fileName%</source>
+            </trans-unit>
+            <trans-unit id="fileUpload.filesAdded" approved="yes">
+                <source>%fileNames% added</source>
+            </trans-unit>
+            <trans-unit id="fileUpload.fileDeleted" approved="yes">
+                <source>%fileName% deleted</source>
             </trans-unit>
             <trans-unit id="input.wordCount" approved="yes">
                 <source>%count% / %max% characters</source>
@@ -86,13 +107,13 @@
             <trans-unit id="datePicker.triggerClose" approved="yes">
                 <source>Close calendar</source>
             </trans-unit>
-            <trans-unit id="datePicker.prevTriggerDay" approved="yes">
+            <trans-unit id="datePicker.previousTriggerDay" approved="yes">
                 <source>Switch to previous month</source>
             </trans-unit>
-            <trans-unit id="datePicker.prevTriggerMonth" approved="yes">
+            <trans-unit id="datePicker.previousTriggerMonth" approved="yes">
                 <source>Switch to previous year</source>
             </trans-unit>
-            <trans-unit id="datePicker.prevTriggerYear" approved="yes">
+            <trans-unit id="datePicker.previousTriggerYear" approved="yes">
                 <source>Switch to previous decade</source>
             </trans-unit>
             <trans-unit id="datePicker.nextTriggerDay" approved="yes">
@@ -146,18 +167,6 @@
             <trans-unit id="datePicker.dayCellUnavailable" approved="yes">
                 <source>Not available. %date%</source>
             </trans-unit>
-            <trans-unit id="datePicker.contentRoleDescription" approved="yes">
-                <source>datepicker</source>
-            </trans-unit>
-            <trans-unit id="datePicker.tableRoleDescriptionDay" approved="yes">
-                <source>calendar month</source>
-            </trans-unit>
-            <trans-unit id="datePicker.tableRoleDescriptionMonth" approved="yes">
-                <source>calendar year</source>
-            </trans-unit>
-            <trans-unit id="datePicker.tableRoleDescriptionYear" approved="yes">
-                <source>calendar decade</source>
-            </trans-unit>
             <trans-unit id="datePicker.placeholderDay" approved="yes">
                 <source>dd</source>
             </trans-unit>
@@ -179,7 +188,7 @@
             <trans-unit id="pagination.firstTriggerLabel" approved="yes">
                 <source>First page</source>
             </trans-unit>
-            <trans-unit id="pagination.prevTriggerLabel" approved="yes">
+            <trans-unit id="pagination.previousTriggerLabel" approved="yes">
                 <source>Previous page</source>
             </trans-unit>
             <trans-unit id="pagination.nextTriggerLabel" approved="yes">

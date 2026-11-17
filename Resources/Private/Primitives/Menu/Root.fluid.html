@@ -1,5 +1,6 @@
 <ui:prop name="closeOnSelect" type="boolean" optional="{true}" client="{true}" default="{true}" description="Whether to close the menu when an option is selected." />
-<ui:prop name="composite" type="boolean" optional="{true}" client="{true}" default="{true}" description="Whether the menu is composed with other composite widgets like a combobox or tabs." />
+<ui:prop name="popupType" type="Jramke\FluidPrimitives\Enum\MenuPopupType" optional="{true}" client="{true}" default="{f:constant(name: 'Jramke\FluidPrimitives\Enum\MenuPopupType::Menu')}" description="The role of the popup. `menu` is a list of actions. Set `dialog` for a popup that holds more than the items, such as a filter `input`: `content` becomes a dialog and the `list` the menu." />
+<ui:prop name="autoHighlight" type="boolean|string" optional="{true}" client="{true}" description="Highlights the first item while the query of the filter `input` changes. Set `always` to keep an item highlighted at all times." />
 <ui:prop name="typeahead" type="boolean" optional="{true}" client="{true}" default="{true}" description="Whether pressing printable characters should trigger typeahead navigation." />
 <ui:prop name="loopFocus" type="boolean" optional="{true}" client="{true}" default="{false}" description="Whether to loop the keyboard navigation." />
 <ui:prop name="positioning" type="array" optional="{true}" client="{true}" default="{ placement: 'bottom-start', gutter: 8 }" description="The options used to dynamically position the menu." />

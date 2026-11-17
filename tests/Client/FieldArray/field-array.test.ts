@@ -298,6 +298,14 @@ describe('FieldArray rows', () => {
         );
     });
 
+    test('keeps the polite live region inside the root of the field array', () => {
+        mountPeople();
+
+        expect(document.getElementById('__live-region-polite__')?.parentElement).toBe(
+            document.querySelector('[data-field-array-root]')
+        );
+    });
+
     test('a removed row is announced by its position, in the polite live region', async () => {
         const { fieldArray } = mountPeople({
             translations: { rowRemoved: 'Row %number% removed.', rowAdded: false },

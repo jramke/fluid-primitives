@@ -2,16 +2,18 @@
 <ui:prop name="showCloseButton" type="boolean" default="{true}" />
 
 <ui:portal>
-    <primitives:dialog.backdrop class="{ui:cn(value: '
-        fixed inset-0 bg-black/50 z-[var(--layer-index,0)]
-        transition-all ease-out duration-150 transition-discrete
-        starting:data-[state=open]:opacity-0 starting:data-[state=open]:backdrop-blur-none
-        data-[state=closed]:opacity-0 data-[state=closed]:backdrop-blur-none
-        data-[state=open]:opacity-100 data-[state=open]:backdrop-blur-xs
-    ')}" />
+    <f:if condition="{context.modal}">
+        <primitives:dialog.backdrop class="{ui:cn(value: '
+            fixed inset-0 bg-black/50 z-[var(--layer-index,0)]
+            transition-all ease-out duration-150 transition-discrete
+            starting:data-[state=open]:opacity-0 starting:data-[state=open]:backdrop-blur-none
+            data-[state=closed]:opacity-0 data-[state=closed]:backdrop-blur-none
+            data-[state=open]:opacity-100 data-[state=open]:backdrop-blur-xs
+        ')}" />
+    </f:if>
     <primitives:dialog.positioner class="fixed inset-0 grid place-items-center p-6 overflow-y-auto overscroll-y-contain z-[var(--layer-index,0)]">
         <primitives:dialog.content spreadProps="{contentProps}" class="{ui:cn(value: '
-            flex flex-col gap-4 bg-popover text-popover-foreground rounded-lg shadow-lg w-full max-w-md border p-6 z-[var(--layer-index,0)]
+            flex flex-col gap-4 bg-popover text-popover-foreground rounded-lg shadow-lg w-full max-w-md border p-6
             transition-all ease-out duration-175 transition-discrete
             starting:data-[state=open]:opacity-0 starting:data-[state=open]:scale-90 starting:data-[state=open]:blur-[4px]
             data-[state=closed]:opacity-0 data-[state=closed]:scale-90 data-[state=closed]:blur-[4px]

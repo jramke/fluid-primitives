@@ -269,7 +269,7 @@ final class DatePickerRenderingTest extends FunctionalTestCase
             <primitives:datePicker.root>
                 <primitives:datePicker.view view="day">
                     <primitives:datePicker.viewControl view="day">
-                        <primitives:datePicker.prevTrigger view="day" />
+                        <primitives:datePicker.previousTrigger view="day" />
                         <primitives:datePicker.viewTrigger view="day" />
                         <primitives:datePicker.nextTrigger view="day" />
                     </primitives:datePicker.viewControl>
@@ -283,7 +283,7 @@ final class DatePickerRenderingTest extends FunctionalTestCase
             </primitives:datePicker.root>
         ');
 
-        foreach (['view', 'view-control', 'prev-trigger', 'view-trigger', 'next-trigger'] as $part) {
+        foreach (['view', 'view-control', 'previous-trigger', 'view-trigger', 'next-trigger'] as $part) {
             $this->assertSame('day', $this->elementWith($html, 'data-date-picker-' . $part)->get('data-value'), $part);
         }
         $tables = $this->elementsWith($html, 'data-date-picker-table');
@@ -324,13 +324,13 @@ final class DatePickerRenderingTest extends FunctionalTestCase
         $content = $this->elementWith($html, 'data-date-picker-content');
         // The per-instance override wins over the language file.
         $this->assertSame('Kalender', $content->get('aria-label'));
-        $this->assertSame('Datumsauswahl', $content->get('aria-roledescription'));
+        $this->assertFalse($content->has('aria-roledescription'));
 
         // The client builds Zag's function labels from these texts and fills in the placeholders.
         $props = $this->firstHydrationProps();
         $this->assertSame('Wert löschen', $props['translations']['clearTrigger']);
         $this->assertSame('Kalender', $props['translations']['content']);
-        $this->assertSame('Zum vorherigen Monat wechseln', $props['translations']['prevTriggerDay']);
+        $this->assertSame('Zum vorherigen Monat wechseln', $props['translations']['previousTriggerDay']);
         $this->assertSame('%date% auswählen', $props['translations']['dayCell']);
     }
 

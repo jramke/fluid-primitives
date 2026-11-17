@@ -27,8 +27,6 @@ function hasContent(nodes: Node[]) {
 export class Toast extends Component<toast.Props, toast.Api> {
     static componentName = 'toast';
 
-    // TODO: swipe to dismiss (swipeDirections, data-swiping, --swipe-x/--swipe-y) once @zag-js/toast releases it
-
     private ghosts?: [HTMLElement, HTMLElement];
     // what the template put into a part, shown while the toast has no value for it
     private readonly templateContent = new WeakMap<HTMLElement, Node[]>();
@@ -44,6 +42,10 @@ export class Toast extends Component<toast.Props, toast.Api> {
     render() {
         const rootEl = this.hydrator.query('root');
         if (!rootEl) return;
+
+        // the machine follows the height of the toast by observing its content
+        const contentEl = this.hydrator.query('content');
+        if (contentEl) this.spreadProps(contentEl, this.api.getContentProps());
 
         const titleEl = this.hydrator.query('title');
         const hasTitle = !!titleEl && this.fill(titleEl, this.api.getTitleProps(), this.api.title);

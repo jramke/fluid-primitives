@@ -169,28 +169,111 @@ final class SliderRenderingTest extends FunctionalTestCase
         );
     }
 
+    #[Test]
+    public function marksTheMarkersWithinTheFilledRangeAsInRange(): void
+    {
+        $inRange = function (string $rootArguments): array {
+            $html = $this->renderTemplate('
+                <primitives:slider.root ' . $rootArguments . ' min="0" max="100">
+                    <primitives:slider.markerGroup>
+                        <primitives:slider.marker value="10" />
+                        <primitives:slider.marker value="50" />
+                        <primitives:slider.marker value="90" />
+                    </primitives:slider.markerGroup>
+                </primitives:slider.root>
+            ');
+
+            return array_map(
+                static fn($marker): bool => $marker->has('data-in-range'),
+                $this->elementsByValue($html, 'data-slider-marker'),
+            );
+        };
+
+        // between the thumbs of a range, between the thumb and the origin for a single one
+        $this->assertSame([10 => false, 50 => true, 90 => false], $inRange('defaultValue="{0: 30, 1: 70}"'));
+        $this->assertSame([10 => true, 50 => true, 90 => false], $inRange('defaultValue="60"'));
+        $this->assertSame(
+            [10 => false, 50 => false, 90 => true],
+            $inRange(
+                'defaultValue="60" origin="' .
+                "{f:constant(name: 'Jramke\\FluidPrimitives\\Enum\\SliderOrigin::End')}" .
+                '"',
+            ),
+        );
+    }
+
+    #[Test]
+    public function namesEachThumbByItsLabelBeforeTheClientHydrates(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:slider.root defaultValue="{0: 20, 1: 80}" thumbLabels="{0: \'Minimum\'}">
+                <primitives:slider.thumb index="0" />
+                <primitives:slider.thumb index="1" />
+            </primitives:slider.root>
+        ');
+
+        $thumbs = $this->elementsByValue($html, 'data-slider-thumb');
+        $this->assertSame('Minimum', $thumbs['0']->get('aria-label'));
+        $this->assertFalse($thumbs['1']->has('aria-label'));
+    }
+
+    #[Test]
+    public function shipsTheThumbSizeAndTheThumbLabelsToTheClient(): void
+    {
+        $propsOf = function (string $rootArguments): array {
+            $html = $this->renderTemplate(
+                '<primitives:slider.root ' .
+                $rootArguments .
+                '><primitives:slider.thumb index="0" /></primitives:slider.root>',
+            );
+            $rootId = (string)$this->elementWith($html, 'data-slider-root')->get('data-slider-root');
+
+            return HydrationRegistry::getInstance()->get('primitives', 'slider', $rootId)['props'];
+        };
+
+        $this->assertSame(20.0, (float)$propsOf('thumbSize="20"')['thumbSize']);
+        $this->assertSame(
+            ['width' => 20, 'height' => 10],
+            $propsOf('thumbSize="{width: 20, height: 10}"')['thumbSize'],
+        );
+        $this->assertSame(
+            ['Minimum', 'Maximum'],
+            $propsOf('thumbLabels="{0: \'Minimum\', 1: \'Maximum\'}"')['thumbLabels'],
+        );
+    }
+
     /**
      * @return iterable<string, array{0: string, 1: string}>
      */
     public static function rangeStyles(): iterable
     {
-        yield 'from the start' => ['defaultValue="{0: 30}"', 'position: absolute; left: 0%; right: 70%;'];
-        yield 'between two thumbs' => ['defaultValue="{0: 25, 1: 75}"', 'position: absolute; left: 25%; right: 25%;'];
+        yield 'from the start' => [
+            'defaultValue="{0: 30}"',
+            'position: absolute; left: 0%; right: calc(70% + var(--slider-thumb-width, 0px) * -0.2);',
+        ];
+        yield 'between two thumbs' => [
+            'defaultValue="{0: 25, 1: 75}"',
+            'position: absolute; left: calc(25% - var(--slider-thumb-width, 0px) * -0.25); right: calc(25% + var(--slider-thumb-width, 0px) * 0.25);',
+        ];
         yield 'from the center to a lower value' => [
             'defaultValue="{0: 30}" origin="' . self::ORIGIN_CENTER . '"',
-            'position: absolute; left: 30%; right: 50%;',
+            'position: absolute; left: calc(30% - var(--slider-thumb-width, 0px) * -0.2); right: 50%;',
         ];
         yield 'from the center to a higher value' => [
             'defaultValue="{0: 70}" origin="' . self::ORIGIN_CENTER . '"',
-            'position: absolute; left: 50%; right: 30%;',
+            'position: absolute; left: 50%; right: calc(30% + var(--slider-thumb-width, 0px) * 0.2);',
         ];
         yield 'from the end' => [
             'defaultValue="{0: 30}" origin="' . self::ORIGIN_END . '"',
-            'position: absolute; left: 30%; right: 0%;',
+            'position: absolute; left: calc(30% - var(--slider-thumb-width, 0px) * -0.2); right: 0%;',
         ];
         yield 'vertical' => [
             'defaultValue="{0: 30}" orientation="' . self::ORIENTATION_VERTICAL . '"',
-            'position: absolute; bottom: 0%; top: 70%;',
+            'position: absolute; bottom: 0%; top: calc(70% + var(--slider-thumb-height, 0px) * -0.2);',
+        ];
+        yield 'centered thumbs' => [
+            'defaultValue="{0: 30}" thumbAlignment="' . self::THUMB_ALIGNMENT_CENTER . '"',
+            'position: absolute; left: 0%; right: 70%;',
         ];
     }
 
@@ -240,6 +323,31 @@ final class SliderRenderingTest extends FunctionalTestCase
             // the input only carries the value, the thumb is what the user sees
             $this->assertTrue($input->has('hidden'));
         }
+    }
+
+    #[Test]
+    public function disablesOneThumbAndLeavesItsValueOutOfTheForm(): void
+    {
+        $html = $this->renderTemplate('
+            <primitives:slider.root name="range[]" defaultValue="{0: 20, 1: 80}">
+                <primitives:slider.thumb index="0" disabled="{true}">
+                    <primitives:slider.hiddenInput />
+                </primitives:slider.thumb>
+                <primitives:slider.thumb index="1">
+                    <primitives:slider.hiddenInput />
+                </primitives:slider.thumb>
+            </primitives:slider.root>
+        ');
+
+        $thumbs = $this->elementsByValue($html, 'data-slider-thumb');
+        $this->assertSame('true', $thumbs[0]->get('aria-disabled'));
+        $this->assertFalse($thumbs[0]->has('tabindex'));
+        $this->assertTrue($thumbs[0]->has('data-thumb-disabled'));
+        $this->assertSame('false', $thumbs[1]->get('aria-disabled'));
+        $this->assertSame('0', $thumbs[1]->get('tabindex'));
+        $inputs = $this->elementsByValue($html, 'data-slider-hidden-input');
+        $this->assertTrue($inputs[0]->has('disabled'));
+        $this->assertFalse($inputs[1]->has('disabled'));
     }
 
     /**

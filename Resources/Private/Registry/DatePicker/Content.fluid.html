@@ -4,7 +4,7 @@
 
 <ui:cn
     value="
-        bg-popover text-popover-foreground z-50 w-fit min-w-64 rounded-md border p-3 shadow-md outline-none
+        bg-popover text-popover-foreground w-fit min-w-64 rounded-md border p-3 shadow-md outline-none
         transition-all ease-out duration-150 transition-discrete origin-(--transform-origin)
         starting:data-[state=open]:opacity-0 starting:data-[state=open]:scale-97 starting:data-[state=open]:-translate-y-0.5
         data-[state=closed]:opacity-0 data-[state=closed]:scale-97 data-[state=closed]:-translate-y-0.5
@@ -16,7 +16,7 @@
     as="class" />
 
 <ui:portal disabled="{context.inline}">
-    <primitives:datePicker.positioner>
+    <primitives:datePicker.positioner class="z-[var(--layer-index,0)]">
         <primitives:datePicker.content spreadProps="{contentProps}" class="{class}">
             <f:slot />
         </primitives:datePicker.content>

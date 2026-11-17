@@ -8,6 +8,9 @@
             <trans-unit id="numberInput.decrementLabel" approved="yes">
                 <target>Wert verringern</target>
             </trans-unit>
+            <trans-unit id="numberInput.roleDescription" approved="yes">
+                <target>Zahlenfeld</target>
+            </trans-unit>
             <trans-unit id="clipboard.triggerLabelIdle" approved="yes">
                 <target>In Zwischenablage kopieren</target>
             </trans-unit>
@@ -38,6 +41,18 @@
             <trans-unit id="combobox.clearTriggerLabel" approved="yes">
                 <target>Wert löschen</target>
             </trans-unit>
+            <trans-unit id="combobox.resultsCount" approved="yes">
+                <target>%count% Ergebnisse</target>
+            </trans-unit>
+            <trans-unit id="combobox.resultsCountOne" approved="yes">
+                <target>1 Ergebnis</target>
+            </trans-unit>
+            <trans-unit id="combobox.noResults" approved="yes">
+                <target>Keine Ergebnisse</target>
+            </trans-unit>
+            <trans-unit id="combobox.loading" approved="yes">
+                <target>Ergebnisse werden geladen</target>
+            </trans-unit>
             <trans-unit id="fileUpload.dropzoneLabel" approved="yes">
                 <target>Dateien hierher ziehen oder zum Durchsuchen klicken</target>
             </trans-unit>
@@ -46,6 +61,12 @@
             </trans-unit>
             <trans-unit id="fileUpload.deleteFileLabel" approved="yes">
                 <target>Datei %fileName% löschen</target>
+            </trans-unit>
+            <trans-unit id="fileUpload.filesAdded" approved="yes">
+                <target>%fileNames% hinzugefügt</target>
+            </trans-unit>
+            <trans-unit id="fileUpload.fileDeleted" approved="yes">
+                <target>%fileName% gelöscht</target>
             </trans-unit>
             <trans-unit id="input.wordCount" approved="yes">
                 <target>%count% / %max% Zeichen</target>
@@ -86,13 +107,13 @@
             <trans-unit id="datePicker.triggerClose" approved="yes">
                 <target>Kalender schließen</target>
             </trans-unit>
-            <trans-unit id="datePicker.prevTriggerDay" approved="yes">
+            <trans-unit id="datePicker.previousTriggerDay" approved="yes">
                 <target>Zum vorherigen Monat wechseln</target>
             </trans-unit>
-            <trans-unit id="datePicker.prevTriggerMonth" approved="yes">
+            <trans-unit id="datePicker.previousTriggerMonth" approved="yes">
                 <target>Zum vorherigen Jahr wechseln</target>
             </trans-unit>
-            <trans-unit id="datePicker.prevTriggerYear" approved="yes">
+            <trans-unit id="datePicker.previousTriggerYear" approved="yes">
                 <target>Zum vorherigen Jahrzehnt wechseln</target>
             </trans-unit>
             <trans-unit id="datePicker.nextTriggerDay" approved="yes">
@@ -146,18 +167,6 @@
             <trans-unit id="datePicker.dayCellUnavailable" approved="yes">
                 <target>Nicht verfügbar: %date%</target>
             </trans-unit>
-            <trans-unit id="datePicker.contentRoleDescription" approved="yes">
-                <target>Datumsauswahl</target>
-            </trans-unit>
-            <trans-unit id="datePicker.tableRoleDescriptionDay" approved="yes">
-                <target>Kalendermonat</target>
-            </trans-unit>
-            <trans-unit id="datePicker.tableRoleDescriptionMonth" approved="yes">
-                <target>Kalenderjahr</target>
-            </trans-unit>
-            <trans-unit id="datePicker.tableRoleDescriptionYear" approved="yes">
-                <target>Kalenderjahrzehnt</target>
-            </trans-unit>
             <trans-unit id="datePicker.placeholderDay" approved="yes">
                 <target>TT</target>
             </trans-unit>
@@ -179,7 +188,7 @@
             <trans-unit id="pagination.firstTriggerLabel" approved="yes">
                 <target>Erste Seite</target>
             </trans-unit>
-            <trans-unit id="pagination.prevTriggerLabel" approved="yes">
+            <trans-unit id="pagination.previousTriggerLabel" approved="yes">
                 <target>Vorherige Seite</target>
             </trans-unit>
             <trans-unit id="pagination.nextTriggerLabel" approved="yes">

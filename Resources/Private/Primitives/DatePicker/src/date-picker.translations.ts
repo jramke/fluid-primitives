@@ -1,4 +1,4 @@
-import type { DateView, IntlTranslations } from '@zag-js/date-picker';
+import type { IntlTranslations } from '@zag-js/date-picker';
 import { fillPlaceholders } from '../../../Client';
 
 /**
@@ -6,17 +6,6 @@ import { fillPlaceholders } from '../../../Client';
  * label renders.
  */
 export type TranslationTexts = Record<string, string | undefined>;
-
-/**
- * Zag's translations, plus the role descriptions it hard-codes in English.
- * TODO: chakra-ui/zag#3421 makes them part of Zag's own translations.
- */
-export interface DatePickerTranslations extends IntlTranslations {
-    roleDescription?: {
-        content?: string;
-        table?: Partial<Record<DateView, string>>;
-    };
-}
 
 const capitalize = (word: string) => word.charAt(0).toUpperCase() + word.slice(1);
 
@@ -38,7 +27,7 @@ const formatDay = (dateString: string, locale: string) => {
 export function buildTranslations(
     texts: TranslationTexts = {},
     locale = 'en-US'
-): DatePickerTranslations {
+): IntlTranslations {
     // An empty text is `undefined` for Zag, which leaves the attribute out.
     const label = (key: string, values: Record<string, string | number> = {}) =>
         fill(texts[key], values) as string;
@@ -50,7 +39,7 @@ export function buildTranslations(
         content: label('content'),
         weekColumnHeader: label('weekColumnHeader'),
         trigger: open => label(open ? 'triggerClose' : 'triggerOpen'),
-        prevTrigger: view => label(`prevTrigger${capitalize(view)}`),
+        previousTrigger: view => label(`previousTrigger${capitalize(view)}`),
         nextTrigger: view => label(`nextTrigger${capitalize(view)}`),
         // The next view when there is one to switch to, else the view itself.
         viewTrigger: (view, nextView) =>
@@ -83,30 +72,5 @@ export function buildTranslations(
             month: texts.placeholderMonth || 'mm',
             year: texts.placeholderYear || 'yyyy',
         }),
-        roleDescription: {
-            content: texts.contentRoleDescription || undefined,
-            table: {
-                day: texts.tableRoleDescriptionDay || undefined,
-                month: texts.tableRoleDescriptionMonth || undefined,
-                year: texts.tableRoleDescriptionYear || undefined,
-            },
-        },
     };
-}
-
-/**
- * The placeholder of the input: the date pattern of the locale written with the letters of the
- * translation, e.g. `TT.MM.JJJJ`. Zag only knows the English ones.
- */
-export function getPlaceholder(
-    translations: DatePickerTranslations | undefined,
-    locale = 'en-US'
-): string | undefined {
-    const letters: Record<string, string> | undefined = translations?.placeholder?.(locale);
-    if (!letters) return undefined;
-
-    return new Intl.DateTimeFormat(locale)
-        .formatToParts(new Date())
-        .map(part => letters[part.type] ?? part.value)
-        .join('');
 }

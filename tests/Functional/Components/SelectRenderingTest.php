@@ -264,6 +264,35 @@ final class SelectRenderingTest extends FunctionalTestCase
         $this->assertSame($multiselectable, $list->get('aria-multiselectable'));
     }
 
+    #[Test]
+    public function rendersAFilterInputAndAnEmptyPartThatIsHiddenWhileTheCollectionHasItems(): void
+    {
+        $render = fn(ListCollection $collection): string => $this->renderTemplate(
+            '
+            <primitives:select.root collection="{collection}" popupType="' . self::POPUP_DIALOG . '">
+                <primitives:select.positioner>
+                    <primitives:select.content>
+                        <primitives:select.input placeholder="Search" />
+                        <primitives:select.list>List</primitives:select.list>
+                        <primitives:select.empty data-message="">No results</primitives:select.empty>
+                    </primitives:select.content>
+                </primitives:select.positioner>
+            </primitives:select.root>
+        ',
+            ['collection' => $collection],
+        );
+
+        $html = $render($this->collection());
+        $input = $this->elementWith($html, 'data-select-input');
+        $this->assertSame('input', $input->tag);
+        $this->assertSame('searchbox', $input->get('role'));
+        $this->assertSame('Search', $input->get('placeholder'));
+        $this->assertFalse($this->elementWith($html, 'data-select-empty')->has('hidden'));
+        $this->assertTrue($this->elementWith($html, 'data-message')->has('hidden'));
+
+        $this->assertFalse($this->elementWith($render(new ListCollection([])), 'data-message')->has('hidden'));
+    }
+
     /**
      * @return iterable<string, array{0: string, 1: string, 2: string}>
      */

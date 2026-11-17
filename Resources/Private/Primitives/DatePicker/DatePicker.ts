@@ -11,12 +11,7 @@ import {
     type ConverterMachineProps,
 } from '../../Client';
 import type { FieldClientApi } from '../Field/src/field.handle';
-import {
-    buildTranslations,
-    getPlaceholder,
-    type DatePickerTranslations,
-    type TranslationTexts,
-} from './src/date-picker.translations';
+import { buildTranslations, type TranslationTexts } from './src/date-picker.translations';
 
 const parseDate = (date?: string) => (date ? datePicker.parse(date) : undefined);
 
@@ -76,14 +71,6 @@ export class DatePicker extends FieldAwareComponent<datePicker.Props, datePicker
     transformProps(props: datePicker.Props): datePicker.Props {
         return {
             ...props,
-            // TODO: Zag only knows the English placeholder letters, drop this once chakra-ui/zag#3421
-            // (translatable placeholder) is released and `translations.placeholder` is used as it is.
-            placeholder:
-                props.placeholder ??
-                getPlaceholder(
-                    props.translations as DatePickerTranslations | undefined,
-                    props.locale
-                ),
             // Zag writes a date picked in the calendar into the input without an event, but a Field
             // and a Form only learn of a change from one (and read the value once it has settled).
             onValueChange: details => {
@@ -137,20 +124,8 @@ export class DatePicker extends FieldAwareComponent<datePicker.Props, datePicker
             this.spreadProps(positionerEl, positionerProps);
         }
 
-        // Zag hard-codes English role descriptions for the content and the tables.
-        // TODO: drop this override once chakra-ui/zag#3421 (translatable role descriptions) is released.
-        const roleDescription = (this.userProps.translations as DatePickerTranslations | undefined)
-            ?.roleDescription;
-
         const contentEl = this.hydrator.query('content');
-        if (contentEl) {
-            this.spreadProps(
-                contentEl,
-                mergeProps(this.api.getContentProps(), {
-                    'aria-roledescription': roleDescription?.content,
-                })
-            );
-        }
+        if (contentEl) this.spreadProps(contentEl, this.api.getContentProps());
 
         this.spreadPropsByValue('view', ({ value }) =>
             this.api.getViewProps({ view: value as datePicker.DateView })
@@ -161,8 +136,8 @@ export class DatePicker extends FieldAwareComponent<datePicker.Props, datePicker
         this.spreadPropsByValue('viewTrigger', ({ value }) =>
             this.api.getViewTriggerProps({ view: value as datePicker.DateView })
         );
-        this.spreadPropsByValue('prevTrigger', ({ value }) =>
-            this.api.getPrevTriggerProps({ view: value as datePicker.DateView })
+        this.spreadPropsByValue('previousTrigger', ({ value }) =>
+            this.api.getPreviousTriggerProps({ view: value as datePicker.DateView })
         );
         this.spreadPropsByValue('nextTrigger', ({ value }) =>
             this.api.getNextTriggerProps({ view: value as datePicker.DateView })
@@ -189,7 +164,6 @@ export class DatePicker extends FieldAwareComponent<datePicker.Props, datePicker
                 mergeProps(
                     this.api.getTableProps({ view, id: offset ? String(offset) : undefined }),
                     {
-                        'aria-roledescription': roleDescription?.table?.[view],
                         ...(view === 'day' && {
                             'aria-label': this.api.getOffset({ months: offset }).visibleRangeText
                                 .start,

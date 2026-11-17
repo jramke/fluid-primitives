@@ -113,6 +113,42 @@ final class ComboboxRenderingTest extends FunctionalTestCase
         $this->assertSame('my-combobox', $this->elementWith($html, 'data-combobox-root')->get('data-combobox-root'));
     }
 
+    #[Test]
+    public function shipsTheAnnouncementTextsToTheClientAndLetsAnOverrideWin(): void
+    {
+        $this->renderTemplate('
+            <primitives:combobox.root rootId="my-combobox" loading="{true}" translations="{noResults: \'Nothing\'}">
+                <primitives:combobox.trigger>Toggle</primitives:combobox.trigger>
+            </primitives:combobox.root>
+        ');
+
+        $props = HydrationRegistry::getInstance()->get('primitives', 'combobox', 'my-combobox')['props'];
+        $this->assertTrue($props['loading']);
+        // the client turns the texts into the functions Zag wants, filling in %count%
+        $this->assertSame('%count% results', $props['translations']['resultsCount']);
+        $this->assertSame('1 result', $props['translations']['resultsCountOne']);
+        $this->assertSame('Loading results', $props['translations']['loading']);
+        $this->assertSame('Nothing', $props['translations']['noResults']);
+    }
+
+    #[Test]
+    public function shipsTheAnnouncementTextsInTheSiteLanguage(): void
+    {
+        $this->setRequestLocale('de_DE');
+        $this->renderTemplate('
+            <primitives:combobox.root rootId="my-combobox"><primitives:combobox.trigger>Toggle</primitives:combobox.trigger></primitives:combobox.root>
+        ');
+
+        $translations = HydrationRegistry::getInstance()->get(
+            'primitives',
+            'combobox',
+            'my-combobox',
+        )['props']['translations'];
+        $this->assertSame('%count% Ergebnisse', $translations['resultsCount']);
+        $this->assertSame('1 Ergebnis', $translations['resultsCountOne']);
+        $this->assertSame('Keine Ergebnisse', $translations['noResults']);
+    }
+
     /**
      * @return iterable<string, array{0: string, 1: ?string}>
      */
@@ -363,12 +399,17 @@ final class ComboboxRenderingTest extends FunctionalTestCase
         $html = $this->renderTemplate('
             <primitives:combobox.root collection="{collection}">
                 <primitives:combobox.content>
-                    <primitives:combobox.empty>No results found</primitives:combobox.empty>
+                    <primitives:combobox.empty data-message="">No results found</primitives:combobox.empty>
                 </primitives:combobox.content>
             </primitives:combobox.root>
         ', ['collection' => new ListCollection($items)]);
 
-        $this->assertSame($hidden, $this->elementWith($html, 'data-combobox-empty')->has('hidden'));
+        // the part is a live region that stays, the message inside it shows and hides
+        $part = $this->elementWith($html, 'data-combobox-empty');
+        $this->assertFalse($part->has('hidden'));
+        $this->assertSame('status', $part->get('role'));
+        $this->assertSame('polite', $part->get('aria-live'));
+        $this->assertSame($hidden, $this->elementWith($html, 'data-message')->has('hidden'));
         $this->assertSame(!$hidden, $this->elementWith($html, 'data-combobox-content')->has('data-empty'));
     }
 

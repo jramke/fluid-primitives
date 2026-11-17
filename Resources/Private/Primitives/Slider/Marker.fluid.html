@@ -6,6 +6,7 @@
 <div
     role="presentation"
     {f:if(condition: class, then: 'class="{class}"' )}
+    {f:if(condition: markerState.inRange, then: 'data-in-range')}
     {ui:ref(name: 'marker' , value: value, data: refData )}
     {ui:attributes()}
     {ui:asChild()}

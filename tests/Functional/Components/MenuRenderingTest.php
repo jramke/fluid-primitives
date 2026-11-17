@@ -70,26 +70,52 @@ final class MenuRenderingTest extends FunctionalTestCase
     }
 
     #[Test]
-    public function rendersContentRoleBasedOnComposite(): void
+    public function rendersTheTriggerAndTheContentForThePopupTypeAndShipsItToTheClient(): void
     {
-        $menu = static fn(string $arguments): string => '
-            <primitives:menu.root ' . $arguments . '>
+        $menu = static fn(string $arguments): string => (
+            '
+            <primitives:menu.root rootId="my-menu" ' . $arguments . '>
+                <primitives:menu.trigger>Open</primitives:menu.trigger>
                 <primitives:menu.positioner>
                     <primitives:menu.content>
-                        <primitives:menu.item value="a">A</primitives:menu.item>
+                        <primitives:menu.input placeholder="Filter" />
+                        <primitives:menu.list>
+                            <primitives:menu.item value="a">A</primitives:menu.item>
+                        </primitives:menu.list>
+                        <primitives:menu.empty data-message="">No results</primitives:menu.empty>
                     </primitives:menu.content>
                 </primitives:menu.positioner>
             </primitives:menu.root>
-        ';
+        '
+        );
 
-        $this->assertSame(
-            'menu',
-            $this->elementWith($this->renderTemplate($menu('')), 'data-menu-content')->get('role'),
-        );
-        $this->assertSame(
-            'dialog',
-            $this->elementWith($this->renderTemplate($menu('composite="{false}"')), 'data-menu-content')->get('role'),
-        );
+        $menuPopup = $this->renderTemplate($menu(''));
+        $this->assertSame('menu', $this->elementWith($menuPopup, 'data-menu-trigger')->get('aria-haspopup'));
+        $content = $this->elementWith($menuPopup, 'data-menu-content');
+        $this->assertSame('menu', $content->get('role'));
+        $this->assertSame('0', $content->get('tabindex'));
+        $this->assertSame('presentation', $this->elementWith($menuPopup, 'data-menu-list')->get('role'));
+        $this->assertSame('menu', $this->firstHydrationProps()['popupType']);
+
+        $dialogPopup = $this->renderTemplate($menu(
+            'popupType="{f:constant(name: \'Jramke\\FluidPrimitives\\Enum\\MenuPopupType::Dialog\')}"',
+        ));
+        $this->assertSame('dialog', $this->elementWith($dialogPopup, 'data-menu-trigger')->get('aria-haspopup'));
+        $content = $this->elementWith($dialogPopup, 'data-menu-content');
+        $this->assertSame('dialog', $content->get('role'));
+        $this->assertSame('-1', $content->get('tabindex'));
+        $this->assertSame('menu', $this->elementWith($dialogPopup, 'data-menu-list')->get('role'));
+        $this->assertSame('dialog', $this->firstHydrationProps()['popupType']);
+
+        $input = $this->elementWith($dialogPopup, 'data-menu-input');
+        $this->assertSame('input', $input->tag);
+        $this->assertSame('searchbox', $input->get('role'));
+        $this->assertSame('Filter', $input->get('placeholder'));
+        // the part stays on the page as a live region, its message is hidden until a filter matches nothing
+        $empty = $this->elementWith($dialogPopup, 'data-menu-empty');
+        $this->assertFalse($empty->has('hidden'));
+        $this->assertSame('status', $empty->get('role'));
+        $this->assertTrue($this->elementWith($dialogPopup, 'data-message')->has('hidden'));
     }
 
     #[Test]
@@ -183,5 +209,13 @@ final class MenuRenderingTest extends FunctionalTestCase
 
         $this->assertSame('false', $triggers['a']->get('aria-expanded'));
         $this->assertSame('true', $triggers['b']->get('aria-expanded'));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function firstHydrationProps(): array
+    {
+        return array_values(HydrationRegistry::getInstance()->getAll()['primitives']['menu'])[0]['props'];
     }
 }

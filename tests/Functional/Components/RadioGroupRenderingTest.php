@@ -43,6 +43,31 @@ final class RadioGroupRenderingTest extends FunctionalTestCase
         }
     }
 
+    #[Test]
+    public function submitsTheValueOfAReadOnlyGroupButNotOfADisabledOne(): void
+    {
+        $template = '
+            <primitives:radioGroup.root name="size" defaultValue="m" %s>
+                <primitives:radioGroup.item value="m">
+                    <primitives:radioGroup.itemHiddenInput />
+                </primitives:radioGroup.item>
+            </primitives:radioGroup.root>
+        ';
+
+        $readOnly = $this->elementWith(
+            $this->renderTemplate(sprintf($template, 'readOnly="{true}"')),
+            'data-radio-group-item-hidden-input',
+        );
+        $this->assertTrue($readOnly->has('checked'));
+        $this->assertFalse($readOnly->has('disabled'));
+
+        $disabled = $this->elementWith(
+            $this->renderTemplate(sprintf($template, 'disabled="{true}"')),
+            'data-radio-group-item-hidden-input',
+        );
+        $this->assertTrue($disabled->has('disabled'));
+    }
+
     /**
      * @return iterable<string, array{0: string, 1: list<string>}>
      */
