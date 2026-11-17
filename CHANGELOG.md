@@ -95,6 +95,10 @@ What changed in each release of Fluid Primitives, newest first. Every release li
 - `thumbSize` of `ui:slider.root` takes a single number for a square thumb. ([#125](https://github.com/jramke/fluid-primitives/pull/125))
 - The range of a contained slider ends at the center of the thumb in the server render too, as Zag.js draws it now, so it no longer shifts by a few pixels on load. ([#125](https://github.com/jramke/fluid-primitives/pull/125))
 
+### Tabs
+
+- The registry `ui:tabs.content` shows a focus ring while it has keyboard focus, like the triggers, so focus no longer seems lost after `Tab` from the list. Run `ui:add` again to pick it up. ([#125](https://github.com/jramke/fluid-primitives/pull/125))
+
 ### Toast
 
 - A toast can be swiped away toward the nearest edges of its placement. Turn its transition and text selection off while it has `data-swiping`, as the registry `Toast` does, and pass `swipeDirections` to the toaster to choose the directions, `[]` turns swiping off. The registry `Toaster` gives its region a `z-index`, which Zag.js no longer sets. Run `ui:add` again to pick both up. ([#125](https://github.com/jramke/fluid-primitives/pull/125))
