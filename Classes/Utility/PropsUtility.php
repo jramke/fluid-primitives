@@ -73,6 +73,7 @@ class PropsUtility
             $argumentDefinition->isRequired(),
             $newDefaultValue ?? $argumentDefinition->getDefaultValue(),
             $argumentDefinition->getEscape(),
+            $argumentDefinition->getAnnotations(),
         );
     }
 
