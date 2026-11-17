@@ -84,7 +84,7 @@ What changed in each release of Fluid Primitives, newest first. Every release li
 
 ### Select
 
-- `ui:select.root` takes `alignItemWithTrigger`: the list opens over the trigger, with the selected item on top of the value of the trigger. ([#125](https://github.com/jramke/fluid-primitives/pull/125))
+- `ui:select.root` takes `alignItemWithTrigger`: the list opens over the trigger, with the selected item on top of the value of the trigger. The registry `ui:select.root` turns it on by default, set `alignItemWithTrigger="{false}"` to open the list below the trigger. Run `ui:add` again to pick it up. ([#125](https://github.com/jramke/fluid-primitives/pull/125))
 - A `Select` can filter its items. With the `dialog` popup type, put a `select.input` and a `select.empty` ("no results") into the content. The input keeps focus while the arrow keys move the highlight, and the new `onInputValueChange` option of the `Select` class takes your own filter: pass the result of `getSourceCollection().filter(...)` to `updateProps({ collection })`. The registry `Select` filters by label in its entry file, run `ui:add` again to pick it up. ([#125](https://github.com/jramke/fluid-primitives/pull/125))
 
 ### Slider
@@ -110,6 +110,10 @@ What changed in each release of Fluid Primitives, newest first. Every release li
 ### Tooltip
 
 - New `tooltip.viewport` part, and `tooltip.content` takes a `value`: render one content per trigger value inside the viewport, and the tooltip animates between them when you move from one trigger to the next, with `data-activation-direction` and `data-transitioning` to style the move. ([#125](https://github.com/jramke/fluid-primitives/pull/125))
+
+### `ui:useProps`
+
+- A default you set with `defaults` for a `client` prop reaches the client again. The prop used to lose its `client` marking, so the client got neither the default nor a value you passed. ([#125](https://github.com/jramke/fluid-primitives/pull/125))
 
 ### Core
 
