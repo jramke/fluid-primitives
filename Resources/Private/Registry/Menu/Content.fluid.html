@@ -1,4 +1,4 @@
-<ui:prop name="portalled" type="boolean" optional="{true}" default="{true}" description="Whether the menu content portals to the end of the document body. Disable when nesting the menu inside another portalled/focus-trapped element, like a dialog, so it stays within that element's DOM subtree." />
+<ui:prop name="portalled" type="boolean" optional="{true}" default="{true}" description="Whether the menu content portals to the end of the document body. Disable it to keep the menu next to its trigger in the DOM." />
 <ui:useProps name="primitives:menu.content" as="contentProps" />
 
 <ui:portal disabled="!{portalled}">
